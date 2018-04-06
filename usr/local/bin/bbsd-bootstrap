@@ -1,0 +1,69 @@
+#!/bin/sh
+
+if [ "$#" -lt 3 ]; then
+    echo "Required: '[activate|update|snapshot]', 'bastille', 'release'"
+    echo "Supported releases: '11.1-RELEASE', '10.4-RELEASE', '10.3-RELEASE'"
+    exit 1
+fi
+
+echo
+echo "###########################"
+echo "## args: $1      ##"
+echo "## args: $2      ##"
+echo "## args: $3  ##"
+echo "###########################"
+echo
+
+RELEASE="$3"
+PREFIX=/usr/local
+PLATFORM="${PREFIX}/$2"
+VALIDRELEASE=''
+
+if [ "${RELEASE}" == "11.1-RELEASE" -o "${RELEASE}" == "10.4-RELEASE" -o "${RELEASE}" == "10.3-RELEASE" ]; then
+    VALIDRELEASE="${RELEASE}"
+fi
+
+BASETXZPATH="${PLATFORM}/downloads/${RELEASE}/base.txz"
+UPSTREAMURL="https://download.freebsd.org/ftp/releases/amd64/${RELEASE}/base.txz"
+
+if [ "$1" == "activate" ]; then
+    if [ -d "/usr/local/bastille" ]; then
+        echo "Looks like you're already bootstrapped."
+        exit 1
+    else
+        /sbin/zfs create -o compression=lz4 -o atime=off -o mountpoint="${PLATFORM}" "zroot${PLATFORM}"
+        /sbin/zfs create -o compression=lz4 -o atime=off -o mountpoint="${PLATFORM}/downloads" "zroot${PLATFORM}/downloads"
+        /sbin/zfs create -o compression=lz4 -o atime=off -o mountpoint="${PLATFORM}/jails" "zroot${PLATFORM}/jails"
+        /sbin/zfs create -o compression=lz4 -o atime=off -o mountpoint="${PLATFORM}/logs" "zroot${PLATFORM}/logs"
+        /sbin/zfs create -o compression=lz4 -o atime=off -o mountpoint="${PLATFORM}/fstab" "zroot${PLATFORM}/fstab"
+        /sbin/zfs create -o compression=lz4 -o atime=off -o mountpoint="${PLATFORM}/releases" "zroot${PLATFORM}/releases"
+
+        ## create the downloads && releases ZFS volumes
+        if [ ! -z "${VALIDRELEASE}" ]; then
+            if [ ! -d "${PLATFORM}"/downloads/"${RELEASE}" ]; then
+                /sbin/zfs create zroot"${PLATFORM}"/downloads/"${RELEASE}"
+            fi
+            if [ ! -d "${PLATFORM}"/releases/"${RELEASE}" ]; then
+                /sbin/zfs create zroot"${PLATFORM}"/releases/"${RELEASE}"
+            fi
+        
+            ## fetch && untar base.txz
+            if [ ! -f "${BASETXZPATH}" ]; then
+                /usr/bin/fetch "${UPSTREAMURL}" -o "${PLATFORM}/downloads/${RELEASE}"
+                /usr/bin/tar -C "${PLATFORM}/releases/${RELEASE}" -xf "${PLATFORM}/downloads/${RELEASE}/base.txz"
+            fi
+
+            ## freebsd-update && snapshot
+            env PAGER=/bin/cat /usr/sbin/freebsd-update -b "${PLATFORM}/releases/${RELEASE}" fetch install
+            /sbin/zfs snapshot "zroot${PLATFORM}/releases/${RELEASE}@$(date +%F)"
+        fi
+    fi
+fi
+
+if [ "$1" == "update" ]; then
+    env PAGER=/bin/cat /usr/sbin/freebsd-update -b "${PLATFORM}/releases/${RELEASE}" fetch install
+fi
+
+if [ "$1" == "snapshot" ]; then
+    /sbin/zfs snapshot "zroot${PLATFORM}/releases/${RELEASE}@$(date +%F)"
+fi

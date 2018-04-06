@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# basic cmd targeting and execution
+
+if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+    echo "Usage: bbsd-cmd [glob|ALL] 'quoted command'"
+    exit 1
+fi
+
+if [ "$1" = 'ALL' ]; then
+    JAILS=$(jls -N | awk '!/JID/{print $1}')
+    echo "Targeting all containers."
+    echo
+    for jail in ${JAILS}; do
+        echo "${jail}:"
+        jexec ${jail} $2
+        echo
+    done
+fi
+
+if [ "$1" != 'ALL' ]; then
+    JAILS=$(jls -N | awk '!/JID/{print $1}' | grep "$1")
+    echo "Targeting specified containers."
+    echo "${JAILS}"
+    echo
+    for jail in ${JAILS}; do
+        echo "${jail}:"
+        jexec ${jail} $2
+        echo
+    done
+fi

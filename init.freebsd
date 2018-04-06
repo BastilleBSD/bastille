@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# $FreeBSD: $
+#
+# Bastille startup script
+#
+# PROVIDE: bastille
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+# Add the following to /etc/rc.conf[.local] to enable this service
+#
+# bastille_enable (bool):          Set to NO by default.
+#               Set it to YES to enable bastille.
+# bastille_list (string):        Set to "" by default.
+#               Space separated list of jails to start.
+#
+
+. /etc/rc.subr
+
+name=bastille
+rcvar=bastille_enable
+
+load_rc_config ${name}
+
+: ${bastille_enable:=NO}
+: ${bastille_list:=""}
+
+start_cmd=bastille_start
+stop_cmd=bastille_stop
+
+start_command="/usr/local/bin/bbsd-start"
+stop_command="/usr/local/bin/bbsd-stop"
+
+bastille_start()
+{
+    if [ ! -n "${bastille_list}" ]; then
+        echo "${bastille_list} is undefined"
+        return 1
+    fi
+
+    local _jail
+
+    for _jail in ${bastille_list}; do
+        echo "Starting Bastille Jail: ${_jail}"
+        ${start_command} ${_jail}
+    done
+}
+
+bastille_stop()
+{
+    if [ ! -n "${bastille_list}" ]; then
+        echo "${bastille_list} is undefined"
+        return 1
+    fi
+
+    local _jail
+
+    for _jail in ${bastille_list}; do
+        echo "Stopping Bastille Jail: ${_jail}"
+        ${stop_command} ${_jail}
+    done
+}
+
+run_rc_command "$1"

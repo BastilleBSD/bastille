@@ -1,0 +1,32 @@
+#!/bin/sh
+# (christer.edwards@gmail.com)
+# stop jail
+
+if [ $# -lt 1 ]; then
+    printf "Required: jail name(s)."
+    exit 1
+fi
+
+ARGS=$*
+
+for jail in ${ARGS}; do
+    PREFIX=/usr/local
+    PLATFORM=${PREFIX}/bastille
+    JAIL_BASE=${PLATFORM}/jails/${jail}
+
+    JAIL_ROOT=${JAIL_BASE}/root
+    JAIL_CONF=${JAIL_BASE}/jail.conf
+    PKGS_CONF=${JAIL_BASE}/pkgs.conf
+    JAIL_JID=${JAIL_BASE}/${jail}.jid
+
+    err_msg() {
+        printf "ERROR:\t$@\n"
+    }
+
+    if [ ! -d ${JAIL_ROOT} ]; then
+        err_msg "Jail (${jail}) does not exist(?)."
+    fi
+    if [ -d ${JAIL_ROOT} ]; then
+        jail -r -f ${JAIL_CONF} ${jail}
+    fi
+done

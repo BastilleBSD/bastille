@@ -1,0 +1,42 @@
+#!/bin/sh
+# (christer.edwards@gmail.com)
+# initialize a Bastille repo
+
+if [ $# -lt 1 ] || [ $# -gt 1 ]; then
+    echo "Usage: bbsd-init-repo /path/to/repo"
+    return 1
+fi
+
+REPOPATH=$1
+
+RODIRS="root/bin root/boot root/dev root/lib\
+        root/libexec root/rescue root/sbin\
+        root/usr/bin root/usr/include root/usr/lib\
+        root/usr/libdata root/usr/libexec\
+        root/usr/sbin root/usr/share root/tmp"
+
+RWDIRS="root/etc root/root root/usr/local root/var"
+
+bbsd_init_repo()
+{
+    local _dir
+
+    for _dir in ${RWDIRS}; do
+        mkdir -p "${REPOPATH}"/"${_dir}"
+    done
+
+    for _dir in ${RODIRS}; do
+        mkdir -p "${REPOPATH}"/"${_dir}"
+        cat << EOF > "${_dir}"/.gitignore
+# Ignore everything in this directory
+# All directory contents will be lost
+*
+# Except this file
+!.gitignore
+EOF
+done
+
+chmod 1777 root/tmp
+}
+
+bbsd_init_repo
