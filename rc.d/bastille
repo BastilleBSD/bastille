@@ -29,8 +29,8 @@ load_rc_config ${name}
 start_cmd=bastille_start
 stop_cmd=bastille_stop
 
-start_command="/usr/local/bin/bbsd-start"
-stop_command="/usr/local/bin/bbsd-stop"
+start_command="/usr/local/sbin/bbsd-start"
+stop_command="/usr/local/sbin/bbsd-stop"
 
 bastille_start()
 {
