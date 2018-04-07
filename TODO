@@ -1,0 +1,16 @@
+# TODO
+
+This is just a place to throw down the ideas of things I need to fix and or
+improve. In no particular order.
+
++ Consolidate the commands into a single `bastille` cmd.
++ Modular design for imported `bastille` functionality (ie; pkg, cmd, sysrc)
++ ZFS or UFS support
++ `bastille create` needs to support `fetch` fallback
++ `bastille create` needs to support branches
++ `bastille bootstrap` needs a complete review
++ New commands: `sysrc`, `fstab`, `jls`, `git`, `update`, `upgrade`
++ Support for multi-jail templating (create, snapshot, deploy)
++ jail.conf validation support in `create`
++ Dynamic config support for templating
++ 
