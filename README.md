@@ -15,8 +15,8 @@ would very much like to keep things flexible enough to not *require* ZFS. To
 bootstrap a release use the `bbsd-bootstrap` command.
 
 ```shell
-pebbles ~ # bbsd-bootstrap activate bastille 11.1-RELEASE
-pebbles ~ #
+ishmael ~ # bbsd-bootstrap activate bastille 11.1-RELEASE
+ishmael ~ #
 ```
 
 This command creates the directory structure, fetches the specified release,
@@ -24,14 +24,14 @@ extracts and creates a ZFS snapshot. Once a system is "activated" it should
 have everything it needs to create a jail.
 
 ```shell
-pebbles ~ # ll /usr/local/bastille
+ishmael ~ # ll /usr/local/bastille
 total 27
 drwxr-xr-x  2 root  wheel     3B Mar 17 15:34 downloads
 drwxr-xr-x  2 root  wheel     8B Apr  6 18:52 fstab
 drwxr-xr-x  8 root  wheel     8B Mar 31 08:35 jails
 drwxr-xr-x  2 root  wheel     8B Mar 30 20:50 logs
 drwxr-xr-x  3 root  wheel     3B Mar 17 15:37 releases
-pebbles ~ #
+ishmael ~ #
 ```
 
 ### bbsd-create
@@ -44,9 +44,9 @@ things:
 - FreeBSD release (ie; 11.1-RELEASE)
 
 ```shell
-pebbles ~ # bbsd-create unbound0 https://github.com/bastillebsd/local_unbound.git 11.1-RELEASE
+ishmael ~ # bbsd-create unbound0 https://github.com/bastillebsd/local_unbound.git 11.1-RELEASE
 ...[snip]...
-pebbles ~ #
+ishmael ~ #
 ```
 
 This command will create a 11.1-based basejail, and pre-populate the root
@@ -65,19 +65,19 @@ ZFS-snapshots of pre-created profiles.
 To start a jail you can use the `bbsd-start` command.
 
 ```shell
-pebbles ~ # bbsd-start unbound0
+ishmael ~ # bbsd-start unbound0
 unbound0: created
-pebbles ~ #
+ishmael ~ #
 ```
 
 This command can also take a space-separated list of jails to start.
 
 ```shell
-pebbles ~ # bbsd-start unbound0 unbound1 unbound2
+ishmael ~ # bbsd-start unbound0 unbound1 unbound2
 unbound0: created
 unbound1: created
 unbound2: created
-pebbles ~ #
+ishmael ~ #
 ```
 
 ### bbsd-stop
@@ -86,17 +86,17 @@ To stop a jail you can use the `bbsd-stop` command.
 ```shell
 ishmael ~ # bbsd-stop unbound0
 unbound0: removed
-pebbles ~ #
+ishmael ~ #
 ```
 
 This command can also take a space-separated list of jails to stop.
 
 ```shell
-pebbles ~ # bbsd-stop unbound0 unbound1 unbound2
+ishmael ~ # bbsd-stop unbound0 unbound1 unbound2
 unbound0: removed
 unbound1: removed
 unbound2: removed
-pebbles ~ #
+ishmael ~ #
 ```
 
 ### bbsd-restart
@@ -109,7 +109,7 @@ to manage my jails. It started out as a simple for-loop and have now evolved
 into something a _little_ more mature.
 
 ```shell
-pebbles ~ # bbsd-cmd ALL 'sockstat -4'
+ishmael ~ # bbsd-cmd ALL 'sockstat -4'
 ```
 
 This command will execute the "$2" argument (note the use of quotes to
@@ -124,16 +124,16 @@ command on *ALL* systems matching the target. Here is an example from a dev
 system.
 
 ```shell
-pebbles ~ # jls
+ishmael ~ # jls
  JID             IP Address      Hostname                      Path
  unbound0        10.0.0.10       unbound0                      /usr/local/bastille/jails/unbound0/root
  unbound1        10.0.0.20       unbound1                      /usr/local/bastille/jails/unbound1/root
  unbound2        10.0.0.30       unbound2                      /usr/local/bastille/jails/unbound2/root
  beastie         10.0.0.79       beastie                       /usr/local/bastille/jails/beastie/root
  xmakaba         10.0.0.137      xmakaba                       /usr/local/bastille/jails/xmakaba/root
-pebbles ~ #
-pebbles ~ #
-pebbles ~ # bbsd-cmd unbound 'sockstat -4'
+ishmael ~ #
+ishmael ~ #
+ishmael ~ # bbsd-cmd unbound 'sockstat -4'
 Targeting specified containers.
 unbound0
 unbound1
@@ -154,14 +154,14 @@ USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
 unbound  unbound    66761 3  udp4   10.0.0.30:53          *:*
 unbound  unbound    66761 4  tcp4   10.0.0.30:53          *:*
 
-pebbles ~ # bbsd-cmd beast 'freebsd-version'
+ishmael ~ # bbsd-cmd beast 'freebsd-version'
 Targeting specified containers.
 beastie
 
 beastie:
 11.1-RELEASE-p9
 
-pebbles ~ #
+ishmael ~ #
 ```
 
 As you can see, the very basic `grep` is done and limits the targeting to the
@@ -182,9 +182,9 @@ login, but this will support specifying users. It will likely remain
 password-less.
 
 ```shell
-pebbles ~ # bbsd-login beastie
+ishmael ~ # bbsd-login beastie
 root@beastie:~ # exit
-pebbles ~ #
+ishmael ~ #
 ```
 
 ### bbsd-destroy
@@ -195,9 +195,9 @@ of a fail-safe. I just need to make the script a little more mature to make
 sure it handles the file system deletions properly.
 
 ```shell
-pebbles ~ # bbsd-destroy unbound0 /usr/local/bastille/jails/unbound0
+ishmael ~ # bbsd-destroy unbound0 /usr/local/bastille/jails/unbound0
 Jail destroyed. RIP.
-pebbles ~ #
+ishmael ~ #
 ```
 
 ### bbsd-top
@@ -215,8 +215,8 @@ This command requires a path argument and then creates a bunch of directories
 at that path. For example.
 
 ```shell
-pebbles ~ # bbsd-init-repo ~/Projects/www_nginx.git
-pebbles ~ #
+ishmael ~ # bbsd-init-repo ~/Projects/www_nginx.git
+ishmael ~ #
 ```
 
 This would create the required template structure in the pre-existing directory
