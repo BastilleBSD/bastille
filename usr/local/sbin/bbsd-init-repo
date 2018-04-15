@@ -2,12 +2,14 @@
 # (christer.edwards@gmail.com)
 # initialize a Bastille repo
 
-if [ $# -lt 1 ] || [ $# -gt 1 ]; then
-    echo "Usage: bbsd-init-repo /path/to/repo"
+if [ $# -lt 3 ] || [ $# -gt 3 ]; then
+    echo "Usage: bbsd-init-repo /path/to/repo name ipaddr"
     return 1
 fi
 
 REPOPATH=$1
+JAILNAME=$2
+JAILADDR=$3
 
 RODIRS="root/bin root/boot root/dev root/lib\
         root/libexec root/rescue root/sbin\
@@ -16,6 +18,41 @@ RODIRS="root/bin root/boot root/dev root/lib\
         root/usr/sbin root/usr/share root/tmp"
 
 RWDIRS="root/etc root/root root/usr/local root/var"
+
+bbsd_init_rc_conf()
+{
+    cat << EOF > "${REPOPATH}"/root/etc/rc.conf
+sendmail_enable="NONE"
+syslogd_flags="-ss"
+cron_flags="-J 15"
+EOF
+}
+
+bbsd_jail_conf()
+{
+    touch "${REPOPATH}"/pkgs.conf
+    cat << EOF > "${REPOPATH}"/jail.conf
+interface = "lo1";
+host.hostname = "\${name}";
+exec.consolelog = "/usr/local/bastille/logs/\${name}.console.log";
+path = "/usr/local/bastille/jails/\${name}/root";
+ip6 = "disable";
+securelevel = 2;
+devfs_ruleset = 4;
+enforce_statfs = 2;
+
+exec.start = "/bin/sh /etc/rc";
+exec.stop = "/bin/sh /etc/rc.shutdown";
+
+exec.clean;
+mount.devfs;
+
+${JAILNAME} {
+    mount.fstab = "/usr/local/bastille/fstab/\${name}.fstab";
+    ip4.addr = ${JAILADDR};
+}
+EOF
+}
 
 bbsd_init_repo()
 {
@@ -27,7 +64,7 @@ bbsd_init_repo()
 
     for _dir in ${RODIRS}; do
         mkdir -p "${REPOPATH}"/"${_dir}"
-        cat << EOF > "${_dir}"/.gitignore
+        cat << EOF > "${REPOPATH}"/"${_dir}"/.gitignore
 # Ignore everything in this directory
 # All directory contents will be lost
 *
@@ -36,7 +73,10 @@ bbsd_init_repo()
 EOF
 done
 
-chmod 1777 root/tmp
+chmod 1777 "${REPOPATH}"/root/tmp
+cp -L /etc/resolv.conf "${REPOPATH}"/root/etc/resolv.conf
 }
 
 bbsd_init_repo
+bbsd_jail_conf
+bbsd_init_rc_conf
