@@ -1,5 +1,0 @@
-#!/bin/sh
-#
-# run top inside a jail
-
-/usr/bin/top -J $1
