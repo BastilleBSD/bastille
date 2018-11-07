@@ -1,237 +1,691 @@
-# Bastille
-Bastille Jail Management Tool
+Bastille
+========
+Bastille is a jail automation framework that allows you to quickly and
+easily create and manage FreeBSD jail.
 
-## 0.1 alpha
+
+Basic Usage
+-----------
+```
+ishmael ~ # bastille -h
+Usage:
+  bastille command [ALL|glob] [args]
+
+Available Commands:
+  bootstrap   Bootstrap a FreeBSD release for jail base.
+  cmd         Execute arbitrary command on targeted jail(s).
+  console     Console into a running jail.
+  cp          cp(1) files from host to targeted jail(s).
+  create      Create a new jail.
+  destroy     Destroy a stopped jail.
+  help        Help about any command
+  htop        Interactive process viewer (requires htop).
+  list        List jails (running and stopped).
+  pkg         Manipulate binary packages within targeted jail(s). See pkg(8).
+  restart     Restart a running jail.
+  start       Start a stopped jail.
+  stop        Stop a running jail.
+  sysrc       Safely edit rc files within targeted jail(s).
+  top         Display and update information about the top(1) cpu processes.
+  update      Update jail base -pX release.
+  upgrade     Upgrade jail release to X.Y-RELEASE.
+
+Use "bastille -v|--version" for version information.
+Use "bastille command -h|--help" for more information about a command.
+```
+
+
+## 0.3-beta
 This document outlines the basic usage of the Bastille jail management
-framework. This release, obviously, is alpha quality. I make no guarantees of
-quality, and if it screws up your system... Sorry, bro. DO NOT USE THIS IN
-PRODUCTION unless you are the embodiment of The Chaos Monkey.
+framework. This release, obviously, is beta quality. I make no guarantees of
+quality, and if it screws up your system... Sorry, bro. 
 
-With all that said, here's how to use this tool in its current ALPHA state.
+With all that said, here's how to use this tool in its current beta state...
 
-### bbsd-bootstrap
-The first step is to "bootstrap" a release. Currently this uses ZFS, but I
-would very much like to keep things flexible enough to not *require* ZFS. To
-bootstrap a release use the `bbsd-bootstrap` command.
 
-```shell
-ishmael ~ # bbsd-bootstrap activate bastille 11.1-RELEASE
-ishmael ~ #
-```
+## Network Requirements
+In order to segregate jails from the network and from the world, Bastille
+attaches jails to a loopback interface only. The host system then acts as
+the firewall, permitting and denying traffic as needed.
 
-This command creates the directory structure, fetches the specified release,
-extracts and creates a ZFS snapshot. Once a system is "activated" it should
-have everything it needs to create a jail.
+First, create the loopback interface:
 
 ```shell
-ishmael ~ # ll /usr/local/bastille
-total 27
-drwxr-xr-x  2 root  wheel     3B Mar 17 15:34 downloads
-drwxr-xr-x  2 root  wheel     8B Apr  6 18:52 fstab
-drwxr-xr-x  8 root  wheel     8B Mar 31 08:35 jails
-drwxr-xr-x  2 root  wheel     8B Mar 30 20:50 logs
-drwxr-xr-x  3 root  wheel     3B Mar 17 15:37 releases
-ishmael ~ #
+ishmael ~ # sysrc cloned_interfaces="lo1"
+ishmael ~ # service netif cloneup
 ```
 
-### bbsd-create
-Bastille creates jails using pre-defined templates (which are generally stored
-in GitHub), and the concept of basejails. The general workflow requires three
-things:
-
-- Jail name
-- Git repo / template
-- FreeBSD release (ie; 11.1-RELEASE)
+Second, enable NAT through the firewall:
 
 ```shell
-ishmael ~ # bbsd-create unbound0 https://github.com/bastillebsd/local_unbound.git 11.1-RELEASE
-...[snip]...
-ishmael ~ #
+ishmael ~ # sysrc pf_enable="YES"
 ```
 
-This command will create a 11.1-based basejail, and pre-populate the root
-file system with the required configuration. At creation time the following is
-done:
+Create the firewall config, or merge as necessary.
+### /etc/pf.conf
+```
+ext_if="vtnet0"
 
-- 11.1-RELEASE directories created
-- Git repo / template contents fetched
-- Any required pkgs are installed
+set block-policy drop
+scrub in on $ext_if all fragment reassemble
 
-By default it uses the basejail concept, but I don't want it to be limited to
-_just_ that in the long-term. The other jail-type that I envision is simply
-ZFS-snapshots of pre-created profiles.
+set skip on lo
+nat on $ext_if from !($ext_if) -> ($ext_if:0)
 
-### bbsd-start
-To start a jail you can use the `bbsd-start` command.
+## rdr example
+## rdr pass inet proto tcp from any to any port {80, 443} -> 10.88.9.45
+
+block in log all
+pass out quick modulate state
+antispoof for $ext_if inet
+pass in inet proto tcp from any to any port ssh flags S/SA keep state
+```
+
+* Make sure to change the `ext_if` variable to match your host system interface.
+* Make sure to include the last line (`port ssh`) or you'll end up locked
+out.
+
+Note: if you have an existing firewall, the key lines for in/out traffic to jails are:
+
+```
+nat on $ext_if from lo1:network to any -> ($ext_if)
+
+## rdr example
+## rdr pass inet proto tcp from any to any port {80, 443} -> 10.88.9.45
+```
+
+The `nat` routes traffic from the loopback interface to the external interface
+for outbound access.
+
+The `rdr pass ...` will redirect traffic from the host firewall on port X to
+the ip of Jail Y. The example shown redirects web traffic (80 & 443) to the
+jails at `10.88.9.45`.
+
+We'll get to that later, but when you're ready to allow traffic inbound to your
+jails, that's where you'd do it.
+
+Finally, start up the firewall:
 
 ```shell
-ishmael ~ # bbsd-start unbound0
-unbound0: created
-ishmael ~ #
+ishmael ~ # service pf restart
 ```
 
-This command can also take a space-separated list of jails to start.
+At this point you'll likely be disconnected from the host. Reconnect the ssh
+session and continue.
+
+This step only needs to be done once in order to prepare the host.
+
+
+bastille bootstrap
+------------------
+The first step is to "bootstrap" a release. Current supported release is
+11.2-RELEASE, but you can bootstrap anything in the ftp.FreeBSD.org RELEASES
+directory. 
+
+Note: your mileage may vary with unsupported releases and releases newer than
+the host system likely will NOT work at all.
+
+To `bootstrap` a release, run the bootstrap sub-command with the
+release version as the argument.
 
 ```shell
-ishmael ~ # bbsd-start unbound0 unbound1 unbound2
-unbound0: created
-unbound1: created
-unbound2: created
-ishmael ~ #
+ishmael ~ # bastille bootstrap 11.2-RELEASE
+ishmael ~ # bastille bootstrap 10.4-RELEASE
 ```
 
-### bbsd-stop
-To stop a jail you can use the `bbsd-stop` command.
+This command will ensure the required directory structures are in place and
+download the requested release. For each requested release, `bootstrap` will
+download the base.txz and lib32.txz. These are both verified (sha256 via
+MANIFEST file) before they are extracted for use.
+
+Downloaded artifacts are stored in the `cache` directory. "bootstrapped"
+releases are stored in `releases/version`.
+
+The bootstrap subcommand is generally only used once to prepare the system. The
+only other use case for the bootstrap command is when a new FreeBSD version is
+released and you want to start building jails on that version.
+
+To update a release as patches are made available, see the `bastille update`
+command.
+
+
+bastille create
+---------------
+Bastille create uses any available bootstrapped release to create a lightweight
+jailized system. To create a jail simply provide a name, release and
+a private (rfc1918) IP address.
+
+- name
+- release (bootstrapped)
+- ip
 
 ```shell
-ishmael ~ # bbsd-stop unbound0
-unbound0: removed
-ishmael ~ #
+ishmael ~ # bastille create folsom 11.2-RELEASE 10.8.62.1
+
+RELEASE: 11.2-RELEASE.
+NAME: folsom.
+IP: 10.8.62.1.
+
 ```
 
-This command can also take a space-separated list of jails to stop.
+This command will create a 11.2-RELEASE jail assigning the 10.8.62.1 ip address
+to the new system.
+
+I recommend using private (rfc1918) ip address ranges for your jails.
+These ranges include:
+
+- 10.0.0.0/8
+- 172.16.0.0/12
+- 192.168.0.0/16
+
+Bastille does its best to validate the submitted ip is valid. This has not been
+thouroughly tested--I generally use the 10/8 range.
+
+
+bastille start
+--------------
+To start a jail you can use the `bastille start` command.
 
 ```shell
-ishmael ~ # bbsd-stop unbound0 unbound1 unbound2
-unbound0: removed
-unbound1: removed
-unbound2: removed
-ishmael ~ #
+ishmael ~ # bastille start folsom
+Targeting specified jails.
+folsom
+
+[folsom]:
+folsom: created
+
 ```
 
-### bbsd-restart
-You can probably guess what this one does. It takes the same options as
-`bbsd-start` or `bbsd-stop`.
 
-### bbsd-cmd
-This tool is an extension of a tiny set of scripts I have been using personally
-to manage my jails. It started out as a simple for-loop and have now evolved
-into something a _little_ more mature.
+bastille stop
+-------------
+To stop a jail you can use the `bastille stop` command.
 
 ```shell
-ishmael ~ # bbsd-cmd ALL 'sockstat -4'
+ishmael ~ # bastille stop folsom
+Targeting specified jails.
+folsom
+
+[folsom]:
+folsom: removed
+
 ```
 
-This command will execute the "$2" argument (note the use of quotes to
-encapsulate longer commands) inside the targeted jail(s). Yes, I said
-targeting, but I will admit it is VERY rudimentary. It has all the flexibility
-of a simple `grep "$1"` within the list of jails, with a built-in for `ALL`.
-This could/should be expanded to use PCRE and any other targeting method people
-want (think SaltStack targeting options). For now, it's simple.
 
-Remember, `bbsd-cmd TARGET "QUOTED COMMAND INCLUDING OPTIONS"` will execute the
-command on *ALL* systems matching the target. Here is an example from a dev
-system.
+bastille restart
+----------------
+To restart a jail you can use the `bastille restart` command.
 
 ```shell
-ishmael ~ # jls
- JID             IP Address      Hostname                      Path
- unbound0        10.0.0.10       unbound0                      /usr/local/bastille/jails/unbound0/root
- unbound1        10.0.0.20       unbound1                      /usr/local/bastille/jails/unbound1/root
- unbound2        10.0.0.30       unbound2                      /usr/local/bastille/jails/unbound2/root
- beastie         10.0.0.79       beastie                       /usr/local/bastille/jails/beastie/root
- xmakaba         10.0.0.137      xmakaba                       /usr/local/bastille/jails/xmakaba/root
-ishmael ~ #
-ishmael ~ #
-ishmael ~ # bbsd-cmd unbound 'sockstat -4'
-Targeting specified containers.
-unbound0
-unbound1
-unbound2
+ishmael ~ # bastille restart folsom
+Targeting specified jails.
+folsom
 
-unbound0:
-USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
-unbound  unbound    9639  3  udp4   10.0.0.10:53          *:*
-unbound  unbound    9639  4  tcp4   10.0.0.10:53          *:*
+[folsom]:
+folsom: removed
 
-unbound1:
-USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
-unbound  unbound    31590 3  udp4   10.0.0.20:53          *:*
-unbound  unbound    31590 4  tcp4   10.0.0.20:53          *:*
+Targeting specified jails.
+folsom
 
-unbound2:
-USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
-unbound  unbound    66761 3  udp4   10.0.0.30:53          *:*
-unbound  unbound    66761 4  tcp4   10.0.0.30:53          *:*
+[folsom]:
+folsom: created
 
-ishmael ~ # bbsd-cmd beast 'freebsd-version'
-Targeting specified containers.
-beastie
-
-beastie:
-11.1-RELEASE-p9
-
-ishmael ~ #
 ```
 
-As you can see, the very basic `grep` is done and limits the targeting to the
-specified machine(s). The hope here is to provide flexible targeting to N
-number of arbitrary systems.
 
-### bbsd-pkg
-This component is very similar to the `bbsd-cmd` tool above, but is restricted
-to the `pkg` system. If you need to install, delete, upgrade or otherwise
-manage installed pkgs within a jail this is the tool to use.
-
-In documenting this section it looks like this script might need a little love.
-I'll take a look when I'm done here.
-
-### bbsd-login
-This command will log you into a jail. Current support is password-less root
-login, but this will support specifying users. It will likely remain
-password-less.
+bastille cmd
+------------
+To execute commands within the jail you can use `bastille cmd`.
 
 ```shell
-ishmael ~ # bbsd-login beastie
-root@beastie:~ # exit
-ishmael ~ #
+ishmael ~ # bastille cmd folsom 'ps -auxw'
+Targeting specified jails.
+folsom
+
+[folsom]:
+USER   PID %CPU %MEM   VSZ  RSS TT  STAT STARTED    TIME COMMAND
+root 71464  0.0  0.0 14536 2000  -  IsJ   4:52PM 0:00.00 /usr/sbin/syslogd -ss
+root 77447  0.0  0.0 16632 2140  -  SsJ   4:52PM 0:00.00 /usr/sbin/cron -s
+root 80591  0.0  0.0 18784 2340  1  R+J   4:53PM 0:00.00 ps -auxw
+
 ```
 
-### bbsd-destroy
-This command will destroy a non-running jail. No, it can't destroy running
-jails. You have to stop them first. It takes two arguments: jail name & path.
-The path, at this point, is probably extraneous. I added it initially as kind
-of a fail-safe. I just need to make the script a little more mature to make
-sure it handles the file system deletions properly.
+
+bastille pkg
+------------
+To manage binary packages within the jail use `bastille pkg`.
 
 ```shell
-ishmael ~ # bbsd-destroy unbound0 /usr/local/bastille/jails/unbound0
-Jail destroyed. RIP.
-ishmael ~ #
+ishmael ~ # bastille pkg folsom 'install vim-console git-lite zsh'
+Targeting specified jails.
+folsom
+
+[folsom]:
+The package management tool is not yet installed on your system.
+Do you want to fetch and install it now? [y/N]: y
+Bootstrapping pkg from pkg+http://pkg.FreeBSD.org/FreeBSD:10:amd64/quarterly, please wait...
+Verifying signature with trusted certificate pkg.freebsd.org.2013102301... done
+[folsom] Installing pkg-1.10.5_5...
+[folsom] Extracting pkg-1.10.5_5: 100%
+Updating FreeBSD repository catalogue...
+pkg: Repository FreeBSD load error: access repo file(/var/db/pkg/repo-FreeBSD.sqlite) failed: No such file or directory
+[folsom] Fetching meta.txz: 100%    944 B   0.9kB/s    00:01
+[folsom] Fetching packagesite.txz: 100%    6 MiB   3.4MB/s    00:02
+Processing entries: 100%
+FreeBSD repository update completed. 32550 packages processed.
+All repositories are up to date.
+Updating database digests format: 100%
+The following 10 package(s) will be affected (of 0 checked):
+
+New packages to be INSTALLED:
+	vim-console: 8.1.0342
+	git-lite: 2.19.1
+	zsh: 5.6.2
+	expat: 2.2.6_1
+	curl: 7.61.1
+	libnghttp2: 1.33.0
+	ca_root_nss: 3.40
+	pcre: 8.42
+	gettext-runtime: 0.19.8.1_1
+	indexinfo: 0.3.1
+
+Number of packages to be installed: 10
+
+The process will require 77 MiB more space.
+17 MiB to be downloaded.
+
+Proceed with this action? [y/N]: y
+[folsom] [1/10] Fetching vim-console-8.1.0342.txz: 100%    5 MiB   5.8MB/s    00:01
+[folsom] [2/10] Fetching git-lite-2.19.1.txz: 100%    4 MiB   2.1MB/s    00:02
+[folsom] [3/10] Fetching zsh-5.6.2.txz: 100%    4 MiB   4.4MB/s    00:01
+[folsom] [4/10] Fetching expat-2.2.6_1.txz: 100%  109 KiB 111.8kB/s    00:01
+[folsom] [5/10] Fetching curl-7.61.1.txz: 100%    1 MiB   1.2MB/s    00:01
+[folsom] [6/10] Fetching libnghttp2-1.33.0.txz: 100%  107 KiB 109.8kB/s    00:01
+[folsom] [7/10] Fetching ca_root_nss-3.40.txz: 100%  287 KiB 294.3kB/s    00:01
+[folsom] [8/10] Fetching pcre-8.42.txz: 100%    1 MiB   1.2MB/s    00:01
+[folsom] [9/10] Fetching gettext-runtime-0.19.8.1_1.txz: 100%  148 KiB 151.3kB/s    00:01
+[folsom] [10/10] Fetching indexinfo-0.3.1.txz: 100%    6 KiB   5.7kB/s    00:01
+Checking integrity... done (0 conflicting)
+[folsom] [1/10] Installing libnghttp2-1.33.0...
+[folsom] [1/10] Extracting libnghttp2-1.33.0: 100%
+[folsom] [2/10] Installing ca_root_nss-3.40...
+[folsom] [2/10] Extracting ca_root_nss-3.40: 100%
+[folsom] [3/10] Installing indexinfo-0.3.1...
+[folsom] [3/10] Extracting indexinfo-0.3.1: 100%
+[folsom] [4/10] Installing expat-2.2.6_1...
+[folsom] [4/10] Extracting expat-2.2.6_1: 100%
+[folsom] [5/10] Installing curl-7.61.1...
+[folsom] [5/10] Extracting curl-7.61.1: 100%
+[folsom] [6/10] Installing pcre-8.42...
+[folsom] [6/10] Extracting pcre-8.42: 100%
+[folsom] [7/10] Installing gettext-runtime-0.19.8.1_1...
+[folsom] [7/10] Extracting gettext-runtime-0.19.8.1_1: 100%
+[folsom] [8/10] Installing vim-console-8.1.0342...
+[folsom] [8/10] Extracting vim-console-8.1.0342: 100%
+[folsom] [9/10] Installing git-lite-2.19.1...
+===> Creating groups.
+Creating group 'git_daemon' with gid '964'.
+===> Creating users
+Creating user 'git_daemon' with uid '964'.
+[folsom] [9/10] Extracting git-lite-2.19.1: 100%
+[folsom] [10/10] Installing zsh-5.6.2...
+[folsom] [10/10] Extracting zsh-5.6.2: 100%
+
 ```
 
-### bbsd-top
+The PKG sub-command can, of course, do more than just `install`. The
+expectation is that you can fully leverage the pkg manager. This means,
+`install`, `update`, `upgrade`, `audit`, `clean`, `autoremove`, etc., etc.
+
+```shell
+ishmael ~ # bastille pkg ALL upgrade
+Targeting all jails.
+
+[bastion]:
+Updating iniquity.io repository catalogue...
+[bastion] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
+[bastion] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
+Processing entries: 100%
+iniquity.io repository update completed. 493 packages processed.
+All repositories are up to date.
+Checking for upgrades (1 candidates): 100%
+Processing candidates (1 candidates): 100%
+Checking integrity... done (0 conflicting)
+Your packages are up to date.
+
+[unbound0]:
+Updating iniquity.io repository catalogue...
+[unbound0] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
+[unbound0] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
+Processing entries: 100%
+iniquity.io repository update completed. 493 packages processed.
+All repositories are up to date.
+Checking for upgrades (0 candidates): 100%
+Processing candidates (0 candidates): 100%
+Checking integrity... done (0 conflicting)
+Your packages are up to date.
+
+[unbound1]:
+Updating iniquity.io repository catalogue...
+[unbound1] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
+[unbound1] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
+Processing entries: 100%
+iniquity.io repository update completed. 493 packages processed.
+All repositories are up to date.
+Checking for upgrades (0 candidates): 100%
+Processing candidates (0 candidates): 100%
+Checking integrity... done (0 conflicting)
+Your packages are up to date.
+
+[squid]:
+Updating iniquity.io repository catalogue...
+[squid] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
+[squid] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
+Processing entries: 100%
+iniquity.io repository update completed. 493 packages processed.
+All repositories are up to date.
+Checking for upgrades (0 candidates): 100%
+Processing candidates (0 candidates): 100%
+Checking integrity... done (0 conflicting)
+Your packages are up to date.
+
+[nginx]:
+Updating iniquity.io repository catalogue...
+[nginx] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
+[nginx] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
+Processing entries: 100%
+iniquity.io repository update completed. 493 packages processed.
+All repositories are up to date.
+Checking for upgrades (1 candidates): 100%
+Processing candidates (1 candidates): 100%
+The following 1 package(s) will be affected (of 0 checked):
+
+Installed packages to be UPGRADED:
+	nginx-lite: 1.14.0_14,2 -> 1.14.1,2
+
+Number of packages to be upgraded: 1
+
+315 KiB to be downloaded.
+
+Proceed with this action? [y/N]: y
+[nginx] [1/1] Fetching nginx-lite-1.14.1,2.txz: 100%  315 KiB 322.8kB/s    00:01
+Checking integrity... done (0 conflicting)
+[nginx] [1/1] Upgrading nginx-lite from 1.14.0_14,2 to 1.14.1,2...
+===> Creating groups.
+Using existing group 'www'.
+===> Creating users
+Using existing user 'www'.
+[nginx] [1/1] Extracting nginx-lite-1.14.1,2: 100%
+You may need to manually remove /usr/local/etc/nginx/nginx.conf if it is no longer needed.
+```
+
+
+bastille destroy
+----------------
+Jails can be destroyed and thrown away just as easily as they were created.
+Note: jails must be stopped before destroyed.
+
+```shell
+ishmael ~ # bastille stop folsom
+Targeting specified jails.
+folsom
+
+[folsom]:
+folsom: removed
+
+ishmael ~ # bastille destroy folsom
+Deleting Jail: folsom.
+Note: jail console logs not destroyed.
+/usr/local/bastille/logs/folsom_console.log
+
+```
+
+
+bastille top
+------------
 This one simply runs `top` in that jail. This command is interactive, as `top`
-is interactive. If you want metrics other than actually running `top`, use
-`bbsd-cmd TARGET 'ps -auxwww'` or the like.
+is interactive.
 
-### bbsd-init-repo
-This command is a convenience tool to create the template structure for a
-template. The idea here is that it creates all the appropriate directories
-needed for a basejail-style jail. It also includes the other required template
-files such as the `jail.conf` and the `pkgs.conf`.
 
-This command requires a path argument and then creates a bunch of directories
-at that path. For example.
+bastille htop
+-------------
+This one simply runs `htop` inside the jail. This one is a quick and dirty
+addition. note: won't work if you don't have htop installed in the jail.
+
+
+bastille sysrc
+--------------
+The `sysrc` sub-command allows for safely editing system configuration files.
+In jail terms, this allows us to toggle on/off services and options at
+startup.
 
 ```shell
-ishmael ~ # bbsd-init-repo ~/Projects/www_nginx.git
-ishmael ~ #
+ishmael ~ # bastille sysrc nginx nginx_enable="YES"
+Targeting specified jails.
+nginx
+
+[nginx]:
+nginx_enable: NO -> YES
 ```
 
-This would create the required template structure in the pre-existing directory
-of `www_nginx.git` within the `Projects` directory of the users HOME. This
-script also needs a little work.
+See `man sysrc(8)` for more info.
 
-This tool should be used by template developers who want to quickly create the
-required structure for a template. The customization of config files can then
-be put in place within that template directory structure.
 
-I want to evolve this tool to the point where it can help churn out templates
-for much of what is in the FreeBSD ports tree. Initially I expect to build
-services such as DNS, SMTP, Media (Plex), SSH, browser (Firefox) jails.
+bastille console
+----------------
+This sub-command launches a login shell into the jail. Default is
+password-less root login.
 
-## Goals
+```shell
+ishmael ~ # bastille console folsom
+Targeting specified jails.
+folsom
+
+[folsom]:
+FreeBSD 11.2-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
+
+Welcome to FreeBSD!
+
+Release Notes, Errata: https://www.FreeBSD.org/releases/
+Security Advisories:   https://www.FreeBSD.org/security/
+FreeBSD Handbook:      https://www.FreeBSD.org/handbook/
+FreeBSD FAQ:           https://www.FreeBSD.org/faq/
+Questions List: https://lists.FreeBSD.org/mailman/listinfo/freebsd-questions/
+FreeBSD Forums:        https://forums.FreeBSD.org/
+
+Documents installed with the system are in the /usr/local/share/doc/freebsd/
+directory, or can be installed later with:  pkg install en-freebsd-doc
+For other languages, replace "en" with a language code like de or fr.
+
+Show the version of FreeBSD installed:  freebsd-version ; uname -a
+Please include that output and any error messages when posting questions.
+Introduction to manual pages:  man man
+FreeBSD directory layout:      man hier
+
+Edit /etc/motd to change this login announcement.
+root@folsom:~ #
+```
+
+At this point you are logged in to the jail and have full shell access.
+The system is yours to use and/or abuse as you like. Any changes made inside
+the jail are limited to the jail. 
+
+bastille cp
+-----------
+Note: this sub-command may need a little work. 
+
+This sub-command allows efficiently copying files from host to jail(s).
+
+```shell
+ishmael ~ # bastille cp ALL /tmp/resolv.conf-cf etc/resolv.conf
+Targeting all jails.
+
+[bastion]:
+
+[unbound0]:
+
+[unbound1]:
+
+[squid]:
+
+[nginx]:
+
+[folsom]:
+
+```
+
+Unless you see errors reported in the output the `cp` was successful.
+
+
+bastille list
+-------------
+This sub-command will show you the running jails on your system.
+
+```shell
+ishmael ~ # bastille list
+ JID             IP Address      Hostname                      Path
+ bastion         10.88.9.65      bastion                       /usr/local/bastille/jails/bastion/root
+ unbound0        10.88.9.60      unbound0                      /usr/local/bastille/jails/unbound0/root
+ unbound1        10.88.9.61      unbound1                      /usr/local/bastille/jails/unbound1/root
+ squid           10.88.9.30      squid                         /usr/local/bastille/jails/squid/root
+ nginx           10.88.9.45      nginx                         /usr/local/bastille/jails/nginx/root
+ folsom          10.8.62.1       folsom                        /usr/local/bastille/jails/folsom/root
+```
+
+
+bastille update
+---------------
+The `update` command targets a release instead of a jail. Because every
+jail is based on a release, when the release is updated all the jails are
+automatically updated as well.
+
+To update all jails based on the 11.2-RELEASE `release`:
+
+Up to date 11.2-RELEASE:
+```shell
+ishmael ~ # bastille update 11.2-RELEASE
+Targeting specified release.
+11.2-RELEASE
+
+Looking up update.FreeBSD.org mirrors... 2 mirrors found.
+Fetching metadata signature for 11.2-RELEASE from update4.freebsd.org... done.
+Fetching metadata index... done.
+Inspecting system... done.
+Preparing to download files... done.
+
+No updates needed to update system to 11.2-RELEASE-p4.
+No updates are available to install.
+```
+
+Updating 10.4-RELEASE:
+```shell
+ishmael ~ # bastille update 10.4-RELEASE
+Targeting specified release.
+10.4-RELEASE
+
+Looking up update.FreeBSD.org mirrors... 2 mirrors found.
+Fetching metadata signature for 10.4-RELEASE from update1.freebsd.org... done.
+Fetching metadata index... done.
+Fetching 2 metadata patches.. done.
+Applying metadata patches... done.
+Fetching 2 metadata files... done.
+Inspecting system... done.
+Preparing to download files... done.
+
+The following files will be added as part of updating to 10.4-RELEASE-p13:
+...[snip]...
+```
+
+To be safe, you may want to restart any jails that have been updated
+live.
+
+
+bastille upgrade
+----------------
+This sub-command lets you upgrade a release to a new release. Depending on the
+workflow this can be similar to a `bootstrap`.
+
+```shell
+ishmael ~ # bastille upgrade 11.2-RELEASE 12.0-RELEASE
+...
+```
+
+
+bastille verify
+---------------
+This sub-command scans a bootstrapped release and validates that everything
+looks in order. This is not a 100% comprehensive check, but it compares the
+release against a "known good" index.
+
+If you see errors or issues here, consider deleting and re-bootstrapping the
+release.
+
+
+Example (create, start, console)
+================================
+This example creates, starts and consoles into the jail.
+
+```shell
+ishmael ~ # bastille create alcatraz 11.2-RELEASE 10.9.8.7
+
+RELEASE: 11.2-RELEASE.
+NAME: alcatraz.
+IP: 10.9.8.7.
+```
+
+```shell
+ishmael ~ # bastille start alcatraz
+Targeting specified jails.
+alcatraz
+
+[alcatraz]:
+alcatraz: created
+```
+
+```shell
+ishmael ~ # bastille console alcatraz
+Targeting specified jails.
+alcatraz
+
+[alcatraz]:
+FreeBSD 11.2-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
+
+Welcome to FreeBSD!
+
+Release Notes, Errata: https://www.FreeBSD.org/releases/
+Security Advisories:   https://www.FreeBSD.org/security/
+FreeBSD Handbook:      https://www.FreeBSD.org/handbook/
+FreeBSD FAQ:           https://www.FreeBSD.org/faq/
+Questions List: https://lists.FreeBSD.org/mailman/listinfo/freebsd-questions/
+FreeBSD Forums:        https://forums.FreeBSD.org/
+
+Documents installed with the system are in the /usr/local/share/doc/freebsd/
+directory, or can be installed later with:  pkg install en-freebsd-doc
+For other languages, replace "en" with a language code like de or fr.
+
+Show the version of FreeBSD installed:  freebsd-version ; uname -a
+Please include that output and any error messages when posting questions.
+Introduction to manual pages:  man man
+FreeBSD directory layout:      man hier
+
+Edit /etc/motd to change this login announcement.
+root@alcatraz:~ #
+```
+
+```shell
+root@alcatraz:~ # ps -auxw
+USER   PID %CPU %MEM  VSZ  RSS TT  STAT STARTED    TIME COMMAND
+root 83222  0.0  0.0 6412 2492  -  IsJ  02:21   0:00.00 /usr/sbin/syslogd -ss
+root 88531  0.0  0.0 6464 2508  -  SsJ  02:21   0:00.01 /usr/sbin/cron -s
+root  6587  0.0  0.0 6912 2788  3  R+J  02:42   0:00.00 ps -auxw
+root 92441  0.0  0.0 6952 3024  3  IJ   02:21   0:00.00 login [pam] (login)
+root 92565  0.0  0.0 7412 3756  3  SJ   02:21   0:00.01 -csh (csh)
+root@alcatraz:~ #
+```
+
+
+Project Goals
+=============
 These tools are created initially with the mindset of function over form. I
 want to simply prove the concept is sound for real work. The real work is a
 sort of meta-jail-port system. Instead of installing the MySQL port directly on
@@ -250,3 +704,61 @@ best way to design systems. This is not my goal.
 My goal is to provide a secure framework where processes and services can run
 isolated. I want to limit the scope and reach of bad actors. I want to severely
 limit the target areas available to anyone that has (or has gained!) access.
+
+Possible Jail names
+-------------------
+
+prisons:
+- arkham
+- ashecliffe
+- azkaban
+- coldmountain
+- dolguldur
+- foxriver
+- litchfield
+- oswald
+- shawshank
+- stockton
+- stormcage
+- ziggurat
+- astralqueen
+
+- alcatraz
+- rikers
+- leavenworth
+- folsom
+- attica
+- singsing
+- sanquentin
+- corcoran
+- pelicanbay
+
+
+Networking Tips
+===============
+
+Tip #1: 
+-------
+Ports and destinations can be defined as lists. eg;
+```
+rdr pass inet proto tcp from any to any port {80, 443} -> {10.88.9.45, 10.88.9.46, 10.88.9.47, 10.88.9.48}
+```
+
+This rule would redirect any traffic to the host on ports 80 or 443 and
+round-robin between jails with ips 45, 46, 47, and 48 (on ports 80 or 443).
+
+
+Tip #2: 
+-------
+Ports can redirect to other ports. eg;
+```
+rdr pass inet proto tcp from any to any port 8080 -> 10.7.6.5 port 80
+rdr pass inet proto tcp from any to any port 8081 -> 10.7.6.5 port 8080
+rdr pass inet proto tcp from any to any port 8181 -> 10.7.6.5 port 443
+```
+
+Tip: Initially I spent time worrying about what IP addresses to assign. In the
+end I've come to the conclusion that it _really_ doesn't matter. Pick *any*
+private address and be done with it. These are all isolated networks. In the
+end, what matters is you can map host:port to jail:port reliably, and we
+can.
