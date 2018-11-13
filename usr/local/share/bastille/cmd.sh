@@ -29,10 +29,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/colors.pre.sh
-. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille htop [ALL|glob]'.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille cmd [ALL|glob] 'quoted command'.${COLOR_RESET}"
     exit 1
 }
 
@@ -43,7 +42,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -gt 2 ] || [ $# -lt 2 ]; then
     usage
 fi
 
@@ -55,12 +54,6 @@ if [ "$1" != 'ALL' ]; then
 fi
 
 for _jail in ${JAILS}; do
-    if [ ! -x "${bastille_jailsdir}/${_jail}/root/usr/local/bin/htop" ]; then
-        echo -e "${COLOR_RED}htop not found on ${_jail}.${COLOR_RESET}"
-    fi
-    if [ -x "${bastille_jailsdir}/${_jail}/root/usr/local/bin/htop" ]; then
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-        jexec -l ${_jail} /usr/local/bin/htop
-    fi
-    echo -e "${COLOR_RESET}"
+    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    jexec -l ${_jail} $2
 done

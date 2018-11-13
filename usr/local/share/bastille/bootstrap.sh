@@ -120,6 +120,10 @@ case "${RELEASE}" in
     bootstrap
     echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
 	;;
+12.0-BETA4)
+    bootstrap
+    echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
+	;;
 *)
     echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
     usage

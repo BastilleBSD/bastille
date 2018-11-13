@@ -29,9 +29,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/colors.pre.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille pkg [ALL|glob] 'pkg command'${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille stop [ALL|glob].${COLOR_RESET}"
     exit 1
 }
 
@@ -42,7 +43,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
@@ -55,6 +56,8 @@ fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jexec -l ${_jail} /usr/sbin/pkg $2
-    echo -e "${COLOR_RESET}"
+    jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
 done
+
+## HUP the firewall
+pfctl -f /etc/pf.conf

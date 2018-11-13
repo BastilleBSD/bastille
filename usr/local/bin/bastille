@@ -28,11 +28,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+SAVED_TERM=$TERM
+
 . /usr/local/share/bastille/colors.pre.sh
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.3.20181107"
+BASTILLE_VERSION="0.3.20181112"
 
 
 usage() {
@@ -58,6 +60,7 @@ Available Commands:
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
+  template    Apply file templates to targeted jail(s).
   top         Display and update information about the top(1) cpu processes.
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
@@ -73,7 +76,6 @@ EOF
 
 CMD=$1
 shift
-CMD_ENV=
 
 # Handle special-case commands first.
 case "${CMD}" in
@@ -88,22 +90,13 @@ esac
 
 # Filter out all non-commands
 case "${CMD}" in
-cmd|console|cp|create|destroy|list|pkg|restart|start|stop|sysrc|verify)
+cmd|cp|create|destroy|list|pkg|restart|start|stop|sysrc|template|verify)
 	;;
 update|upgrade)
 	CMD_ENV="${CMD_ENV} PAGER=cat"
 	;;
 console|bootstrap|htop|top)
-	while read envvar envvalue; do
-		case "${envvar}" in
-			TERM)
-				CMD_ENV="${CMD_ENV} ${envvar}=${envvalue}"
-				;;
-		esac
-	done <<-EOF
-	$(env | sed -Ee 's,^([^=]*)=(.*),\1 \2,')
-	EOF
-	;;
+    ;;
 bootstrap|update|upgrade)
 	while read envvar envvalue; do
 		case "${envvar}" in
@@ -119,6 +112,7 @@ bootstrap|update|upgrade)
 	usage
 	;;
 esac
+
 
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 
