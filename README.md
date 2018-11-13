@@ -26,6 +26,7 @@ Available Commands:
   start       Start a stopped jail.
   stop        Stop a running jail.
   sysrc       Safely edit rc files within targeted jail(s).
+  template    Apply Bastille template to running jail(s).
   top         Display and update information about the top(1) cpu processes.
   update      Update jail base -pX release.
   upgrade     Upgrade jail release to X.Y-RELEASE.
@@ -130,7 +131,7 @@ release version as the argument.
 
 ```shell
 ishmael ~ # bastille bootstrap 11.2-RELEASE
-ishmael ~ # bastille bootstrap 10.4-RELEASE
+ishmael ~ # bastille bootstrap 12.0-RELEASE
 ```
 
 This command will ensure the required directory structures are in place and
@@ -437,6 +438,86 @@ ishmael ~ # bastille destroy folsom
 Deleting Jail: folsom.
 Note: jail console logs not destroyed.
 /usr/local/bastille/logs/folsom_console.log
+
+```
+
+bastille template
+-----------------
+Bastille supports a templating system allowing you to apply files, pkgs and
+execute commands inside the jail automatically.
+
+Currently supported template hooks are: `PRE`, `CONFIG`, `PKG`, `SYSRC`, `CMD`.
+Planned template hooks include: `FSTAB`, `PF`
+
+Templates are created in `${bastille_prefix}/templates` and can leverage any of
+the template hooks. Simply create a new directory named after the template. eg;
+
+```shell
+mkdir -p /usr/local/bastille/templates/base
+```
+
+To leverage a template hook, create an UPPERCASE file in the root of the
+template directory named after the hook you want to execute. eg;
+
+```shell
+echo "zsh vim-console git-lite htop" > /usr/local/bastille/templates/base/PKG
+echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/base/CMD
+echo "etc root usr" > /usr/local/bastille/templates/base/CONFIG
+```
+
+Template hooks are executed in specific order and require specific syntax to
+work as expected. This table outlines those requirements:
+
+| HOOK    | format           | example                              |
+|---------|------------------|--------------------------------------|
+| PRE/CMD | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh  |
+| CONFIG  | path             | etc root usr                         |
+| PKG     | port/pkg name(s) | vim-console zsh git-lite tree htop   |
+| SYSRC   | sysrc command(s) | nginx_enable="YES" nginx_flags="..." |
+
+In addition to supporting template hooks, Bastille supports overlaying files
+into the jail. This is done by placing the files in their full path, using the
+template directory as "/".
+
+An example here may help. Think of `/usr/local/bastille/templates/base`, our
+example template, as the root of our filesystem overlay. If you create an
+`etc/hosts` or `etc/resolv.conf` *inside* the base template directory, these
+can be overlayed into your jail.
+
+Note: due to the way FreeBSD segregates user-space, the majority of your
+overlayed template files will be in `usr/local`. The few general
+exceptions are the `etc/hosts`, `etc/resolv.conf`, and `etc/rc.conf.local`.
+
+After populating `usr/local/` with custom config files that your jail will
+use, be sure to include `usr` in the template CONFIG definition. eg;
+
+```shell
+echo "etc usr" > /usr/local/bastille/templates/base/CONFIG
+```
+
+The above example "etc usr" will include anything under "etc" and "usr" inside
+the template. You do not need to list individual files. Just include the
+top-level directory name.
+
+Applying Templates
+------------------
+
+Jails must be running to apply templates.
+
+Bastille includes a `template` sub-command. This sub-command requires a target
+and a template name. As covered in the previous section, template names
+correspond to directory names in the `bastille/templates` directory.
+
+```shell
+ishmael ~ # bastille template folsom base
+[folsom]:
+Copying files...
+Copy complete.
+Installing packages.
+...[snip]...
+Executing final command(s).
+chsh: user information updated
+Template Complete.
 
 ```
 

@@ -70,8 +70,8 @@ create_jail() {
 
     if [ ! -d "${bastille_jail_base}" ]; then
         mkdir -p "${bastille_jail_base}"
-        mkdir -p "${bastille_jail_path}/usr"
         mkdir -p "${bastille_jail_path}/usr/home"
+        mkdir -p "${bastille_jail_path}/usr/local"
     fi
 
     if [ ! -d "${bastille_jail_template}" ]; then
@@ -97,9 +97,9 @@ create_jail() {
     ## ro
     cd "${bastille_jail_path}"
     echo
-    echo -e "${COLOR_GREEN}RELEASE: ${RELEASE}.${COLOR_RESET}"
     echo -e "${COLOR_GREEN}NAME: ${NAME}.${COLOR_RESET}"
     echo -e "${COLOR_GREEN}IP: ${IP}.${COLOR_RESET}"
+    echo -e "${COLOR_GREEN}RELEASE: ${RELEASE}.${COLOR_RESET}"
     echo
 
     for _link in bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src; do
@@ -107,7 +107,7 @@ create_jail() {
     done
 
     ## link home properly
-    ln -sf usr/home home
+    ln -s usr/home home
 
     ## rw
     cp -a "${bastille_releasesdir}/${RELEASE}/.cshrc" "${bastille_jail_path}"
@@ -135,8 +135,7 @@ create_jail() {
     fi
 
     ## TZ: UTC
-    ln -s "/usr/share/zoneinfo/Etc/UTC ${bastille_jail_root}/etc/localtime"
-    ln -s "/.template/usr/local ${bastille_jail_root}/usr/local"
+    ln -s /usr/share/zoneinfo/Etc/UTC etc/localtime
 }
 
 # Handle special-case commands first.
@@ -171,12 +170,6 @@ esac
 ## check for name/root/.bastille
 if [ -d "/usr/local/bastille/jails/${NAME}/root/.bastille" ]; then
     echo -e "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
-    exit 1
-fi
-
-## check for name/root/.template
-if [ -d "/usr/local/bastille/jails/${NAME}/root/.template" ]; then
-    echo -e "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.template exists.${COLOR_RESET}"
     exit 1
 fi
 
