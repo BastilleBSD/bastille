@@ -29,8 +29,8 @@ load_rc_config ${name}
 start_cmd=bastille_start
 stop_cmd=bastille_stop
 
-start_command="%%$PREFIX%%/bin/bastille start"
-stop_command="%%$PREFIX%%/bin/bastille stop"
+start_command="%%PREFIX%%/bin/bastille start"
+stop_command="%%PREFIX%%/bin/bastille stop"
 
 bastille_start()
 {
