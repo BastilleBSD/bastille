@@ -29,9 +29,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/colors.pre.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille list.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille list [release|template|jail|log].${COLOR_RESET}"
     exit 1
 }
 
@@ -44,6 +45,18 @@ if [ $# -gt 0 ]; then
     case "$1" in
     help|-h|--help)
         usage
+        ;;
+    release|releases)
+        ls "${bastille_releasesdir}"
+        ;;
+    template|templates)
+        ls "${bastille_templatesdir}"
+        ;;
+    jail|jails)
+        ls "${bastille_jailsdir}"
+        ;;
+    log|logs)
+        ls "${bastille_logsdir}"
         ;;
     *)
         usage

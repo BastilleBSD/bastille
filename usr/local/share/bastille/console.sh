@@ -55,5 +55,6 @@ fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jexec -l ${_jail} /usr/bin/login -fp root
+    jexec -l ${_jail} /usr/bin/login -f root
+    echo
 done

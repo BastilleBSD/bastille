@@ -1,6 +1,9 @@
 #!/bin/sh
+# https://pastebin.com/T6eThbKu
 
 DEVICE_SELF_SCAN_ALL=NO
+DIALOG_BACKTITLE="BastilleBSD"
+DIALOG_TITLE="bootstrap"
 [ "$_SCRIPT_SUBR" ] || . /usr/share/bsdconfig/script.subr
 usage(){ echo "Usage: ${0##*/} [-r releaseName] [dists ...]" >&2; exit 1; }
 while getopts hr: flag; do
@@ -21,13 +24,13 @@ REL_DIST=/usr/local/bastille/cache/$releaseName
 download() # $src to $dest
 {
 	size=$( f_device_get device_media "$1" $PROBE_SIZE )
-	f_device_get device_media "$1" | dpv -kb "BastilleBSD" \
-		-t "bootstrap" -p "Downloading $releaseName" \
+	f_device_get device_media "$1" | dpv -kb "$DIALOG_BACKTITLE" \
+		-t "$DIALOG_TITLE" -p "Downloading $releaseName" \
 		-o "$3" "$size:$1"
 }
 sign() # $file
 {
-	dpv -kb "BastilleBSD" -t "bootstrap" \
+	dpv -kb "$DIALOG_BACKTITLE" -t "$DIALOG_TITLE" \
 		-p "Signing $releaseName" -mx "sha256 >&2" \
 		"$size:${1##*/}" "$1" 2>&1 >&$TERMINAL_STDOUT_PASSTHRU
 }

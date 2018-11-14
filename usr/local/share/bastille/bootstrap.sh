@@ -110,22 +110,22 @@ case "${RELEASE}" in
 	;;
 12.0-BETA1)
     bootstrap
-    echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
+    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
 	;;
 12.0-BETA2)
     bootstrap
-    echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
+    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
 	;;
 12.0-BETA3)
     bootstrap
-    echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
+    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
 	;;
 12.0-BETA4)
     bootstrap
-    echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
+    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
 	;;
 *)
-    echo -e "${COLOR_RED}BETA releases are complete untested.${COLOR_RESET}"
+    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
     usage
     ;;
 esac
