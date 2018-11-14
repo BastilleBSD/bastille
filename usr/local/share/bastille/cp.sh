@@ -58,5 +58,5 @@ for _jail in ${JAILS}; do
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     cp -a "$2" "${bastille_jail_path}/$3"
-    echo -e "${COLOR_RESET}"
+    echo
 done

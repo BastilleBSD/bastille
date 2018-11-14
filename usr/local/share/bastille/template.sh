@@ -64,7 +64,7 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template}/PRE" ]; then
         echo -e "${COLOR_GREEN}Executing PRE-command(s).${COLOR_RESET}"
         bastille_templatepre=$(cat "${bastille_template}/PRE")
-        jexec -l "${_jail}" "${bastille_templatepre}"
+        jexec -l "${_jail}" /bin/sh "${bastille_templatepre}"
     fi
 
     ## config

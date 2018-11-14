@@ -57,5 +57,5 @@ fi
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     jexec -l ${_jail} /usr/sbin/service $2
-    echo -e "${COLOR_RESET}"
+    echo
 done
