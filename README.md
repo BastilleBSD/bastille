@@ -4,6 +4,21 @@ Bastille is a jail automation framework that allows you to quickly and
 easily create and manage FreeBSD jail.
 
 
+Installation
+------------
+Bastille is not (yet) in the official ports tree, but I have built and verified
+binary packages.
+
+To install using one of the BETA binary packages, copy the URL for the latest release here (TXZ file):
+https://github.com/bastillebsd/bastille/releases
+
+Then, install via `pkg` using:
+
+```shell
+pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20181114/bastille-0.3.20181114.txz
+```
+
+
 Basic Usage
 -----------
 ```
