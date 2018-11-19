@@ -9,10 +9,11 @@ Installation
 Bastille is not (yet) in the official ports tree, but I have built and verified
 binary packages.
 
-To install using one of the BETA binary packages, copy the URL for the latest release here (TXZ file):
-https://github.com/bastillebsd/bastille/releases
+To install using one of the BETA binary packages, copy the URL for the latest
+release here (TXZ file): https://github.com/bastillebsd/bastille/releases
 
-Then, install via `pkg` using:
+Then, install via `pkg`. 
+Example:
 
 ```shell
 pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20181114/bastille-0.3.20181114.txz
@@ -853,8 +854,25 @@ rdr pass inet proto tcp from any to any port 8081 -> 10.7.6.5 port 8080
 rdr pass inet proto tcp from any to any port 8181 -> 10.7.6.5 port 443
 ```
 
-Tip: Initially I spent time worrying about what IP addresses to assign. In the
+Tip #3:
+-------
+Don't worry too much about IP assignments.
+Initially I spent time worrying about what IP addresses to assign. In the
 end I've come to the conclusion that it _really_ doesn't matter. Pick *any*
 private address and be done with it. These are all isolated networks. In the
 end, what matters is you can map host:port to jail:port reliably, and we
 can.
+
+
+Community Support
+=================
+We would love to hear your feedback on Bastille! Please join us on the
+[BastilleBSD Chat Server](https://chat.bastillebsd.org) and let us know what
+you think. Registration is currently open pending email verification. 
+
+Be mindful of the [Bastille Code of
+Conduct](https://github.com/BastilleBSD/bastille/blob/master/CODE-OF-CONDUCT.md)
+when participating in the chat rooms.
+
+If you've found a bug in Bastille, please submit it to the [Bastille Issue
+Tracker](https://github.com/bastillebsd/bastille/issues/new).
