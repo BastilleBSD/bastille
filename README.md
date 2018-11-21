@@ -22,7 +22,7 @@ pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20181114/b
 
 Basic Usage
 -----------
-```
+```shell
 ishmael ~ # bastille -h
 Usage:
   bastille command [ALL|glob] [args]
@@ -68,7 +68,7 @@ the firewall, permitting and denying traffic as needed.
 First, create the loopback interface:
 
 ```shell
-ishmael ~ # sysrc cloned_interfaces="lo1"
+ishmael ~ # sysrc cloned_interfaces+=lo1
 ishmael ~ # service netif cloneup
 ```
 
@@ -489,7 +489,9 @@ work as expected. This table outlines those requirements:
 | PRE/CMD | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh  |
 | CONFIG  | path             | etc root usr                         |
 | PKG     | port/pkg name(s) | vim-console zsh git-lite tree htop   |
-| SYSRC   | sysrc command(s) | nginx_enable="YES" nginx_flags="..." |
+| SYSRC   | sysrc command(s) | nginx_enable=YES                     |
+
+Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 
 In addition to supporting template hooks, Bastille supports overlaying files
 into the jail. This is done by placing the files in their full path, using the
