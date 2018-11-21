@@ -126,8 +126,10 @@ create_jail() {
     if [ "${RELEASE}" == "11.2-RELEASE" ]; then cp -a "${bastille_releasesdir}/${RELEASE}/usr/tests" "${bastille_jail_path}"; fi
 
     ## rc.conf.local & resolv.conf
+    ## cron_flags="-J 60" ## cedwards 20181118
     if [ ! -f "${bastille_jail_rc_conf}" ]; then
         echo -e "syslogd_flags=\"-ss\"\nsendmail_enable=\"NONE\"" > ${bastille_jail_rc_conf}
+	echo -e "cron_flags=\"-J 60\"" >> ${bastille_jail_rc_conf}
     fi
 
     if [ ! -f "${bastille_jail_resolv_conf}" ]; then

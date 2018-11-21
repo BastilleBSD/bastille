@@ -63,8 +63,7 @@ for _jail in ${JAILS}; do
     ## pre
     if [ -s "${bastille_template}/PRE" ]; then
         echo -e "${COLOR_GREEN}Executing PRE-command(s).${COLOR_RESET}"
-        bastille_templatepre=$(cat "${bastille_template}/PRE")
-        jexec -l "${_jail}" /bin/sh "${bastille_templatepre}"
+        jexec -l ${_jail} /bin/sh < "${bastille_template}/PRE"
     fi
 
     ## config
@@ -80,12 +79,14 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template}/FSTAB" ]; then
         bastille_templatefstab=$(cat "${bastille_template}/FSTAB")
         echo -e "${COLOR_GREEN}Updating fstab.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}NOT YET IMPLEMENTED.${COLOR_RESET}"
     fi
 
     ## pf
     if [ -s "${bastille_template}/PF" ]; then
         bastille_templatepf=$(cat "${bastille_template}/PF")
         echo -e "${COLOR_GREEN}Generating PF profile.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}NOT YET IMPLEMENTED.${COLOR_RESET}"
     fi
 
     ## pkg (bootstrap + pkg)
@@ -94,23 +95,23 @@ for _jail in ${JAILS}; do
         echo -e "${COLOR_GREEN}Installing packages.${COLOR_RESET}"
         jexec -l ${_jail} env ASSUME_ALWAYS_YES="YES" /usr/sbin/pkg bootstrap
         jexec -l ${_jail} env ASSUME_ALWAYS_YES="YES" /usr/sbin/pkg audit -F
-        jexec -l ${_jail} env ASSUME_ALWAYS_YES="YES" /usr/sbin/pkg install -y ${bastille_templatepkg}
+        jexec -l ${_jail} env ASSUME_ALWAYS_YES="YES" /usr/sbin/pkg install ${bastille_templatepkg}
     fi
 
     ## sysrc
     if [ -s "${bastille_template}/SYSRC" ]; then
-        bastille_templatesys=$(cat "${bastille_template}/SYSRC")
         echo -e "${COLOR_GREEN}Updating services.${COLOR_RESET}"
-        jexec -l ${_jail} /usr/sbin/sysrc ${bastille_templatesys}
+        IFS=''
+        while read _sysrc; do
+            jexec -l ${_jail} /usr/sbin/sysrc "${_sysrc}"
+        done < "${bastille_template}/SYSRC"
     fi
 
     ## cmd
     if [ -s "${bastille_template}/CMD" ]; then
-        bastille_templatecmd=$(cat "${bastille_template}/CMD")
         echo -e "${COLOR_GREEN}Executing final command(s).${COLOR_RESET}"
-        jexec -l ${_jail} ${bastille_templatecmd}
+        jexec -l ${_jail} /bin/sh < "${bastille_template}/CMD"
     fi
     echo -e "${COLOR_GREEN}Template Complete.${COLOR_RESET}"
-    echo
     echo
 done

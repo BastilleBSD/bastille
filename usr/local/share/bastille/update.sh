@@ -49,7 +49,7 @@ fi
 
 RELEASE=$1
 
-echo -e "${COLOR_RED}Targeting specified release.${COLOR_RESET}"
+echo -e "${COLOR_GREEN}Targeting specified release.${COLOR_RESET}"
 echo -e "${RELEASE}"
 echo
 if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
