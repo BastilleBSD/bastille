@@ -28,14 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SAVED_TERM=$TERM
-
 . /usr/local/share/bastille/colors.pre.sh
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.3.20181114"
-
+BASTILLE_VERSION="0.3.20181120"
 
 usage() {
     cat << EOF
@@ -102,7 +99,6 @@ bootstrap|update|upgrade)
 	usage
 	;;
 esac
-
 
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 
