@@ -48,17 +48,15 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
 fi
 
 if [ "$1" = 'ALL' ]; then
-    JAILS=$(jls -N name)
+    JAILS=$(jls name)
 fi
 if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls -N name | grep "$1")
+    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
 fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
+    pfctl -f /etc/pf.conf
     echo
 done
-
-## HUP the firewall
-pfctl -f /etc/pf.conf

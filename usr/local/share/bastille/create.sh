@@ -37,7 +37,7 @@ usage() {
 }
 
 running_jail() {
-    jls -N name | grep ${NAME}
+    jls name | grep -E "(^|\b)${NAME}($|\b)"
 }
 
 validate_ip() {
@@ -94,7 +94,6 @@ create_jail() {
 
     ## using relative paths here
     ## MAKE SURE WE'RE IN THE RIGHT PLACE
-    ## ro
     cd "${bastille_jail_path}"
     echo
     echo -e "${COLOR_GREEN}NAME: ${NAME}.${COLOR_RESET}"
@@ -125,8 +124,11 @@ create_jail() {
     cp -a "${bastille_releasesdir}/${RELEASE}/usr/obj" "${bastille_jail_path}"
     if [ "${RELEASE}" == "11.2-RELEASE" ]; then cp -a "${bastille_releasesdir}/${RELEASE}/usr/tests" "${bastille_jail_path}"; fi
 
-    ## rc.conf.local & resolv.conf
-    ## cron_flags="-J 60" ## cedwards 20181118
+    ## rc.conf.local
+    ##  + syslogd_flags="-ss"
+    ##  + sendmail_none="NONE"
+    ##  + cron_flags="-J 60" ## cedwards 20181118
+    ## resolv.conf
     if [ ! -f "${bastille_jail_rc_conf}" ]; then
         echo -e "syslogd_flags=\"-ss\"\nsendmail_enable=\"NONE\"" > ${bastille_jail_rc_conf}
 	echo -e "cron_flags=\"-J 60\"" >> ${bastille_jail_rc_conf}
@@ -157,11 +159,50 @@ IP="$3"
 
 ## verify release
 case "${RELEASE}" in
+10.1-RELEASE)
+    RELEASE="10.1-RELEASE"
+	;;
+10.2-RELEASE)
+    RELEASE="10.2-RELEASE"
+	;;
+10.3-RELEASE)
+    RELEASE="10.3-RELEASE"
+	;;
 10.4-RELEASE)
     RELEASE="10.4-RELEASE"
     ;;
+11.0-RELEASE)
+    RELEASE="11.0-RELEASE"
+    ;;
+11.1-RELEASE)
+    RELEASE="11.1-RELEASE"
+    ;;
 11.2-RELEASE)
     RELEASE="11.2-RELEASE"
+    ;;
+12.0-RELEASE)
+    RELEASE="12.0-RELEASE"
+    ;;
+12.0-BETA1)
+    RELEASE="12.0-BETA1"
+    ;;
+12.0-BETA2)
+    RELEASE="12.0-BETA2"
+    ;;
+12.0-BETA3)
+    RELEASE="12.0-BETA3"
+    ;;
+12.0-BETA4)
+    RELEASE="12.0-BETA4"
+    ;;
+12.0-RC1)
+    RELEASE="12.0-RC1"
+    ;;
+12.0-RC2)
+    RELEASE="12.0-RC2"
+    ;;
+12.0-RC3)
+    RELEASE="12.0-RC3"
     ;;
 *)
     echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"
@@ -170,14 +211,15 @@ case "${RELEASE}" in
 esac
 
 ## check for name/root/.bastille
-if [ -d "/usr/local/bastille/jails/${NAME}/root/.bastille" ]; then
+if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
     echo -e "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
     exit 1
 fi
 
 ## check if a running jail matches name
 if running_jail ${NAME}; then
-    echo -e "${COLOR_RED}Running jail matches name.${COLOR_RESET}"
+    echo -e "${COLOR_RED}A running jail matches name.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Jails must be stopped before they are destroyed.${COLOR_RESET}"
     exit 1
 fi
 

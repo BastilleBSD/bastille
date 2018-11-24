@@ -50,9 +50,6 @@ fi
 RELEASE=$1
 NEWRELEASE=$2
 
-echo -e "${COLOR_RED}Targeting specified release.${COLOR_RESET}"
-echo -e "${RELEASE} => ${NEWRELEASE}"
-echo
 if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
     freebsd-update -b "${bastille_releasesdir}/${RELEASE}" -r ${NEWRELEASE} upgrade
 else

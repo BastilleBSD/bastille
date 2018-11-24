@@ -47,11 +47,11 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
 fi
 
 if [ "$1" = 'ALL' ]; then
-    JAILS=$(jls -N name)
+    JAILS=$(jls name)
 fi
 
 if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls -N name | grep "$1")
+    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
 fi
 
 for _jail in ${JAILS}; do
@@ -59,5 +59,3 @@ for _jail in ${JAILS}; do
     jexec -l ${_jail} /usr/bin/top
     echo -e "${COLOR_RESET}"
 done
-
-TERM=${SAVED_TERM}

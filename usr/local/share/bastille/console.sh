@@ -42,15 +42,14 @@ help|-h|--help)
     ;;
 esac
 
-
 if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 if [ "$1" = 'ALL' ]; then
-    JAILS=$(jls -N name)
+    JAILS=$(jls name)
 fi
 if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls -N name | grep "$1")
+    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
 fi
 
 for _jail in ${JAILS}; do

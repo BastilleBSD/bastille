@@ -48,22 +48,19 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
 fi
 
 if [ "$1" = 'ALL' ]; then
-    JAILS=$(find ${bastille_jailsdir} -d 1 | awk -F / '{ print $6 }')
+    JAILS=$(/usr/local/bin/bastille list jails)
 fi
 if [ "$1" != 'ALL' ]; then
-    JAILS=$(find ${bastille_jailsdir} -d 1 | awk -F / '{ print $6 }' | grep $1)
-fi
-
-if [ $(jls -N name | ${NAME}) ]; then
-    echo -e "${COLOR_RED}${NAME} already running.${COLOR_RESET}"
-    exit 1
+    JAILS=$(/usr/local/bin/bastille list jails | grep "$1")
 fi
 
 for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
+    if [ $(jls name | grep ${_jail}) ]; then
+        echo -e "${COLOR_RED}[${_jail}]: Already started.${COLOR_RESET}"
+    elif [ ! $(jls name | grep ${_jail}) ]; then
+        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
+        pfctl -f /etc/pf.conf
+    fi
     echo
 done
-
-## HUP the firewall
-pfctl -f /etc/pf.conf
