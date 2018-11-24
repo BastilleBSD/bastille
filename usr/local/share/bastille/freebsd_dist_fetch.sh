@@ -1,6 +1,8 @@
 #!/bin/sh
 # https://pastebin.com/T6eThbKu
 
+. /usr/local/etc/bastille/bastille.conf
+
 DEVICE_SELF_SCAN_ALL=NO
 [ "$_SCRIPT_SUBR" ] || . /usr/share/bsdconfig/script.subr
 usage(){ echo "Usage: ${0##*/} [-r releaseName] [dists ...]" >&2; exit 1; }
@@ -18,7 +20,7 @@ mediaSetFTP
 mediaOpen
 set -e
 #debug=1
-REL_DIST=/usr/local/bastille/cache/$releaseName
+REL_DIST=${bastille_cachedir}/$releaseName
 download() # $src to $dest
 {
 	size=$( f_device_get device_media "$1" $PROBE_SIZE )

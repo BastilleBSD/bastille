@@ -49,9 +49,6 @@ fi
 
 RELEASE=$1
 
-echo -e "${COLOR_RED}Targeting specified release.${COLOR_RESET}"
-echo -e "${RELEASE}"
-echo
 if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
     freebsd-update -b "${bastille_releasesdir}/${RELEASE}" IDS
 else

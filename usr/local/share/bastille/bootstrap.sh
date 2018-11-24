@@ -46,36 +46,42 @@ esac
 RELEASE=$1
 
 bootstrap() {
-    ### create $bastille_base/release/$release directory
-    ### fetch $release/base.txz -o $bastille_base/cache/$release/base.txz
-    ### extract $release/base.txz to $bastille_base/release/$release
+    ## ensure required directories are in place
     if [ ! -d ${bastille_jailsdir} ]; then
         mkdir -p ${bastille_jailsdir}
     fi
     if [ ! -d ${bastille_logsdir} ]; then
         mkdir -p ${bastille_logsdir}
     fi
-    if [ ! -d ${bastille_cachedir}/${RELEASE} ]; then
-        mkdir -p ${bastille_cachedir}/${RELEASE}
+    if [ ! -d ${bastille_templatesdir} ]; then
+        mkdir -p ${bastille_templatesdir}
+    fi
+    if [ ! -d "${bastille_cachedir}/${RELEASE}" ]; then
+        mkdir -p "${bastille_cachedir}/${RELEASE}"
     fi
 
-    if [ ! -d ${bastille_releasesdir}/${RELEASE} ]; then
-        mkdir -p ${bastille_releasesdir}/${RELEASE}
+    ### create $bastille_base/release/$release directory
+    ### fetch $release/base.txz -o $bastille_base/cache/$release/base.txz
+    ### fetch $release/lib32.txz -o $bastille_base/cache/$release/lib32.txz
+    ### extract $release/base.txz to $bastille_base/release/$release
+    ### extract $release/lib32.txz to $bastille_base/release/$release
+    if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+        mkdir -p "${bastille_releasesdir}/${RELEASE}"
         sh ${bastille_sharedir}/freebsd_dist_fetch.sh -r ${RELEASE} base lib32
 
         echo
         echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} base.txz.${COLOR_RESET}"
-        /usr/bin/tar -C ${bastille_releasesdir}/${RELEASE} -xf ${bastille_cachedir}/${RELEASE}/base.txz
+        /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/base.txz"
 
         echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} lib32.txz.${COLOR_RESET}"
-        /usr/bin/tar -C ${bastille_releasesdir}/${RELEASE} -xf ${bastille_cachedir}/${RELEASE}/lib32.txz
+        /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/lib32.txz"
 
-	    echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
-	    echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
-	    echo
+        echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
+        echo
     else
         echo -e "${COLOR_RED}Bootstrap appears complete.${COLOR_RESET}"
-	exit 1
+        exit 1
     fi
 }
 
@@ -83,29 +89,32 @@ bootstrap() {
 case "${RELEASE}" in
 10.1-RELEASE)
     bootstrap
-    echo -e "${COLOR_RED}This release is End of Life. No security updates.${COLOR_RESET}"
+    echo -e "${COLOR_RED}WARNING: FreeBSD 10.1-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
 	;;
 10.2-RELEASE)
     bootstrap
-    echo -e "${COLOR_RED}This release is End of Life. No security updates.${COLOR_RESET}"
+    echo -e "${COLOR_RED}WARNING: FreeBSD 10.2-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
 	;;
 10.3-RELEASE)
     bootstrap
-    echo -e "${COLOR_RED}This release is End of Life. No security updates.${COLOR_RESET}"
+    echo -e "${COLOR_RED}WARNING: FreeBSD 10.3-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
 	;;
 10.4-RELEASE)
     bootstrap
-    echo -e "${COLOR_RED}This release is End of Life. No security updates.${COLOR_RESET}"
+    echo -e "${COLOR_RED}WARNING: FreeBSD 10.4-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
 	;;
 11.0-RELEASE)
     bootstrap
-    echo -e "${COLOR_RED}This release is End of Life. No security updates.${COLOR_RESET}"
+    echo -e "${COLOR_RED}WARNING: FreeBSD 11.0-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
 	;;
 11.1-RELEASE)
     bootstrap
-    echo -e "${COLOR_RED}This release is End of Life. No security updates.${COLOR_RESET}"
+    echo -e "${COLOR_RED}WARNING: FreeBSD 11.1-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
 	;;
 11.2-RELEASE)
+    bootstrap
+	;;
+12.0-RELEASE)
     bootstrap
 	;;
 12.0-BETA1)
@@ -124,8 +133,19 @@ case "${RELEASE}" in
     bootstrap
     echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
 	;;
+12.0-RC1)
+    bootstrap
+    echo -e "${COLOR_RED}RC releases are completely untested.${COLOR_RESET}"
+	;;
+12.0-RC2)
+    bootstrap
+    echo -e "${COLOR_RED}RC releases are completely untested.${COLOR_RESET}"
+	;;
+12.0-RC3)
+    bootstrap
+    echo -e "${COLOR_RED}RC releases are completely untested.${COLOR_RESET}"
+	;;
 *)
-    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
     usage
     ;;
 esac

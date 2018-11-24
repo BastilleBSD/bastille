@@ -2,8 +2,6 @@
 
 # $FreeBSD: $
 #
-# Bastille startup script
-#
 # PROVIDE: bastille
 # REQUIRE: LOGIN
 # KEYWORD: shutdown
@@ -19,47 +17,29 @@
 . /etc/rc.subr
 
 name=bastille
-rcvar=bastille_enable
+rcvar=${name}_enable
 
-load_rc_config ${name}
+command="/usr/local/bin/${name}"
+
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
 
 : ${bastille_enable:=NO}
-: ${bastille_list:=""}
-
-start_cmd=bastille_start
-stop_cmd=bastille_stop
-
-start_command="%%PREFIX%%/bin/bastille start"
-stop_command="%%PREFIX%%/bin/bastille stop"
+: ${bastille_list:="ALL"}
 
 bastille_start()
 {
-    if [ ! -n "${bastille_list}" ]; then
-        echo "${bastille_list} is undefined"
-        return 1
-    fi
-
-    local _jail
-
     for _jail in ${bastille_list}; do
-        echo "Starting Bastille Jail: ${_jail}"
-        ${start_command} ${_jail}
+        ${command} start ${_jail}
     done
 }
 
 bastille_stop()
 {
-    if [ ! -n "${bastille_list}" ]; then
-        echo "${bastille_list} is undefined"
-        return 1
-    fi
-
-    local _jail
-
     for _jail in ${bastille_list}; do
-        echo "Stopping Bastille Jail: ${_jail}"
-        ${stop_command} ${_jail}
+        ${command} stop ${_jail}
     done
 }
 
-run_rc_command "$1"
+load_rc_config ${name}
+run_rc_command "$@"

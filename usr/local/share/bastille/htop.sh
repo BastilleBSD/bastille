@@ -48,21 +48,19 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
 fi
 
 if [ "$1" = 'ALL' ]; then
-    JAILS=$(jls -N name)
+    JAILS=$(jls name)
 fi
 if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls -N name | grep "$1")
+    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
 fi
 
 for _jail in ${JAILS}; do
-    if [ ! -x "${bastille_jailsdir}/${_jail}/root/usr/local/bin/htop" ]; then
+    bastille_jail_path=$(jls -j "${_jail}" path)
+    if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
         echo -e "${COLOR_RED}htop not found on ${_jail}.${COLOR_RESET}"
-    fi
-    if [ -x "${bastille_jailsdir}/${_jail}/root/usr/local/bin/htop" ]; then
+    elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jexec -l ${_jail} /usr/local/bin/htop
     fi
     echo -e "${COLOR_RESET}"
 done
-
-TERM=${SAVED_TERM}

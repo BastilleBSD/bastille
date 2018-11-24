@@ -47,15 +47,15 @@ if [ $# -gt 3 ] || [ $# -lt 3 ]; then
     usage
 fi
 
-if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls -N name | grep "$1")
-fi
 if [ "$1" = 'ALL' ]; then
-    JAILS=$(jls -N name)
+    JAILS=$(jls name)
+fi
+if [ "$1" != 'ALL' ]; then
+    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
 fi
 
 for _jail in ${JAILS}; do
-    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
+    bastille_jail_path="$(jls -j "${_jail}" path)"
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     cp -a "$2" "${bastille_jail_path}/$3"
     echo
