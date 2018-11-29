@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille bootstrap release.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille bootstrap [release|template].${COLOR_RESET}"
     exit 1
 }
 
@@ -43,9 +43,7 @@ help|-h|--help)
     ;;
 esac
 
-RELEASE=$1
-
-bootstrap() {
+bootstrap_release() {
     ## ensure required directories are in place
     if [ ! -d ${bastille_jailsdir} ]; then
         mkdir -p ${bastille_jailsdir}
@@ -85,66 +83,117 @@ bootstrap() {
     fi
 }
 
+bootstrap_template() {
+    ## define basic variables
+    _url=${BASTILLE_TEMPLATE_URL}
+    _user=${BASTILLE_TEMPLATE_USER}
+    _repo=${BASTILLE_TEMPLATE_REPO}
+    _template=${bastille_templatesdir}/${_user}/${_repo}
+
+    ## verify essential directories are in place
+    if [ ! -d ${bastille_jailsdir} ]; then
+        mkdir -p ${bastille_jailsdir}
+    fi
+    if [ ! -d ${bastille_logsdir} ]; then
+        mkdir -p ${bastille_logsdir}
+    fi
+    if [ ! -d ${bastille_templatesdir} ]; then
+        mkdir -p ${bastille_templatesdir}
+    fi
+    if [ ! -d ${_template} ]; then
+        mkdir -p ${_template}
+    fi
+
+    ## support for non-git
+    if [ ! -x /usr/local/bin/git ]; then
+	echo -e "${COLOR_RED}We're gonna have to use fetch. Strap in.${COLOR_RESET}"
+	echo -e "${COLOR_RED}Not yet implemented...${COLOR_RESET}"
+    fi
+
+    ## support for git
+    if [ -x /usr/local/bin/git ]; then
+        if [ ! -d "${_template}/.git" ]; then
+            /usr/local/bin/git clone "${_url}" "${_template}" ||\
+                echo -e "${COLOR_RED}Clone unsuccessful.${COLOR_RESET}"
+                echo
+        elif [ -d "${_template}/.git" ]; then
+            cd ${_template} &&
+            /usr/local/bin/git pull ||\
+                echo -e "${COLOR_RED}Template update unsuccessful.${COLOR_RESET}"
+                echo
+        fi
+    fi
+
+    ## template validation
+    _hook_validate=0
+    for _hook in PRE FSTAB PF PKG SYSRC CMD; do
+        if [ -s ${_template}/${_hook} ]; then
+            _hook_validate=$((_hook_validate+1))
+            echo -e "${COLOR_GREEN}Detected ${_hook} hook.${COLOR_RESET}"
+            echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
+            cat "${_template}/${_hook}"
+            echo
+        fi
+    done
+    if [ -s ${_template}/CONFIG ]; then
+        _hook_validate=$((_hook_validate+1))
+        echo -e "${COLOR_GREEN}Detected CONFIG hook.${COLOR_RESET}"
+        while read _dir; do
+            echo -e "${COLOR_GREEN}[${_dir}]:${COLOR_RESET}"
+            tree -a ${_template}/${_dir}
+        done < ${_template}/CONFIG
+        echo
+    fi
+
+    ## remove bad templates
+    if [ ${_hook_validate} -lt 1 ]; then
+        echo -e "${COLOR_GREEN}Template validation failed.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}Deleting template.${COLOR_RESET}"
+        rm -rf ${_template}
+	exit 1
+    fi
+
+    ## if validated; ready to use 
+    if [ ${_hook_validate} -gt 0 ]; then
+        echo -e "${COLOR_GREEN}Template ready to use.${COLOR_RESET}"
+        echo
+    fi
+}
+
+#Usage: bastille bootstrap [release|template].${COLOR_RESET}"
+
 # Filter sane release names
-case "${RELEASE}" in
-10.1-RELEASE)
-    bootstrap
+case "${1}" in
+10.1-RELEASE|10.2-RELEASE|10.3-RELEASE|10.4-RELEASE)
+    bootstrap_release
     echo -e "${COLOR_RED}WARNING: FreeBSD 10.1-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-	;;
-10.2-RELEASE)
-    bootstrap
-    echo -e "${COLOR_RED}WARNING: FreeBSD 10.2-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-	;;
-10.3-RELEASE)
-    bootstrap
-    echo -e "${COLOR_RED}WARNING: FreeBSD 10.3-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-	;;
-10.4-RELEASE)
-    bootstrap
-    echo -e "${COLOR_RED}WARNING: FreeBSD 10.4-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-	;;
-11.0-RELEASE)
-    bootstrap
+    ;;
+11.0-RELEASE|11.1-RELEASE)
+    bootstrap_release
     echo -e "${COLOR_RED}WARNING: FreeBSD 11.0-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-	;;
-11.1-RELEASE)
-    bootstrap
-    echo -e "${COLOR_RED}WARNING: FreeBSD 11.1-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-	;;
+    ;;
 11.2-RELEASE)
-    bootstrap
-	;;
+    bootstrap_release
+    ;;
 12.0-RELEASE)
-    bootstrap
-	;;
-12.0-BETA1)
-    bootstrap
+    bootstrap_release
+    ;;
+12.0-BETA1|12.0-BETA2|12.0-BETA3|12.0-BETA4)
+    bootstrap_release
     echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
-	;;
-12.0-BETA2)
-    bootstrap
-    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
-	;;
-12.0-BETA3)
-    bootstrap
-    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
-	;;
-12.0-BETA4)
-    bootstrap
-    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
-	;;
-12.0-RC1)
-    bootstrap
+    ;;
+12.0-RC1|12.0-RC2|12.0-RC3)
+    bootstrap_release
     echo -e "${COLOR_RED}RC releases are completely untested.${COLOR_RESET}"
-	;;
-12.0-RC2)
-    bootstrap
-    echo -e "${COLOR_RED}RC releases are completely untested.${COLOR_RESET}"
-	;;
-12.0-RC3)
-    bootstrap
-    echo -e "${COLOR_RED}RC releases are completely untested.${COLOR_RESET}"
-	;;
+    ;;
+http?://github.com/*/*)
+    BASTILLE_TEMPLATE_URL=${1}
+    BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
+    BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
+    echo -e "${COLOR_GREEN}Template: ${1}${COLOR_RESET}"
+    echo
+    bootstrap_template
+    ;;
 *)
     usage
     ;;

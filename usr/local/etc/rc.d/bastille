@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $FreeBSD: $
+# Bastille jail startup script
 #
 # PROVIDE: bastille
 # REQUIRE: LOGIN
@@ -10,7 +10,7 @@
 #
 # bastille_enable (bool):          Set to NO by default.
 #               Set it to YES to enable bastille.
-# bastille_list (string):        Set to "" by default.
+# bastille_list (string):        Set to "ALL" by default.
 #               Space separated list of jails to start.
 #
 
@@ -19,27 +19,42 @@
 name=bastille
 rcvar=${name}_enable
 
-command="/usr/local/bin/${name}"
-
-start_cmd="${name}_start"
-stop_cmd="${name}_stop"
+load_rc_config ${name}
 
 : ${bastille_enable:=NO}
 : ${bastille_list:="ALL"}
 
+start_command="/usr/local/bin/bastille start"
+stop_command="/usr/local/bin/bastille stop"
+
 bastille_start()
 {
+    if [ ! -n "${bastille_list}" ]; then
+        echo "${bastille_list} is undefined"
+        return 1
+    fi
+
+    local _jail
+
     for _jail in ${bastille_list}; do
-        ${command} start ${_jail}
+        echo "Starting Bastille Jail: ${_jail}"
+        ${start_command} ${_jail}
     done
 }
 
 bastille_stop()
 {
+    if [ ! -n "${bastille_list}" ]; then
+        echo "${bastille_list} is undefined"
+        return 1
+    fi
+
+    local _jail
+
     for _jail in ${bastille_list}; do
-        ${command} stop ${_jail}
+        echo "Stopping Bastille Jail: ${_jail}"
+        ${stop_command} ${_jail}
     done
 }
 
-load_rc_config ${name}
-run_rc_command "$@"
+run_rc_command "$1"
