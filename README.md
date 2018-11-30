@@ -16,7 +16,7 @@ Then, install via `pkg`.
 Example:
 
 ```shell
-pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20181124/bastille-0.3.20181124.txz
+pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20181130/bastille-0.3.20181130_2.txz
 ```
 
 BETA binary packages are signed. These can be verified with this pubkey:
