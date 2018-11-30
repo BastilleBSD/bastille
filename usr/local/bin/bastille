@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.3.20181128"
+BASTILLE_VERSION="0.3.20181130"
 
 usage() {
     cat << EOF

@@ -19,13 +19,13 @@
 name=bastille
 rcvar=${name}_enable
 
-load_rc_config ${name}
-
 : ${bastille_enable:=NO}
 : ${bastille_list:="ALL"}
 
-start_command="/usr/local/bin/bastille start"
-stop_command="/usr/local/bin/bastille stop"
+command=/usr/local/bin/${name}
+start_cmd="bastille_start"
+stop_cmd="bastille_stop"
+restart_cmd="bastille_stop && bastille_start"
 
 bastille_start()
 {
@@ -38,7 +38,7 @@ bastille_start()
 
     for _jail in ${bastille_list}; do
         echo "Starting Bastille Jail: ${_jail}"
-        ${start_command} ${_jail}
+        ${command} start ${_jail}
     done
 }
 
@@ -53,8 +53,9 @@ bastille_stop()
 
     for _jail in ${bastille_list}; do
         echo "Stopping Bastille Jail: ${_jail}"
-        ${stop_command} ${_jail}
+        ${command} stop ${_jail}
     done
 }
 
+load_rc_config ${name}
 run_rc_command "$1"
