@@ -57,6 +57,7 @@ fi
 ## global variables
 TEMPLATE=$2
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
+bastille_template_TARGET=${bastille_template}/TARGET
 bastille_template_INCLUDE=${bastille_template}/INCLUDE
 bastille_template_PRE=${bastille_template}/PRE
 bastille_template_CONFIG=${bastille_template}/CONFIG
@@ -71,6 +72,20 @@ for _jail in ${JAILS}; do
     bastille_jail_path=$(jls -j "${_jail}" path)
 
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+
+    ## TARGET
+    if [ -s "${bastille_template_TARGET}" ]; then
+        if [ $(grep -E "(^|\b)\!${_jail}($|\b)" ${bastille_template_TARGET}) ]; then
+            echo -e "${COLOR_GREEN}TARGET: !${_jail}.${COLOR_RESET}"
+	    echo
+            continue
+        fi
+	if [ ! $(grep -E "(^|\b)(${_jail}|ALL)($|\b)" ${bastille_template_TARGET}) ]; then
+            echo -e "${COLOR_GREEN}TARGET: ?${_jail}.${COLOR_RESET}"
+	    echo
+            continue
+        fi
+    fi
 
     ## INCLUDE
     if [ -s "${bastille_template_INCLUDE}" ]; then
@@ -113,8 +128,8 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template_PKG}" ]; then
         echo -e "${COLOR_GREEN}Installing packages.${COLOR_RESET}"
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg bootstrap
-        jexec -l "${_jail}" /usr/sbin/pkg audit -F
-        jexec -l "${_jail}" /usr/sbin/pkg install $(cat ${bastille_template_PKG})
+        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg audit -F
+        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg install $(cat ${bastille_template_PKG})
     fi
 
     ## sysrc
