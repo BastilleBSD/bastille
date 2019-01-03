@@ -165,26 +165,22 @@ bootstrap_template() {
 # Filter sane release names
 case "${1}" in
 10.1-RELEASE|10.2-RELEASE|10.3-RELEASE|10.4-RELEASE)
+    RELEASE="${1}"
     bootstrap_release
     echo -e "${COLOR_RED}WARNING: FreeBSD 10.1-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
     ;;
 11.0-RELEASE|11.1-RELEASE)
+    RELEASE="${1}"
     bootstrap_release
     echo -e "${COLOR_RED}WARNING: FreeBSD 11.0-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
     ;;
 11.2-RELEASE)
+    RELEASE="${1}"
     bootstrap_release
     ;;
 12.0-RELEASE)
+    RELEASE="${1}"
     bootstrap_release
-    ;;
-12.0-BETA1|12.0-BETA2|12.0-BETA3|12.0-BETA4)
-    bootstrap_release
-    echo -e "${COLOR_RED}BETA releases are completely untested.${COLOR_RESET}"
-    ;;
-12.0-RC1|12.0-RC2|12.0-RC3)
-    bootstrap_release
-    echo -e "${COLOR_RED}RC releases are completely untested.${COLOR_RESET}"
     ;;
 http?://github.com/*/*)
     BASTILLE_TEMPLATE_URL=${1}
