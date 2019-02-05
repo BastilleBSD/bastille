@@ -58,16 +58,15 @@ bootstrap_release() {
         mkdir -p "${bastille_cachedir}/${RELEASE}"
     fi
 
-    ### create $bastille_base/release/$release directory
-    ### fetch $release/base.txz -o $bastille_base/cache/$release/base.txz
-    ### extract $release/base.txz to $bastille_base/release/$release
     if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
         mkdir -p "${bastille_releasesdir}/${RELEASE}"
         sh ${bastille_sharedir}/freebsd_dist_fetch.sh -r ${RELEASE} ${bastille_bootstrap_archives}
 
         echo
-        echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} base.txz.${COLOR_RESET}"
-        /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/base.txz"
+        for _archive in ${bastille_bootstrap_archives}; do
+            echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
+            /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
+        done
 
         echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
         echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
