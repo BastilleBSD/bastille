@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# Copyright (c) 2018, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2019, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -60,19 +60,14 @@ bootstrap_release() {
 
     ### create $bastille_base/release/$release directory
     ### fetch $release/base.txz -o $bastille_base/cache/$release/base.txz
-    ### fetch $release/lib32.txz -o $bastille_base/cache/$release/lib32.txz
     ### extract $release/base.txz to $bastille_base/release/$release
-    ### extract $release/lib32.txz to $bastille_base/release/$release
     if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
         mkdir -p "${bastille_releasesdir}/${RELEASE}"
-        sh ${bastille_sharedir}/freebsd_dist_fetch.sh -r ${RELEASE} base lib32
+        sh ${bastille_sharedir}/freebsd_dist_fetch.sh -r ${RELEASE} ${bastille_bootstrap_archives}
 
         echo
         echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} base.txz.${COLOR_RESET}"
         /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/base.txz"
-
-        echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} lib32.txz.${COLOR_RESET}"
-        /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/lib32.txz"
 
         echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
         echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"

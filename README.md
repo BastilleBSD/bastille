@@ -16,7 +16,7 @@ Then, install via `pkg`.
 Example:
 
 ```shell
-pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20181130/bastille-0.3.20181130_2.txz
+pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20190204/bastille-0.3.20190204.txz
 ```
 
 BETA binary packages are signed. These can be verified with this pubkey:
@@ -191,15 +191,15 @@ a private (rfc1918) IP address.
 - ip
 
 ```shell
-ishmael ~ # bastille create folsom 11.2-RELEASE 10.8.62.1
+ishmael ~ # bastille create folsom 12.0-RELEASE 10.8.62.1
 
-RELEASE: 11.2-RELEASE.
+RELEASE: 12.0-RELEASE.
 NAME: folsom.
 IP: 10.8.62.1.
 
 ```
 
-This command will create a 11.2-RELEASE jail assigning the 10.8.62.1 ip address
+This command will create a 12.0-RELEASE jail assigning the 10.8.62.1 ip address
 to the new system.
 
 I recommend using private (rfc1918) ip address ranges for your jails.
