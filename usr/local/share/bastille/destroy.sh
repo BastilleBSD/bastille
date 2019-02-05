@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# Copyright (c) 2018, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2019, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -55,8 +55,9 @@ destroy_jail() {
         echo -e "${COLOR_GREEN}Deleting Jail: ${NAME}.${COLOR_RESET}"
         chflags -R noschg ${bastille_jail_base}
         rm -rf ${bastille_jail_base}
-        echo -e "${COLOR_GREEN}Note: jail console logs not destroyed.${COLOR_RESET}"
-	echo -e "${COLOR_GREEN}${bastille_jail_log}${COLOR_RESET}"
+        mv ${bastille_jail_log} ${bastille_jail_log}-$(date +%F)
+        echo -e "${COLOR_GREEN}Note: jail console logs archived.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}${bastille_jail_log}-$(date +%F)${COLOR_RESET}"
         echo
     fi
 }

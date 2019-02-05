@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# Copyright (c) 2018, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2019, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,5 @@ fi
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
-    pfctl -f /etc/pf.conf
     echo
 done
