@@ -6,22 +6,29 @@ easily create and manage FreeBSD jail.
 
 Installation
 ------------
-Bastille is not (yet) in the official ports tree, but I have built and verified
-binary packages.
-
-To install using one of the BETA binary packages, copy the URL for the latest
-release here (TXZ file): https://github.com/bastillebsd/bastille/releases
-
-Then, install via `pkg`. 
-Example:
-
-```shell
-pkg add https://github.com/BastilleBSD/bastille/releases/download/0.3.20190204/bastille-0.3.20190204.txz
-```
-
-BETA binary packages are signed. These can be verified with this pubkey:
+Bastille is available in the official ports tree.
 
 ```
+pkg install bastille
+```
+
+Development builds are available on the `pkg.bastillebsd.org` package server.
+To subscribe to this repo, use the following two configuration additions.
+
+Note: The BastilleBSD pkg server will usually be ahead of FreeBSD latest.
+
+```
+## /usr/local/etc/pkg/repos/BastilleBSD.conf
+BastilleBSD: {
+  url: "https://pkg.bastillebsd.org/pkg/${ABI}",
+  signature_type: "pubkey",
+  pubkey: "/usr/local/etc/ssl/poudriere.pub",
+  enabled: yes
+}
+```
+
+```
+## /usr/local/etc/ssl/poudriere.pub
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq28OLDhJ12JmsKKcJpnn
 pCW3fFYBNI1BtdvTvFx57ZXvQ2qecBvnR9+XWi83hKS9ALTKZI6CLC2uTv1fIsZl
@@ -68,10 +75,7 @@ Use "bastille command -h|--help" for more information about a command.
 
 ## 0.3-beta
 This document outlines the basic usage of the Bastille jail management
-framework. This release, obviously, is beta quality. I make no guarantees of
-quality, and if it screws up your system... Sorry, bro. 
-
-With all that said, here's how to use this tool in its current beta state...
+framework. This release is still considered beta.
 
 
 ## Network Requirements
@@ -101,7 +105,7 @@ set block-policy drop
 scrub in on $ext_if all fragment reassemble
 
 set skip on lo
-nat on $ext_if from !($ext_if) -> ($ext_if:0)
+nat on $ext_if from lo1:network to any -> ($ext_if)
 
 ## rdr example
 ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.88.9.45
@@ -149,9 +153,9 @@ This step only needs to be done once in order to prepare the host.
 
 bastille bootstrap
 ------------------
-The first step is to "bootstrap" a release. Current supported release is
-11.2-RELEASE, but you can bootstrap anything in the ftp.FreeBSD.org RELEASES
-directory. 
+The first step is to "bootstrap" a release. Current supported releases are
+11.2-RELEASE and 12.0-RELEASE, but you can bootstrap anything in the
+ftp.FreeBSD.org RELEASES directory.
 
 Note: your mileage may vary with unsupported releases and releases newer than
 the host system likely will NOT work at all.
@@ -160,17 +164,17 @@ To `bootstrap` a release, run the bootstrap sub-command with the
 release version as the argument.
 
 ```shell
-ishmael ~ # bastille bootstrap 11.2-RELEASE
 ishmael ~ # bastille bootstrap 12.0-RELEASE
+ishmael ~ # bastille bootstrap 11.2-RELEASE
 ```
 
 This command will ensure the required directory structures are in place and
 download the requested release. For each requested release, `bootstrap` will
-download the base.txz and lib32.txz. These are both verified (sha256 via
-MANIFEST file) before they are extracted for use.
+download the base.txz. These are verified (sha256 via MANIFEST file) before
+they are extracted for use.
 
 Downloaded artifacts are stored in the `cache` directory. "bootstrapped"
-releases are stored in `releases/version`.
+releases are stored in `releases/$RELEASE`.
 
 The bootstrap subcommand is generally only used once to prepare the system. The
 only other use case for the bootstrap command is when a new FreeBSD version is
@@ -183,7 +187,7 @@ command.
 bastille create
 ---------------
 Bastille create uses any available bootstrapped release to create a lightweight
-jailized system. To create a jail simply provide a name, release and
+jailed system. To create a jail simply provide a name, release and
 a private (rfc1918) IP address.
 
 - name
@@ -196,7 +200,6 @@ ishmael ~ # bastille create folsom 12.0-RELEASE 10.8.62.1
 RELEASE: 12.0-RELEASE.
 NAME: folsom.
 IP: 10.8.62.1.
-
 ```
 
 This command will create a 12.0-RELEASE jail assigning the 10.8.62.1 ip address
@@ -373,11 +376,11 @@ ishmael ~ # bastille pkg ALL upgrade
 Targeting all jails.
 
 [bastion]:
-Updating iniquity.io repository catalogue...
+Updating pkg.bastillebsd.org repository catalogue...
 [bastion] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
 [bastion] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
 Processing entries: 100%
-iniquity.io repository update completed. 493 packages processed.
+pkg.bastillebsd.org repository update completed. 493 packages processed.
 All repositories are up to date.
 Checking for upgrades (1 candidates): 100%
 Processing candidates (1 candidates): 100%
@@ -385,11 +388,11 @@ Checking integrity... done (0 conflicting)
 Your packages are up to date.
 
 [unbound0]:
-Updating iniquity.io repository catalogue...
+Updating pkg.bastillebsd.org repository catalogue...
 [unbound0] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
 [unbound0] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
 Processing entries: 100%
-iniquity.io repository update completed. 493 packages processed.
+pkg.bastillebsd.org repository update completed. 493 packages processed.
 All repositories are up to date.
 Checking for upgrades (0 candidates): 100%
 Processing candidates (0 candidates): 100%
@@ -397,11 +400,11 @@ Checking integrity... done (0 conflicting)
 Your packages are up to date.
 
 [unbound1]:
-Updating iniquity.io repository catalogue...
+Updating pkg.bastillebsd.org repository catalogue...
 [unbound1] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
 [unbound1] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
 Processing entries: 100%
-iniquity.io repository update completed. 493 packages processed.
+pkg.bastillebsd.org repository update completed. 493 packages processed.
 All repositories are up to date.
 Checking for upgrades (0 candidates): 100%
 Processing candidates (0 candidates): 100%
@@ -409,11 +412,11 @@ Checking integrity... done (0 conflicting)
 Your packages are up to date.
 
 [squid]:
-Updating iniquity.io repository catalogue...
+Updating pkg.bastillebsd.org repository catalogue...
 [squid] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
 [squid] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
 Processing entries: 100%
-iniquity.io repository update completed. 493 packages processed.
+pkg.bastillebsd.org repository update completed. 493 packages processed.
 All repositories are up to date.
 Checking for upgrades (0 candidates): 100%
 Processing candidates (0 candidates): 100%
@@ -421,11 +424,11 @@ Checking integrity... done (0 conflicting)
 Your packages are up to date.
 
 [nginx]:
-Updating iniquity.io repository catalogue...
+Updating pkg.bastillebsd.org repository catalogue...
 [nginx] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
 [nginx] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
 Processing entries: 100%
-iniquity.io repository update completed. 493 packages processed.
+pkg.bastillebsd.org repository update completed. 493 packages processed.
 All repositories are up to date.
 Checking for upgrades (1 candidates): 100%
 Processing candidates (1 candidates): 100%
@@ -477,7 +480,7 @@ Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the jail automatically.
 
 Currently supported template hooks are: `PRE`, `CONFIG`, `PKG`, `SYSRC`, `CMD`.
-Planned template hooks include: `FSTAB`, `PF`
+Planned template hooks include: `FSTAB`, `PF`, `LOG`
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
 the template hooks. Simply create a new directory named after the template. eg;
@@ -498,12 +501,18 @@ echo "etc root usr" > /usr/local/bastille/templates/base/CONFIG
 Template hooks are executed in specific order and require specific syntax to
 work as expected. This table outlines those requirements:
 
-| HOOK    | format           | example                              |
-|---------|------------------|--------------------------------------|
-| PRE/CMD | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh  |
-| CONFIG  | path             | etc root usr                         |
-| PKG     | port/pkg name(s) | vim-console zsh git-lite tree htop   |
-| SYSRC   | sysrc command(s) | nginx_enable=YES                     |
+| SUPPORTED | format           | example                                                        |
+|-----------|------------------|----------------------------------------------------------------|
+| PRE/CMD   | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh                            |
+| CONFIG    | path             | etc root usr                                                   |
+| PKG       | port/pkg name(s) | vim-console zsh git-lite tree htop                             |
+| SYSRC     | sysrc command(s) | nginx_enable=YES                                               |
+
+| PLANNED | format           | example                                                        |
+|---------|------------------|----------------------------------------------------------------|
+| PF      | pf rdr entry     | rdr pass inet proto tcp from any to any port 80 -> 10.17.89.80 |
+| LOG     | path             | /var/log/nginx/access.log                                      |
+| FSTAB   | fstab syntax     | /path/on/host /path/in/jail nullfs ro 0 0                      |
 
 Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 
@@ -530,6 +539,7 @@ echo "etc usr" > /usr/local/bastille/templates/base/CONFIG
 The above example "etc usr" will include anything under "etc" and "usr" inside
 the template. You do not need to list individual files. Just include the
 top-level directory name.
+
 
 Applying Templates
 ------------------
@@ -622,6 +632,7 @@ root@folsom:~ #
 At this point you are logged in to the jail and have full shell access.
 The system is yours to use and/or abuse as you like. Any changes made inside
 the jail are limited to the jail. 
+
 
 bastille cp
 -----------
