@@ -58,9 +58,29 @@ bootstrap_release() {
         mkdir -p "${bastille_cachedir}/${RELEASE}"
     fi
 
-    if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+    ## if release exists, quit
+    if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
+        echo -e "${COLOR_RED}Bootstrap appears complete.${COLOR_RESET}"
+        exit 1
+    fi
+
+    ## if existing ${CACHEDIR}/${RELEASE}/base.txz; extract
+    if [ -f "${bastille_cachedir}/${RELEASE}/base.txz" ] && [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
         mkdir -p "${bastille_releasesdir}/${RELEASE}"
-        sh ${bastille_sharedir}/freebsd_dist_fetch.sh -r ${RELEASE} ${bastille_bootstrap_archives}
+        for _archive in ${bastille_bootstrap_archives}; do
+            echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
+            /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
+        done
+
+        echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
+        echo
+    fi
+
+    ## if no existing ${CACHEDIR}/${RELEASE} download and extract
+    if [ ! -f "${bastille_cachedir}/${RELEASE}/base.txz" ] && [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+        mkdir -p "${bastille_releasesdir}/${RELEASE}"
+	fetch ${UPSTREAM_URL}/base.txz -o ${bastille_cachedir}/${RELEASE}/base.txz
 
         echo
         for _archive in ${bastille_bootstrap_archives}; do
@@ -71,9 +91,6 @@ bootstrap_release() {
         echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
         echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
         echo
-    else
-        echo -e "${COLOR_RED}Bootstrap appears complete.${COLOR_RESET}"
-        exit 1
     fi
 }
 
@@ -156,24 +173,29 @@ bootstrap_template() {
 
 #Usage: bastille bootstrap [release|template].${COLOR_RESET}"
 
+HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
+HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
+
 # Filter sane release names
 case "${1}" in
-10.1-RELEASE|10.2-RELEASE|10.3-RELEASE|10.4-RELEASE)
-    RELEASE="${1}"
-    bootstrap_release
-    echo -e "${COLOR_RED}WARNING: FreeBSD 10.1-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-    ;;
-11.0-RELEASE|11.1-RELEASE)
-    RELEASE="${1}"
-    bootstrap_release
-    echo -e "${COLOR_RED}WARNING: FreeBSD 11.0-RELEASE HAS PASSED ITS END-OF-LIFE DATE.${COLOR_RESET}"
-    ;;
 11.2-RELEASE)
     RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.2-RELEASE/"
     bootstrap_release
     ;;
 12.0-RELEASE)
     RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.0-RELEASE/"
+    bootstrap_release
+    ;;
+11-stable-LAST)
+    RELEASE="${1}"
+    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-11-stable-LAST/"
+    bootstrap_release
+    ;;
+12-stable-LAST)
+    RELEASE="${1}"
+    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-12-stable-LAST/"
     bootstrap_release
     ;;
 http?://github.com/*/*)

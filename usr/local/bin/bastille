@@ -88,16 +88,16 @@ esac
 # Filter out all non-commands
 case "${CMD}" in
 cmd|cp|create|destroy|list|pkg|restart|start|stop|sysrc|template|verify)
-	;;
+    ;;
 update|upgrade)
-	;;
+    ;;
 console|bootstrap|htop|top)
     ;;
 bootstrap|update|upgrade)
-	;;
+    ;;
 *)
-	usage
-	;;
+usage
+    ;;
 esac
 
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
