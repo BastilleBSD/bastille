@@ -65,7 +65,7 @@ create_jail() {
     bastille_jail_fstab="${bastille_jailsdir}/${NAME}/fstab"  ## file
     bastille_jail_conf="${bastille_jailsdir}/${NAME}/jail.conf"  ## file
     bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
-    bastille_jail_rc_conf="${bastille_jailsdir}/${NAME}/root/etc/rc.conf.local" ## file
+    bastille_jail_rc_conf="${bastille_jailsdir}/${NAME}/root/etc/rc.conf" ## file
     bastille_jail_resolv_conf="${bastille_jailsdir}/${NAME}/root/etc/resolv.conf" ## file
 
     if [ ! -d "${bastille_jail_base}" ]; then
@@ -124,22 +124,30 @@ create_jail() {
     cp -a "${bastille_releasesdir}/${RELEASE}/usr/obj" "${bastille_jail_path}"
     if [ "${RELEASE}" == "11.2-RELEASE" ]; then cp -a "${bastille_releasesdir}/${RELEASE}/usr/tests" "${bastille_jail_path}"; fi
 
-    ## rc.conf.local
+    ## rc.conf
     ##  + syslogd_flags="-ss"
     ##  + sendmail_none="NONE"
     ##  + cron_flags="-J 60" ## cedwards 20181118
-    ## resolv.conf
     if [ ! -f "${bastille_jail_rc_conf}" ]; then
-        echo -e "syslogd_flags=\"-ss\"\nsendmail_enable=\"NONE\"" > ${bastille_jail_rc_conf}
-	echo -e "cron_flags=\"-J 60\"" >> ${bastille_jail_rc_conf}
+        touch "${bastille_jail_rc_conf}"
+        /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" syslogd_flags=-ss
+        /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" sendmail_enable=NONE
+        /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" cron_flags='-J 60'
+        echo
     fi
 
+    ## resolv.conf
+    ##  + default nameservers configurable; 1 required, 3 optional ## cedwards 20190522
+    ##  + nameserver options supported
     if [ ! -f "${bastille_jail_resolv_conf}" ]; then
-        echo -e "nameserver 1.1.1.1\nnameserver 1.0.0.1\noptions edns0 rotate" > ${bastille_jail_resolv_conf}
+        [ ! -z "${bastille_nameserver1}" ] && echo -e "nameserver ${bastille_nameserver1}" >> ${bastille_jail_resolv_conf}
+        [ ! -z "${bastille_nameserver2}" ] && echo -e "nameserver ${bastille_nameserver2}" >> ${bastille_jail_resolv_conf}
+        [ ! -z "${bastille_nameserver3}" ] && echo -e "nameserver ${bastille_nameserver3}" >> ${bastille_jail_resolv_conf}
+        [ ! -z "${bastille_nameserver_options}" ] && echo -e "${bastille_nameserver_options}" >> ${bastille_jail_resolv_conf}
     fi
 
-    ## TZ: UTC
-    ln -s /usr/share/zoneinfo/Etc/UTC etc/localtime
+    ## TZ: configurable (default: etc/UTC)
+    ln -s /usr/share/zoneinfo/${bastille_tzdata} etc/localtime
 }
 
 # Handle special-case commands first.
@@ -159,50 +167,17 @@ IP="$3"
 
 ## verify release
 case "${RELEASE}" in
-10.1-RELEASE)
-    RELEASE="10.1-RELEASE"
-	;;
-10.2-RELEASE)
-    RELEASE="10.2-RELEASE"
-	;;
-10.3-RELEASE)
-    RELEASE="10.3-RELEASE"
-	;;
-10.4-RELEASE)
-    RELEASE="10.4-RELEASE"
-    ;;
-11.0-RELEASE)
-    RELEASE="11.0-RELEASE"
-    ;;
-11.1-RELEASE)
-    RELEASE="11.1-RELEASE"
-    ;;
 11.2-RELEASE)
     RELEASE="11.2-RELEASE"
     ;;
 12.0-RELEASE)
     RELEASE="12.0-RELEASE"
     ;;
-12.0-BETA1)
-    RELEASE="12.0-BETA1"
+11-stable-LAST)
+    RELEASE="11-stable-LAST"
     ;;
-12.0-BETA2)
-    RELEASE="12.0-BETA2"
-    ;;
-12.0-BETA3)
-    RELEASE="12.0-BETA3"
-    ;;
-12.0-BETA4)
-    RELEASE="12.0-BETA4"
-    ;;
-12.0-RC1)
-    RELEASE="12.0-RC1"
-    ;;
-12.0-RC2)
-    RELEASE="12.0-RC2"
-    ;;
-12.0-RC3)
-    RELEASE="12.0-RC3"
+12-stable-LAST)
+    RELEASE="12-stable-LAST"
     ;;
 *)
     echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"
