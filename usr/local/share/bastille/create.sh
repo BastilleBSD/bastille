@@ -41,6 +41,7 @@ running_jail() {
 }
 
 validate_ip() {
+    local IFS
     ip=${IP}
     
     if expr "$ip" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
@@ -68,6 +69,16 @@ create_jail() {
     bastille_jail_rc_conf="${bastille_jailsdir}/${NAME}/root/etc/rc.conf" ## file
     bastille_jail_resolv_conf="${bastille_jailsdir}/${NAME}/root/etc/resolv.conf" ## file
 
+    if [ ! -d "${bastille_jailsdir}/${NAME}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_jailsdir}/${NAME} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
+            fi
+        else
+            mkdir -p "${bastille_jailsdir}/${NAME}"
+        fi
+    fi
+
     if [ ! -d "${bastille_jail_base}" ]; then
         mkdir -p "${bastille_jail_base}"
         mkdir -p "${bastille_jail_path}/usr/home"
@@ -83,14 +94,14 @@ create_jail() {
     fi
 
     if [ ! -f "${bastille_jail_conf}" ]; then
-	echo -e "interface = lo1;\nhost.hostname = ${NAME};\nexec.consolelog =\
-	${bastille_jail_log};\npath = ${bastille_jail_path};\nip6 =\
-	disable;\nsecurelevel = 2;\ndevfs_ruleset = 4;\nenforce_statfs =\
-	2;\nexec.start = '/bin/sh /etc/rc';\nexec.stop = '/bin/sh\
-	/etc/rc.shutdown';\nexec.clean;\nmount.devfs;\nmount.fstab =\
-	${bastille_jail_fstab};\n\n${NAME} {\n\tip4.addr = ${IP};\n}" >\
-	${bastille_jail_conf}
-    fi
+echo -e "interface = lo1;\nhost.hostname = ${NAME};\nexec.consolelog = \
+${bastille_jail_log};\npath = ${bastille_jail_path};\nip6 = \
+disable;\nsecurelevel = 2;\ndevfs_ruleset = 4;\nenforce_statfs = \
+2;\nexec.start = '/bin/sh /etc/rc';\nexec.stop = '/bin/sh \
+/etc/rc.shutdown';\nexec.clean;\nmount.devfs;\nmount.fstab = \
+${bastille_jail_fstab};\n\n${NAME} {\n\tip4.addr = ${IP};\n}" > \
+${bastille_jail_conf}
+fi
 
     ## using relative paths here
     ## MAKE SURE WE'RE IN THE RIGHT PLACE
@@ -136,14 +147,9 @@ create_jail() {
         echo
     fi
 
-    ## resolv.conf
-    ##  + default nameservers configurable; 1 required, 3 optional ## cedwards 20190522
-    ##  + nameserver options supported
+    ## resolv.conf (default: copy from host)
     if [ ! -f "${bastille_jail_resolv_conf}" ]; then
-        [ ! -z "${bastille_nameserver1}" ] && echo -e "nameserver ${bastille_nameserver1}" >> ${bastille_jail_resolv_conf}
-        [ ! -z "${bastille_nameserver2}" ] && echo -e "nameserver ${bastille_nameserver2}" >> ${bastille_jail_resolv_conf}
-        [ ! -z "${bastille_nameserver3}" ] && echo -e "nameserver ${bastille_nameserver3}" >> ${bastille_jail_resolv_conf}
-        [ ! -z "${bastille_nameserver_options}" ] && echo -e "${bastille_nameserver_options}" >> ${bastille_jail_resolv_conf}
+        cp -L ${bastille_resolv_conf} ${bastille_jail_resolv_conf}
     fi
 
     ## TZ: configurable (default: etc/UTC)
@@ -167,16 +173,16 @@ IP="$3"
 
 ## verify release
 case "${RELEASE}" in
-11.2-RELEASE)
+11.2-RELEASE|11.2-release)
     RELEASE="11.2-RELEASE"
     ;;
-12.0-RELEASE)
+12.0-RELEASE|12.0-release)
     RELEASE="12.0-RELEASE"
     ;;
-11-stable-LAST)
+11-stable-LAST|11-STABLE-last|11-stable-last|11-STABLE-LAST)
     RELEASE="11-stable-LAST"
     ;;
-12-stable-LAST)
+12-stable-LAST|12-STABLE-last|12-stable-last|12-STABLE-LAST)
     RELEASE="12-stable-LAST"
     ;;
 *)
@@ -188,6 +194,12 @@ esac
 ## check for name/root/.bastille
 if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
     echo -e "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
+    exit 1
+fi
+
+## check for required release
+if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+    echo -e "${COLOR_RED}Release must be bootstrapped first; see `bastille bootstrap`.${COLOR_RESET}"
     exit 1
 fi
 

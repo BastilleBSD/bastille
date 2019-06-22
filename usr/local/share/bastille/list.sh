@@ -37,7 +37,7 @@ usage() {
 }
 
 if [ $# -eq 0 ]; then
-    jls -N
+    jls -N | grep -v 'poudriere'
 fi
 
 if [ $# -gt 0 ]; then

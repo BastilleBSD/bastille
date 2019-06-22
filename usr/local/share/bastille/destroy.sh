@@ -53,11 +53,24 @@ destroy_jail() {
 
     if [ -d "${bastille_jail_base}" ]; then
         echo -e "${COLOR_GREEN}Deleting Jail: ${NAME}.${COLOR_RESET}"
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
+            fi
+        fi
+
+        ## removing all flags
         chflags -R noschg ${bastille_jail_base}
+
+        ## remove jail base
         rm -rf ${bastille_jail_base}
-        mv ${bastille_jail_log} ${bastille_jail_log}-$(date +%F)
-        echo -e "${COLOR_GREEN}Note: jail console logs archived.${COLOR_RESET}"
-        echo -e "${COLOR_GREEN}${bastille_jail_log}-$(date +%F)${COLOR_RESET}"
+
+        ## archive jail log
+        if [ -f "${bastille_jail_log}" ]; then
+            mv ${bastille_jail_log} ${bastille_jail_log}-$(date +%F)
+            echo -e "${COLOR_GREEN}Note: jail console logs archived.${COLOR_RESET}"
+            echo -e "${COLOR_GREEN}${bastille_jail_log}-$(date +%F)${COLOR_RESET}"
+        fi
         echo
     fi
 }
