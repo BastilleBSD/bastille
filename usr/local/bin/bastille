@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.3.20190204"
+BASTILLE_VERSION="0.3.20190622"
 
 usage() {
     cat << EOF
@@ -93,7 +93,7 @@ update|upgrade)
     ;;
 console|bootstrap|htop|top)
     ;;
-bootstrap|update|upgrade)
+bootstrap|update|upgrade|zfs)
     ;;
 *)
 usage

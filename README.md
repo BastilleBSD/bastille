@@ -44,6 +44,7 @@ Available Commands:
   top         Display and update information about the top(1) cpu processes.
   update      Update jail base -pX release.
   upgrade     Upgrade jail release to X.Y-RELEASE.
+  zfs         Manage (get|set) zfs attributes on targeted jail(s).
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
@@ -756,6 +757,27 @@ release against a "known good" index.
 
 If you see errors or issues here, consider deleting and re-bootstrapping the
 release.
+
+
+bastille zfs
+------------
+This sub-command allows managing zfs attributes for the targeted jail(s).
+Common usage includes setting jail quotas.
+
+** set quota **
+```shell
+ishmael ~ # bastille zfs folsom 'set quota=1G'
+```
+
+** built-in: df **
+```shell
+ishmael ~ # bastille zfs ALL df
+```
+
+** built-in: df **
+```shell
+ishmael ~ # bastille zfs folsom df
+```
 
 
 Example (create, start, console)
