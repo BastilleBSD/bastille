@@ -173,16 +173,16 @@ IP="$3"
 
 ## verify release
 case "${RELEASE}" in
-11.2-RELEASE)
+11.2-RELEASE|11.2-release)
     RELEASE="11.2-RELEASE"
     ;;
-12.0-RELEASE)
+12.0-RELEASE|12.0-release)
     RELEASE="12.0-RELEASE"
     ;;
-11-stable-LAST)
+11-stable-LAST|11-STABLE-last|11-stable-last|11-STABLE-LAST)
     RELEASE="11-stable-LAST"
     ;;
-12-stable-LAST)
+12-stable-LAST|12-STABLE-last|12-stable-last|12-STABLE-LAST)
     RELEASE="12-stable-LAST"
     ;;
 *)
