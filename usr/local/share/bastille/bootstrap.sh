@@ -43,55 +43,108 @@ help|-h|--help)
     ;;
 esac
 
-bootstrap_release() {
+bootstrap_directories() {
     ## ensure required directories are in place
-    if [ ! -d ${bastille_jailsdir} ]; then
-        mkdir -p ${bastille_jailsdir}
-    fi
-    if [ ! -d ${bastille_logsdir} ]; then
-        mkdir -p ${bastille_logsdir}
-    fi
-    if [ ! -d ${bastille_templatesdir} ]; then
-        mkdir -p ${bastille_templatesdir}
-    fi
-    if [ ! -d "${bastille_cachedir}/${RELEASE}" ]; then
-        mkdir -p "${bastille_cachedir}/${RELEASE}"
+
+    ## ${bastille_prefix}
+    if [ ! -d "${bastille_prefix}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ];then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_prefix} ${bastille_zfs_zpool}/${bastille_zfs_prefix}
+            fi
+        else
+            mkdir -p "${bastille_prefix}"
+        fi
     fi
 
+    ## ${bastille_cachedir}
+    if [ ! -d "${bastille_cachedir}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_cachedir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache
+                mkdir -p ${bastille_cachedir}/${RELEASE}
+            fi
+        else
+            mkdir -p "${bastille_cachedir}"
+        fi
+    fi
+
+    ## ${bastille_jailsdir}
+    if [ ! -d "${bastille_jailsdir}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_jailsdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails
+            fi
+        else
+            mkdir -p "${bastille_jailsdir}"
+        fi
+    fi
+
+    ## ${bastille_logsdir}
+    if [ ! -d "${bastille_logsdir}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_logsdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/logs
+            fi
+        else
+            mkdir -p "${bastille_logsdir}"
+        fi
+    fi
+
+    ## ${bastille_templatesdir}
+    if [ ! -d "${bastille_templatesdir}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_templatesdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates
+            fi
+        else
+            mkdir -p "${bastille_templatesdir}"
+        fi
+    fi
+
+    ## ${bastille_releasesdir}
+    if [ ! -d "${bastille_releasesdir}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_releasesdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases
+                mkdir -p "${bastille_releasesdir}/${RELEASE}"
+	        fi
+        else
+            mkdir -p "${bastille_releasesdir}"
+        fi
+    fi
+}
+
+bootstrap_release() {
     ## if release exists, quit
-    if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
+    if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
         echo -e "${COLOR_RED}Bootstrap appears complete.${COLOR_RESET}"
         exit 1
     fi
 
-    ## if existing ${CACHEDIR}/${RELEASE}/base.txz; extract
-    if [ -f "${bastille_cachedir}/${RELEASE}/base.txz" ] && [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
-        mkdir -p "${bastille_releasesdir}/${RELEASE}"
-        for _archive in ${bastille_bootstrap_archives}; do
+    for _archive in ${bastille_bootstrap_archives}; do
+        if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-        done
+        fi
+    done
 
-        echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
-        echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
-        echo
-    fi
 
-    ## if no existing ${CACHEDIR}/${RELEASE} download and extract
-    if [ ! -f "${bastille_cachedir}/${RELEASE}/base.txz" ] && [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
-        mkdir -p "${bastille_releasesdir}/${RELEASE}"
-	fetch ${UPSTREAM_URL}/base.txz -o ${bastille_cachedir}/${RELEASE}/base.txz
+    for _archive in ${bastille_bootstrap_archives}; do
+        if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
+            fetch ${UPSTREAM_URL}/${_archive}.txz -o ${bastille_cachedir}/${RELEASE}/${_archive}.txz
+	fi
 
-        echo
-        for _archive in ${bastille_bootstrap_archives}; do
+        if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-        done
+	fi
+    done
+    echo
 
-        echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
-        echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
-        echo
-    fi
+    echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
+    echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
+    echo
 }
 
 bootstrap_template() {
@@ -101,24 +154,11 @@ bootstrap_template() {
     _repo=${BASTILLE_TEMPLATE_REPO}
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
-    ## verify essential directories are in place
-    if [ ! -d ${bastille_jailsdir} ]; then
-        mkdir -p ${bastille_jailsdir}
-    fi
-    if [ ! -d ${bastille_logsdir} ]; then
-        mkdir -p ${bastille_logsdir}
-    fi
-    if [ ! -d ${bastille_templatesdir} ]; then
-        mkdir -p ${bastille_templatesdir}
-    fi
-    if [ ! -d ${_template} ]; then
-        mkdir -p ${_template}
-    fi
-
     ## support for non-git
     if [ ! -x /usr/local/bin/git ]; then
 	echo -e "${COLOR_RED}We're gonna have to use fetch. Strap in.${COLOR_RESET}"
 	echo -e "${COLOR_RED}Not yet implemented...${COLOR_RESET}"
+	exit 1
     fi
 
     ## support for git
@@ -146,6 +186,8 @@ bootstrap_template() {
             echo
         fi
     done
+
+    # template overlay
     if [ -s ${_template}/CONFIG ]; then
         _hook_validate=$((_hook_validate+1))
         echo -e "${COLOR_GREEN}Detected CONFIG hook.${COLOR_RESET}"
@@ -181,21 +223,25 @@ case "${1}" in
 11.2-RELEASE)
     RELEASE="${1}"
     UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.2-RELEASE/"
+    bootstrap_directories
     bootstrap_release
     ;;
 12.0-RELEASE)
     RELEASE="${1}"
     UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.0-RELEASE/"
+    bootstrap_directories
     bootstrap_release
     ;;
 11-stable-LAST)
     RELEASE="${1}"
     UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-11-stable-LAST/"
+    bootstrap_directories
     bootstrap_release
     ;;
 12-stable-LAST)
     RELEASE="${1}"
     UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-12-stable-LAST/"
+    bootstrap_directories
     bootstrap_release
     ;;
 http?://github.com/*/*)
@@ -204,6 +250,7 @@ http?://github.com/*/*)
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     echo -e "${COLOR_GREEN}Template: ${1}${COLOR_RESET}"
     echo
+    bootstrap_directories
     bootstrap_template
     ;;
 *)

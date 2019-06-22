@@ -57,5 +57,6 @@ fi
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
+    pfctl -f /etc/pf.conf
     echo
 done

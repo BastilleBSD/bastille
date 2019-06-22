@@ -1,45 +1,22 @@
 Bastille
 ========
-Bastille is a jail automation framework that allows you to quickly and
-easily create and manage FreeBSD jail.
+Bastille is a jail automation framework that allows you to quickly create and
+manage FreeBSD jails.
 
 
 Installation
-------------
+============
 Bastille is available in the official ports tree.
 
-```
+**pkg**
+```shell
 pkg install bastille
 ```
 
-Development builds are available on the `pkg.bastillebsd.org` package server.
-To subscribe to this repo, use the following two configuration additions.
-
-Note: The BastilleBSD pkg server will usually be ahead of FreeBSD latest.
-
+**ports**
+```shell
+make -C /usr/ports/sysutils/bastille install clean
 ```
-## /usr/local/etc/pkg/repos/BastilleBSD.conf
-BastilleBSD: {
-  url: "https://pkg.bastillebsd.org/pkg/${ABI}",
-  signature_type: "pubkey",
-  pubkey: "/usr/local/etc/ssl/poudriere.pub",
-  enabled: yes
-}
-```
-
-```
-## /usr/local/etc/ssl/poudriere.pub
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq28OLDhJ12JmsKKcJpnn
-pCW3fFYBNI1BtdvTvFx57ZXvQ2qecBvnR9+XWi83hKS9ALTKZI6CLC2uTv1fIsZl
-u6rDRRNZwZFfITACSfwI+7UObMXz3oBZjk94J3rIegk49EyjDswKdVWv5k1EiVXF
-SAwXSl2kA2hGfQJkj5NS4nrfoRBc0z6fm+BGdNuHKSTmeZh1dbLEHt9EArD20DJ7
-HIr8vUSPLwONeqJCBFA/MeDO+GpwtwA/ldc2ZZy1RCPctdC2NeiGW7oy1yVDu6wp
-mHCq8qDfmCx5Aex84rWUf9iH8TM92AWmegTaz2p+BgESctpjNRCUuSEwOCBIO6g5
-3wIDAQAB
------END PUBLIC KEY-----
-```
-
 
 Basic Usage
 -----------
@@ -73,12 +50,13 @@ Use "bastille command -h|--help" for more information about a command.
 ```
 
 
-## 0.3-beta
+## 0.4-beta
 This document outlines the basic usage of the Bastille jail management
 framework. This release is still considered beta.
 
 
-## Network Requirements
+Network Requirements
+====================
 In order to segregate jails from the network and from the world, Bastille
 attaches jails to a loopback interface only. The host system then acts as
 the firewall, permitting and denying traffic as needed.
@@ -90,14 +68,16 @@ ishmael ~ # sysrc cloned_interfaces+=lo1
 ishmael ~ # service netif cloneup
 ```
 
-Second, enable NAT through the firewall:
+Second, enable the firewall:
 
 ```shell
 ishmael ~ # sysrc pf_enable="YES"
 ```
 
 Create the firewall config, or merge as necessary.
-### /etc/pf.conf
+
+/etc/pf.conf
+------------
 ```
 ext_if="vtnet0"
 
@@ -108,7 +88,7 @@ set skip on lo
 nat on $ext_if from lo1:network to any -> ($ext_if)
 
 ## rdr example
-## rdr pass inet proto tcp from any to any port {80, 443} -> 10.88.9.45
+## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
 
 block in log all
 pass out quick modulate state
@@ -126,7 +106,7 @@ Note: if you have an existing firewall, the key lines for in/out traffic to jail
 nat on $ext_if from lo1:network to any -> ($ext_if)
 
 ## rdr example
-## rdr pass inet proto tcp from any to any port {80, 443} -> 10.88.9.45
+## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
 ```
 
 The `nat` routes traffic from the loopback interface to the external interface
@@ -134,7 +114,7 @@ for outbound access.
 
 The `rdr pass ...` will redirect traffic from the host firewall on port X to
 the ip of Jail Y. The example shown redirects web traffic (80 & 443) to the
-jails at `10.88.9.45`.
+jails at `10.17.89.45`.
 
 We'll get to that later, but when you're ready to allow traffic inbound to your
 jails, that's where you'd do it.
@@ -151,11 +131,46 @@ session and continue.
 This step only needs to be done once in order to prepare the host.
 
 
+ZFS support
+===========
+
+![BastilleBSD Twitter Poll](/docs/images/bastillebsd-twitter-poll.png)
+
+Bastille 0.4 added initial support for ZFS. `bastille bootstrap` and `bastille
+create` will generate ZFS volumes based on settings found in the
+`bastille.conf`. This section outlines how to enable and configure Bastille for
+ZFS.
+
+Two values are required for Bastille to use ZFS. The default values in the
+`bastille.conf` are empty. Populate these two to enable ZFS.
+
+```shell
+## ZFS options
+bastille_zfs_enable=""                                  ## default: ""
+bastille_zfs_zpool=""                                   ## default: ""
+bastille_zfs_prefix="bastille"                          ## default: "${bastille_zfs_zpool}/bastille"
+bastille_zfs_mountpoint=${bastille_prefix}              ## default: "${bastille_prefix}"
+bastille_zfs_options="-o compress=lz4 -o atime=off"     ## default: "-o compress=lz4 -o atime=off"
+```
+
+**Example**
+
+```shell
+ishmael ~ # sysrc -f /usr/local/etc/bastille/bastille.conf bastille_zfs_enable=YES
+ishmael ~ # sysrc -f /usr/local/etc/bastille/bastille.conf bastille_zfs_zpool=ZPOOL_NAME
+```
+
+Replace `ZPOOL_NAME` with the zpool you want Bastille to use. Tip: `zpool list`
+and `zpool status` will help.
+
+
 bastille bootstrap
 ------------------
-The first step is to "bootstrap" a release. Current supported releases are
-11.2-RELEASE and 12.0-RELEASE, but you can bootstrap anything in the
-ftp.FreeBSD.org RELEASES directory.
+Before you can begin creating jails, Bastille needs to "bootstrap" a release.
+Current supported releases are 11.2-RELEASE and 12.0-RELEASE, but you can
+bootstrap anything in the ftp.FreeBSD.org RELEASES directory.
+
+**Important: If you need ZFS support see the above section BEFORE bootstrapping.**
 
 Note: your mileage may vary with unsupported releases and releases newer than
 the host system likely will NOT work at all.
@@ -163,30 +178,56 @@ the host system likely will NOT work at all.
 To `bootstrap` a release, run the bootstrap sub-command with the
 release version as the argument.
 
+
+** FreeBSD 12.0-RELEASE **
 ```shell
 ishmael ~ # bastille bootstrap 12.0-RELEASE
+```
+
+** FreeBSD 11.2-RELEASE **
+```shell
 ishmael ~ # bastille bootstrap 11.2-RELEASE
+```
+
+** HardenedBSD 12-STABLE-LAST **
+```shell
+ishmael ~ # bastille bootstrap 12-STABLE-LAST
+```
+
+** HardenedBSD 11-STABLE-LAST **
+```shell
+ishmael ~ # bastille bootstrap 11-STABLE-LAST
 ```
 
 This command will ensure the required directory structures are in place and
 download the requested release. For each requested release, `bootstrap` will
-download the base.txz. These are verified (sha256 via MANIFEST file) before
-they are extracted for use.
+download the base.txz. If you need more than base (eg; ports, lib32, src) you
+can configure the `bastille_bootstrap_archives` in the configuration file. By
+default this value is set to "base". Additional components are added, space
+separated, without extension.
 
-Downloaded artifacts are stored in the `cache` directory. "bootstrapped"
+Bastille will attempt to fetch the required archives if they are not found in
+the `cache/$RELEASE` directory. 
+
+Downloaded artifacts are stored in the `cache/$RELEASE` directory. "bootstrapped"
 releases are stored in `releases/$RELEASE`.
 
-The bootstrap subcommand is generally only used once to prepare the system. The
-only other use case for the bootstrap command is when a new FreeBSD version is
-released and you want to start building jails on that version.
+Advanced: If you want to create your own custom base.txz, or use an unsupported
+variant of FreeBSD, drop your own base.txz in `cache/$RELEASE/base.txz` and
+`bastille bootstrap` will attempt to extract and use it.
 
-To update a release as patches are made available, see the `bastille update`
-command.
+The bootstrap subcommand is generally only used once to prepare the system. The
+other use cases for the bootstrap command are when a new FreeBSD version is
+released and you want to start building jails on that version, or bootstrapping
+templates from GitHub or GitLab.
+
+See `bastille update` to ensure your bootstrapped releases include the latest
+patches.
 
 
 bastille create
 ---------------
-Bastille create uses any available bootstrapped release to create a lightweight
+`bastille create` uses a bootstrapped release to create a lightweight
 jailed system. To create a jail simply provide a name, release and
 a private (rfc1918) IP address.
 
@@ -194,16 +235,17 @@ a private (rfc1918) IP address.
 - release (bootstrapped)
 - ip
 
+
 ```shell
-ishmael ~ # bastille create folsom 12.0-RELEASE 10.8.62.1
+ishmael ~ # bastille create folsom 12.0-RELEASE 10.17.89.10
 
 RELEASE: 12.0-RELEASE.
 NAME: folsom.
-IP: 10.8.62.1.
+IP: 10.17.89.10.
 ```
 
-This command will create a 12.0-RELEASE jail assigning the 10.8.62.1 ip address
-to the new system.
+This command will create a 12.0-RELEASE jail assigning the 10.17.89.10 ip
+address to the new system.
 
 I recommend using private (rfc1918) ip address ranges for your jails.
 These ranges include:
@@ -212,8 +254,11 @@ These ranges include:
 - 172.16.0.0/12
 - 192.168.0.0/16
 
+If your Bastille host also uses private (rfc1918) addresses, use a different
+range for your jails. ie; Host uses 192.168.0.0/16, jails use 10.0.0.0/8.
+
 Bastille does its best to validate the submitted ip is valid. This has not been
-thouroughly tested--I generally use the 10/8 range.
+thouroughly tested. I generally use the 10.0.0.0/8 range for jails.
 
 
 bastille start
@@ -222,9 +267,6 @@ To start a jail you can use the `bastille start` command.
 
 ```shell
 ishmael ~ # bastille start folsom
-Targeting specified jails.
-folsom
-
 [folsom]:
 folsom: created
 
@@ -237,9 +279,6 @@ To stop a jail you can use the `bastille stop` command.
 
 ```shell
 ishmael ~ # bastille stop folsom
-Targeting specified jails.
-folsom
-
 [folsom]:
 folsom: removed
 
@@ -252,14 +291,8 @@ To restart a jail you can use the `bastille restart` command.
 
 ```shell
 ishmael ~ # bastille restart folsom
-Targeting specified jails.
-folsom
-
 [folsom]:
 folsom: removed
-
-Targeting specified jails.
-folsom
 
 [folsom]:
 folsom: created
@@ -273,9 +306,6 @@ To execute commands within the jail you can use `bastille cmd`.
 
 ```shell
 ishmael ~ # bastille cmd folsom 'ps -auxw'
-Targeting specified jails.
-folsom
-
 [folsom]:
 USER   PID %CPU %MEM   VSZ  RSS TT  STAT STARTED    TIME COMMAND
 root 71464  0.0  0.0 14536 2000  -  IsJ   4:52PM 0:00.00 /usr/sbin/syslogd -ss
@@ -291,9 +321,6 @@ To manage binary packages within the jail use `bastille pkg`.
 
 ```shell
 ishmael ~ # bastille pkg folsom 'install vim-console git-lite zsh'
-Targeting specified jails.
-folsom
-
 [folsom]:
 The package management tool is not yet installed on your system.
 Do you want to fetch and install it now? [y/N]: y
@@ -364,17 +391,14 @@ Creating user 'git_daemon' with uid '964'.
 [folsom] [9/10] Extracting git-lite-2.19.1: 100%
 [folsom] [10/10] Installing zsh-5.6.2...
 [folsom] [10/10] Extracting zsh-5.6.2: 100%
-
 ```
 
 The PKG sub-command can, of course, do more than just `install`. The
 expectation is that you can fully leverage the pkg manager. This means,
-`install`, `update`, `upgrade`, `audit`, `clean`, `autoremove`, etc., etc.
+`install`, `update`, `upgrade`, `audit`, `clean`, `autoremove`, etc.
 
 ```shell
 ishmael ~ # bastille pkg ALL upgrade
-Targeting all jails.
-
 [bastion]:
 Updating pkg.bastillebsd.org repository catalogue...
 [bastion] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
@@ -461,9 +485,6 @@ Note: jails must be stopped before destroyed.
 
 ```shell
 ishmael ~ # bastille stop folsom
-Targeting specified jails.
-folsom
-
 [folsom]:
 folsom: removed
 
@@ -583,10 +604,7 @@ In jail terms, this allows us to toggle on/off services and options at
 startup.
 
 ```shell
-ishmael ~ # bastille sysrc nginx nginx_enable="YES"
-Targeting specified jails.
-nginx
-
+ishmael ~ # bastille sysrc nginx nginx_enable=YES
 [nginx]:
 nginx_enable: NO -> YES
 ```
@@ -601,9 +619,6 @@ password-less root login.
 
 ```shell
 ishmael ~ # bastille console folsom
-Targeting specified jails.
-folsom
-
 [folsom]:
 FreeBSD 11.2-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
 
@@ -642,8 +657,6 @@ This sub-command allows efficiently copying files from host to jail(s).
 
 ```shell
 ishmael ~ # bastille cp ALL /tmp/resolv.conf-cf etc/resolv.conf
-Targeting all jails.
-
 [bastion]:
 
 [unbound0]:
@@ -668,12 +681,12 @@ This sub-command will show you the running jails on your system.
 ```shell
 ishmael ~ # bastille list
  JID             IP Address      Hostname                      Path
- bastion         10.88.9.65      bastion                       /usr/local/bastille/jails/bastion/root
- unbound0        10.88.9.60      unbound0                      /usr/local/bastille/jails/unbound0/root
- unbound1        10.88.9.61      unbound1                      /usr/local/bastille/jails/unbound1/root
- squid           10.88.9.30      squid                         /usr/local/bastille/jails/squid/root
- nginx           10.88.9.45      nginx                         /usr/local/bastille/jails/nginx/root
- folsom          10.8.62.1       folsom                        /usr/local/bastille/jails/folsom/root
+ bastion         10.17.89.65      bastion                       /usr/local/bastille/jails/bastion/root
+ unbound0        10.17.89.60      unbound0                      /usr/local/bastille/jails/unbound0/root
+ unbound1        10.17.89.61      unbound1                      /usr/local/bastille/jails/unbound1/root
+ squid           10.17.89.30      squid                         /usr/local/bastille/jails/squid/root
+ nginx           10.17.89.45      nginx                         /usr/local/bastille/jails/nginx/root
+ folsom          10.17.89.10      folsom                        /usr/local/bastille/jails/folsom/root
 ```
 
 
@@ -750,27 +763,21 @@ Example (create, start, console)
 This example creates, starts and consoles into the jail.
 
 ```shell
-ishmael ~ # bastille create alcatraz 11.2-RELEASE 10.9.8.7
+ishmael ~ # bastille create alcatraz 11.2-RELEASE 10.17.89.7
 
 RELEASE: 11.2-RELEASE.
 NAME: alcatraz.
-IP: 10.9.8.7.
+IP: 10.17.89.7.
 ```
 
 ```shell
 ishmael ~ # bastille start alcatraz
-Targeting specified jails.
-alcatraz
-
 [alcatraz]:
 alcatraz: created
 ```
 
 ```shell
 ishmael ~ # bastille console alcatraz
-Targeting specified jails.
-alcatraz
-
 [alcatraz]:
 FreeBSD 11.2-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
 
@@ -833,29 +840,28 @@ Possible Jail names
 -------------------
 
 prisons:
+- alcatraz
 - arkham
 - ashecliffe
+- astralqueen
+- attica
 - azkaban
 - coldmountain
+- corcoran
 - dolguldur
+- folsom
 - foxriver
+- leavenworth
 - litchfield
 - oswald
+- pelicanbay
+- rikers
+- sanquentin
 - shawshank
+- singsing
 - stockton
 - stormcage
 - ziggurat
-- astralqueen
-
-- alcatraz
-- rikers
-- leavenworth
-- folsom
-- attica
-- singsing
-- sanquentin
-- corcoran
-- pelicanbay
 
 
 Networking Tips
@@ -865,7 +871,7 @@ Tip #1:
 -------
 Ports and destinations can be defined as lists. eg;
 ```
-rdr pass inet proto tcp from any to any port {80, 443} -> {10.88.9.45, 10.88.9.46, 10.88.9.47, 10.88.9.48}
+rdr pass inet proto tcp from any to any port {80, 443} -> {10.17.89.45, 10.17.89.46, 10.17.89.47, 10.17.89.48}
 ```
 
 This rule would redirect any traffic to the host on ports 80 or 443 and
@@ -876,9 +882,9 @@ Tip #2:
 -------
 Ports can redirect to other ports. eg;
 ```
-rdr pass inet proto tcp from any to any port 8080 -> 10.7.6.5 port 80
-rdr pass inet proto tcp from any to any port 8081 -> 10.7.6.5 port 8080
-rdr pass inet proto tcp from any to any port 8181 -> 10.7.6.5 port 443
+rdr pass inet proto tcp from any to any port 8080 -> 10.17.89.5 port 80
+rdr pass inet proto tcp from any to any port 8081 -> 10.17.89.5 port 8080
+rdr pass inet proto tcp from any to any port 8181 -> 10.17.89.5 port 443
 ```
 
 Tip #3:
@@ -893,9 +899,9 @@ can.
 
 Community Support
 =================
-We would love to hear your feedback on Bastille! Please join us on the
-[BastilleBSD Chat Server](https://chat.bastillebsd.org) and let us know what
-you think. Registration is currently open pending email verification. 
+We would love to hear your feedback on Bastille! Please join us in the
+[#bastillebsd](ircs://chat.freenode.net:6697/bastillebsd) and let us know what
+you think.
 
 Be mindful of the [Bastille Code of
 Conduct](https://github.com/BastilleBSD/bastille/blob/master/CODE-OF-CONDUCT.md)
