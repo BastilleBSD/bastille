@@ -37,6 +37,7 @@ Available Commands:
   list        List jails (running and stopped).
   pkg         Manipulate binary packages within targeted jail(s). See pkg(8).
   restart     Restart a running jail.
+  service     Manage services within targeted jail(s).
   start       Start a stopped jail.
   stop        Stop a running jail.
   sysrc       Safely edit rc files within targeted jail(s).
@@ -44,6 +45,7 @@ Available Commands:
   top         Display and update information about the top(1) cpu processes.
   update      Update jail base -pX release.
   upgrade     Upgrade jail release to X.Y-RELEASE.
+  verify      Compare release against a "known good" index.
   zfs         Manage (get|set) zfs attributes on targeted jail(s).
 
 Use "bastille -v|--version" for version information.
@@ -297,6 +299,19 @@ folsom: removed
 
 [folsom]:
 folsom: created
+
+```
+
+
+bastille service
+----------------
+To restart services inside a jail you can use the `bastille service` command.
+
+```shell
+ishmael ~ # bastille service folsom 'postfix restart'
+[folsom]
+postfix/postfix-script: stopping the Postfix mail system
+postfix/postfix-script: starting the Postfix mail system
 
 ```
 
