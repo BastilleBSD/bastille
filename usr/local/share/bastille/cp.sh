@@ -57,6 +57,6 @@ fi
 for _jail in ${JAILS}; do
     bastille_jail_path="$(jls -j "${_jail}" path)"
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    cp -a "$2" "${bastille_jail_path}/$3"
+    cp -av "$2" "${bastille_jail_path}/$3"
     echo
 done

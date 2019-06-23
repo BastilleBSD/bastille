@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.3.20190622"
+BASTILLE_VERSION="0.3.20190623"
 
 usage() {
     cat << EOF
@@ -77,23 +77,19 @@ shift
 # Handle special-case commands first.
 case "${CMD}" in
 version|-v|--version)
-	echo -e "${COLOR_GREEN}${BASTILLE_VERSION}${COLOR_RESET}"
-	exit 0
-	;;
+    echo -e "${COLOR_GREEN}${BASTILLE_VERSION}${COLOR_RESET}"
+    exit 0
+    ;;
 help|-h|--help)
-	usage
-	;;
+    usage
+    ;;
 esac
 
 # Filter out all non-commands
 case "${CMD}" in
-cmd|cp|create|destroy|list|pkg|restart|start|stop|sysrc|template|verify)
+bootstrap|cmd|console|cp|create|destroy|htop|list|pkg|restart|service)
     ;;
-update|upgrade)
-    ;;
-console|bootstrap|htop|top)
-    ;;
-bootstrap|update|upgrade|zfs)
+start|stop|sysrc|template|top|update|upgrade|verify|zfs)
     ;;
 *)
 usage

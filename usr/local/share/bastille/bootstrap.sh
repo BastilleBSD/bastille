@@ -65,7 +65,7 @@ bootstrap_directories() {
                 mkdir -p ${bastille_cachedir}/${RELEASE}
             fi
         else
-            mkdir -p "${bastille_cachedir}"
+            mkdir -p "${bastille_cachedir}/${RELEASE}"
         fi
     fi
 
@@ -110,7 +110,7 @@ bootstrap_directories() {
                 mkdir -p "${bastille_releasesdir}/${RELEASE}"
 	        fi
         else
-            mkdir -p "${bastille_releasesdir}"
+            mkdir -p "${bastille_releasesdir}/${RELEASE}"
         fi
     fi
 }
@@ -129,16 +129,15 @@ bootstrap_release() {
         fi
     done
 
-
     for _archive in ${bastille_bootstrap_archives}; do
         if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             fetch ${UPSTREAM_URL}/${_archive}.txz -o ${bastille_cachedir}/${RELEASE}/${_archive}.txz
-	fi
+        fi
 
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-	fi
+        fi
     done
     echo
 
@@ -156,9 +155,9 @@ bootstrap_template() {
 
     ## support for non-git
     if [ ! -x /usr/local/bin/git ]; then
-	echo -e "${COLOR_RED}We're gonna have to use fetch. Strap in.${COLOR_RESET}"
-	echo -e "${COLOR_RED}Not yet implemented...${COLOR_RESET}"
-	exit 1
+        echo -e "${COLOR_RED}We're gonna have to use fetch. Strap in.${COLOR_RESET}"
+        echo -e "${COLOR_RED}Not yet implemented...${COLOR_RESET}"
+        exit 1
     fi
 
     ## support for git
@@ -203,7 +202,7 @@ bootstrap_template() {
         echo -e "${COLOR_GREEN}Template validation failed.${COLOR_RESET}"
         echo -e "${COLOR_GREEN}Deleting template.${COLOR_RESET}"
         rm -rf ${_template}
-	exit 1
+        exit 1
     fi
 
     ## if validated; ready to use 
@@ -212,8 +211,6 @@ bootstrap_template() {
         echo
     fi
 }
-
-#Usage: bastille bootstrap [release|template].${COLOR_RESET}"
 
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
@@ -244,7 +241,7 @@ case "${1}" in
     bootstrap_directories
     bootstrap_release
     ;;
-http?://github.com/*/*)
+http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_URL=${1}
     BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
