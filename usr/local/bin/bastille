@@ -1,5 +1,5 @@
 #!/bin/sh
-# 
+#
 # Copyright (c) 2018-2019, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # 
@@ -69,7 +69,7 @@ bastille_perms_check
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.4.20190710"
+BASTILLE_VERSION="0.4.20190714"
 
 usage() {
     cat << EOF
