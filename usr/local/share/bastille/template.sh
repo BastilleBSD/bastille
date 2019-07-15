@@ -60,11 +60,12 @@ bastille_template=${bastille_templatesdir}/${TEMPLATE}
 bastille_template_TARGET=${bastille_template}/TARGET
 bastille_template_INCLUDE=${bastille_template}/INCLUDE
 bastille_template_PRE=${bastille_template}/PRE
-bastille_template_CONFIG=${bastille_template}/CONFIG
+bastille_template_OVERLAY=${bastille_template}/OVERLAY
 bastille_template_FSTAB=${bastille_template}/FSTAB
 bastille_template_PF=${bastille_template}/PF
 bastille_template_PKG=${bastille_template}/PKG
 bastille_template_SYSRC=${bastille_template}/SYSRC
+bastille_template_SERVICE=${bastille_template}/SERVICE
 bastille_template_CMD=${bastille_template}/CMD
 
 for _jail in ${JAILS}; do
@@ -91,40 +92,57 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template_INCLUDE}" ]; then
         echo -e "${COLOR_GREEN}Detected INCLUDE.${COLOR_RESET}"
         while read _include; do
-            echo -e "${COLOR_GREEN}${_include}${COLOR_RESET}"
+            echo
+            echo -e "${COLOR_GREEN}INCLUDE: ${_include}${COLOR_RESET}"
+            echo -e "${COLOR_GREEN}Bootstrapping ${_include}...${COLOR_RESET}"
+            bastille bootstrap ${_include}
+
+            echo
+            echo -e "${COLOR_GREEN}Applying ${_include}...${COLOR_RESET}"
+            BASTILLE_TEMPLATE_PROJECT=$(echo "${_include}" | awk -F / '{ print $4}')
+            BASTILLE_TEMPLATE_REPO=$(echo "${_include}" | awk -F / '{ print $5}')
+            bastille template ${_jail} ${BASTILLE_TEMPLATE_PROJECT}/${BASTILLE_TEMPLATE_REPO}
         done < "${bastille_template_INCLUDE}"
     fi
 
-    ## pre
+    ## PRE
     if [ -s "${bastille_template_PRE}" ]; then
         echo -e "${COLOR_GREEN}Executing PRE-command(s).${COLOR_RESET}"
         jexec -l ${_jail} /bin/sh < "${bastille_template_PRE}"
     fi
 
-    ## config
-    if [ -s "${bastille_template_CONFIG}" ]; then
+    ## CONFIG / OVERLAY
+    if [ -s "${bastille_template_OVERLAY}" ]; then
         echo -e "${COLOR_GREEN}Copying files...${COLOR_RESET}"
         while read _dir; do
             cp -a "${bastille_template}/${_dir}" "${bastille_jail_path}"
-        done < ${bastille_template_CONFIG}
+        done < ${bastille_template_OVERLAY}
+        echo -e "${COLOR_GREEN}Copy complete.${COLOR_RESET}"
+    fi
+    if [ -s "${bastille_template}/CONFIG" ]; then
+        echo -e "${COLOR_YELLOW}CONFIG deprecated; rename to OVERLAY.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}Copying files...${COLOR_RESET}"
+        while read _dir; do
+            cp -a "${bastille_template}/${_dir}" "${bastille_jail_path}"
+        done < ${bastille_template}/CONFIG
         echo -e "${COLOR_GREEN}Copy complete.${COLOR_RESET}"
     fi
 
-    ## fstab
+    ## FSTAB
     if [ -s "${bastille_template_FSTAB}" ]; then
         bastille_templatefstab=$(cat "${bastille_template_FSTAB}")
         echo -e "${COLOR_GREEN}Updating fstab.${COLOR_RESET}"
         echo -e "${COLOR_GREEN}NOT YET IMPLEMENTED.${COLOR_RESET}"
     fi
 
-    ## pf
+    ## PF
     if [ -s "${bastille_template_PF}" ]; then
         bastille_templatepf=$(cat "${bastille_template_PF}")
         echo -e "${COLOR_GREEN}Generating PF profile.${COLOR_RESET}"
         echo -e "${COLOR_GREEN}NOT YET IMPLEMENTED.${COLOR_RESET}"
     fi
 
-    ## pkg (bootstrap + pkg)
+    ## PKG (bootstrap + pkg)
     if [ -s "${bastille_template_PKG}" ]; then
         echo -e "${COLOR_GREEN}Installing packages.${COLOR_RESET}"
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg bootstrap
@@ -132,7 +150,7 @@ for _jail in ${JAILS}; do
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg install $(cat ${bastille_template_PKG})
     fi
 
-    ## sysrc
+    ## SYSRC
     if [ -s "${bastille_template_SYSRC}" ]; then
         echo -e "${COLOR_GREEN}Updating services.${COLOR_RESET}"
         while read _sysrc; do
@@ -140,7 +158,15 @@ for _jail in ${JAILS}; do
         done < "${bastille_template_SYSRC}"
     fi
 
-    ## cmd
+    ## SERVICE
+    if [ -s "${bastille_template_SERVICE}" ]; then
+        echo -e "${COLOR_GREEN}Managing services.${COLOR_RESET}"
+        while read _sysrc; do
+            jexec -l ${_jail} /usr/sbin/service "${_sysrc}"
+        done < "${bastille_template_SERVICE}"
+    fi
+
+    ## CMD
     if [ -s "${bastille_template_CMD}" ]; then
         echo -e "${COLOR_GREEN}Executing final command(s).${COLOR_RESET}"
         jexec -l ${_jail} /bin/sh < "${bastille_template_CMD}"

@@ -32,8 +32,40 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille zfs [ALL|glob] '[set|get] key=value'${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille zfs [ALL|glob] [set|get|snap] [key=value|date]'${COLOR_RESET}"
     exit 1
+}
+
+zfs_snapshot() {
+for _jail in ${JAILS}; do
+    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    zfs snapshot ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}@${TAG}
+    echo
+done
+}
+
+zfs_set_value() {
+for _jail in ${JAILS}; do
+    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    zfs $ATTRIBUTE ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}
+    echo
+done
+}
+
+zfs_get_value() {
+for _jail in ${JAILS}; do
+    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    zfs get $ATTRIBUTE ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}
+    echo
+done
+}
+
+zfs_disk_usage() {
+for _jail in ${JAILS}; do
+    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}
+    echo
+done
 }
 
 # Handle special-case commands first.
@@ -45,45 +77,45 @@ esac
 
 ## check ZFS enabled
 if [ ! "${bastille_zfs_enable}" = "YES" ]; then
-        echo -e "${COLOR_RED}ZFS not enabled.'${COLOR_RESET}"
-        exit 1
+    echo -e "${COLOR_RED}ZFS not enabled.'${COLOR_RESET}"
+    exit 1
 fi
 
 ## check zpool defined
 if [ -z "${bastille_zfs_zpool}" ]; then
-        echo -e "${COLOR_RED}ZFS zpool not defined.'${COLOR_RESET}"
-        exit 1
+    echo -e "${COLOR_RED}ZFS zpool not defined.'${COLOR_RESET}"
+    exit 1
 fi
 
-if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+if [ $# -gt 3 ] || [ $# -lt 2 ]; then
     usage
 fi
 
 if [ "$1" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
+
 if [ "$1" != 'ALL' ]; then
     JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
 fi
 
-if [ "$1" = 'ALL' ]; then
-    if [ "$2" = 'df' ]; then
-        zfs list -o name,used,avail,refer,mountpoint,quota,ratio -r ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails
-    fi
-fi
-
-if [ "$1" != 'ALL' ]; then
-    if [ "$2" = 'df' ]; then
-        for _jail in ${JAILS}; do
-            zfs list -o name,used,avail,refer,mountpoint,quota,ratio -r ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}
-        done
-    fi
-fi
-
-if [ "$2" != 'df' ]; then
-    for _jail in ${JAILS}; do
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-        zfs $2 ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}
-        echo
-    done
-fi
+case "$2" in
+set)
+    ATTRIBUTE=$3
+    JAILS=${JAILS}
+    zfs_set_value
+    ;;
+get)
+    ATTRIBUTE=$3
+    JAILS=${JAILS}
+    zfs_get_value
+    ;;
+snap|snapshot)
+    TAG=$3
+    JAILS=${JAILS}
+    zfs_snapshot
+    ;;
+df|usage)
+    zfs_disk_usage
+    ;;
+esac

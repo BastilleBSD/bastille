@@ -60,7 +60,9 @@ for _jail in ${JAILS}; do
     elif [ ! $(jls name | grep ${_jail}) ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
-        pfctl -f /etc/pf.conf
+        if [ ! -z ${bastille_jail_loopback} ]; then
+            pfctl -f /etc/pf.conf
+        fi
     fi
     echo
 done

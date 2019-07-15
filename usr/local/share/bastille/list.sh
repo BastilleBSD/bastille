@@ -47,16 +47,16 @@ if [ $# -gt 0 ]; then
         usage
         ;;
     release|releases)
-        ls "${bastille_releasesdir}" | sed "s/\n//g"
+        find "${bastille_releasesdir}" -type d -maxdepth 1
         ;;
     template|templates)
-	ls "${bastille_templatesdir}" | sed "s/\n//g"
+	    find "${bastille_templatesdir}" -type d -maxdepth 2
         ;;
     jail|jails)
-	ls "${bastille_jailsdir}" | sed "s/\n//g"
+        ls "${bastille_jailsdir}" | sed "s/\n//g"
         ;;
     log|logs)
-        ls "${bastille_logsdir}" | sed "s/\n//g"
+        find "${bastille_logsdir}" -type f -maxdepth 1
         ;;
     *)
         usage
