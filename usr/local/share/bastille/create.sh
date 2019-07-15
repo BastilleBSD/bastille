@@ -173,7 +173,7 @@ if [ $# -gt 3 ] || [ $# -lt 3 ]; then
     usage
 fi
 
-if [ $(grep '@' $3) ]; then
+if [ $(echo $3 | grep '@' ) ]; then
     BASTILLE_JAIL_IP=$(echo $3 | awk -F@ '{print $2}')
     BASTILLE_JAIL_INTERFACES=$( echo $3 | awk -F@ '{print $1}')
 fi
