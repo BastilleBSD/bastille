@@ -28,16 +28,53 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## root check first.
+bastille_root_check() {
+    if [ $(id -u) -ne 0 ]; then
+        ## so we can make it colorful
+        . /usr/local/share/bastille/colors.pre.sh
+
+        ## permission denied
+        echo -e "${COLOR_RED}Bastille: Permission Denied${COLOR_RESET}" 1>&2
+        echo -e "${COLOR_RED}root / sudo / doas required${COLOR_RESET}" 1>&2
+        exit 1
+    fi
+}
+
+bastille_root_check
+
+## we only load the config if root_check passes
+. /usr/local/etc/bastille/bastille.conf
 . /usr/local/share/bastille/colors.pre.sh
+
+
+## bastille_prefix should be 0750
+## this restricts file system access to privileged users
+bastille_perms_check() {
+    if [ -d "${bastille_prefix}" ]; then
+        BASTILLE_PREFIX_PERMS=$(stat -f "%Op" "${bastille_prefix}")
+        if [ "${BASTILLE_PREFIX_PERMS}" != 40750 ]; then
+            echo -e "${COLOR_RED}Insecure permissions on ${bastille_prefix}${COLOR_RESET}" 1>&2
+            echo -e "${COLOR_RED}Try: chmod 0750 ${bastille_prefix}${COLOR_RESET}" 1>&2
+            echo
+            exit 1
+        fi
+    fi
+}
+
+bastille_perms_check
+
+
+## we only load the config if root_check passes
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.4.20190623"
+BASTILLE_VERSION="0.4.20190710"
 
 usage() {
     cat << EOF
-Bastille is a jail automation framework that allows you to quickly and easily
-create and manage FreeBSD jails.
+Bastille is a jail automation framework that allows you to quickly create and
+manage FreeBSD jails.
 
 Usage:
   bastille command [ALL|glob] [args]
@@ -54,6 +91,7 @@ Available Commands:
   list        List containers (running and stopped).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   restart     Restart a running container.
+  service     Manage services within targeted jail(s).
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
@@ -61,6 +99,8 @@ Available Commands:
   top         Display and update information about the top(1) cpu processes.
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
+  verify      Compare release against a "known good" index.
+  zfs         Manage (get|set) zfs attributes on targeted jail(s).
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
@@ -87,9 +127,13 @@ esac
 
 # Filter out all non-commands
 case "${CMD}" in
-bootstrap|cmd|console|cp|create|destroy|htop|list|pkg|restart|service)
+cmd|cp|create|destroy|list|pkg|restart|start|stop|sysrc|template|verify)
     ;;
-start|stop|sysrc|template|top|update|upgrade|verify|zfs)
+update|upgrade)
+    ;;
+service|console|bootstrap|htop|top)
+    ;;
+bootstrap|update|upgrade|zfs)
     ;;
 *)
 usage
@@ -97,10 +141,13 @@ usage
 esac
 
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
+if [ -f "${SCRIPTPATH}" ]; then
+    : ${UMASK:=022}
+    umask ${UMASK}
 
-: ${UMASK:=022}
-umask ${UMASK}
+    : ${SH:=sh}
 
-: ${SH:=sh}
-
-exec ${SH} "${SCRIPTPATH}" "$@"
+    exec ${SH} "${SCRIPTPATH}" "$@"
+else
+    echo -e "${COLOR_RED}${SCRIPTPATH} not found.${COLOR_RESET}" 1>&2
+fi
