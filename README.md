@@ -3,6 +3,8 @@ Bastille
 Bastille is a jail automation framework that allows you to quickly create and
 manage FreeBSD jails.
 
+Looking for [Bastille Templates](https://github.com/Bastille-Templates)?
+
 
 Installation
 ============
@@ -17,6 +19,7 @@ pkg install bastille
 ```shell
 make -C /usr/ports/sysutils/bastille install clean
 ```
+
 
 Basic Usage
 -----------
