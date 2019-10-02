@@ -184,6 +184,9 @@ IP="$3"
 
 ## verify release
 case "${RELEASE}" in
+11.3-RELEASE|11.3-release)
+    RELEASE="11.3-RELEASE"
+    ;;
 11.2-RELEASE|11.2-release)
     RELEASE="11.2-RELEASE"
     ;;

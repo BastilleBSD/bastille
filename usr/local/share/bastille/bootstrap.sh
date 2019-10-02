@@ -318,6 +318,12 @@ HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 # Filter sane release names
 case "${1}" in
+11.3-RELEASE)
+    RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.3-RELEASE/"
+    bootstrap_directories
+    bootstrap_release
+    ;;
 11.2-RELEASE)
     RELEASE="${1}"
     UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.2-RELEASE/"
