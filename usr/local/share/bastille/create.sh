@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille create name release ip.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille create name release ip | interface.${COLOR_RESET}"
     exit 1
 }
 
@@ -43,7 +43,6 @@ running_jail() {
 validate_ip() {
     local IFS
     ip=${IP}
-    
     if expr "$ip" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
       IFS=.
       set $ip
@@ -55,7 +54,19 @@ validate_ip() {
       done
       echo -e "${COLOR_GREEN}Valid: ($ip).${COLOR_RESET}"
     else
+      echo -e "${COLOR_RED}Invalid: ($ip).${COLOR_RESET}"
       exit 1
+    fi
+}
+
+validate_netif() {
+    local LIST_INTERFACES=$(ifconfig -l)
+    interface=${INTERFACE}
+    if echo "${LIST_INTERFACES}" | grep -qwo "${INTERFACE}"; then
+        echo -e "${COLOR_GREEN}Valid: ($interface).${COLOR_RESET}"
+    else
+        echo -e "${COLOR_RED}Invalid: ($interface).${COLOR_RESET}"
+        exit 1
     fi
 }
 
@@ -100,6 +111,9 @@ create_jail() {
         if [ ! -z ${bastille_jail_loopback} ] && [ -z ${bastille_jail_external} ]; then
             local bastille_jail_conf_interface=${bastille_jail_interface}
         fi
+        if [ ! -z  ${INTERFACE} ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
 echo -e "interface = ${bastille_jail_conf_interface};\nhost.hostname = ${NAME};\nexec.consolelog = \
 ${bastille_jail_log};\npath = ${bastille_jail_path};\nip6 = \
 disable;\nsecurelevel = 2;\ndevfs_ruleset = 4;\nenforce_statfs = \
@@ -115,6 +129,9 @@ fi
     echo
     echo -e "${COLOR_GREEN}NAME: ${NAME}.${COLOR_RESET}"
     echo -e "${COLOR_GREEN}IP: ${IP}.${COLOR_RESET}"
+    if [ ! -z  ${INTERFACE} ]; then
+        echo -e "${COLOR_GREEN}INTERFACE: ${INTERFACE}.${COLOR_RESET}"
+    fi
     echo -e "${COLOR_GREEN}RELEASE: ${RELEASE}.${COLOR_RESET}"
     echo
 
@@ -169,7 +186,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 3 ] || [ $# -lt 3 ]; then
+if [ $# -gt 4 ] || [ $# -lt 3 ]; then
     usage
 fi
 
@@ -181,6 +198,7 @@ fi
 NAME="$1"
 RELEASE="$2"
 IP="$3"
+INTERFACE="$4"
 
 ## verify release
 case "${RELEASE}" in
@@ -225,8 +243,15 @@ if running_jail ${NAME}; then
 fi
 
 ## check if ip address is valid
-if ! validate_ip ${IP}; then
-    echo -e "${COLOR_RED}Invalid: ($ip).${COLOR_RESET}"
+if [ ! -z ${IP} ]; then
+    validate_ip
+else
+    usage
 fi
 
-create_jail ${NAME} ${RELEASE} ${IP}
+## check if interface is valid
+if [ ! -z  ${INTERFACE} ]; then
+    validate_netif
+fi
+
+create_jail ${NAME} ${RELEASE} ${IP} ${INTERFACE}

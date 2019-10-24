@@ -85,7 +85,7 @@ Available Commands:
   console     Console into a running container.
   cp          cp(1) files from host to targeted container(s).
   create      Create a new container.
-  destroy     Destroy a stopped container.
+  destroy     Destroy a stopped container or a FreeBSD release.
   help        Help about any command
   htop        Interactive process viewer (requires htop).
   list        List containers (running and stopped).
