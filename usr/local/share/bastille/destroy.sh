@@ -59,17 +59,46 @@ destroy_jail() {
             fi
         fi
 
-        ## removing all flags
-        chflags -R noschg ${bastille_jail_base}
+        if [ -d "${bastille_jail_base}" ]; then
+            ## removing all flags
+            chflags -R noschg ${bastille_jail_base}
 
-        ## remove jail base
-        rm -rf ${bastille_jail_base}
+            ## remove jail base
+            rm -rf ${bastille_jail_base}
+        fi
 
         ## archive jail log
         if [ -f "${bastille_jail_log}" ]; then
             mv ${bastille_jail_log} ${bastille_jail_log}-$(date +%F)
             echo -e "${COLOR_GREEN}Note: jail console logs archived.${COLOR_RESET}"
             echo -e "${COLOR_GREEN}${bastille_jail_log}-$(date +%F)${COLOR_RESET}"
+        fi
+        echo
+    fi
+}
+
+destroy_rel() {
+    bastille_rel_base="${bastille_releasesdir}/${NAME}"  ## dir
+
+    if [ ! -d "${bastille_rel_base}" ]; then
+        echo -e "${COLOR_RED}Release base not found.${COLOR_RESET}"
+        exit 1
+    fi
+
+    if [ -d "${bastille_rel_base}" ]; then
+        echo -e "${COLOR_GREEN}Deleting base: ${NAME}.${COLOR_RESET}"
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${NAME}
+            fi
+        fi
+
+        if [ -d "${bastille_rel_base}" ]; then
+            ## removing all flags
+            chflags -R noschg ${bastille_rel_base}
+
+            ## remove jail base
+            rm -rf ${bastille_rel_base}
         fi
         echo
     fi
@@ -88,4 +117,9 @@ fi
 
 NAME="$1"
 
-destroy_jail
+## check what should we clean
+if echo "${NAME}" | grep -qwE '^([0-9]{1,2})\.[0-9]-RELEASE$'; then
+    destroy_rel
+else
+    destroy_jail
+fi

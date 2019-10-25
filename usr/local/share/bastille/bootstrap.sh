@@ -43,6 +43,29 @@ help|-h|--help)
     ;;
 esac
 
+# Validate ZFS parameters first.
+if [ "${bastille_zfs_enable}" = "YES" ]; then
+    ## check for the ZFS pool and bastille prefix
+    if [ -z "${bastille_zfs_zpool}" ]; then
+        echo -e "${COLOR_RED}ERROR: Missing ZFS parameters, see bastille_zfs_zpool.${COLOR_RESET}"
+        exit 1
+	elif [ -z "${bastille_zfs_prefix}" ]; then
+        echo -e "${COLOR_RED}ERROR: Missing ZFS parameters, see bastille_zfs_prefix.${COLOR_RESET}"
+        exit 1
+    elif ! zfs list "${bastille_zfs_zpool}" > /dev/null 2>&1; then
+        echo -e "${COLOR_RED}ERROR: ${bastille_zfs_zpool} is not a ZFS pool.${COLOR_RESET}"
+        exit 1
+    fi
+
+    ## check for the ZFS dataset prefix if already exist
+	if [ -d "/${bastille_zfs_zpool}/${bastille_zfs_prefix}" ]; then
+        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" > /dev/null 2>&1; then
+            echo -e "${COLOR_RED}ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset.${COLOR_RESET}"
+            exit 1
+        fi
+    fi
+fi
+
 bootstrap_network_interfaces() {
 
     ## test for both options empty
@@ -160,6 +183,15 @@ bootstrap_directories() {
         else
             mkdir -p "${bastille_cachedir}/${RELEASE}"
         fi
+    ## create subsequent cache/XX.X-RELEASE datasets
+    elif [ ! -d "${bastille_cachedir}/${RELEASE}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_cachedir}/${RELEASE} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}
+            fi
+        else
+            mkdir -p "${bastille_cachedir}/${RELEASE}"
+        fi
     fi
 
     ## ${bastille_jailsdir}
@@ -201,10 +233,19 @@ bootstrap_directories() {
             if [ ! -z "${bastille_zfs_zpool}" ]; then
                 zfs create ${bastille_zfs_options} -o mountpoint=${bastille_releasesdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases
                 zfs create ${bastille_zfs_options} -o mountpoint=${bastille_releasesdir}/${RELEASE} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}
-	        fi
+            fi
         else
             mkdir -p "${bastille_releasesdir}/${RELEASE}"
         fi
+    ## create subsequent releases/XX.X-RELEASE datasets
+    elif [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_releasesdir}/${RELEASE} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}
+            fi
+       else
+           mkdir -p "${bastille_releasesdir}/${RELEASE}"
+       fi
     fi
 }
 
@@ -216,20 +257,23 @@ bootstrap_release() {
     fi
 
     for _archive in ${bastille_bootstrap_archives}; do
+        ## check if the dist files already exists then extract
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-        fi
-    done
+        else
+           for _archive in ${bastille_bootstrap_archives}; do
+                ## fetch for missing dist files
+                if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
+                    fetch ${UPSTREAM_URL}/${_archive}.txz -o ${bastille_cachedir}/${RELEASE}/${_archive}.txz
+                fi
 
-    for _archive in ${bastille_bootstrap_archives}; do
-        if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            fetch ${UPSTREAM_URL}/${_archive}.txz -o ${bastille_cachedir}/${RELEASE}/${_archive}.txz
-        fi
-
-        if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
-            /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
+                ## extract the fetched dist files
+                if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
+                    echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
+                    /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
+                fi
+            done
         fi
     done
     echo
@@ -318,27 +362,33 @@ HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 # Filter sane release names
 case "${1}" in
+11.3-RELEASE)
+    RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.3-RELEASE"
+    bootstrap_directories
+    bootstrap_release
+    ;;
 11.2-RELEASE)
     RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.2-RELEASE/"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.2-RELEASE"
     bootstrap_directories
     bootstrap_release
     ;;
 12.0-RELEASE)
     RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.0-RELEASE/"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.0-RELEASE"
     bootstrap_directories
     bootstrap_release
     ;;
 11-stable-LAST)
     RELEASE="${1}"
-    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-11-stable-LAST/"
+    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-11-stable-LAST"
     bootstrap_directories
     bootstrap_release
     ;;
 12-stable-LAST)
     RELEASE="${1}"
-    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-12-stable-LAST/"
+    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-12-stable-LAST"
     bootstrap_directories
     bootstrap_release
     ;;

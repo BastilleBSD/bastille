@@ -47,13 +47,23 @@ if [ $# -gt 0 ]; then
         usage
         ;;
     release|releases)
-        find "${bastille_releasesdir}" -type d -maxdepth 1
+        REL_LIST=$(ls "${bastille_releasesdir}" | sed "s/\n//g")
+        for _REL in ${REL_LIST}; do
+            if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ]; then
+                echo "${bastille_releasesdir}/${_REL}"
+            fi
+        done
         ;;
     template|templates)
-	    find "${bastille_templatesdir}" -type d -maxdepth 2
+        find "${bastille_templatesdir}" -type d -maxdepth 2
         ;;
     jail|jails)
-        ls "${bastille_jailsdir}" | sed "s/\n//g"
+        JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+        for _JAIL in ${JAIL_LIST}; do
+            if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
+                echo "${_JAIL}"
+            fi
+        done
         ;;
     log|logs)
         find "${bastille_logsdir}" -type f -maxdepth 1
