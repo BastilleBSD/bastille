@@ -362,21 +362,39 @@ HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 # Filter sane release names
 case "${1}" in
-11.3-RELEASE)
-    RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.3-RELEASE"
-    bootstrap_directories
-    bootstrap_release
-    ;;
 11.2-RELEASE)
     RELEASE="${1}"
     UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.2-RELEASE"
     bootstrap_directories
     bootstrap_release
     ;;
+11.3-RELEASE)
+    RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.3-RELEASE"
+    bootstrap_directories
+    bootstrap_release
+    ;;
 12.0-RELEASE)
     RELEASE="${1}"
     UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.0-RELEASE"
+    bootstrap_directories
+    bootstrap_release
+    ;;
+12.1-RC1)
+    RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.1-RC1"
+    bootstrap_directories
+    bootstrap_release
+    ;;
+12.1-RC2)
+    RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.1-RC2"
+    bootstrap_directories
+    bootstrap_release
+    ;;
+12.1-RELEASE)
+    RELEASE="${1}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.1-RELEASE"
     bootstrap_directories
     bootstrap_release
     ;;
