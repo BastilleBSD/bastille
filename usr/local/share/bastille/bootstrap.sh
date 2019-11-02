@@ -262,10 +262,25 @@ bootstrap_release() {
             echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
         else
-           for _archive in ${bastille_bootstrap_archives}; do
+                ## get the manifest for dist files checksum validation
+                if [ ! -f "${bastille_cachedir}/${RELEASE}/MANIFEST" ]; then
+                    fetch ${UPSTREAM_URL}/MANIFEST -o ${bastille_cachedir}/${RELEASE}/MANIFEST
+                fi
+
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
                     fetch ${UPSTREAM_URL}/${_archive}.txz -o ${bastille_cachedir}/${RELEASE}/${_archive}.txz
+                fi
+
+                ## compare checksums on the fetched dist files
+                if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
+                    SHA256_DIST=$(grep -w "${_archive}.txz" ${bastille_cachedir}/${RELEASE}/MANIFEST | awk '{print $2}')
+                    SHA256_FILE=$(sha256 -q ${bastille_cachedir}/${RELEASE}/${_archive}.txz)
+                    if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
+                        echo -e "${COLOR_RED}Failed validation for ${_archive}.txz, please retry bootstrap!${COLOR_RESET}"
+                        rm ${bastille_cachedir}/${RELEASE}/${_archive}.txz
+                        exit 1
+                    fi
                 fi
 
                 ## extract the fetched dist files
@@ -273,7 +288,6 @@ bootstrap_release() {
                     echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
                     /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
                 fi
-            done
         fi
     done
     echo

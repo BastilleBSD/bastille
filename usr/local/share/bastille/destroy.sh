@@ -79,6 +79,11 @@ destroy_jail() {
 
 destroy_rel() {
     bastille_rel_base="${bastille_releasesdir}/${NAME}"  ## dir
+    ## check if this release have containers child
+    if grep -qwo "${NAME}" ${bastille_jailsdir}/*/fstab 2>/dev/null; then
+        echo -e "${COLOR_RED} ${NAME} base appears to have containers child.${COLOR_RESET}"
+        exit 1
+    fi
 
     if [ ! -d "${bastille_rel_base}" ]; then
         echo -e "${COLOR_RED}Release base not found.${COLOR_RESET}"
