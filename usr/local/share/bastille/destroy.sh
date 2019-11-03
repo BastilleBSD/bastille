@@ -55,6 +55,8 @@ destroy_jail() {
         echo -e "${COLOR_GREEN}Deleting Jail: ${NAME}.${COLOR_RESET}"
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ ! -z "${bastille_zfs_zpool}" ]; then
+                ## remove zfs datasets individually
+                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
                 zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
             fi
         fi
