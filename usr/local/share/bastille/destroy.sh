@@ -79,33 +79,42 @@ destroy_jail() {
 
 destroy_rel() {
     bastille_rel_base="${bastille_releasesdir}/${NAME}"  ## dir
+
     ## check if this release have containers child
-    if grep -qwo "${NAME}" ${bastille_jailsdir}/*/fstab 2>/dev/null; then
-        echo -e "${COLOR_RED} ${NAME} base appears to have containers child.${COLOR_RESET}"
-        exit 1
+    BASE_HASCHILD="0"
+	if [ -d "${bastille_jailsdir}" ]; then
+        JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+        for _jail in ${JAIL_LIST}; do
+            if grep -qwo "${NAME}" ${bastille_jailsdir}/${_jail}/fstab 2>/dev/null; then
+                echo -e "${COLOR_RED}Notice: (${_jail}) depends on ${NAME} base.${COLOR_RESET}"
+                BASE_HASCHILD="1"
+            fi
+        done
     fi
 
     if [ ! -d "${bastille_rel_base}" ]; then
         echo -e "${COLOR_RED}Release base not found.${COLOR_RESET}"
         exit 1
-    fi
-
-    if [ -d "${bastille_rel_base}" ]; then
-        echo -e "${COLOR_GREEN}Deleting base: ${NAME}.${COLOR_RESET}"
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${NAME}
+    else
+        if [ "${BASE_HASCHILD}" -eq "0" ]; then
+            echo -e "${COLOR_GREEN}Deleting base: ${NAME}.${COLOR_RESET}"
+            if [ "${bastille_zfs_enable}" = "YES" ]; then
+                if [ ! -z "${bastille_zfs_zpool}" ]; then
+                    zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${NAME}
+                fi
             fi
-        fi
 
-        if [ -d "${bastille_rel_base}" ]; then
-            ## removing all flags
-            chflags -R noschg ${bastille_rel_base}
+            if [ -d "${bastille_rel_base}" ]; then
+                ## removing all flags
+                chflags -R noschg ${bastille_rel_base}
 
-            ## remove jail base
-            rm -rf ${bastille_rel_base}
+                ## remove jail base
+                rm -rf ${bastille_rel_base}
+            fi
+            echo
+        else
+            echo -e "${COLOR_RED}Cannot destroy base with containers child.${COLOR_RESET}"
         fi
-        echo
     fi
 }
 
