@@ -204,20 +204,23 @@ INTERFACE="$4"
 
 ## verify release
 case "${RELEASE}" in
-11.3-RELEASE|11.3-release)
-    RELEASE="11.3-RELEASE"
+*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+## check for FreeBSD releases name
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+if [ -n "${NAME_VERIFY}" ]; then
+    RELEASE="${NAME_VERIFY}"
+else
+    usage
+fi
     ;;
-11.2-RELEASE|11.2-release)
-    RELEASE="11.2-RELEASE"
-    ;;
-12.0-RELEASE|12.0-release)
-    RELEASE="12.0-RELEASE"
-    ;;
-11-stable-LAST|11-STABLE-last|11-stable-last|11-STABLE-LAST)
-    RELEASE="11-stable-LAST"
-    ;;
-12-stable-LAST|12-STABLE-last|12-stable-last|12-STABLE-LAST)
-    RELEASE="12-stable-LAST"
+*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+## check for HardenedBSD releases name
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+if [ -n "${NAME_VERIFY}" ]; then
+    RELEASE="${NAME_VERIFY}"
+else
+    usage
+fi
     ;;
 *)
     echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"
