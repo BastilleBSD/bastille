@@ -55,6 +55,8 @@ destroy_jail() {
         echo -e "${COLOR_GREEN}Deleting Jail: ${NAME}.${COLOR_RESET}"
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ ! -z "${bastille_zfs_zpool}" ]; then
+                ## remove zfs datasets individually
+                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
                 zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
             fi
         fi
@@ -80,27 +82,41 @@ destroy_jail() {
 destroy_rel() {
     bastille_rel_base="${bastille_releasesdir}/${NAME}"  ## dir
 
+    ## check if this release have containers child
+    BASE_HASCHILD="0"
+	if [ -d "${bastille_jailsdir}" ]; then
+        JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+        for _jail in ${JAIL_LIST}; do
+            if grep -qwo "${NAME}" ${bastille_jailsdir}/${_jail}/fstab 2>/dev/null; then
+                echo -e "${COLOR_RED}Notice: (${_jail}) depends on ${NAME} base.${COLOR_RESET}"
+                BASE_HASCHILD="1"
+            fi
+        done
+    fi
+
     if [ ! -d "${bastille_rel_base}" ]; then
         echo -e "${COLOR_RED}Release base not found.${COLOR_RESET}"
         exit 1
-    fi
-
-    if [ -d "${bastille_rel_base}" ]; then
-        echo -e "${COLOR_GREEN}Deleting base: ${NAME}.${COLOR_RESET}"
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${NAME}
+    else
+        if [ "${BASE_HASCHILD}" -eq "0" ]; then
+            echo -e "${COLOR_GREEN}Deleting base: ${NAME}.${COLOR_RESET}"
+            if [ "${bastille_zfs_enable}" = "YES" ]; then
+                if [ ! -z "${bastille_zfs_zpool}" ]; then
+                    zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${NAME}
+                fi
             fi
-        fi
 
-        if [ -d "${bastille_rel_base}" ]; then
-            ## removing all flags
-            chflags -R noschg ${bastille_rel_base}
+            if [ -d "${bastille_rel_base}" ]; then
+                ## removing all flags
+                chflags -R noschg ${bastille_rel_base}
 
-            ## remove jail base
-            rm -rf ${bastille_rel_base}
+                ## remove jail base
+                rm -rf ${bastille_rel_base}
+            fi
+            echo
+        else
+            echo -e "${COLOR_RED}Cannot destroy base with containers child.${COLOR_RESET}"
         fi
-        echo
     fi
 }
 
@@ -118,8 +134,29 @@ fi
 NAME="$1"
 
 ## check what should we clean
-if echo "${NAME}" | grep -qwE '^([0-9]{1,2})\.[0-9]-RELEASE$'; then
+case "${NAME}" in
+*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+## check for FreeBSD releases name
+NAME_VERIFY=$(echo "${NAME}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+if [ -n "${NAME_VERIFY}" ]; then
+    NAME="${NAME_VERIFY}"
     destroy_rel
 else
-    destroy_jail
+    usage
 fi
+    ;;
+*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+## check for HardenedBSD releases name
+NAME_VERIFY=$(echo "${NAME}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+if [ -n "${NAME_VERIFY}" ]; then
+    NAME="${NAME_VERIFY}"
+    destroy_rel
+else
+    usage
+fi
+    ;;
+*)
+    ## just destroy a jail
+    destroy_jail
+    ;;
+esac

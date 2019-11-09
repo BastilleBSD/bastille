@@ -258,22 +258,75 @@ bootstrap_release() {
 
     for _archive in ${bastille_bootstrap_archives}; do
         ## check if the dist files already exists then extract
+        FETCH_VALIDATION="0"
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
+            if [ $? -ne 0 ]; then
+                echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
+                exit 1
+            fi
         else
-           for _archive in ${bastille_bootstrap_archives}; do
+                ## get the manifest for dist files checksum validation
+                if [ ! -f "${bastille_cachedir}/${RELEASE}/MANIFEST" ]; then
+                    fetch ${UPSTREAM_URL}/MANIFEST -o ${bastille_cachedir}/${RELEASE}/MANIFEST || FETCH_VALIDATION="1"
+                fi
+
+                if [ "${FETCH_VALIDATION}" -ne "0" ]; then
+                    ## perform cleanup only for stale/empty directories on failure
+                    if [ "${bastille_zfs_enable}" = "YES" ]; then
+                        if [ ! -z "${bastille_zfs_zpool}" ]; then
+                            if [ ! "$(ls -A ${bastille_cachedir}/${RELEASE})" ]; then
+                                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}
+                            fi
+                            if [ ! "$(ls -A ${bastille_releasesdir}/${RELEASE})" ]; then
+                                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}
+                            fi
+                            fi
+                        fi
+                        if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
+                            if [ ! "$(ls -A ${bastille_cachedir}/${RELEASE})" ]; then
+                                rm -rf ${bastille_cachedir}/${RELEASE}
+                            fi
+                        fi
+                        if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
+                            if [ ! "$(ls -A ${bastille_releasesdir}/${RELEASE})" ]; then
+                                rm -rf ${bastille_releasesdir}/${RELEASE}
+                            fi
+                        fi
+                        echo -e "${COLOR_RED}Bootstrap failed.${COLOR_RESET}"
+                        exit 1
+                    fi
+
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
                     fetch ${UPSTREAM_URL}/${_archive}.txz -o ${bastille_cachedir}/${RELEASE}/${_archive}.txz
+                    if [ $? -ne 0 ]; then
+                        ## alert only if unable to fetch additional dist files
+                        echo -e "${COLOR_RED}Failed to fetch ${_archive}.txz.${COLOR_RESET}"
+                    fi
+                fi
+
+                ## compare checksums on the fetched dist files
+                if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
+                    SHA256_DIST=$(grep -w "${_archive}.txz" ${bastille_cachedir}/${RELEASE}/MANIFEST | awk '{print $2}')
+                    SHA256_FILE=$(sha256 -q ${bastille_cachedir}/${RELEASE}/${_archive}.txz)
+                    if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
+                        echo -e "${COLOR_RED}Failed validation for ${_archive}.txz, please retry bootstrap!${COLOR_RESET}"
+                        rm ${bastille_cachedir}/${RELEASE}/${_archive}.txz
+                        exit 1
+                    fi
                 fi
 
                 ## extract the fetched dist files
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
                     echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
                     /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
+                    if [ $? -ne 0 ]; then
+                        echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
+                        exit 1
+                    fi
                 fi
-            done
         fi
     done
     echo
@@ -359,56 +412,33 @@ bootstrap_template() {
 
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
+RELEASE="${1}"
 
-# Filter sane release names
+## Filter sane release names
 case "${1}" in
-11.2-RELEASE)
-    RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.2-RELEASE"
+*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+## check for FreeBSD releases name
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+if [ -n "${NAME_VERIFY}" ]; then
+    RELEASE="${NAME_VERIFY}"
+    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
     bootstrap_directories
     bootstrap_release
+else
+    usage
+fi
     ;;
-11.3-RELEASE)
-    RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/11.3-RELEASE"
+*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+## check for HardenedBSD releases name
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+if [ -n "${NAME_VERIFY}" ]; then
+    RELEASE="${NAME_VERIFY}"
+    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
     bootstrap_directories
     bootstrap_release
-    ;;
-12.0-RELEASE)
-    RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.0-RELEASE"
-    bootstrap_directories
-    bootstrap_release
-    ;;
-12.1-RC1)
-    RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.1-RC1"
-    bootstrap_directories
-    bootstrap_release
-    ;;
-12.1-RC2)
-    RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.1-RC2"
-    bootstrap_directories
-    bootstrap_release
-    ;;
-12.1-RELEASE)
-    RELEASE="${1}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/12.1-RELEASE"
-    bootstrap_directories
-    bootstrap_release
-    ;;
-11-stable-LAST)
-    RELEASE="${1}"
-    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-11-stable-LAST"
-    bootstrap_directories
-    bootstrap_release
-    ;;
-12-stable-LAST)
-    RELEASE="${1}"
-    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-12-stable-LAST"
-    bootstrap_directories
-    bootstrap_release
+else
+    usage
+fi
     ;;
 http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_URL=${1}
