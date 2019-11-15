@@ -544,7 +544,7 @@ work as expected. This table outlines those requirements:
 | SUPPORTED | format           | example                                                        |
 |-----------|------------------|----------------------------------------------------------------|
 | PRE/CMD   | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh                            |
-| CONFIG    | path             | etc root usr                                                   |
+| OVERLAY   | paths (one/line) | etc root usr                                                   |
 | PKG       | port/pkg name(s) | vim-console zsh git-lite tree htop                             |
 | SYSRC     | sysrc command(s) | nginx_enable=YES                                               |
 
@@ -573,10 +573,11 @@ After populating `usr/local/` with custom config files that your jail will
 use, be sure to include `usr` in the template CONFIG definition. eg;
 
 ```shell
-echo "etc usr" > /usr/local/bastille/templates/base/CONFIG
+echo "etc" > /usr/local/bastille/templates/base/OVERLAY
+echo "usr" >> /usr/local/bastille/templates/base/OVERLAY
 ```
 
-The above example "etc usr" will include anything under "etc" and "usr" inside
+The above example will include anything under "etc" and "usr" inside
 the template. You do not need to list individual files. Just include the
 top-level directory name.
 
