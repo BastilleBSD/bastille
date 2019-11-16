@@ -91,7 +91,7 @@ set block-policy drop
 scrub in on $ext_if all fragment reassemble
 
 set skip on lo
-nat on $ext_if from lo1:network to any -> ($ext_if)
+nat on $ext_if from !($ext_if) -> ($ext_if:0)
 
 ## rdr example
 ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
