@@ -47,7 +47,6 @@ bastille_root_check
 . /usr/local/etc/bastille/bastille.conf
 . /usr/local/share/bastille/colors.pre.sh
 
-
 ## bastille_prefix should be 0750
 ## this restricts file system access to privileged users
 bastille_perms_check() {
@@ -63,7 +62,6 @@ bastille_perms_check() {
 }
 
 bastille_perms_check
-
 
 ## we only load the config if root_check passes
 . /usr/local/etc/bastille/bastille.conf
@@ -84,7 +82,7 @@ Available Commands:
   cmd         Execute arbitrary command on targeted container(s).
   console     Console into a running container.
   cp          cp(1) files from host to targeted container(s).
-  create      Create a new container.
+  create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
   help        Help about any command
   htop        Interactive process viewer (requires htop).
