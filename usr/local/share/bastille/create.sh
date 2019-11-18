@@ -192,6 +192,10 @@ EOF
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ ! -z "${bastille_zfs_zpool}" ]; then
                 ## perform release base replication
+
+                ## sane bastille zfs options 
+                ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
+
                 ## take a temp snapshot of the base release
                 SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
                 zfs snapshot ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}@${SNAP_NAME}
@@ -199,7 +203,7 @@ EOF
                 ## replicate the release base to the new thickjail and set the default mountpoint
                 zfs send -R ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}@${SNAP_NAME} | \
                 zfs receive ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
-                zfs set mountpoint=${bastille_jailsdir}/${NAME}/root ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
+                zfs set ${ZFS_OPTIONS} mountpoint=${bastille_jailsdir}/${NAME}/root ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
 
                 ## cleanup temp snapshots initially
                 zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}@${SNAP_NAME}
