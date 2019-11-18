@@ -85,7 +85,9 @@ create_jail() {
             if [ ! -z "${bastille_zfs_zpool}" ]; then
                 ## create required zfs datasets
                 zfs create ${bastille_zfs_options} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_jailsdir}/${NAME}/root ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
+                if [ -z "${THICK_JAIL}" ]; then
+                    zfs create ${bastille_zfs_options} -o mountpoint=${bastille_jailsdir}/${NAME}/root ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
+                fi
             fi
         else
             mkdir -p "${bastille_jailsdir}/${NAME}"
@@ -186,14 +188,39 @@ EOF
             fi
         done
     else
-        ## copy all files for thick jails
         echo -e "${COLOR_GREEN}Creating a thickjail, this may take a while...${COLOR_RESET}"
-        cp -a "${bastille_releasesdir}/${RELEASE}/" "${bastille_jail_path}"
-        if [ $? -ne 0 ]; then
-            ## notify and clean stale files/directories
-            echo -e "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
-            bastille destroy ${NAME}
-            exit 1
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                ## perform release base replication
+                ## take a temp snapshot of the base release
+                SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
+                zfs snapshot ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}@${SNAP_NAME}
+
+                ## replicate the release base to the new thickjail and set the default mountpoint
+                zfs send -R ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}@${SNAP_NAME} | \
+                zfs receive ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
+                zfs set mountpoint=${bastille_jailsdir}/${NAME}/root ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
+
+                ## cleanup temp snapshots initially
+                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}@${SNAP_NAME}
+                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root@${SNAP_NAME}
+
+                if [ $? -ne 0 ]; then
+                    ## notify and clean stale files/directories
+                    echo -e "${COLOR_RED}Failed release base replication, please retry create!${COLOR_RESET}"
+                    bastille destroy ${NAME}
+                    exit 1
+                fi
+            fi
+        else
+            ## copy all files for thick jails
+            cp -a "${bastille_releasesdir}/${RELEASE}/" "${bastille_jail_path}"
+            if [ $? -ne 0 ]; then
+                ## notify and clean stale files/directories
+                echo -e "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
+                bastille destroy ${NAME}
+                exit 1
+            fi
         fi
     fi
 
