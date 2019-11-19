@@ -292,6 +292,12 @@ case "${TYPE}" in
     ;;
 esac
 
+## don't allow for dots(.) in container names
+if [ $(echo "${NAME}" | grep "[.]") ]; then
+    echo -e "${COLOR_RED}Container names may not contain a dot(.)!${COLOR_RESET}"
+    exit 1
+fi
+
 ## verify release
 case "${RELEASE}" in
 *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)

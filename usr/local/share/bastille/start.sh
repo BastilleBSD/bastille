@@ -51,7 +51,7 @@ if [ "$1" = 'ALL' ]; then
     JAILS=$(/usr/local/bin/bastille list jails)
 fi
 if [ "$1" != 'ALL' ]; then
-    JAILS=$(/usr/local/bin/bastille list jails | grep "$1")
+    JAILS=$(/usr/local/bin/bastille list jails | grep -w "$1")
 fi
 
 for _jail in ${JAILS}; do

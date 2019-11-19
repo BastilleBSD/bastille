@@ -40,7 +40,7 @@ destroy_jail() {
     bastille_jail_base="${bastille_jailsdir}/${NAME}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
 
-    if [ $(jls name | grep ${NAME}) ]; then
+    if [ $(jls name | grep -w "${NAME}") ]; then
         echo -e "${COLOR_RED}Jail running.${COLOR_RESET}"
         echo -e "${COLOR_RED}See 'bastille stop ${NAME}'.${COLOR_RESET}"
         exit 1
