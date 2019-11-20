@@ -29,25 +29,25 @@ Usage:
   bastille command [ALL|glob] [args]
 
 Available Commands:
-  bootstrap   Bootstrap a FreeBSD release for jail base.
-  cmd         Execute arbitrary command on targeted jail(s).
-  console     Console into a running jail.
-  cp          cp(1) files from host to targeted jail(s).
-  create      Create a new jail.
-  destroy     Destroy a stopped jail.
+  bootstrap   Bootstrap a FreeBSD release for container base.
+  cmd         Execute arbitrary command on targeted container(s).
+  console     Console into a running container.
+  cp          cp(1) files from host to targeted container(s).
+  create      Create a new thin container or a thick container if -T|--thick option specified.
+  destroy     Destroy a stopped container or a FreeBSD release.
   help        Help about any command
   htop        Interactive process viewer (requires htop).
-  list        List jails (running and stopped).
-  pkg         Manipulate binary packages within targeted jail(s). See pkg(8).
-  restart     Restart a running jail.
+  list        List containers (running and stopped).
+  pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+  restart     Restart a running container.
   service     Manage services within targeted jail(s).
-  start       Start a stopped jail.
-  stop        Stop a running jail.
-  sysrc       Safely edit rc files within targeted jail(s).
-  template    Apply Bastille template to running jail(s).
+  start       Start a stopped container.
+  stop        Stop a running container.
+  sysrc       Safely edit rc files within targeted container(s).
+  template    Apply file templates to targeted jail(s).
   top         Display and update information about the top(1) cpu processes.
-  update      Update jail base -pX release.
-  upgrade     Upgrade jail release to X.Y-RELEASE.
+  update      Update container base -pX release.
+  upgrade     Upgrade container release to X.Y-RELEASE.
   verify      Compare release against a "known good" index.
   zfs         Manage (get|set) zfs attributes on targeted jail(s).
 
@@ -63,7 +63,11 @@ framework. This release is still considered beta.
 
 Network Requirements
 ====================
-In order to segregate jails from the network and from the world, Bastille
+Several networking options can be performed regarding the user needs.
+Basic jails can support IP alias networking, where the IP address is assigned
+to the host interface and used by the jail, generally known as "shared IP" based jails.
+
+However, in order to segregate jails from the network and from the world, Bastille
 attaches jails to a loopback interface only. The host system then acts as
 the firewall, permitting and denying traffic as needed.
 
@@ -252,6 +256,12 @@ IP: 10.17.89.10.
 
 This command will create a 12.0-RELEASE jail assigning the 10.17.89.10 ip
 address to the new system.
+
+Optionally `bastille create [ -T | --thick ]` will create a self contained Thickjail system instead.
+
+```shell
+ishmael ~ # bastille create -T folsom 12.0-RELEASE 10.17.89.10
+```
 
 I recommend using private (rfc1918) ip address ranges for your jails.
 These ranges include:

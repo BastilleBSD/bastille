@@ -51,7 +51,7 @@ if [ "$1" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
 if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
+    JAILS=$(jls name | grep -w "$1")
 fi
 
 for _jail in ${JAILS}; do

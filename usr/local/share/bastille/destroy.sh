@@ -40,7 +40,7 @@ destroy_jail() {
     bastille_jail_base="${bastille_jailsdir}/${NAME}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
 
-    if [ $(jls name | grep ${NAME}) ]; then
+    if [ $(jls name | grep -w "${NAME}") ]; then
         echo -e "${COLOR_RED}Jail running.${COLOR_RESET}"
         echo -e "${COLOR_RED}See 'bastille stop ${NAME}'.${COLOR_RESET}"
         exit 1
@@ -55,9 +55,10 @@ destroy_jail() {
         echo -e "${COLOR_GREEN}Deleting Jail: ${NAME}.${COLOR_RESET}"
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ ! -z "${bastille_zfs_zpool}" ]; then
-                ## remove zfs datasets individually
-                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
-                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
+                if [ ! -z "${NAME}" ]; then
+                    ## remove jail zfs dataset recursively
+                    zfs destroy -r ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
+                fi
             fi
         fi
 
