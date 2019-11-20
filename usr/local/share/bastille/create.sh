@@ -70,6 +70,23 @@ validate_netif() {
     fi
 }
 
+validate_netconf() {
+    if [ ! -z "${bastille_jail_external}" ]; then
+        break
+    elif [ ! -z ${bastille_jail_loopback} ] && [ -z ${bastille_jail_external} ]; then
+        if [ -z "${bastille_jail_interface}" ]; then
+            echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
+            exit 1
+        fi
+    elif [ -z ${bastille_jail_loopback} ] && [ ! -z ${bastille_jail_interface} ]; then
+        echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
+        exit 1
+    elif [ -z ${bastille_jail_external} ]; then
+        echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
+        exit 1
+    fi
+}
+
 create_jail() {
     bastille_jail_base="${bastille_jailsdir}/${NAME}/root/.bastille"  ## dir
     bastille_jail_template="${bastille_jailsdir}/${NAME}/root/.template"  ## dir
@@ -353,6 +370,8 @@ fi
 ## check if interface is valid
 if [ ! -z  ${INTERFACE} ]; then
     validate_netif
+else
+    validate_netconf
 fi
 
 create_jail ${NAME} ${RELEASE} ${IP} ${INTERFACE}
