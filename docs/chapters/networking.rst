@@ -79,7 +79,7 @@ First, create the loopback interface:
 .. code-block:: shell
 
   ishmael ~ # sysrc cloned_interfaces+=lo1
-  ishmael ~ # ifconfig_lo1_name="bastille0"
+  ishmael ~ # sysrc ifconfig_lo1_name="bastille0"
   ishmael ~ # service netif cloneup
   ishmael ~ # ifconfig bastille0 inet 10.17.89.10
 
