@@ -47,18 +47,29 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-if [ "$1" = 'ALL' ]; then
+TARGET="${1}"
+
+if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
-if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "$1")
+if [ "${TARGET}" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${TARGET}")
 fi
 
 for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
-    if [ ! -z ${bastille_jail_loopback} ]; then
-        pfctl -f /etc/pf.conf
+    ## test if not running
+    if [ ! $(jls name | grep -w "${_jail}") ]; then
+        echo -e "${COLOR_RED}[${_jail}]: Not started.${COLOR_RESET}"
+
+    ## test if running
+    elif [ $(jls name | grep -w "${_jail}") ]; then
+        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
+
+        ## update ${bastille_jail_loopback}:network with added/removed addresses
+        if [ ! -z ${bastille_jail_loopback} ]; then
+            pfctl -f /etc/pf.conf
+        fi
     fi
     echo
 done

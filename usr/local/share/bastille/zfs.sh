@@ -87,16 +87,18 @@ if [ -z "${bastille_zfs_zpool}" ]; then
     exit 1
 fi
 
-if [ $# -gt 3 ] || [ $# -lt 2 ]; then
+if [ $# -lt 2 ]; then
     usage
 fi
 
-if [ "$1" = 'ALL' ]; then
+TARGET="${1}"
+
+if [ "$TARGET" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
 
-if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
+if [ "$TARGET" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${1}")
 fi
 
 case "$2" in

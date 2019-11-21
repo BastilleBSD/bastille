@@ -42,20 +42,23 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+if [ $# -lt 2 ]; then
     usage
 fi
 
-if [ "$1" = 'ALL' ]; then
+TARGET=$1
+shift
+
+if [ "$TARGET" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
 
-if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
+if [ "$TARGET" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${1}")
 fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jexec -l ${_jail} /usr/sbin/service $2
+    jexec -l ${_jail} /usr/sbin/service $@
     echo
 done

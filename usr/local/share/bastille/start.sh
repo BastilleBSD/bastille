@@ -47,19 +47,26 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-if [ "$1" = 'ALL' ]; then
-    JAILS=$(/usr/local/bin/bastille list jails)
+TARGET="${1}"
+
+if [ "$TARGET" = 'ALL' ]; then
+    JAILS=$(bastille list jails)
 fi
-if [ "$1" != 'ALL' ]; then
-    JAILS=$(/usr/local/bin/bastille list jails | grep -w "$1")
+if [ "$TARGET" != 'ALL' ]; then
+    JAILS=$(bastille list jails | grep -w "$TARGET")
 fi
 
 for _jail in ${JAILS}; do
-    if [ $(jls name | grep ${_jail}) ]; then
+    ## test if running
+    if [ $(jls name | grep -w ${_jail}) ]; then
         echo -e "${COLOR_RED}[${_jail}]: Already started.${COLOR_RESET}"
-    elif [ ! $(jls name | grep ${_jail}) ]; then
+
+    ## test if not running
+    elif [ ! $(jls name | grep -w ${_jail}) ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
+
+        ## update ${bastille_jail_loopback}:network with added/removed addresses
         if [ ! -z ${bastille_jail_loopback} ]; then
             pfctl -f /etc/pf.conf
         fi
