@@ -114,7 +114,7 @@ Create the firewall rules:
 - Make sure to include the last line (`port ssh`) or you'll end up locked out.
 
 Note: if you have an existing firewall, the key lines for in/out traffic
-to jails are:
+to containers are:
 
 .. code-block:: shell
 
@@ -127,8 +127,8 @@ The `nat` routes traffic from the loopback interface to the external
 interface for outbound access.
 
 The `rdr pass ...` will redirect traffic from the host firewall on port X to
-the ip of Jail Y. The example shown redirects web traffic (80 & 443) to the
-jails at `10.17.89.45`.
+the ip of Container Y. The example shown redirects web traffic (80 & 443) to the
+containers at `10.17.89.45`.
 
 Finally, start up the firewall:
 

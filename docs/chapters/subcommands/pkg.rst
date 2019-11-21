@@ -2,7 +2,7 @@
 pkg
 ===
 
-To manage binary packages within the jail use `bastille pkg`.
+To manage binary packages within the container use `bastille pkg`.
 
 .. code-block:: shell
 

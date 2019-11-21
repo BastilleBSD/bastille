@@ -1,7 +1,7 @@
 restart
 =======
 
-To restart a jail you can use the `bastille restart` command.
+To restart a container you can use the `bastille restart` command.
 
 .. code-block:: shell
 

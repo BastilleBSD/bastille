@@ -2,7 +2,7 @@ create
 ======
 
 Bastille create uses any available bootstrapped release to create a
-lightweight jailed system. To create a jail simply provide a name,
+lightweight container system. To create a container simply provide a name,
 bootstrapped release and a private (rfc1918) IP address.
 
 - name
@@ -18,10 +18,10 @@ bootstrapped release and a private (rfc1918) IP address.
   NAME: folsom.
   IP: 10.17.89.10.
 
-This command will create a 11.3-RELEASE jail assigning the 10.17.89.10 ip
+This command will create a 11.3-RELEASE container assigning the 10.17.89.10 ip
 address to the new system.
 
-I recommend using private (rfc1918) ip address ranges for your jails.  These
+I recommend using private (rfc1918) ip address ranges for your container.  These
 ranges include:
 
 - 10.0.0.0/8

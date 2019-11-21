@@ -3,7 +3,7 @@ Template
 ========
 
 Bastille supports a templating system allowing you to apply files, pkgs and
-execute commands inside the jail automatically.
+execute commands inside the containers automatically.
 
 Currently supported template hooks are: `PRE`, `OVERLAY`, `PKG`, `SYSRC`, `CMD`.
 Planned template hooks include: `FSTAB`, `PF`, `LOG`.
@@ -48,20 +48,20 @@ Note: SYSRC requires that NO quotes be used or that quotes (`"`) be escaped.
 ie; `\"`)
 
 In addition to supporting template hooks, Bastille supports overlaying
-files into the jail. This is done by placing the files in their full path,
+files into the container. This is done by placing the files in their full path,
 using the template directory as "/".
 
 An example here may help. Think of `bastille/templates/username/base`, our
 example template, as the root of our filesystem overlay. If you create an
 `etc/hosts` or `etc/resolv.conf` *inside* the base template directory, these
-can be overlayed into your jail.
+can be overlayed into your container.
 
 Note: due to the way FreeBSD segregates user-space, the majority of your
 overlayed template files will be in `usr/local`. The few general
 exceptions are the `etc/hosts`, `etc/resolv.conf`, and
 `etc/rc.conf.local`.
 
-After populating `usr/local/` with custom config files that your jail will
+After populating `usr/local/` with custom config files that your container will
 use, be sure to include `usr` in the template OVERLAY definition. eg;
 
 .. code-block:: shell
@@ -76,7 +76,7 @@ line.
 Applying Templates
 ------------------
 
-Jails must be running to apply templates.
+Containers must be running to apply templates.
 
 Bastille includes a `template` command. This command requires a target and a
 template name. As covered in the previous section, template names correspond to

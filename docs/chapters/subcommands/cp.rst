@@ -1,7 +1,7 @@
 cp
 ==
 
-This command allows efficiently copying files from host to jail(s).
+This command allows efficiently copying files from host to container(s).
 
 .. code-block:: shell
 

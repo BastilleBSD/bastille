@@ -1,3 +1,7 @@
+Note: FreeBSD introduced container technology twenty years ago, long before the
+industry standardized on the term "container". Internally, FreeBSD refers to
+these containers as "jails".
+
 jail.conf
 =========
 In this section we'll look at the default config for a new container. The
