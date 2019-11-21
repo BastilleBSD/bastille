@@ -87,11 +87,11 @@ expectation is that you can fully leverage the pkg manager. This means,
 
   ishmael ~ # bastille pkg ALL upgrade
   [bastion]:
-  Updating iniquity.io repository catalogue...
+  Updating pkg.bastillebsd.org repository catalogue...
   [bastion] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
   [bastion] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
   Processing entries: 100%
-  iniquity.io repository update completed. 493 packages processed.
+  pkg.bastillebsd.org repository update completed. 493 packages processed.
   All repositories are up to date.
   Checking for upgrades (1 candidates): 100%
   Processing candidates (1 candidates): 100%
@@ -99,11 +99,11 @@ expectation is that you can fully leverage the pkg manager. This means,
   Your packages are up to date.
   
   [unbound0]:
-  Updating iniquity.io repository catalogue...
+  Updating pkg.bastillebsd.org repository catalogue...
   [unbound0] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
   [unbound0] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
   Processing entries: 100%
-  iniquity.io repository update completed. 493 packages processed.
+  pkg.bastillebsd.org repository update completed. 493 packages processed.
   All repositories are up to date.
   Checking for upgrades (0 candidates): 100%
   Processing candidates (0 candidates): 100%
@@ -111,11 +111,11 @@ expectation is that you can fully leverage the pkg manager. This means,
   Your packages are up to date.
   
   [unbound1]:
-  Updating iniquity.io repository catalogue...
+  Updating pkg.bastillebsd.org repository catalogue...
   [unbound1] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
   [unbound1] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
   Processing entries: 100%
-  iniquity.io repository update completed. 493 packages processed.
+  pkg.bastillebsd.org repository update completed. 493 packages processed.
   All repositories are up to date.
   Checking for upgrades (0 candidates): 100%
   Processing candidates (0 candidates): 100%
@@ -123,11 +123,11 @@ expectation is that you can fully leverage the pkg manager. This means,
   Your packages are up to date.
   
   [squid]:
-  Updating iniquity.io repository catalogue...
+  Updating pkg.bastillebsd.org repository catalogue...
   [squid] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
   [squid] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
   Processing entries: 100%
-  iniquity.io repository update completed. 493 packages processed.
+  pkg.bastillebsd.org repository update completed. 493 packages processed.
   All repositories are up to date.
   Checking for upgrades (0 candidates): 100%
   Processing candidates (0 candidates): 100%
@@ -135,11 +135,11 @@ expectation is that you can fully leverage the pkg manager. This means,
   Your packages are up to date.
   
   [nginx]:
-  Updating iniquity.io repository catalogue...
+  Updating pkg.bastillebsd.org repository catalogue...
   [nginx] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
   [nginx] Fetching packagesite.txz: 100%  118 KiB 121.3kB/s    00:01
   Processing entries: 100%
-  iniquity.io repository update completed. 493 packages processed.
+  pkg.bastillebsd.org repository update completed. 493 packages processed.
   All repositories are up to date.
   Checking for upgrades (1 candidates): 100%
   Processing candidates (1 candidates): 100%

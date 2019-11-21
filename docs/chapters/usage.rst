@@ -1,32 +1,37 @@
-=====
 Usage
 =====
 
 .. code-block:: shell
 
     ishmael ~ # bastille -h
+    Bastille is an open-source system for automating deployment and management
+    of containerized applications on FreeBSD.
+
     Usage:
-      bastille command [ALL|glob] [args]
-    
+    bastille command [ALL|glob] [args]
+
     Available Commands:
-      bootstrap   Bootstrap a FreeBSD release for jail base.
-      cmd         Execute arbitrary command on targeted jail(s).
-      console     Console into a running jail.
-      cp          cp(1) files from host to targeted jail(s).
-      create      Create a new jail.
-      destroy     Destroy a stopped jail.
+      bootstrap   Bootstrap a FreeBSD release for container base.
+      cmd         Execute arbitrary command on targeted container(s).
+      console     Console into a running container.
+      cp          cp(1) files from host to targeted container(s).
+      create      Create a new container.
+      destroy     Destroy a stopped container or a FreeBSD release.
       help        Help about any command
       htop        Interactive process viewer (requires htop).
-      list        List jails (running and stopped).
-      pkg         Manipulate binary packages within targeted jail(s). See pkg(8).
-      restart     Restart a running jail.
-      start       Start a stopped jail.
-      stop        Stop a running jail.
-      sysrc       Safely edit rc files within targeted jail(s).
-      template    Apply Bastille template to running jail(s).
+      list        List containers (running and stopped).
+      pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+      restart     Restart a running container.
+      service     Manage services within targeted jail(s).
+      start       Start a stopped container.
+      stop        Stop a running container.
+      sysrc       Safely edit rc files within targeted container(s).
+      template    Apply file templates to targeted jail(s).
       top         Display and update information about the top(1) cpu processes.
-      update      Update jail base -pX release.
-      upgrade     Upgrade jail release to X.Y-RELEASE.
+      update      Update container base -pX release.
+      upgrade     Upgrade container release to X.Y-RELEASE.
+      verify      Compare release against a "known good" index.
+      zfs         Manage (get|set) zfs attributes on targeted jail(s).
     
     Use "bastille -v|--version" for version information.
     Use "bastille command -h|--help" for more information about a command.

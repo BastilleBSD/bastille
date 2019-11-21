@@ -14,6 +14,7 @@ Bastille sub-commands
    htop
    pkg
    restart
+   service
    start
    stop
    sysrc

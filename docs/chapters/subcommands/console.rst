@@ -1,14 +1,14 @@
 console
 =======
 
-This sub-command launches a login shell into the jail. Default is
-password-less root login.
+This sub-command launches a login shell into the jail. Default is password-less
+root login.
 
 .. code-block:: shell
 
   ishmael ~ # bastille console folsom
   [folsom]:
-  FreeBSD 11.2-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
+  FreeBSD 12.1-RELEASE-p1 GENERIC
   
   Welcome to FreeBSD!
   
@@ -31,6 +31,6 @@ password-less root login.
   Edit /etc/motd to change this login announcement.
   root@folsom:~ #
 
-At this point you are logged in to the jail and have full shell access.
-The system is yours to use and/or abuse as you like. Any changes made
-inside the jail are limited to the jail. 
+At this point you are logged in to the jail and have full shell access.  The
+system is yours to use and/or abuse as you like. Any changes made inside the
+jail are limited to the jail.
