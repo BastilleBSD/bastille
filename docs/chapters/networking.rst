@@ -31,9 +31,9 @@ IP addresses is no problem.
 Bastille allows you to define the interface you want the IP attached to when
 you create it. An example:
 
-```shell
-bastille create alcatraz 12.1-RELEASE 192.168.1.50 em0
-```
+.. code-block:: shell
+
+  bastille create alcatraz 12.1-RELEASE 192.168.1.50 em0
 
 When the `alcatraz` container is started it will add `192.168.1.60` as an IP
 alias to the `em0` interface. It will then simply be another member of the
