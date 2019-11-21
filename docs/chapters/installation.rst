@@ -14,14 +14,17 @@ To install from the FreeBSD package repository:
 
 PKG
 ---
-```shell
-pkg install bastille
-```
+
+.. code-block:: shell
+
+  pkg install bastille
+
 
 To install from source (don't worry, no compiling):
 
 ports
 -----
-```shell
-make -C /usr/ports/sysutils/bastille install clean
-```
+
+.. code-block:: shell
+
+  make -C /usr/ports/sysutils/bastille install clean
