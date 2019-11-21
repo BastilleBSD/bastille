@@ -456,3 +456,9 @@ network)
     usage
     ;;
 esac
+
+if [ ! -z "${2}" ]; then
+    if [ "${2}" = 'update' ]; then
+        bastille update "${RELEASE}"
+    fi
+fi
