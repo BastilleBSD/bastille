@@ -1,7 +1,7 @@
 stop
 ====
 
-To stop a jail you can use the `bastille stop` command.
+To stop a container you can use the `bastille stop` command.
 
 .. code-block:: shell
 

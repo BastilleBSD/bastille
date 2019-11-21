@@ -1,50 +1,48 @@
-=========
 Targeting
 =========
 
 Bastille uses a `command-target-args` syntax, meaning that each command
-requires a target. Targets are usually jails, but can also be releases.
+requires a target. Targets are usually containers, but can also be releases.
 
-Targeting a jail is done by providing the exact jail name.
+Targeting a containers is done by providing the exact containers name.
 
 Targeting a release is done by providing the release name. (Note: do note
 include the `-pX` point-release version.)
 
-Bastille includes a pre-defined keyword ALL to target all running jails.
+Bastille includes a pre-defined keyword ALL to target all running containers.
 
 In the future I would like to support more options, including globbing, lists
 and regular-expressions.
 
-Examples: Jails
-===============
+Examples: Containers
+====================
 
 .. code-block:: shell
 
   ishmael ~ # bastille ...
 
-
 +-----------+--------+------------------+-------------------------------------------------------------+
 | command   | target | args             | description                                                 |
 +===========+========+==================+=============================================================+
-| cmd       | ALL    | 'sockstat -4'    | execute `sockstat -4` in ALL jails (listening ip4 sockets)  |
+| cmd       | ALL    | 'sockstat -4'    | execute `sockstat -4` in ALL containers (ip4 sockets)       |
 +-----------+--------+-----+------------+-------------------------------------------------------------+ 
 | console   | mariadb02    | ---        | console (shell) access to mariadb02                         |
 +----+------+----+---------+------------+--------------+----------------------------------------------+ 
-| pkg       | web01  | 'install nginx'  | install nginx package in web01 jail                         |
+| pkg       | web01  | 'install nginx'  | install nginx package in web01 container                    |
 +-----------+--------+------------------+-------------------------------------------------------------+
-| pkg       | ALL    | upgrade          | upgrade packages in ALL jails                               |
+| pkg       | ALL    | upgrade          | upgrade packages in ALL containers                          |
 +-----------+--------+------------------+-------------------------------------------------------------+ 
-| pkg       | ALL    | audit            | (CVE) audit packages in ALL jails                           |
+| pkg       | ALL    | audit            | (CVE) audit packages in ALL containers                      |
 +-----------+--------+------------------+-------------------------------------------------------------+ 
-| sysrc     | web01  | nginx_enable=YES | execute `sysrc nginx_enable=YES` in web01 jail              |
+| sysrc     | web01  | nginx_enable=YES | execute `sysrc nginx_enable=YES` in web01 container         |
 +-----------+--------+------------------+-------------------------------------------------------------+ 
-| template  | ALL    | base             | apply `base` template to ALL jails                          |
+| template  | ALL    | username/base    | apply `username/base` template to ALL containers            |
 +-----------+--------+------------------+-------------------------------------------------------------+ 
-| start     | web02  | ---              | start web02 jail                                            |
+| start     | web02  | ---              | start web02 container                                       |
 +-----------+--------+-----+------------+-------------------------------------------------------------+ 
-| cp | bastion03 | /tmp/resolv.conf-cf etc/resolv.conf | copy host-path to jail-path in bastion03     |
+| cp | bastion03 | /tmp/resolv.conf-cf etc/resolv.conf | copy host-path to container-path in bastion03|
 +----+------+----+---+------------------+--------------+----------------------------------------------+ 
-| create    | folsom | 12.0-RELEASE 10.10.10.10        | create v12.0 jail named `folsom` with IP     |
+| create    | folsom | 12.0-RELEASE 10.17.89.10        | create 12.0 container named `folsom` with IP |
 +-----------+--------+------------------+--------------+----------------------------------------------+
 
 
@@ -55,15 +53,14 @@ Examples: Releases
 
   ishmael ~ # bastille ...
 
-
 +-----------+--------------+--------------+-------------------------------------------------------------+
 | command   | target       | args         | description                                                 |
 +===========+==============+==============+=============================================================+
 | bootstrap | 12.0-RELEASE | ---          | bootstrap 12.0-RELEASE release                              |
 +-----------+--------------+--------------+-------------------------------------------------------------+ 
-| update    | 11.2-RELEASE | ---          | update 11.2-RELEASE release                                 |
+| update    | 11.3-RELEASE | ---          | update 11.2-RELEASE release                                 |
 +-----------+--------------+--------------+-------------------------------------------------------------+ 
-| upgrade   | 11.1-RELEASE | 11.2-RELEASE | update 11.2-RELEASE release                                 |
+| upgrade   | 11.2-RELEASE | 11.3-RELEASE | update 11.2-RELEASE release                                 |
 +-----------+--------------+--------------+-------------------------------------------------------------+ 
-| verify    | 11.2-RELEASE | ---          | update 11.2-RELEASE release                                 |
+| verify    | 11.3-RELEASE | ---          | update 11.2-RELEASE release                                 |
 +-----------+--------------+--------------+-------------------------------------------------------------+ 

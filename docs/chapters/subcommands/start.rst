@@ -1,7 +1,7 @@
 start
 =====
 
-To start a jail you can use the `bastille start` command.
+To start a container you can use the `bastille start` command.
 
 .. code-block:: shell
 

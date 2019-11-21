@@ -2,7 +2,7 @@
 cmd
 ===
 
-To execute commands within the jail you can use `bastille cmd`.
+To execute commands within the container you can use `bastille cmd`.
 
 .. code-block:: shell
 

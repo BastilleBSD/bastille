@@ -17,6 +17,7 @@ https://docs.bastillebsd.org.
    chapters/targeting
    chapters/subcommands/index
    chapters/template
+   chapters/jail-config
 
    copyright
 

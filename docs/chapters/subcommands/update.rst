@@ -2,8 +2,8 @@
 update
 ======
 
-The `update` command targets a release instead of a jail. Because every jail is
-based on a release, when the release is updated all the jails are automatically
+The `update` command targets a release instead of a container. Because every container is
+based on a release, when the release is updated all the containers are automatically
 updated as well.
 
 If no updates are available, a message will be shown:
@@ -38,4 +38,4 @@ The older the release, however, the more updates will be available:
   The following files will be added as part of updating to 10.4-RELEASE-p13:
   ...[snip]...
 
-To be safe, you may want to restart any jails that have been updated live.
+To be safe, you may want to restart any containers that have been updated live.

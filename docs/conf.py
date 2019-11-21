@@ -12,9 +12,9 @@ copyright = '2018-2019, Christer Edwards'
 author = 'Christer Edwards'
 
 # The short X.Y version
-version = '0.3.20181124'
+version = '0.4.20191025'
 # The full version, including alpha/beta/rc tags
-release = '0.3.20181124-beta'
+release = '0.4.20191025-beta'
 
 
 # -- General configuration ---------------------------------------------------
@@ -67,7 +67,7 @@ man_pages = [
 
 texinfo_documents = [
     (master_doc, 'Bastille', 'Bastille Documentation',
-     author, 'Bastille', 'Bastille is a jail automation framework that allows you to quickly and easily create and manage FreeBSD jails.',
+     author, 'Bastille', 'Bastille is an open-source system for automating deployment and management of containerized applications on FreeBSD.',
      'Miscellaneous'),
 ]
 
