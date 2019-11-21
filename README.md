@@ -71,7 +71,9 @@ First, create the loopback interface:
 
 ```shell
 ishmael ~ # sysrc cloned_interfaces+=lo1
+ishmael ~ # sysrc ifconfig_lo1_name="bastille0"
 ishmael ~ # service netif cloneup
+ishmael ~ # ifconfig bastille0 inet 10.17.89.10
 ```
 
 Second, enable the firewall:
@@ -91,7 +93,7 @@ set block-policy drop
 scrub in on $ext_if all fragment reassemble
 
 set skip on lo
-nat on $ext_if from lo1:network to any -> ($ext_if)
+nat on $ext_if from bastille0:network to any -> ($ext_if)
 
 ## rdr example
 ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
@@ -109,7 +111,7 @@ out.
 Note: if you have an existing firewall, the key lines for in/out traffic to jails are:
 
 ```
-nat on $ext_if from lo1:network to any -> ($ext_if)
+nat on $ext_if from bastille0:network to any -> ($ext_if)
 
 ## rdr example
 ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
