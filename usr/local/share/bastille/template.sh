@@ -161,8 +161,8 @@ for _jail in ${JAILS}; do
     ## SERVICE
     if [ -s "${bastille_template_SERVICE}" ]; then
         echo -e "${COLOR_GREEN}Managing services.${COLOR_RESET}"
-        while read _sysrc; do
-            jexec -l ${_jail} /usr/sbin/service ${_sysrc} || exit 1
+        while read _service; do
+            jexec -l ${_jail} /usr/sbin/service ${_service} || exit 1
         done < "${bastille_template_SERVICE}"
     fi
 
