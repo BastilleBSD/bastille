@@ -35,7 +35,7 @@ you create it. An example:
 
   bastille create alcatraz 12.1-RELEASE 192.168.1.50 em0
 
-When the `alcatraz` container is started it will add `192.168.1.60` as an IP
+When the `alcatraz` container is started it will add `192.168.1.50` as an IP
 alias to the `em0` interface. It will then simply be another member of the
 hosts network. Other networked systems (firewall permitting) should be able to
 reach services at that address.
@@ -81,6 +81,7 @@ First, create the loopback interface:
   ishmael ~ # sysrc cloned_interfaces+=lo1
   ishmael ~ # ifconfig_lo1_name="bastille0"
   ishmael ~ # service netif cloneup
+  ishmael ~ # ifconfig bastille0 inet 10.17.89.10
 
 Second, enable the firewall:
 
