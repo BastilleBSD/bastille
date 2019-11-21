@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille cp [ALL|glob] '/path/to/source' 'path/to/dest'.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille cp [ALL|glob] /path/to/source path/to/dest.${COLOR_RESET}"
     exit 1
 }
 
@@ -47,16 +47,20 @@ if [ $# -gt 3 ] || [ $# -lt 3 ]; then
     usage
 fi
 
-if [ "$1" = 'ALL' ]; then
+TARGET="${1}"
+CPSOURCE="${2}"
+CPDEST="${3}"
+
+if [ "$TARGET" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
-if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
+if [ "$TARGET" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${1}")
 fi
 
 for _jail in ${JAILS}; do
     bastille_jail_path="$(jls -j "${_jail}" path)"
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    cp -av "$2" "${bastille_jail_path}/$3"
+    cp -av "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
     echo
 done

@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille bootstrap [release|template].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille bootstrap [release|template] [update].${COLOR_RESET}"
     exit 1
 }
 
@@ -337,6 +337,18 @@ bootstrap_release() {
 }
 
 bootstrap_template() {
+
+    ## ${bastille_templatesdir}
+    if [ ! -d "${bastille_templatesdir}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_templatesdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates
+            fi
+        else
+            mkdir -p "${bastille_templatesdir}"
+        fi
+    fi
+
     ## define basic variables
     _url=${BASTILLE_TEMPLATE_URL}
     _user=${BASTILLE_TEMPLATE_USER}
@@ -382,7 +394,9 @@ bootstrap_template() {
         echo -e "${COLOR_GREEN}Detected OVERLAY hook.${COLOR_RESET}"
         while read _dir; do
             echo -e "${COLOR_GREEN}[${_dir}]:${COLOR_RESET}"
-            tree -a ${_template}/${_dir}
+            if [ -x $(which tree) ]; then
+                tree -a ${_template}/${_dir}
+            fi
         done < ${_template}/OVERLAY
         echo
     fi
@@ -391,7 +405,9 @@ bootstrap_template() {
         echo -e "${COLOR_YELLOW}CONFIG deprecated; rename to OVERLAY.${COLOR_RESET}"
         while read _dir; do
             echo -e "${COLOR_GREEN}[${_dir}]:${COLOR_RESET}"
-            tree -a ${_template}/${_dir}
+            if [ -x $(which tree) ]; then
+                tree -a ${_template}/${_dir}
+            fi
         done < ${_template}/CONFIG
     fi
 
@@ -446,7 +462,6 @@ http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     echo -e "${COLOR_GREEN}Template: ${1}${COLOR_RESET}"
     echo
-    bootstrap_directories
     bootstrap_template
     ;;
 network)

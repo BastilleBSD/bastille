@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille template [ALL|glob] template.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille template TARGET template/path.${COLOR_RESET}"
     exit 1
 }
 
@@ -47,15 +47,23 @@ if [ $# -gt 2 ] || [ $# -lt 2 ]; then
     usage
 fi
 
-if [ "$1" = 'ALL' ]; then
+TARGET="${1}"
+
+if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
-if [ "$1" != 'ALL' ]; then
-    JAILS=$(jls name | grep -E "(^|\b)${1}($|\b)")
+if [ "${TARGET}" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${TARGET}")
+fi
+
+TEMPLATE="${2}"
+
+if [ ! -d "${bastille_templatesdir}"/"${TEMPLATE}" ]; then
+    echo -e "${COLOR_RED}${TEMPLATE} not found.${COLOR_RESET}"
+    exit 1
 fi
 
 ## global variables
-TEMPLATE=$2
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
 bastille_template_TARGET=${bastille_template}/TARGET
 bastille_template_INCLUDE=${bastille_template}/INCLUDE
@@ -76,7 +84,7 @@ for _jail in ${JAILS}; do
 
     ## TARGET
     if [ -s "${bastille_template_TARGET}" ]; then
-        if [ $(grep -E "(^|\b)\!${_jail}($|\b)" ${bastille_template_TARGET}) ]; then
+        if [ $(grep -w "${_jail}" ${bastille_template_TARGET}) ]; then
             echo -e "${COLOR_GREEN}TARGET: !${_jail}.${COLOR_RESET}"
 	    echo
             continue
@@ -90,7 +98,7 @@ for _jail in ${JAILS}; do
 
     ## INCLUDE
     if [ -s "${bastille_template_INCLUDE}" ]; then
-        echo -e "${COLOR_GREEN}Detected INCLUDE.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:INCLUDE -- START${COLOR_RESET}"
         while read _include; do
             echo
             echo -e "${COLOR_GREEN}INCLUDE: ${_include}${COLOR_RESET}"
@@ -103,29 +111,35 @@ for _jail in ${JAILS}; do
             BASTILLE_TEMPLATE_REPO=$(echo "${_include}" | awk -F / '{ print $5}')
             bastille template ${_jail} ${BASTILLE_TEMPLATE_PROJECT}/${BASTILLE_TEMPLATE_REPO}
         done < "${bastille_template_INCLUDE}"
+        echo -e "${COLOR_GREEN}[${_jail}]:INCLUDE -- END${COLOR_RESET}"
+        echo
     fi
 
     ## PRE
     if [ -s "${bastille_template_PRE}" ]; then
-        echo -e "${COLOR_GREEN}Executing PRE-command(s).${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:PRE -- START${COLOR_RESET}"
         jexec -l ${_jail} /bin/sh < "${bastille_template_PRE}" || exit 1
+        echo -e "${COLOR_GREEN}[${_jail}]:PRE -- END${COLOR_RESET}"
+        echo
     fi
 
     ## CONFIG / OVERLAY
     if [ -s "${bastille_template_OVERLAY}" ]; then
-        echo -e "${COLOR_GREEN}Copying files...${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:OVERLAY -- START${COLOR_RESET}"
         while read _dir; do
-            cp -a "${bastille_template}/${_dir}" "${bastille_jail_path}" || exit 1
+            cp -av "${bastille_template}/${_dir}" "${bastille_jail_path}" || exit 1
         done < ${bastille_template_OVERLAY}
-        echo -e "${COLOR_GREEN}Copy complete.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:OVERLAY -- END${COLOR_RESET}"
+        echo
     fi
     if [ -s "${bastille_template}/CONFIG" ]; then
         echo -e "${COLOR_YELLOW}CONFIG deprecated; rename to OVERLAY.${COLOR_RESET}"
-        echo -e "${COLOR_GREEN}Copying files...${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:CONFIG -- START${COLOR_RESET}"
         while read _dir; do
-            cp -a "${bastille_template}/${_dir}" "${bastille_jail_path}" || exit 1
+            cp -av "${bastille_template}/${_dir}" "${bastille_jail_path}" || exit 1
         done < ${bastille_template}/CONFIG
-        echo -e "${COLOR_GREEN}Copy complete.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:CONFIG -- END${COLOR_RESET}"
+        echo
     fi
 
     ## FSTAB
@@ -144,33 +158,42 @@ for _jail in ${JAILS}; do
 
     ## PKG (bootstrap + pkg)
     if [ -s "${bastille_template_PKG}" ]; then
-        echo -e "${COLOR_GREEN}Installing packages.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:PKG -- START${COLOR_RESET}"
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg bootstrap || exit 1
-        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg audit -F || exit 1
+        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg audit -F
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg install $(cat ${bastille_template_PKG}) || exit 1
+        echo -e "${COLOR_GREEN}[${_jail}]:PKG -- END${COLOR_RESET}"
+        echo
     fi
 
     ## SYSRC
     if [ -s "${bastille_template_SYSRC}" ]; then
-        echo -e "${COLOR_GREEN}Updating services.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:SYSRC -- START${COLOR_RESET}"
         while read _sysrc; do
             jexec -l ${_jail} /usr/sbin/sysrc "${_sysrc}" || exit 1
         done < "${bastille_template_SYSRC}"
+        echo -e "${COLOR_GREEN}[${_jail}]:SYSRC -- END${COLOR_RESET}"
+        echo
     fi
 
     ## SERVICE
     if [ -s "${bastille_template_SERVICE}" ]; then
-        echo -e "${COLOR_GREEN}Managing services.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:SERVICE -- START${COLOR_RESET}"
         while read _service; do
             jexec -l ${_jail} /usr/sbin/service ${_service} || exit 1
         done < "${bastille_template_SERVICE}"
+        echo -e "${COLOR_GREEN}[${_jail}]:SERVICE -- END${COLOR_RESET}"
+        echo
     fi
 
     ## CMD
     if [ -s "${bastille_template_CMD}" ]; then
-        echo -e "${COLOR_GREEN}Executing final command(s).${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:CMD -- START${COLOR_RESET}"
         jexec -l ${_jail} /bin/sh < "${bastille_template_CMD}" || exit 1
+        echo -e "${COLOR_GREEN}[${_jail}]:CMD -- END${COLOR_RESET}"
+        echo
     fi
+
     echo -e "${COLOR_GREEN}Template Complete.${COLOR_RESET}"
     echo
 done

@@ -37,7 +37,7 @@ usage() {
 }
 
 running_jail() {
-    jls name | grep -E "(^|\b)${NAME}($|\b)"
+    jls name | grep -w "${NAME}"
 }
 
 validate_ip() {
