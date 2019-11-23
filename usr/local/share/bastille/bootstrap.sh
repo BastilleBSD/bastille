@@ -315,6 +315,10 @@ bootstrap_release() {
                         echo -e "${COLOR_RED}Failed validation for ${_archive}.txz, please retry bootstrap!${COLOR_RESET}"
                         rm ${bastille_cachedir}/${RELEASE}/${_archive}.txz
                         exit 1
+                    else
+                        echo -e "${COLOR_GREEN}Validated checksum for ${RELEASE}:${_archive}.txz.${COLOR_RESET}"
+                        echo -e "${COLOR_GREEN}MANIFEST:${SHA256_DIST}${COLOR_RESET}"
+                        echo -e "${COLOR_GREEN}DOWNLOAD:${SHA256_FILE}${COLOR_RESET}"
                     fi
                 fi
 
@@ -472,8 +476,8 @@ network)
     ;;
 esac
 
-if [ ! -z "${2}" ]; then
-    if [ "${2}" = 'update' ]; then
-        bastille update "${RELEASE}"
-    fi
-fi
+case "${2}" in
+update)
+    bastille update "${RELEASE}"
+    ;;
+esac

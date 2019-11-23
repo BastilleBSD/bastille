@@ -89,8 +89,9 @@ First, create the loopback interface:
 ```shell
 ishmael ~ # sysrc cloned_interfaces+=lo1
 ishmael ~ # sysrc ifconfig_lo1_name="bastille0"
+ishmael ~ # sysrc ifconfig_bastille0_aliases="inet 10.17.89.1/32"
+ishmael ~ # ifconfig bastille0 inet 10.17.89.1/32
 ishmael ~ # service netif cloneup
-ishmael ~ # ifconfig bastille0 inet 10.17.89.10
 ```
 
 Second, enable the firewall:
@@ -357,9 +358,9 @@ ishmael ~ # bastille list
  folsom          10.17.89.10      folsom                        /usr/local/bastille/jails/folsom/root
 ```
 
-You can also list non-running containers with `bastille list jails`.  In the
-same manner you can list archived `logs`, downloaded `templates`, and
-`releases.
+You can also list non-running containers with `bastille list containers`.  In
+the same manner you can list archived `logs`, downloaded `templates`, and
+`releases`.
 
 
 bastille service
