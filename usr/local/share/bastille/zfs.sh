@@ -77,13 +77,13 @@ esac
 
 ## check ZFS enabled
 if [ ! "${bastille_zfs_enable}" = "YES" ]; then
-    echo -e "${COLOR_RED}ZFS not enabled.'${COLOR_RESET}"
+    echo -e "${COLOR_RED}ZFS not enabled.${COLOR_RESET}"
     exit 1
 fi
 
 ## check zpool defined
 if [ -z "${bastille_zfs_zpool}" ]; then
-    echo -e "${COLOR_RED}ZFS zpool not defined.'${COLOR_RESET}"
+    echo -e "${COLOR_RED}ZFS zpool not defined.${COLOR_RESET}"
     exit 1
 fi
 
