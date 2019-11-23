@@ -31,7 +31,7 @@
 . /usr/local/share/bastille/colors.pre.sh
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille pkg [ALL|glob] 'pkg command'${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille pkg TARGET command [args]${COLOR_RESET}"
     exit 1
 }
 
