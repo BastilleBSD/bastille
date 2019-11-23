@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille create [option] name release ip | interface.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille create [option] name release ip [interface].${COLOR_RESET}"
     exit 1
 }
 
