@@ -47,7 +47,8 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-RELEASE=$1
+RELEASE="${1}"
+shift
 
 if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
     echo -e "${COLOR_RED}Not yet supported on HardenedBSD.${COLOR_RESET}"
@@ -55,7 +56,7 @@ if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
 fi
 
 if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
-    freebsd-update -b "${bastille_releasesdir}/${RELEASE}" fetch install --currently-running ${RELEASE}
+    freebsd-update -b "${bastille_releasesdir}/${RELEASE}" fetch install --currently-running "${RELEASE}"
 else
     echo -e "${COLOR_RED}${RELEASE} not found. See bootstrap.${COLOR_RESET}"
     exit 1
