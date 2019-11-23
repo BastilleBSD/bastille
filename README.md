@@ -95,8 +95,8 @@ First, create the loopback interface:
 ishmael ~ # sysrc cloned_interfaces+=lo1
 ishmael ~ # sysrc ifconfig_lo1_name="bastille0"
 ishmael ~ # sysrc ifconfig_bastille0_aliases="inet 10.17.89.1/32"
-ishmael ~ # ifconfig bastille0 inet 10.17.89.1/32
 ishmael ~ # service netif cloneup
+ishmael ~ # ifconfig bastille0 inet 10.17.89.1/32
 ```
 
 Second, enable the firewall:
