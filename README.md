@@ -21,6 +21,11 @@ portsnap fetch auto
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
+**enable at boot**
+```shell
+sysrc bastille_enable=YES
+```
+
 
 Basic Usage
 -----------
@@ -533,6 +538,9 @@ Note: container console logs not destroyed.
 
 bastille template
 -----------------
+Looking for ready made CI/CD validated [Bastille
+Templates](https://gitlab.com/BastilleBSD-Templates)?
+
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the container automatically.
 
@@ -764,17 +772,17 @@ bastille zfs
 This sub-command allows managing zfs attributes for the targeted container(s).
 Common usage includes setting container quotas.
 
-** set quota **
+**set quota**
 ```shell
 ishmael ~ # bastille zfs folsom set quota=1G
 ```
 
-** built-in: df **
+**built-in: df**
 ```shell
 ishmael ~ # bastille zfs ALL df
 ```
 
-** built-in: df **
+**built-in: df**
 ```shell
 ishmael ~ # bastille zfs folsom df
 ```
