@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille stop [ALL|glob].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille stop TARGET${COLOR_RESET}"
     exit 1
 }
 
@@ -48,6 +48,7 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
 fi
 
 TARGET="${1}"
+shift
 
 if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)

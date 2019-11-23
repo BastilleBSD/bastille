@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille zfs [ALL|glob] [set|get|snap] [key=value|date]'${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille zfs TARGET [set|get|snap] [key=value|date]'${COLOR_RESET}"
     exit 1
 }
 
@@ -93,12 +93,12 @@ fi
 
 TARGET="${1}"
 
-if [ "$TARGET" = 'ALL' ]; then
+if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
 
-if [ "$TARGET" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "${1}")
+if [ "${TARGET}" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${TARGET}")
 fi
 
 case "$2" in

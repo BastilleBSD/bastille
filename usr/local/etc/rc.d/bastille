@@ -37,7 +37,7 @@ bastille_start()
     local _jail
 
     for _jail in ${bastille_list}; do
-        echo "Starting Bastille Jail: ${_jail}"
+        echo "Starting Bastille Container: ${_jail}"
         ${command} start ${_jail}
     done
 }
@@ -52,7 +52,7 @@ bastille_stop()
     local _jail
 
     for _jail in ${bastille_list}; do
-        echo "Stopping Bastille Jail: ${_jail}"
+        echo "Stopping Bastille Container: ${_jail}"
         ${command} stop ${_jail}
     done
 }

@@ -31,7 +31,7 @@
 . /usr/local/share/bastille/colors.pre.sh
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille cmd [ALL|glob] 'quoted command'.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille cmd TARGET command.${COLOR_RESET}"
     exit 1
 }
 
@@ -49,11 +49,11 @@ fi
 TARGET="${1}"
 shift
 
-if [ "$TARGET" = 'ALL' ]; then
+if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
-if [ "$TARGET" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "${1}")
+if [ "${TARGET}" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${TARGET}")
 fi
 
 for _jail in ${JAILS}; do

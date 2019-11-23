@@ -31,7 +31,7 @@
 . /usr/local/share/bastille/colors.pre.sh
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille console [ALL|glob]'.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille console TARGET [user]'.${COLOR_RESET}"
     exit 1
 }
 
@@ -47,18 +47,20 @@ if [ $# -gt 2 ] || [ $# -lt 1 ]; then
 fi
 
 TARGET="${1}"
+shift
+USER="${1}"
 
-if [ "$TARGET" = 'ALL' ]; then
+if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
-if [ "$TARGET" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "${1}")
+if [ "${TARGET}" != 'ALL' ]; then
+    JAILS=$(jls name | grep -w "${TARGET}")
 fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    if [ ! -z "${2}" ]; then
-        jexec -l ${_jail} /usr/bin/login -f "${2}"
+    if [ ! -z "${USER}" ]; then
+        jexec -l ${_jail} /usr/bin/login -f "${USER}"
     else
         jexec -l ${_jail} /usr/bin/login -f root
     fi

@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille template TARGET template/path.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille template TARGET project/template.${COLOR_RESET}"
     exit 1
 }
 
@@ -48,6 +48,7 @@ if [ $# -gt 2 ] || [ $# -lt 2 ]; then
 fi
 
 TARGET="${1}"
+shift
 
 if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
@@ -56,7 +57,8 @@ if [ "${TARGET}" != 'ALL' ]; then
     JAILS=$(jls name | grep -w "${TARGET}")
 fi
 
-TEMPLATE="${2}"
+TEMPLATE="${1}"
+shift
 
 if [ ! -d "${bastille_templatesdir}"/"${TEMPLATE}" ]; then
     echo -e "${COLOR_RED}${TEMPLATE} not found.${COLOR_RESET}"

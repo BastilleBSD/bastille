@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille start [ALL|glob].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille start TARGET${COLOR_RESET}"
     exit 1
 }
 
@@ -48,12 +48,13 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
 fi
 
 TARGET="${1}"
+shift
 
-if [ "$TARGET" = 'ALL' ]; then
+if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(bastille list jails)
 fi
-if [ "$TARGET" != 'ALL' ]; then
-    JAILS=$(bastille list jails | grep -w "$TARGET")
+if [ "${TARGET}" != 'ALL' ]; then
+    JAILS=$(bastille list jails | grep -w "${TARGET}")
 fi
 
 for _jail in ${JAILS}; do
