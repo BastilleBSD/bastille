@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille destroy name.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille destroy [container|release]${COLOR_RESET}"
     exit 1
 }
 
@@ -137,26 +137,28 @@ NAME="$1"
 ## check what should we clean
 case "${NAME}" in
 *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
-## check for FreeBSD releases name
-NAME_VERIFY=$(echo "${NAME}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
-if [ -n "${NAME_VERIFY}" ]; then
-    NAME="${NAME_VERIFY}"
-    destroy_rel
-else
-    usage
-fi
+    ## check for FreeBSD releases name
+    NAME_VERIFY=$(echo "${NAME}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+    if [ -n "${NAME_VERIFY}" ]; then
+        NAME="${NAME_VERIFY}"
+        destroy_rel
+    else
+        usage
+    fi
     ;;
+
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-## check for HardenedBSD releases name
-NAME_VERIFY=$(echo "${NAME}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-if [ -n "${NAME_VERIFY}" ]; then
-    NAME="${NAME_VERIFY}"
-    destroy_rel
-else
-    usage
-fi
+    ## check for HardenedBSD releases name
+    NAME_VERIFY=$(echo "${NAME}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    if [ -n "${NAME_VERIFY}" ]; then
+        NAME="${NAME_VERIFY}"
+        destroy_rel
+    else
+        usage
+    fi
     ;;
 *)
+
     ## just destroy a jail
     destroy_jail
     ;;
