@@ -32,12 +32,12 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille list [release|template|jail|log].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille list [release|template|(jail|container)|log].${COLOR_RESET}"
     exit 1
 }
 
 if [ $# -eq 0 ]; then
-    jls -N | grep -v 'poudriere'
+    jls -N
 fi
 
 if [ $# -gt 0 ]; then
@@ -60,7 +60,7 @@ if [ $# -gt 0 ]; then
     template|templates)
         find "${bastille_templatesdir}" -type d -maxdepth 2
         ;;
-    jail|jails)
+    jail|jails|container|containers)
         if [ -d "${bastille_jailsdir}" ]; then
             JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
             for _JAIL in ${JAIL_LIST}; do
