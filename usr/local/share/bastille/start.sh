@@ -51,10 +51,10 @@ TARGET="${1}"
 shift
 
 if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(bastille list jails)
+    JAILS=$(/usr/local/bin/bastille list jails)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(bastille list jails | grep -w "${TARGET}")
+    JAILS=$(/usr/local/bin/bastille list jails | grep -w "${TARGET}")
 fi
 
 for _jail in ${JAILS}; do
