@@ -64,13 +64,14 @@ for _jail in ${JAILS}; do
 
     ## test if running
     elif [ $(jls name | grep -w "${_jail}") ]; then
+        ## remove ip4.addr from firewall table:jails
+        if [ ! -z ${bastille_jail_loopback} ]; then
+            pfctl -t jails -T delete $(jls -j ${_jail} ip4.addr)
+        fi
+
+        ## stop container
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
-
-        ## update ${bastille_jail_loopback}:network with added/removed addresses
-        if [ ! -z ${bastille_jail_loopback} ]; then
-            pfctl -f /etc/pf.conf
-        fi
     fi
     echo
 done

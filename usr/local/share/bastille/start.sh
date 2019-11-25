@@ -67,9 +67,9 @@ for _jail in ${JAILS}; do
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
 
-        ## update ${bastille_jail_loopback}:network with added/removed addresses
+        ## update table:jails in firewall with container address
         if [ ! -z ${bastille_jail_loopback} ]; then
-            pfctl -f /etc/pf.conf
+            pfctl -t jails -T add $(jls -j ${_jail} ip4.addr)
         fi
     fi
     echo
