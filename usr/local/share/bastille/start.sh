@@ -51,10 +51,10 @@ TARGET="${1}"
 shift
 
 if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(/usr/local/bin/bastille list jails)
+    JAILS=$(bastille list jails)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(/usr/local/bin/bastille list jails | grep -w "${TARGET}")
+    JAILS=$(bastille list jails | grep -w "${TARGET}")
 fi
 
 for _jail in ${JAILS}; do
@@ -67,9 +67,9 @@ for _jail in ${JAILS}; do
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
 
-        ## update ${bastille_jail_loopback}:network with added/removed addresses
+        ## add ip4.addr to firewall table:jails
         if [ ! -z ${bastille_jail_loopback} ]; then
-            pfctl -f /etc/pf.conf
+            pfctl -t jails -T add $(jls -j ${_jail} ip4.addr)
         fi
     fi
     echo
