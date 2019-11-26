@@ -97,12 +97,6 @@ ishmael ~ # sysrc ifconfig_lo1_name="bastille0"
 ishmael ~ # service netif cloneup
 ```
 
-Second, enable the firewall:
-
-```shell
-ishmael ~ # sysrc pf_enable="YES"
-```
-
 Create the firewall config, or merge as necessary.
 
 /etc/pf.conf
@@ -134,7 +128,8 @@ Note: if you have an existing firewall, the key lines for in/out traffic to
 containers are:
 
 ```
-nat on $ext_if from bastille0:network to any -> ($ext_if)
+table <jails> persist
+nat on $ext_if from <jails> to any -> ($ext_if)
 
 ## rdr example
 ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
@@ -147,9 +142,10 @@ The `rdr pass ...` will redirect traffic from the host firewall on port X to
 the ip of container Y. The example shown redirects web traffic (80 & 443) to the
 container at `10.17.89.45`.
 
-Finally, start up the firewall:
+Finally, enable and (re)start the firewall:
 
 ```shell
+ishmael ~ # sysrc pf_enable="YES"
 ishmael ~ # service pf restart
 ```
 
