@@ -21,11 +21,17 @@ portsnap fetch auto
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
+**Git**
+```shell
+git clone https://github.com/BastilleBSD/bastille.git
+cd bastille
+make install
+```
+
 **enable at boot**
 ```shell
 sysrc bastille_enable=YES
 ```
-
 
 Basic Usage
 -----------
@@ -64,11 +70,9 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-
 ## 0.5-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
-
 
 Network Requirements
 ====================
@@ -106,8 +110,8 @@ ext_if="vtnet0"
 
 set block-policy return
 scrub in on $ext_if all fragment reassemble
-
 set skip on lo
+
 table <jails> persist
 nat on $ext_if from <jails> to any -> ($ext_if)
 
