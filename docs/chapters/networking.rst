@@ -81,7 +81,6 @@ First, create the loopback interface:
   ishmael ~ # sysrc cloned_interfaces+=lo1
   ishmael ~ # sysrc ifconfig_lo1_name="bastille0"
   ishmael ~ # service netif cloneup
-  ishmael ~ # ifconfig bastille0 inet 10.17.89.10
 
 Second, enable the firewall:
 
@@ -99,9 +98,10 @@ Create the firewall rules:
   
   set block-policy return
   scrub in on $ext_if all fragment reassemble
-  
   set skip on lo
-  nat on $ext_if from bastille0:network to any -> ($ext_if)
+
+  table <jails> persist
+  nat on $ext_if from <jails> to any -> ($ext_if)
   
   ## rdr example
   ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
@@ -119,7 +119,7 @@ to containers are:
 
 .. code-block:: shell
 
-  nat on $ext_if from bastille0:network to any -> ($ext_if)
+  nat on $ext_if from <jails> to any -> ($ext_if)
   
   ## rdr example
   ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
