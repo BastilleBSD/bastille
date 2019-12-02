@@ -146,7 +146,6 @@ case "${NAME}" in
         usage
     fi
     ;;
-
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name
     NAME_VERIFY=$(echo "${NAME}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
@@ -157,8 +156,17 @@ case "${NAME}" in
         usage
     fi
     ;;
+*-stable-build-*|*-STABLE-BUILD-*)
+## check for HardenedBSD(for current changes)
+NAME_VERIFY=$(echo "${NAME}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,2})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    if [ -n "${NAME_VERIFY}" ]; then
+        NAME="${NAME_VERIFY}"
+        destroy_rel
+    else
+        usage
+    fi
+    ;;
 *)
-
     ## just destroy a jail
     destroy_jail
     ;;

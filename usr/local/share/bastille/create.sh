@@ -339,6 +339,15 @@ else
     usage
 fi
     ;;
+*-stable-build-*|*-STABLE-BUILD-*)
+## check for HardenedBSD(for current changes)
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,2})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+if [ -n "${NAME_VERIFY}" ]; then
+    RELEASE="${NAME_VERIFY}"
+else
+    usage
+fi
+    ;;
 *)
     echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"
     usage
