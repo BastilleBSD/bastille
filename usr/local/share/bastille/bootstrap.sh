@@ -442,6 +442,10 @@ NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1
 if [ -n "${NAME_VERIFY}" ]; then
     RELEASE="${NAME_VERIFY}"
     UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
+    if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
+        ## try an alternate url
+        UPSTREAM_URL="ftp://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
+    fi
     bootstrap_directories
     bootstrap_release
 else
@@ -454,6 +458,24 @@ NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-
 if [ -n "${NAME_VERIFY}" ]; then
     RELEASE="${NAME_VERIFY}"
     UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
+    bootstrap_directories
+    bootstrap_release
+else
+    usage
+fi
+    ;;
+*-stable-build-*|*-STABLE-BUILD-*)
+## check for HardenedBSD(for current changes)
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,2})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-build-[0-9]\{1,2\}//g')
+NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
+if [ -n "${NAME_VERIFY}" ]; then
+    RELEASE="${NAME_VERIFY}"
+    UPSTREAM_URL="http://installer.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
+        ## try an alternate url
+        UPSTREAM_URL="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    fi
     bootstrap_directories
     bootstrap_release
 else

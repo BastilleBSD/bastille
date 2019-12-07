@@ -57,10 +57,27 @@ if [ "${TARGET}" != 'ALL' ]; then
     JAILS=$(jls name | grep -w "${TARGET}")
 fi
 
+validate_user() {
+    if jexec -l ${_jail} id "${USER}" >/dev/null 2>&1; then
+        USER_SHELL="$(jexec -l ${_jail} getent passwd "${USER}" | cut -d: -f7)"
+        if [ -n "${USER_SHELL}" ]; then
+            if jexec -l ${_jail} grep -qwF "${USER_SHELL}" /etc/shells; then
+                jexec -l ${_jail} /usr/bin/login -f "${USER}"
+            else
+                echo "Invalid shell for user ${USER}"
+            fi
+        else
+            echo "User ${USER} has no shell"
+        fi
+    else
+        echo "Unknown user ${USER}"
+    fi
+}
+
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     if [ ! -z "${USER}" ]; then
-        jexec -l ${_jail} /usr/bin/login -f "${USER}"
+        validate_user
     else
         jexec -l ${_jail} /usr/bin/login -f root
     fi
