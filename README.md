@@ -1,9 +1,9 @@
-Bastille: Automated Container Security
-======================================
-Bastille is an open-source system for automating deployment and management of
-containerized applications on FreeBSD.
+Bastille: Automate Container Security
+=====================================
+[Bastille](https://bastillebsd.org/) is an open-source system for automating
+deployment and management of containerized applications on FreeBSD.
 
-Looking for [Bastille Templates](https://gitlab.com/BastilleBSD-Templates)?
+Looking for [Bastille Templates](https://gitlab.com/BastilleBSD-Templates/)?
 
 
 Installation
@@ -557,9 +557,9 @@ To leverage a template hook, create an UPPERCASE file in the root of the
 template directory named after the hook you want to execute. eg;
 
 ```shell
-echo "install zsh vim-console git-lite htop" > /usr/local/bastille/templates/base/PKG
-echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/base/CMD
-echo "etc\nroot\nusr" > /usr/local/bastille/templates/base/OVERLAY
+echo "zsh vim-console git-lite htop" > /usr/local/bastille/templates/username/base/PKG
+echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/username/base/CMD
+echo "usr" > /usr/local/bastille/templates/username/base/OVERLAY
 ```
 
 Template hooks are executed in specific order and require specific syntax to
