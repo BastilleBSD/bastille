@@ -360,74 +360,21 @@ bootstrap_template() {
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
-    if [ ! -x /usr/local/bin/git ]; then
-        echo -e "${COLOR_RED}We're gonna have to use fetch. Strap in.${COLOR_RESET}"
-        echo -e "${COLOR_RED}Not yet implemented...${COLOR_RESET}"
+    if [ ! -x $(which git) ]; then
+        echo -e "${COLOR_RED}Git not found.${COLOR_RESET}"
+        echo -e "${COLOR_RED}Not yet implemented.${COLOR_RESET}"
         exit 1
-    fi
-
-    ## support for git
-    if [ -x /usr/local/bin/git ]; then
+    elif [ -x $(which git) ]; then
         if [ ! -d "${_template}/.git" ]; then
-            /usr/local/bin/git clone "${_url}" "${_template}" ||\
+            $(which git) clone "${_url}" "${_template}" ||\
                 echo -e "${COLOR_RED}Clone unsuccessful.${COLOR_RESET}"
-                echo
         elif [ -d "${_template}/.git" ]; then
-            cd ${_template} &&
-            /usr/local/bin/git pull ||\
+            cd ${_template} && $(which git) pull ||\
                 echo -e "${COLOR_RED}Template update unsuccessful.${COLOR_RESET}"
-                echo
         fi
     fi
 
-    ## template validation
-    _hook_validate=0
-    for _hook in PRE FSTAB PF PKG SYSRC CMD; do
-        if [ -s ${_template}/${_hook} ]; then
-            _hook_validate=$((_hook_validate+1))
-            echo -e "${COLOR_GREEN}Detected ${_hook} hook.${COLOR_RESET}"
-            echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
-            cat "${_template}/${_hook}"
-            echo
-        fi
-    done
-
-    # template overlay
-    if [ -s ${_template}/OVERLAY ]; then
-        _hook_validate=$((_hook_validate+1))
-        echo -e "${COLOR_GREEN}Detected OVERLAY hook.${COLOR_RESET}"
-        while read _dir; do
-            echo -e "${COLOR_GREEN}[${_dir}]:${COLOR_RESET}"
-            if [ -x $(which tree) ]; then
-                tree -a ${_template}/${_dir}
-            fi
-        done < ${_template}/OVERLAY
-        echo
-    fi
-    if [ -s ${_template}/CONFIG ]; then
-        echo -e "${COLOR_GREEN}Detected CONFIG hook.${COLOR_RESET}"
-        echo -e "${COLOR_YELLOW}CONFIG deprecated; rename to OVERLAY.${COLOR_RESET}"
-        while read _dir; do
-            echo -e "${COLOR_GREEN}[${_dir}]:${COLOR_RESET}"
-            if [ -x $(which tree) ]; then
-                tree -a ${_template}/${_dir}
-            fi
-        done < ${_template}/CONFIG
-    fi
-
-    ## remove bad templates
-    if [ ${_hook_validate} -lt 1 ]; then
-        echo -e "${COLOR_GREEN}Template validation failed.${COLOR_RESET}"
-        echo -e "${COLOR_GREEN}Deleting template.${COLOR_RESET}"
-        rm -rf ${_template}
-        exit 1
-    fi
-
-    ## if validated; ready to use 
-    if [ ${_hook_validate} -gt 0 ]; then
-        echo -e "${COLOR_GREEN}Template ready to use.${COLOR_RESET}"
-        echo
-    fi
+    bastille verify ${_user}/${_repo}
 }
 
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
@@ -464,8 +411,6 @@ http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_URL=${1}
     BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
-    echo -e "${COLOR_GREEN}Template: ${1}${COLOR_RESET}"
-    echo
     bootstrap_template
     ;;
 network)
