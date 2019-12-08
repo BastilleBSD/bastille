@@ -88,8 +88,8 @@ verify_template() {
                         ;;
                         *)
                             echo -e "${COLOR_RED}Template INCLUDE content not recognized.${COLOR_RESET}"
-	                    exit 1
-	                ;;
+                            exit 1
+                    ;;
                     esac
                 done < ${_path}
 

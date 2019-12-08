@@ -51,8 +51,7 @@ if [ $# -gt 0 ]; then
             REL_LIST=$(ls "${bastille_releasesdir}" | sed "s/\n//g")
             for _REL in ${REL_LIST}; do
                 if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ]; then
-                    #echo "${bastille_releasesdir}/${_REL}"
-					echo "${_REL}"
+                    echo "${_REL}"
                 fi
             done
         fi

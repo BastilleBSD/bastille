@@ -85,7 +85,7 @@ destroy_rel() {
 
     ## check if this release have containers child
     BASE_HASCHILD="0"
-	if [ -d "${bastille_jailsdir}" ]; then
+    if [ -d "${bastille_jailsdir}" ]; then
         JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
         for _jail in ${JAIL_LIST}; do
             if grep -qwo "${NAME}" ${bastille_jailsdir}/${_jail}/fstab 2>/dev/null; then

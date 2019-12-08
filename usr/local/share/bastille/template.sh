@@ -106,8 +106,8 @@ for _jail in ${JAILS}; do
                 ;;
                 *)
                     echo -e "${COLOR_RED}Template INCLUDE content not recognized.${COLOR_RESET}"
-		    exit 1
-	        ;;
+                    exit 1
+            ;;
             esac
 
             echo
