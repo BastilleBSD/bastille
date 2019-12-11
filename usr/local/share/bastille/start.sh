@@ -68,7 +68,7 @@ for _jail in ${JAILS}; do
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
 
         ## add ip4.addr to firewall table:jails
-        if [ ! -z ${bastille_jail_loopback} ]; then
+        if [ ! -z "${bastille_jail_loopback}" ]; then
             pfctl -q -t jails -T add $(jls -j ${_jail} ip4.addr)
         fi
     fi

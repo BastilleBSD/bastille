@@ -56,7 +56,7 @@ verify_template() {
 
     for _hook in TARGET INCLUDE PRE OVERLAY FSTAB PF PKG SYSRC SERVICE CMD; do
         _path=${_template_path}/${_hook}
-        if [ -s ${_path} ]; then
+        if [ -s "${_path}" ]; then
             _hook_validate=$((_hook_validate+1))
             echo -e "${COLOR_GREEN}Detected ${_hook} hook.${COLOR_RESET}"
 

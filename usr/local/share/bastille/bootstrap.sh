@@ -69,14 +69,14 @@ fi
 bootstrap_network_interfaces() {
 
     ## test for both options empty
-    if [ -z ${bastille_jail_loopback} ] && [ -z ${bastille_jail_external} ]; then
+    if [ -z "${bastille_jail_loopback}" ] && [ -z "${bastille_jail_external}" ]; then
         echo -e "${COLOR_RED}Please set preferred loopback or external interface.${COLOR_RESET}"
         echo -e "${COLOR_RED}See bastille.conf.${COLOR_RESET}"
         exit 1
     fi
 
     ## test for required variables -- external
-    if [ -z ${bastille_jail_loopback} ] && [ ! -z ${bastille_jail_external} ]; then
+    if [ -z "${bastille_jail_loopback}" ] && [ ! -z "${bastille_jail_external}" ]; then
 
        ## test for existing interface
        ifconfig ${bastille_jail_external} 2>&1 >/dev/null
@@ -101,8 +101,8 @@ bootstrap_network_interfaces() {
     fi
 
     ## test for required variables -- loopback
-    if [ -z ${bastille_jail_external} ] && [ ! -z ${bastille_jail_loopback} ] && \
-       [ ! -z ${bastille_jail_addr} ]; then
+    if [ -z "${bastille_jail_external}" ] && [ ! -z "${bastille_jail_loopback}" ] && \
+       [ ! -z "${bastille_jail_addr}" ]; then
 
        echo -e "${COLOR_GREEN}Detecting...${COLOR_RESET}"
        ## test for existing interface
@@ -360,11 +360,11 @@ bootstrap_template() {
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
-    if [ ! -x $(which git) ]; then
+    if [ ! -x "$(which git)" ]; then
         echo -e "${COLOR_RED}Git not found.${COLOR_RESET}"
         echo -e "${COLOR_RED}Not yet implemented.${COLOR_RESET}"
         exit 1
-    elif [ -x $(which git) ]; then
+    elif [ -x "$(which git)" ]; then
         if [ ! -d "${_template}/.git" ]; then
             $(which git) clone "${_url}" "${_template}" ||\
                 echo -e "${COLOR_RED}Clone unsuccessful.${COLOR_RESET}"
