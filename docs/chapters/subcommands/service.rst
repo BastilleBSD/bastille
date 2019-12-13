@@ -11,3 +11,6 @@ running inside the containers.
   ishmael ~ # bastille service web01 'nginx start'
   ishmael ~ # bastille service db01 'mysql-server restart'
   ishmael ~ # bastille service proxy 'nginx configtest'
+  ishmael ~ # bastille service proxy 'nginx enable'
+  ishmael ~ # bastille service proxy 'nginx disable'
+  ishmael ~ # bastille service proxy 'nginx delete'
