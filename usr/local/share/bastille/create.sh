@@ -140,10 +140,10 @@ create_jail() {
     fi
 
     if [ ! -f "${bastille_jail_conf}" ]; then
-        if [ -z ${bastille_jail_loopback} ] && [ ! -z ${bastille_jail_external} ]; then
+        if [ -z "${bastille_jail_loopback}" ] && [ ! -z "${bastille_jail_external}" ]; then
             local bastille_jail_conf_interface=${bastille_jail_external}
         fi
-        if [ ! -z ${bastille_jail_loopback} ] && [ -z ${bastille_jail_external} ]; then
+        if [ ! -z "${bastille_jail_loopback}" ] && [ -z "${bastille_jail_external}" ]; then
             local bastille_jail_conf_interface=${bastille_jail_interface}
         fi
         if [ ! -z  ${INTERFACE} ]; then
@@ -374,7 +374,7 @@ if running_jail ${NAME}; then
 fi
 
 ## check if ip address is valid
-if [ ! -z ${IP} ]; then
+if [ ! -z "${IP}" ]; then
     validate_ip
 else
     usage

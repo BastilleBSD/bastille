@@ -65,7 +65,7 @@ for _jail in ${JAILS}; do
     ## test if running
     elif [ $(jls name | grep -w "${_jail}") ]; then
         ## remove ip4.addr from firewall table:jails
-        if [ ! -z ${bastille_jail_loopback} ]; then
+        if [ ! -z "${bastille_jail_loopback}" ]; then
             pfctl -q -t jails -T delete $(jls -j ${_jail} ip4.addr)
         fi
 

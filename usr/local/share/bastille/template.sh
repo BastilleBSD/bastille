@@ -65,6 +65,11 @@ if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
     exit 1
 fi
 
+if [ -z "${JAILS}" ]; then
+    echo -e "${COLOR_RED}Container ${TARGET} is not running.${COLOR_RESET}"
+    exit 1
+fi
+
 ## global variables
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
 for _jail in ${JAILS}; do
