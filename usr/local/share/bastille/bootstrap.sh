@@ -49,7 +49,7 @@ if [ "${bastille_zfs_enable}" = "YES" ]; then
     if [ -z "${bastille_zfs_zpool}" ]; then
         echo -e "${COLOR_RED}ERROR: Missing ZFS parameters, see bastille_zfs_zpool.${COLOR_RESET}"
         exit 1
-	elif [ -z "${bastille_zfs_prefix}" ]; then
+    elif [ -z "${bastille_zfs_prefix}" ]; then
         echo -e "${COLOR_RED}ERROR: Missing ZFS parameters, see bastille_zfs_prefix.${COLOR_RESET}"
         exit 1
     elif ! zfs list "${bastille_zfs_zpool}" > /dev/null 2>&1; then

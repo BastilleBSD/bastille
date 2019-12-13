@@ -71,7 +71,7 @@ validate_netif() {
 }
 
 validate_netconf() {
-	if [ -n "${bastille_jail_loopback}" ] && [ -n "${bastille_jail_interface}" ] && [ -n "${bastille_jail_external}" ]; then
+    if [ -n "${bastille_jail_loopback}" ] && [ -n "${bastille_jail_interface}" ] && [ -n "${bastille_jail_external}" ]; then
         echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
         exit 1
     fi
