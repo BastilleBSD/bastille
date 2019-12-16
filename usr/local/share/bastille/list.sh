@@ -37,7 +37,11 @@ usage() {
 }
 
 if [ $# -eq 0 ]; then
-    jls -N
+   jls -N
+fi
+
+if [ "$1" == "-j" ]; then
+    jls -N --libxo json
 fi
 
 if [ $# -gt 0 ]; then
