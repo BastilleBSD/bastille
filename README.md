@@ -364,7 +364,7 @@ ishmael ~ # bastille list
 
 You can also list non-running containers with `bastille list containers`.  In
 the same manner you can list archived `logs`, downloaded `templates`, and
-`releases`.
+`releases`.  Providing the `-j` flag to list alone will result in JSON output.
 
 
 bastille service
