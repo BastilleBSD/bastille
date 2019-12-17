@@ -47,7 +47,7 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-RELEASE="${1}"
+TARGET="${1}"
 shift
 
 if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
@@ -55,9 +55,34 @@ if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
     exit 1
 fi
 
-if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
-    freebsd-update -b "${bastille_releasesdir}/${RELEASE}" fetch install --currently-running "${RELEASE}"
+if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
+    if ! cat "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | grep -w "${TARGET}" | grep -q ".bastille"; then
+            if [ "$(jls name | grep -w "${TARGET}")" ]; then
+                # Update a thick container.
+                CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version 2>/dev/null)
+                if [ -z "${CURRENT_VERSION}" ]; then
+                    echo -e "${COLOR_RED}Can't determine '${TARGET}' version.${COLOR_RESET}"
+                    exit 1
+                else
+                    env PAGER="/bin/cat" freebsd-update --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" \
+                    fetch install --currently-running "${CURRENT_VERSION}"
+                fi
+            else
+                echo -e "${COLOR_RED}${TARGET} is not running.${COLOR_RESET}"
+                echo -e "${COLOR_RED}See 'bastille start ${TARGET}'.${COLOR_RESET}"
+                exit 1
+            fi
+    else
+        echo -e "${COLOR_RED}${TARGET} is not a thick container.${COLOR_RESET}"
+        exit 1
+    fi
 else
-    echo -e "${COLOR_RED}${RELEASE} not found. See bootstrap.${COLOR_RESET}"
-    exit 1
+    if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
+        # Update container base(affects child containers).
+        env PAGER="/bin/cat" freebsd-update --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
+        fetch install --currently-running "${TARGET}"
+    else
+        echo -e "${COLOR_RED}${TARGET} not found. See bootstrap.${COLOR_RESET}"
+        exit 1
+    fi
 fi
