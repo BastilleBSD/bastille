@@ -32,12 +32,17 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille list [release|template|(jail|container)|log].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille list [-j] [release|template|(jail|container)|log].${COLOR_RESET}"
     exit 1
 }
 
 if [ $# -eq 0 ]; then
-    jls -N
+   jls -N
+fi
+
+if [ "$1" == "-j" ]; then
+    jls -N --libxo json
+    exit 0
 fi
 
 if [ $# -gt 0 ]; then
