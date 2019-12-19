@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille update release.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille update release | container.${COLOR_RESET}"
     exit 1
 }
 
@@ -55,11 +55,11 @@ if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
     exit 1
 fi
 
-if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
-    if ! cat "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | grep -w "${TARGET}" | grep -q ".bastille"; then
+if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
+    if ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
             if [ "$(jls name | grep -w "${TARGET}")" ]; then
                 # Update a thick container.
-                CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version 2>/dev/null)
+                CURRENT_VERSION=$(/usr/sbin/jexec -l ${TARGET} freebsd-version 2>/dev/null)
                 if [ -z "${CURRENT_VERSION}" ]; then
                     echo -e "${COLOR_RED}Can't determine '${TARGET}' version.${COLOR_RESET}"
                     exit 1
