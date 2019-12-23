@@ -1,6 +1,6 @@
 .PHONY: all
 all:
-	@echo "Nothing to be done. Please use make install or make uinstall"
+	@echo "Nothing to be done. Please use make install or make uninstall"
 .PHONY: install
 install:
 	@echo "Installing Bastille"
