@@ -6,6 +6,7 @@ install:
 	@echo "Installing Bastille"
 	@echo
 	@cp -av usr /
+	@chmod 0750 /usr/local/bastille
 	@echo
 	@echo "This method is for testing / development."
 
