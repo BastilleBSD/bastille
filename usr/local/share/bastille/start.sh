@@ -54,16 +54,16 @@ if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(bastille list jails)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(bastille list jails | grep -w "${TARGET}")
+    JAILS=$(bastille list jails | awk "/^${TARGET}$/")
 fi
 
 for _jail in ${JAILS}; do
     ## test if running
-    if [ $(jls name | grep -w ${_jail}) ]; then
+    if [ "$(jls name | awk "/^${_jail}$/")" ]; then
         echo -e "${COLOR_RED}[${_jail}]: Already started.${COLOR_RESET}"
 
     ## test if not running
-    elif [ ! $(jls name | grep -w ${_jail}) ]; then
+    elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
 

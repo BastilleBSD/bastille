@@ -54,16 +54,16 @@ if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "${TARGET}")
+    JAILS=$(jls name | awk "/^${TARGET}$/")
 fi
 
 for _jail in ${JAILS}; do
     ## test if not running
-    if [ ! $(jls name | grep -w "${_jail}") ]; then
+    if [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
         echo -e "${COLOR_RED}[${_jail}]: Not started.${COLOR_RESET}"
 
     ## test if running
-    elif [ $(jls name | grep -w "${_jail}") ]; then
+    elif [ "$(jls name | awk "/^${_jail}$/")" ]; then
         ## remove ip4.addr from firewall table:jails
         if [ ! -z "${bastille_jail_loopback}" ]; then
             pfctl -q -t jails -T delete $(jls -j ${_jail} ip4.addr)
