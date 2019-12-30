@@ -37,7 +37,13 @@ usage() {
 }
 
 running_jail() {
-    jls name | grep -w "${NAME}"
+    if [ -n "$(jls name | awk "/^${NAME}$/")" ]; then
+        echo -e "${COLOR_RED}A running jail matches name.${COLOR_RESET}"
+        exit 1
+    elif [ -d "${bastille_jailsdir}/${NAME}" ]; then
+        echo -e "${COLOR_RED}Jail: ${NAME} already created.${COLOR_RESET}"
+        exit 1
+    fi
 }
 
 validate_ip() {
@@ -366,11 +372,9 @@ if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
     exit 1
 fi
 
-## check if a running jail matches name
-if running_jail ${NAME}; then
-    echo -e "${COLOR_RED}A running jail matches name.${COLOR_RESET}"
-    echo -e "${COLOR_RED}Jails must be stopped before they are destroyed.${COLOR_RESET}"
-    exit 1
+## check if a running jail matches name or already exist
+if [ -n "${NAME}" ]; then
+    running_jail
 fi
 
 ## check if ip address is valid
