@@ -70,7 +70,7 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.5-beta
+## 0.6-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
@@ -543,40 +543,44 @@ Templates](https://gitlab.com/BastilleBSD-Templates)?
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the container automatically.
 
-Currently supported template hooks are: `PRE`, `CONFIG`, `PKG`, `SYSRC`, `CMD`.
-Planned template hooks include: `FSTAB`, `PF`, `LOG`
+Currently supported template hooks are: `INCLUDE`, `PRE`, `FSTAB`, `OVERLAY`, `PKG`, `SYSRC`, `SERVICE`, `CMD`.
+Planned template hooks include: `PF`, `LOG`
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
-the template hooks. Simply create a new directory named after the template. eg;
+the template hooks. Simply create a new directory in the format project/repo,
+ie; `username/base-template`
 
 ```shell
-mkdir -p /usr/local/bastille/templates/username/base
+mkdir -p /usr/local/bastille/templates/username/base-template
 ```
 
 To leverage a template hook, create an UPPERCASE file in the root of the
 template directory named after the hook you want to execute. eg;
 
 ```shell
-echo "zsh vim-console git-lite htop" > /usr/local/bastille/templates/username/base/PKG
-echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/username/base/CMD
-echo "usr" > /usr/local/bastille/templates/username/base/OVERLAY
+echo "zsh vim-console git-lite htop" > /usr/local/bastille/templates/username/base-template/PKG
+echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/username/base-template/CMD
+echo "usr" > /usr/local/bastille/templates/username/base-template/OVERLAY
 ```
 
 Template hooks are executed in specific order and require specific syntax to
-work as expected. This table outlines those requirements:
+work as expected. This table outlines that order and those requirements:
 
-| SUPPORTED | format           | example                                                        |
-|-----------|------------------|----------------------------------------------------------------|
-| PRE/CMD   | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh                            |
-| OVERLAY   | paths (one/line) | etc root usr                                                   |
-| PKG       | port/pkg name(s) | vim-console zsh git-lite tree htop                             |
-| SYSRC     | sysrc command(s) | nginx_enable=YES                                               |
+| SUPPORTED | format              | example                                        |
+|-----------|---------------------|------------------------------------------------|
+| INCLUDE   | template path/URL   | http?://TEMPLATE_URL or username/base-template |
+| PRE       | /bin/sh command     | mkdir -p /usr/local/path                       |
+| FSTAB     | fstab syntax        | /host/path container/path nullfs ro 0 0        |
+| PKG       | port/pkg name(s)    | vim-console zsh git-lite tree htop             |
+| OVERLAY   | paths (one/line)    | etc usr                                        |
+| SYSRC     | sysrc command(s)    | nginx_enable=YES                               |
+| SERVICE   | service command(s)  | nginx restart                                  |
+| CMD       | /bin/sh command     | /usr/bin/chsh -s /usr/local/bin/zsh            |
 
 | PLANNED | format           | example                                                        |
 |---------|------------------|----------------------------------------------------------------|
 | PF      | pf rdr entry     | rdr pass inet proto tcp from any to any port 80 -> 10.17.89.80 |
 | LOG     | path             | /var/log/nginx/access.log                                      |
-| FSTAB   | fstab syntax     | /path/on/host /path/in/container nullfs ro 0 0                      |
 
 Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 
@@ -587,12 +591,12 @@ template directory as "/".
 An example here may help. Think of
 `/usr/local/bastille/templates/username/base`, our example template, as the
 root of our filesystem overlay. If you create an `etc/hosts` or
-`etc/resolv.conf` *inside* the base template directory, these can be overlayed
+`etc/resolv.conf` inside the base template directory, these can be overlayed
 into your container.
 
 Note: due to the way FreeBSD segregates user-space, the majority of your
 overlayed template files will be in `usr/local`. The few general
-exceptions are the `etc/hosts`, `etc/resolv.conf`, and `etc/rc.conf.local`, etc.
+exceptions are the `etc/hosts`, `etc/resolv.conf`, and `etc/rc.conf.local`.
 
 After populating `usr/local/` with custom config files that your container will
 use, be sure to include `usr` in the template OVERLAY definition. eg;

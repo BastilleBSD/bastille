@@ -135,7 +135,58 @@ for _jail in ${JAILS}; do
 
     ## FSTAB
     if [ -s "${bastille_template}/FSTAB" ]; then
-        echo -e "${COLOR_GREEN}NOT YET IMPLEMENTED.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}[${_jail}]:FSTAB -- START${COLOR_RESET}"
+        while read _fstab; do
+            ## assign needed variables
+            _hostpath=$(echo "${_fstab}" | awk '{print $1}')
+            _jailpath=$(echo "${_fstab}" | awk '{print $2}')
+            _type=$(echo "${_fstab}" | awk '{print $3}')
+            _perms=$(echo "${_fstab}" | awk '{print $4}')
+            _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
+
+            ## if any variables are empty, bail out
+            if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "${_perms}" ] || [ -z "${_checks}" ]; then
+                echo -e "${COLOR_RED}FSTAB format not recognized.${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+                exit 1
+            fi
+            ## if host path doesn't exist or type is not "nullfs"
+            if [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
+                echo -e "${COLOR_RED}Detected invalid host path or incorrect mount type in FSTAB.${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+                exit 1
+            fi
+            ## if mount permissions are not "ro" or "rw"
+            if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
+                echo -e "${COLOR_RED}Detected invalid mount permissions in FSTAB.${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+                exit 1
+            fi
+            ## if check & pass are not "0 0 - 1 1"; bail out
+            if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "0 1" ] && [ "${_checks}" != "1 1" ]; then
+                echo -e "${COLOR_RED}Detected invalid fstab options in FSTAB.${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
+                echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+                exit 1
+            fi
+
+            ## aggregate variables into FSTAB entry
+            _fstab_entry="${_hostpath} ${bastille_jailsdir}/${_jail}/root/${_jailpath} ${_type} ${_perms} ${_checks}"
+
+            ## if entry doesn't exist, add; else show existing entry
+            if [ ! "$(grep "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab")" ]; then
+                echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"
+                echo "Added: ${_fstab_entry}"
+            else
+                echo "$(grep "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab")"
+            fi
+        done < "${bastille_template}/FSTAB"
+        mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
+        echo -e "${COLOR_GREEN}[${_jail}]:FSTAB -- END${COLOR_RESET}"
+        echo
     fi
 
     ## PF
