@@ -99,11 +99,13 @@ verify_template() {
                 cat "${_path}"
                 echo
                 while read _dir; do
-                if [ -x /usr/local/bin/tree ]; then
                     echo -e "${COLOR_GREEN}[${_hook}]:[${_dir}]:${COLOR_RESET}"
-                    tree -a ${_template_path}/${_dir}
+                        if [ -x /usr/local/bin/tree ]; then
+                            /usr/local/bin/tree -a ${_template_path}/${_dir}
+                        else
+                           find "${_template_path}/${_dir}" -print | sed -e 's;[^/]*/;|___;g;s;___|; |;g'
+                        fi
                     echo
-                fi
                 done < ${_path}
             else
                 echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
