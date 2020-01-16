@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2019, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -83,6 +83,7 @@ Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   cmd         Execute arbitrary command on targeted container(s).
   console     Console into a running container.
+  convert     Convert a Thin container into a Thick container.
   cp          cp(1) files from host to targeted container(s).
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
@@ -127,7 +128,7 @@ esac
 
 # Filter out all non-commands
 case "${CMD}" in
-cmd|cp|create|destroy|list|pkg|restart|start|stop|sysrc|template|verify)
+cmd|convert|cp|create|destroy|list|pkg|restart|start|stop|sysrc|template|verify)
     ;;
 update|upgrade)
     ;;

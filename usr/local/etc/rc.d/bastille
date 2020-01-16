@@ -29,8 +29,8 @@ restart_cmd="bastille_stop && bastille_start"
 
 bastille_start()
 {
-    if [ ! -n "${bastille_list}" ]; then
-        echo "${bastille_list} is undefined"
+    if [ -z "${bastille_list}" ]; then
+        echo "bastille_list is undefined"
         return 1
     fi
 
@@ -44,8 +44,8 @@ bastille_start()
 
 bastille_stop()
 {
-    if [ ! -n "${bastille_list}" ]; then
-        echo "${bastille_list} is undefined"
+    if [ -z "${bastille_list}" ]; then
+        echo "bastille_list is undefined"
         return 1
     fi
 
