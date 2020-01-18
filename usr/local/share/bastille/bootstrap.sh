@@ -250,10 +250,22 @@ bootstrap_directories() {
 }
 
 bootstrap_release() {
-    ## if release exists, quit
+    ## if release exists quit, else bootstrap additional distfiles
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
-        echo -e "${COLOR_RED}Bootstrap appears complete.${COLOR_RESET}"
-        exit 1
+        ## check distfiles list and skip existing cached files
+        bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/base//")
+        bastille_cached_files=$(ls ${bastille_cachedir}/${RELEASE} | grep -v "MANIFEST" | tr -d ".txz")
+        for distfile in ${bastille_cached_files}; do
+            bastille_bootstrap_archives=$(echo ${bastille_bootstrap_archives} | sed "s/${distfile}//")
+        done
+
+        ## check if release already bootstrapped, else continue bootstrapping
+        if [ -z "${bastille_bootstrap_archives}" ]; then
+            echo -e "${COLOR_RED}Bootstrap appears complete.${COLOR_RESET}"
+            exit 1
+        else
+            echo -e "${COLOR_GREEN}Bootstrapping additional distfiles...${COLOR_RESET}"
+        fi
     fi
 
     for _archive in ${bastille_bootstrap_archives}; do
