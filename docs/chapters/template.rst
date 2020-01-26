@@ -1,12 +1,15 @@
 ========
 Template
 ========
+Looking for ready made CI/CD validated [Bastille
+Templates](https://gitlab.com/BastilleBSD-Templates)?
 
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the containers automatically.
 
-Currently supported template hooks are: `PRE`, `OVERLAY`, `PKG`, `SYSRC`, `CMD`.
-Planned template hooks include: `FSTAB`, `PF`, `LOG`.
+Currently supported template hooks are: `LIMITS`, `INCLUDE`, `PRE`, `FSTAB`,
+`PKG`, `OVERLAY`, `SYSRC`, `SERVICE`, `CMD`.
+Planned template hooks include: `PF`, `LOG`.
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
 the template hooks. Simply create a new directory named after the template. eg;
@@ -22,27 +25,33 @@ template directory named after the hook you want to execute. eg;
 
   echo "zsh vim-console git-lite htop" > /usr/local/bastille/templates/username/base/PKG
   echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/username/base/CMD
-  echo "etc\nrootjn usr" > /usr/local/bastille/templates/username/base/OVERLAY
+  echo "usr" > /usr/local/bastille/templates/username/base/OVERLAY
 
 Template hooks are executed in specific order and require specific syntax to
 work as expected. This table outlines those requirements:
 
 
-+---------+------------------+--------------------------------------+
-| HOOK    | format           | example                              |
-+=========+==================+======================================+
-| PRE     | /bin/sh command  | mkdir -p /usr/local/my_app/html      |
-+---------+------------------+--------------------------------------+
-| OVERLAY | path(s)          | etc root usr (one per line)          |
-+---------+------------------+--------------------------------------+
-| PKG     | port/pkg name(s) | vim-console zsh git-lite tree htop   |
-+---------+------------------+--------------------------------------+
-| SYSRC   | sysrc command(s) | nginx_enable=YES                     |
-+---------+------------------+--------------------------------------+
-| SERVICE | service command  | 'nginx start' OR 'postfix reload'    |
-+---------+------------------+--------------------------------------+
-| CMD     | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh  |
-+---------+------------------+--------------------------------------+
++---------+-------------------+-----------------------------------------+
+| HOOK    | format            | example                                 |
++=========+===================+=========================================+
+| LIMITS  | resource value    | memoryuse 1G                            |
++---------+-------------------+-----------------------------------------+
+| INCLUDE | template path/URL | http?://TEMPLATE_URL or project/path    |
++---------+-------------------+-----------------------------------------+
+| PRE     | /bin/sh command   | mkdir -p /usr/local/my_app/html         |
++---------+-------------------+-----------------------------------------+
+| FSTAB   | fstab syntax      | /host/path container/path nullfs ro 0 0 |
++---------+-------------------+-----------------------------------------+
+| PKG     | port/pkg name(s)  | vim-console zsh git-lite tree htop      |
++---------+-------------------+-----------------------------------------+
+| OVERLAY | path(s)           | etc root usr (one per line)             |
++---------+-------------------+-----------------------------------------+
+| SYSRC   | sysrc command(s)  | nginx_enable=YES                        |
++---------+-------------------+-----------------------------------------+
+| SERVICE | service command   | 'nginx start' OR 'postfix reload'       |
++---------+-------------------+-----------------------------------------+
+| CMD     | /bin/sh command   | /usr/bin/chsh -s /usr/local/bin/zsh     |
++---------+-------------------+-----------------------------------------+
 
 Note: SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
 ie; (`\\"`)
@@ -61,17 +70,16 @@ overlayed template files will be in `usr/local`. The few general
 exceptions are the `etc/hosts`, `etc/resolv.conf`, and
 `etc/rc.conf.local`.
 
-After populating `usr/local/` with custom config files that your container will
+After populating `usr/local` with custom config files that your container will
 use, be sure to include `usr` in the template OVERLAY definition. eg;
 
 .. code-block:: shell
 
-  echo "etc\nusr" > /usr/local/bastille/templates/username/base/OVERLAY
+  echo "usr" > /usr/local/bastille/templates/username/base/OVERLAY
 
-The above example "etc usr" will include anything under "etc" and "usr"
-inside the template. You do not need to list individual files. Just
-include the top-level directory name. List these top-level directories one per
-line.
+The above example "usr" will include anything under "usr" inside the template.
+You do not need to list individual files. Just include the top-level directory
+name. List these top-level directories one per line.
 
 Applying Templates
 ------------------
