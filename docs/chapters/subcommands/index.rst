@@ -20,6 +20,5 @@ Bastille sub-commands
    sysrc
    top
    update
-   update
    upgrade
    verify
