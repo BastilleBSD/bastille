@@ -69,6 +69,13 @@ for _jail in ${JAILS}; do
             pfctl -q -t jails -T delete $(jls -j ${_jail} ip4.addr)
         fi
 
+        ## remove rctl limits
+        if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+            while read _limits; do
+                rctl -r "${_limits}"
+            done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+        fi
+
         ## stop container
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
