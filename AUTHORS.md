@@ -2,29 +2,34 @@
 
 ## Lead
 
-Christer Edwards [christer.edwards@gmail.com]
+Christer Edwards [christer.edwards@gmail.com]  
 
-## Contributors
+## Contributors (code)
 
-Barry McCormick
-Jose Rivera
-Giacomo Olgeni
-Jan-Piet Mens
+Barry McCormick  
+Brian Downs  
+Dave Cottlehuber  
+Giacomo Olgeni  
+JP Mens  
+Jose Rivera  
+Lars E.  
+Sven R.  
 
 ### Special thanks
 Software doesn't happen in a vacuum. Thank you to the following people who may
-not be found in the commit history.
+not be found in the commit history but have influenced Bastille's development
+in some way.
 
-Barry McCormick
-Carlos Meza
-Casandra Woodcox
-Clint Savage
-G. Clifford Williams
-Jack Thomasson
-Jun C Park
-Justin Desilets
-Larry Raab
-Nate Taylor
-Ryan Simpkins
-Tim Gelter
-Trevor Sharpe
+Carlos Meza  
+Casandra Woodcox  
+Clint Savage  
+G. Clifford Williams  
+Jack Thomasson  
+Jun C Park  
+Justin Desilets  
+Larry Raab  
+Nate Taylor  
+Peter Czanik  
+Ryan Simpkins  
+Tim Gelter  
+Trevor Sharpe  

@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# Copyright (c) 2018-2019, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -90,6 +90,35 @@ for _jail in ${JAILS}; do
             echo
             continue
         fi
+    fi
+
+    ## LIMITS (RCTL)
+    if [ -s "${bastille_template}/LIMITS" ]; then
+        echo -e "${COLOR_GREEN}[${_jail}]:LIMITS -- START${COLOR_RESET}"
+        RACCT_ENABLE=$(sysctl -n kern.racct.enable)
+        if [ "${RACCT_ENABLE}" != '1' ]; then
+            echo "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
+            continue
+        fi
+        while read _limits; do
+            ## define the key and value
+            _limit_key=$(echo "${_limits}" | awk '{print $1}')
+            _limit_value=$(echo "${_limits}" | awk '{print $2}')
+            _rctl_rule="jail:${_jail}:${_limit_key}:deny=${_limit_value}/jail"
+
+            ## if entry doesn't exist, add; else show existing entry
+            if [ ! "$(grep -qs "${_rctl_rule}" "${bastille_jailsdir}/${_jail}/rctl.conf")" ]; then
+                echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+                echo "${_limits}"
+            else
+                echo "${_limits}"
+            fi
+
+            ## apply limits to system
+            rctl -a "${_rctl_rule}" || exit 1
+        done < "${bastille_template}/LIMITS"
+        echo -e "${COLOR_GREEN}[${_jail}]:LIMITS -- END${COLOR_RESET}"
+        echo
     fi
 
     ## INCLUDE
