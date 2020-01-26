@@ -173,6 +173,18 @@ bootstrap_directories() {
         fi
     fi
 
+    ## ${bastille_backupsdir}
+    if [ ! -d "${bastille_backupsdir}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ];then
+            if [ ! -z "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_backupsdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/backups
+            fi
+        else
+            mkdir -p "${bastille_backupsdir}"
+            chmod 0750 "${bastille_backupsdir}"
+        fi
+    fi
+
     ## ${bastille_cachedir}
     if [ ! -d "${bastille_cachedir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
