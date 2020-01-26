@@ -543,7 +543,8 @@ Templates](https://gitlab.com/BastilleBSD-Templates)?
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the container automatically.
 
-Currently supported template hooks are: `INCLUDE`, `PRE`, `FSTAB`, `OVERLAY`, `PKG`, `SYSRC`, `SERVICE`, `CMD`.
+Currently supported template hooks are: `LIMITS`, `INCLUDE`, `PRE`, `FSTAB`,
+`PKG`, `OVERLAY`, `SYSRC`, `SERVICE`, `CMD`.
 Planned template hooks include: `PF`, `LOG`
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
@@ -568,6 +569,7 @@ work as expected. This table outlines that order and those requirements:
 
 | SUPPORTED | format              | example                                        |
 |-----------|---------------------|------------------------------------------------|
+| LIMITS    | resource value      | memoryuse 1G                                   |
 | INCLUDE   | template path/URL   | http?://TEMPLATE_URL or username/base-template |
 | PRE       | /bin/sh command     | mkdir -p /usr/local/path                       |
 | FSTAB     | fstab syntax        | /host/path container/path nullfs ro 0 0        |
