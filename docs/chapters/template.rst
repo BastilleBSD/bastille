@@ -44,8 +44,8 @@ work as expected. This table outlines those requirements:
 | CMD     | /bin/sh command  | /usr/bin/chsh -s /usr/local/bin/zsh  |
 +---------+------------------+--------------------------------------+
 
-Note: SYSRC requires that NO quotes be used or that quotes (`"`) be escaped.
-ie; `\"`)
+Note: SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
+ie; (`\\"`)
 
 In addition to supporting template hooks, Bastille supports overlaying
 files into the container. This is done by placing the files in their full path,
