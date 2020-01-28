@@ -181,21 +181,12 @@ if [ ! -d "${bastille_backupsdir}" ]; then
     error_notify "${COLOR_RED}Backups directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
 fi
 
-# Handle additional options
-case "${TARGET}" in
-list)
-    ls "${bastille_backupsdir}" | grep -Ev "*.sha256"
-    exit 0
-    ;;
-*)
-    # Check if archive exist then trim archive name
-    if [ "$(ls "${bastille_backupsdir}" | awk "/^${TARGET}$/")" ]; then
-        TARGET_TRIM=$(echo ${TARGET} | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*:[0-9]*:[0-9]*.[txz]\{2,3\}//")
-    else
-        error_notify "${COLOR_RED}Archive '${TARGET}' not found.${COLOR_RESET}"
-    fi
-    ;;
-esac
+# Check if archive exist then trim archive name
+if [ "$(ls "${bastille_backupsdir}" | awk "/^${TARGET}$/")" ]; then
+    TARGET_TRIM=$(echo ${TARGET} | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*:[0-9]*:[0-9]*.[txz]\{2,3\}//")
+else
+    error_notify "${COLOR_RED}Archive '${TARGET}' not found.${COLOR_RESET}"
+fi
 
 # Check if a running jail matches name or already exist
 if [ -n "$(jls name | awk "/^${TARGET_TRIM}$/")" ]; then
