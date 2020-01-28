@@ -388,7 +388,7 @@ case "${1}" in
 NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
 if [ -n "${NAME_VERIFY}" ]; then
     RELEASE="${NAME_VERIFY}"
-    UPSTREAM_URL="http://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
+    UPSTREAM_URL="${bastille_url_freebsd}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
     if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
         ## try an alternate url
         UPSTREAM_URL="ftp://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
@@ -404,7 +404,7 @@ fi
 NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
 if [ -n "${NAME_VERIFY}" ]; then
     RELEASE="${NAME_VERIFY}"
-    UPSTREAM_URL="https://installer.hardenedbsd.org/pub/HardenedBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
+    UPSTREAM_URL="i${bastille_url_hardenedbsd}/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
     bootstrap_directories
     bootstrap_release
 else
