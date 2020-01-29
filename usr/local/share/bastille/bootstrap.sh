@@ -399,29 +399,29 @@ else
     usage
 fi
     ;;
-*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+current|CURRENT)
 ## check for HardenedBSD releases name
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^((current|CURRENT)$' | sed 's/CURRENT/current/g')
 if [ -n "${NAME_VERIFY}" ]; then
     RELEASE="${NAME_VERIFY}"
-    UPSTREAM_URL="${bastille_url_hardenedbsd}/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
+    UPSTREAM_URL="http://installer.hardenedbsd.org/pub/hardenedbsd/current/${HW_MACHINE}/${HW_MACHINE_ARCH}/BUILD-LATEST/"
     bootstrap_directories
     bootstrap_release
 else
     usage
 fi
     ;;
-*-stable-build-*|*-STABLE-BUILD-*)
+*-stable|*-STABLE)
 ## check for HardenedBSD(for current changes)
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,2})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable|-STABLE))$' | sed 's/STABLE/stable/g')
 NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-build-[0-9]\{1,2\}//g')
-NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
+NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable//g')
 if [ -n "${NAME_VERIFY}" ]; then
     RELEASE="${NAME_VERIFY}"
-    UPSTREAM_URL="http://installer.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    UPSTREAM_URL="http://installer.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/BUILD-LATEST/"
     if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
         ## try an alternate url
-        UPSTREAM_URL="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+        UPSTREAM_URL="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/BUILD-LATEST/"
     fi
     bootstrap_directories
     bootstrap_release
