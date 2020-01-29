@@ -67,11 +67,10 @@ validate_ip() {
 
 validate_netif() {
     local LIST_INTERFACES=$(ifconfig -l)
-    interface=${INTERFACE}
-    if echo "${LIST_INTERFACES}" | grep -qwo "${INTERFACE}"; then
-        echo -e "${COLOR_GREEN}Valid: ($interface).${COLOR_RESET}"
+    if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
+        echo -e "${COLOR_GREEN}Valid: (${INTERFACE}).${COLOR_RESET}"
     else
-        echo -e "${COLOR_RED}Invalid: ($interface).${COLOR_RESET}"
+        echo -e "${COLOR_RED}Invalid: (${INTERFACE}).${COLOR_RESET}"
         exit 1
     fi
 }

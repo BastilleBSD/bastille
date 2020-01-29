@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille import [TARGET|list].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille import backup_file.${COLOR_RESET}"
     exit 1
 }
 
