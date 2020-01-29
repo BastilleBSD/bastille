@@ -49,8 +49,10 @@ Available Commands:
   cp          cp(1) files from host to targeted container(s).
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
+  export      Exports a specified container.
   help        Help about any command
   htop        Interactive process viewer (requires htop).
+  import      Import a specified container.
   list        List containers (running and stopped).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   restart     Restart a running container.
@@ -220,14 +222,14 @@ ishmael ~ # bastille bootstrap 12.0-RELEASE
 ishmael ~ # bastille bootstrap 12.1-RELEASE
 ```
 
-**HardenedBSD 11-STABLE-LAST**
+**HardenedBSD 11-STABLE-BUILD-XX**
 ```shell
-ishmael ~ # bastille bootstrap 11-STABLE-LAST
+ishmael ~ # bastille bootstrap 11-STABLE-BUILD-XX
 ```
 
-**HardenedBSD 12-STABLE-LAST**
+**HardenedBSD 12-STABLE-BUILD-XX**
 ```shell
-ishmael ~ # bastille bootstrap 12-STABLE-LAST
+ishmael ~ # bastille bootstrap 12-STABLE-BUILD-XX
 ```
 
 > `bastille bootstrap RELEASE update` to apply updates automatically at bootstrap.
@@ -792,6 +794,45 @@ ishmael ~ # bastille zfs ALL df
 ishmael ~ # bastille zfs folsom df
 ```
 
+bastille export
+----------------
+Containers can be exported for archiving purposes easily.
+Note: On UFS systems containers must be stopped before export.
+
+```shell
+ishmael ~ # bastille export folsom
+Exporting 'folsom' to a compressed .xz archive.
+Sending zfs data stream...
+  100 %     1057.2 KiB / 9231.5 KiB = 0.115                   0:01             
+Exported '/usr/local/bastille/jails/backups/folsom_2020-01-26-19:23:04.xz' successfully.
+
+```
+
+bastille import
+----------------
+Containers can be imported from supported archives easily.
+
+```shell
+ishmael ~ # bastille import folsom_2020-01-26-19:22:23.xz
+Validating file: folsom_2020-01-26-19:22:23.xz...
+File validation successful!
+Importing 'folsom' from compressed .xz archive.
+Receiving zfs data stream...
+/usr/local/bastille/jails/backups/folsom_2020-01-26-19:22:23.xz (1/1)
+  100 %      626.4 KiB / 9231.5 KiB = 0.068                   0:02             
+Container 'folsom' imported successfully.
+```
+
+bastille import list
+--------------------
+Exported containers can be listed easily before import.
+```shell
+ishmael ~ # bastille import list
+folsom_2020-01-26-19:23:04.xz
+thickjail_2020-01-25-04:00:19.xz
+thinjail_2020-01-25-02:10:16.txz
+root@nas-mserver: ~#
+```
 
 Example (create, start, console)
 ================================

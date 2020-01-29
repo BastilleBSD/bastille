@@ -87,8 +87,10 @@ Available Commands:
   cp          cp(1) files from host to targeted container(s).
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
-  help        Help about any command
+  export      Exports a specified container.
+  help        Help about any command.
   htop        Interactive process viewer (requires htop).
+  import      Import a specified container.
   list        List containers (running and stopped).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   restart     Restart a running container.
@@ -128,7 +130,7 @@ esac
 
 # Filter out all non-commands
 case "${CMD}" in
-cmd|convert|cp|create|destroy|list|pkg|restart|start|stop|sysrc|template|verify)
+cmd|convert|cp|create|destroy|export|import|list|pkg|restart|start|stop|sysrc|template|verify)
     ;;
 update|upgrade)
     ;;

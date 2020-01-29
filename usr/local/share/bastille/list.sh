@@ -80,6 +80,10 @@ if [ $# -gt 0 ]; then
     limit|limits)
         rctl -h jail:
         ;;
+    import|imports|export|exports|backup|backups)
+        ls "${bastille_backupsdir}" | grep -Ev "*.sha256"
+    exit 0
+    ;;
     *)
         usage
         ;;
