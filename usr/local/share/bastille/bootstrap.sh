@@ -401,7 +401,7 @@ fi
     ;;
 current|CURRENT)
 ## check for HardenedBSD releases name
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^((current|CURRENT)$' | sed 's/CURRENT/current/g')
+NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^(current|CURRENT)$' | sed 's/CURRENT/current/g')
 if [ -n "${NAME_VERIFY}" ]; then
     RELEASE="${NAME_VERIFY}"
     UPSTREAM_URL="http://installer.hardenedbsd.org/pub/hardenedbsd/current/${HW_MACHINE}/${HW_MACHINE_ARCH}/BUILD-LATEST/"
