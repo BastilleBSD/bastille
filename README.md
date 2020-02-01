@@ -55,6 +55,7 @@ Available Commands:
   import      Import a specified container.
   list        List containers (running and stopped).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+  rdr         Redirect host port to container port.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
   start       Start a stopped container.
@@ -117,13 +118,21 @@ set skip on lo
 table <jails> persist
 nat on $ext_if from <jails> to any -> ($ext_if)
 
-## rdr example
+## static rdr example
 ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
+
+# Enable dynamic rdr (see below)
+rdr-anchor "rdr/*"
 
 block in all
 pass out quick modulate state
 antispoof for $ext_if inet
 pass in inet proto tcp from any to any port ssh flags S/SA keep state
+
+# make sure you also open up ports that you are going to use for dynamic rdr
+# pass in inet proto tcp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
+# pass in inet proto udp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
+
 ```
 
 * Make sure to change the `ext_if` variable to match your host system interface.
@@ -149,6 +158,21 @@ the ip of container Y. The example shown redirects web traffic (80 & 443) to the
 container at `10.17.89.45`.
 
 Finally, enable and (re)start the firewall:
+
+  ## dynamic rdr anchor (see below)
+  rdr-anchor "rdr/*"
+
+The `rdr-anchor "rdr/*"` anables dynamic rdr rules to be setup using the 
+`bastille rdr` command at runtime - eg.
+
+  bastille rdr <jail> --tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
+  bastille rdr <jail> --udp 2053 53 # Same for udp
+  bastille rdr <jail> --list        # List dynamic rdr rules
+  bastille rdr <jail> --clear       # Clear dynamic rdr rules
+
+  Note that if you are rediirecting ports where the host is also listening
+  (eg. ssh) you should make sure that the host service is not listening on 
+  the cloned interface - eg. for ssh set sshd_flags in rc.conf
 
 ```shell
 ishmael ~ # sysrc pf_enable="YES"
@@ -720,6 +744,28 @@ ishmael ~ # bastille cp ALL /tmp/resolv.conf-cf etc/resolv.conf
 
 [unbound0]:
 /tmp/resolv.conf-cf -> /usr/local/bastille/jails/unbound0/root/etc/resolv.conf
+```
+
+bastille-rdr
+------------
+
+`bastille rdr` allows yiou to configure dynamic rdr rules for your containers
+without modifying pf.conf (assuming you are using the `bastille0` interface 
+for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf 
+as described in the Networking section).
+
+```shell
+    # bastille rdr --help
+    Usage: bastille rdr TARGET [--clear] | [--list] | [--tcp <host_port> <jail_port>] | [--udp <host_port> <jail_port>]
+    # bastille rdr dev1 --tcp 2001 22
+    # bastille rdr dev1 --list
+    rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
+    # bastille rdr dev1 --udp 2053 53
+    # bastille rdr dev1 --list
+    rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
+    rdr on em0 inet proto udp from any to any port = 2053 -> 10.17.89.1 port 53
+    # bastille rdr dev1 --clear
+    nat cleared
 ```
 
 bastille update
