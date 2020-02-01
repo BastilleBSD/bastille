@@ -159,20 +159,23 @@ container at `10.17.89.45`.
 
 Finally, enable and (re)start the firewall:
 
-  ## dynamic rdr anchor (see below)
-  rdr-anchor "rdr/*"
+## dynamic rdr 
 
-The `rdr-anchor "rdr/*"` anables dynamic rdr rules to be setup using the 
+The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the 
 `bastille rdr` command at runtime - eg.
 
+```
   bastille rdr <jail> --tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
   bastille rdr <jail> --udp 2053 53 # Same for udp
   bastille rdr <jail> --list        # List dynamic rdr rules
   bastille rdr <jail> --clear       # Clear dynamic rdr rules
+```
 
   Note that if you are rediirecting ports where the host is also listening
   (eg. ssh) you should make sure that the host service is not listening on 
   the cloned interface - eg. for ssh set sshd_flags in rc.conf
+
+## Enable pf rules
 
 ```shell
 ishmael ~ # sysrc pf_enable="YES"
