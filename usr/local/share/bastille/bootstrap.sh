@@ -451,7 +451,7 @@ case "${1}" in
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-BUILD-LATEST//g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    UPSTREAM_URL="${bastille_url_hardenedbsd_alt}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    UPSTREAM_ALT="${bastille_url_hardenedbsd_alt}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
     ;;
 current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
