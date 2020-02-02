@@ -454,20 +454,20 @@ case "${1}" in
     UPSTREAM_URL="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
     ;;
-*-current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
+current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
     ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-current-build|-CURRENT-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
-    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-.*/current/g')
-    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-//g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build|-CURRENT-BUILD)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
+    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     UPSTREAM_ALT="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
     ;;
-*-current-build-latest|*-CURRENT-BUILD-LATEST)
+current-build-latest|*-CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-current-build-latest|-CURRENT-BUILD-LATEST)$' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-.*/current/g')
-    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-//g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest|-CURRENT-BUILD-LATEST)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
+    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     UPSTREAM_ALT="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
