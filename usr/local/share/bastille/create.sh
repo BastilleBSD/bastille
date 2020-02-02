@@ -96,6 +96,15 @@ validate_netconf() {
     fi
 }
 
+validate_release() {
+    ## check release name match, else show usage
+    if [ -n "${NAME_VERIFY}" ]; then
+        RELEASE="${NAME_VERIFY}"
+    else
+        usage
+    fi
+}
+
 create_jail() {
     bastille_jail_base="${bastille_jailsdir}/${NAME}/root/.bastille"  ## dir
     bastille_jail_template="${bastille_jailsdir}/${NAME}/root/.template"  ## dir
@@ -327,31 +336,34 @@ fi
 ## verify release
 case "${RELEASE}" in
 *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
-## check for FreeBSD releases name
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
-if [ -n "${NAME_VERIFY}" ]; then
-    RELEASE="${NAME_VERIFY}"
-else
-    usage
-fi
+    ## check for FreeBSD releases name
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+    validate_release
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-## check for HardenedBSD releases name
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-if [ -n "${NAME_VERIFY}" ]; then
-    RELEASE="${NAME_VERIFY}"
-else
-    usage
-fi
+    ## check for HardenedBSD releases name(previous infrastructure)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    validate_release
     ;;
-*-stable-build-*|*-STABLE-BUILD-*)
-## check for HardenedBSD(for current changes)
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,2})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-if [ -n "${NAME_VERIFY}" ]; then
-    RELEASE="${NAME_VERIFY}"
-else
-    usage
-fi
+*-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
+    ## check for HardenedBSD(specific stable build releases)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    validate_release
+    ;;
+*-stable-build-latest|*-STABLE-BUILD-LATEST)
+    ## check for HardenedBSD(latest stable build release)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest|-STABLE-BUILD-LATEST)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    validate_release
+    ;;
+*-current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
+    ## check for HardenedBSD(specific current build releases)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-current-build|-CURRENT-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    validate_release
+    ;;
+*-current-build-latest|*-CURRENT-BUILD-LATEST)
+    ## check for HardenedBSD(latest current build release)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-current-build-latest|-CURRENT-BUILD-LATEST)$' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    validate_release
     ;;
 *)
     echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"

@@ -66,6 +66,21 @@ if [ "${bastille_zfs_enable}" = "YES" ]; then
     fi
 fi
 
+validate_release_url() {
+    ## check upstream url, else switch to alternate url
+    if [ -n "${NAME_VERIFY}" ]; then
+        RELEASE="${NAME_VERIFY}"
+        if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
+            ## try an alternate url
+            UPSTREAM_URL="${UPSTREAM_ALT}"
+        fi
+        bootstrap_directories
+        bootstrap_release
+    else
+        usage
+    fi
+}
+
 bootstrap_network_interfaces() {
 
     ## test for both options empty
@@ -408,50 +423,54 @@ RELEASE="${1}"
 ## Filter sane release names
 case "${1}" in
 *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
-## check for FreeBSD releases name
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
-if [ -n "${NAME_VERIFY}" ]; then
-    RELEASE="${NAME_VERIFY}"
-    UPSTREAM_URL="${bastille_url_freebsd}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
-    if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
-        ## try an alternate url
-        UPSTREAM_URL="ftp://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
-    fi
-    bootstrap_directories
-    bootstrap_release
-else
-    usage
-fi
+    ## check for FreeBSD releases name
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+    UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
+    UPSTREAM_ALT="ftp://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
+    validate_release_url
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-## check for HardenedBSD releases name
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-if [ -n "${NAME_VERIFY}" ]; then
-    RELEASE="${NAME_VERIFY}"
-    UPSTREAM_URL="${bastille_url_hardenedbsd}/${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
-    bootstrap_directories
-    bootstrap_release
-else
-    usage
-fi
+    ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
+    UPSTREAM_ALT="http://ftp.freebsd.org/pub/FreeBSD/releases/"
+    validate_release_url
     ;;
-*-stable-build-*|*-STABLE-BUILD-*)
-## check for HardenedBSD(for current changes)
-NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,2})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-build-[0-9]\{1,2\}//g')
-NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
-if [ -n "${NAME_VERIFY}" ]; then
-    RELEASE="${NAME_VERIFY}"
-    UPSTREAM_URL="http://installer.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
-        ## try an alternate url
-        UPSTREAM_URL="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    fi
-    bootstrap_directories
-    bootstrap_release
-else
-    usage
-fi
+*-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
+    ## check for HardenedBSD(specific stable build releases)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-build-[0-9]\{1,2\}//g')
+    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    UPSTREAM_ALT="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    validate_release_url
+    ;;
+*-stable-build-latest|*-STABLE-BUILD-LATEST)
+    ## check for HardenedBSD(latest stable build release)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest|-STABLE-BUILD-LATEST)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-BUILD-LATEST//g')
+    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    UPSTREAM_URL="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    validate_release_url
+    ;;
+*-current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
+    ## check for HardenedBSD(specific current build releases)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-current-build|-CURRENT-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-.*/current/g')
+    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    UPSTREAM_ALT="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    validate_release_url
+    ;;
+*-current-build-latest|*-CURRENT-BUILD-LATEST)
+    ## check for HardenedBSD(latest current build release)
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-current-build-latest|-CURRENT-BUILD-LATEST)$' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-.*/current/g')
+    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-current-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    UPSTREAM_ALT="http://ci-01.nyi.hardenedbsd.org/pub/hardenedbsd/${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    validate_release_url
     ;;
 http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_URL=${1}

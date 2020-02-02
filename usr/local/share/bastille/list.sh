@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille list [-j] [release|template|(jail|container)|log|limit].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille list [-j] [release|template|(jail|container)|log|limit|(import|export|backup)].${COLOR_RESET}"
     exit 1
 }
 
