@@ -67,12 +67,12 @@ if [ "${bastille_zfs_enable}" = "YES" ]; then
 fi
 
 validate_release_url() {
-    ## check upstream url, else switch to alternate url
+    ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
         RELEASE="${NAME_VERIFY}"
         if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
-            ## try an alternate url
-            UPSTREAM_URL="${UPSTREAM_ALT}"
+            echo -e "${COLOR_RED}Unable to fetch MANIFEST, See 'bootstrap urls'.${COLOR_RESET}"
+            exit 1
         fi
         bootstrap_directories
         bootstrap_release
@@ -426,14 +426,12 @@ case "${1}" in
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
     UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
-    UPSTREAM_ALT="${bastille_url_freebsd_alt}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
     validate_release_url
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${NAME_VERIFY}"
-    UPSTREAM_ALT="${bastille_url_hardenedbsd_alt}"
     validate_release_url
     ;;
 *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
@@ -442,7 +440,6 @@ case "${1}" in
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-build-[0-9]\{1,2\}//g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    UPSTREAM_ALT="${bastille_url_hardenedbsd_alt}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
     ;;
 *-stable-build-latest|*-STABLE-BUILD-LATEST)
@@ -451,7 +448,6 @@ case "${1}" in
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-BUILD-LATEST//g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    UPSTREAM_ALT="${bastille_url_hardenedbsd_alt}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
     ;;
 current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
@@ -460,7 +456,6 @@ current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    UPSTREAM_ALT="${bastille_url_hardenedbsd_alt}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
     ;;
 current-build-latest|*-CURRENT-BUILD-LATEST)
@@ -469,7 +464,6 @@ current-build-latest|*-CURRENT-BUILD-LATEST)
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    UPSTREAM_ALT="${bastille_url_hardenedbsd_alt}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     validate_release_url
     ;;
 http?://github.com/*/*|http?://gitlab.com/*/*)

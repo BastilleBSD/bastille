@@ -41,7 +41,7 @@ destroy_jail() {
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 
     if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
-        if [ "${FORCE_STOP}" = "1" ]; then
+        if [ "${FORCE}" = "1" ]; then
             bastille stop ${TARGET}
         else
             echo -e "${COLOR_RED}Jail running.${COLOR_RESET}"
@@ -116,6 +116,11 @@ destroy_rel() {
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ ! -z "${bastille_zfs_zpool}" ]; then
                     zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${TARGET}
+                    if [ "${FORCE}" = "1" ]; then
+                        if [ -d "${bastille_cachedir}/${TARGET}" ]; then
+                            zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${TARGET}
+                        fi
+                    fi
                 fi
             fi
 
@@ -125,6 +130,13 @@ destroy_rel() {
 
                 ## remove jail base
                 rm -rf ${bastille_rel_base}
+            fi
+
+            if [ "${FORCE}" = "1" ]; then
+                ## remove cache on force
+                if [ -d "${bastille_cachedir}/${TARGET}" ]; then
+                    rm -rf "${bastille_cachedir}/${TARGET}"
+                fi
             fi
             echo
         else
@@ -145,11 +157,11 @@ TARGET="${2}"
 
 ## handle additional options
 case "${OPTION}" in
--f|--forcestop)
+-f|--force)
     if [ $# -gt 2 ] || [ $# -lt 2 ]; then
         usage
     fi
-    FORCE_STOP="1"
+    FORCE="1"
     ;;
 -*)
     echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
