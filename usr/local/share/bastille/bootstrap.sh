@@ -69,6 +69,7 @@ fi
 validate_release_url() {
     ## check upstream url, else switch to alternate url
     if [ -n "${NAME_VERIFY}" ]; then
+        RELEASE="${NAME_VERIFY}"
         if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
             ## try an alternate url
             UPSTREAM_URL="${UPSTREAM_ALT}"
