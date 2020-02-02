@@ -29,7 +29,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille rdr TARGET [--clear] | [--list] | [--tcp <host_port> <jail_port>] | [--udp <host_port> <jail_port>]${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille rdr TARGET [clear] | [list] | [tcp <host_port> <jail_port>] | [udp <host_port> <jail_port>]${COLOR_RESET}"
     exit 1
 }
 
@@ -82,15 +82,15 @@ fi
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --list)
+        list)
             pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
             shift
             ;;
-        --clear)
+        clear)
             pfctl -a "rdr/${JAIL_NAME}" -Fn
             shift
             ;;
-        --tcp)
+        tcp)
             if [ $# -lt 3 ]; then
                 usage
             fi
@@ -99,7 +99,7 @@ while [ $# -gt 0 ]; do
                   | pfctl -a "rdr/${JAIL_NAME}" -f-
             shift 3
             ;;
-        --udp)
+        udp)
             if [ $# -lt 3 ]; then
                 usage
             fi

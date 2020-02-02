@@ -165,10 +165,10 @@ The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
 `bastille rdr` command at runtime - eg.
 
 ```
-  bastille rdr <jail> --tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
-  bastille rdr <jail> --udp 2053 53 # Same for udp
-  bastille rdr <jail> --list        # List dynamic rdr rules
-  bastille rdr <jail> --clear       # Clear dynamic rdr rules
+  bastille rdr <jail> tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
+  bastille rdr <jail> udp 2053 53 # Same for udp
+  bastille rdr <jail> list        # List dynamic rdr rules
+  bastille rdr <jail> clear       # Clear dynamic rdr rules
 ```
 
   Note that if you are rediirecting ports where the host is also listening
@@ -752,22 +752,22 @@ ishmael ~ # bastille cp ALL /tmp/resolv.conf-cf etc/resolv.conf
 bastille-rdr
 ------------
 
-`bastille rdr` allows yiou to configure dynamic rdr rules for your containers
+`bastille rdr` allows you to configure dynamic rdr rules for your containers
 without modifying pf.conf (assuming you are using the `bastille0` interface 
 for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf 
 as described in the Networking section).
 
 ```shell
     # bastille rdr --help
-    Usage: bastille rdr TARGET [--clear] | [--list] | [--tcp <host_port> <jail_port>] | [--udp <host_port> <jail_port>]
-    # bastille rdr dev1 --tcp 2001 22
-    # bastille rdr dev1 --list
+    Usage: bastille rdr TARGET [clear] | [list] | [tcp <host_port> <jail_port>] | [udp <host_port> <jail_port>]
+    # bastille rdr dev1 tcp 2001 22
+    # bastille rdr dev1 list
     rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
-    # bastille rdr dev1 --udp 2053 53
-    # bastille rdr dev1 --list
+    # bastille rdr dev1 udp 2053 53
+    # bastille rdr dev1 list
     rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
     rdr on em0 inet proto udp from any to any port = 2053 -> 10.17.89.1 port 53
-    # bastille rdr dev1 --clear
+    # bastille rdr dev1 clear
     nat cleared
 ```
 
