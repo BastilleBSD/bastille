@@ -46,14 +46,16 @@ Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   cmd         Execute arbitrary command on targeted container(s).
   console     Console into a running container.
+  convert     Convert a thin container into a thick container.
   cp          cp(1) files from host to targeted container(s).
-  create      Create a new thin container or a thick container if -T|--thick option specified.
-  destroy     Destroy a stopped container or a FreeBSD release.
-  export      Exports a specified container.
+  create      Create a new thin or thick container.
+  destroy     Destroy a stopped container or a bootstrapped release.
+  export      Exports a container archive or image.
   help        Help about any command
   htop        Interactive process viewer (requires htop).
-  import      Import a specified container.
-  list        List containers (running and stopped).
+  import      Import a container archive or image.
+  limits      Apply resources limits to targeted container(s). See rctl(8).
+  list        List containers, releases, templates, logs, limits or backups.
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port.
   restart     Restart a running container.
@@ -61,11 +63,11 @@ Available Commands:
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
-  template    Apply file templates to targeted container(s).
+  template    Apply automation templates to targeted container(s).
   top         Display and update information about the top(1) cpu processes.
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
-  verify      Compare release against a "known good" index.
+  verify      Verify bootstrapped release or automation template.
   zfs         Manage (get|set) zfs attributes on targeted container(s).
 
 Use "bastille -v|--version" for version information.
@@ -73,7 +75,7 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.5-beta
+## 0.6-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
@@ -393,7 +395,8 @@ ishmael ~ # bastille list
 
 You can also list non-running containers with `bastille list containers`.  In
 the same manner you can list archived `logs`, downloaded `templates`, and
-`releases`.  Providing the `-j` flag to list alone will result in JSON output.
+`releases` and `backups`.  Providing the `-j` flag to list alone will result in
+JSON output.
 
 
 bastille service
@@ -870,17 +873,6 @@ Receiving zfs data stream...
 /usr/local/bastille/jails/backups/folsom_2020-01-26-19:22:23.xz (1/1)
   100 %      626.4 KiB / 9231.5 KiB = 0.068                   0:02             
 Container 'folsom' imported successfully.
-```
-
-bastille import list
---------------------
-Exported containers can be listed easily before import.
-```shell
-ishmael ~ # bastille import list
-folsom_2020-01-26-19:23:04.xz
-thickjail_2020-01-25-04:00:19.xz
-thinjail_2020-01-25-02:10:16.txz
-root@nas-mserver: ~#
 ```
 
 Example (create, start, console)

@@ -8,13 +8,13 @@ else:
 # -- Project information -----------------------------------------------------
 
 project = 'Bastille'
-copyright = '2018-2019, Christer Edwards'
+copyright = '2018-2020, Christer Edwards'
 author = 'Christer Edwards'
 
 # The short X.Y version
-version = '0.5.20191128'
+version = '0.6.20200202'
 # The full version, including alpha/beta/rc tags
-release = '0.5.20191128-beta'
+release = '0.6.20200202-beta'
 
 
 # -- General configuration ---------------------------------------------------
