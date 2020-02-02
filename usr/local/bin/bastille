@@ -93,6 +93,7 @@ Available Commands:
   import      Import a specified container.
   list        List containers (running and stopped).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+  rdr         Redirect host port to container port.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
   start       Start a stopped container.
@@ -130,7 +131,7 @@ esac
 
 # Filter out all non-commands
 case "${CMD}" in
-cmd|convert|cp|create|destroy|export|import|list|pkg|restart|start|stop|sysrc|template|verify)
+cmd|convert|cp|create|destroy|export|import|list|pkg|rdr|restart|start|stop|sysrc|template|verify)
     ;;
 update|upgrade)
     ;;
