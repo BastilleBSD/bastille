@@ -13,6 +13,7 @@ Giacomo Olgeni
 JP Mens  
 Jose Rivera  
 Lars E.  
+Paul C.  
 Sven R.  
 
 ### Special thanks
