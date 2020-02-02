@@ -69,7 +69,6 @@ fi
 validate_release_url() {
     ## check upstream url, else switch to alternate url
     if [ -n "${NAME_VERIFY}" ]; then
-        RELEASE="${NAME_VERIFY}"
         if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
             ## try an alternate url
             UPSTREAM_URL="${UPSTREAM_ALT}"
@@ -425,14 +424,14 @@ case "${1}" in
 *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
-    UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
-    UPSTREAM_ALT="ftp://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${RELEASE}"
+    UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
+    UPSTREAM_ALT="ftp://ftp.freebsd.org/pub/FreeBSD/releases/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
     validate_release_url
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${RELEASE}"
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${NAME_VERIFY}"
     UPSTREAM_ALT="http://ftp.freebsd.org/pub/FreeBSD/releases/"
     validate_release_url
     ;;

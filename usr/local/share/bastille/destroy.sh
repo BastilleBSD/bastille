@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille destroy [container|release]${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille destroy [option] | [container|release]${COLOR_RESET}"
     exit 1
 }
 
@@ -41,9 +41,13 @@ destroy_jail() {
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 
     if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
-        echo -e "${COLOR_RED}Jail running.${COLOR_RESET}"
-        echo -e "${COLOR_RED}See 'bastille stop ${TARGET}'.${COLOR_RESET}"
-        exit 1
+        if [ "${FORCE_STOP}" = "1" ]; then
+            bastille stop ${TARGET}
+        else
+            echo -e "${COLOR_RED}Jail running.${COLOR_RESET}"
+            echo -e "${COLOR_RED}See 'bastille stop ${TARGET}'.${COLOR_RESET}"
+            exit 1
+        fi
     fi
 
     if [ ! -d "${bastille_jail_base}" ]; then
@@ -136,11 +140,28 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
-    usage
-fi
+OPTION="${1}"
+TARGET="${2}"
 
-TARGET="$1"
+## handle additional options
+case "${OPTION}" in
+-f|--forcestop)
+    if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+        usage
+    fi
+    FORCE_STOP="1"
+    ;;
+-*)
+    echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
+    usage
+    ;;
+*)
+    if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+        usage
+    fi
+    TARGET="${1}"
+    ;;
+esac
 
 ## check what should we clean
 case "${TARGET}" in
