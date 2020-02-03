@@ -21,7 +21,8 @@ portsnap fetch auto
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
-**Git**
+**Git (Only for testing)**
+ATTENTION: This will overwrite your running (config) files.
 ```shell
 git clone https://github.com/BastilleBSD/bastille.git
 cd bastille
