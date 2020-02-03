@@ -21,7 +21,8 @@ portsnap fetch auto
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
-**Git**
+**Git (for testing only)**
+This will break your running (config) files
 ```shell
 git clone https://github.com/BastilleBSD/bastille.git
 cd bastille
@@ -113,7 +114,7 @@ Create the firewall config, or merge as necessary.
 ```
 ext_if="vtnet0"
 rdr_tcp = "{80, 443}" # bastille TCP ports
-# rdr_udp = "{53}" # bastille UDP ports
+rdr_udp = "{53}" # bastille UDP ports
 
 set block-policy return
 scrub in on $ext_if all fragment reassemble
@@ -132,7 +133,8 @@ block in all
 pass out quick modulate state
 antispoof for $ext_if inet
 
-pass in inet proto tcp from any to $ext_if port ssh flags S/SA keep state                                                                                                                    pass in inet proto tcp from any to <jails> port $rdr_tcp flags S/SA keep state label bastille_tcp_ports
+pass in inet proto tcp from any to $ext_if port ssh flags S/SA keep state
+# pass in inet proto tcp from any to <jails> port $rdr_tcp flags S/SA keep state label bastille_tcp_ports
 # pass in inet proto udp from any to <jails> port $rdr_udp label bastille_udp_ports
 ```
 
