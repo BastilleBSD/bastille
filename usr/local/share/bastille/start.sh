@@ -66,7 +66,7 @@ for _jail in ${JAILS}; do
     elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
 	ip=$(cat ${bastille_jailsdir}/${_jail}/jail.conf | grep ip4.addr | awk '{print $3}' | sed 's/\;//g')
 	echo $ip
-        if ifconfig | grep inet | grep "$ip" >/dev/null; then
+        if ifconfig | grep inet | grep -w "$ip" >/dev/null; then
           echo -e "${COLOR_RED}Error: IP address ($ip) already in use.${COLOR_RESET}"
           exit 1
         fi
