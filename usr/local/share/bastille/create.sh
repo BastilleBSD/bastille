@@ -58,7 +58,7 @@ validate_ip() {
           exit 1
         fi
       done
-      if ifconfig | grep inet | grep -w "$ip" >/dev/null; then
+      if ifconfig | grep -w "$ip" >/dev/null; then
         echo -e "${COLOR_YELLOW}Warning: ip address already in use ($ip).${COLOR_RESET}"
       else
         echo -e "${COLOR_GREEN}Valid: ($ip).${COLOR_RESET}"
