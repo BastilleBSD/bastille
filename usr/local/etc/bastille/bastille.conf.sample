@@ -28,8 +28,8 @@ bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"          ## 
 bastille_url_hardenedbsd="http://installer.hardenedbsd.org/pub/hardenedbsd/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
 
 ## ZFS options
-bastille_zfs_enable=""                                                ## default: ""
-bastille_zfs_zpool=""                                                 ## default: ""
+bastille_zfs_enable="NO"                                              ## default: "NO"
+bastille_zfs_zpool="zroot"                                            ## default: "zroot"
 bastille_zfs_prefix="bastille"                                        ## default: "${bastille_zfs_zpool}/bastille"
 bastille_zfs_options="-o compress=lz4 -o atime=off"                   ## default: "-o compress=lz4 -o atime=off"
 
