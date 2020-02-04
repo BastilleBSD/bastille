@@ -112,6 +112,8 @@ Create the firewall config, or merge as necessary.
 ------------
 ```
 ext_if="vtnet0"
+rdr_tcp = "{80, 443}" # bastille TCP ports
+# rdr_udp = "{53}" # bastille UDP ports
 
 set block-policy return
 scrub in on $ext_if all fragment reassemble
@@ -121,20 +123,17 @@ table <jails> persist
 nat on $ext_if from <jails> to any -> ($ext_if)
 
 ## static rdr example
-## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
+# rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
 
-# Enable dynamic rdr (see below)
+## Enable dynamic rdr (see below)
 rdr-anchor "rdr/*"
 
 block in all
 pass out quick modulate state
 antispoof for $ext_if inet
-pass in inet proto tcp from any to any port ssh flags S/SA keep state
 
-# make sure you also open up ports that you are going to use for dynamic rdr
-# pass in inet proto tcp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
-# pass in inet proto udp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
-
+pass in inet proto tcp from any to $ext_if port ssh flags S/SA keep state                                                                                                                    pass in inet proto tcp from any to <jails> port $rdr_tcp flags S/SA keep state label bastille_tcp_ports
+# pass in inet proto udp from any to <jails> port $rdr_udp label bastille_udp_ports
 ```
 
 * Make sure to change the `ext_if` variable to match your host system interface.
