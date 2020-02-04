@@ -64,13 +64,17 @@ for _jail in ${JAILS}; do
 
     ## test if not running
     elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
+	## warn if matching configured (but not online) ip4.addr
         ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
         if ifconfig | grep -w "$ip" >/dev/null; then
           echo -e "${COLOR_RED}Error: IP address ($ip) already in use.${COLOR_RESET}"
           exit 1
         fi
+
+	## start the container
+        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
+
         ## add rctl limits
         if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
             while read _limits; do
