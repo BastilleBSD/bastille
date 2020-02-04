@@ -98,7 +98,7 @@ update_fstab() {
     # Set some variables
     FSTAB_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/fstab"
     FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2]|-stable-build-[0-9]{1,3})' ${FSTAB_CONFIG})
-    FSTAB_CURRENT=$(cat ${FSTAB_CONFIG} | grep -w ".*/releases/.*/jails/${TARGET_TRIM}/root/.bastille")
+    FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET_TRIM}/root/.bastille" ${FSTAB_CONFIG})
     FSTAB_NEWCONF="${bastille_releasesdir}/${FSTAB_RELEASE} ${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille nullfs ro 0 0"
     if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
         # If both variables are set, compare and update as needed
