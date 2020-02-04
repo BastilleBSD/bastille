@@ -37,7 +37,8 @@ usage() {
 }
 
 if [ $# -eq 0 ]; then
-   jls -N
+    echo -e "${COLOR_RED}Usage: bastille list [-j] [release|template|(jail|container)|log|limit|(import|export|backup)].${COLOR_RESET}"
+    exit 1
 fi
 
 if [ "$1" == "-j" ]; then
@@ -69,7 +70,13 @@ if [ $# -gt 0 ]; then
             JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
             for _JAIL in ${JAIL_LIST}; do
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
-                    echo "${_JAIL}"
+                    ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_JAIL}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+                    dir=$(grep 'path' "${bastille_jailsdir}/${_JAIL}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+                    if jls -n name | awk 'BEGIN { FS = "=" } ; { print $2 }' | grep -w "$_JAIL"  >/dev/null; then
+                        echo -e "${COLOR_GREEN}${_JAIL} $ip $dir running${COLOR_RESET}"
+                    else
+                        echo -e "${COLOR_RED}${_JAIL} $ip $dir offline${COLOR_RESET}"
+                    fi 
                 fi
             done
         fi
