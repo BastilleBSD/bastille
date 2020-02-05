@@ -54,7 +54,7 @@ if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "${TARGET}")
+    JAILS=$(jls name | awk "/^${TARGET}$/")
 fi
 
 validate_user() {
