@@ -32,7 +32,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 ## root check first.
 bastille_root_check() {
-    if [ $(id -u) -ne 0 ]; then
+    if [ "$(id -u)" -ne 0 ]; then
         ## so we can make it colorful
         . /usr/local/share/bastille/colors.pre.sh
 
@@ -69,7 +69,7 @@ bastille_perms_check
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.5.20191128"
+BASTILLE_VERSION="0.6.20200202"
 
 usage() {
     cat << EOF
@@ -131,13 +131,13 @@ esac
 
 # Filter out all non-commands
 case "${CMD}" in
-cmd|convert|cp|create|destroy|export|import|list|pkg|rdr|restart|start|stop|sysrc|template|verify)
+bootstrap|cmd|console|convert|cp|create)
     ;;
-update|upgrade)
+destroy|export|htop|import|limits|list)
     ;;
-service|console|bootstrap|htop|top)
+pkg|rdr|restart|service|start|stop|sysrc)
     ;;
-bootstrap|update|upgrade|zfs)
+template|top|update|upgrade|verify|zfs)
     ;;
 *)
 usage
@@ -146,12 +146,12 @@ esac
 
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 if [ -f "${SCRIPTPATH}" ]; then
-    : ${UMASK:=022}
-    umask ${UMASK}
+    : "${UMASK:=022}"
+    umask "${UMASK}"
 
-    : ${SH:=sh}
+    : "${SH:=sh}"
 
-    exec ${SH} "${SCRIPTPATH}" "$@"
+    exec "${SH}" "${SCRIPTPATH}" "$@"
 else
     echo -e "${COLOR_RED}${SCRIPTPATH} not found.${COLOR_RESET}" 1>&2
 fi

@@ -17,6 +17,9 @@ uninstall:
 	@echo "Removing Bastille sub-commands"
 	@rm -rvf /usr/local/share/bastille
 	@echo
+	@echo "removing man page"
+	@rm -rvf /usr/local/share/man/man1/bastille.1.gz
+	@echo
 	@echo "removing configuration file"
 	@rm -rvf /usr/local/etc/bastille
 	@echo

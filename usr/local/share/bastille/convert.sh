@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille convert name.${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille convert TARGET.${COLOR_RESET}"
     exit 1
 }
 
