@@ -74,6 +74,7 @@ validate_release_url() {
             echo -e "${COLOR_RED}Unable to fetch MANIFEST, See 'bootstrap urls'.${COLOR_RESET}"
             exit 1
         fi
+        echo -e "${COLOR_GREEN}Bootstrapping ${PLATFORM_OS} distfiles...${COLOR_RESET}"
         bootstrap_directories
         bootstrap_release
     else
@@ -426,44 +427,50 @@ case "${1}" in
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
     UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
+    PLATFORM_OS="FreeBSD"
     validate_release_url
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${NAME_VERIFY}"
+    PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
 *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
     ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-build-[0-9]\{1,2\}//g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
 *-stable-build-latest|*-STABLE-BUILD-LATEST)
     ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest|-STABLE-BUILD-LATEST)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-BUILD-LATEST//g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
-current-build-[0-9]*|*-CURRENT-BUILD-[0-9]*)
+current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
     ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build|-CURRENT-BUILD)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
-current-build-latest|*-CURRENT-BUILD-LATEST)
+current-build-latest|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest|-CURRENT-BUILD-LATEST)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
     NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
 http?://github.com/*/*|http?://gitlab.com/*/*)
