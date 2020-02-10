@@ -72,8 +72,7 @@ update_jailconf() {
 }
 
 update_fstab() {
-    # Update fstab .bastille mountpoint on thin containers only
-    # Set some variables
+    # Update fstab to use the new name
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
     FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2]|-stable-build-[0-9]{1,3})' ${FSTAB_CONFIG})
     FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET}/root/.bastille" ${FSTAB_CONFIG})
