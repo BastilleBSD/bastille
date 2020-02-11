@@ -446,7 +446,7 @@ case "${1}" in
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
-*-stable-build-latest|*-STABLE-BUILD-LATEST)
+*-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
     ## check for HardenedBSD(latest stable build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-BUILD-LATEST//g')
@@ -464,7 +464,7 @@ current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
-current-build-latest|CURRENT-BUILD-LATEST)
+current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
