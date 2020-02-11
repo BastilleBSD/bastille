@@ -300,7 +300,7 @@ bootstrap_release() {
         ## check if the dist files already exists then extract
         FETCH_VALIDATION="0"
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
+            echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
             if [ $? -ne 0 ]; then
                 echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
@@ -364,7 +364,7 @@ bootstrap_release() {
 
                 ## extract the fetched dist files
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    echo -e "${COLOR_GREEN}Extracting FreeBSD ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
+                    echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
                     /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
                     if [ $? -ne 0 ]; then
                         echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
