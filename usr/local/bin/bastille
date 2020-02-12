@@ -94,6 +94,7 @@ Available Commands:
   list        List containers (running and stopped).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port.
+  rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
   start       Start a stopped container.
@@ -135,7 +136,7 @@ bootstrap|cmd|console|convert|cp|create)
     ;;
 destroy|export|htop|import|limits|list)
     ;;
-pkg|rdr|restart|service|start|stop|sysrc)
+pkg|rdr|rename|restart|service|start|stop|sysrc)
     ;;
 template|top|update|upgrade|verify|zfs)
     ;;

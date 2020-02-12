@@ -346,27 +346,27 @@ case "${RELEASE}" in
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name(previous infrastructure)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
     validate_release
     ;;
 *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
     ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
     validate_release
     ;;
-*-stable-build-latest|*-STABLE-BUILD-LATEST)
+*-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
     ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest|-STABLE-BUILD-LATEST)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     validate_release
     ;;
 current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
     ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build|-CURRENT-BUILD)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
     validate_release
     ;;
-current-build-latest|CURRENT-BUILD-LATEST)
+current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest|-CURRENT-BUILD-LATEST)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     validate_release
     ;;
 *)
