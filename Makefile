@@ -21,7 +21,8 @@ uninstall:
 	@rm -rvf /usr/local/share/man/man1/bastille.1.gz
 	@echo
 	@echo "removing configuration file"
-	@rm -rvf /usr/local/etc/bastille
+	@rm -rvf /usr/local/etc/bastille/bastille.conf.sample
 	@echo
 	@echo "removing startup script"
 	@rm -vf /usr/local/etc/rc.d/bastille
+	@echo "You may need to manually remove /usr/local/etc/bastille/bastille.conf if it is no longer needed."
