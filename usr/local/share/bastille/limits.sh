@@ -69,6 +69,6 @@ fi
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     echo -e "${TYPE} ${VALUE}"
-     rctl -a jail:${_jail}:${OPTION}:deny=${VALUE}/jail
+    rctl -a jail:"${_jail}":"${OPTION}":deny="${VALUE}/jail"
     echo -e "${COLOR_RESET}"
 done

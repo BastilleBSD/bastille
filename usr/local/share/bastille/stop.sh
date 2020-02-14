@@ -55,8 +55,10 @@ if [ "${TARGET}" = 'ALL' ]; then
 fi
 if [ "${TARGET}" != 'ALL' ]; then
     JAILS=$(jls name | awk "/^${TARGET}$/")
-    ## test if not running
-    if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
+    ## check if exist or not running
+    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+        echo -e "${COLOR_RED}[${TARGET}]: Not found.${COLOR_RESET}"
+    elif [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
         echo -e "${COLOR_RED}[${TARGET}]: Not started.${COLOR_RESET}"
     fi
 fi
