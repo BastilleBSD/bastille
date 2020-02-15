@@ -122,10 +122,10 @@ create_jail() {
     if [ ! -d "${bastille_jailsdir}/${NAME}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ ! -z "${bastille_zfs_zpool}" ]; then
-                ## create required zfs datasets
+                ## create required zfs datasets, mountpoint inherited from system
                 zfs create ${bastille_zfs_options} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}
                 if [ -z "${THICK_JAIL}" ]; then
-                    zfs create ${bastille_zfs_options} -o mountpoint=${bastille_jailsdir}/${NAME}/root ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
+                    zfs create ${bastille_zfs_options} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root
                 fi
             fi
         else

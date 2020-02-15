@@ -78,6 +78,14 @@ update_zfsmount() {
         echo -e "${COLOR_GREEN}Updating zfs mountpoint...${COLOR_RESET}"
         zfs set mountpoint=${bastille_jailsdir}/${TARGET_TRIM}/root ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root
     fi
+
+    # Mount new container ZFS datasets
+    if ! zfs mount | grep "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"; then
+        zfs mount ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}
+    fi
+    if ! zfs mount | grep "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"; then
+        zfs mount ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root
+    fi
 }
 
 update_jailconf() {
@@ -128,9 +136,6 @@ jail_import() {
                     # This is required on foreign imports only
                     update_zfsmount
 
-                    # Mount new container ZFS datasets
-                    zfs mount ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}
-                    zfs mount ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root
                 elif [ "${FILE_EXT}" = "txz" ]; then
                     # Prepare the ZFS environment and restore from existing tar.xz file
                     echo -e "${COLOR_GREEN}Importing '${TARGET_TRIM}' form .${FILE_EXT} archive.${COLOR_RESET}"

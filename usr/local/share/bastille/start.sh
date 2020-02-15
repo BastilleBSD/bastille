@@ -68,11 +68,13 @@ for _jail in ${JAILS}; do
 
     ## test if not running
     elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
-    ## warn if matching configured (but not online) ip4.addr
+        ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
         ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
-        if ifconfig | grep -w "${ip}" >/dev/null; then
-          echo -e "${COLOR_RED}Error: IP address (${ip}) already in use.${COLOR_RESET}"
-          exit 1
+        if [ -n "${ip}" ]; then
+            if ifconfig | grep -w "${ip}" >/dev/null; then
+                echo -e "${COLOR_RED}Error: IP address (${ip}) already in use.${COLOR_RESET}"
+                exit 1
+            fi
         fi
 
         ## start the container
