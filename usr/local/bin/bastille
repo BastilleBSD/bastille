@@ -134,7 +134,7 @@ esac
 case "${CMD}" in
 bootstrap|cmd|console|convert|cp|create)
     ;;
-destroy|export|htop|import|limits|list)
+destroy|edit|export|htop|import|limits|list)
     ;;
 pkg|rdr|rename|restart|service|start|stop|sysrc)
     ;;
