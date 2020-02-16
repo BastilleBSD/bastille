@@ -57,10 +57,10 @@ if [ -z "${EDITOR}" ]; then
 fi
 
 if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
+    JAILS=$(bastille list jails)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
+    JAILS=$(bastille list jails | awk "/^${TARGET}$/")
 fi
 
 for _jail in ${JAILS}; do
