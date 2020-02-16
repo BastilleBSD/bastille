@@ -56,23 +56,23 @@ validate_ip() {
         IP6_MODE="new"
     else
         local IFS
-        ip=${IP}
-        if expr "${ip}" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+        if echo "${IP}" | grep -E '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$' >/dev/null; then
+            TEST_IP=$(echo ${IP} | cut -d / -f1)
             IFS=.
-            set ${ip}
+            set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    echo "fail (${ip})"
+                    echo "fail (${TEST_IP})"
                     exit 1
                 fi
             done
-            if ifconfig | grep -w "$ip" >/dev/null; then
-                echo -e "${COLOR_YELLOW}Warning: ip address already in use (${ip}).${COLOR_RESET}"
+            if ifconfig | grep -w "$TEST_IP" >/dev/null; then
+                echo -e "${COLOR_YELLOW}Warning: ip address already in use (${TEST_IP}).${COLOR_RESET}"
             else
-                echo -e "${COLOR_GREEN}Valid: (${ip}).${COLOR_RESET}"
+                echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
             fi
         else
-            echo -e "${COLOR_RED}Invalid: (${ip}).${COLOR_RESET}"
+            echo -e "${COLOR_RED}Invalid: (${IP}).${COLOR_RESET}"
             exit 1
         fi
     fi
@@ -116,6 +116,64 @@ validate_release() {
     else
         usage
     fi
+}
+
+generate_jail_conf() {
+    cat << EOF > ${bastille_jail_conf}
+${NAME} {
+  devfs_ruleset = 4;
+  enforce_statfs = 2;
+  exec.clean;
+  exec.consolelog = ${bastille_jail_log};
+  exec.start = '/bin/sh /etc/rc';
+  exec.stop = '/bin/sh /etc/rc.shutdown';
+  host.hostname = ${NAME};
+  mount.devfs;
+  mount.fstab = ${bastille_jail_fstab};
+  path = ${bastille_jail_path};
+  securelevel = 2;
+
+  interface = ${bastille_jail_conf_interface};
+  ${IPX_ADDR} = ${IP};
+  ip6 = ${IP6_MODE};
+}
+EOF
+}
+
+generate_vnet_jail_conf() {
+    ## determine number of containers + 1
+    ## iterate num and grep all jail configs
+    ## define uniq_epair
+    local list_jails_num=$(bastille list jails | wc -l | awk '{print $1}')
+    local num_range=$(expr "${list_jails_num}" + 1)
+    for _num in $(seq 0 "${num_range}"); do
+        if ! grep "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf >/dev/null; then
+            uniq_epair="bastille${_num}"
+	    break
+        fi
+    done
+
+    ## generate config
+    cat << EOF > ${bastille_jail_conf}
+${NAME} {
+  devfs_ruleset = 13;
+  enforce_statfs = 2;
+  exec.clean;
+  exec.consolelog = ${bastille_jail_log};
+  exec.start = '/bin/sh /etc/rc';
+  exec.stop = '/bin/sh /etc/rc.shutdown';
+  host.hostname = ${NAME};
+  mount.devfs;
+  mount.fstab = ${bastille_jail_fstab};
+  path = ${bastille_jail_path};
+  securelevel = 2;
+
+  vnet;
+  vnet.interface = e0b_${uniq_epair};
+  exec.prestart += "jib addm ${uniq_epair} ${INTERFACE}";
+  exec.poststop += "jib destroy ${uniq_epair}";
+}
+EOF
 }
 
 create_jail() {
@@ -178,25 +236,11 @@ create_jail() {
         fi
 
         ## generate the jail configuration file 
-        cat << EOF > ${bastille_jail_conf}
-interface = ${bastille_jail_conf_interface};
-host.hostname = ${NAME};
-exec.consolelog = ${bastille_jail_log};
-path = ${bastille_jail_path};
-ip6 = disable;
-securelevel = 2;
-devfs_ruleset = 4;
-enforce_statfs = 2;
-exec.start = '/bin/sh /etc/rc';
-exec.stop = '/bin/sh /etc/rc.shutdown';
-exec.clean;
-mount.devfs;
-mount.fstab = ${bastille_jail_fstab};
-
-${NAME} {
-	${IPX_ADDR} = ${IP};
-}
-EOF
+        if [ -n ${VNET_JAIL} ]; then
+            generate_vnet_jail_conf
+        else
+            generate_jail_conf
+        fi
     fi
 
     ## using relative paths here
@@ -285,7 +329,28 @@ EOF
         /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" syslogd_flags=-ss
         /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" sendmail_enable=NONE
         /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" cron_flags='-J 60'
-        echo
+
+	## VNET specific
+        if [ -n "${VNET_JAIL}" ]; then
+            ## rename interface to generic vnet0
+            uniq_epair=$(grep vnet.interface ${bastille_jailsdir}/${NAME}/jail.conf | awk '{print $3}' | sed 's/;//')
+            /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" "ifconfig_${uniq_epair}_name"=vnet0
+
+	    ## if 0.0.0.0 set DHCP
+	    ## else set static address
+            if [ "${IP}" == "0.0.0.0" ]; then
+                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="DHCP"
+            else
+                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
+            fi
+
+	    ## VNET requires jib script
+	    if [ ! $(command -v jib) ]; then
+	        if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+                    install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+	        fi
+	    fi
+        fi
     fi
 
     ## resolv.conf (default: copy from host)
@@ -321,7 +386,14 @@ case "${TYPE}" in
     if [ $# -gt 5 ] || [ $# -lt 4 ]; then
         usage
     fi
-    THICK_JAIL="0"
+    THICK_JAIL="1"
+    break
+    ;;
+-V|--vnet|vnet)
+    if [ $# -gt 5 ] || [ $# -lt 4 ]; then
+        usage
+    fi
+    VNET_JAIL="1"
     break
     ;;
 -*)
