@@ -336,6 +336,43 @@ cron_flags:  -> -J 60
 This command will create a 12.1-RELEASE container assigning the
 fd35:f1fd:2cb6:6c5c::13  ip address to the new system.
 
+**VNET**
+```shell
+ishmael ~ # bastille create -V vnetjail 12.1-RELEASE 192.168.87.55/24 em0
+Valid: (192.168.87.55/24).
+Valid: (em0).
+
+NAME: vnettest0.
+IP: 192.168.87.55/24.
+INTERFACE: em0.
+RELEASE: 12.1-RELEASE.
+
+syslogd_flags: -s -> -ss
+sendmail_enable: NO -> NONE
+cron_flags:  -> -J 60
+ifconfig_e0b_bastille0_name:  -> vnet0
+ifconfig_vnet0:  -> inet 192.168.87.55/24
+```
+
+This command will create a 12.1-RELEASE container assigning the
+192.168.87.55/24 ip address to the new system.
+
+VNET-enabled containers are attached to a virtual bridge interface for
+connectivity. This bridge interface is defined by the interface argument in the
+create command (in this case, em0).
+
+VNET also requires a custom `devfs` ruleset. Create the file as needed on the host system:
+
+**/etc/devfs.rules**
+```
+[bastille_vnet=13]
+add include $devfsrules_hide_all
+add include $devfsrules_unhide_basic
+add include $devfsrules_unhide_login
+add include $devfsrules_jail
+add path 'bpf*' unhide
+```
+
 Optionally `bastille create [ -T | --thick ]` will create a container with a
 private base. This is sometimes referred to as a "thick" container (whereas the
 shared base container is a "thin").
