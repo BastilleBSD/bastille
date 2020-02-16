@@ -47,25 +47,34 @@ running_jail() {
 }
 
 validate_ip() {
-    local IFS
-    ip=${IP}
-    if expr "$ip" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
-      IFS=.
-      set $ip
-      for quad in 1 2 3 4; do
-        if eval [ \$$quad -gt 255 ]; then
-          echo "fail ($ip)"
-          exit 1
-        fi
-      done
-      if ifconfig | grep -w "$ip" >/dev/null; then
-        echo -e "${COLOR_YELLOW}Warning: ip address already in use ($ip).${COLOR_RESET}"
-      else
-        echo -e "${COLOR_GREEN}Valid: ($ip).${COLOR_RESET}"      
-      fi
+    IPX_ADDR="ip4.addr"
+    IP6_MODE="disable"
+    ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
+    if [ -n "${ip6}" ]; then
+        echo -e "${COLOR_GREEN}Valid: (${ip6}).${COLOR_RESET}"
+        IPX_ADDR="ip6.addr"
+        IP6_MODE="new"
     else
-      echo -e "${COLOR_RED}Invalid: ($ip).${COLOR_RESET}"
-      exit 1
+        local IFS
+        ip=${IP}
+        if expr "${ip}" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+            IFS=.
+            set ${ip}
+            for quad in 1 2 3 4; do
+                if eval [ \$$quad -gt 255 ]; then
+                    echo "fail (${ip})"
+                    exit 1
+                fi
+            done
+            if ifconfig | grep -w "$ip" >/dev/null; then
+                echo -e "${COLOR_YELLOW}Warning: ip address already in use (${ip}).${COLOR_RESET}"
+            else
+                echo -e "${COLOR_GREEN}Valid: (${ip}).${COLOR_RESET}"
+            fi
+        else
+            echo -e "${COLOR_RED}Invalid: (${ip}).${COLOR_RESET}"
+            exit 1
+        fi
     fi
 }
 
@@ -185,7 +194,7 @@ mount.devfs;
 mount.fstab = ${bastille_jail_fstab};
 
 ${NAME} {
-	ip4.addr = ${IP};
+	${IPX_ADDR} = ${IP};
 }
 EOF
     fi
