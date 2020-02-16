@@ -135,7 +135,7 @@ ${NAME} {
 
   interface = ${bastille_jail_conf_interface};
   ${IPX_ADDR} = ${IP};
-  ip6 = disable;
+  ip6 = ${IP6_MODE};
 }
 EOF
 }
