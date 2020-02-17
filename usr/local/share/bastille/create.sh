@@ -231,12 +231,12 @@ create_jail() {
         if [ ! -z "${bastille_jail_loopback}" ] && [ -z "${bastille_jail_external}" ]; then
             local bastille_jail_conf_interface=${bastille_jail_interface}
         fi
-        if [ ! -z  ${INTERFACE} ]; then
+        if [ -n "${INTERFACE}" ]; then
             local bastille_jail_conf_interface=${INTERFACE}
         fi
 
         ## generate the jail configuration file 
-        if [ -n ${VNET_JAIL} ]; then
+        if [ -n "${VNET_JAIL}" ]; then
             generate_vnet_jail_conf
         else
             generate_jail_conf
