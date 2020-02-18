@@ -56,17 +56,17 @@ validate_ip() {
         IP6_MODE="new"
     else
         local IFS
-        if echo "${IP}" | grep -E '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$' >/dev/null; then
+        if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
             TEST_IP=$(echo ${IP} | cut -d / -f1)
             IFS=.
             set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    echo "fail (${TEST_IP})"
+                    echo "Invalid: (${TEST_IP})"
                     exit 1
                 fi
             done
-            if ifconfig | grep -w "$TEST_IP" >/dev/null; then
+            if ifconfig | grep -qw "$TEST_IP"; then
                 echo -e "${COLOR_YELLOW}Warning: ip address already in use (${TEST_IP}).${COLOR_RESET}"
             else
                 echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
@@ -146,11 +146,14 @@ generate_vnet_jail_conf() {
     ## define uniq_epair
     local list_jails_num=$(bastille list jails | wc -l | awk '{print $1}')
     local num_range=$(expr "${list_jails_num}" + 1)
+    jail_list=$(bastille list jail)
     for _num in $(seq 0 "${num_range}"); do
-        if ! grep "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf >/dev/null; then
-            uniq_epair="bastille${_num}"
-	    break
-        fi
+        for _jail in ${jail_list}; do
+            if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/${_jail}/jail.conf; then
+                uniq_epair="bastille${_num}"
+                break
+            fi
+        done
     done
 
     ## generate config
@@ -330,26 +333,26 @@ create_jail() {
         /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" sendmail_enable=NONE
         /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" cron_flags='-J 60'
 
-	## VNET specific
+        ## VNET specific
         if [ -n "${VNET_JAIL}" ]; then
             ## rename interface to generic vnet0
             uniq_epair=$(grep vnet.interface ${bastille_jailsdir}/${NAME}/jail.conf | awk '{print $3}' | sed 's/;//')
             /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" "ifconfig_${uniq_epair}_name"=vnet0
 
-	    ## if 0.0.0.0 set DHCP
-	    ## else set static address
+            ## if 0.0.0.0 set DHCP
+            ## else set static address
             if [ "${IP}" == "0.0.0.0" ]; then
                 /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="DHCP"
             else
                 /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
             fi
 
-	    ## VNET requires jib script
-	    if [ ! $(command -v jib) ]; then
-	        if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+            ## VNET requires jib script
+            if [ ! $(command -v jib) ]; then
+                if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
                     install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
-	        fi
-	    fi
+                fi
+            fi
         fi
     fi
 
@@ -374,43 +377,61 @@ if [ $(echo $3 | grep '@' ) ]; then
     BASTILLE_JAIL_INTERFACES=$( echo $3 | awk -F@ '{print $1}')
 fi
 
-TYPE="$1"
-NAME="$2"
-RELEASE="$3"
-IP="$4"
-INTERFACE="$5"
+## reset this options
+THICK_JAIL=""
+VNET_JAIL=""
 
-## handle additional options
-case "${TYPE}" in
--T|--thick|thick)
-    if [ $# -gt 5 ] || [ $# -lt 4 ]; then
+## handle combined options
+if [ "${1}" = "-T" -o "${1}" = "--thick" -o "${1}" = "thick" ] && \
+    [ "${2}" = "-V" -o "${2}" = "--vnet" -o "${2}" = "vnet" ]; then
+
+    NAME="$3"
+    RELEASE="$4"
+    IP="$5"
+    INTERFACE="$6"
+    if [ $# -gt 6 ] || [ $# -lt 5 ]; then
         usage
     fi
     THICK_JAIL="1"
-    break
-    ;;
--V|--vnet|vnet)
-    if [ $# -gt 5 ] || [ $# -lt 4 ]; then
-        usage
-    fi
     VNET_JAIL="1"
     break
-    ;;
--*)
-    echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
-    usage
-    ;;
-*)
-    if [ $# -gt 4 ] || [ $# -lt 3 ]; then
+else
+    ## handle single options
+    NAME="$2"
+    RELEASE="$3"
+    IP="$4"
+    INTERFACE="$5"
+
+    case "${1}" in
+    -T|--thick|thick)
+        if [ $# -gt 5 ] || [ $# -lt 4 ]; then
+            usage
+        fi
+        THICK_JAIL="1"
+        break
+        ;;
+    -V|--vnet|vnet)
+        if [ $# -gt 5 ] || [ $# -lt 4 ]; then
+            usage
+        fi
+        VNET_JAIL="1"
+        break
+        ;;
+    -*)
+        echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
         usage
-    fi
-    THICK_JAIL=""
-    NAME="$1"
-    RELEASE="$2"
-    IP="$3"
-    INTERFACE="$4"
-    ;;
-esac
+        ;;
+    *)
+        if [ $# -gt 4 ] || [ $# -lt 3 ]; then
+            usage
+        fi
+        NAME="$1"
+        RELEASE="$2"
+        IP="$3"
+        INTERFACE="$4"
+        ;;
+    esac
+fi
 
 ## don't allow for dots(.) in container names
 if [ $(echo "${NAME}" | grep "[.]") ]; then
