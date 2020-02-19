@@ -381,56 +381,40 @@ fi
 THICK_JAIL=""
 VNET_JAIL=""
 
-## handle combined options
+## handle combined options then shift
 if [ "${1}" = "-T" -o "${1}" = "--thick" -o "${1}" = "thick" ] && \
     [ "${2}" = "-V" -o "${2}" = "--vnet" -o "${2}" = "vnet" ]; then
-
-    NAME="$3"
-    RELEASE="$4"
-    IP="$5"
-    INTERFACE="$6"
-    if [ $# -gt 6 ] || [ $# -lt 5 ]; then
-        usage
-    fi
     THICK_JAIL="1"
     VNET_JAIL="1"
-    break
+    shift 2
 else
     ## handle single options
-    NAME="$2"
-    RELEASE="$3"
-    IP="$4"
-    INTERFACE="$5"
-
     case "${1}" in
-    -T|--thick|thick)
-        if [ $# -gt 5 ] || [ $# -lt 4 ]; then
+        -T|--thick|thick)
+            shift 1
+            THICK_JAIL="1"
+            ;;
+        -V|--vnet|vnet)
+            shift 1
+            VNET_JAIL="1"
+            ;;
+        -*)
+            echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
             usage
-        fi
-        THICK_JAIL="1"
-        break
-        ;;
-    -V|--vnet|vnet)
-        if [ $# -gt 5 ] || [ $# -lt 4 ]; then
-            usage
-        fi
-        VNET_JAIL="1"
-        break
-        ;;
-    -*)
-        echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
-        usage
-        ;;
-    *)
-        if [ $# -gt 4 ] || [ $# -lt 3 ]; then
-            usage
-        fi
-        NAME="$1"
-        RELEASE="$2"
-        IP="$3"
-        INTERFACE="$4"
-        ;;
+            ;;
+        *)
+            break
+            ;;
     esac
+fi
+
+NAME="$1"
+RELEASE="$2"
+IP="$3"
+INTERFACE="$4"
+
+if [ $# -gt 4 ] || [ $# -lt 3 ]; then
+    usage
 fi
 
 ## don't allow for dots(.) in container names
