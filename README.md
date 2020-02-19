@@ -121,9 +121,9 @@ table <jails> persist
 nat on $ext_if from <jails> to any -> ($ext_if)
 
 ## static rdr example
-## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
+# rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
 
-# Enable dynamic rdr (see below)
+## Enable dynamic rdr (see below)
 rdr-anchor "rdr/*"
 
 block in all
@@ -131,7 +131,7 @@ pass out quick modulate state
 antispoof for $ext_if inet
 pass in inet proto tcp from any to any port ssh flags S/SA keep state
 
-# make sure you also open up ports that you are going to use for dynamic rdr
+## make sure you also open up ports that you are going to use for dynamic rdr
 # pass in inet proto tcp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
 # pass in inet proto udp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
 
@@ -239,11 +239,6 @@ release version as the argument.
 **FreeBSD 11.3-RELEASE**
 ```shell
 ishmael ~ # bastille bootstrap 11.3-RELEASE
-```
-
-**FreeBSD 12.0-RELEASE**
-```shell
-ishmael ~ # bastille bootstrap 12.0-RELEASE
 ```
 
 **FreeBSD 12.1-RELEASE**
