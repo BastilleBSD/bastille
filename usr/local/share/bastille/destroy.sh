@@ -152,28 +152,29 @@ help|-h|--help)
     ;;
 esac
 
-OPTION="${1}"
-TARGET="${2}"
+## reset this options
+FORCE=""
 
 ## handle additional options
-case "${OPTION}" in
--f|--force)
-    if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+case "${1}" in
+    -f|--force|force)
+        FORCE="1"
+        shift
+        ;;
+    -*)
+        echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
         usage
-    fi
-    FORCE="1"
-    ;;
--*)
-    echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
-    usage
-    ;;
-*)
-    if [ $# -gt 1 ] || [ $# -lt 1 ]; then
-        usage
-    fi
-    TARGET="${1}"
-    ;;
+        ;;
+    *)
+        break
+        ;;
 esac
+
+TARGET="${1}"
+
+if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+    usage
+fi
 
 ## check what should we clean
 case "${TARGET}" in
