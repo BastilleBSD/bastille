@@ -391,11 +391,11 @@ else
     ## handle single options
     case "${1}" in
         -T|--thick|thick)
-            shift 1
+            shift
             THICK_JAIL="1"
             ;;
         -V|--vnet|vnet)
-            shift 1
+            shift
             VNET_JAIL="1"
             ;;
         -*)
