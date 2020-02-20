@@ -67,8 +67,8 @@ for _jail in ${JAILS}; do
     ## test if running
     if [ "$(jls name | awk "/^${_jail}$/")" ]; then
         ## remove ip4.addr from firewall table:jails
-        if [ ! -z "${bastille_jail_loopback}" ]; then
-            pfctl -q -t jails -T delete $(jls -j ${_jail} ip4.addr)
+        if [ -n "${bastille_jail_loopback}" ]; then
+            pfctl -q -t jails -T delete "$(jls -j "${_jail}" ip4.addr)"
         fi
 
         ## remove rctl limits
@@ -80,7 +80,7 @@ for _jail in ${JAILS}; do
 
         ## stop container
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r ${_jail}
+        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
     fi
     echo
 done

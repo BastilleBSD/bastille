@@ -51,7 +51,7 @@ RELEASE="$1"
 shift
 NEWRELEASE="$1"
 
-if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
+if freebsd-version | grep -qi HBSD; then
     echo -e "${COLOR_RED}Not yet supported on HardenedBSD.${COLOR_RESET}"
     exit 1
 fi

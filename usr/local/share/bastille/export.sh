@@ -63,32 +63,32 @@ jail_export()
     DATE=$(date +%F-%H:%M:%S)
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
                 FILE_EXT="xz"
                 echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive.${COLOR_RESET}"
                 echo -e "${COLOR_GREEN}Sending zfs data stream...${COLOR_RESET}"
                 # Take a recursive temporary snapshot
                 SNAP_NAME="bastille_export-${DATE}"
-                zfs snapshot -r ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@${SNAP_NAME}
+                zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"@"${SNAP_NAME}"
 
                 # Export the container recursively and cleanup temporary snapshots
-                zfs send -R ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@${SNAP_NAME} | \
-                xz ${bastille_compress_xz_options} > ${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}
-                zfs destroy -r ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@${SNAP_NAME}
+                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"@"${SNAP_NAME}" | \
+                xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
+                zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"@"${SNAP_NAME}"
             fi
         else
             # Create standard backup archive
             FILE_EXT="txz"
             echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive...${COLOR_RESET}"
-            cd ${bastille_jailsdir} && tar -cf - ${TARGET} | xz ${bastille_compress_xz_options} > ${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}
+            cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
         fi
 
-        if [ $? -ne 0 ]; then
+        if [ "$?" -ne 0 ]; then
             error_notify "${COLOR_RED}Failed to export '${TARGET}' container.${COLOR_RESET}"
         else
             # Generate container checksum file
-            cd ${bastille_backupsdir}
-            sha256 -q ${TARGET}_${DATE}.${FILE_EXT} > ${TARGET}_${DATE}.sha256
+            cd "${bastille_backupsdir}"
+            sha256 -q "${TARGET}_${DATE}.${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
             echo -e "${COLOR_GREEN}Exported '${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}' successfully.${COLOR_RESET}"
             exit 0
         fi

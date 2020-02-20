@@ -92,85 +92,85 @@ bootstrap_network_interfaces() {
     fi
 
     ## test for required variables -- external
-    if [ -z "${bastille_jail_loopback}" ] && [ ! -z "${bastille_jail_external}" ]; then
+    if [ -z "${bastille_jail_loopback}" ] && [ -n "${bastille_jail_external}" ]; then
 
-       ## test for existing interface
-       ifconfig ${bastille_jail_external} 2>&1 >/dev/null
-           if [ $? = 0 ]; then
+        ## test for existing interface
+        ifconfig "${bastille_jail_external}" >/dev/null 2>&1
+        if [ "$?" = 0 ]; then
 
-               ## create ifconfig alias
-               ifconfig ${bastille_jail_external} inet ${bastille_jail_addr} alias && \
-                   echo -e "${COLOR_GREEN}IP alias added to ${bastille_jail_external} successfully.${COLOR_RESET}"
-                   echo
+            ## create ifconfig alias
+            ifconfig "${bastille_jail_external}" inet "${bastille_jail_addr}" alias && \
+            echo -e "${COLOR_GREEN}IP alias added to ${bastille_jail_external} successfully.${COLOR_RESET}"
+            echo
 
-               ## attempt to ping gateway
-               echo -e "${COLOR_YELLOW}Attempting to ping default gateway...${COLOR_RESET}"
-               ping -c3 -t3 -S ${bastille_jail_addr} ${bastille_jail_gateway}
-               if [ $? = 0 ]; then
-                   echo
-                   echo -e "${COLOR_GREEN}External networking appears functional.${COLOR_RESET}"
-                   echo
-               else
-                   echo -e "${COLOR_RED}Unable to ping default gateway.${COLOR_RESET}"
-               fi
-           fi
+            ## attempt to ping gateway
+            echo -e "${COLOR_YELLOW}Attempting to ping default gateway...${COLOR_RESET}"
+            ping -c3 -t3 -S "${bastille_jail_addr}" "${bastille_jail_gateway}"
+            if [ "$?" = 0 ]; then
+                echo
+                echo -e "${COLOR_GREEN}External networking appears functional.${COLOR_RESET}"
+                echo
+            else
+                echo -e "${COLOR_RED}Unable to ping default gateway.${COLOR_RESET}"
+            fi
+        fi
     fi
 
     ## test for required variables -- loopback
-    if [ -z "${bastille_jail_external}" ] && [ ! -z "${bastille_jail_loopback}" ] && \
-       [ ! -z "${bastille_jail_addr}" ]; then
+    if [ -z "${bastille_jail_external}" ] && [ -n "${bastille_jail_loopback}" ] && \
+        [ -n "${bastille_jail_addr}" ]; then
 
-       echo -e "${COLOR_GREEN}Detecting...${COLOR_RESET}"
-       ## test for existing interface
-       ifconfig ${bastille_jail_interface} >&2 >/dev/null
+        echo -e "${COLOR_GREEN}Detecting...${COLOR_RESET}"
+        ## test for existing interface
+        ifconfig "${bastille_jail_interface}" >&2 >/dev/null
 
-       ## if above return code is 1; create interface
-       if [ $? = 1 ]; then
-           sysrc ifconfig_${bastille_jail_loopback}_name | grep ${bastille_jail_interface} >&2 >/dev/null
-           if [ $? = 1 ]; then
-               echo
-               echo -e "${COLOR_GREEN}Defining secure loopback interface.${COLOR_RESET}"
-               sysrc cloned_interfaces+="${bastille_jail_loopback}" &&
-               sysrc ifconfig_${bastille_jail_loopback}_name="${bastille_jail_interface}"
-               sysrc ifconfig_${bastille_jail_interface}_aliases+="inet ${bastille_jail_addr}/32"
+        ## if above return code is 1; create interface
+        if [ "$?" = 1 ]; then
+            sysrc ifconfig_"${bastille_jail_loopback}"_name | grep "${bastille_jail_interface}" >&2 >/dev/null
+            if [ "$?" = 1 ]; then
+                echo
+                echo -e "${COLOR_GREEN}Defining secure loopback interface.${COLOR_RESET}"
+                sysrc cloned_interfaces+="${bastille_jail_loopback}" &&
+                sysrc ifconfig_"${bastille_jail_loopback}"_name="${bastille_jail_interface}"
+                sysrc ifconfig_"${bastille_jail_interface}"_aliases+="inet ${bastille_jail_addr}/32"
 
-               ## create and name interface; assign address
-               echo
-               echo -e "${COLOR_GREEN}Creating secure loopback interface.${COLOR_RESET}"
-               ifconfig ${bastille_jail_loopback} create name ${bastille_jail_interface}
-               ifconfig ${bastille_jail_interface} up
-               ifconfig ${bastille_jail_interface} inet ${bastille_jail_addr}/32
+                ## create and name interface; assign address
+                echo
+                echo -e "${COLOR_GREEN}Creating secure loopback interface.${COLOR_RESET}"
+                ifconfig "${bastille_jail_loopback}" create name "${bastille_jail_interface}"
+                ifconfig "${bastille_jail_interface}" up
+                ifconfig "${bastille_jail_interface}" inet "${bastille_jail_addr}/32"
 
-               ## reload firewall
-               pfctl -f /etc/pf.conf
+                ## reload firewall
+                pfctl -f /etc/pf.conf
 
-               ## look for nat rule for bastille_jail_addr
-               echo -e "${COLOR_GREEN}Detecting NAT from bastille0 interface...${COLOR_RESET}"
-               pfctl -s nat | grep nat | grep ${bastille_jail_addr}
-               if [ $? = 0 ]; then
-                   ## test connectivity; ping from bastille_jail_addr
-                   echo
-                   echo -e "${COLOR_YELLOW}Attempting to ping default gateway...${COLOR_RESET}"
-                   ping -c3 -t3 -S ${bastille_jail_addr} ${bastille_jail_gateway}
-                   if [ $? = 0 ]; then
-                       echo
-                       echo -e "${COLOR_GREEN}Private networking appears functional.${COLOR_RESET}"
-                       echo
-                   else
-                       echo -e "${COLOR_RED}Unable to ping default gateway.${COLOR_RESET}"
-                       echo -e "${COLOR_YELLOW}See https://github.com/BastilleBSD/bastille/blob/master/README.md#etcpfconf.${COLOR_RESET}"
-                       echo -e
-                   fi
-               else
-                   echo -e "${COLOR_RED}Unable to detect firewall 'nat' rule.${COLOR_RESET}"
-                   echo -e "${COLOR_YELLOW}See https://github.com/BastilleBSD/bastille/blob/master/README.md#etcpfconf.${COLOR_RESET}"
-               fi
-           else
-               echo -e "${COLOR_RED}Interface ${bastille_jail_loopback} already configured; bailing out.${COLOR_RESET}"
-           fi
-       else
-           echo -e "${COLOR_RED}Interface ${bastille_jail_interface} already active; bailing out.${COLOR_RESET}"
-       fi
+                ## look for nat rule for bastille_jail_addr
+                echo -e "${COLOR_GREEN}Detecting NAT from bastille0 interface...${COLOR_RESET}"
+                pfctl -s nat | grep nat | grep "${bastille_jail_addr}"
+                if [ "$?" = 0 ]; then
+                    ## test connectivity; ping from bastille_jail_addr
+                    echo
+                    echo -e "${COLOR_YELLOW}Attempting to ping default gateway...${COLOR_RESET}"
+                    ping -c3 -t3 -S "${bastille_jail_addr}" "${bastille_jail_gateway}"
+                    if [ "$?" = 0 ]; then
+                        echo
+                        echo -e "${COLOR_GREEN}Private networking appears functional.${COLOR_RESET}"
+                        echo
+                    else
+                        echo -e "${COLOR_RED}Unable to ping default gateway.${COLOR_RESET}"
+                        echo -e "${COLOR_YELLOW}See https://github.com/BastilleBSD/bastille/blob/master/README.md#etcpfconf.${COLOR_RESET}"
+                        echo -e
+                    fi
+                else
+                    echo -e "${COLOR_RED}Unable to detect firewall 'nat' rule.${COLOR_RESET}"
+                    echo -e "${COLOR_YELLOW}See https://github.com/BastilleBSD/bastille/blob/master/README.md#etcpfconf.${COLOR_RESET}"
+                fi
+            else
+                echo -e "${COLOR_RED}Interface ${bastille_jail_loopback} already configured; bailing out.${COLOR_RESET}"
+            fi
+        else
+            echo -e "${COLOR_RED}Interface ${bastille_jail_interface} already active; bailing out.${COLOR_RESET}"
+        fi
     fi
 }
 
@@ -180,8 +180,8 @@ bootstrap_directories() {
     ## ${bastille_prefix}
     if [ ! -d "${bastille_prefix}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ];then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_prefix} ${bastille_zfs_zpool}/${bastille_zfs_prefix}
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
             fi
         else
             mkdir -p "${bastille_prefix}"
@@ -192,8 +192,8 @@ bootstrap_directories() {
     ## ${bastille_backupsdir}
     if [ ! -d "${bastille_backupsdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ];then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_backupsdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/backups
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_backupsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/backups"
             fi
         else
             mkdir -p "${bastille_backupsdir}"
@@ -204,9 +204,9 @@ bootstrap_directories() {
     ## ${bastille_cachedir}
     if [ ! -d "${bastille_cachedir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_cachedir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_cachedir}/${RELEASE} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
             fi
         else
             mkdir -p "${bastille_cachedir}/${RELEASE}"
@@ -214,8 +214,8 @@ bootstrap_directories() {
     ## create subsequent cache/XX.X-RELEASE datasets
     elif [ ! -d "${bastille_cachedir}/${RELEASE}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_cachedir}/${RELEASE} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
             fi
         else
             mkdir -p "${bastille_cachedir}/${RELEASE}"
@@ -225,8 +225,8 @@ bootstrap_directories() {
     ## ${bastille_jailsdir}
     if [ ! -d "${bastille_jailsdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_jailsdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_jailsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails"
             fi
         else
             mkdir -p "${bastille_jailsdir}"
@@ -236,8 +236,8 @@ bootstrap_directories() {
     ## ${bastille_logsdir}
     if [ ! -d "${bastille_logsdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_logsdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/logs
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_logsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/logs"
             fi
         else
             mkdir -p "${bastille_logsdir}"
@@ -247,8 +247,8 @@ bootstrap_directories() {
     ## ${bastille_templatesdir}
     if [ ! -d "${bastille_templatesdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_templatesdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_templatesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates"
             fi
         else
             mkdir -p "${bastille_templatesdir}"
@@ -258,9 +258,9 @@ bootstrap_directories() {
     ## ${bastille_releasesdir}
     if [ ! -d "${bastille_releasesdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_releasesdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_releasesdir}/${RELEASE} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
             fi
         else
             mkdir -p "${bastille_releasesdir}/${RELEASE}"
@@ -268,8 +268,8 @@ bootstrap_directories() {
     ## create subsequent releases/XX.X-RELEASE datasets
     elif [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_releasesdir}/${RELEASE} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
             fi
        else
            mkdir -p "${bastille_releasesdir}/${RELEASE}"
@@ -282,9 +282,9 @@ bootstrap_release() {
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
         ## check distfiles list and skip existing cached files
         bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/base//")
-        bastille_cached_files=$(ls ${bastille_cachedir}/${RELEASE} | grep -v "MANIFEST" | tr -d ".txz")
+        bastille_cached_files=$(ls "${bastille_cachedir}/${RELEASE}" | grep -v "MANIFEST" | tr -d ".txz")
         for distfile in ${bastille_cached_files}; do
-            bastille_bootstrap_archives=$(echo ${bastille_bootstrap_archives} | sed "s/${distfile}//")
+            bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/${distfile}//")
         done
 
         ## check if release already bootstrapped, else continue bootstrapping
@@ -302,36 +302,36 @@ bootstrap_release() {
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
             /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-            if [ $? -ne 0 ]; then
+            if [ "$?" -ne 0 ]; then
                 echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
                 exit 1
             fi
         else
                 ## get the manifest for dist files checksum validation
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/MANIFEST" ]; then
-                    fetch ${UPSTREAM_URL}/MANIFEST -o ${bastille_cachedir}/${RELEASE}/MANIFEST || FETCH_VALIDATION="1"
+                    fetch "${UPSTREAM_URL}/MANIFEST" -o "${bastille_cachedir}/${RELEASE}/MANIFEST" || FETCH_VALIDATION="1"
                 fi
 
                 if [ "${FETCH_VALIDATION}" -ne "0" ]; then
                     ## perform cleanup only for stale/empty directories on failure
                     if [ "${bastille_zfs_enable}" = "YES" ]; then
-                        if [ ! -z "${bastille_zfs_zpool}" ]; then
-                            if [ ! "$(ls -A ${bastille_cachedir}/${RELEASE})" ]; then
-                                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}
+                        if [ -n "${bastille_zfs_zpool}" ]; then
+                            if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
+                                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
                             fi
-                            if [ ! "$(ls -A ${bastille_releasesdir}/${RELEASE})" ]; then
-                                zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}
+                            if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
+                                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
                             fi
                             fi
                         fi
                         if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
-                            if [ ! "$(ls -A ${bastille_cachedir}/${RELEASE})" ]; then
-                                rm -rf ${bastille_cachedir}/${RELEASE}
+                            if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
+                                rm -rf "${bastille_cachedir}/${RELEASE}"
                             fi
                         fi
                         if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
-                            if [ ! "$(ls -A ${bastille_releasesdir}/${RELEASE})" ]; then
-                                rm -rf ${bastille_releasesdir}/${RELEASE}
+                            if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
+                                rm -rf "${bastille_releasesdir}/${RELEASE}"
                             fi
                         fi
                         echo -e "${COLOR_RED}Bootstrap failed.${COLOR_RESET}"
@@ -340,8 +340,8 @@ bootstrap_release() {
 
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    fetch ${UPSTREAM_URL}/${_archive}.txz -o ${bastille_cachedir}/${RELEASE}/${_archive}.txz
-                    if [ $? -ne 0 ]; then
+                    fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
+                    if [ "$?" -ne 0 ]; then
                         ## alert only if unable to fetch additional dist files
                         echo -e "${COLOR_RED}Failed to fetch ${_archive}.txz.${COLOR_RESET}"
                     fi
@@ -349,11 +349,11 @@ bootstrap_release() {
 
                 ## compare checksums on the fetched dist files
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    SHA256_DIST=$(grep -w "${_archive}.txz" ${bastille_cachedir}/${RELEASE}/MANIFEST | awk '{print $2}')
-                    SHA256_FILE=$(sha256 -q ${bastille_cachedir}/${RELEASE}/${_archive}.txz)
+                    SHA256_DIST=$(grep -w "${_archive}.txz" "${bastille_cachedir}/${RELEASE}/MANIFEST" | awk '{print $2}')
+                    SHA256_FILE=$(sha256 -q "${bastille_cachedir}/${RELEASE}/${_archive}.txz")
                     if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
                         echo -e "${COLOR_RED}Failed validation for ${_archive}.txz, please retry bootstrap!${COLOR_RESET}"
-                        rm ${bastille_cachedir}/${RELEASE}/${_archive}.txz
+                        rm "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
                         exit 1
                     else
                         echo -e "${COLOR_GREEN}Validated checksum for ${RELEASE}:${_archive}.txz.${COLOR_RESET}"
@@ -366,7 +366,7 @@ bootstrap_release() {
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
                     echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
                     /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-                    if [ $? -ne 0 ]; then
+                    if [ "$?" -ne 0 ]; then
                         echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
                         exit 1
                     fi
@@ -385,8 +385,8 @@ bootstrap_template() {
     ## ${bastille_templatesdir}
     if [ ! -d "${bastille_templatesdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint=${bastille_templatesdir} ${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_templatesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates"
             fi
         else
             mkdir -p "${bastille_templatesdir}"
@@ -409,12 +409,12 @@ bootstrap_template() {
             $(which git) clone "${_url}" "${_template}" ||\
                 echo -e "${COLOR_RED}Clone unsuccessful.${COLOR_RESET}"
         elif [ -d "${_template}/.git" ]; then
-            cd ${_template} && $(which git) pull ||\
+            cd "${_template}" && $(which git) pull ||\
                 echo -e "${COLOR_RED}Template update unsuccessful.${COLOR_RESET}"
         fi
     fi
 
-    bastille verify ${_user}/${_repo}
+    bastille verify "${_user}/${_repo}"
 }
 
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
@@ -440,8 +440,8 @@ case "${1}" in
 *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
     ## check for HardenedBSD(specific stable build releases)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-build-[0-9]\{1,2\}//g')
-    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
+    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-build-[0-9]\{1,2\}//g')
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url
@@ -449,8 +449,8 @@ case "${1}" in
 *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
     ## check for HardenedBSD(latest stable build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/-BUILD-LATEST//g')
-    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/[0-9]\{1,2\}-stable-//g')
+    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-BUILD-LATEST//g')
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url
@@ -458,8 +458,8 @@ case "${1}" in
 current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
     ## check for HardenedBSD(specific current build releases)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
-    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
-    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
+    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url
@@ -467,8 +467,8 @@ current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
 current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-    NAME_RELEASE=$(echo ${NAME_VERIFY} | sed 's/current-.*/current/g')
-    NAME_BUILD=$(echo ${NAME_VERIFY} | sed 's/current-//g')
+    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
     UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url

@@ -50,7 +50,7 @@ fi
 TARGET="${1}"
 shift
 
-if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
+if freebsd-version | grep -qi HBSD; then
     echo -e "${COLOR_RED}Not yet supported on HardenedBSD.${COLOR_RESET}"
     exit 1
 fi
@@ -59,7 +59,7 @@ if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
     if ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
             if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
                 # Update a thick container.
-                CURRENT_VERSION=$(/usr/sbin/jexec -l ${TARGET} freebsd-version 2>/dev/null)
+                CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
                 if [ -z "${CURRENT_VERSION}" ]; then
                     echo -e "${COLOR_RED}Can't determine '${TARGET}' version.${COLOR_RESET}"
                     exit 1

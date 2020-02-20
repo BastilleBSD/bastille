@@ -37,13 +37,13 @@ bastille_usage() {
 }
 
 verify_release() {
-    if [ ! -z "$(freebsd-version | grep -i HBSD)" ]; then
+    if freebsd-version | grep -qi HBSD; then
         echo -e "${COLOR_RED}Not yet supported on HardenedBSD.${COLOR_RESET}"
         exit 1
     fi
 
     if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
-        freebsd-update -b "${bastille_releasesdir}/${RELEASE}" --currently-running ${RELEASE} IDS
+        freebsd-update -b "${bastille_releasesdir}/${RELEASE}" --currently-running "${RELEASE}" IDS
     else
         echo -e "${COLOR_RED}${RELEASE} not found. See bootstrap.${COLOR_RESET}"
         exit 1
@@ -61,7 +61,7 @@ verify_template() {
             echo -e "${COLOR_GREEN}Detected ${_hook} hook.${COLOR_RESET}"
 
             ## line count must match newline count
-            if [ $(wc -l ${_path} | awk '{print $1}') -ne $(grep -c $'\n' ${_path}) ]; then
+            if [ $(wc -l "${_path}" | awk '{print $1}') -ne $(grep -c $'\n' "${_path}") ]; then
                 echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
                 echo -e "${COLOR_RED}${BASTILLE_TEMPLATE}:${_hook} [failed].${COLOR_RESET}"
                 echo -e "${COLOR_RED}Line numbers don't match line breaks.${COLOR_RESET}"
@@ -79,19 +79,19 @@ verify_template() {
 
                     case ${_include} in
                         http?://github.com/*/*|http?://gitlab.com/*/*)
-                            bastille bootstrap ${_include}
+                            bastille bootstrap "${_include}"
                         ;;
                         */*)
                             BASTILLE_TEMPLATE_USER=$(echo "${_include}" | awk -F / '{ print $1 }')
                             BASTILLE_TEMPLATE_REPO=$(echo "${_include}" | awk -F / '{ print $2 }')
-                            bastille verify ${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}
+                            bastille verify "${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}"
                         ;;
                         *)
                             echo -e "${COLOR_RED}Template INCLUDE content not recognized.${COLOR_RESET}"
                             exit 1
                     ;;
                     esac
-                done < ${_path}
+                done < "${_path}"
 
             ## if tree; tree -a bastille_template/_dir
             elif [ ${_hook} = 'OVERLAY' ]; then
@@ -101,12 +101,12 @@ verify_template() {
                 while read _dir; do
                     echo -e "${COLOR_GREEN}[${_hook}]:[${_dir}]:${COLOR_RESET}"
                         if [ -x /usr/local/bin/tree ]; then
-                            /usr/local/bin/tree -a ${_template_path}/${_dir}
+                            /usr/local/bin/tree -a "${_template_path}/${_dir}"
                         else
                            find "${_template_path}/${_dir}" -print | sed -e 's;[^/]*/;|___;g;s;___|; |;g'
                         fi
                     echo
-                done < ${_path}
+                done < "${_path}"
             else
                 echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
                 cat "${_path}"
@@ -119,7 +119,7 @@ verify_template() {
     if [ ${_hook_validate} -lt 1 ]; then
         echo -e "${COLOR_RED}No valid template hooks found.${COLOR_RESET}"
         echo -e "${COLOR_RED}Template discarded.${COLOR_RESET}"
-        rm -rf ${bastille_template}
+        rm -rf "${bastille_template}"
         exit 1
     fi
 

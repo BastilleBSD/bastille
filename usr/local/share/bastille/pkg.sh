@@ -58,6 +58,6 @@ fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jexec -l ${_jail} /usr/sbin/pkg $@
+    jexec -l "${_jail}" /usr/sbin/pkg "$@"
     echo
 done
