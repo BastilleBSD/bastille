@@ -60,7 +60,7 @@ error_notify()
 jail_export()
 {
     # Attempt to export the container
-    DATE=$(date +%F-%H:%M:%S)
+    DATE=$(date +%F-%H%M%S)
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
