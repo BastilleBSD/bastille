@@ -218,7 +218,7 @@ jail_import() {
                         rm -f "${FILE_TRIM}" "${FILE_TRIM}_root"
                     fi
                     echo -e "${COLOR_GREEN}Receiving zfs data stream...${COLOR_RESET}"
-                    zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
+                    zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
                     zfs set ${ZFS_OPTIONS} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
 
