@@ -227,7 +227,7 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template}/PKG" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:PKG -- START${COLOR_RESET}"
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg bootstrap || exit 1
-        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg install "$(cat "${bastille_template}/PKG")" || exit 1
+        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg install $(cat "${bastille_template}/PKG") || exit 1
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg audit -F
         echo -e "${COLOR_GREEN}[${_jail}]:PKG -- END${COLOR_RESET}"
         echo
