@@ -58,11 +58,11 @@ if [ "${TARGET}" != 'ALL' ]; then
 fi
 
 validate_user() {
-    if jexec -l ${_jail} id "${USER}" >/dev/null 2>&1; then
-        USER_SHELL="$(jexec -l ${_jail} getent passwd "${USER}" | cut -d: -f7)"
+    if jexec -l "${_jail}" id "${USER}" >/dev/null 2>&1; then
+        USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
-            if jexec -l ${_jail} grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l ${_jail} /usr/bin/login -f "${USER}"
+            if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                jexec -l "${_jail}" /usr/bin/login -f "${USER}"
             else
                 echo "Invalid shell for user ${USER}"
             fi
@@ -76,10 +76,10 @@ validate_user() {
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    if [ ! -z "${USER}" ]; then
+    if [ -n "${USER}" ]; then
         validate_user
     else
-        jexec -l ${_jail} /usr/bin/login -f root
+        jexec -l "${_jail}" /usr/bin/login -f root
     fi
     echo
 done

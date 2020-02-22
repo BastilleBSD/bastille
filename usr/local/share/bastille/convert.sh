@@ -63,7 +63,7 @@ convert_symlinks() {
         # Retrieve old symlinks temporarily
         for _link in ${SYMLINKS}; do
             if [ -L "${_link}" ]; then
-                mv ${_link} ${_link}.old
+                mv "${_link}" "${_link}.old"
             fi
         done
 
@@ -73,7 +73,7 @@ convert_symlinks() {
                 if [ -d "${bastille_releasesdir}/${RELEASE}/${_link}" ]; then
                     cp -a "${bastille_releasesdir}/${RELEASE}/${_link}" "${bastille_jailsdir}/${TARGET}/root/${_link}"
                 fi
-                if [ $? -ne 0 ]; then
+                if [ "$?" -ne 0 ]; then
                     revert_convert
                 fi
             fi
@@ -82,11 +82,11 @@ convert_symlinks() {
         # Remove the old symlinks on success
         for _link in ${SYMLINKS}; do
             if [ -L "${_link}.old" ]; then
-                rm -r ${_link}.old
+                rm -r "${_link}.old"
             fi
         done
     else
-        error_notify "${COLOR_RED}Release must be bootstrapped first, See `bastille bootstrap`.${COLOR_RESET}"
+        error_notify "${COLOR_RED}Release must be bootstrapped first, See 'bastille bootstrap'.${COLOR_RESET}"
     fi
 }
 
@@ -103,7 +103,7 @@ revert_convert() {
     # Restore previous symlinks
     for _link in ${SYMLINKS}; do
         if [ -L "${_link}.old" ]; then
-            mv ${_link}.old ${_link}
+            mv "${_link}.old" "${_link}"
         fi
     done
     error_notify "${COLOR_GREEN}Changes for '${TARGET}' has been reverted.${COLOR_RESET}"
@@ -115,8 +115,8 @@ start_convert() {
         echo -e "${COLOR_GREEN}Converting '${TARGET}' into a thickjail, this may take a while...${COLOR_RESET}"
 
         # Set some variables
-        RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])|([0-9]{1,2}-stable-build-[0-9]{1,3})|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)|(current-BUILD-LATEST)' ${bastille_jailsdir}/${TARGET}/fstab)
-        FSTABMOD=$(grep -w "${bastille_releasesdir}/${RELEASE} ${bastille_jailsdir}/${TARGET}/root/.bastille" ${bastille_jailsdir}/${TARGET}/fstab)
+        RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])|([0-9]{1,2}-stable-build-[0-9]{1,3})|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)|(current-BUILD-LATEST)' "${bastille_jailsdir}/${TARGET}/fstab")
+        FSTABMOD=$(grep -w "${bastille_releasesdir}/${RELEASE} ${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab")
         SYMLINKS="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/ports usr/sbin usr/share usr/src"
 
         if [ -n "${RELEASE}" ]; then
@@ -127,21 +127,21 @@ start_convert() {
 
             # Comment the line containing .bastille and rename mountpoint
             sed -i '' -E "s|${FSTABMOD}|# Converted from thin to thick container on $(date)|g" "${bastille_jailsdir}/${TARGET}/fstab"
-            mv ${bastille_jailsdir}/${TARGET}/root/.bastille ${bastille_jailsdir}/${TARGET}/root/.bastille.old
+            mv "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/root/.bastille.old"
 
             echo -e "${COLOR_GREEN}Conversion of '${TARGET}' completed successfully!${COLOR_RESET}"
             exit 0
         else
-            error_notify "${COLOR_RED}Can't determine release version, See `bastille bootstrap`.${COLOR_RESET}"
+            error_notify "${COLOR_RED}Can't determine release version, See 'bastille bootstrap'.${COLOR_RESET}"
         fi
-     else
-        error_notify "${COLOR_RED}${TARGET} not found. See bootstrap.${COLOR_RESET}"
+    else
+        error_notify "${COLOR_RED}${TARGET} not found. See 'bastille create'.${COLOR_RESET}"
     fi
 }
 
 # Check if container is running
 if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-    error_notify "${COLOR_RED}${TARGET} is running, See `bastille stop`.${COLOR_RESET}"
+    error_notify "${COLOR_RED}${TARGET} is running, See 'bastille stop'.${COLOR_RESET}"
 fi
 
 # Check if is a thin container
