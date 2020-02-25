@@ -265,6 +265,7 @@ bootstrap_directories() {
         else
             mkdir -p "${bastille_releasesdir}/${RELEASE}"
         fi
+
     ## create subsequent releases/XX.X-RELEASE datasets
     elif [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
@@ -301,42 +302,45 @@ bootstrap_release() {
         FETCH_VALIDATION="0"
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
             echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
-            /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-            if [ "$?" -ne 0 ]; then
+            if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
+                ## silence motd at container login
+                touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
+                touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
+            else
                 echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
                 exit 1
             fi
         else
-                ## get the manifest for dist files checksum validation
-                if [ ! -f "${bastille_cachedir}/${RELEASE}/MANIFEST" ]; then
-                    fetch "${UPSTREAM_URL}/MANIFEST" -o "${bastille_cachedir}/${RELEASE}/MANIFEST" || FETCH_VALIDATION="1"
-                fi
+            ## get the manifest for dist files checksum validation
+            if [ ! -f "${bastille_cachedir}/${RELEASE}/MANIFEST" ]; then
+                fetch "${UPSTREAM_URL}/MANIFEST" -o "${bastille_cachedir}/${RELEASE}/MANIFEST" || FETCH_VALIDATION="1"
+            fi
 
-                if [ "${FETCH_VALIDATION}" -ne "0" ]; then
-                    ## perform cleanup only for stale/empty directories on failure
-                    if [ "${bastille_zfs_enable}" = "YES" ]; then
-                        if [ -n "${bastille_zfs_zpool}" ]; then
-                            if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
-                                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
-                            fi
-                            if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
-                            fi
-                            fi
+            if [ "${FETCH_VALIDATION}" -ne "0" ]; then
+                ## perform cleanup only for stale/empty directories on failure
+                if [ "${bastille_zfs_enable}" = "YES" ]; then
+                    if [ -n "${bastille_zfs_zpool}" ]; then
+                        if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
+                            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
                         fi
-                        if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
-                            if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
-                                rm -rf "${bastille_cachedir}/${RELEASE}"
-                            fi
+                        if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
+                            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
                         fi
-                        if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
-                            if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                                rm -rf "${bastille_releasesdir}/${RELEASE}"
-                            fi
                         fi
-                        echo -e "${COLOR_RED}Bootstrap failed.${COLOR_RESET}"
-                        exit 1
                     fi
+                    if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
+                        if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
+                            rm -rf "${bastille_cachedir}/${RELEASE}"
+                        fi
+                    fi
+                    if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
+                        if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
+                            rm -rf "${bastille_releasesdir}/${RELEASE}"
+                        fi
+                    fi
+                    echo -e "${COLOR_RED}Bootstrap failed.${COLOR_RESET}"
+                    exit 1
+                fi
 
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
@@ -365,8 +369,11 @@ bootstrap_release() {
                 ## extract the fetched dist files
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
                     echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
-                    /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-                    if [ "$?" -ne 0 ]; then
+                    if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
+                        ## silence motd at container login
+                        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
+                        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
+                    else
                         echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
                         exit 1
                     fi
