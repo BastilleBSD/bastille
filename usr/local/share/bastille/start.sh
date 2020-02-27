@@ -55,6 +55,10 @@ if [ "${TARGET}" = 'ALL' ]; then
 fi
 if [ "${TARGET}" != 'ALL' ]; then
     JAILS=$(bastille list jails | awk "/^${TARGET}$/")
+    ## check if exist
+    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+        echo -e "${COLOR_RED}[${TARGET}]: Not found.${COLOR_RESET}"
+    fi
 fi
 
 for _jail in ${JAILS}; do
@@ -64,13 +68,19 @@ for _jail in ${JAILS}; do
 
     ## test if not running
     elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c ${_jail}
+        ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
         ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
-        if ifconfig | grep -w "$ip" >/dev/null; then
-          echo -e "${COLOR_RED}Error: IP address ($ip) already in use.${COLOR_RESET}"
-          exit 1
+        if [ -n "${ip}" ]; then
+            if ifconfig | grep -w "${ip}" >/dev/null; then
+                echo -e "${COLOR_RED}Error: IP address (${ip}) already in use.${COLOR_RESET}"
+                exit 1
+            fi
         fi
+
+        ## start the container
+        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
+
         ## add rctl limits
         if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
             while read _limits; do
@@ -80,7 +90,7 @@ for _jail in ${JAILS}; do
 
         ## add ip4.addr to firewall table:jails
         if [ ! -z "${bastille_jail_loopback}" ]; then
-            pfctl -q -t jails -T add $(jls -j ${_jail} ip4.addr)
+            pfctl -q -t jails -T add "$(jls -j "${_jail}" ip4.addr)"
         fi
     fi
     echo

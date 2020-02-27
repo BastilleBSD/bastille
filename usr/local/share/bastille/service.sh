@@ -54,11 +54,11 @@ if [ "${TARGET}" = 'ALL' ]; then
 fi
 
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "${TARGET}")
+    JAILS=$(jls name | awk "/^${TARGET}$/")
 fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jexec -l ${_jail} /usr/sbin/service $@
+    jexec -l "${_jail}" /usr/sbin/service "$@"
     echo
 done
