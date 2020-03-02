@@ -274,7 +274,7 @@ fi
 
 # Check if archive exist then trim archive name
 if ls "${bastille_backupsdir}" | awk "/^${TARGET}$/"; then
-    TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*:[0-9]*:[0-9]*.[txz]\{2,3\}//g;s/_[0-9]*-[0-9]*-[0-9]*.zip//g")
+    TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.[txz]\{2,3\}//g;s/_[0-9]*-[0-9]*-[0-9]*.zip//g")
 else
     error_notify "${COLOR_RED}Archive '${TARGET}' not found.${COLOR_RESET}"
 fi
