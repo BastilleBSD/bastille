@@ -929,7 +929,7 @@ Container 'folsom' imported successfully.
 bastille clone
 ---------------
 `bastille clone` will duplicate an existing container.
-Please be aware that no host specific keys or hashes will we regenerated.
+Please be aware that no host specific keys or hashes will be regenerated.
 E. g. remove OpenSSH host keys to avoid duplicate host keys `rm /etc/ssh/ssh_host_*`
 
 Usage: `bastille clone [TARGET] [NEWJAIL] [NEW_IPADRRESS]
