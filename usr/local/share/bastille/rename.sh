@@ -57,6 +57,11 @@ TARGET="${1}"
 NEWNAME="${2}"
 shift
 
+if echo "${NEWNAME}" | grep -q "[.]"; then
+    echo -e "${COLOR_RED}Container names may not contain a dot(.)!${COLOR_RESET}"
+    exit 1
+fi
+
 update_jailconf() {
     # Update jail.conf
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
