@@ -48,7 +48,7 @@ help|-h|--help)
     ;;
 esac
 
-if ! [ $# == 3 ]; then
+if [ $# -ne 3 ]; then
     usage
 fi
 
@@ -70,7 +70,7 @@ validate_ip() {
         if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
             TEST_IP=$(echo "${IP}" | cut -d / -f1)
             IFS=.
-            set "${TEST_IP}"
+            set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
                     echo "Invalid: (${TEST_IP})"
@@ -89,27 +89,51 @@ validate_ip() {
     fi
 }
 
-generate_jailconf() {
-    rm "${bastille_jailsdir}/${NEWNAME}/jail.conf"
-    cat << EOF > "${bastille_jailsdir}/${NEWNAME}/jail.conf"
-${NEWNAME} {
-  devfs_ruleset = 4;
-  enforce_statfs = 2;
-  exec.clean;
-  exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;
-  exec.start = '/bin/sh /etc/rc';
-  exec.stop = '/bin/sh /etc/rc.shutdown';
-  host.hostname = ${NEWNAME};
-  mount.devfs;
-  mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;
-  path = ${bastille_jailsdir}/${NEWNAME}/root;
-  securelevel = 2;
+update_jailconf() {
+    # Update jail.conf
+    JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    if [ -f "${JAIL_CONFIG}" ]; then
+        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
+            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
+            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
+            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
+            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
+            sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
+            sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
+        fi
+    fi
 
-  interface = ${bastille_jail_interface};
-  ${IPX_ADDR} = ${IP};
-  ip6 = ${IP6_MODE};
+    if grep -qw "vnet;" "${JAIL_CONFIG}"; then
+        update_jailconf_vnet
+    fi
 }
-EOF
+
+update_jailconf_vnet() {
+    bastille_jail_rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
+
+    # Determine number of containers and define an uniq_epair
+    local list_jails_num=$(bastille list jails | wc -l | awk '{print $1}')
+    local num_range=$(expr "${list_jails_num}" + 1)
+    jail_list=$(bastille list jail)
+    for _num in $(seq 0 "${num_range}"); do
+        if [ -n "${jail_list}" ]; then
+            if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                uniq_epair="bastille${_num}"
+                sed -i '' "s|vnet.interface = e0b_bastille.*;|vnet.interface = e0b_${uniq_epair};|" "${JAIL_CONFIG}"
+                break
+            fi
+        fi
+    done
+
+    # Rename interface to new uniq_epair
+    sed -i '' "s|ifconfig_e0b_bastille.*_name|ifconfig_e0b_${uniq_epair}_name|" "${bastille_jail_rc_conf}"
+
+    # If 0.0.0.0 set DHCP, else set static IP address
+    if [ "${IP}" == "0.0.0.0" ]; then
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="DHCP"
+    else
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
+    fi
 }
 
 update_fstab() {
@@ -137,13 +161,19 @@ clone_jail() {
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     # Rename ZFS dataset and mount points accordingly
                     DATE=$(date +%F-%H%M%S)
-                    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@cloned_$DATE"
-                    zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@cloned_$DATE" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
-                    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@cloned_$DATE"
+                    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
+                    zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+                    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
                 fi
             else
                 # Just clone the jail directory
-                cp -R "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+                # Check if container is running
+                if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
+                    error_notify "${COLOR_RED}${TARGET} is running, See 'bastille stop ${TARGET}'.${COLOR_RESET}"
+                fi
+
+                # Perform container file copy(archive mode)
+                cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
             fi
         else
             error_notify "${COLOR_RED}${NEWNAME} already exists.${COLOR_RESET}"
@@ -153,9 +183,22 @@ clone_jail() {
     fi
 
     # Generate jail configuration files
-    generate_jailconf
+    update_jailconf
     update_fstab
+
+    # Display the exist status
+	if [ "$?" -ne 0 ]; then
+        error_notify "${COLOR_RED}An error has occurred while attempting to clone '${TARGET}'.${COLOR_RESET}"
+    else
+        echo -e "${COLOR_GREEN}Cloned '${TARGET}' to '${NEWNAME}' successfully.${COLOR_RESET}"
+    fi
 }
+
+## don't allow for dots(.) in container names
+if echo "${NEWNAME}" | grep -q "[.]"; then
+    echo -e "${COLOR_RED}Container names may not contain a dot(.)!${COLOR_RESET}"
+    exit 1
+fi
 
 ## check if ip address is valid
 if [ -n "${IP}" ]; then
