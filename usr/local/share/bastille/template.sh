@@ -54,7 +54,7 @@ if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(jls name)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | grep -w "${TARGET}")
+    JAILS=$(jls name | awk "/^${TARGET}$/")
 fi
 
 TEMPLATE="${1}"
@@ -80,12 +80,12 @@ for _jail in ${JAILS}; do
 
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
-        if [ $(grep -w "${_jail}" ${bastille_template}/TARGET) ]; then
+        if grep -qw "${_jail}" "${bastille_template}/TARGET"; then
             echo -e "${COLOR_GREEN}TARGET: !${_jail}.${COLOR_RESET}"
             echo
             continue
         fi
-    if [ ! $(grep -E "(^|\b)(${_jail}|ALL)($|\b)" ${bastille_template}/TARGET) ]; then
+    if ! grep -Eq "(^|\b)(${_jail}|ALL)($|\b)" "${bastille_template}/TARGET"; then
             echo -e "${COLOR_GREEN}TARGET: ?${_jail}.${COLOR_RESET}"
             echo
             continue
@@ -107,7 +107,7 @@ for _jail in ${JAILS}; do
             _rctl_rule="jail:${_jail}:${_limit_key}:deny=${_limit_value}/jail"
 
             ## if entry doesn't exist, add; else show existing entry
-            if [ ! "$(grep -qs "${_rctl_rule}" "${bastille_jailsdir}/${_jail}/rctl.conf")" ]; then
+            if ! grep -qs "${_rctl_rule}" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
                 echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
                 echo "${_limits}"
             else
@@ -131,12 +131,12 @@ for _jail in ${JAILS}; do
 
             case ${_include} in
                 http?://github.com/*/*|http?://gitlab.com/*/*)
-                    bastille bootstrap ${_include}
+                    bastille bootstrap "${_include}"
                 ;;
                 */*)
                     BASTILLE_TEMPLATE_USER=$(echo "${_include}" | awk -F / '{ print $1 }')
                     BASTILLE_TEMPLATE_REPO=$(echo "${_include}" | awk -F / '{ print $2 }')
-                    bastille template ${_jail} ${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}
+                    bastille template "${_jail}" "${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}"
                 ;;
                 *)
                     echo -e "${COLOR_RED}Template INCLUDE content not recognized.${COLOR_RESET}"
@@ -148,7 +148,7 @@ for _jail in ${JAILS}; do
             echo -e "${COLOR_GREEN}Applying ${_include}...${COLOR_RESET}"
             BASTILLE_TEMPLATE_PROJECT=$(echo "${_include}" | awk -F / '{ print $4}')
             BASTILLE_TEMPLATE_REPO=$(echo "${_include}" | awk -F / '{ print $5}')
-            bastille template ${_jail} ${BASTILLE_TEMPLATE_PROJECT}/${BASTILLE_TEMPLATE_REPO}
+            bastille template "${_jail}" "${BASTILLE_TEMPLATE_PROJECT}/${BASTILLE_TEMPLATE_REPO}"
         done < "${bastille_template}/INCLUDE"
         echo -e "${COLOR_GREEN}[${_jail}]:INCLUDE -- END${COLOR_RESET}"
         echo
@@ -157,7 +157,7 @@ for _jail in ${JAILS}; do
     ## PRE
     if [ -s "${bastille_template}/PRE" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:PRE -- START${COLOR_RESET}"
-        jexec -l ${_jail} /bin/sh < "${bastille_template}/PRE" || exit 1
+        jexec -l "${_jail}" /bin/sh < "${bastille_template}/PRE" || exit 1
         echo -e "${COLOR_GREEN}[${_jail}]:PRE -- END${COLOR_RESET}"
         echo
     fi
@@ -206,11 +206,11 @@ for _jail in ${JAILS}; do
             _fstab_entry="${_hostpath} ${bastille_jailsdir}/${_jail}/root/${_jailpath} ${_type} ${_perms} ${_checks}"
 
             ## if entry doesn't exist, add; else show existing entry
-            if [ ! "$(grep "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab")" ]; then
+            if ! grep -q "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab"; then
                 echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"
                 echo "Added: ${_fstab_entry}"
             else
-                echo "$(grep "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab")"
+                grep "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab"
             fi
         done < "${bastille_template}/FSTAB"
         mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
@@ -227,7 +227,7 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template}/PKG" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:PKG -- START${COLOR_RESET}"
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg bootstrap || exit 1
-        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg install $(cat ${bastille_template}/PKG) || exit 1
+        jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg install $(cat "${bastille_template}/PKG") || exit 1
         jexec -l "${_jail}" env ASSUME_ALWAYS_YES=YES /usr/sbin/pkg audit -F
         echo -e "${COLOR_GREEN}[${_jail}]:PKG -- END${COLOR_RESET}"
         echo
@@ -238,7 +238,7 @@ for _jail in ${JAILS}; do
         echo -e "${COLOR_GREEN}[${_jail}]:OVERLAY -- START${COLOR_RESET}"
         while read _dir; do
             cp -av "${bastille_template}/${_dir}" "${bastille_jail_path}" || exit 1
-        done < ${bastille_template}/OVERLAY
+        done < "${bastille_template}/OVERLAY"
         echo -e "${COLOR_GREEN}[${_jail}]:OVERLAY -- END${COLOR_RESET}"
         echo
     fi
@@ -247,7 +247,7 @@ for _jail in ${JAILS}; do
         echo -e "${COLOR_GREEN}[${_jail}]:CONFIG -- START${COLOR_RESET}"
         while read _dir; do
             cp -av "${bastille_template}/${_dir}" "${bastille_jail_path}" || exit 1
-        done < ${bastille_template}/CONFIG
+        done < "${bastille_template}/CONFIG"
         echo -e "${COLOR_GREEN}[${_jail}]:CONFIG -- END${COLOR_RESET}"
         echo
     fi
@@ -256,7 +256,7 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template}/SYSRC" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:SYSRC -- START${COLOR_RESET}"
         while read _sysrc; do
-            jexec -l ${_jail} /usr/sbin/sysrc "${_sysrc}" || exit 1
+            jexec -l "${_jail}" /usr/sbin/sysrc "${_sysrc}" || exit 1
         done < "${bastille_template}/SYSRC"
         echo -e "${COLOR_GREEN}[${_jail}]:SYSRC -- END${COLOR_RESET}"
         echo
@@ -266,7 +266,7 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template}/SERVICE" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:SERVICE -- START${COLOR_RESET}"
         while read _service; do
-            jexec -l ${_jail} /usr/sbin/service ${_service} || exit 1
+            jexec -l "${_jail}" /usr/sbin/service "${_service}" || exit 1
         done < "${bastille_template}/SERVICE"
         echo -e "${COLOR_GREEN}[${_jail}]:SERVICE -- END${COLOR_RESET}"
         echo
@@ -275,7 +275,7 @@ for _jail in ${JAILS}; do
     ## CMD
     if [ -s "${bastille_template}/CMD" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:CMD -- START${COLOR_RESET}"
-        jexec -l ${_jail} /bin/sh < "${bastille_template}/CMD" || exit 1
+        jexec -l "${_jail}" /bin/sh < "${bastille_template}/CMD" || exit 1
         echo -e "${COLOR_GREEN}[${_jail}]:CMD -- END${COLOR_RESET}"
         echo
     fi

@@ -1,10 +1,9 @@
-Bastille: Automate Container Security
-=====================================
+Bastille
+========
 [Bastille](https://bastillebsd.org/) is an open-source system for automating
 deployment and management of containerized applications on FreeBSD.
 
 Looking for [Bastille Templates](https://gitlab.com/BastilleBSD-Templates/)?
-
 
 Installation
 ============
@@ -21,7 +20,7 @@ portsnap fetch auto
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
-**Git**
+**Git** (bleeding edge / unstable -- primarily for developers)
 ```shell
 git clone https://github.com/BastilleBSD/bastille.git
 cd bastille
@@ -50,6 +49,7 @@ Available Commands:
   cp          cp(1) files from host to targeted container(s).
   create      Create a new thin or thick container.
   destroy     Destroy a stopped container or a bootstrapped release.
+  edit        Edit container configuration files (advanced).
   export      Exports a container archive or image.
   help        Help about any command
   htop        Interactive process viewer (requires htop).
@@ -293,25 +293,80 @@ IP at container creation.
 
 - name
 - release (bootstrapped)
-- ip
+- ip (ip4 or ip6)
 - interface (optional)
 
 
+**ip4**
 ```shell
-ishmael ~ # bastille create folsom 12.0-RELEASE 10.17.89.10
+ishmael ~ # bastille create folsom 12.1-RELEASE 10.17.89.10
 Valid: (10.17.89.10).
 
 NAME: folsom.
 IP: 10.17.89.10.
-RELEASE: 12.0-RELEASE.
+RELEASE: 12.1-RELEASE.
 
 syslogd_flags: -s -> -ss
 sendmail_enable: NO -> NONE
 cron_flags:  -> -J 60
 ```
 
-This command will create a 12.0-RELEASE container assigning the 10.17.89.10 ip
+This command will create a 12.1-RELEASE container assigning the 10.17.89.10 ip
 address to the new system.
+
+**ip6**
+```shell
+ishmael ~ # bastille create folsom 12.1-RELEASE fd35:f1fd:2cb6:6c5c::13
+Valid: (fd35:f1fd:2cb6:6c5c::13).
+
+NAME: folsom.
+IP: fd35:f1fd:2cb6:6c5c::13
+RELEASE: 12.1-RELEASE.
+
+syslogd_flags: -s -> -ss
+sendmail_enable: NO -> NONE
+cron_flags:  -> -J 60
+```
+
+This command will create a 12.1-RELEASE container assigning the
+fd35:f1fd:2cb6:6c5c::13  ip address to the new system.
+
+**VNET**
+```shell
+ishmael ~ # bastille create -V vnetjail 12.1-RELEASE 192.168.87.55/24 em0
+Valid: (192.168.87.55/24).
+Valid: (em0).
+
+NAME: vnettest0.
+IP: 192.168.87.55/24.
+INTERFACE: em0.
+RELEASE: 12.1-RELEASE.
+
+syslogd_flags: -s -> -ss
+sendmail_enable: NO -> NONE
+cron_flags:  -> -J 60
+ifconfig_e0b_bastille0_name:  -> vnet0
+ifconfig_vnet0:  -> inet 192.168.87.55/24
+```
+
+This command will create a 12.1-RELEASE container assigning the
+192.168.87.55/24 ip address to the new system.
+
+VNET-enabled containers are attached to a virtual bridge interface for
+connectivity. This bridge interface is defined by the interface argument in the
+create command (in this case, em0).
+
+VNET also requires a custom `devfs` ruleset. Create the file as needed on the host system:
+
+**/etc/devfs.rules**
+```
+[bastille_vnet=13]
+add include $devfsrules_hide_all
+add include $devfsrules_unhide_basic
+add include $devfsrules_unhide_login
+add include $devfsrules_jail
+add path 'bpf*' unhide
+```
 
 Optionally `bastille create [ -T | --thick ]` will create a container with a
 private base. This is sometimes referred to as a "thick" container (whereas the
@@ -608,7 +663,7 @@ work as expected. This table outlines that order and those requirements:
 
 | PLANNED | format           | example                                                        |
 |---------|------------------|----------------------------------------------------------------|
-| PF      | pf rdr entry     | rdr pass inet proto tcp from any to any port 80 -> 10.17.89.80 |
+| RDR     | pf rdr entry     | rdr pass inet proto tcp from any to any port 80 -> 10.17.89.80 |
 | LOG     | path             | /var/log/nginx/access.log                                      |
 
 Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
@@ -747,7 +802,7 @@ ishmael ~ # bastille cp ALL /tmp/resolv.conf-cf etc/resolv.conf
 /tmp/resolv.conf-cf -> /usr/local/bastille/jails/unbound0/root/etc/resolv.conf
 ```
 
-bastille-rdr
+bastille rdr
 ------------
 
 `bastille rdr` allows you to configure dynamic rdr rules for your containers
@@ -756,7 +811,7 @@ for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf
 as described in the Networking section).
 
 ```shell
-    # bastille rdr --help
+    # bastille rdr help
     Usage: bastille rdr TARGET [clear] | [list] | [tcp <host_port> <jail_port>] | [udp <host_port> <jail_port>]
     # bastille rdr dev1 tcp 2001 22
     # bastille rdr dev1 list

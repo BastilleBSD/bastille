@@ -42,7 +42,7 @@ destroy_jail() {
 
     if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
         if [ "${FORCE}" = "1" ]; then
-            bastille stop ${TARGET}
+            bastille stop "${TARGET}"
         else
             echo -e "${COLOR_RED}Jail running.${COLOR_RESET}"
             echo -e "${COLOR_RED}See 'bastille stop ${TARGET}'.${COLOR_RESET}"
@@ -58,25 +58,25 @@ destroy_jail() {
     if [ -d "${bastille_jail_base}" ]; then
         echo -e "${COLOR_GREEN}Deleting Jail: ${TARGET}.${COLOR_RESET}"
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ ! -z "${bastille_zfs_zpool}" ]; then
-                if [ ! -z "${TARGET}" ]; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                if [ -n "${TARGET}" ]; then
                     ## remove jail zfs dataset recursively
-                    zfs destroy -r ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}
+                    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"
                 fi
             fi
         fi
 
         if [ -d "${bastille_jail_base}" ]; then
             ## removing all flags
-            chflags -R noschg ${bastille_jail_base}
+            chflags -R noschg "${bastille_jail_base}"
 
             ## remove jail base
-            rm -rf ${bastille_jail_base}
+            rm -rf "${bastille_jail_base}"
         fi
 
         ## archive jail log
         if [ -f "${bastille_jail_log}" ]; then
-            mv ${bastille_jail_log} ${bastille_jail_log}-$(date +%F)
+            mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
             echo -e "${COLOR_GREEN}Note: jail console logs archived.${COLOR_RESET}"
             echo -e "${COLOR_GREEN}${bastille_jail_log}-$(date +%F)${COLOR_RESET}"
         fi
@@ -88,7 +88,6 @@ destroy_rel() {
     ## check release name match before destroy
     if [ -n "${NAME_VERIFY}" ]; then
         TARGET="${NAME_VERIFY}"
-        break
     else
         usage
     fi
@@ -100,7 +99,7 @@ destroy_rel() {
     if [ -d "${bastille_jailsdir}" ]; then
         JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
         for _jail in ${JAIL_LIST}; do
-            if grep -qwo "${TARGET}" ${bastille_jailsdir}/${_jail}/fstab 2>/dev/null; then
+            if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
                 echo -e "${COLOR_RED}Notice: (${_jail}) depends on ${TARGET} base.${COLOR_RESET}"
                 BASE_HASCHILD="1"
             fi
@@ -114,11 +113,11 @@ destroy_rel() {
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
             echo -e "${COLOR_GREEN}Deleting base: ${TARGET}.${COLOR_RESET}"
             if [ "${bastille_zfs_enable}" = "YES" ]; then
-                if [ ! -z "${bastille_zfs_zpool}" ]; then
-                    zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${TARGET}
+                if [ -n "${bastille_zfs_zpool}" ]; then
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${TARGET}"
                     if [ "${FORCE}" = "1" ]; then
                         if [ -d "${bastille_cachedir}/${TARGET}" ]; then
-                            zfs destroy ${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${TARGET}
+                            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${TARGET}"
                         fi
                     fi
                 fi
@@ -126,10 +125,10 @@ destroy_rel() {
 
             if [ -d "${bastille_rel_base}" ]; then
                 ## removing all flags
-                chflags -R noschg ${bastille_rel_base}
+                chflags -R noschg "${bastille_rel_base}"
 
                 ## remove jail base
-                rm -rf ${bastille_rel_base}
+                rm -rf "${bastille_rel_base}"
             fi
 
             if [ "${FORCE}" = "1" ]; then
@@ -152,28 +151,26 @@ help|-h|--help)
     ;;
 esac
 
-OPTION="${1}"
-TARGET="${2}"
+## reset this options
+FORCE=""
 
 ## handle additional options
-case "${OPTION}" in
--f|--force)
-    if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+case "${1}" in
+    -f|--force|force)
+        FORCE="1"
+        shift
+        ;;
+    -*)
+        echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
         usage
-    fi
-    FORCE="1"
-    ;;
--*)
-    echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
-    usage
-    ;;
-*)
-    if [ $# -gt 1 ] || [ $# -lt 1 ]; then
-        usage
-    fi
-    TARGET="${1}"
-    ;;
+        ;;
 esac
+
+TARGET="${1}"
+
+if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+    usage
+fi
 
 ## check what should we clean
 case "${TARGET}" in
@@ -184,27 +181,27 @@ case "${TARGET}" in
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-LAST|-STABLE-last|-stable-last|-STABLE-LAST)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
     destroy_rel
     ;;
 *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
     ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build|-STABLE-BUILD)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
     destroy_rel
     ;;
-*-stable-build-latest|*-STABLE-BUILD-LATEST)
+*-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
     ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest|-STABLE-BUILD-LATEST)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     destroy_rel
     ;;
 current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
     ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build|-CURRENT-BUILD)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
     destroy_rel
     ;;
-current-build-latest|CURRENT-BUILD-LATEST)
+current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest|-CURRENT-BUILD-LATEST)$' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     destroy_rel
     ;;
 *)

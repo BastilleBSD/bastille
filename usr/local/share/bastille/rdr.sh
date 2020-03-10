@@ -68,7 +68,7 @@ if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
 fi
 
 # Check rdr-anchor is setup in pf.conf
-if !(pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
+if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
     echo -e "${COLOR_RED}rdr-anchor not found in pf.conf${COLOR_RESET}"
     exit 1
 fi
@@ -113,6 +113,3 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
-
-
-
