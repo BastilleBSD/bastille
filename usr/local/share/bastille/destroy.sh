@@ -80,6 +80,12 @@ destroy_jail() {
             echo -e "${COLOR_GREEN}Note: jail console logs archived.${COLOR_RESET}"
             echo -e "${COLOR_GREEN}${bastille_jail_log}-$(date +%F)${COLOR_RESET}"
         fi
+
+        ## clear any active rdr rules
+        if [ ! -z "$(pfctl -a "rdr/${TARGET}" -Psn 2>/dev/null)" ]; then
+            echo -e "${COLOR_GREEN}Clearing RDR rules:${COLOR_RESET}"
+            pfctl -a "rdr/${TARGET}" -Fn
+        fi
         echo
     fi
 }
