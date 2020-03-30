@@ -144,10 +144,10 @@ generate_vnet_jail_conf() {
     ## determine number of containers + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
-    local list_jails_num=$(bastille list jails | wc -l | awk '{print $1}')
-    local num_range=$(expr "${list_jails_num}" + 1)
-    jail_list=$(bastille list jail)
+    local jail_list=$(bastille list jails)
     if [ -n "${jail_list}" ]; then
+        local list_jails_num=$(echo "${jail_list}" | wc -l | awk '{print $1}')
+        local num_range=$(expr "${list_jails_num}" + 1)
         for _num in $(seq 0 "${num_range}"); do
             if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
                 uniq_epair="bastille${_num}"
