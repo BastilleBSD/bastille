@@ -102,11 +102,11 @@ if echo "${TARGET}" | grep -q '\/'; then
     GETDIR="${TARGET}"
     TARGET=$(echo ${TARGET} | awk -F '\/' '{print $NF}')
     bastille_backupsdir=$(echo ${GETDIR} | sed "s/${TARGET}//")
-else
-    # Check if backups directory/dataset exist
-    if [ ! -d "${bastille_backupsdir}" ]; then
-        error_notify "${COLOR_RED}Backups directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
-    fi
+fi
+
+# Check if backups directory/dataset exist
+if [ ! -d "${bastille_backupsdir}" ]; then
+    error_notify "${COLOR_RED}Backups directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
 fi
 
 # Check if is a ZFS system
