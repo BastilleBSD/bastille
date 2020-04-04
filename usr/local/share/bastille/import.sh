@@ -238,17 +238,19 @@ config_netif() {
 update_symlinks() {
     # Work with the symlinks
     SYMLINKS="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/ports usr/sbin usr/share usr/src"
-    if [ -d "${bastille_releasesdir}/${CONFIG_RELEASE}" ]; then
-        # Update old symlinks
-        echo -e "${COLOR_GREEN}Updating symlinks...${COLOR_RESET}"
-        for _link in ${SYMLINKS}; do
-            if [ -L "${_link}" ]; then
-                ln -sf /.bastille/${_link} ${_link}
-            fi
-        done
-    else
-        error_notify "${COLOR_RED}Release must be bootstrapped first, See 'bastille bootstrap'.${COLOR_RESET}"
+
+    # Just warn user to bootstrap the release if missing
+    if [ ! -d "${bastille_releasesdir}/${CONFIG_RELEASE}" ]; then
+        echo -e "${COLOR_YELLOW}Warning: ${CONFIG_RELEASE} must be bootstrapped, See 'bastille bootstrap'.${COLOR_RESET}"
     fi
+
+    # Update old symlinks
+    echo -e "${COLOR_GREEN}Updating symlinks...${COLOR_RESET}"
+    for _link in ${SYMLINKS}; do
+        if [ -L "${_link}" ]; then
+            ln -sf /.bastille/${_link} ${_link}
+        fi
+    done
 }
 
 jail_import() {
@@ -370,14 +372,23 @@ jail_import() {
     fi
 }
 
-# Check if backups directory/dataset exist
-if [ ! -d "${bastille_backupsdir}" ]; then
-    error_notify "${COLOR_RED}Backups directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
+# Check for user specified file location
+if echo "${TARGET}" | grep -q '\/'; then
+    GETDIR="${TARGET}"
+    TARGET=$(echo ${TARGET} | awk -F '\/' '{print $NF}')
+    bastille_backupsdir=$(echo ${GETDIR} | sed "s/${TARGET}//")
+else
+    # Check if backups directory/dataset exist
+    if [ ! -d "${bastille_backupsdir}" ]; then
+        error_notify "${COLOR_RED}Backups directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
+    fi
 fi
 
 # Check if archive exist then trim archive name
-if ls "${bastille_backupsdir}" | awk "/^${TARGET}$/" >/dev/null; then
-    TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.[txz]\{2,3\}//g;s/_[0-9]*-[0-9]*-[0-9]*.zip//g;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//g")
+if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
+    if ls "${bastille_backupsdir}" | awk "/^${TARGET}$/" >/dev/null; then
+        TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.[txz]\{2,3\}//g;s/_[0-9]*-[0-9]*-[0-9]*.zip//g;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//g")
+    fi
 else
     error_notify "${COLOR_RED}Archive '${TARGET}' not found.${COLOR_RESET}"
 fi
