@@ -272,12 +272,13 @@ jail_import() {
                     update_zfsmount
 
                 elif [ "${FILE_EXT}" = ".txz" ]; then
-                    # Prepare the ZFS environment and restore from existing tar.xz file
+                    # Prepare the ZFS environment and restore from existing .txz file
                     echo -e "${COLOR_GREEN}Importing '${TARGET_TRIM}' form ${FILE_EXT} archive.${COLOR_RESET}"
                     echo -e "${COLOR_GREEN}Preparing zfs environment...${COLOR_RESET}"
+
+                    # Create required ZFS datasets, mountpoint inherited from system
                     zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
-                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_jailsdir}/${TARGET_TRIM}/root" \
-                    "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
+                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
 
                     # Extract required files to the new datasets
                     echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
@@ -319,12 +320,13 @@ jail_import() {
                     generate_config
                 elif [ "${FILE_EXT}" = ".tar.gz" ]; then
                     # Attempt to import a foreign/ezjail container
-                    # Prepare the ZFS environment and restore from existing tar.gz file
+                    # Prepare the ZFS environment and restore from existing .tar.gz file
                     echo -e "${COLOR_GREEN}Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive.${COLOR_RESET}"
                     echo -e "${COLOR_GREEN}Preparing zfs environment...${COLOR_RESET}"
+
+                    # Create required ZFS datasets, mountpoint inherited from system
                     zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
-                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_jailsdir}/${TARGET_TRIM}/root" \
-                    "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
+                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
 
                     # Extract required files to the new datasets
                     echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
