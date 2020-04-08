@@ -44,6 +44,7 @@ Usage:
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   cmd         Execute arbitrary command on targeted container(s).
+  clone       Clone an existing container.
   console     Console into a running container.
   convert     Convert a thin container into a thick container.
   cp          cp(1) files from host to targeted container(s).
@@ -923,6 +924,18 @@ Receiving zfs data stream...
 /usr/local/bastille/jails/backups/folsom_2020-01-26-19:22:23.xz (1/1)
   100 %      626.4 KiB / 9231.5 KiB = 0.068                   0:02             
 Container 'folsom' imported successfully.
+```
+
+bastille clone
+---------------
+`bastille clone` will duplicate an existing container.
+Please be aware that no host specific keys or hashes will be regenerated.
+E. g. remove OpenSSH host keys to avoid duplicate host keys `rm /etc/ssh/ssh_host_*`
+
+Usage: `bastille clone [TARGET] [NEWJAIL] [NEW_IPADRRESS]
+
+```shell
+ishmael ~ # bastille clone sourcejail targetjail 10.17.89.11
 ```
 
 Example (create, start, console)

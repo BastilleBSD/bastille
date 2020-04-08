@@ -82,6 +82,7 @@ Usage:
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   cmd         Execute arbitrary command on targeted container(s).
+  clone       Clone an existing container.
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
   cp          cp(1) files from host to targeted container(s).
@@ -133,7 +134,7 @@ esac
 
 # Filter out all non-commands
 case "${CMD}" in
-bootstrap|cmd|console|convert|cp|create)
+bootstrap|clone|cmd|console|convert|cp|create)
     ;;
 destroy|edit|export|htop|import|limits|list)
     ;;
