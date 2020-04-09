@@ -153,17 +153,24 @@ update_fstab() {
 }
 
 clone_jail() {
-    # Attempt container name change
+    # Attempt container clone
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         echo -e "${COLOR_GREEN}Attempting to clone '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
         if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
-                    # Rename ZFS dataset and mount points accordingly
+                    # Replicate the existing container
                     DATE=$(date +%F-%H%M%S)
                     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
                     zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
-                    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
+
+                    # Cleanup source temporary snapshots
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}"
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
+
+                    # Cleanup target temporary snapshots
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
                 fi
             else
                 # Just clone the jail directory
@@ -187,7 +194,7 @@ clone_jail() {
     update_fstab
 
     # Display the exist status
-	if [ "$?" -ne 0 ]; then
+    if [ "$?" -ne 0 ]; then
         error_notify "${COLOR_RED}An error has occurred while attempting to clone '${TARGET}'.${COLOR_RESET}"
     else
         echo -e "${COLOR_GREEN}Cloned '${TARGET}' to '${NEWNAME}' successfully.${COLOR_RESET}"

@@ -285,7 +285,8 @@ jail_import() {
                     tar --exclude='root' -Jxf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
                     tar -Jxf "${bastille_backupsdir}/${TARGET}" --strip-components 2 -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${TARGET_TRIM}/root"
                     if [ "$?" -ne 0 ]; then
-                        zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                         error_notify "${COLOR_RED}Failed to extract files from '${TARGET}' archive.${COLOR_RESET}"
                     fi
                 elif [ "${FILE_EXT}" = ".zip" ]; then
@@ -333,7 +334,8 @@ jail_import() {
                     tar --exclude='ezjail/' -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}/${TARGET_TRIM}"
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}/root"
                     if [ "$?" -ne 0 ]; then
-                        zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                         error_notify "${COLOR_RED}Failed to extract files from '${TARGET}' archive.${COLOR_RESET}"
                     else
                         generate_config

@@ -68,13 +68,13 @@ jail_export()
                 echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive.${COLOR_RESET}"
                 echo -e "${COLOR_GREEN}Sending zfs data stream...${COLOR_RESET}"
                 # Take a recursive temporary snapshot
-                SNAP_NAME="bastille_export-${DATE}"
-                zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"@"${SNAP_NAME}"
+                zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
 
                 # Export the container recursively and cleanup temporary snapshots
-                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"@"${SNAP_NAME}" | \
+                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}" | \
                 xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
-                zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"@"${SNAP_NAME}"
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_export_${DATE}"
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
             fi
         else
             # Create standard backup archive
