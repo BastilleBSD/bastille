@@ -43,6 +43,7 @@ Usage:
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
+  clone       Clone an existing container. 
   cmd         Execute arbitrary command on targeted container(s).
   clone       Clone an existing container.
   console     Console into a running container.
