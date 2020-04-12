@@ -82,98 +82,6 @@ validate_release_url() {
     fi
 }
 
-bootstrap_network_interfaces() {
-
-    ## test for both options empty
-    if [ -z "${bastille_jail_loopback}" ] && [ -z "${bastille_jail_external}" ]; then
-        echo -e "${COLOR_RED}Please set preferred loopback or external interface.${COLOR_RESET}"
-        echo -e "${COLOR_RED}See bastille.conf.${COLOR_RESET}"
-        exit 1
-    fi
-
-    ## test for required variables -- external
-    if [ -z "${bastille_jail_loopback}" ] && [ -n "${bastille_jail_external}" ]; then
-
-        ## test for existing interface
-        ifconfig "${bastille_jail_external}" >/dev/null 2>&1
-        if [ "$?" = 0 ]; then
-
-            ## create ifconfig alias
-            ifconfig "${bastille_jail_external}" inet "${bastille_jail_addr}" alias && \
-            echo -e "${COLOR_GREEN}IP alias added to ${bastille_jail_external} successfully.${COLOR_RESET}"
-            echo
-
-            ## attempt to ping gateway
-            echo -e "${COLOR_YELLOW}Attempting to ping default gateway...${COLOR_RESET}"
-            ping -c3 -t3 -S "${bastille_jail_addr}" "${bastille_jail_gateway}"
-            if [ "$?" = 0 ]; then
-                echo
-                echo -e "${COLOR_GREEN}External networking appears functional.${COLOR_RESET}"
-                echo
-            else
-                echo -e "${COLOR_RED}Unable to ping default gateway.${COLOR_RESET}"
-            fi
-        fi
-    fi
-
-    ## test for required variables -- loopback
-    if [ -z "${bastille_jail_external}" ] && [ -n "${bastille_jail_loopback}" ] && \
-        [ -n "${bastille_jail_addr}" ]; then
-
-        echo -e "${COLOR_GREEN}Detecting...${COLOR_RESET}"
-        ## test for existing interface
-        ifconfig "${bastille_jail_interface}" >&2 >/dev/null
-
-        ## if above return code is 1; create interface
-        if [ "$?" = 1 ]; then
-            sysrc ifconfig_"${bastille_jail_loopback}"_name | grep "${bastille_jail_interface}" >&2 >/dev/null
-            if [ "$?" = 1 ]; then
-                echo
-                echo -e "${COLOR_GREEN}Defining secure loopback interface.${COLOR_RESET}"
-                sysrc cloned_interfaces+="${bastille_jail_loopback}" &&
-                sysrc ifconfig_"${bastille_jail_loopback}"_name="${bastille_jail_interface}"
-                sysrc ifconfig_"${bastille_jail_interface}"_aliases+="inet ${bastille_jail_addr}/32"
-
-                ## create and name interface; assign address
-                echo
-                echo -e "${COLOR_GREEN}Creating secure loopback interface.${COLOR_RESET}"
-                ifconfig "${bastille_jail_loopback}" create name "${bastille_jail_interface}"
-                ifconfig "${bastille_jail_interface}" up
-                ifconfig "${bastille_jail_interface}" inet "${bastille_jail_addr}/32"
-
-                ## reload firewall
-                pfctl -f /etc/pf.conf
-
-                ## look for nat rule for bastille_jail_addr
-                echo -e "${COLOR_GREEN}Detecting NAT from bastille0 interface...${COLOR_RESET}"
-                pfctl -s nat | grep nat | grep "${bastille_jail_addr}"
-                if [ "$?" = 0 ]; then
-                    ## test connectivity; ping from bastille_jail_addr
-                    echo
-                    echo -e "${COLOR_YELLOW}Attempting to ping default gateway...${COLOR_RESET}"
-                    ping -c3 -t3 -S "${bastille_jail_addr}" "${bastille_jail_gateway}"
-                    if [ "$?" = 0 ]; then
-                        echo
-                        echo -e "${COLOR_GREEN}Private networking appears functional.${COLOR_RESET}"
-                        echo
-                    else
-                        echo -e "${COLOR_RED}Unable to ping default gateway.${COLOR_RESET}"
-                        echo -e "${COLOR_YELLOW}See https://github.com/BastilleBSD/bastille/blob/master/README.md#etcpfconf.${COLOR_RESET}"
-                        echo -e
-                    fi
-                else
-                    echo -e "${COLOR_RED}Unable to detect firewall 'nat' rule.${COLOR_RESET}"
-                    echo -e "${COLOR_YELLOW}See https://github.com/BastilleBSD/bastille/blob/master/README.md#etcpfconf.${COLOR_RESET}"
-                fi
-            else
-                echo -e "${COLOR_RED}Interface ${bastille_jail_loopback} already configured; bailing out.${COLOR_RESET}"
-            fi
-        else
-            echo -e "${COLOR_RED}Interface ${bastille_jail_interface} already active; bailing out.${COLOR_RESET}"
-        fi
-    fi
-}
-
 bootstrap_directories() {
     ## ensure required directories are in place
 
@@ -487,9 +395,6 @@ http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     bootstrap_template
-    ;;
-network)
-    bootstrap_network_interfaces
     ;;
 *)
     usage

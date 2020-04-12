@@ -274,10 +274,10 @@ workout_components() {
 
 config_netif() {
     # Get interface from bastille configuration
-    if [ -n "${bastille_jail_interface}" ]; then
-        NETIF_CONFIG="${bastille_jail_interface}"
-    elif [ -n "${bastille_jail_external}" ]; then
-        NETIF_CONFIG="${bastille_jail_external}"
+    if [ -n "${bastille_network_loopback}" ]; then
+        NETIF_CONFIG="${bastille_network_loopback}"
+    elif [ -n "${bastille_network_shared}" ]; then
+        NETIF_CONFIG="${bastille_network_shared}"
     else
         NETIF_CONFIG=
     fi
