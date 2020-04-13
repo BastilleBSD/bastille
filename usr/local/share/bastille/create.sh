@@ -89,21 +89,7 @@ validate_netif() {
 }
 
 validate_netconf() {
-    if [ -n "${bastille_jail_loopback}" ] && [ -n "${bastille_jail_interface}" ] && [ -n "${bastille_jail_external}" ]; then
-        echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
-        exit 1
-    fi
-    if [ -n "${bastille_jail_external}" ]; then
-        return 0
-    elif [ ! -z "${bastille_jail_loopback}" ] && [ -z "${bastille_jail_external}" ]; then
-        if [ -z "${bastille_jail_interface}" ]; then
-            echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
-            exit 1
-        fi
-    elif [ -z "${bastille_jail_loopback}" ] && [ ! -z "${bastille_jail_interface}" ]; then
-        echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
-        exit 1
-    elif [ -z "${bastille_jail_external}" ]; then
+    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
         echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
         exit 1
     fi
@@ -230,11 +216,11 @@ create_jail() {
     fi
 
     if [ ! -f "${bastille_jail_conf}" ]; then
-        if [ -z "${bastille_jail_loopback}" ] && [ -n "${bastille_jail_external}" ]; then
-            local bastille_jail_conf_interface=${bastille_jail_external}
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
         fi
-        if [ -n "${bastille_jail_loopback}" ] && [ -z "${bastille_jail_external}" ]; then
-            local bastille_jail_conf_interface=${bastille_jail_interface}
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
         fi
         if [ -n "${INTERFACE}" ]; then
             local bastille_jail_conf_interface=${INTERFACE}
@@ -348,6 +334,11 @@ create_jail() {
                 /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="DHCP"
             else
                 /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                if [ -n "${bastille_network_gateway}" ]; then
+                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="${bastille_network_gateway}"
+                else
+                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(route show default | awk '/gateway/ {print $2}')"
+                fi
             fi
 
             ## VNET requires jib script

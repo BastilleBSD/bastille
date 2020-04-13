@@ -38,8 +38,6 @@ bastille_compress_xz_options="-0 -v"                                  ## default
 bastille_decompress_xz_options="-c -d -v"                             ## default "-c -d -v"
 
 ## Networking
-bastille_jail_loopback="lo1"                                          ## default: "lo1"
-bastille_jail_interface="bastille0"                                   ## default: "bastille0"
-bastille_jail_external=""                                             ## default: ""
-bastille_jail_addr="10.17.89.10"                                      ## default: "10.17.89.10"
-bastille_jail_gateway=""                                              ## default: ""
+bastille_network_loopback="bastille0"                                 ## default: "bastille0"
+bastille_network_shared=""                                            ## default: ""
+bastille_network_gateway=""                                           ## default: ""
