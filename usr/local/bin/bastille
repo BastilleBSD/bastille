@@ -69,7 +69,7 @@ bastille_perms_check
 . /usr/local/etc/bastille/bastille.conf
 
 ## version
-BASTILLE_VERSION="0.6.20200202"
+BASTILLE_VERSION="0.6.20200412"
 
 usage() {
     cat << EOF
