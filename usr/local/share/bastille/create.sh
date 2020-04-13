@@ -479,6 +479,7 @@ fi
 ## check if interface is valid
 if [ -n  "${INTERFACE}" ]; then
     validate_netif
+    validate_netconf
 else
     validate_netconf
 fi
