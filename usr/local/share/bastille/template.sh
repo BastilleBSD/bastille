@@ -266,7 +266,7 @@ for _jail in ${JAILS}; do
     if [ -s "${bastille_template}/SERVICE" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:SERVICE -- START${COLOR_RESET}"
         while read _service; do
-            jexec -l "${_jail}" /usr/sbin/service "${_service}" || exit 1
+            jexec -l "${_jail}" /usr/sbin/service ${_service} || exit 1
         done < "${bastille_template}/SERVICE"
         echo -e "${COLOR_GREEN}[${_jail}]:SERVICE -- END${COLOR_RESET}"
         echo

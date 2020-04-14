@@ -331,13 +331,13 @@ create_jail() {
             ## if 0.0.0.0 set DHCP
             ## else set static address
             if [ "${IP}" == "0.0.0.0" ]; then
-                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="DHCP"
+                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
             else
                 /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
                 if [ -n "${bastille_network_gateway}" ]; then
                     /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="${bastille_network_gateway}"
                 else
-                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(route show default | awk '/gateway/ {print $2}')"
+                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(netstat -rn | awk '/default/ {print $2}')"
                 fi
             fi
 
