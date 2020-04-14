@@ -337,7 +337,7 @@ create_jail() {
                 if [ -n "${bastille_network_gateway}" ]; then
                     /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="${bastille_network_gateway}"
                 else
-                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(route show default | awk '/gateway/ {print $2}')"
+                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(netstat -rn | awk '/default/ {print $2}')"
                 fi
             fi
 
