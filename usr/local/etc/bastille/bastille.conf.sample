@@ -18,7 +18,7 @@ bastille_sharedir=/usr/local/share/bastille                           ## default
 bastille_bootstrap_archives="base"                                    ## default: "base"
 
 ## default timezone
-bastille_tzdata="etc/UTC"                                             ## default: "etc/UTC"
+bastille_tzdata="Etc/UTC"                                             ## default: "Etc/UTC"
 
 ## default jail resolv.conf
 bastille_resolv_conf="/etc/resolv.conf"                               ## default: "/etc/resolv.conf"
