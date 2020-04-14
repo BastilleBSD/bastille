@@ -43,7 +43,7 @@ Usage:
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
-  clone       Clone an existing container. 
+  clone       Clone an existing container.
   cmd         Execute arbitrary command on targeted container(s).
   clone       Clone an existing container.
   console     Console into a running container.
@@ -163,9 +163,9 @@ container at `10.17.89.45`.
 
 Finally, enable and (re)start the firewall:
 
-## dynamic rdr 
+## dynamic rdr
 
-The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the 
+The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
 `bastille rdr` command at runtime - eg.
 
 ```
@@ -176,7 +176,7 @@ The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
 ```
 
   Note that if you are rediirecting ports where the host is also listening
-  (eg. ssh) you should make sure that the host service is not listening on 
+  (eg. ssh) you should make sure that the host service is not listening on
   the cloned interface - eg. for ssh set sshd_flags in rc.conf
 
 ## Enable pf rules
@@ -268,7 +268,7 @@ default this value is set to "base". Additional components are added, space
 separated, without file extension.
 
 Bastille will attempt to fetch the required archives if they are not found in
-the `cache/$RELEASE` directory. 
+the `cache/$RELEASE` directory.
 
 Downloaded artifacts are stored in the `cache/RELEASE` directory. "bootstrapped"
 releases are stored in `releases/RELEASE`.
@@ -782,7 +782,7 @@ root@folsom:~ #
 
 At this point you are logged in to the container and have full shell access.
 The system is yours to use and/or abuse as you like. Any changes made inside
-the container are limited to the container. 
+the container are limited to the container.
 
 
 bastille cp
@@ -808,8 +808,8 @@ bastille rdr
 ------------
 
 `bastille rdr` allows you to configure dynamic rdr rules for your containers
-without modifying pf.conf (assuming you are using the `bastille0` interface 
-for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf 
+without modifying pf.conf (assuming you are using the `bastille0` interface
+for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf
 as described in the Networking section).
 
 ```shell
@@ -907,7 +907,7 @@ Note: On UFS systems containers must be stopped before export.
 ishmael ~ # bastille export folsom
 Exporting 'folsom' to a compressed .xz archive.
 Sending zfs data stream...
-  100 %     1057.2 KiB / 9231.5 KiB = 0.115                   0:01             
+  100 %     1057.2 KiB / 9231.5 KiB = 0.115                   0:01
 Exported '/usr/local/bastille/jails/backups/folsom_2020-01-26-19:23:04.xz' successfully.
 
 ```
@@ -923,7 +923,7 @@ File validation successful!
 Importing 'folsom' from compressed .xz archive.
 Receiving zfs data stream...
 /usr/local/bastille/jails/backups/folsom_2020-01-26-19:22:23.xz (1/1)
-  100 %      626.4 KiB / 9231.5 KiB = 0.068                   0:02             
+  100 %      626.4 KiB / 9231.5 KiB = 0.068                   0:02
 Container 'folsom' imported successfully.
 ```
 
@@ -1020,7 +1020,7 @@ limit the target areas available to anyone that has (or has gained) access.
 Networking Tips
 ===============
 
-Tip #1: 
+Tip #1:
 -------
 Ports and destinations can be defined as lists. eg;
 ```
@@ -1032,7 +1032,7 @@ round-robin between containers with ips 45, 46, 47, and 48 (on ports 80 or
 443).
 
 
-Tip #2: 
+Tip #2:
 -------
 Ports can redirect to other ports. eg;
 ```

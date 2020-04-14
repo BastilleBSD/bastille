@@ -2,7 +2,7 @@
 top
 ===
 
-This one runs `top` in that container. 
+This one runs `top` in that container.
 
 
 .. image:: ../../images/top.png

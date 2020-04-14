@@ -16,7 +16,7 @@ If no updates are available, a message will be shown:
   Fetching metadata index... done.
   Inspecting system... done.
   Preparing to download files... done.
-  
+
   No updates needed to update system to 11.2-RELEASE-p4.
   No updates are available to install.
 
@@ -34,7 +34,7 @@ The older the release, however, the more updates will be available:
   Fetching 2 metadata files... done.
   Inspecting system... done.
   Preparing to download files... done.
-  
+
   The following files will be added as part of updating to 10.4-RELEASE-p13:
   ...[snip]...
 

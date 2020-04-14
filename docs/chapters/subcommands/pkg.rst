@@ -23,7 +23,7 @@ To manage binary packages within the container use `bastille pkg`.
   All repositories are up to date.
   Updating database digests format: 100%
   The following 10 package(s) will be affected (of 0 checked):
-  
+
   New packages to be INSTALLED:
       vim-console: 8.1.0342
       git-lite: 2.19.1
@@ -35,12 +35,12 @@ To manage binary packages within the container use `bastille pkg`.
       pcre: 8.42
       gettext-runtime: 0.19.8.1_1
       indexinfo: 0.3.1
-  
+
   Number of packages to be installed: 10
-  
+
   The process will require 77 MiB more space.
   17 MiB to be downloaded.
-  
+
   Proceed with this action? [y/N]: y
   [folsom] [1/10] Fetching vim-console-8.1.0342.txz: 100%    5 MiB   5.8MB/s    00:01
   [folsom] [2/10] Fetching git-lite-2.19.1.txz: 100%    4 MiB   2.1MB/s    00:02
@@ -77,7 +77,7 @@ To manage binary packages within the container use `bastille pkg`.
   [folsom] [9/10] Extracting git-lite-2.19.1: 100%
   [folsom] [10/10] Installing zsh-5.6.2...
   [folsom] [10/10] Extracting zsh-5.6.2: 100%
-    
+
 
 The PKG sub-command can, of course, do more than just `install`. The
 expectation is that you can fully leverage the pkg manager. This means,
@@ -97,7 +97,7 @@ expectation is that you can fully leverage the pkg manager. This means,
   Processing candidates (1 candidates): 100%
   Checking integrity... done (0 conflicting)
   Your packages are up to date.
-  
+
   [unbound0]:
   Updating pkg.bastillebsd.org repository catalogue...
   [unbound0] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
@@ -109,7 +109,7 @@ expectation is that you can fully leverage the pkg manager. This means,
   Processing candidates (0 candidates): 100%
   Checking integrity... done (0 conflicting)
   Your packages are up to date.
-  
+
   [unbound1]:
   Updating pkg.bastillebsd.org repository catalogue...
   [unbound1] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
@@ -121,7 +121,7 @@ expectation is that you can fully leverage the pkg manager. This means,
   Processing candidates (0 candidates): 100%
   Checking integrity... done (0 conflicting)
   Your packages are up to date.
-  
+
   [squid]:
   Updating pkg.bastillebsd.org repository catalogue...
   [squid] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
@@ -133,7 +133,7 @@ expectation is that you can fully leverage the pkg manager. This means,
   Processing candidates (0 candidates): 100%
   Checking integrity... done (0 conflicting)
   Your packages are up to date.
-  
+
   [nginx]:
   Updating pkg.bastillebsd.org repository catalogue...
   [nginx] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
@@ -144,14 +144,14 @@ expectation is that you can fully leverage the pkg manager. This means,
   Checking for upgrades (1 candidates): 100%
   Processing candidates (1 candidates): 100%
   The following 1 package(s) will be affected (of 0 checked):
-  
+
   Installed packages to be UPGRADED:
       nginx-lite: 1.14.0_14,2 -> 1.14.1,2
-  
+
   Number of packages to be upgraded: 1
-  
+
   315 KiB to be downloaded.
-  
+
   Proceed with this action? [y/N]: y
   [nginx] [1/1] Fetching nginx-lite-1.14.1,2.txz: 100%  315 KiB 322.8kB/s    00:01
   Checking integrity... done (0 conflicting)
