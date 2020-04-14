@@ -355,7 +355,7 @@ create_jail() {
         cp -L "${bastille_resolv_conf}" "${bastille_jail_resolv_conf}"
     fi
 
-    ## TZ: configurable (default: etc/UTC)
+    ## TZ: configurable (default: Etc/UTC)
     ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
 }
 
