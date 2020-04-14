@@ -6,10 +6,10 @@ Usage
     ishmael ~ # bastille -h
     Bastille is an open-source system for automating deployment and management of
     containerized applications on FreeBSD.
-    
+
     Usage:
       bastille command [ALL|glob] [args]
-    
+
     Available Commands:
       bootstrap   Bootstrap a FreeBSD release for container base.
       cmd         Execute arbitrary command on targeted container(s).
@@ -32,6 +32,6 @@ Usage
       upgrade     Upgrade container release to X.Y-RELEASE.
       verify      Compare release against a "known good" index.
       zfs         Manage (get|set) zfs attributes on targeted container(s).
-    
+
     Use "bastille -v|--version" for version information.
     Use "bastille command -h|--help" for more information about a command.

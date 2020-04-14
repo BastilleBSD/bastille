@@ -13,7 +13,7 @@ bootstrapped release and a private (rfc1918) IP address.
 .. code-block:: shell
 
   ishmael ~ # bastille create folsom 11.3-RELEASE 10.17.89.10 [interface]
-  
+
   RELEASE: 11.3-RELEASE.
   NAME: folsom.
   IP: 10.17.89.10.

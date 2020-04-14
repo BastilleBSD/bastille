@@ -95,20 +95,20 @@ Create the firewall rules:
 .. code-block:: shell
 
   ext_if="vtnet0"
-  
+
   set block-policy return
   scrub in on $ext_if all fragment reassemble
   set skip on lo
 
   table <jails> persist
   nat on $ext_if from <jails> to any -> ($ext_if)
-  
+
   ## static rdr example
   ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
 
   ## dynamic rdr anchor (see below)
   rdr-anchor "rdr/*"
-  
+
   block in all
   pass out quick modulate state
   antispoof for $ext_if inet
@@ -127,7 +127,7 @@ to containers are:
 .. code-block:: shell
 
   nat on $ext_if from <jails> to any -> ($ext_if)
-  
+
   ## static rdr example
   ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
 
@@ -141,7 +141,7 @@ containers at `10.17.89.45`.
   ## dynamic rdr anchor (see below)
   rdr-anchor "rdr/*"
 
-The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the 
+The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
 `bastille rdr` command at runtime - eg.
 
   bastille rdr <jail> tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
@@ -150,7 +150,7 @@ The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
   bastille rdr <jail> clear       # Clear dynamic rdr rules
 
   Note that if you are redirecting ports where the host is also listening
-  (eg. ssh) you should make sure that the host service is not listening on 
+  (eg. ssh) you should make sure that the host service is not listening on
   the cloned interface - eg. for ssh set sshd_flags in rc.conf
 
   sshd_flags="-o ListenAddress=<hostname>"

@@ -115,7 +115,7 @@ directory names in the `bastille/templates` directory.
   Executing final command(s).
   chsh: user information updated
   Template Complete.
-  
+
   [web01]:
   Copying files...
   Copy complete.
@@ -143,4 +143,3 @@ directory names in the `bastille/templates` directory.
   Executing final command(s).
   chsh: user information updated
   Template Complete.
-

@@ -45,7 +45,7 @@ devfs_ruleset
     effective and enforce_statfs is set to a value lower than 2.
     Devfs rules and rulesets cannot be viewed or modified from inside
     a jail.
-   
+
     NOTE: It is important that only appropriate device nodes in devfs
     be exposed to a jail; access to disk devices in the jail may
     permit processes in the jail to bypass the jail sandboxing by
@@ -178,13 +178,13 @@ cases.
   The kernel runs with five different security levels.  Any super-user
   process can raise the level, but no process can lower it.  The security
   levels are:
-   
+
   -1    Permanently insecure mode - always run the system in insecure mode.
         This is the default initial value.
-   
+
   0     Insecure mode - immutable and append-only flags may be turned off.
         All devices may be read or written subject to their permissions.
-   
+
   1     Secure mode - the system immutable and system append-only flags may
         not be turned off; disks for mounted file systems, /dev/mem and
         /dev/kmem may not be opened for writing; /dev/io (if your platform
@@ -192,18 +192,17 @@ cases.
         not be loaded or unloaded.  The kernel debugger may not be entered
         using the debug.kdb.enter sysctl.  A panic or trap cannot be forced
         using the debug.kdb.panic and other sysctl's.
-   
+
   2     Highly secure mode - same as secure mode, plus disks may not be
         opened for writing (except by mount(2)) whether mounted or not.
         This level precludes tampering with file systems by unmounting
         them, but also inhibits running newfs(8) while the system is multi-
         user.
-   
+
         In addition, kernel time changes are restricted to less than or
         equal to one second.  Attempts to change the time by more than this
         will log the message "Time adjustment clamped to +1 second".
-   
+
   3     Network secure mode - same as highly secure mode, plus IP packet
         filter rules (see ipfw(8), ipfirewall(4) and pfctl(8)) cannot be
         changed and dummynet(4) or pf(4) configuration cannot be adjusted.
-

@@ -25,7 +25,7 @@ To `bootstrap` a release, run the bootstrap sub-command with the
 release version as the argument.
 
 .. code-block:: shell
-    
+
   ishmael ~ # bastille bootstrap 11.3-RELEASE [update]
   ishmael ~ # bastille bootstrap 12.0-RELEASE
   ishmael ~ # bastille bootstrap 12.1-RELEASE
