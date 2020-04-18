@@ -104,6 +104,17 @@ validate_release() {
     fi
 }
 
+generate_minimal_conf() {
+    cat << EOF > "${bastille_jail_conf}"
+${NAME} {
+  host.hostname = ${NAME};
+  mount.fstab = ${bastille_jail_fstab};
+  path = ${bastille_jail_path};
+}
+EOF
+    touch "${bastille_jail_fstab}"
+}
+
 generate_jail_conf() {
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
@@ -187,81 +198,123 @@ create_jail() {
                 fi
             fi
         else
-            mkdir -p "${bastille_jailsdir}/${NAME}"
+            mkdir -p "${bastille_jailsdir}/${NAME}/root"
         fi
     fi
 
-    if [ ! -d "${bastille_jail_base}" ]; then
-        mkdir -p "${bastille_jail_base}"
-    fi
+    if [ -z "${EMPTY_JAIL}" ]; then
+        if [ ! -d "${bastille_jail_base}" ]; then
+            mkdir -p "${bastille_jail_base}"
+        fi
 
-    if [ ! -d "${bastille_jail_path}/usr/home" ]; then
-        mkdir -p "${bastille_jail_path}/usr/home"
-    fi
+        if [ ! -d "${bastille_jail_path}/usr/home" ]; then
+            mkdir -p "${bastille_jail_path}/usr/home"
+        fi
 
-    if [ ! -d "${bastille_jail_path}/usr/local" ]; then
-        mkdir -p "${bastille_jail_path}/usr/local"
-    fi
+        if [ ! -d "${bastille_jail_path}/usr/local" ]; then
+            mkdir -p "${bastille_jail_path}/usr/local"
+        fi
 
-    if [ ! -d "${bastille_jail_template}" ]; then
-        mkdir -p "${bastille_jail_template}"
-    fi
+        if [ ! -d "${bastille_jail_template}" ]; then
+            mkdir -p "${bastille_jail_template}"
+        fi
 
-    if [ ! -f "${bastille_jail_fstab}" ]; then
+        if [ ! -f "${bastille_jail_fstab}" ]; then
+            if [ -z "${THICK_JAIL}" ]; then
+                echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
+            else
+                touch "${bastille_jail_fstab}"
+            fi
+        fi
+
+        if [ ! -f "${bastille_jail_conf}" ]; then
+            if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_shared}
+            fi
+            if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_loopback}
+            fi
+            if [ -n "${INTERFACE}" ]; then
+                local bastille_jail_conf_interface=${INTERFACE}
+            fi
+
+            ## generate the jail configuration file
+            if [ -n "${VNET_JAIL}" ]; then
+                generate_vnet_jail_conf
+            else
+                generate_jail_conf
+            fi
+        fi
+
+        ## using relative paths here
+        ## MAKE SURE WE'RE IN THE RIGHT PLACE
+        cd "${bastille_jail_path}"
+        echo
+        echo -e "${COLOR_GREEN}NAME: ${NAME}.${COLOR_RESET}"
+        echo -e "${COLOR_GREEN}IP: ${IP}.${COLOR_RESET}"
+        if [ -n  "${INTERFACE}" ]; then
+            echo -e "${COLOR_GREEN}INTERFACE: ${INTERFACE}.${COLOR_RESET}"
+        fi
+        echo -e "${COLOR_GREEN}RELEASE: ${RELEASE}.${COLOR_RESET}"
+        echo
+
         if [ -z "${THICK_JAIL}" ]; then
-            echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
+            for _link in bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src; do
+                ln -sf /.bastille/${_link} ${_link}
+            done
+        fi
+
+        ## link home properly
+        ln -s usr/home home
+
+        if [ -z "${THICK_JAIL}" ]; then
+            ## rw
+            ## copy only required files for thin jails
+            FILE_LIST=".cshrc .profile COPYRIGHT dev etc media mnt net proc root tmp var usr/obj usr/tests"
+            for files in ${FILE_LIST}; do
+                if [ -f "${bastille_releasesdir}/${RELEASE}/${files}" ] || [ -d "${bastille_releasesdir}/${RELEASE}/${files}" ]; then
+                    cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"
+                    if [ "$?" -ne 0 ]; then
+                        ## notify and clean stale files/directories
+                        echo -e "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
+                        bastille destroy "${NAME}"
+                        exit 1
+                    fi
+                fi
+            done
         else
-            touch "${bastille_jail_fstab}"
-        fi
-    fi
+            echo -e "${COLOR_GREEN}Creating a thickjail, this may take a while...${COLOR_RESET}"
+            if [ "${bastille_zfs_enable}" = "YES" ]; then
+                if [ -n "${bastille_zfs_zpool}" ]; then
+                    ## perform release base replication
 
-    if [ ! -f "${bastille_jail_conf}" ]; then
-        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_shared}
-        fi
-        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_loopback}
-        fi
-        if [ -n "${INTERFACE}" ]; then
-            local bastille_jail_conf_interface=${INTERFACE}
-        fi
+                    ## sane bastille zfs options
+                    ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
 
-        ## generate the jail configuration file
-        if [ -n "${VNET_JAIL}" ]; then
-            generate_vnet_jail_conf
-        else
-            generate_jail_conf
-        fi
-    fi
+                    ## take a temp snapshot of the base release
+                    SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
+                    zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
-    ## using relative paths here
-    ## MAKE SURE WE'RE IN THE RIGHT PLACE
-    cd "${bastille_jail_path}"
-    echo
-    echo -e "${COLOR_GREEN}NAME: ${NAME}.${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}IP: ${IP}.${COLOR_RESET}"
-    if [ -n  "${INTERFACE}" ]; then
-        echo -e "${COLOR_GREEN}INTERFACE: ${INTERFACE}.${COLOR_RESET}"
-    fi
-    echo -e "${COLOR_GREEN}RELEASE: ${RELEASE}.${COLOR_RESET}"
-    echo
+                    ## replicate the release base to the new thickjail and set the default mountpoint
+                    zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
+                    zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                    zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                    zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
-    if [ -z "${THICK_JAIL}" ]; then
-        for _link in bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src; do
-            ln -sf /.bastille/${_link} ${_link}
-        done
-    fi
+                    ## cleanup temp snapshots initially
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
 
-    ## link home properly
-    ln -s usr/home home
-
-    if [ -z "${THICK_JAIL}" ]; then
-        ## rw
-        ## copy only required files for thin jails
-        FILE_LIST=".cshrc .profile COPYRIGHT dev etc media mnt net proc root tmp var usr/obj usr/tests"
-        for files in ${FILE_LIST}; do
-            if [ -f "${bastille_releasesdir}/${RELEASE}/${files}" ] || [ -d "${bastille_releasesdir}/${RELEASE}/${files}" ]; then
-                cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"
+                    if [ "$?" -ne 0 ]; then
+                        ## notify and clean stale files/directories
+                        echo -e "${COLOR_RED}Failed release base replication, please retry create!${COLOR_RESET}"
+                        bastille destroy "${NAME}"
+                        exit 1
+                    fi
+                fi
+            else
+                ## copy all files for thick jails
+                cp -a "${bastille_releasesdir}/${RELEASE}/" "${bastille_jail_path}"
                 if [ "$?" -ne 0 ]; then
                     ## notify and clean stale files/directories
                     echo -e "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
@@ -269,94 +322,57 @@ create_jail() {
                     exit 1
                 fi
             fi
-        done
-    else
-        echo -e "${COLOR_GREEN}Creating a thickjail, this may take a while...${COLOR_RESET}"
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                ## perform release base replication
-
-                ## sane bastille zfs options
-                ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
-
-                ## take a temp snapshot of the base release
-                SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
-                zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-
-                ## replicate the release base to the new thickjail and set the default mountpoint
-                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
-                zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-
-                ## cleanup temp snapshots initially
-                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
-
-                if [ "$?" -ne 0 ]; then
-                    ## notify and clean stale files/directories
-                    echo -e "${COLOR_RED}Failed release base replication, please retry create!${COLOR_RESET}"
-                    bastille destroy "${NAME}"
-                    exit 1
-                fi
-            fi
-        else
-            ## copy all files for thick jails
-            cp -a "${bastille_releasesdir}/${RELEASE}/" "${bastille_jail_path}"
-            if [ "$?" -ne 0 ]; then
-                ## notify and clean stale files/directories
-                echo -e "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
-                bastille destroy "${NAME}"
-                exit 1
-            fi
         fi
-    fi
 
-    ## rc.conf
-    ##  + syslogd_flags="-ss"
-    ##  + sendmail_none="NONE"
-    ##  + cron_flags="-J 60" ## cedwards 20181118
-    if [ ! -f "${bastille_jail_rc_conf}" ]; then
-        touch "${bastille_jail_rc_conf}"
-        sysrc -f "${bastille_jail_rc_conf}" syslogd_flags=-ss
-        sysrc -f "${bastille_jail_rc_conf}" sendmail_enable=NONE
-        sysrc -f "${bastille_jail_rc_conf}" cron_flags='-J 60'
+        ## rc.conf
+        ##  + syslogd_flags="-ss"
+        ##  + sendmail_none="NONE"
+        ##  + cron_flags="-J 60" ## cedwards 20181118
+        if [ ! -f "${bastille_jail_rc_conf}" ]; then
+            touch "${bastille_jail_rc_conf}"
+            sysrc -f "${bastille_jail_rc_conf}" syslogd_flags=-ss
+            sysrc -f "${bastille_jail_rc_conf}" sendmail_enable=NONE
+            sysrc -f "${bastille_jail_rc_conf}" cron_flags='-J 60'
 
-        ## VNET specific
-        if [ -n "${VNET_JAIL}" ]; then
-            ## rename interface to generic vnet0
-            uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
-            /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" "ifconfig_${uniq_epair}_name"=vnet0
+            ## VNET specific
+            if [ -n "${VNET_JAIL}" ]; then
+                ## rename interface to generic vnet0
+                uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
+                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" "ifconfig_${uniq_epair}_name"=vnet0
 
-            ## if 0.0.0.0 set DHCP
-            ## else set static address
-            if [ "${IP}" == "0.0.0.0" ]; then
-                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
-            else
-                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
-                if [ -n "${bastille_network_gateway}" ]; then
-                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="${bastille_network_gateway}"
+                ## if 0.0.0.0 set DHCP
+                ## else set static address
+                if [ "${IP}" == "0.0.0.0" ]; then
+                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
                 else
-                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(netstat -rn | awk '/default/ {print $2}')"
+                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                    if [ -n "${bastille_network_gateway}" ]; then
+                        /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="${bastille_network_gateway}"
+                    else
+                        /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(netstat -rn | awk '/default/ {print $2}')"
+                    fi
                 fi
-            fi
 
-            ## VNET requires jib script
-            if [ ! "$(command -v jib)" ]; then
-                if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
-                    install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+                ## VNET requires jib script
+                if [ ! "$(command -v jib)" ]; then
+                    if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+                        install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+                    fi
                 fi
             fi
         fi
-    fi
 
-    ## resolv.conf (default: copy from host)
-    if [ ! -f "${bastille_jail_resolv_conf}" ]; then
-        cp -L "${bastille_resolv_conf}" "${bastille_jail_resolv_conf}"
-    fi
+        ## resolv.conf (default: copy from host)
+        if [ ! -f "${bastille_jail_resolv_conf}" ]; then
+            cp -L "${bastille_resolv_conf}" "${bastille_jail_resolv_conf}"
+        fi
 
-    ## TZ: configurable (default: Etc/UTC)
-    ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+        ## TZ: configurable (default: Etc/UTC)
+        ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+    else
+        ## Generate minimal configuration for empty jail
+        generate_minimal_conf
+    fi
 }
 
 # Handle special-case commands first.
@@ -372,6 +388,7 @@ if echo "$3" | grep '@'; then
 fi
 
 ## reset this options
+EMPTY_JAIL=""
 THICK_JAIL=""
 VNET_JAIL=""
 
@@ -384,6 +401,10 @@ if [ "${1}" = "-T" -o "${1}" = "--thick" -o "${1}" = "thick" ] && \
 else
     ## handle single options
     case "${1}" in
+        -E|--empty|empty)
+            shift
+            EMPTY_JAIL="1"
+            ;;
         -T|--thick|thick)
             shift
             THICK_JAIL="1"
@@ -404,8 +425,14 @@ RELEASE="$2"
 IP="$3"
 INTERFACE="$4"
 
-if [ $# -gt 4 ] || [ $# -lt 3 ]; then
-    usage
+if [ -n "${EMPTY_JAIL}" ]; then
+    if [ $# -ne 1 ]; then
+        usage
+    fi
+else
+    if [ $# -gt 4 ] || [ $# -lt 3 ]; then
+        usage
+    fi
 fi
 
 ## don't allow for dots(.) in container names
@@ -414,74 +441,78 @@ if echo "${NAME}" | grep -q "[.]"; then
     exit 1
 fi
 
-## verify release
-case "${RELEASE}" in
-*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
-    ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
-    validate_release
-    ;;
-*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-    ## check for HardenedBSD releases name(previous infrastructure)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-    validate_release
-    ;;
-*-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
-    ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-    validate_release
-    ;;
-*-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
-    ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-    validate_release
-    ;;
-current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
-    ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
-    validate_release
-    ;;
-current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
-    ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-    validate_release
-    ;;
-*)
-    echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"
-    usage
-    ;;
-esac
+if [ -z "${EMPTY_JAIL}" ]; then
+    ## verify release
+    case "${RELEASE}" in
+    *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+        validate_release
+        ;;
+    *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+        ## check for HardenedBSD releases name(previous infrastructure)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+        validate_release
+        ;;
+    *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
+        ## check for HardenedBSD(specific stable build releases)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+        validate_release
+        ;;
+    *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
+        ## check for HardenedBSD(latest stable build release)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+        validate_release
+        ;;
+    current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
+        ## check for HardenedBSD(specific current build releases)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+        validate_release
+        ;;
+    current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
+        ## check for HardenedBSD(latest current build release)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+        validate_release
+        ;;
+    *)
+        echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"
+        usage
+        ;;
+    esac
 
-## check for name/root/.bastille
-if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
-    echo -e "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
-    exit 1
-fi
+    ## check for name/root/.bastille
+    if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
+        echo -e "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
+        exit 1
+    fi
 
-## check for required release
-if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
-    echo -e "${COLOR_RED}Release must be bootstrapped first; see 'bastille bootstrap'.${COLOR_RESET}"
-    exit 1
+    ## check for required release
+    if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+        echo -e "${COLOR_RED}Release must be bootstrapped first; see 'bastille bootstrap'.${COLOR_RESET}"
+        exit 1
+    fi
+
+    ## check if ip address is valid
+    if [ -n "${IP}" ]; then
+        validate_ip
+    else
+        usage
+    fi
+
+    ## check if interface is valid
+    if [ -n  "${INTERFACE}" ]; then
+        validate_netif
+        validate_netconf
+    else
+        validate_netconf
+    fi
+else
+    echo -e "${COLOR_GREEN}Creating empty jail: ${NAME}.${COLOR_RESET}"
 fi
 
 ## check if a running jail matches name or already exist
 if [ -n "${NAME}" ]; then
     running_jail
-fi
-
-## check if ip address is valid
-if [ -n "${IP}" ]; then
-    validate_ip
-else
-    usage
-fi
-
-## check if interface is valid
-if [ -n  "${INTERFACE}" ]; then
-    validate_netif
-    validate_netconf
-else
-    validate_netconf
 fi
 
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"
