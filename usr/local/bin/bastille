@@ -64,9 +64,6 @@ bastille_perms_check() {
 
 bastille_perms_check
 
-## we only load the config if root_check passes
-. /usr/local/etc/bastille/bastille.conf
-
 ## version
 BASTILLE_VERSION="0.6.20200414"
 
