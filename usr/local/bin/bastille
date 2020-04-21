@@ -45,7 +45,17 @@ bastille_root_check() {
 
 bastille_root_check
 
-## we only load the config if root_check passes
+## check for config existance
+bastille_conf_check() {
+    if [ ! -r /usr/local/etc/bastille/bastille.conf ]; then
+        echo -e "${COLOR_RED}Missing Configuration${COLOR_RESET}" 1>&2
+        exit 1
+    fi
+}
+
+bastille_conf_check
+
+## we only load the config if conf_check passes
 . /usr/local/etc/bastille/bastille.conf
 
 ## bastille_prefix should be 0750
