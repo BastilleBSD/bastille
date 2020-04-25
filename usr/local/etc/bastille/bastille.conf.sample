@@ -3,16 +3,16 @@
 #####################
 
 ## default paths
-bastille_prefix=/usr/local/bastille                                   ## default: "/usr/local/bastille"
-bastille_backupsdir=${bastille_prefix}/backups                        ## default: ${bastille_prefix}/backups
-bastille_cachedir=${bastille_prefix}/cache                            ## default: ${bastille_prefix}/cache
-bastille_jailsdir=${bastille_prefix}/jails                            ## default: ${bastille_prefix}/jails
-bastille_logsdir=${bastille_prefix}/logs                              ## default: ${bastille_prefix}/logs
-bastille_releasesdir=${bastille_prefix}/releases                      ## default: ${bastille_prefix}/releases
-bastille_templatesdir=${bastille_prefix}/templates                    ## default: ${bastille_prefix}/templates
+bastille_prefix="/usr/local/bastille"                                 ## default: "/usr/local/bastille"
+bastille_backupsdir="${bastille_prefix}/backups"                      ## default: ${bastille_prefix}/backups
+bastille_cachedir="${bastille_prefix}/cache"                          ## default: ${bastille_prefix}/cache
+bastille_jailsdir="${bastille_prefix}/jails"                          ## default: ${bastille_prefix}/jails
+bastille_logsdir="${bastille_prefix}/logs"                            ## default: ${bastille_prefix}/logs
+bastille_releasesdir="${bastille_prefix}/releases"                    ## default: ${bastille_prefix}/releases
+bastille_templatesdir="${bastille_prefix}/templates"                  ## default: ${bastille_prefix}/templates
 
 ## bastille scripts directory (assumed by bastille pkg)
-bastille_sharedir=/usr/local/share/bastille                           ## default: "/usr/local/share/bastille"
+bastille_sharedir="/usr/local/share/bastille"                         ## default: "/usr/local/share/bastille"
 
 ## bootstrap archives (base, lib32, ports, src, test)
 bastille_bootstrap_archives="base"                                    ## default: "base"

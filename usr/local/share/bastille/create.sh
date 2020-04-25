@@ -325,14 +325,20 @@ create_jail() {
         fi
 
         ## rc.conf
-        ##  + syslogd_flags="-ss"
-        ##  + sendmail_none="NONE"
-        ##  + cron_flags="-J 60" ## cedwards 20181118
+        ## + syslogd_flags="-ss"
+        ## + sendmail_enable="NO"
+        ## + sendmail_submit_enable="NO"
+        ## + sendmail_outbound_enable="NO"
+        ## + sendmail_msp_queue_enable="NO"
+        ## + cron_flags="-J 60" ## cedwards 20181118
         if [ ! -f "${bastille_jail_rc_conf}" ]; then
             touch "${bastille_jail_rc_conf}"
-            sysrc -f "${bastille_jail_rc_conf}" syslogd_flags=-ss
-            sysrc -f "${bastille_jail_rc_conf}" sendmail_enable=NONE
-            sysrc -f "${bastille_jail_rc_conf}" cron_flags='-J 60'
+            sysrc -f "${bastille_jail_rc_conf}" syslogd_flags="-ss"
+            sysrc -f "${bastille_jail_rc_conf}" sendmail_enable="NO"
+            sysrc -f "${bastille_jail_rc_conf}" sendmail_submit_enable="NO"
+            sysrc -f "${bastille_jail_rc_conf}" sendmail_outbound_enable="NO"
+            sysrc -f "${bastille_jail_rc_conf}" sendmail_msp_queue_enable="NO"
+            sysrc -f "${bastille_jail_rc_conf}" cron_flags="-J 60"
 
             ## VNET specific
             if [ -n "${VNET_JAIL}" ]; then
