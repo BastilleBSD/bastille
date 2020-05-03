@@ -14,7 +14,14 @@ bastille_templatesdir="${bastille_prefix}/templates"                  ## default
 ## bastille scripts directory (assumed by bastille pkg)
 bastille_sharedir="/usr/local/share/bastille"                         ## default: "/usr/local/share/bastille"
 
-## bootstrap archives (base, lib32, ports, src, test)
+## bootstrap archives, which components of the OS to install.
+## base  - The base OS, kernel + userland
+## lib32 - Libraries for comptibility with 32 bit binaries
+## ports - The FreeBSD ports (3rd party applications) tree
+## src   - The source code to the kernel + userland
+## test  - The FreeBSD test suite
+## this is a whitespace separated list:
+## bastille_bootstrap_archives="base lib32 ports src test"
 bastille_bootstrap_archives="base"                                    ## default: "base"
 
 ## default timezone
