@@ -207,10 +207,6 @@ create_jail() {
             mkdir -p "${bastille_jail_base}"
         fi
 
-        if [ ! -d "${bastille_jail_path}/usr/home" ]; then
-            mkdir -p "${bastille_jail_path}/usr/home"
-        fi
-
         if [ ! -d "${bastille_jail_path}/usr/local" ]; then
             mkdir -p "${bastille_jail_path}/usr/local"
         fi
@@ -259,13 +255,11 @@ create_jail() {
         echo
 
         if [ -z "${THICK_JAIL}" ]; then
-            for _link in bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src; do
+            LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
+            for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
         fi
-
-        ## link home properly
-        ln -s usr/home home
 
         if [ -z "${THICK_JAIL}" ]; then
             ## rw
@@ -322,6 +316,15 @@ create_jail() {
                     exit 1
                 fi
             fi
+        fi
+
+        ## create home directory if missing
+        if [ ! -d "${bastille_jail_path}/usr/home" ]; then
+            mkdir -p "${bastille_jail_path}/usr/home"
+        fi
+        ## link home properly
+        if [ ! -L "home" ]; then
+            ln -s usr/home home
         fi
 
         ## rc.conf
