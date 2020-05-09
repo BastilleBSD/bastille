@@ -445,8 +445,8 @@ else
 fi
 
 ## don't allow for dots(.) in container names
-if echo "${NAME}" | grep -q "[.]"; then
-    echo -e "${COLOR_RED}Container names may not contain a dot(.)!${COLOR_RESET}"
+if echo "${NAME}" | grep -Eq '[.]|\ '; then
+    echo -e "${COLOR_RED}Container names may not contain a dot(.) nor spaces!${COLOR_RESET}"
     exit 1
 fi
 

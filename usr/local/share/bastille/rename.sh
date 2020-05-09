@@ -57,8 +57,8 @@ TARGET="${1}"
 NEWNAME="${2}"
 shift
 
-if echo "${NEWNAME}" | grep -q "[.]"; then
-    echo -e "${COLOR_RED}Container names may not contain a dot(.)!${COLOR_RESET}"
+if echo "${NEWNAME}" | grep -Eq '[.]|\ '; then
+    echo -e "${COLOR_RED}Container names may not contain a dot(.) nor spaces!${COLOR_RESET}"
     exit 1
 fi
 
@@ -125,9 +125,11 @@ change_name() {
     fi
 }
 
-# Check if container is running
-if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-    error_notify "${COLOR_RED}${TARGET} is running, See 'bastille stop'.${COLOR_RESET}"
+## check if a running jail matches name or already exist
+if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
+    error_notify "${COLOR_RED}Warning: ${TARGET} is running or the name does match.${COLOR_RESET}"
+elif [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
+    error_notify "${COLOR_RED}Jail: ${NEWNAME} already exist.${COLOR_RESET}"
 fi
 
 change_name
