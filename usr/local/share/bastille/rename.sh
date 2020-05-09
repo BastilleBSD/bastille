@@ -43,7 +43,7 @@ error_notify() {
 }
 
 validate_name() {
-    local NAME_VERIFY=${NAME}
+    local NAME_VERIFY=${NEWNAME}
     local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
     if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_notify "${COLOR_RED}Container names may not contain special characters!${COLOR_RESET}"
@@ -64,11 +64,6 @@ fi
 TARGET="${1}"
 NEWNAME="${2}"
 shift
-
-if echo "${NEWNAME}" | grep -Eq '[.]|\ '; then
-    echo -e "${COLOR_RED}Container names may not contain a dot(.) nor spaces!${COLOR_RESET}"
-    exit 1
-fi
 
 update_jailconf() {
     # Update jail.conf
@@ -141,7 +136,7 @@ elif [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
 fi
 
 ## validate jail name
-if [ -n "${NAME}" ]; then
+if [ -n "${NEWNAME}" ]; then
     validate_name
 fi
 
