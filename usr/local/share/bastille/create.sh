@@ -36,13 +36,25 @@ usage() {
     exit 1
 }
 
+error_notify() {
+    # Notify message on error and exit
+    echo -e "$*" >&2
+    exit 1
+}
+
 running_jail() {
     if [ -n "$(jls name | awk "/^${NAME}$/")" ]; then
-        echo -e "${COLOR_RED}A running jail matches name.${COLOR_RESET}"
-        exit 1
+        error_notify "${COLOR_RED}A running jail matches name.${COLOR_RESET}"
     elif [ -d "${bastille_jailsdir}/${NAME}" ]; then
-        echo -e "${COLOR_RED}Jail: ${NAME} already created.${COLOR_RESET}"
-        exit 1
+        error_notify "${COLOR_RED}Jail: ${NAME} already created.${COLOR_RESET}"
+    fi
+}
+
+validate_name() {
+    local NAME_VERIFY=${NAME}
+    local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
+    if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+        error_notify "${COLOR_RED}Container names may not contain special characters!${COLOR_RESET}"
     fi
 }
 
@@ -72,8 +84,7 @@ validate_ip() {
                 echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
             fi
         else
-            echo -e "${COLOR_RED}Invalid: (${IP}).${COLOR_RESET}"
-            exit 1
+            error_notify "${COLOR_RED}Invalid: (${IP}).${COLOR_RESET}"
         fi
     fi
 }
@@ -83,15 +94,13 @@ validate_netif() {
     if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         echo -e "${COLOR_GREEN}Valid: (${INTERFACE}).${COLOR_RESET}"
     else
-        echo -e "${COLOR_RED}Invalid: (${INTERFACE}).${COLOR_RESET}"
-        exit 1
+        error_notify "${COLOR_RED}Invalid: (${INTERFACE}).${COLOR_RESET}"
     fi
 }
 
 validate_netconf() {
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        echo -e "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
-        exit 1
+        error_notify "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
     fi
 }
 
@@ -270,9 +279,8 @@ create_jail() {
                     cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
-                        echo -e "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
                         bastille destroy "${NAME}"
-                        exit 1
+                        error_notify "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
                     fi
                 fi
             done
@@ -301,9 +309,8 @@ create_jail() {
 
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
-                        echo -e "${COLOR_RED}Failed release base replication, please retry create!${COLOR_RESET}"
                         bastille destroy "${NAME}"
-                        exit 1
+                        error_notify "${COLOR_RED}Failed release base replication, please retry create!${COLOR_RESET}"
                     fi
                 fi
             else
@@ -311,9 +318,8 @@ create_jail() {
                 cp -a "${bastille_releasesdir}/${RELEASE}/" "${bastille_jail_path}"
                 if [ "$?" -ne 0 ]; then
                     ## notify and clean stale files/directories
-                    echo -e "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
                     bastille destroy "${NAME}"
-                    exit 1
+                    error_notify "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
                 fi
             fi
         fi
@@ -444,10 +450,9 @@ else
     fi
 fi
 
-## don't allow for dots(.) in container names
-if echo "${NAME}" | grep -Eq '[.]|\ '; then
-    echo -e "${COLOR_RED}Container names may not contain a dot(.) nor spaces!${COLOR_RESET}"
-    exit 1
+## validate jail name
+if [ -n "${NAME}" ]; then
+    validate_name
 fi
 
 if [ -z "${EMPTY_JAIL}" ]; then
@@ -491,14 +496,12 @@ if [ -z "${EMPTY_JAIL}" ]; then
 
     ## check for name/root/.bastille
     if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
-        echo -e "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
-        exit 1
+        error_notify "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
     fi
 
     ## check for required release
     if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
-        echo -e "${COLOR_RED}Release must be bootstrapped first; see 'bastille bootstrap'.${COLOR_RESET}"
-        exit 1
+        error_notify "${COLOR_RED}Release must be bootstrapped first; see 'bastille bootstrap'.${COLOR_RESET}"
     fi
 
     ## check if ip address is valid

@@ -42,6 +42,14 @@ error_notify() {
     exit 1
 }
 
+validate_name() {
+    local NAME_VERIFY=${NAME}
+    local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
+    if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+        error_notify "${COLOR_RED}Container names may not contain special characters!${COLOR_RESET}"
+    fi
+}
+
 # Handle special-case commands first
 case "$1" in
 help|-h|--help)
@@ -130,6 +138,11 @@ if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
     error_notify "${COLOR_RED}Warning: ${TARGET} is running or the name does match.${COLOR_RESET}"
 elif [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
     error_notify "${COLOR_RED}Jail: ${NEWNAME} already exist.${COLOR_RESET}"
+fi
+
+## validate jail name
+if [ -n "${NAME}" ]; then
+    validate_name
 fi
 
 change_name
