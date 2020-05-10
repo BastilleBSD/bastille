@@ -102,9 +102,16 @@ change_name() {
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 # Rename ZFS dataset and mount points accordingly
-                zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
-                if [ "$?" -ne 0 ]; then
-                    error_notify "${COLOR_RED}Error: Can't rename zfs dataset.${COLOR_RESET}"
+                if zfs list | grep -qw "${bastille_zfs_prefix}/jails/${TARGET}$"; then
+                    zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+                    if [ "$?" -ne 0 ]; then
+                        error_notify "${COLOR_RED}Error: Can't rename zfs dataset.${COLOR_RESET}"
+                    fi
+                else
+                    # Just rename the jail directory
+                    if ! zfs list | grep -qw "jails/${TARGET}$"; then
+                        mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+                    fi
                 fi
             fi
         else
