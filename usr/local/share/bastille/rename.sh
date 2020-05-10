@@ -103,11 +103,21 @@ change_name() {
             if [ -n "${bastille_zfs_zpool}" ]; then
                 # Rename ZFS dataset and mount points accordingly
                 zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
-                zfs set mountpoint="${bastille_jailsdir}/${NEWNAME}/root" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root"
             fi
         else
-            # Just rename the jail directory
-            mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            # Try to get the zfs origin path before rename dataset
+            if zfs list | grep -qw "${bastille_zfs_prefix}/jails/${TARGET}$"; then
+                ZFS_DATASET_ORIGIN=$(zfs list | grep -w "${bastille_zfs_prefix}/jails/${TARGET}$" | awk '{print $1}')
+                ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
+                if [ -n "${ZFS_DATASET_ORIGIN}" ]; then
+                    zfs rename "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"
+                else
+                    error_notify "${COLOR_RED}Can't determine the zfs origin path of '${TARGET}'.${COLOR_RESET}"
+                fi
+            else
+                # Just rename the jail directory
+                mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            fi
         fi
     else
         error_notify "${COLOR_RED}${TARGET} not found. See bootstrap.${COLOR_RESET}"
