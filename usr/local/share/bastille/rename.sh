@@ -103,6 +103,9 @@ change_name() {
             if [ -n "${bastille_zfs_zpool}" ]; then
                 # Rename ZFS dataset and mount points accordingly
                 zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+                if [ "$?" -ne 0 ]; then
+                    error_notify "${COLOR_RED}Error: Can't rename zfs dataset.${COLOR_RESET}"
+                fi
             fi
         else
             # Try to get the zfs origin path before rename dataset
@@ -111,6 +114,9 @@ change_name() {
                 ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
                 if [ -n "${ZFS_DATASET_ORIGIN}" ]; then
                     zfs rename "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"
+                    if [ "$?" -ne 0 ]; then
+                        error_notify "${COLOR_RED}Error: Can't rename zfs dataset.${COLOR_RESET}"
+                    fi
                 else
                     error_notify "${COLOR_RED}Can't determine the zfs origin path of '${TARGET}'.${COLOR_RESET}"
                 fi
@@ -127,9 +133,11 @@ change_name() {
     update_jailconf
     update_fstab
 
-    # Remove the old jail directory if exist
+    # Remove the old jail directory if exist and is empty
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        rm -r "${bastille_jailsdir}/${TARGET}"
+        if [ ! "$(ls -A ${bastille_jailsdir}/${TARGET})" ]; then
+            rm -r "${bastille_jailsdir}/${TARGET}"
+        fi
     fi
     if [ "$?" -ne 0 ]; then
         error_notify "${COLOR_RED}An error has occurred while attempting to rename '${TARGET}'.${COLOR_RESET}"
