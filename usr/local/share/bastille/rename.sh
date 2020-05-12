@@ -70,11 +70,11 @@ update_jailconf() {
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
-            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
-            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
-            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
-            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
-            sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
+            sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
+            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
+            sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
+            sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
+            sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${JAIL_CONFIG}"
         fi
     fi
 }
@@ -100,30 +100,26 @@ change_name() {
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         echo -e "${COLOR_GREEN}Attempting to rename '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                # Rename ZFS dataset and mount points accordingly
-                if zfs list | grep -qw "${bastille_zfs_prefix}/jails/${TARGET}$"; then
+            if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
+                # Check and rename container ZFS dataset accordingly
+                # Perform additional checks in case of non-zfs existing containers
+                if zfs list | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
                     zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
-                    if [ "$?" -ne 0 ]; then
-                        error_notify "${COLOR_RED}Error: Can't rename zfs dataset.${COLOR_RESET}"
-                    fi
                 else
-                    # Just rename the jail directory
+                    # Check and rename container directory instead
                     if ! zfs list | grep -qw "jails/${TARGET}$"; then
                         mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
                     fi
                 fi
             fi
         else
-            # Try to get the zfs origin path before rename dataset
-            if zfs list | grep -qw "${bastille_zfs_prefix}/jails/${TARGET}$"; then
-                ZFS_DATASET_ORIGIN=$(zfs list | grep -w "${bastille_zfs_prefix}/jails/${TARGET}$" | awk '{print $1}')
+            # Check if container is a zfs/dataset before rename attempt
+            # Perform additional checks in case of bastille.conf miss-configuration
+            if zfs list | grep -qw "jails/${TARGET}$"; then
+                ZFS_DATASET_ORIGIN=$(zfs list | grep -w "jails/${TARGET}$" | awk '{print $1}')
                 ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
-                if [ -n "${ZFS_DATASET_ORIGIN}" ]; then
+                if [ -n "${ZFS_DATASET_ORIGIN}" ] && [ -n "${ZFS_DATASET_TARGET}" ]; then
                     zfs rename "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"
-                    if [ "$?" -ne 0 ]; then
-                        error_notify "${COLOR_RED}Error: Can't rename zfs dataset.${COLOR_RESET}"
-                    fi
                 else
                     error_notify "${COLOR_RED}Can't determine the zfs origin path of '${TARGET}'.${COLOR_RESET}"
                 fi
@@ -140,12 +136,7 @@ change_name() {
     update_jailconf
     update_fstab
 
-    # Remove the old jail directory if exist and is empty
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        if [ ! "$(ls -A ${bastille_jailsdir}/${TARGET})" ]; then
-            rm -r "${bastille_jailsdir}/${TARGET}"
-        fi
-    fi
+    # Check exit status and notify
     if [ "$?" -ne 0 ]; then
         error_notify "${COLOR_RED}An error has occurred while attempting to rename '${TARGET}'.${COLOR_RESET}"
     else
