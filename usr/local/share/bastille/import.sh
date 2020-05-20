@@ -109,9 +109,9 @@ update_jailconf() {
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${TARGET_TRIM}/root;" "${JAIL_CONFIG}"; then
             echo -e "${COLOR_GREEN}Updating jail.conf...${COLOR_RESET}"
-            sed -i '' "s|exec.consolelog.*= .*;|exec.consolelog = ${bastille_logsdir}/${TARGET_TRIM}_console.log;|" "${JAIL_CONFIG}"
-            sed -i '' "s|path.*= .*;|path = ${bastille_jailsdir}/${TARGET_TRIM}/root;|" "${JAIL_CONFIG}"
-            sed -i '' "s|mount.fstab.*= .*;|mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;|" "${JAIL_CONFIG}"
+            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${TARGET_TRIM}_console.log;|" "${JAIL_CONFIG}"
+            sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${TARGET_TRIM}/root;|" "${JAIL_CONFIG}"
+            sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;|" "${JAIL_CONFIG}"
         fi
     fi
 }

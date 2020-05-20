@@ -42,6 +42,14 @@ error_notify() {
     exit 1
 }
 
+validate_name() {
+    local NAME_VERIFY=${NEWNAME}
+    local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
+    if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+        error_notify "${COLOR_RED}Container names may not contain special characters!${COLOR_RESET}"
+    fi
+}
+
 # Handle special-case commands first
 case "$1" in
 help|-h|--help)
@@ -57,21 +65,16 @@ TARGET="${1}"
 NEWNAME="${2}"
 shift
 
-if echo "${NEWNAME}" | grep -q "[.]"; then
-    echo -e "${COLOR_RED}Container names may not contain a dot(.)!${COLOR_RESET}"
-    exit 1
-fi
-
 update_jailconf() {
     # Update jail.conf
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
-            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
-            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
-            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
-            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
-            sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
+            sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
+            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
+            sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
+            sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
+            sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${JAIL_CONFIG}"
         fi
     fi
 }
@@ -97,14 +100,33 @@ change_name() {
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         echo -e "${COLOR_GREEN}Attempting to rename '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
         if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                # Rename ZFS dataset and mount points accordingly
-                zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
-                zfs set mountpoint="${bastille_jailsdir}/${NEWNAME}/root" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root"
+            if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
+                # Check and rename container ZFS dataset accordingly
+                # Perform additional checks in case of non-zfs existing containers
+                if zfs list | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
+                    zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+                else
+                    # Check and rename container directory instead
+                    if ! zfs list | grep -qw "jails/${TARGET}$"; then
+                        mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+                    fi
+                fi
             fi
         else
-            # Just rename the jail directory
-            mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            # Check if container is a zfs/dataset before rename attempt
+            # Perform additional checks in case of bastille.conf miss-configuration
+            if zfs list | grep -qw "jails/${TARGET}$"; then
+                ZFS_DATASET_ORIGIN=$(zfs list | grep -w "jails/${TARGET}$" | awk '{print $1}')
+                ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
+                if [ -n "${ZFS_DATASET_ORIGIN}" ] && [ -n "${ZFS_DATASET_TARGET}" ]; then
+                    zfs rename "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"
+                else
+                    error_notify "${COLOR_RED}Can't determine the zfs origin path of '${TARGET}'.${COLOR_RESET}"
+                fi
+            else
+                # Just rename the jail directory
+                mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            fi
         fi
     else
         error_notify "${COLOR_RED}${TARGET} not found. See bootstrap.${COLOR_RESET}"
@@ -114,10 +136,7 @@ change_name() {
     update_jailconf
     update_fstab
 
-    # Remove the old jail directory if exist
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        rm -r "${bastille_jailsdir}/${TARGET}"
-    fi
+    # Check exit status and notify
     if [ "$?" -ne 0 ]; then
         error_notify "${COLOR_RED}An error has occurred while attempting to rename '${TARGET}'.${COLOR_RESET}"
     else
@@ -125,9 +144,16 @@ change_name() {
     fi
 }
 
-# Check if container is running
-if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-    error_notify "${COLOR_RED}${TARGET} is running, See 'bastille stop'.${COLOR_RESET}"
+## check if a running jail matches name or already exist
+if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
+    error_notify "${COLOR_RED}Warning: ${TARGET} is running or the name does match.${COLOR_RESET}"
+elif [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
+    error_notify "${COLOR_RED}Jail: ${NEWNAME} already exist.${COLOR_RESET}"
+fi
+
+## validate jail name
+if [ -n "${NEWNAME}" ]; then
+    validate_name
 fi
 
 change_name
