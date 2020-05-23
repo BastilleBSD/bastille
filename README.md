@@ -58,6 +58,7 @@ Available Commands:
   import      Import a container archive or image.
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers, releases, templates, logs, limits or backups.
+  mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port.
   restart     Restart a running container.
@@ -67,6 +68,7 @@ Available Commands:
   sysrc       Safely edit rc files within targeted container(s).
   template    Apply automation templates to targeted container(s).
   top         Display and update information about the top(1) cpu processes.
+  umount      Unmount a volume from within the targeted container(s).
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
   verify      Verify bootstrapped release or automation template.
@@ -933,10 +935,36 @@ bastille clone
 Please be aware that no host specific keys or hashes will be regenerated.
 E. g. remove OpenSSH host keys to avoid duplicate host keys `rm /etc/ssh/ssh_host_*`
 
-Usage: `bastille clone [TARGET] [NEWJAIL] [NEW_IPADRRESS]
+Usage: `bastille clone [TARGET] [NEWJAIL] [NEW_IPADRRESS]`
 
 ```shell
 ishmael ~ # bastille clone sourcejail targetjail 10.17.89.11
+```
+
+bastille mount
+---------------
+`bastille mount` will nullfs mount a path from the host inside the container.
+Uses the same format as an fstab entry.
+Filesystem type, options, dump, and pass number are optional and default to: nullfs ro 0 0
+
+Usage: `bastille mount [TARGET] [HOST_PATH] [CONTAINER_PATH] [FILESYSTEM_TYPE] [OPTIONS] [DUMP] [PASS_NUMBER]`
+
+```shell
+ishmael ~ # bastille mount targetjail /host/path container/path
+[targetjail]:
+Added: /host/path container/path nullfs ro 0 0
+```
+
+bastille umount
+---------------
+`bastille umount` will unmount a volume from inside the container.
+
+Usage: `bastille umount [TARGET] [CONTAINER_PATH]`
+
+```shell
+ishmael ~ # bastille umount targetjail container/path
+[targetjail]:
+Unmounted: container/path
 ```
 
 Example (create, start, console)
