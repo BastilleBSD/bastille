@@ -100,6 +100,7 @@ Available Commands:
   htop        Interactive process viewer (requires htop).
   import      Import a specified container.
   list        List containers (running and stopped).
+  mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port.
   rename      Rename a container.
@@ -110,6 +111,7 @@ Available Commands:
   sysrc       Safely edit rc files within targeted container(s).
   template    Apply file templates to targeted container(s).
   top         Display and update information about the top(1) cpu processes.
+  umount      Unmount a volume from within the targeted container(s).
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
   verify      Compare release against a "known good" index.
@@ -142,9 +144,9 @@ esac
 case "${CMD}" in
 bootstrap|clone|cmd|console|convert|cp|create)
     ;;
-destroy|edit|export|htop|import|limits|list)
+destroy|edit|export|htop|import|limits|list|mount)
     ;;
-pkg|rdr|rename|restart|service|start|stop|sysrc)
+pkg|rdr|rename|restart|service|start|stop|sysrc|umount)
     ;;
 template|top|update|upgrade|verify|zfs)
     ;;
