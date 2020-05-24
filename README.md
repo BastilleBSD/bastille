@@ -695,6 +695,31 @@ The above example will include anything under "etc" and "usr" inside
 the template. You do not need to list individual files. Just include the
 top-level directory name.
 
+For more control over the order of operations when applying a template,
+create a `Bastillefile` inside the base template directory. Each line in
+the file should begin with an uppercase reference to a Bastille command
+followed by its arguments (omitting the target, which is deduced from the
+`template` arguments). Lines beginning with `#` are treated as comments.
+
+Bastillefile example:
+
+```shell
+LIMITS memoryuse 1G
+
+# Install and start nginx.
+PKG nginx
+SYSRC nginx_enable=YES
+SERVICE nginx restart
+
+# Copy files to nginx.
+CP www/ usr/local/www/nginx-dist/
+
+# Create a file on the server containing the jail's hostname.
+CMD hostname > /usr/local/www/nginx-dist/hostname.txt
+
+# Forward TCP port 80 on the host to port 80 in the container.
+RDR tcp 80 80
+```
 
 Applying Templates
 ------------------
