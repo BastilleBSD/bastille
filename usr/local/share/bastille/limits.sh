@@ -30,6 +30,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/colors.pre.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     echo -e "${COLOR_RED}Usage: bastille limits TARGET option value${COLOR_RESET}"
@@ -40,6 +41,7 @@ usage() {
 RACCT_ENABLE=$(sysctl -n kern.racct.enable)
 if [ "${RACCT_ENABLE}" != '1' ]; then
     echo "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
+#    exit 1
 fi
 
 # Handle special-case commands first.
@@ -68,7 +70,15 @@ fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    echo -e "${TYPE} ${VALUE}"
-    rctl -a jail:"${_jail}":"${OPTION}":deny="${VALUE}/jail"
+
+    _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
+
+    ## if entry doesn't exist, add; else show existing entry
+    if ! grep -qs "${_rctl_rule}" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
+        echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+    fi
+
+    echo -e "${OPTION} ${VALUE}"
+    rctl -a "${_rctl_rule}"
     echo -e "${COLOR_RESET}"
 done
