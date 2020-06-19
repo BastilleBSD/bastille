@@ -92,6 +92,46 @@ for _jail in ${JAILS}; do
         fi
     fi
 
+    if [ -s "${bastille_template}/Bastillefile" ]; then
+        # Ignore blank lines and comments. -- cwells
+        SCRIPT=$(grep -v '^\s*$' "${bastille_template}/Bastillefile" | grep -v '^\s*#')
+        # Use a newline as the separator. -- cwells
+        IFS='
+'
+        set -f
+        for _line in ${SCRIPT}; do
+            _cmd=$(echo "${_line}" | awk '{print tolower($1);}')
+            _args=$(echo "${_line}" | awk '{$1=""; sub(/^ */, ""); print;}')
+
+            # Apply overrides for commands/aliases and arguments. -- cwells
+            case $_cmd in
+                cmd)
+                    # Allow redirection within the jail. -- cwells
+                    _args="sh -c '${_args}'"
+                    ;;
+                cp)
+                    # Convert relative "from" path into absolute path inside the template directory. -- cwells
+                    if [ "${_args%${_args#?}}" != '/' ]; then
+                        _args="${bastille_template}/${_args}"
+                    fi
+                    ;;
+                include)
+                    _cmd='template' ;;
+                pkg)
+                    _args="install -y ${_args}" ;;
+            esac
+
+            if ! eval "bastille ${_cmd} ${_jail} ${_args}"; then
+                echo -e "${COLOR_RED}Failed to execute command: ${BASTILLE_COMMAND}${COLOR_RESET}"
+                set +f
+                unset IFS
+                exit 1
+            fi
+        done
+        set +f
+        unset IFS
+    fi
+
     ## LIMITS (RCTL)
     if [ -s "${bastille_template}/LIMITS" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:LIMITS -- START${COLOR_RESET}"
