@@ -37,6 +37,7 @@ usage() {
 }
 
 destroy_jail() {
+    local OPTIONS
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 
@@ -60,8 +61,12 @@ destroy_jail() {
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 if [ -n "${TARGET}" ]; then
+                    OPTIONS="-r"
+                    if [ "${FORCE}" = "1" ]; then
+                        OPTIONS="-rf"
+                    fi
                     ## remove jail zfs dataset recursively
-                    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"
+                    zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"
                 fi
             fi
         fi
