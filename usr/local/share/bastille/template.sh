@@ -243,14 +243,15 @@ for _jail in ${JAILS}; do
             fi
 
             ## aggregate variables into FSTAB entry
-            _fstab_entry="${_hostpath} ${bastille_jailsdir}/${_jail}/root/${_jailpath} ${_type} ${_perms} ${_checks}"
+            _jailpath="${bastille_jailsdir}/${_jail}/root/${_jailpath}"
+            _fstab_entry="${_hostpath} ${_jailpath} ${_type} ${_perms} ${_checks}"
 
             ## if entry doesn't exist, add; else show existing entry
-            if ! grep -q "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab"; then
+            if ! egrep -q "[[:blank:]]${_jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
                 echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"
                 echo "Added: ${_fstab_entry}"
             else
-                grep "${_jailpath}" "${bastille_jailsdir}/${_jail}/fstab"
+                egrep "[[:blank:]]${_jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
             fi
         done < "${bastille_template}/FSTAB"
         mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
