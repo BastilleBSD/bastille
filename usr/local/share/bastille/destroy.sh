@@ -96,6 +96,8 @@ destroy_jail() {
 }
 
 destroy_rel() {
+    local OPTIONS
+
     ## check release name match before destroy
     if [ -n "${NAME_VERIFY}" ]; then
         TARGET="${NAME_VERIFY}"
@@ -125,10 +127,16 @@ destroy_rel() {
             echo -e "${COLOR_GREEN}Deleting base: ${TARGET}.${COLOR_RESET}"
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${TARGET}"
-                    if [ "${FORCE}" = "1" ]; then
-                        if [ -d "${bastille_cachedir}/${TARGET}" ]; then
-                            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${TARGET}"
+                    if [ -n "${TARGET}" ]; then
+                        OPTIONS="-r"
+                        if [ "${FORCE}" = "1" ]; then
+                            OPTIONS="-rf"
+                        fi
+                        zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${TARGET}"
+                        if [ "${FORCE}" = "1" ]; then
+                            if [ -d "${bastille_cachedir}/${TARGET}" ]; then
+                                zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${TARGET}"
+                            fi
                         fi
                     fi
                 fi
