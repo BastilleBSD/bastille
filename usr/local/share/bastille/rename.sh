@@ -104,7 +104,9 @@ change_name() {
                 # Check and rename container ZFS dataset accordingly
                 # Perform additional checks in case of non-zfs existing containers
                 if zfs list | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
-                    zfs rename "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+                    if ! zfs rename -f "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"; then
+                        error_notify "${COLOR_RED}Can't rename '${TARGET}' dataset.${COLOR_RESET}"
+                    fi
                 else
                     # Check and rename container directory instead
                     if ! zfs list | grep -qw "jails/${TARGET}$"; then
@@ -119,7 +121,9 @@ change_name() {
                 ZFS_DATASET_ORIGIN=$(zfs list | grep -w "jails/${TARGET}$" | awk '{print $1}')
                 ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
                 if [ -n "${ZFS_DATASET_ORIGIN}" ] && [ -n "${ZFS_DATASET_TARGET}" ]; then
-                    zfs rename "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"
+                    if ! zfs rename -f "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"; then
+                        error_notify "${COLOR_RED}Can't rename '${TARGET}' dataset.${COLOR_RESET}"
+                    fi
                 else
                     error_notify "${COLOR_RED}Can't determine the zfs origin path of '${TARGET}'.${COLOR_RESET}"
                 fi
