@@ -1,3 +1,4 @@
+=========
 bootstrap
 =========
 
@@ -26,8 +27,7 @@ release version as the argument.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille bootstrap 11.3-RELEASE [update]
-  ishmael ~ # bastille bootstrap 12.0-RELEASE
+  ishmael ~ # bastille bootstrap 11.4-RELEASE [update]
   ishmael ~ # bastille bootstrap 12.1-RELEASE
 
 This command will ensure the required directory structures are in place and

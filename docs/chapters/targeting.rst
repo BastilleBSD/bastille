@@ -1,12 +1,12 @@
 Targeting
 =========
 
-Bastille uses a `command-target-args` syntax, meaning that each command
+Bastille uses a `command target arguments` syntax, meaning that each command
 requires a target. Targets are usually containers, but can also be releases.
 
-Targeting a containers is done by providing the exact containers name.
+Targeting a container is done by providing the exact containers name.
 
-Targeting a release is done by providing the release name. (Note: do note
+Targeting a release is done by providing the release name. (Note: do not
 include the `-pX` point-release version.)
 
 Bastille includes a pre-defined keyword ALL to target all running containers.
@@ -42,7 +42,7 @@ Examples: Containers
 +-----------+--------+-----+------------+-------------------------------------------------------------+
 | cp | bastion03 | /tmp/resolv.conf-cf etc/resolv.conf | copy host-path to container-path in bastion03|
 +----+------+----+---+------------------+--------------+----------------------------------------------+
-| create    | folsom | 12.0-RELEASE 10.17.89.10        | create 12.0 container named `folsom` with IP |
+| create    | folsom | 12.1-RELEASE 10.17.89.10        | create 12.1 container named `folsom` with IP |
 +-----------+--------+------------------+--------------+----------------------------------------------+
 
 
@@ -56,11 +56,11 @@ Examples: Releases
 +-----------+--------------+--------------+-------------------------------------------------------------+
 | command   | target       | args         | description                                                 |
 +===========+==============+==============+=============================================================+
-| bootstrap | 12.0-RELEASE | ---          | bootstrap 12.0-RELEASE release                              |
+| bootstrap | 12.1-RELEASE | ---          | bootstrap 12.1-RELEASE release                              |
 +-----------+--------------+--------------+-------------------------------------------------------------+
-| update    | 11.3-RELEASE | ---          | update 11.2-RELEASE release                                 |
+| update    | 11.4-RELEASE | ---          | update 11.4-RELEASE release                                 |
 +-----------+--------------+--------------+-------------------------------------------------------------+
-| upgrade   | 11.2-RELEASE | 11.3-RELEASE | update 11.2-RELEASE release                                 |
+| upgrade   | 11.3-RELEASE | 11.4-RELEASE | update 11.4-RELEASE release                                 |
 +-----------+--------------+--------------+-------------------------------------------------------------+
-| verify    | 11.3-RELEASE | ---          | update 11.2-RELEASE release                                 |
+| verify    | 11.4-RELEASE | ---          | update 11.4-RELEASE release                                 |
 +-----------+--------------+--------------+-------------------------------------------------------------+

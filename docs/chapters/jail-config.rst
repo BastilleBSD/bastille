@@ -17,7 +17,7 @@ template looks like this:
     devfs_ruleset = 4;
     enforce_statfs = 2;
     exec.clean;
-    exec.consolelog = /usr/local/bastille/logs/{name}_console.log;
+    exec.consolelog = /var/log/bastille/{name}_console.log;
     exec.start = '/bin/sh /etc/rc';
     exec.stop = '/bin/sh /etc/rc.shutdown';
     host.hostname = {name};

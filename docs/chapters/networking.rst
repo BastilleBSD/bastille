@@ -5,28 +5,25 @@ to get started putting applications in secure little containers, but how do I
 get these containers on the network?
 
 Bastille tries to be flexible about how to network containerized applications.
-The two most common methods are described here. Consider both options to decide
-which design work best for your needs. One of the methods works better across
-clouds while the other is simpler if used in local area networks.
-
-As you've probably seen, Bastille containers require certain information when
-they are created. An IP address has to be assigned to the container through
-which all network traffic will flow.
-
-When the container is started the IP address assigned at creation will be bound
-to a network interface. In FreeBSD these interfaces have different names, but
-look something like `em0`, `bge0`, `re0`, etc. On a virtual machine it may be
-`vtnet0`. You get the idea...
+Three methods are described here. Consider each options when deciding
+which design work best for your needs. One of the methods works better in the 
+cloud while the others are simpler if used in local area networks.
 
 **Note: if you are running in the cloud and only have a single public IP you
 may want the Public Network option. See below.**
 
 
 Local Area Network
-------------------
+==================
 I will cover the local area network (LAN) method first. This method is simpler
 to get going and works well in a home network (or similar) where adding alias
 IP addresses is no problem.
+
+Shared Interface (IP alias)
+---------------------------
+In FreeBSD network interfaces have different names, but look something like
+`em0`, `bge0`, `re0`, etc. On a virtual machine it may be `vtnet0`. You get the
+idea...
 
 Bastille allows you to define the interface you want the IP attached to when
 you create it. An example:
@@ -43,13 +40,59 @@ reach services at that address.
 This method is the simplest. All you need to know is the name of your network
 interface and a free IP on your current network.
 
-(Bastille does try to verify that the interface name you provide it is a valid
-interface. This validation has not been exhaustively tested yet in Bastille's
-beta state.)
+Bastille tries to verify that the interface name you provide it is a valid
+interface. It also checks for a valid syntax IP4 or IP6 address.
+
+Virtual Network (VNET)
+----------------------
+(Added in 0.6.x) VNET is supported on FreeBSD 12+ only.
+
+Virtual Network (VNET) creates a private network interface for a container.
+This includes a unique hardware address. This is required for VPN, DHCP, and
+similar containers.
+
+To create a VNET based container use the `-V` option, an IP/netmask and
+external interface.
+
+.. code-block:: shell
+
+  bastille create -V azkaban 12.1-RELEASE 192.168.1.50/24 em0
+
+Bastille will automagically create the bridge interface and connect /
+disconnect containers as they are started and stopped. A new interface will be
+created on the host matching the pattern `interface0bridge`. In the example
+here, `em0bridge`. 
+
+The `em0` interface will be attached to the bridge along with the unique
+container interfaces as they are started and stopped. These interface names
+match the pattern `eXb_bastilleX`. Internally to the containers these
+interfaces are presented as `vnet0`.
+
+VNET also requires a custom devfs ruleset. Create the file as needed on the
+host system:
+
+.. code-block:: shell
+
+  ## /etc/devfs.rules (NOT .conf)
+  
+  [bastille_vnet=13]
+  add include $devfsrules_hide_all
+  add include $devfsrules_unhide_basic
+  add include $devfsrules_unhide_login
+  add include $devfsrules_jail
+  add path 'bpf*' unhide
+
+Lastly, you may want to consider these three `sysctl` values:
+
+.. code-block:: shell
+
+  net.link.bridge.pfil_bridge=0
+  net.link.bridge.pfil_onlyip=0
+  net.link.bridge.pfil_member=0
 
 
 Public Network
---------------
+==============
 In this section I'll describe how to network containers in a public network
 such as a cloud hosting provider (AWS, digital ocean, vultr, etc)
 
@@ -58,9 +101,11 @@ addresses for your virtual machines. This means if you want to create multiple
 containers and assign them all IP addresses, you'll need to create a new
 network.
 
+loopback (bastille0)
+--------------------
 What I recommend is creating a cloned loopback interface (`bastille0`) and
 assigning all the containers private (rfc1918) addresses on that interface. The
-setup I develop on and use Bastille day to day uses the `10.0.0.0/8` address
+setup I develop on and use Bastille day-to-day uses the `10.0.0.0/8` address
 range. I have the ability to use whatever address I want within that range
 because I've created my own private network. The host system then acts as the
 firewall, permitting and denying traffic as needed.
