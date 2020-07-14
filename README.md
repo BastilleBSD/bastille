@@ -78,7 +78,7 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.6-beta
+## 0.7-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
