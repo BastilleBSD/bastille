@@ -6,7 +6,7 @@ To execute commands within the container you can use `bastille cmd`.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille cmd folsom 'ps -auxw'
+  ishmael ~ # bastille cmd folsom ps -auxw
   [folsom]:
   USER   PID %CPU %MEM   VSZ  RSS TT  STAT STARTED    TIME COMMAND
   root 71464  0.0  0.0 14536 2000  -  IsJ   4:52PM 0:00.00 /usr/sbin/syslogd -ss

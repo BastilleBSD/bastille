@@ -9,27 +9,20 @@ execute commands inside the containers automatically.
 
 Currently supported template hooks are: `LIMITS`, `INCLUDE`, `PRE`, `FSTAB`,
 `PKG`, `OVERLAY`, `SYSRC`, `SERVICE`, `CMD`.
-Planned template hooks include: `PF`, `LOG`.
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
-the template hooks. Simply create a new directory named after the template. eg;
+the template hooks.
 
-.. code-block:: shell
+Bastille 0.7.x
+--------------
+Bastille 0.7.x introduces a template syntax that is more flexible and allows
+any-order scripting. Previous versions had a hard template execution order and
+instructions were spread across multiple files. The new syntax is done in a
+`Bastillefile` and the template hook (see below) files are replaced with
+template hook commands.
 
-  mkdir -p /usr/local/bastille/templates/username/base
-
-To leverage a template hook, create an UPPERCASE file in the root of the
-template directory named after the hook you want to execute. eg;
-
-.. code-block:: shell
-
-  echo "zsh vim-console git-lite htop" > /usr/local/bastille/templates/username/base/PKG
-  echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/username/base/CMD
-  echo "usr" > /usr/local/bastille/templates/username/base/OVERLAY
-
-Template hooks are executed in specific order and require specific syntax to
-work as expected. This table outlines those requirements:
-
+Template Automation Hooks
+-------------------------
 
 +---------+-------------------+-----------------------------------------+
 | HOOK    | format            | example                                 |
@@ -56,13 +49,16 @@ work as expected. This table outlines those requirements:
 Note: SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
 ie; (`\\"`)
 
+Place these uppercase template hook commands into a `Bastillefile` in any order
+and automate container setup as needed.
+
 In addition to supporting template hooks, Bastille supports overlaying
 files into the container. This is done by placing the files in their full path,
 using the template directory as "/".
 
-An example here may help. Think of `bastille/templates/username/base`, our
+An example here may help. Think of `bastille/templates/username/template`, our
 example template, as the root of our filesystem overlay. If you create an
-`etc/hosts` or `etc/resolv.conf` *inside* the base template directory, these
+`etc/hosts` or `etc/resolv.conf` *inside* the template directory, these
 can be overlayed into your container.
 
 Note: due to the way FreeBSD segregates user-space, the majority of your
@@ -75,7 +71,7 @@ use, be sure to include `usr` in the template OVERLAY definition. eg;
 
 .. code-block:: shell
 
-  echo "usr" > /usr/local/bastille/templates/username/base/OVERLAY
+  echo "usr" > /usr/local/bastille/templates/username/template/OVERLAY
 
 The above example "usr" will include anything under "usr" inside the template.
 You do not need to list individual files. Just include the top-level directory
@@ -92,7 +88,7 @@ directory names in the `bastille/templates` directory.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille template ALL username/base
+  ishmael ~ # bastille template ALL username/template
   [proxy01]:
   Copying files...
   Copy complete.
