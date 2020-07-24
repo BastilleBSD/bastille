@@ -388,6 +388,14 @@ create_jail() {
         ## Generate minimal configuration for empty jail
         generate_minimal_conf
     fi
+
+    # Post-creation jail misc configuration
+    # Creates a dummy fstab file
+    # Disables adjkerntz, avoids spurious error messages
+    # Set strict permissions on the jail by default
+    touch "etc/fstab"
+    sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
+    chmod 0700 "${bastille_jailsdir}/${NAME}"
 }
 
 # Handle special-case commands first.
