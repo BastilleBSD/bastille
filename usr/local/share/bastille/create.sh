@@ -458,9 +458,9 @@ fi
 if [ -z "${EMPTY_JAIL}" ]; then
     ## verify release
     case "${RELEASE}" in
-    *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+    *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
         ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
         validate_release
         ;;
     *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)

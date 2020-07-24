@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille bootstrap [release|template] [update].${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille bootstrap [release|template] [update|arch].${COLOR_RESET}"
     exit 1
 }
 
@@ -58,7 +58,7 @@ if [ "${bastille_zfs_enable}" = "YES" ]; then
     fi
 
     ## check for the ZFS dataset prefix if already exist
-	if [ -d "/${bastille_zfs_zpool}/${bastille_zfs_prefix}" ]; then
+    if [ -d "/${bastille_zfs_zpool}/${bastille_zfs_prefix}" ]; then
         if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" > /dev/null 2>&1; then
             echo -e "${COLOR_RED}ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset.${COLOR_RESET}"
             exit 1
@@ -75,6 +75,13 @@ validate_release_url() {
             exit 1
         fi
         echo -e "${COLOR_GREEN}Bootstrapping ${PLATFORM_OS} distfiles...${COLOR_RESET}"
+
+        # Alternate RELEASE/ARCH fetch support
+        if [ "${ARCH}" = "--i386" -o "${ARCH}" = "--32bit" ]; then
+            ARCH="i386"
+            RELEASE="${RELEASE}-${ARCH}"
+        fi
+
         bootstrap_directories
         bootstrap_release
     else
@@ -337,6 +344,21 @@ bootstrap_template() {
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 RELEASE="${1}"
+ARCH="${2}"
+
+# Alternate RELEASE/ARCH fetch support(experimental)
+if [ -n "${ARCH}" ] && [ "${ARCH}" != "${HW_MACHINE}" ]; then
+    # Supported architectures
+    if [ "${ARCH}" = "--i386" -o "${ARCH}" = "--32bit" ]; then
+        HW_MACHINE="i386"
+        HW_MACHINE_ARCH="i386"
+    else
+        echo -e "${COLOR_RED}Unsupported architecture.${COLOR_RESET}"
+        exit 1
+    fi
+else
+    ARCH=""
+fi
 
 ## Filter sane release names
 case "${1}" in
