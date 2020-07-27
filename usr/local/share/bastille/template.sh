@@ -134,6 +134,9 @@ for _jail in ${JAILS}; do
                     ;;
                 overlay)
                     _cmd='cp'
+                    _args="${bastille_template}/${_args} /"
+                    ;;
+                cp|copy)
                     # Convert relative "from" path into absolute path inside the template directory. -- cwells
                     if [ "${_args%${_args#?}}" != '/' ]; then
                         _args="${bastille_template}/${_args}"
