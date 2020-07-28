@@ -49,7 +49,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 3 ]; then
     usage
 fi
 
