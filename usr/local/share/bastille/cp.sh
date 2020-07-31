@@ -61,6 +61,11 @@ fi
 for _jail in ${JAILS}; do
     bastille_jail_path="$(jls -j "${_jail}" path)"
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    cp -av "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
-    echo
+    # Add line break and return status
+    if cp -av "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"; then
+        echo
+    else
+        echo
+        false
+    fi
 done
