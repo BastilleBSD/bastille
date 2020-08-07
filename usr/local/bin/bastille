@@ -106,6 +106,7 @@ Available Commands:
   import      Import a specified container.
   list        List containers (running and stopped).
   mount       Mount a volume inside the targeted container(s).
+  nuke        First stop a container then destroy that container.
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port.
   rename      Rename a container.
@@ -150,7 +151,7 @@ esac
 case "${CMD}" in
 bootstrap|clone|cmd|console|convert|cp|create)
     ;;
-destroy|edit|export|htop|import|limits|list|mount)
+destroy|edit|export|htop|import|limits|list|mount|nuke)
     ;;
 pkg|rdr|rename|restart|service|start|stop|sysrc|umount)
     ;;
