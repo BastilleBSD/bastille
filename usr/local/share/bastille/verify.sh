@@ -54,7 +54,7 @@ verify_template() {
     _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
     _hook_validate=0
 
-    for _hook in TARGET INCLUDE PRE OVERLAY FSTAB PF PKG SYSRC SERVICE CMD; do
+    for _hook in TARGET INCLUDE PRE OVERLAY FSTAB PF PKG SYSRC SERVICE CMD Bastillefile; do
         _path=${_template_path}/${_hook}
         if [ -s "${_path}" ]; then
             _hook_validate=$((_hook_validate+1))
