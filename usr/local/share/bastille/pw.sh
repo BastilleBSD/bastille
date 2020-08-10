@@ -28,7 +28,58 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-bastille stop "$@"
-sleep 5
-bastille destroy "$@"
+. /usr/local/share/bastille/colors.pre.sh
 
+usage() {
+    echo -e "${COLOR_RED}Usage: bastille pw TARGET [user]'.${COLOR_RESET}"
+    exit 1
+}
+
+# Handle special-case commands first.
+case "$1" in
+help|-h|--help)
+    usage
+    ;;
+esac
+
+if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+    usage
+fi
+
+TARGET="${1}"
+shift
+USER="${1}"
+
+if [ "${TARGET}" = 'ALL' ]; then
+    JAILS=$(jls name)
+fi
+if [ "${TARGET}" != 'ALL' ]; then
+    JAILS=$(jls name | awk "/^${TARGET}$/")
+fi
+
+validate_user() {
+    if jexec -l "${_jail}" id "${USER}" >/dev/null 2>&1; then
+        USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
+        if [ -n "${USER_SHELL}" ]; then
+            if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                jexec -l "${_jail}" /usr/bin/login -f "${USER}"
+            else
+                echo "Invalid shell for user ${USER}"
+            fi
+        else
+            echo "User ${USER} has no shell"
+        fi
+    else
+        echo "Unknown user ${USER}"
+    fi
+}
+
+for _jail in ${JAILS}; do
+    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    if [ -n "${USER}" ]; then
+        validate_user
+    else
+        jexec -l "${_jail}" /usr/bin/login -f root
+    fi
+    echo
+done
