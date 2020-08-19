@@ -138,6 +138,8 @@ for _jail in ${JAILS}; do
                         _args="${bastille_template}/${_args}"
                     fi
                     ;;
+                fstab|mount)
+                    _cmd='mount' ;;
                 include)
                     _cmd='template' ;;
                 pkg)
