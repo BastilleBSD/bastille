@@ -145,7 +145,7 @@ for _jail in ${JAILS}; do
             esac
 
             if ! eval "bastille ${_cmd} ${_jail} ${_args}"; then
-                echo -e "${COLOR_RED}Failed to execute command: ${BASTILLE_COMMAND}${COLOR_RESET}"
+                echo -e "${COLOR_RED}Failed to execute command: ${_cmd}${COLOR_RESET}"
                 set +f
                 unset IFS
                 exit 1
