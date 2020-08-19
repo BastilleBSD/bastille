@@ -172,4 +172,5 @@ if [ -f "${SCRIPTPATH}" ]; then
 else
     bastille_colors_pre
     echo -e "${COLOR_RED}${SCRIPTPATH} not found.${COLOR_RESET}" 1>&2
+    exit 1
 fi

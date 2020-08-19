@@ -62,5 +62,12 @@ for _jail in ${JAILS}; do
     bastille_jail_path="$(jls -j "${_jail}" path)"
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
     cp -av "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
-    echo
+    RETURN="$?"
+    if [ "${TARGET}" = "ALL" ]; then
+        # Display the return status for reference
+        echo -e "Returned: ${RETURN}\n"
+    else
+        echo
+        return "${RETURN}"
+    fi
 done
