@@ -132,7 +132,11 @@ for _jail in ${JAILS}; do
                     # Allow redirection within the jail. -- cwells
                     _args="sh -c '${_args}'"
                     ;;
-                cp)
+                overlay)
+                    _cmd='cp'
+                    _args="${bastille_template}/${_args} /"
+                    ;;
+                cp|copy)
                     # Convert relative "from" path into absolute path inside the template directory. -- cwells
                     if [ "${_args%${_args#?}}" != '/' ]; then
                         _args="${bastille_template}/${_args}"
