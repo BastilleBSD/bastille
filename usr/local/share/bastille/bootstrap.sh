@@ -77,7 +77,7 @@ validate_release_url() {
         echo -e "${COLOR_GREEN}Bootstrapping ${PLATFORM_OS} distfiles...${COLOR_RESET}"
 
         # Alternate RELEASE/ARCH fetch support
-        if [ "${ARCH}" = "--i386" -o "${ARCH}" = "--32bit" ]; then
+        if [ "${OPTION}" = "--i386" -o "${OPTION}" = "--32bit" ]; then
             ARCH="i386"
             RELEASE="${RELEASE}-${ARCH}"
         fi
@@ -344,20 +344,18 @@ bootstrap_template() {
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 RELEASE="${1}"
-ARCH="${2}"
+OPTION="${2}"
 
 # Alternate RELEASE/ARCH fetch support(experimental)
-if [ -n "${ARCH}" ] && [ "${ARCH}" != "${HW_MACHINE}" ]; then
+if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != "update" ]; then
     # Supported architectures
-    if [ "${ARCH}" = "--i386" -o "${ARCH}" = "--32bit" ]; then
+    if [ "${OPTION}" = "--i386" -o "${OPTION}" = "--32bit" ]; then
         HW_MACHINE="i386"
         HW_MACHINE_ARCH="i386"
     else
         echo -e "${COLOR_RED}Unsupported architecture.${COLOR_RESET}"
         exit 1
     fi
-else
-    ARCH=""
 fi
 
 ## Filter sane release names
@@ -423,7 +421,7 @@ http?://github.com/*/*|http?://gitlab.com/*/*)
     ;;
 esac
 
-case "${2}" in
+case "${OPTION}" in
 update)
     bastille update "${RELEASE}"
     ;;
