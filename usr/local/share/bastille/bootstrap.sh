@@ -360,6 +360,13 @@ fi
 
 ## Filter sane release names
 case "${1}" in
+*-CURRENT|*-current)
+    ## check for FreeBSD releases name
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
+    UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
+    PLATFORM_OS="FreeBSD"
+    validate_release_url
+    ;;
 *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
