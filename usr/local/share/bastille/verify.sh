@@ -28,25 +28,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    echo -e "${COLOR_RED}Usage: bastille verify [release|template].${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille verify [release|template]"
 }
 
 verify_release() {
     if freebsd-version | grep -qi HBSD; then
-        echo -e "${COLOR_RED}Not yet supported on HardenedBSD.${COLOR_RESET}"
-        exit 1
+        error_exit "Not yet supported on HardenedBSD."
     fi
 
     if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
         freebsd-update -b "${bastille_releasesdir}/${RELEASE}" --currently-running "${RELEASE}" IDS
     else
-        echo -e "${COLOR_RED}${RELEASE} not found. See bootstrap.${COLOR_RESET}"
-        exit 1
+        error_exit "${RELEASE} not found. See 'bastille bootstrap'."
     fi
 }
 
@@ -63,12 +60,10 @@ verify_template() {
             ## line count must match newline count
             if [ $(wc -l "${_path}" | awk '{print $1}') -ne $(grep -c $'\n' "${_path}") ]; then
                 echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
-                echo -e "${COLOR_RED}${BASTILLE_TEMPLATE}:${_hook} [failed].${COLOR_RESET}"
-                echo -e "${COLOR_RED}Line numbers don't match line breaks.${COLOR_RESET}"
+                error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."
+                error_notify "Line numbers don't match line breaks."
                 echo
-                echo -e "${COLOR_RED}Template validation failed.${COLOR_RESET}"
-                exit 1
-
+                error_exit "Template validation failed."
             ## if INCLUDE; recursive verify
             elif [ ${_hook} = 'INCLUDE' ]; then
                 echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
@@ -87,8 +82,7 @@ verify_template() {
                             bastille verify "${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}"
                         ;;
                         *)
-                            echo -e "${COLOR_RED}Template INCLUDE content not recognized.${COLOR_RESET}"
-                            exit 1
+                            error_exit "Template INCLUDE content not recognized."
                     ;;
                     esac
                 done < "${_path}"
@@ -117,8 +111,8 @@ verify_template() {
 
     ## remove bad templates
     if [ ${_hook_validate} -lt 1 ]; then
-        echo -e "${COLOR_RED}No valid template hooks found.${COLOR_RESET}"
-        echo -e "${COLOR_RED}Template discarded.${COLOR_RESET}"
+        error_notify "No valid template hooks found."
+        error_notify "Template discarded."
         rm -rf "${bastille_template}"
         exit 1
     fi

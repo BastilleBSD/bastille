@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille destroy [option] | [container|release]${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille destroy [option] | [container|release]"
 }
 
 destroy_jail() {
@@ -45,15 +44,13 @@ destroy_jail() {
         if [ "${FORCE}" = "1" ]; then
             bastille stop "${TARGET}"
         else
-            echo -e "${COLOR_RED}Jail running.${COLOR_RESET}"
-            echo -e "${COLOR_RED}See 'bastille stop ${TARGET}'.${COLOR_RESET}"
-            exit 1
+            error_notify "Jail running."
+            error_exit "See 'bastille stop ${TARGET}'."
         fi
     fi
 
     if [ ! -d "${bastille_jail_base}" ]; then
-        echo -e "${COLOR_RED}Jail not found.${COLOR_RESET}"
-        exit 1
+        error_exit "Jail not found."
     fi
 
     if [ -d "${bastille_jail_base}" ]; then
@@ -113,15 +110,14 @@ destroy_rel() {
         JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
         for _jail in ${JAIL_LIST}; do
             if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
-                echo -e "${COLOR_RED}Notice: (${_jail}) depends on ${TARGET} base.${COLOR_RESET}"
+                error_notify "Notice: (${_jail}) depends on ${TARGET} base."
                 BASE_HASCHILD="1"
             fi
         done
     fi
 
     if [ ! -d "${bastille_rel_base}" ]; then
-        echo -e "${COLOR_RED}Release base not found.${COLOR_RESET}"
-        exit 1
+        error_exit "Release base not found."
     else
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
             echo -e "${COLOR_GREEN}Deleting base: ${TARGET}.${COLOR_RESET}"
@@ -158,7 +154,7 @@ destroy_rel() {
             fi
             echo
         else
-            echo -e "${COLOR_RED}Cannot destroy base with containers child.${COLOR_RESET}"
+            error_notify "Cannot destroy base with child containers."
         fi
     fi
 }
@@ -180,7 +176,7 @@ case "${1}" in
         shift
         ;;
     -*)
-        echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
+        error_notify "Unknown Option."
         usage
         ;;
 esac

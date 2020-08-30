@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille zfs TARGET [set|get|snap] [key=value|date]'${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille zfs TARGET [set|get|snap] [key=value|date]'"
 }
 
 zfs_snapshot() {
@@ -77,14 +76,12 @@ esac
 
 ## check ZFS enabled
 if [ ! "${bastille_zfs_enable}" = "YES" ]; then
-    echo -e "${COLOR_RED}ZFS not enabled.${COLOR_RESET}"
-    exit 1
+    error_exit "ZFS not enabled."
 fi
 
 ## check zpool defined
 if [ -z "${bastille_zfs_zpool}" ]; then
-    echo -e "${COLOR_RED}ZFS zpool not defined.${COLOR_RESET}"
-    exit 1
+    error_exit "ZFS zpool not defined."
 fi
 
 if [ $# -lt 2 ]; then

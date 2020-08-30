@@ -28,11 +28,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille service TARGET service_name action${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille service TARGET service_name action"
 }
 
 # Handle special-case commands first.

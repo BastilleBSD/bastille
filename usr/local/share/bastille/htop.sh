@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille htop TARGET${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille htop TARGET"
 }
 
 # Handle special-case commands first.
@@ -60,7 +59,7 @@ fi
 for _jail in ${JAILS}; do
     bastille_jail_path=$(jls -j "${_jail}" path)
     if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        echo -e "${COLOR_RED}htop not found on ${_jail}.${COLOR_RESET}"
+        error_notify "htop not found on ${_jail}."
     elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
         echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
         jexec -l ${_jail} /usr/local/bin/htop

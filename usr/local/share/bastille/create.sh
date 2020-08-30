@@ -28,25 +28,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille create [option] name release ip [interface].${COLOR_RESET}"
-    exit 1
-}
-
-error_notify() {
-    # Notify message on error and exit
-    echo -e "$*" >&2
-    exit 1
+    error_exit "Usage: bastille create [option] name release ip [interface]"
 }
 
 running_jail() {
     if [ -n "$(jls name | awk "/^${NAME}$/")" ]; then
-        error_notify "${COLOR_RED}A running jail matches name.${COLOR_RESET}"
+        error_exit "A running jail matches name."
     elif [ -d "${bastille_jailsdir}/${NAME}" ]; then
-        error_notify "${COLOR_RED}Jail: ${NAME} already created.${COLOR_RESET}"
+        error_exit "Jail: ${NAME} already created."
     fi
 }
 
@@ -54,7 +47,7 @@ validate_name() {
     local NAME_VERIFY=${NAME}
     local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
     if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
-        error_notify "${COLOR_RED}Container names may not contain special characters!${COLOR_RESET}"
+        error_exit "Container names may not contain special characters!"
     fi
 }
 
@@ -84,7 +77,7 @@ validate_ip() {
                 echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
             fi
         else
-            error_notify "${COLOR_RED}Invalid: (${IP}).${COLOR_RESET}"
+            error_exit "Invalid: (${IP})."
         fi
     fi
 }
@@ -94,13 +87,13 @@ validate_netif() {
     if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         echo -e "${COLOR_GREEN}Valid: (${INTERFACE}).${COLOR_RESET}"
     else
-        error_notify "${COLOR_RED}Invalid: (${INTERFACE}).${COLOR_RESET}"
+        error_exit "Invalid: (${INTERFACE})."
     fi
 }
 
 validate_netconf() {
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        error_notify "${COLOR_RED}Invalid network configuration.${COLOR_RESET}"
+        error_exit "Invalid network configuration."
     fi
 }
 
@@ -280,7 +273,7 @@ create_jail() {
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
                         bastille destroy "${NAME}"
-                        error_notify "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
+                        error_exit "Failed to copy release files. Please retry create!"
                     fi
                 fi
             done
@@ -310,7 +303,7 @@ create_jail() {
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
                         bastille destroy "${NAME}"
-                        error_notify "${COLOR_RED}Failed release base replication, please retry create!${COLOR_RESET}"
+                        error_exit "Failed release base replication. Please retry create!"
                     fi
                 fi
             else
@@ -319,7 +312,7 @@ create_jail() {
                 if [ "$?" -ne 0 ]; then
                     ## notify and clean stale files/directories
                     bastille destroy "${NAME}"
-                    error_notify "${COLOR_RED}Failed to copy release files, please retry create!${COLOR_RESET}"
+                    error_exit "Failed to copy release files. Please retry create!"
                 fi
             fi
         fi
@@ -437,7 +430,7 @@ else
             VNET_JAIL="1"
             ;;
         -*)
-            echo -e "${COLOR_RED}Unknown Option.${COLOR_RESET}"
+            error_notify "Unknown Option."
             usage
             ;;
     esac
@@ -502,19 +495,19 @@ if [ -z "${EMPTY_JAIL}" ]; then
         validate_release
         ;;
     *)
-        echo -e "${COLOR_RED}Unknown Release.${COLOR_RESET}"
+        error_notify "Unknown Release."
         usage
         ;;
     esac
 
     ## check for name/root/.bastille
     if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
-        error_notify "${COLOR_RED}Jail: ${NAME} already created. ${NAME}/root/.bastille exists.${COLOR_RESET}"
+        error_exit "Jail: ${NAME} already created. ${NAME}/root/.bastille exists."
     fi
 
     ## check for required release
     if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
-        error_notify "${COLOR_RED}Release must be bootstrapped first; see 'bastille bootstrap'.${COLOR_RESET}"
+        error_exit "Release must be bootstrapped first; see 'bastille bootstrap'."
     fi
 
     ## check if ip address is valid

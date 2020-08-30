@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille mount TARGET host_path container_path [filesystem_type options dump pass_number]${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille mount TARGET host_path container_path [filesystem_type options dump pass_number]"
 }
 
 # Handle special-case commands first.
@@ -71,7 +70,7 @@ _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
 
 ## if any variables are empty, bail out
 if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "${_perms}" ] || [ -z "${_checks}" ]; then
-    echo -e "${COLOR_RED}FSTAB format not recognized.${COLOR_RESET}"
+    error_notify "FSTAB format not recognized."
     echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
     echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
     exit 1
@@ -79,7 +78,7 @@ fi
 
 ## if host path doesn't exist or type is not "nullfs"
 if [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
-    echo -e "${COLOR_RED}Detected invalid host path or incorrect mount type in FSTAB.${COLOR_RESET}"
+    error_notify "Detected invalid host path or incorrect mount type in FSTAB."
     echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
     echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
     exit 1
@@ -87,7 +86,7 @@ fi
 
 ## if mount permissions are not "ro" or "rw"
 if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
-    echo -e "${COLOR_RED}Detected invalid mount permissions in FSTAB.${COLOR_RESET}"
+    error_notify "Detected invalid mount permissions in FSTAB."
     echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
     echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
     exit 1
@@ -95,7 +94,7 @@ fi
 
 ## if check & pass are not "0 0 - 1 1"; bail out
 if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "0 1" ] && [ "${_checks}" != "1 1" ]; then
-    echo -e "${COLOR_RED}Detected invalid fstab options in FSTAB.${COLOR_RESET}"
+    error_notify "Detected invalid fstab options in FSTAB."
     echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
     echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
     exit 1
@@ -111,16 +110,14 @@ for _jail in ${JAILS}; do
     ## Create mount point if it does not exist. -- cwells
     if [ ! -d "${bastille_jailsdir}/${_jail}/root/${_jailpath}" ]; then
         if ! mkdir -p "${bastille_jailsdir}/${_jail}/root/${_jailpath}"; then
-            echo -e "${COLOR_RED}Failed to create mount point inside jail.${COLOR_RESET}"
-            exit 1
+            error_exit "Failed to create mount point inside jail."
         fi
     fi
 
     ## if entry doesn't exist, add; else show existing entry
     if ! egrep -q "[[:blank:]]${_jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
         if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"; then
-            echo -e "${COLOR_RED}Failed to create fstab entry: ${_fstab_entry}${COLOR_RESET}"
-            exit 1
+            error_exit "Failed to create fstab entry: ${_fstab_entry}"
         fi
         echo "Added: ${_fstab_entry}"
     else

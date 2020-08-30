@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille import file [option].${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille import file [option]"
 }
 
 # Handle special-case commands first
@@ -51,12 +50,6 @@ TARGET="${1}"
 OPTION="${2}"
 shift
 
-error_notify() {
-    # Notify message on error and exit
-    echo -e "$*" >&2
-    exit 1
-}
-
 validate_archive() {
     # Compare checksums on the target archive
     # Skip validation for unsupported archives
@@ -67,7 +60,7 @@ validate_archive() {
                 SHA256_DIST=$(cat "${bastille_backupsdir}/${FILE_TRIM}.sha256")
                 SHA256_FILE=$(sha256 -q "${bastille_backupsdir}/${TARGET}")
                 if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
-                    error_notify "${COLOR_RED}Failed validation for ${TARGET}.${COLOR_RESET}"
+                    error_exit "Failed validation for ${TARGET}."
                 else
                     echo -e "${COLOR_GREEN}File validation successful!${COLOR_RESET}"
                 fi
@@ -76,7 +69,7 @@ validate_archive() {
                 if [ "${OPTION}" = "-f" -o "${OPTION}" = "force" ]; then
                     echo -e "${COLOR_YELLOW}Warning: Skipping archive validation!${COLOR_RESET}"
                 else
-                    error_notify "${COLOR_RED}Checksum file not found, See 'bastille import TARGET -f'${COLOR_RESET}"
+                    error_exit "Checksum file not found. See 'bastille import TARGET -f'."
                 fi
             fi
         fi
@@ -315,7 +308,7 @@ remove_zfs_datasets() {
     # Perform cleanup on failure
     zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
     zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
-    error_notify "${COLOR_RED}Failed to extract files from '${TARGET}' archive.${COLOR_RESET}"
+    error_exit "Failed to extract files from '${TARGET}' archive."
 }
 
 jail_import() {
@@ -356,7 +349,7 @@ jail_import() {
                     # Extract required files from the zip archive
                     cd "${bastille_backupsdir}" && unzip -j "${TARGET}"
                     if [ "$?" -ne 0 ]; then
-                        error_notify "${COLOR_RED}Failed to extract files from '${TARGET}' archive.${COLOR_RESET}"
+                        error_exit "Failed to extract files from '${TARGET}' archive."
                         rm -f "${FILE_TRIM}" "${FILE_TRIM}_root"
                     fi
                     echo -e "${COLOR_GREEN}Receiving zfs data stream...${COLOR_RESET}"
@@ -411,7 +404,7 @@ jail_import() {
                         update_config
                     fi
                 else
-                    error_notify "${COLOR_RED}Unknown archive format.${COLOR_RESET}"
+                    error_exit "Unknown archive format."
                 fi
             fi
         else
@@ -438,12 +431,12 @@ jail_import() {
                 fi
                 update_config
             else
-                error_notify "${COLOR_RED}Unsupported archive format.${COLOR_RESET}"
+                error_exit "Unsupported archive format."
             fi
         fi
 
         if [ "$?" -ne 0 ]; then
-            error_notify "${COLOR_RED}Failed to import from '${TARGET}' archive.${COLOR_RESET}"
+            error_exit "Failed to import from '${TARGET}' archive."
         else
             # Update the jail.conf and fstab if required
             # This is required on foreign imports only
@@ -453,7 +446,7 @@ jail_import() {
             exit 0
         fi
     else
-        error_notify "${COLOR_RED}Jails directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
+        error_exit "Jails directory/dataset does not exist. See 'bastille bootstrap'."
     fi
 }
 
@@ -466,7 +459,7 @@ fi
 
 # Check if backups directory/dataset exist
 if [ ! -d "${bastille_backupsdir}" ]; then
-    error_notify "${COLOR_RED}Backups directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
+    error_exit "Backups directory/dataset does not exist. See 'bastille bootstrap'."
 fi
 
 # Check if archive exist then trim archive name
@@ -477,17 +470,17 @@ if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
             TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.xz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.txz//;s/_[0-9]*-[0-9]*-[0-9]*.zip//;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//;s/@[0-9]\{12\}.[0-9]\{2\}.tar//")
         fi
     else
-        error_notify "${COLOR_RED}Unrecognized archive name.${COLOR_RESET}"
+        error_exit "Unrecognized archive name."
     fi
 else
-    error_notify "${COLOR_RED}Archive '${TARGET}' not found.${COLOR_RESET}"
+    error_exit "Archive '${TARGET}' not found."
 fi
 
 # Check if a running jail matches name or already exist
 if [ -n "$(jls name | awk "/^${TARGET_TRIM}$/")" ]; then
-    error_notify "${COLOR_RED}A running jail matches name.${COLOR_RESET}"
+    error_exit "A running jail matches name."
 elif [ -d "${bastille_jailsdir}/${TARGET_TRIM}" ]; then
-    error_notify "${COLOR_RED}Container: ${TARGET_TRIM} already exist.${COLOR_RESET}"
+    error_exit "Container: ${TARGET_TRIM} already exists."
 fi
 
 jail_import

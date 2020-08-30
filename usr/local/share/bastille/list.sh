@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille list [-j] [release|template|(jail|container)|log|limit|(import|export|backup)].${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille list [-j] [release|template|(jail|container)|log|limit|(import|export|backup)]"
 }
 
 if [ $# -eq 0 ]; then

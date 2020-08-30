@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    echo -e "${COLOR_RED}Usage: bastille template TARGET project/template.${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille template TARGET project/template"
 }
 
 # Handle special-case commands first.
@@ -66,26 +65,22 @@ case ${TEMPLATE} in
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
             echo -e "${COLOR_GREEN}Bootstrapping ${TEMPLATE}...${COLOR_RESET}"
             if ! bastille bootstrap "${TEMPLATE}"; then
-                echo -e "${COLOR_RED}Failed to bootstrap template: ${TEMPLATE}.${COLOR_RESET}"
-                exit 1
+                error_exit "Failed to bootstrap template: ${TEMPLATE}"
             fi
         fi
         TEMPLATE="${TEMPLATE_DIR}"
         ;;
     */*)
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
-            echo -e "${COLOR_RED}${TEMPLATE} not found.${COLOR_RESET}"
-            exit 1
+            error_exit "${TEMPLATE} not found."
         fi
         ;;
     *)
-        echo -e "${COLOR_RED}Template name/URL not recognized.${COLOR_RESET}"
-        exit 1
+        error_exit "Template name/URL not recognized."
 esac
 
 if [ -z "${JAILS}" ]; then
-    echo -e "${COLOR_RED}Container ${TARGET} is not running.${COLOR_RESET}"
-    exit 1
+    error_exit "Container ${TARGET} is not running."
 fi
 
 if [ -z "${HOOKS}" ]; then
@@ -151,10 +146,9 @@ for _jail in ${JAILS}; do
             esac
 
             if ! eval "bastille ${_cmd} ${_jail} ${_args}"; then
-                echo -e "${COLOR_RED}Failed to execute command: ${_cmd}${COLOR_RESET}"
                 set +f
                 unset IFS
-                exit 1
+                error_exit "Failed to execute command: ${_cmd}"
             fi
         done
         set +f

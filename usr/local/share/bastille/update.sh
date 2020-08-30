@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille update [release|container].${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille update [release|container]"
 }
 
 # Handle special-case commands first.
@@ -51,8 +50,7 @@ TARGET="${1}"
 shift
 
 if freebsd-version | grep -qi HBSD; then
-    echo -e "${COLOR_RED}Not yet supported on HardenedBSD.${COLOR_RESET}"
-    exit 1
+    error_exit "Not yet supported on HardenedBSD."
 fi
 
 if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
@@ -61,20 +59,17 @@ if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
                 # Update a thick container.
                 CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
                 if [ -z "${CURRENT_VERSION}" ]; then
-                    echo -e "${COLOR_RED}Can't determine '${TARGET}' version.${COLOR_RESET}"
-                    exit 1
+                    error_exit "Can't determine '${TARGET}' version."
                 else
                     env PAGER="/bin/cat" freebsd-update --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" \
                     fetch install --currently-running "${CURRENT_VERSION}"
                 fi
             else
-                echo -e "${COLOR_RED}${TARGET} is not running.${COLOR_RESET}"
-                echo -e "${COLOR_RED}See 'bastille start ${TARGET}'.${COLOR_RESET}"
-                exit 1
+                error_notify "${TARGET} is not running."
+                error_exit "See 'bastille start ${TARGET}'."
             fi
     else
-        echo -e "${COLOR_RED}${TARGET} is not a thick container.${COLOR_RESET}"
-        exit 1
+        error_exit "${TARGET} is not a thick container."
     fi
 else
     if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
@@ -82,7 +77,6 @@ else
         env PAGER="/bin/cat" freebsd-update --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
         fetch install --currently-running "${TARGET}"
     else
-        echo -e "${COLOR_RED}${TARGET} not found. See bootstrap.${COLOR_RESET}"
-        exit 1
+        error_exit "${TARGET} not found. See 'bastille bootstrap'."
     fi
 fi

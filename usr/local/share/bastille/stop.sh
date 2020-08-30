@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille stop TARGET${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille stop TARGET"
 }
 
 # Handle special-case commands first.
@@ -57,9 +56,9 @@ if [ "${TARGET}" != 'ALL' ]; then
     JAILS=$(jls name | awk "/^${TARGET}$/")
     ## check if exist or not running
     if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-        echo -e "${COLOR_RED}[${TARGET}]: Not found.${COLOR_RESET}"
+        error_exit "[${TARGET}]: Not found."
     elif [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
-        echo -e "${COLOR_RED}[${TARGET}]: Not started.${COLOR_RESET}"
+        error_exit "[${TARGET}]: Not started."
     fi
 fi
 

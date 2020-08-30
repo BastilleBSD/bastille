@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille umount TARGET container_path${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille umount TARGET container_path"
 }
 
 # Handle special-case commands first.
@@ -65,20 +64,17 @@ for _jail in ${JAILS}; do
     _jailpath="${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}"
 
     if [ ! -d "${_jailpath}" ]; then
-        echo -e "${COLOR_RED}The specified mount point does not exist inside the jail.${COLOR_RESET}"
-        exit 1
+        error_exit "The specified mount point does not exist inside the jail."
     fi
 
     # Unmount the volume. -- cwells
     if ! umount "${_jailpath}"; then
-        echo -e "${COLOR_RED}Failed to unmount volume: ${MOUNT_PATH}${COLOR_RESET}"
-        exit 1
+        error_exit "Failed to unmount volume: ${MOUNT_PATH}"
     fi
 
     # Remove the entry from fstab so it is not automounted in the future. -- cwells
     if ! sed -E -i '' "\, +${_jailpath} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
-        echo -e "${COLOR_RED}Failed to delete fstab entry: ${_fstab_entry}${COLOR_RESET}"
-        exit 1
+        error_exit "Failed to delete fstab entry: ${_fstab_entry}"
     fi
 
     echo "Unmounted: ${MOUNT_PATH}"

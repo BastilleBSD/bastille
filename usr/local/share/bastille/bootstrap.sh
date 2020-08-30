@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille bootstrap [release|template] [update|arch].${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille bootstrap [release|template] [update|arch]"
 }
 
 # Handle special-case commands first.
@@ -47,21 +46,17 @@ esac
 if [ "${bastille_zfs_enable}" = "YES" ]; then
     ## check for the ZFS pool and bastille prefix
     if [ -z "${bastille_zfs_zpool}" ]; then
-        echo -e "${COLOR_RED}ERROR: Missing ZFS parameters, see bastille_zfs_zpool.${COLOR_RESET}"
-        exit 1
+        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_zpool."
     elif [ -z "${bastille_zfs_prefix}" ]; then
-        echo -e "${COLOR_RED}ERROR: Missing ZFS parameters, see bastille_zfs_prefix.${COLOR_RESET}"
-        exit 1
+        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_prefix."
     elif ! zfs list "${bastille_zfs_zpool}" > /dev/null 2>&1; then
-        echo -e "${COLOR_RED}ERROR: ${bastille_zfs_zpool} is not a ZFS pool.${COLOR_RESET}"
-        exit 1
+        error_exit "ERROR: ${bastille_zfs_zpool} is not a ZFS pool."
     fi
 
     ## check for the ZFS dataset prefix if already exist
     if [ -d "/${bastille_zfs_zpool}/${bastille_zfs_prefix}" ]; then
         if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" > /dev/null 2>&1; then
-            echo -e "${COLOR_RED}ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset.${COLOR_RESET}"
-            exit 1
+            error_exit "ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset."
         fi
     fi
 fi
@@ -71,8 +66,7 @@ validate_release_url() {
     if [ -n "${NAME_VERIFY}" ]; then
         RELEASE="${NAME_VERIFY}"
         if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
-            echo -e "${COLOR_RED}Unable to fetch MANIFEST, See 'bootstrap urls'.${COLOR_RESET}"
-            exit 1
+            error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
         fi
         echo -e "${COLOR_GREEN}Bootstrapping ${PLATFORM_OS} distfiles...${COLOR_RESET}"
 
@@ -207,8 +201,7 @@ bootstrap_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            echo -e "${COLOR_RED}Bootstrap appears complete.${COLOR_RESET}"
-            exit 1
+            error_exit "Bootstrap appears complete."
         else
             echo -e "${COLOR_GREEN}Bootstrapping additional distfiles...${COLOR_RESET}"
         fi
@@ -224,8 +217,7 @@ bootstrap_release() {
                 touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
                 touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
             else
-                echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
-                exit 1
+                error_exit "Failed to extract ${_archive}.txz."
             fi
         else
             ## get the manifest for dist files checksum validation
@@ -255,8 +247,7 @@ bootstrap_release() {
                             rm -rf "${bastille_releasesdir}/${RELEASE}"
                         fi
                     fi
-                    echo -e "${COLOR_RED}Bootstrap failed.${COLOR_RESET}"
-                    exit 1
+                    error_exit "Bootstrap failed."
                 fi
 
                 ## fetch for missing dist files
@@ -264,7 +255,7 @@ bootstrap_release() {
                     fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
                     if [ "$?" -ne 0 ]; then
                         ## alert only if unable to fetch additional dist files
-                        echo -e "${COLOR_RED}Failed to fetch ${_archive}.txz.${COLOR_RESET}"
+                        error_notify "Failed to fetch ${_archive}.txz."
                     fi
                 fi
 
@@ -273,9 +264,8 @@ bootstrap_release() {
                     SHA256_DIST=$(grep -w "${_archive}.txz" "${bastille_cachedir}/${RELEASE}/MANIFEST" | awk '{print $2}')
                     SHA256_FILE=$(sha256 -q "${bastille_cachedir}/${RELEASE}/${_archive}.txz")
                     if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
-                        echo -e "${COLOR_RED}Failed validation for ${_archive}.txz, please retry bootstrap!${COLOR_RESET}"
                         rm "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-                        exit 1
+                        error_exit "Failed validation for ${_archive}.txz. Please retry bootstrap!"
                     else
                         echo -e "${COLOR_GREEN}Validated checksum for ${RELEASE}:${_archive}.txz.${COLOR_RESET}"
                         echo -e "${COLOR_GREEN}MANIFEST:${SHA256_DIST}${COLOR_RESET}"
@@ -291,8 +281,7 @@ bootstrap_release() {
                         touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
                         touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
                     else
-                        echo -e "${COLOR_RED}Failed to extract ${_archive}.txz.${COLOR_RESET}"
-                        exit 1
+                        error_exit "Failed to extract ${_archive}.txz."
                     fi
                 fi
         fi
@@ -325,16 +314,15 @@ bootstrap_template() {
 
     ## support for non-git
     if [ ! -x "$(which git)" ]; then
-        echo -e "${COLOR_RED}Git not found.${COLOR_RESET}"
-        echo -e "${COLOR_RED}Not yet implemented.${COLOR_RESET}"
-        exit 1
+        error_notify "Git not found."
+        error_exit "Not yet implemented."
     elif [ -x "$(which git)" ]; then
         if [ ! -d "${_template}/.git" ]; then
             $(which git) clone "${_url}" "${_template}" ||\
-                echo -e "${COLOR_RED}Clone unsuccessful.${COLOR_RESET}"
+                error_notify "Clone unsuccessful."
         elif [ -d "${_template}/.git" ]; then
             cd "${_template}" && $(which git) pull ||\
-                echo -e "${COLOR_RED}Template update unsuccessful.${COLOR_RESET}"
+                error_notify "Template update unsuccessful."
         fi
     fi
 
@@ -353,8 +341,7 @@ if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != 
         HW_MACHINE="i386"
         HW_MACHINE_ARCH="i386"
     else
-        echo -e "${COLOR_RED}Unsupported architecture.${COLOR_RESET}"
-        exit 1
+        error_exit "Unsupported architecture."
     fi
 fi
 

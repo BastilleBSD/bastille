@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille export TARGET.${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille export TARGET"
 }
 
 # Handle special-case commands first
@@ -49,13 +48,6 @@ fi
 
 TARGET="${1}"
 shift
-
-error_notify()
-{
-    # Notify message on error and exit
-    echo -e "$*" >&2
-    exit 1
-}
 
 jail_export()
 {
@@ -84,7 +76,7 @@ jail_export()
         fi
 
         if [ "$?" -ne 0 ]; then
-            error_notify "${COLOR_RED}Failed to export '${TARGET}' container.${COLOR_RESET}"
+            error_exit "Failed to export '${TARGET}' container."
         else
             # Generate container checksum file
             cd "${bastille_backupsdir}"
@@ -93,7 +85,7 @@ jail_export()
             exit 0
         fi
     else
-        error_notify "${COLOR_RED}Container '${TARGET}' does not exist.${COLOR_RESET}"
+        error_exit "Container '${TARGET}' does not exist."
     fi
 }
 
@@ -106,14 +98,14 @@ fi
 
 # Check if backups directory/dataset exist
 if [ ! -d "${bastille_backupsdir}" ]; then
-    error_notify "${COLOR_RED}Backups directory/dataset does not exist, See 'bastille bootstrap'.${COLOR_RESET}"
+    error_exit "Backups directory/dataset does not exist. See 'bastille bootstrap'."
 fi
 
 # Check if is a ZFS system
 if [ "${bastille_zfs_enable}" != "YES" ]; then
     # Check if container is running and ask for stop in UFS systems
     if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-        error_notify "${COLOR_RED}${TARGET} is running, See 'bastille stop'.${COLOR_RESET}"
+        error_exit "${TARGET} is running. See 'bastille stop'."
     fi
 fi
 

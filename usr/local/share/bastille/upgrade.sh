@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille upgrade release newrelease.${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille upgrade release newrelease"
 }
 
 # Handle special-case commands first.
@@ -52,14 +51,11 @@ shift
 NEWRELEASE="$1"
 
 if freebsd-version | grep -qi HBSD; then
-    echo -e "${COLOR_RED}Not yet supported on HardenedBSD.${COLOR_RESET}"
-    exit 1
+    error_exit "Not yet supported on HardenedBSD."
 fi
-
 
 if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
     freebsd-update -b "${bastille_releasesdir}/${RELEASE}" -r "${NEWRELEASE}" upgrade
 else
-    echo -e "${COLOR_RED}${RELEASE} not found. See bootstrap.${COLOR_RESET}"
-    exit 1
+    error_exit "${RELEASE} not found. See 'bastille bootstrap'."
 fi
