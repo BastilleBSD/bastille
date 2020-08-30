@@ -41,19 +41,8 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 1 ]; then
     usage
-fi
-
-TARGET="${1}"
-shift
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
 fi
 
 for _jail in ${JAILS}; do

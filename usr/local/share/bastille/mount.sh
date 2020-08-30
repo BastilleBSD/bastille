@@ -44,18 +44,7 @@ esac
 
 if [ $# -lt 2 ]; then
     usage
-fi
-
-TARGET=$1
-shift
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-else
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
-
-if [ $# -eq 2 ]; then
+elif [ $# -eq 2 ]; then
     _fstab="$@ nullfs ro 0 0"
 else
     _fstab="$@"

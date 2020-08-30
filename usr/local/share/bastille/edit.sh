@@ -42,24 +42,14 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+if [ $# -gt 1 ]; then
     usage
-fi
-
-TARGET="${1}"
-if [ $# == 2 ]; then
-    TARGET_FILENAME="${2}"
+elif [ $# -eq 1 ]; then
+    TARGET_FILENAME="${1}"
 fi
 
 if [ -z "${EDITOR}" ]; then
     EDITOR=vi
-fi
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(bastille list jails)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(bastille list jails | awk "/^${TARGET}$/")
 fi
 
 for _jail in ${JAILS}; do

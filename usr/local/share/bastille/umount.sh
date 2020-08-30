@@ -42,21 +42,11 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
-TARGET=$1
-shift
-
 MOUNT_PATH=$1
-shift
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-else
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"

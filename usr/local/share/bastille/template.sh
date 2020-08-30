@@ -42,22 +42,11 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+if [ $# -ne 1 ]; then
     bastille_usage
 fi
 
-TARGET="${1}"
-shift
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
-
 TEMPLATE="${1}"
-shift
 
 case ${TEMPLATE} in
     http?://github.com/*/*|http?://gitlab.com/*/*)

@@ -42,24 +42,8 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -ne 0 ]; then
     usage
-fi
-
-TARGET="${1}"
-shift
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-    ## check if exist or not running
-    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-        error_exit "[${TARGET}]: Not found."
-    elif [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "[${TARGET}]: Not started."
-    fi
 fi
 
 for _jail in ${JAILS}; do

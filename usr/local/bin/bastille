@@ -133,20 +133,48 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-esac
+bootstrap|create|destroy|import|list|rdr|restart|start|update|upgrade|verify)
+    # Nothing "extra" to do for these commands. -- cwells
+    ;;
+clone|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
+    # Parse the target and ensure it exists. -- cwells
+    if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
+        PARAMS='help'
+    elif [ "${1}" != 'help' ] && [ "${1}" != '-h' ] && [ "${1}" != '--help' ]; then
+        TARGET="${1}"
+        shift
 
-# Filter out all non-commands
-case "${CMD}" in
-bootstrap|clone|cmd|console|convert|cp|create)
+        if [ "${TARGET}" = 'ALL' ]; then
+            JAILS=$(jls name)
+        else
+            JAILS=$(jls name | awk "/^${TARGET}$/")
+
+            # Ensure the target exists. -- cwells
+            if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+                error_exit "[${TARGET}]: Not found."
+            fi
+
+            case "${CMD}" in
+            cmd|console|htop|pkg|service|stop|sysrc|template|top)
+                # Require the target to be running. -- cwells
+                if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
+                    error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+                fi
+                ;;
+            convert|rename)
+                # Require the target to be stopped. -- cwells
+                if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
+                    error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
+                fi
+                ;;
+            esac
+        fi
+        export TARGET
+        export JAILS
+    fi
     ;;
-destroy|edit|export|htop|import|limits|list|mount)
-    ;;
-pkg|rdr|rename|restart|service|start|stop|sysrc|umount)
-    ;;
-template|top|update|upgrade|verify|zfs)
-    ;;
-*)
-usage
+*) # Filter out all non-commands
+    usage
     ;;
 esac
 
@@ -157,7 +185,11 @@ if [ -f "${SCRIPTPATH}" ]; then
 
     : "${SH:=sh}"
 
-    exec "${SH}" "${SCRIPTPATH}" "$@"
+    if [ -n "${PARAMS}" ]; then
+        exec "${SH}" "${SCRIPTPATH}" "${PARAMS}"
+    else
+        exec "${SH}" "${SCRIPTPATH}" "$@"
+    fi
 else
     error_exit "${SCRIPTPATH} not found."
 fi

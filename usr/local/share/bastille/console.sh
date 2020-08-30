@@ -31,7 +31,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille console TARGET [user]'."
+    error_exit "Usage: bastille console TARGET [user]'"
 }
 
 # Handle special-case commands first.
@@ -41,20 +41,11 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+if [ $# -gt 1 ]; then
     usage
 fi
 
-TARGET="${1}"
-shift
 USER="${1}"
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
 
 validate_user() {
     if jexec -l "${_jail}" id "${USER}" >/dev/null 2>&1; then

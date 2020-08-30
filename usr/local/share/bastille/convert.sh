@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille convert TARGET."
+    error_exit "Usage: bastille convert TARGET"
 }
 
 # Handle special-case commands first.
@@ -42,12 +42,9 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -ne 0 ]; then
     usage
 fi
-
-TARGET="${1}"
-shift
 
 convert_symlinks() {
     # Work with the symlinks, revert on first cp error
@@ -130,11 +127,6 @@ start_convert() {
         error_exit "${TARGET} not found. See 'bastille create'."
     fi
 }
-
-# Check if container is running
-if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-    error_exit "${TARGET} is running. See 'bastille stop'."
-fi
 
 # Check if is a thin container
 if [ ! -d "${bastille_jailsdir}/${TARGET}/root/.bastille" ]; then
