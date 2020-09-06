@@ -631,8 +631,8 @@ Templates](https://gitlab.com/BastilleBSD-Templates)?
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the container automatically.
 
-Currently supported template hooks are: `LIMITS`, `INCLUDE`, `PRE`, `FSTAB`,
-`PKG`, `OVERLAY`, `SYSRC`, `SERVICE`, `CMD`.
+Currently supported template hooks are: `ARG`, `LIMITS`, `INCLUDE`, `PRE`,
+ `FSTAB`, `PKG`, `OVERLAY`, `SYSRC`, `SERVICE`, `CMD`, `RENDER`.
 Planned template hooks include: `PF`, `LOG`
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
@@ -655,17 +655,19 @@ echo "usr" > /usr/local/bastille/templates/username/base-template/OVERLAY
 Template hooks are executed in specific order and require specific syntax to
 work as expected. This table outlines that order and those requirements:
 
-| SUPPORTED | format              | example                                        |
-|-----------|---------------------|------------------------------------------------|
-| LIMITS    | resource value      | memoryuse 1G                                   |
-| INCLUDE   | template path/URL   | http?://TEMPLATE_URL or username/base-template |
-| PRE       | /bin/sh command     | mkdir -p /usr/local/path                       |
-| FSTAB     | fstab syntax        | /host/path container/path nullfs ro 0 0        |
-| PKG       | port/pkg name(s)    | vim-console zsh git-lite tree htop             |
-| OVERLAY   | paths (one/line)    | etc usr                                        |
-| SYSRC     | sysrc command(s)    | nginx_enable=YES                               |
-| SERVICE   | service command(s)  | nginx restart                                  |
-| CMD       | /bin/sh command     | /usr/bin/chsh -s /usr/local/bin/zsh            |
+| SUPPORTED | format                | example                                        |
+|-----------|-----------------------|------------------------------------------------|
+| ARG       | name=value (one/line) | domain=example.com (omit value for no default) |
+| LIMITS    | resource value        | memoryuse 1G                                   |
+| INCLUDE   | template path/URL     | http?://TEMPLATE_URL or username/base-template |
+| PRE       | /bin/sh command       | mkdir -p /usr/local/path                       |
+| FSTAB     | fstab syntax          | /host/path container/path nullfs ro 0 0        |
+| PKG       | port/pkg name(s)      | vim-console zsh git-lite tree htop             |
+| OVERLAY   | paths (one/line)      | etc usr                                        |
+| SYSRC     | sysrc command(s)      | nginx_enable=YES                               |
+| SERVICE   | service command(s)    | nginx restart                                  |
+| CMD       | /bin/sh command       | /usr/bin/chsh -s /usr/local/bin/zsh            |
+| RENDER    | paths (one/line)      | /usr/local/etc/nginx                           |
 
 | PLANNED | format           | example                                                        |
 |---------|------------------|----------------------------------------------------------------|
@@ -673,6 +675,12 @@ work as expected. This table outlines that order and those requirements:
 | LOG     | path             | /var/log/nginx/access.log                                      |
 
 Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
+
+Any name provided in the ARG file can be used as a variable in the other hooks.
+For example, `name=value` in the ARG file will cause instances of `${name}`
+to be replaced with `value`. The `RENDER` hook can be used to specify files or
+directories whose contents should have the variables replaced. Values can be specified
+either through the command line when applying the template or as a default in the ARG file.
 
 In addition to supporting template hooks, Bastille supports overlaying files
 into the container. This is done by placing the files in their full path, using the
@@ -705,11 +713,21 @@ create a `Bastillefile` inside the base template directory. Each line in
 the file should begin with an uppercase reference to a Bastille command
 followed by its arguments (omitting the target, which is deduced from the
 `template` arguments). Lines beginning with `#` are treated as comments.
+Variables can also be defined using `ARG` with one `name=value` pair per
+line. Subsequent references to `${name}` would be replaced by `value`.
+Note that argument values are not available for use until after the point
+at which they are defined in the file.
 
 Bastillefile example:
 
 ```shell
 LIMITS memoryuse 1G
+
+# This value can be overridden when the template is applied.
+ARG domain=example.com
+
+# Replace all argument variables inside the nginx config.
+RENDER /usr/local/etc/nginx
 
 # Install and start nginx.
 PKG nginx
@@ -718,6 +736,9 @@ SERVICE nginx restart
 
 # Copy files to nginx.
 CP www/ usr/local/www/nginx-dist/
+
+# Use the "domain" arg to create a file on the server containing the domain.
+CMD echo "${domain}" > /usr/local/www/nginx-dist/domain.txt
 
 # Create a file on the server containing the jail's hostname.
 CMD hostname > /usr/local/www/nginx-dist/hostname.txt
@@ -735,8 +756,12 @@ Bastille includes a `template` sub-command. This sub-command requires a target
 and a template name. As covered in the previous section, template names
 correspond to directory names in the `bastille/templates` directory.
 
+To provide values for arguments defined by `ARG` in the template, pass the
+optional `--arg` parameter as many times as needed. Alternatively, use
+`--arg-file <fileName>` with one `name=value` pair per line.
+
 ```shell
-ishmael ~ # bastille template folsom username/base
+ishmael ~ # bastille template folsom username/base --arg domain=example.com
 [folsom]:
 Copying files...
 Copy complete.
