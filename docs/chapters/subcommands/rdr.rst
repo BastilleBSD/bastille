@@ -9,7 +9,7 @@ as described in the Networking section).
 
 Note: you need to be careful if host services are configured to run
 on all interfaces as this will include the jail interface - you should
-sepcify the interface they run on in rc.conf (or other config files)
+specify the interface they run on in rc.conf (or other config files)
 
 .. code-block:: shell
 
