@@ -51,22 +51,12 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -lt 3 ]; then
+if [ $# -ne 2 ]; then
     usage
 fi
 
-TARGET="${1}"
-OPTION="${2}"
-VALUE="${3}"
-shift
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
+OPTION="${1}"
+VALUE="${2}"
 
 for _jail in ${JAILS}; do
     echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"

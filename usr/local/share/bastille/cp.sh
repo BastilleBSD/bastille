@@ -42,20 +42,12 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 3 ] || [ $# -lt 3 ]; then
+if [ $# -ne 2 ]; then
     usage
 fi
 
-TARGET="${1}"
-CPSOURCE="${2}"
-CPDEST="${3}"
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
+CPSOURCE="${1}"
+CPDEST="${2}"
 
 for _jail in ${JAILS}; do
     bastille_jail_path="$(jls -j "${_jail}" path)"

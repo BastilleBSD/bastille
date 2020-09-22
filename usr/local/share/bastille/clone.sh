@@ -42,14 +42,12 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 3 ]; then
+if [ $# -ne 2 ]; then
     usage
 fi
 
-TARGET="${1}"
-NEWNAME="${2}"
-IP="${3}"
-shift
+NEWNAME="${1}"
+IP="${2}"
 
 validate_ip() {
     IPX_ADDR="ip4.addr"
@@ -146,39 +144,35 @@ update_fstab() {
 
 clone_jail() {
     # Attempt container clone
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        echo -e "${COLOR_GREEN}Attempting to clone '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
-        if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
-            if [ "${bastille_zfs_enable}" = "YES" ]; then
-                if [ -n "${bastille_zfs_zpool}" ]; then
-                    # Replicate the existing container
-                    DATE=$(date +%F-%H%M%S)
-                    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
-                    zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+    echo -e "${COLOR_GREEN}Attempting to clone '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
+    if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                # Replicate the existing container
+                DATE=$(date +%F-%H%M%S)
+                zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
+                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
 
-                    # Cleanup source temporary snapshots
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}"
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
+                # Cleanup source temporary snapshots
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}"
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
 
-                    # Cleanup target temporary snapshots
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
-                fi
-            else
-                # Just clone the jail directory
-                # Check if container is running
-                if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-                    error_exit "${TARGET} is running, See 'bastille stop ${TARGET}'."
-                fi
-
-                # Perform container file copy(archive mode)
-                cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+                # Cleanup target temporary snapshots
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
             fi
         else
-            error_exit "${NEWNAME} already exists."
+            # Just clone the jail directory
+            # Check if container is running
+            if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
+                error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
+            fi
+
+            # Perform container file copy(archive mode)
+            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
         fi
     else
-        error_exit "${TARGET} not found. See bootstrap."
+        error_exit "${NEWNAME} already exists."
     fi
 
     # Generate jail configuration files

@@ -42,50 +42,43 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -ne 0 ]; then
     usage
 fi
-
-TARGET="${1}"
-shift
 
 jail_export()
 {
     # Attempt to export the container
     DATE=$(date +%F-%H%M%S)
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                FILE_EXT="xz"
-                echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive.${COLOR_RESET}"
-                echo -e "${COLOR_GREEN}Sending zfs data stream...${COLOR_RESET}"
-                # Take a recursive temporary snapshot
-                zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
+    if [ "${bastille_zfs_enable}" = "YES" ]; then
+        if [ -n "${bastille_zfs_zpool}" ]; then
+            FILE_EXT="xz"
+            echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive.${COLOR_RESET}"
+            echo -e "${COLOR_GREEN}Sending zfs data stream...${COLOR_RESET}"
+            # Take a recursive temporary snapshot
+            zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
 
-                # Export the container recursively and cleanup temporary snapshots
-                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}" | \
-                xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
-                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_export_${DATE}"
-                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
-            fi
-        else
-            # Create standard backup archive
-            FILE_EXT="txz"
-            echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive...${COLOR_RESET}"
-            cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
-        fi
-
-        if [ "$?" -ne 0 ]; then
-            error_exit "Failed to export '${TARGET}' container."
-        else
-            # Generate container checksum file
-            cd "${bastille_backupsdir}"
-            sha256 -q "${TARGET}_${DATE}.${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
-            echo -e "${COLOR_GREEN}Exported '${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}' successfully.${COLOR_RESET}"
-            exit 0
+            # Export the container recursively and cleanup temporary snapshots
+            zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}" | \
+            xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_export_${DATE}"
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
         fi
     else
-        error_exit "Container '${TARGET}' does not exist."
+        # Create standard backup archive
+        FILE_EXT="txz"
+        echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive...${COLOR_RESET}"
+        cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
+    fi
+
+    if [ "$?" -ne 0 ]; then
+        error_exit "Failed to export '${TARGET}' container."
+    else
+        # Generate container checksum file
+        cd "${bastille_backupsdir}"
+        sha256 -q "${TARGET}_${DATE}.${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
+        echo -e "${COLOR_GREEN}Exported '${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}' successfully.${COLOR_RESET}"
+        exit 0
     fi
 }
 

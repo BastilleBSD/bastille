@@ -84,34 +84,21 @@ if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "ZFS zpool not defined."
 fi
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 1 ]; then
     usage
 fi
 
-TARGET="${1}"
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
-
-case "$2" in
+case "$1" in
 set)
-    ATTRIBUTE=$3
-    JAILS=${JAILS}
+    ATTRIBUTE=$2
     zfs_set_value
     ;;
 get)
-    ATTRIBUTE=$3
-    JAILS=${JAILS}
+    ATTRIBUTE=$2
     zfs_get_value
     ;;
 snap|snapshot)
-    TAG=$3
-    JAILS=${JAILS}
+    TAG=$2
     zfs_snapshot
     ;;
 df|usage)

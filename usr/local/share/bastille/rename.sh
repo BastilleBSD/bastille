@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rename [TARGET] [NEW_NAME]"
+    error_exit "Usage: bastille rename TARGET NEW_NAME"
 }
 
 validate_name() {
@@ -50,13 +50,11 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 2 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
-TARGET="${1}"
-NEWNAME="${2}"
-shift
+NEWNAME="${1}"
 
 update_jailconf() {
     # Update jail.conf
@@ -90,43 +88,39 @@ update_fstab() {
 
 change_name() {
     # Attempt container name change
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        echo -e "${COLOR_GREEN}Attempting to rename '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
-                # Check and rename container ZFS dataset accordingly
-                # Perform additional checks in case of non-zfs existing containers
-                if zfs list | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
-                    if ! zfs rename -f "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"; then
-                        error_exit "Can't rename '${TARGET}' dataset."
-                    fi
-                else
-                    # Check and rename container directory instead
-                    if ! zfs list | grep -qw "jails/${TARGET}$"; then
-                        mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
-                    fi
-                fi
-            fi
-        else
-            # Check if container is a zfs/dataset before rename attempt
-            # Perform additional checks in case of bastille.conf miss-configuration
-            if zfs list | grep -qw "jails/${TARGET}$"; then
-                ZFS_DATASET_ORIGIN=$(zfs list | grep -w "jails/${TARGET}$" | awk '{print $1}')
-                ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
-                if [ -n "${ZFS_DATASET_ORIGIN}" ] && [ -n "${ZFS_DATASET_TARGET}" ]; then
-                    if ! zfs rename -f "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"; then
-                        error_exit "Can't rename '${TARGET}' dataset."
-                    fi
-                else
-                    error_exit "Can't determine the zfs origin path of '${TARGET}'."
+    echo -e "${COLOR_GREEN}Attempting to rename '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
+    if [ "${bastille_zfs_enable}" = "YES" ]; then
+        if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
+            # Check and rename container ZFS dataset accordingly
+            # Perform additional checks in case of non-zfs existing containers
+            if zfs list | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
+                if ! zfs rename -f "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"; then
+                    error_exit "Can't rename '${TARGET}' dataset."
                 fi
             else
-                # Just rename the jail directory
-                mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+                # Check and rename container directory instead
+                if ! zfs list | grep -qw "jails/${TARGET}$"; then
+                    mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+                fi
             fi
         fi
     else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
+        # Check if container is a zfs/dataset before rename attempt
+        # Perform additional checks in case of bastille.conf miss-configuration
+        if zfs list | grep -qw "jails/${TARGET}$"; then
+            ZFS_DATASET_ORIGIN=$(zfs list | grep -w "jails/${TARGET}$" | awk '{print $1}')
+            ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
+            if [ -n "${ZFS_DATASET_ORIGIN}" ] && [ -n "${ZFS_DATASET_TARGET}" ]; then
+                if ! zfs rename -f "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"; then
+                    error_exit "Can't rename '${TARGET}' dataset."
+                fi
+            else
+                error_exit "Can't determine the zfs origin path of '${TARGET}'."
+            fi
+        else
+            # Just rename the jail directory
+            mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+        fi
     fi
 
     # Update jail configuration files accordingly
@@ -141,16 +135,14 @@ change_name() {
     fi
 }
 
-## check if a running jail matches name or already exist
-if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
-    error_exit "Warning: ${TARGET} is running."
-elif [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
-    error_exit "Jail: ${NEWNAME} already exists."
-fi
-
 ## validate jail name
 if [ -n "${NEWNAME}" ]; then
     validate_name
+fi
+
+## check if a jail already exists with the new name
+if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
+    error_exit "Jail: ${NEWNAME} already exists."
 fi
 
 change_name
