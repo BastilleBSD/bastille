@@ -121,7 +121,7 @@ scrub in on $ext_if all fragment reassemble
 set skip on lo
 
 table <jails> persist
-nat on $ext_if from <jails> to any -> ($ext_if)
+nat on $ext_if from <jails> to any -> ($ext_if:0)
 
 ## static rdr example
 # rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
@@ -141,6 +141,9 @@ pass in inet proto tcp from any to any port ssh flags S/SA keep state
 ```
 
 * Make sure to change the `ext_if` variable to match your host system interface.
+* Note that if multiple interface aliases are in place, the index `($ext_if:0)`
+can be changed accordingly; so if you want to send traffic out the second IP alias
+of the interface, change the value to `($ext_if:1)` and so on.
 * Make sure to include the last line (`port ssh`) or you'll end up locked
 out of a remote system.
 
@@ -149,7 +152,7 @@ containers are:
 
 ```
 table <jails> persist
-nat on $ext_if from <jails> to any -> ($ext_if)
+nat on $ext_if from <jails> to any -> ($ext_if:0)
 
 ## rdr example
 ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
