@@ -28,25 +28,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille rename [TARGET] [NEW_NAME].${COLOR_RESET}"
-    exit 1
-}
-
-error_notify() {
-    # Notify message on error and exit
-    echo -e "$*" >&2
-    exit 1
+    error_exit "Usage: bastille rename [TARGET] [NEW_NAME]"
 }
 
 validate_name() {
     local NAME_VERIFY=${NEWNAME}
     local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
     if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
-        error_notify "${COLOR_RED}Container names may not contain special characters!${COLOR_RESET}"
+        error_exit "Container names may not contain special characters!"
     fi
 }
 
@@ -105,7 +98,7 @@ change_name() {
                 # Perform additional checks in case of non-zfs existing containers
                 if zfs list | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
                     if ! zfs rename -f "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"; then
-                        error_notify "${COLOR_RED}Can't rename '${TARGET}' dataset.${COLOR_RESET}"
+                        error_exit "Can't rename '${TARGET}' dataset."
                     fi
                 else
                     # Check and rename container directory instead
@@ -122,10 +115,10 @@ change_name() {
                 ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
                 if [ -n "${ZFS_DATASET_ORIGIN}" ] && [ -n "${ZFS_DATASET_TARGET}" ]; then
                     if ! zfs rename -f "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"; then
-                        error_notify "${COLOR_RED}Can't rename '${TARGET}' dataset.${COLOR_RESET}"
+                        error_exit "Can't rename '${TARGET}' dataset."
                     fi
                 else
-                    error_notify "${COLOR_RED}Can't determine the zfs origin path of '${TARGET}'.${COLOR_RESET}"
+                    error_exit "Can't determine the zfs origin path of '${TARGET}'."
                 fi
             else
                 # Just rename the jail directory
@@ -133,7 +126,7 @@ change_name() {
             fi
         fi
     else
-        error_notify "${COLOR_RED}${TARGET} not found. See bootstrap.${COLOR_RESET}"
+        error_exit "${TARGET} not found. See 'bastille bootstrap'."
     fi
 
     # Update jail configuration files accordingly
@@ -142,7 +135,7 @@ change_name() {
 
     # Check exit status and notify
     if [ "$?" -ne 0 ]; then
-        error_notify "${COLOR_RED}An error has occurred while attempting to rename '${TARGET}'.${COLOR_RESET}"
+        error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
         echo -e "${COLOR_GREEN}Renamed '${TARGET}' to '${NEWNAME}' successfully.${COLOR_RESET}"
     fi
@@ -150,9 +143,9 @@ change_name() {
 
 ## check if a running jail matches name or already exist
 if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
-    error_notify "${COLOR_RED}Warning: ${TARGET} is running or the name does match.${COLOR_RESET}"
+    error_exit "Warning: ${TARGET} is running."
 elif [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
-    error_notify "${COLOR_RED}Jail: ${NEWNAME} already exist.${COLOR_RESET}"
+    error_exit "Jail: ${NEWNAME} already exists."
 fi
 
 ## validate jail name

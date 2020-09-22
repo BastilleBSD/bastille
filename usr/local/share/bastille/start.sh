@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille start TARGET${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille start TARGET"
 }
 
 # Handle special-case commands first.
@@ -57,14 +56,14 @@ if [ "${TARGET}" != 'ALL' ]; then
     JAILS=$(bastille list jails | awk "/^${TARGET}$/")
     ## check if exist
     if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-        echo -e "${COLOR_RED}[${TARGET}]: Not found.${COLOR_RESET}"
+        error_exit "[${TARGET}]: Not found."
     fi
 fi
 
 for _jail in ${JAILS}; do
     ## test if running
     if [ "$(jls name | awk "/^${_jail}$/")" ]; then
-        echo -e "${COLOR_RED}[${_jail}]: Already started.${COLOR_RESET}"
+        error_notify "[${_jail}]: Already started."
 
     ## test if not running
     elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
@@ -72,8 +71,7 @@ for _jail in ${JAILS}; do
         ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
         if [ -n "${ip}" ]; then
             if ifconfig | grep -w "${ip}" >/dev/null; then
-                echo -e "${COLOR_RED}Error: IP address (${ip}) already in use.${COLOR_RESET}"
-                exit 1
+                error_exit "Error: IP address (${ip}) already in use."
             fi
         fi
 

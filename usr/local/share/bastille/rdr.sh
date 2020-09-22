@@ -25,12 +25,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille rdr TARGET [clear] | [list] | [tcp <host_port> <jail_port>] | [udp <host_port> <jail_port>]${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille rdr TARGET [clear] | [list] | [tcp <host_port> <jail_port>] | [udp <host_port> <jail_port>]"
 }
 
 # Handle special-case commands first.
@@ -49,35 +48,30 @@ shift
 
 # Can only redirect to single jail
 if [ "${TARGET}" = 'ALL' ]; then
-    echo -e "${COLOR_RED}Can only redirect to single jail${COLOR_RESET}"
-    exit 1
+    error_exit "Can only redirect to a single jail."
 fi
 
 # Check jail name valid
 JAIL_NAME=$(jls -j "${TARGET}" name 2>/dev/null)
 if [ -z "${JAIL_NAME}" ]; then
-    echo -e "${COLOR_RED}Jail not found: ${TARGET}${COLOR_RESET}"
-    exit 1
+    error_exit "Jail not found: ${TARGET}"
 fi
 
 # Check jail ip4 address valid
 JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
 if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
-    echo -e "${COLOR_RED}Jail IP not found: ${TARGET}${COLOR_RESET}"
-    exit 1
+    error_exit "Jail IP not found: ${TARGET}"
 fi
 
 # Check rdr-anchor is setup in pf.conf
 if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
-    echo -e "${COLOR_RED}rdr-anchor not found in pf.conf${COLOR_RESET}"
-    exit 1
+    error_exit "rdr-anchor not found in pf.conf"
 fi
 
 # Check ext_if is setup in pf.conf
 EXT_IF=$(grep '^[[:space:]]*ext_if[[:space:]]*=' /etc/pf.conf)
 if [ -z "${JAIL_NAME}" ]; then
-    echo -e "${COLOR_RED}ext_if not defined in pf.conf${COLOR_RESET}"
-    exit 1
+    error_exit "ext_if not defined in pf.conf"
 fi
 
 while [ $# -gt 0 ]; do

@@ -28,17 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
-usage() {
-    echo -e "${COLOR_RED}Usage: bastille clone [TARGET] [NEW_NAME] [IPADRESS].${COLOR_RESET}"
-    exit 1
-}
 
-error_notify() {
-    # Notify message on error and exit
-    echo -e "$*" >&2
-    exit 1
+usage() {
+    error_exit "Usage: bastille clone [TARGET] [NEW_NAME] [IPADRESS]"
 }
 
 # Handle special-case commands first
@@ -73,8 +67,7 @@ validate_ip() {
             set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    echo "Invalid: (${TEST_IP})"
-                    exit 1
+                    error_exit "Invalid: (${TEST_IP})"
                 fi
             done
             if ifconfig | grep -qw "${TEST_IP}"; then
@@ -83,8 +76,7 @@ validate_ip() {
                 echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
             fi
         else
-            echo -e "${COLOR_RED}Invalid: (${IP}).${COLOR_RESET}"
-            exit 1
+            error_exit "Invalid: (${IP})."
         fi
     fi
 }
@@ -176,17 +168,17 @@ clone_jail() {
                 # Just clone the jail directory
                 # Check if container is running
                 if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-                    error_notify "${COLOR_RED}${TARGET} is running, See 'bastille stop ${TARGET}'.${COLOR_RESET}"
+                    error_exit "${TARGET} is running, See 'bastille stop ${TARGET}'."
                 fi
 
                 # Perform container file copy(archive mode)
                 cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
             fi
         else
-            error_notify "${COLOR_RED}${NEWNAME} already exists.${COLOR_RESET}"
+            error_exit "${NEWNAME} already exists."
         fi
     else
-        error_notify "${COLOR_RED}${TARGET} not found. See bootstrap.${COLOR_RESET}"
+        error_exit "${TARGET} not found. See bootstrap."
     fi
 
     # Generate jail configuration files
@@ -195,7 +187,7 @@ clone_jail() {
 
     # Display the exist status
     if [ "$?" -ne 0 ]; then
-        error_notify "${COLOR_RED}An error has occurred while attempting to clone '${TARGET}'.${COLOR_RESET}"
+        error_exit "An error has occurred while attempting to clone '${TARGET}'."
     else
         echo -e "${COLOR_GREEN}Cloned '${TARGET}' to '${NEWNAME}' successfully.${COLOR_RESET}"
     fi
@@ -203,8 +195,7 @@ clone_jail() {
 
 ## don't allow for dots(.) in container names
 if echo "${NEWNAME}" | grep -q "[.]"; then
-    echo -e "${COLOR_RED}Container names may not contain a dot(.)!${COLOR_RESET}"
-    exit 1
+    error_exit "Container names may not contain a dot(.)!"
 fi
 
 ## check if ip address is valid

@@ -28,35 +28,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/colors.pre.sh
 
-usage() {
-    error_exit "Usage: bastille pkg TARGET command [args]"
+# Notify message on error, but do not exit
+error_notify() {
+    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
-if [ $# -lt 2 ]; then
-    usage
-fi
-
-TARGET="${1}"
-shift
-
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(jls name)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(jls name | awk "/^${TARGET}$/")
-fi
-
-for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    jexec -l "${_jail}" /usr/sbin/pkg "$@"
-    echo
-done
+# Notify message on error and exit
+error_exit() {
+    error_notify $@
+    exit 1
+}

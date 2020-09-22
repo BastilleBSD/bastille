@@ -28,12 +28,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/colors.pre.sh
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    echo -e "${COLOR_RED}Usage: bastille convert TARGET.${COLOR_RESET}"
-    exit 1
+    error_exit "Usage: bastille convert TARGET."
 }
 
 # Handle special-case commands first.
@@ -49,13 +48,6 @@ fi
 
 TARGET="${1}"
 shift
-
-error_notify()
-{
-    # Notify message on error and exit
-    echo -e "$*" >&2
-    exit 1
-}
 
 convert_symlinks() {
     # Work with the symlinks, revert on first cp error
@@ -86,13 +78,13 @@ convert_symlinks() {
             fi
         done
     else
-        error_notify "${COLOR_RED}Release must be bootstrapped first, See 'bastille bootstrap'.${COLOR_RESET}"
+        error_exit "Release must be bootstrapped first. See 'bastille bootstrap'."
     fi
 }
 
 revert_convert() {
     # Revert the conversion on first cp error
-    echo -e "${COLOR_RED}A problem has occurred while copying the files, reverting changes...${COLOR_RESET}"
+    error_notify "A problem has occurred while copying the files. Reverting changes..."
     for _link in ${SYMLINKS}; do
         if [ -d "${_link}" ]; then
             chflags -R noschg "${bastille_jailsdir}/${TARGET}/root/${_link}"
@@ -106,7 +98,7 @@ revert_convert() {
             mv "${_link}.old" "${_link}"
         fi
     done
-    error_notify "${COLOR_GREEN}Changes for '${TARGET}' has been reverted.${COLOR_RESET}"
+    error_exit "Changes for '${TARGET}' has been reverted."
 }
 
 start_convert() {
@@ -132,29 +124,29 @@ start_convert() {
             echo -e "${COLOR_GREEN}Conversion of '${TARGET}' completed successfully!${COLOR_RESET}"
             exit 0
         else
-            error_notify "${COLOR_RED}Can't determine release version, See 'bastille bootstrap'.${COLOR_RESET}"
+            error_exit "Can't determine release version. See 'bastille bootstrap'."
         fi
     else
-        error_notify "${COLOR_RED}${TARGET} not found. See 'bastille create'.${COLOR_RESET}"
+        error_exit "${TARGET} not found. See 'bastille create'."
     fi
 }
 
 # Check if container is running
 if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-    error_notify "${COLOR_RED}${TARGET} is running, See 'bastille stop'.${COLOR_RESET}"
+    error_exit "${TARGET} is running. See 'bastille stop'."
 fi
 
 # Check if is a thin container
 if [ ! -d "${bastille_jailsdir}/${TARGET}/root/.bastille" ]; then
-    error_notify "${COLOR_RED}${TARGET} is not a thin container.${COLOR_RESET}"
+    error_exit "${TARGET} is not a thin container."
 elif ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-    error_notify "${COLOR_RED}${TARGET} is not a thin container.${COLOR_RESET}"
+    error_exit "${TARGET} is not a thin container."
 fi
 
 # Make sure the user agree with the conversion
 # Be interactive here since this cannot be easily undone
 while :; do
-    echo -e "${COLOR_RED}Warning: container conversion from thin to thick can't be undone!${COLOR_RESET}"
+    error_notify "Warning: container conversion from thin to thick can't be undone!"
     read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
     case ${yn} in
     [Yy]) start_convert;;

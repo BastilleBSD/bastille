@@ -30,19 +30,14 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-bastille_colors_pre() {
-    ## so we can make it colorful
-    . /usr/local/share/bastille/colors.pre.sh
-}
+. /usr/local/share/bastille/common.sh
 
 ## root check first.
 bastille_root_check() {
     if [ "$(id -u)" -ne 0 ]; then
-        bastille_colors_pre
         ## permission denied
-        echo -e "${COLOR_RED}Bastille: Permission Denied${COLOR_RESET}" 1>&2
-        echo -e "${COLOR_RED}root / sudo / doas required${COLOR_RESET}" 1>&2
-        exit 1
+        error_notify "Bastille: Permission Denied"
+        error_exit "root / sudo / doas required"
     fi
 }
 
@@ -51,9 +46,7 @@ bastille_root_check
 ## check for config existance
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        bastille_colors_pre
-        echo -e "${COLOR_RED}Missing Configuration${COLOR_RESET}" 1>&2
-        exit 1
+        error_exit "Missing Configuration"
     fi
 }
 
@@ -68,11 +61,8 @@ bastille_perms_check() {
     if [ -d "${bastille_prefix}" ]; then
         BASTILLE_PREFIX_PERMS=$(stat -f "%Op" "${bastille_prefix}")
         if [ "${BASTILLE_PREFIX_PERMS}" != 40750 ]; then
-            bastille_colors_pre
-            echo -e "${COLOR_RED}Insecure permissions on ${bastille_prefix}${COLOR_RESET}" 1>&2
-            echo -e "${COLOR_RED}Try: chmod 0750 ${bastille_prefix}${COLOR_RESET}" 1>&2
-            echo
-            exit 1
+            error_notify "Insecure permissions on ${bastille_prefix}"
+            error_exit "Try: chmod 0750 ${bastille_prefix}"
         fi
     fi
 }
@@ -137,7 +127,6 @@ shift
 # Handle special-case commands first.
 case "${CMD}" in
 version|-v|--version)
-    bastille_colors_pre
     echo -e "${COLOR_GREEN}${BASTILLE_VERSION}${COLOR_RESET}"
     exit 0
     ;;
@@ -170,7 +159,5 @@ if [ -f "${SCRIPTPATH}" ]; then
 
     exec "${SH}" "${SCRIPTPATH}" "$@"
 else
-    bastille_colors_pre
-    echo -e "${COLOR_RED}${SCRIPTPATH} not found.${COLOR_RESET}" 1>&2
-    exit 1
+    error_exit "${SCRIPTPATH} not found."
 fi
