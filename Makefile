@@ -5,7 +5,7 @@ all:
 install:
 	@echo "Installing Bastille"
 	@echo
-	@cp -av usr /
+	@cp -Rv usr /
 	@echo
 	@echo "This method is for testing / development."
 
