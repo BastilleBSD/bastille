@@ -145,7 +145,7 @@ clone|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|st
         shift
 
         if [ "${TARGET}" = 'ALL' ]; then
-            JAILS=$(jls name)
+            JAILS=$(ls ${bastille_jailsdir})
         else
             JAILS=$(jls name | awk "/^${TARGET}$/")
 
