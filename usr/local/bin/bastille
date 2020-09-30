@@ -145,15 +145,14 @@ clone|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|st
         shift
 
         if [ "${TARGET}" = 'ALL' ]; then
-	    _JAILS=$(jls name)
-	    JAILS=""
-	    for _jail in ${_JAILS}; do
-		_JAILPATH=$(jls -j "${_jail}" path)
-	        if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
-	            JAILS="${JAILS} ${_jail}"
-		fi
+            _JAILS=$(jls name)
+            JAILS=""
+            for _jail in ${_JAILS}; do
+                _JAILPATH=$(jls -j "${_jail}" path)
+                if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
+                    JAILS="${JAILS} ${_jail}"
+                fi
             done
-
         else
             JAILS=$(jls name | awk "/^${TARGET}$/")
 
