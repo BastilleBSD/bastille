@@ -161,7 +161,7 @@ Create the firewall rules:
 
   # If you are using dynamic rdr also need to ensure that the external port
   # range you are using is open
-  # pass in inet proto tcp any to any port <rdr-start>:<rdr-end>
+  # pass in inet proto tcp from any to any port <rdr-start>:<rdr-end>
 
 - Make sure to change the `ext_if` variable to match your host system interface.
 - Make sure to include the last line (`port ssh`) or you'll end up locked out.
