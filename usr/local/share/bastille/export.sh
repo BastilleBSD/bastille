@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille export TARGET"
+    error_exit "Usage: bastille export TARGET [option]"
 }
 
 # Handle special-case commands first
@@ -42,8 +42,23 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 0 ]; then
+if [ $# -gt 1 ] || [ $# -lt 0 ]; then
     usage
+fi
+
+OPTION="${1}"
+
+# Handle some options
+if [ -n "${OPTION}" ]; then
+    if [ "${OPTION}" = "-t" -o "${OPTION}" = "--txz" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            # Temporarily disable ZFS so we can create a standard backup archive
+            bastille_zfs_enable="NO"
+        fi
+    else
+        error_notify "Invalid option!"
+        usage
+    fi
 fi
 
 jail_export()
