@@ -35,6 +35,20 @@ bastille_usage() {
     error_exit "Usage: bastille template TARGET project/template"
 }
 
+post_command_hook() {
+    _jail=$1
+    _cmd=$2
+    _args=$3
+
+    case $_cmd in
+        rdr)
+            if ! grep -qs "${_args}" "${bastille_jailsdir}/${_jail}/rdr.conf"; then
+                echo "${_args}" >> "${bastille_jailsdir}/${_jail}/rdr.conf"
+            fi
+            echo -e ${_args}
+    esac
+}
+
 # Handle special-case commands first.
 case "$1" in
 help|-h|--help)
@@ -140,6 +154,8 @@ for _jail in ${JAILS}; do
                 unset IFS
                 error_exit "Failed to execute command: ${_cmd}"
             fi
+
+            post_command_hook "${_jail}" "${_cmd}" "${_args}"
         done
         set +f
         unset IFS
