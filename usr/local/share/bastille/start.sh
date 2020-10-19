@@ -86,6 +86,13 @@ for _jail in ${JAILS}; do
             done < "${bastille_jailsdir}/${_jail}/rctl.conf"
         fi
 
+        ## add rdr rules
+        if [ -s "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
+            while read _rules; do
+                bastille rdr "${_jail}" ${_rules}
+            done < "${bastille_jailsdir}/${_jail}/rdr.conf"
+        fi
+
         ## add ip4.addr to firewall table:jails
         if [ -n "${bastille_network_loopback}" ]; then
             if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
