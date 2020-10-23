@@ -163,8 +163,8 @@ for _jail in ${JAILS}; do
 
     for _hook in ${HOOKS}; do
         if [ -s "${bastille_template}/${_hook}" ]; then
-        	# Default command is the lowercase hook name and default args are the line from the file. -- cwells
-        	_cmd=$(echo "${_hook}" | awk '{print tolower($1);}')
+            # Default command is the lowercase hook name and default args are the line from the file. -- cwells
+            _cmd=$(echo "${_hook}" | awk '{print tolower($1);}')
             _args_template='${_line}'
 
             # Override default command/args for some hooks. -- cwells
@@ -195,9 +195,9 @@ for _jail in ${JAILS}; do
                 bastille pkg "${_jail}" audit -F
             else
                 while read _line; do
-                	if [ -z "${_line}" ]; then
-                	    continue
-                	fi
+                    if [ -z "${_line}" ]; then
+                        continue
+                    fi
                     eval "_args=\"${_args_template}\""
                     bastille "${_cmd}" "${_jail}" ${_args} || exit 1
                 done < "${bastille_template}/${_hook}"
