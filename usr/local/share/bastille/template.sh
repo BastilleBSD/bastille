@@ -49,6 +49,62 @@ post_command_hook() {
     esac
 }
 
+get_arg_name() {
+    echo "${1}" | sed -E 's/=.*//'
+}
+
+parse_arg_value() {
+    # Parses the value after = and then escapes back/forward slashes and single quotes in it. -- cwells
+    echo "${1}" | sed -E 's/[^=]+=?//' | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/'\''/'\''\\'\'\''/g'
+}
+
+get_arg_value() {
+    _name_value_pair="${1}"
+    shift
+    _arg_name="$(get_arg_name "${_name_value_pair}")"
+
+    # Remaining arguments in $@ are the script arguments, which take precedence. -- cwells
+    for _script_arg in "$@"; do
+        case ${_script_arg} in
+            --arg)
+                # Parse whatever is next. -- cwells
+                _next_arg='true' ;;
+            *)
+                if [ "${_next_arg}" = 'true' ]; then # This is the parameter after --arg. -- cwells
+                    _next_arg=''
+                    if [ "$(get_arg_name "${_script_arg}")" = "${_arg_name}" ]; then
+                        parse_arg_value "${_script_arg}"
+                        return
+                    fi
+                fi
+                ;;
+        esac
+    done
+
+    # Check the ARG_FILE if one was provided. --cwells
+    if [ -n "${ARG_FILE}" ]; then
+        # To prevent a false empty value, only parse the value if this argument exists in the file. -- cwells
+        if grep "^${_arg_name}=" "${ARG_FILE}" > /dev/null 2>&1; then
+            parse_arg_value "$(grep "^${_arg_name}=" "${ARG_FILE}")"
+            return
+        fi
+    fi
+
+    # Return the default value, which may be empty, from the name=value pair. -- cwells
+    parse_arg_value "${_name_value_pair}"
+}
+
+render() {
+    _file_path="${1}/${2}"
+    if [ -d "${_file_path}" ]; then # Recursively render every file in this directory. -- cwells
+        find "${_file_path}" \( -type d -name .git -prune \) -o -type f -print0 | $(eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}")
+    elif [ -f "${_file_path}" ]; then
+        eval "sed -i '' ${ARG_REPLACEMENTS} '${_file_path}'"
+    else
+        echo -e "${COLOR_YELLOW}Path not found for render: ${2}${COLOR_RESET}"
+    fi
+}
+
 # Handle special-case commands first.
 case "$1" in
 help|-h|--help)
@@ -56,7 +112,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 1 ]; then
+if [ $# -lt 1 ]; then
     bastille_usage
 fi
 
@@ -87,7 +143,27 @@ if [ -z "${JAILS}" ]; then
 fi
 
 if [ -z "${HOOKS}" ]; then
-    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD'
+    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
+fi
+
+# Check for an --arg-file parameter. -- cwells
+for _script_arg in "$@"; do
+    case ${_script_arg} in
+        --arg-file)
+            # Parse whatever is next. -- cwells
+            _next_arg='true' ;;
+        *)
+            if [ "${_next_arg}" = 'true' ]; then # This is the parameter after --arg-file. -- cwells
+                _next_arg=''
+                ARG_FILE="${_script_arg}"
+                break
+            fi
+            ;;
+    esac
+done
+
+if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
+    error_exit "File not found: ${ARG_FILE}"
 fi
 
 ## global variables
@@ -113,6 +189,23 @@ for _jail in ${JAILS}; do
         fi
     fi
 
+    # This is parsed outside the HOOKS loop so an ARG file can be used with a Bastillefile. -- cwells
+    ARG_REPLACEMENTS=''
+    if [ -s "${bastille_template}/ARG" ]; then
+        while read _line; do
+            if [ -z "${_line}" ]; then
+                continue
+            fi
+            _arg_name=$(get_arg_name "${_line}")
+            _arg_value=$(get_arg_value "${_line}" "$@")
+            if [ -z "${_arg_value}" ]; then
+                echo -e "${COLOR_YELLOW}No value provided for arg: ${_arg_name}${COLOR_RESET}"
+            fi
+            # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
+            ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
+        done < "${bastille_template}/ARG"
+    fi
+
     if [ -s "${bastille_template}/Bastillefile" ]; then
         # Ignore blank lines and comments. -- cwells
         SCRIPT=$(grep -v '^\s*$' "${bastille_template}/Bastillefile" | grep -v '^\s*#')
@@ -121,18 +214,26 @@ for _jail in ${JAILS}; do
 '
         set -f
         for _line in ${SCRIPT}; do
+            # First word converted to lowercase is the Bastille command. -- cwells
             _cmd=$(echo "${_line}" | awk '{print tolower($1);}')
-            _args=$(echo "${_line}" | awk '{$1=""; sub(/^ */, ""); print;}')
+            # Rest of the line with "arg" variables replaced will be the arguments. -- cwells
+            _args=$(echo "${_line}" | awk '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
 
             # Apply overrides for commands/aliases and arguments. -- cwells
             case $_cmd in
+                arg) # This is a template argument definition. -- cwells
+                    _arg_name=$(get_arg_name "${_args}")
+                    _arg_value=$(get_arg_value "${_args}" "$@")
+                    if [ -z "${_arg_value}" ]; then
+                        echo -e "${COLOR_YELLOW}No value provided for arg: ${_arg_name}${COLOR_RESET}"
+                    fi
+                    # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
+                    ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
+                    continue
+                    ;;
                 cmd)
                     # Allow redirection within the jail. -- cwells
                     _args="sh -c '${_args}'"
-                    ;;
-                overlay)
-                    _cmd='cp'
-                    _args="${bastille_template}/${_args} /"
                     ;;
                 cp|copy)
                     _cmd='cp'
@@ -145,8 +246,16 @@ for _jail in ${JAILS}; do
                     _cmd='mount' ;;
                 include)
                     _cmd='template' ;;
+                overlay)
+                    _cmd='cp'
+                    _args="${bastille_template}/${_args} /"
+                    ;;
                 pkg)
                     _args="install -y ${_args}" ;;
+                render) # This is a path to one or more files needing arguments replaced by values. -- cwells
+                    render "${bastille_jail_path}" "${_args}"
+                    continue
+                    ;;
             esac
 
             if ! eval "bastille ${_cmd} ${_jail} ${_args}"; then
@@ -185,6 +294,10 @@ for _jail in ${JAILS}; do
                     continue ;;
                 PRE)
                     _cmd='cmd' ;;
+                RENDER) # This is a path to one or more files needing arguments replaced by values. -- cwells
+                    render "${bastille_jail_path}" "${_line}"
+                    continue
+                    ;;
             esac
 
             echo -e "${COLOR_GREEN}[${_jail}]:${_hook} -- START${COLOR_RESET}"
@@ -198,6 +311,8 @@ for _jail in ${JAILS}; do
                     if [ -z "${_line}" ]; then
                         continue
                     fi
+                    # Replace "arg" variables in this line with the provided values. -- cwells
+                    _line=$(echo "${_line}" | eval "sed ${ARG_REPLACEMENTS}")
                     eval "_args=\"${_args_template}\""
                     bastille "${_cmd}" "${_jail}" ${_args} || exit 1
                 done < "${bastille_template}/${_hook}"
