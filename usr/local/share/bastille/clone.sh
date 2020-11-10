@@ -120,7 +120,7 @@ update_jailconf_vnet() {
 
     # If 0.0.0.0 set DHCP, else set static IP address
     if [ "${IP}" == "0.0.0.0" ]; then
-        sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="DHCP"
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
     else
         sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
     fi

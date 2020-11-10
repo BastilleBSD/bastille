@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille export TARGET"
+    error_exit "Usage: bastille export TARGET [option] | PATH"
 }
 
 # Handle special-case commands first
@@ -42,8 +42,45 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 0 ]; then
+# Check for unsupported actions
+if [ "${TARGET}" = "ALL" ]; then
+    error_exit "Batch export is unsupported."
+fi
+
+if [ $# -gt 2 ] || [ $# -lt 0 ]; then
     usage
+fi
+
+OPTION="${1}"
+EXPATH="${2}"
+
+# Handle some options
+if [ -n "${OPTION}" ]; then
+    if [ "${OPTION}" = "-t" -o "${OPTION}" = "--txz" ]; then
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            # Temporarily disable ZFS so we can create a standard backup archive
+            bastille_zfs_enable="NO"
+        fi
+    elif echo "${OPTION}" | grep -q "\/"; then
+        if [ -d "${OPTION}" ]; then
+            EXPATH="${OPTION}"
+        else
+            error_exit "Error: Path not found."
+        fi
+    else
+        error_notify "Invalid option!"
+        usage
+    fi
+fi
+
+# Export directory check
+if [ -n "${EXPATH}" ]; then
+    if [ -d "${EXPATH}" ]; then
+        # Set the user defined export directory
+        bastille_backupsdir="${EXPATH}"
+    else
+        error_exit "Error: Path not found."
+    fi
 fi
 
 jail_export()
@@ -81,13 +118,6 @@ jail_export()
         exit 0
     fi
 }
-
-# Check for user specified file location
-if echo "${TARGET}" | grep -q '\/'; then
-    GETDIR="${TARGET}"
-    TARGET=$(echo ${TARGET} | awk -F '\/' '{print $NF}')
-    bastille_backupsdir=$(echo ${GETDIR} | sed "s/${TARGET}//")
-fi
 
 # Check if backups directory/dataset exist
 if [ ! -d "${bastille_backupsdir}" ]; then
