@@ -233,8 +233,8 @@ not using ZFS and can safely ignore these settings.
 bastille bootstrap
 ------------------
 Before you can begin creating containers, Bastille needs to "bootstrap" a
-release.  Current supported releases are 11.3-RELEASE, 12.0-RELEASE and
-12.1-RELEASE.
+release.  Current supported releases are 11.4-RELEASE, 12.1-RELEASE and
+12.2-RELEASE.
 
 **Important: If you need ZFS support see the above section BEFORE
 bootstrapping.**
@@ -242,14 +242,14 @@ bootstrapping.**
 To `bootstrap` a release, run the bootstrap sub-command with the
 release version as the argument.
 
-**FreeBSD 11.3-RELEASE**
-```shell
-ishmael ~ # bastille bootstrap 11.3-RELEASE
-```
-
 **FreeBSD 12.1-RELEASE**
 ```shell
 ishmael ~ # bastille bootstrap 12.1-RELEASE
+```
+
+**FreeBSD 12.2-RELEASE**
+```shell
+ishmael ~ # bastille bootstrap 12.2-RELEASE
 ```
 
 **HardenedBSD 11-STABLE-BUILD-XX**
@@ -305,7 +305,7 @@ IP at container creation.
 
 **ip4**
 ```shell
-ishmael ~ # bastille create folsom 12.1-RELEASE 10.17.89.10
+ishmael ~ # bastille create folsom 12.2-RELEASE 10.17.89.10
 Valid: (10.17.89.10).
 
 NAME: folsom.
@@ -317,12 +317,12 @@ sendmail_enable: NO -> NONE
 cron_flags:  -> -J 60
 ```
 
-This command will create a 12.1-RELEASE container assigning the 10.17.89.10 ip
+This command will create a 12.2-RELEASE container assigning the 10.17.89.10 ip
 address to the new system.
 
 **ip6**
 ```shell
-ishmael ~ # bastille create folsom 12.1-RELEASE fd35:f1fd:2cb6:6c5c::13
+ishmael ~ # bastille create folsom 12.2-RELEASE fd35:f1fd:2cb6:6c5c::13
 Valid: (fd35:f1fd:2cb6:6c5c::13).
 
 NAME: folsom.
@@ -334,12 +334,12 @@ sendmail_enable: NO -> NONE
 cron_flags:  -> -J 60
 ```
 
-This command will create a 12.1-RELEASE container assigning the
+This command will create a 12.2-RELEASE container assigning the
 fd35:f1fd:2cb6:6c5c::13  ip address to the new system.
 
 **VNET**
 ```shell
-ishmael ~ # bastille create -V vnetjail 12.1-RELEASE 192.168.87.55/24 em0
+ishmael ~ # bastille create -V vnetjail 12.2-RELEASE 192.168.87.55/24 em0
 Valid: (192.168.87.55/24).
 Valid: (em0).
 
@@ -355,7 +355,7 @@ ifconfig_e0b_bastille0_name:  -> vnet0
 ifconfig_vnet0:  -> inet 192.168.87.55/24
 ```
 
-This command will create a 12.1-RELEASE container assigning the
+This command will create a 12.2-RELEASE container assigning the
 192.168.87.55/24 ip address to the new system.
 
 VNET-enabled containers are attached to a virtual bridge interface for
@@ -379,7 +379,7 @@ private base. This is sometimes referred to as a "thick" container (whereas the
 shared base container is a "thin").
 
 ```shell
-ishmael ~ # bastille create -T folsom 12.0-RELEASE 10.17.89.10
+ishmael ~ # bastille create -T folsom 12.2-RELEASE 10.17.89.10
 ```
 
 I recommend using private (rfc1918) ip address ranges for your containers.
@@ -810,7 +810,7 @@ you will be logged in as that user. (user must be created first)
 ```shell
 ishmael ~ # bastille console folsom
 [folsom]:
-FreeBSD 11.3-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
+FreeBSD 12.1-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
 
 Welcome to FreeBSD!
 
@@ -886,21 +886,21 @@ The `update` command targets a release instead of a container. Because every
 container is based on a release, when the release is updated all the containers
 are automatically updated as well.
 
-To update all containers based on the 11.2-RELEASE `release`:
+To update all containers based on the 12.1-RELEASE `release`:
 
-Up to date 11.2-RELEASE:
+Up to date 12.2-RELEASE:
 ```shell
-ishmael ~ # bastille update 11.2-RELEASE
+ishmael ~ # bastille update 12.1-RELEASE
 Targeting specified release.
-11.2-RELEASE
+12.1-RELEASE
 
 Looking up update.FreeBSD.org mirrors... 2 mirrors found.
-Fetching metadata signature for 11.2-RELEASE from update4.freebsd.org... done.
+Fetching metadata signature for 12.1-RELEASE from update4.freebsd.org... done.
 Fetching metadata index... done.
 Inspecting system... done.
 Preparing to download files... done.
 
-No updates needed to update system to 11.2-RELEASE-p4.
+No updates needed to update system to 12.1-RELEASE-p4.
 No updates are available to install.
 ```
 
@@ -912,11 +912,20 @@ bastille upgrade
 This sub-command lets you upgrade a release to a new release. Depending on the
 workflow this can be similar to a `bootstrap`.
 
+For standard containers you need to upgrade the shared base jail:
 ```shell
-ishmael ~ # bastille upgrade 11.3-RELEASE 12.0-RELEASE
+ishmael ~ # bastille upgrade 12.1-RELEASE 12.2-RELEASE
 ...
 ```
 
+For thick jails you need to upgrade every single container (according the freebsd-update procedure):
+```shell
+ishmael ~ # bastille upgrade folsom 12.2-RELEASE
+ishmael ~ # bastille upgrade folsom install
+...
+ishmael ~ # bastille restart folsom
+ishmael ~ # bastille upgrade folsom install
+```
 
 bastille verify
 ---------------
@@ -1024,9 +1033,9 @@ Example (create, start, console)
 This example creates, starts and consoles into the container.
 
 ```shell
-ishmael ~ # bastille create alcatraz 11.2-RELEASE 10.17.89.7
+ishmael ~ # bastille create alcatraz 12.2-RELEASE 10.17.89.7
 
-RELEASE: 11.2-RELEASE.
+RELEASE: 12.1-RELEASE.
 NAME: alcatraz.
 IP: 10.17.89.7.
 ```
@@ -1040,7 +1049,7 @@ alcatraz: created
 ```shell
 ishmael ~ # bastille console alcatraz
 [alcatraz]:
-FreeBSD 11.2-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
+FreeBSD 12.2-RELEASE (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
 
 Welcome to FreeBSD!
 
