@@ -80,14 +80,18 @@ jail_check() {
     fi
 }
 
+release_check() {
+    # Validate the release
+    if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
+        error_exit "${NEWRELEASE} is not a valid release."
+    fi
+}
+
 release_upgrade() {
     # Upgrade a release
     if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
-        if echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
-            freebsd-update ${OPTION} -b "${bastille_releasesdir}/${TARGET}" -r "${NEWRELEASE}" upgrade
-        else
-            error_exit "${NEWRELEASE} is not a valid release."
-        fi
+        release_check
+        freebsd-update ${OPTION} -b "${bastille_releasesdir}/${TARGET}" -r "${NEWRELEASE}" upgrade
     else
         error_exit "${TARGET} not found. See 'bastille bootstrap'."
     fi
@@ -97,6 +101,7 @@ jail_upgrade() {
     # Upgrade a thick container
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         jail_check
+        release_check
         CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version)
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" --currently-running "${CURRENT_VERSION}" -r ${NEWRELEASE} upgrade
         echo
