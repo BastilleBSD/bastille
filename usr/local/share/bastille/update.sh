@@ -42,41 +42,72 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
 TARGET="${1}"
-shift
+OPTION="${2}"
+
+# Handle options
+case "${OPTION}" in
+    -f|--force)
+        OPTION="-F"
+        ;;
+    *)
+        OPTION=
+        ;;
+esac
+
+# Check for unsupported actions
+if [ "${TARGET}" = "ALL" ]; then
+    error_exit "Batch upgrade is unsupported."
+fi
 
 if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
 
-if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-    if ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-            if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
-                # Update a thick container.
-                CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-                if [ -z "${CURRENT_VERSION}" ]; then
-                    error_exit "Can't determine '${TARGET}' version."
-                else
-                    env PAGER="/bin/cat" freebsd-update --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" \
-                    fetch install --currently-running "${CURRENT_VERSION}"
-                fi
-            else
-                error_notify "${TARGET} is not running."
-                error_exit "See 'bastille start ${TARGET}'."
-            fi
+jail_check() {
+    # Check if the jail is thick and is running
+    if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
+        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
     else
-        error_exit "${TARGET} is not a thick container."
+        if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+            error_exit "${TARGET} is not a thick container."
+        fi
     fi
-else
+}
+
+jail_update() {
+    # Update a thick container
+    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
+        jail_check    
+        CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+        if [ -z "${CURRENT_VERSION}" ]; then
+            error_exit "Can't determine '${TARGET}' version."
+        else
+            env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" \
+            fetch install --currently-running "${CURRENT_VERSION}"
+        fi
+    else
+        error_exit "${TARGET} not found. See 'bastille bootstrap'."
+    fi
+}
+
+release_update() {
+    # Update a release base(affects child containers)
     if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
-        # Update container base(affects child containers).
-        env PAGER="/bin/cat" freebsd-update --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
+        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
         fetch install --currently-running "${TARGET}"
     else
         error_exit "${TARGET} not found. See 'bastille bootstrap'."
     fi
+}
+
+# Check what we should update
+if echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
+    release_update
+else
+    jail_update
 fi

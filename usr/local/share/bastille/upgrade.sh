@@ -74,7 +74,7 @@ jail_check() {
     if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
         error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
     else
-        if cat "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | grep -w "${TARGET}" | grep -qw "/.*/.bastille"; then
+        if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
             error_exit "${TARGET} is not a thick container."
         fi
     fi
