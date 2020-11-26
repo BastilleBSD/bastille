@@ -88,7 +88,7 @@ update_fstab() {
 
 change_name() {
     # Attempt container name change
-    echo -e "${COLOR_GREEN}Attempting to rename '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
+    info "Attempting to rename '${TARGET}' to ${NEWNAME}..."
     if [ "${bastille_zfs_enable}" = "YES" ]; then
         if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
             # Check and rename container ZFS dataset accordingly
@@ -131,7 +131,7 @@ change_name() {
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
-        echo -e "${COLOR_GREEN}Renamed '${TARGET}' to '${NEWNAME}' successfully.${COLOR_RESET}"
+        info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
     fi
 }
 

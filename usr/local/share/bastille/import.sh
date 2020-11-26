@@ -56,25 +56,25 @@ validate_archive() {
     if [ "${FILE_EXT}" != ".tar.gz" ] && [ "${FILE_EXT}" != ".tar" ]; then
         if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
             if [ -f "${bastille_backupsdir}/${FILE_TRIM}.sha256" ]; then
-                echo -e "${COLOR_GREEN}Validating file: ${TARGET}...${COLOR_RESET}"
+                info "Validating file: ${TARGET}..."
                 SHA256_DIST=$(cat "${bastille_backupsdir}/${FILE_TRIM}.sha256")
                 SHA256_FILE=$(sha256 -q "${bastille_backupsdir}/${TARGET}")
                 if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
                     error_exit "Failed validation for ${TARGET}."
                 else
-                    echo -e "${COLOR_GREEN}File validation successful!${COLOR_RESET}"
+                    info "File validation successful!"
                 fi
             else
                 # Check if user opt to force import
                 if [ "${OPTION}" = "-f" -o "${OPTION}" = "force" ]; then
-                    echo -e "${COLOR_YELLOW}Warning: Skipping archive validation!${COLOR_RESET}"
+                    warn "Warning: Skipping archive validation!"
                 else
                     error_exit "Checksum file not found. See 'bastille import TARGET -f'."
                 fi
             fi
         fi
     else
-        echo -e "${COLOR_YELLOW}Warning: Skipping archive validation!${COLOR_RESET}"
+        warn "Warning: Skipping archive validation!"
     fi
 }
 
@@ -83,7 +83,7 @@ update_zfsmount() {
     OLD_ZFS_MOUNTPOINT=$(zfs get -H mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" | awk '{print $3}')
     NEW_ZFS_MOUNTPOINT="${bastille_jailsdir}/${TARGET_TRIM}/root"
     if [ "${NEW_ZFS_MOUNTPOINT}" != "${OLD_ZFS_MOUNTPOINT}" ]; then
-        echo -e "${COLOR_GREEN}Updating zfs mountpoint...${COLOR_RESET}"
+        info "Updating ZFS mountpoint..."
         zfs set mountpoint="${bastille_jailsdir}/${TARGET_TRIM}/root" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
     fi
 
@@ -101,7 +101,7 @@ update_jailconf() {
     JAIL_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${TARGET_TRIM}/root;" "${JAIL_CONFIG}"; then
-            echo -e "${COLOR_GREEN}Updating jail.conf...${COLOR_RESET}"
+            info "Updating jail.conf..."
             sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${TARGET_TRIM}_console.log;|" "${JAIL_CONFIG}"
             sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${TARGET_TRIM}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;|" "${JAIL_CONFIG}"
@@ -119,7 +119,7 @@ update_fstab() {
     if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
         # If both variables are set, compare and update as needed
         if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille" "${FSTAB_CONFIG}"; then
-            echo -e "${COLOR_GREEN}Updating fstab...${COLOR_RESET}"
+            info "Updating fstab..."
             sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
         fi
     fi
@@ -128,7 +128,7 @@ update_fstab() {
 generate_config() {
     # Attempt to read previous config file and set required variables accordingly
     # If we can't get a valid interface, fallback to lo1 and warn user
-    echo -e "${COLOR_GREEN}Generating jail.conf...${COLOR_RESET}"
+    info "Generating jail.conf..."
 
     if [ "${FILE_EXT}" = ".zip" ]; then
         # Gather some bits from foreign/iocage config files
@@ -188,7 +188,7 @@ generate_config() {
         IPX_ADDR="ip4.addr"
         IP_CONFIG="-"
         IP6_MODE="disable"
-        echo -e "${COLOR_YELLOW}Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration${COLOR_RESET}"
+        warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
     fi
 
     if [ "${FILE_EXT}" = ".tar.gz" ]; then
@@ -196,7 +196,7 @@ generate_config() {
         if [ -z "${CONFIG_RELEASE}" ]; then
             # Fallback to host version
             CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
-            echo -e "${COLOR_YELLOW}Warning: ${CONFIG_RELEASE} was set by default!${COLOR_RESET}"
+            warn "Warning: ${CONFIG_RELEASE} was set by default!"
         fi
         mkdir "${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille"
         echo "${bastille_releasesdir}/${CONFIG_RELEASE} ${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille nullfs ro 0 0" \
@@ -241,7 +241,7 @@ update_config() {
     if [ -z "${CONFIG_RELEASE}" ]; then
         # Fallback to host version
         CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
-        echo -e "${COLOR_YELLOW}Warning: ${CONFIG_RELEASE} was set by default!${COLOR_RESET}"
+        warn "Warning: ${CONFIG_RELEASE} was set by default!"
     fi
     mkdir "${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille"
     echo "${bastille_releasesdir}/${CONFIG_RELEASE} ${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille nullfs ro 0 0" \
@@ -282,11 +282,11 @@ update_symlinks() {
 
     # Just warn user to bootstrap the release if missing
     if [ ! -d "${bastille_releasesdir}/${CONFIG_RELEASE}" ]; then
-        echo -e "${COLOR_YELLOW}Warning: ${CONFIG_RELEASE} must be bootstrapped, See 'bastille bootstrap'.${COLOR_RESET}"
+        warn "Warning: ${CONFIG_RELEASE} must be bootstrapped. See 'bastille bootstrap'."
     fi
 
     # Update old symlinks
-    echo -e "${COLOR_GREEN}Updating symlinks...${COLOR_RESET}"
+    info "Updating symlinks..."
     for _link in ${SYMLINKS}; do
         if [ -L "${_link}" ]; then
             ln -sf /.bastille/${_link} ${_link}
@@ -296,8 +296,8 @@ update_symlinks() {
 
 create_zfs_datasets() {
     # Prepare the ZFS environment and restore from file
-    echo -e "${COLOR_GREEN}Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive.${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}Preparing zfs environment...${COLOR_RESET}"
+    info "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
+    info "Preparing ZFS environment..."
 
     # Create required ZFS datasets, mountpoint inherited from system
     zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
@@ -321,8 +321,8 @@ jail_import() {
             if [ -n "${bastille_zfs_zpool}" ]; then
                 if [ "${FILE_EXT}" = ".xz" ]; then
                     # Import from compressed xz on ZFS systems
-                    echo -e "${COLOR_GREEN}Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} archive.${COLOR_RESET}"
-                    echo -e "${COLOR_GREEN}Receiving zfs data stream...${COLOR_RESET}"
+                    info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} archive."
+                    info "Receiving ZFS data stream..."
                     xz ${bastille_decompress_xz_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
 
@@ -334,7 +334,7 @@ jail_import() {
                     create_zfs_datasets
 
                     # Extract required files to the new datasets
-                    echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
+                    info "Extracting files from '${TARGET}' archive..."
                     tar --exclude='root' -Jxf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
                     tar -Jxf "${bastille_backupsdir}/${TARGET}" --strip-components 2 -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${TARGET_TRIM}/root"
                     if [ "$?" -ne 0 ]; then
@@ -342,7 +342,7 @@ jail_import() {
                     fi
                 elif [ "${FILE_EXT}" = ".zip" ]; then
                     # Attempt to import a foreign/iocage container
-                    echo -e "${COLOR_GREEN}Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive.${COLOR_RESET}"
+                    info "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
                     # Sane bastille zfs options
                     ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
 
@@ -352,7 +352,7 @@ jail_import() {
                         error_exit "Failed to extract files from '${TARGET}' archive."
                         rm -f "${FILE_TRIM}" "${FILE_TRIM}_root"
                     fi
-                    echo -e "${COLOR_GREEN}Receiving zfs data stream...${COLOR_RESET}"
+                    info "Receiving ZFS data stream..."
                     zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
                     zfs set ${ZFS_OPTIONS} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
@@ -376,7 +376,7 @@ jail_import() {
                     create_zfs_datasets
 
                     # Extract required files to the new datasets
-                    echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
+                    info "Extracting files from '${TARGET}' archive..."
                     tar --exclude='ezjail/' -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}/${TARGET_TRIM}"
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}/root"
                     if [ "$?" -ne 0 ]; then
@@ -391,7 +391,7 @@ jail_import() {
                     workout_components
 
                     # Extract required files to the new datasets
-                    echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
+                    info "Extracting files from '${TARGET}' archive..."
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components "${CONF_TRIM}" -C "${bastille_jailsdir}/${TARGET_TRIM}" "${JAIL_CONF}"
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components "${DIRS_PLUS}" -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${JAIL_PATH}"
                     if [ -f "${bastille_jailsdir}/${TARGET_TRIM}/${TARGET_TRIM}" ]; then
@@ -410,18 +410,18 @@ jail_import() {
         else
             # Import from standard supported archives on UFS systems
             if [ "${FILE_EXT}" = ".txz" ]; then
-                echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
+                info "Extracting files from '${TARGET}' archive..."
                 tar -Jxf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
             elif [ "${FILE_EXT}" = ".tar.gz" ]; then
                 # Attempt to import/configure foreign/ezjail container
-                echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
+                info "Extracting files from '${TARGET}' archive..."
                 mkdir "${bastille_jailsdir}/${TARGET_TRIM}"
                 tar -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}/${TARGET_TRIM}"
                 mv "${bastille_jailsdir}/${TARGET_TRIM}/ezjail" "${bastille_jailsdir}/${TARGET_TRIM}/root"
                 generate_config
             elif [ "${FILE_EXT}" = ".tar" ]; then
                 # Attempt to import/configure foreign/qjail container
-                echo -e "${COLOR_GREEN}Extracting files from '${TARGET}' archive...${COLOR_RESET}"
+                info "Extracting files from '${TARGET}' archive..."
                 mkdir -p "${bastille_jailsdir}/${TARGET_TRIM}/root"
                 workout_components
                 tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components "${CONF_TRIM}" -C "${bastille_jailsdir}/${TARGET_TRIM}" "${JAIL_CONF}"
@@ -442,7 +442,7 @@ jail_import() {
             # This is required on foreign imports only
             update_jailconf
             update_fstab
-            echo -e "${COLOR_GREEN}Container '${TARGET_TRIM}' imported successfully.${COLOR_RESET}"
+            info "Container '${TARGET_TRIM}' imported successfully."
             exit 0
         fi
     else

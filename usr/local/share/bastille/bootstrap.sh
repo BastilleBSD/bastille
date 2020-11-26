@@ -68,7 +68,7 @@ validate_release_url() {
         if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
             error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
         fi
-        echo -e "${COLOR_GREEN}Bootstrapping ${PLATFORM_OS} distfiles...${COLOR_RESET}"
+        info "Bootstrapping ${PLATFORM_OS} distfiles..."
 
         # Alternate RELEASE/ARCH fetch support
         if [ "${OPTION}" = "--i386" -o "${OPTION}" = "--32bit" ]; then
@@ -203,7 +203,7 @@ bootstrap_release() {
         if [ -z "${bastille_bootstrap_archives}" ]; then
             error_exit "Bootstrap appears complete."
         else
-            echo -e "${COLOR_GREEN}Bootstrapping additional distfiles...${COLOR_RESET}"
+            info "Bootstrapping additional distfiles..."
         fi
     fi
 
@@ -211,7 +211,7 @@ bootstrap_release() {
         ## check if the dist files already exists then extract
         FETCH_VALIDATION="0"
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
+            info "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
             if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                 ## silence motd at container login
                 touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
@@ -267,15 +267,15 @@ bootstrap_release() {
                         rm "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
                         error_exit "Failed validation for ${_archive}.txz. Please retry bootstrap!"
                     else
-                        echo -e "${COLOR_GREEN}Validated checksum for ${RELEASE}:${_archive}.txz.${COLOR_RESET}"
-                        echo -e "${COLOR_GREEN}MANIFEST:${SHA256_DIST}${COLOR_RESET}"
-                        echo -e "${COLOR_GREEN}DOWNLOAD:${SHA256_FILE}${COLOR_RESET}"
+                        info "Validated checksum for ${RELEASE}: ${_archive}.txz"
+                        info "MANIFEST: ${SHA256_DIST}"
+                        info "DOWNLOAD: ${SHA256_FILE}"
                     fi
                 fi
 
                 ## extract the fetched dist files
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    echo -e "${COLOR_GREEN}Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz.${COLOR_RESET}"
+                    info "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
                     if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## silence motd at container login
                         touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
@@ -288,8 +288,8 @@ bootstrap_release() {
     done
     echo
 
-    echo -e "${COLOR_GREEN}Bootstrap successful.${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}See 'bastille --help' for available commands.${COLOR_RESET}"
+    info "Bootstrap successful."
+    info "See 'bastille --help' for available commands."
     echo
 }
 

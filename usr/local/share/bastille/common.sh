@@ -40,3 +40,11 @@ error_exit() {
     error_notify $@
     exit 1
 }
+
+info() {
+    echo -e "${COLOR_GREEN}$*${COLOR_RESET}"
+}
+
+warn() {
+    echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+}

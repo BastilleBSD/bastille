@@ -54,7 +54,7 @@ validate_ip() {
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
     if [ -n "${ip6}" ]; then
-        echo -e "${COLOR_GREEN}Valid: (${ip6}).${COLOR_RESET}"
+        info "Valid: (${ip6})."
         IPX_ADDR="ip6.addr"
         IP6_MODE="new"
     else
@@ -69,9 +69,9 @@ validate_ip() {
                 fi
             done
             if ifconfig | grep -qw "${TEST_IP}"; then
-                echo -e "${COLOR_YELLOW}Warning: ip address already in use (${TEST_IP}).${COLOR_RESET}"
+                warn "Warning: IP address already in use (${TEST_IP})."
             else
-                echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
+                info "Valid: (${IP})."
             fi
         else
             error_exit "Invalid: (${IP})."
@@ -144,7 +144,7 @@ update_fstab() {
 
 clone_jail() {
     # Attempt container clone
-    echo -e "${COLOR_GREEN}Attempting to clone '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
+    info "Attempting to clone '${TARGET}' to ${NEWNAME}..."
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -183,7 +183,7 @@ clone_jail() {
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to clone '${TARGET}'."
     else
-        echo -e "${COLOR_GREEN}Cloned '${TARGET}' to '${NEWNAME}' successfully.${COLOR_RESET}"
+        info "Cloned '${TARGET}' to '${NEWNAME}' successfully."
     fi
 }
 

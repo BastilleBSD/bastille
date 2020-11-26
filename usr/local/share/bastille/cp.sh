@@ -51,7 +51,7 @@ CPDEST="${2}"
 
 for _jail in ${JAILS}; do
     bastille_jail_path="$(jls -j "${_jail}" path)"
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    info "[${_jail}]:"
     cp -av "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
     RETURN="$?"
     if [ "${TARGET}" = "ALL" ]; then

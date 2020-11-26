@@ -55,22 +55,22 @@ verify_template() {
         _path=${_template_path}/${_hook}
         if [ -s "${_path}" ]; then
             _hook_validate=$((_hook_validate+1))
-            echo -e "${COLOR_GREEN}Detected ${_hook} hook.${COLOR_RESET}"
+            info "Detected ${_hook} hook."
 
             ## line count must match newline count
             if [ $(wc -l "${_path}" | awk '{print $1}') -ne $(grep -c $'\n' "${_path}") ]; then
-                echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
+                info "[${_hook}]:"
                 error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."
                 error_notify "Line numbers don't match line breaks."
                 echo
                 error_exit "Template validation failed."
             ## if INCLUDE; recursive verify
             elif [ ${_hook} = 'INCLUDE' ]; then
-                echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
+                info "[${_hook}]:"
                 cat "${_path}"
                 echo
                 while read _include; do
-                    echo -e "${COLOR_GREEN}[${_hook}]:[${_include}]:${COLOR_RESET}"
+                    info "[${_hook}]:[${_include}]:"
 
                     case ${_include} in
                         http?://github.com/*/*|http?://gitlab.com/*/*)
@@ -89,11 +89,11 @@ verify_template() {
 
             ## if tree; tree -a bastille_template/_dir
             elif [ ${_hook} = 'OVERLAY' ]; then
-                echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
+                info "[${_hook}]:"
                 cat "${_path}"
                 echo
                 while read _dir; do
-                    echo -e "${COLOR_GREEN}[${_hook}]:[${_dir}]:${COLOR_RESET}"
+                    info "[${_hook}]:[${_dir}]:"
                         if [ -x /usr/local/bin/tree ]; then
                             /usr/local/bin/tree -a "${_template_path}/${_dir}"
                         else
@@ -102,7 +102,7 @@ verify_template() {
                     echo
                 done < "${_path}"
             else
-                echo -e "${COLOR_GREEN}[${_hook}]:${COLOR_RESET}"
+                info "[${_hook}]:"
                 cat "${_path}"
                 echo
             fi
@@ -119,7 +119,7 @@ verify_template() {
 
     ## if validated; ready to use
     if [ ${_hook_validate} -gt 0 ]; then
-        echo -e "${COLOR_GREEN}Template ready to use.${COLOR_RESET}"
+        info "Template ready to use."
     fi
 }
 

@@ -101,7 +101,7 @@ revert_convert() {
 start_convert() {
     # Attempt container conversion and handle some errors
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        echo -e "${COLOR_GREEN}Converting '${TARGET}' into a thickjail, this may take a while...${COLOR_RESET}"
+        info "Converting '${TARGET}' into a thickjail. This may take a while..."
 
         # Set some variables
         RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])|([0-9]{1,2}-stable-build-[0-9]{1,3})|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)|(current-BUILD-LATEST)' "${bastille_jailsdir}/${TARGET}/fstab")
@@ -118,7 +118,7 @@ start_convert() {
             sed -i '' -E "s|${FSTABMOD}|# Converted from thin to thick container on $(date)|g" "${bastille_jailsdir}/${TARGET}/fstab"
             mv "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/root/.bastille.old"
 
-            echo -e "${COLOR_GREEN}Conversion of '${TARGET}' completed successfully!${COLOR_RESET}"
+            info "Conversion of '${TARGET}' completed successfully!"
             exit 0
         else
             error_exit "Can't determine release version. See 'bastille bootstrap'."

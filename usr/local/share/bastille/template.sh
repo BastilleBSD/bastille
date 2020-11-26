@@ -101,7 +101,7 @@ render() {
     elif [ -f "${_file_path}" ]; then
         eval "sed -i '' ${ARG_REPLACEMENTS} '${_file_path}'"
     else
-        echo -e "${COLOR_YELLOW}Path not found for render: ${2}${COLOR_RESET}"
+        warn "Path not found for render: ${2}"
     fi
 }
 
@@ -122,7 +122,7 @@ case ${TEMPLATE} in
     http?://github.com/*/*|http?://gitlab.com/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
-            echo -e "${COLOR_GREEN}Bootstrapping ${TEMPLATE}...${COLOR_RESET}"
+            info "Bootstrapping ${TEMPLATE}..."
             if ! bastille bootstrap "${TEMPLATE}"; then
                 error_exit "Failed to bootstrap template: ${TEMPLATE}"
             fi
@@ -172,18 +172,18 @@ for _jail in ${JAILS}; do
     ## jail-specific variables.
     bastille_jail_path=$(jls -j "${_jail}" path)
 
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}Applying template: ${TEMPLATE}...${COLOR_RESET}"
+    info "[${_jail}]:"
+    info "Applying template: ${TEMPLATE}..."
 
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
         if grep -qw "${_jail}" "${bastille_template}/TARGET"; then
-            echo -e "${COLOR_GREEN}TARGET: !${_jail}.${COLOR_RESET}"
+            info "TARGET: !${_jail}."
             echo
             continue
         fi
     if ! grep -Eq "(^|\b)(${_jail}|ALL)($|\b)" "${bastille_template}/TARGET"; then
-            echo -e "${COLOR_GREEN}TARGET: ?${_jail}.${COLOR_RESET}"
+            info "TARGET: ?${_jail}."
             echo
             continue
         fi
@@ -199,7 +199,7 @@ for _jail in ${JAILS}; do
             _arg_name=$(get_arg_name "${_line}")
             _arg_value=$(get_arg_value "${_line}" "$@")
             if [ -z "${_arg_value}" ]; then
-                echo -e "${COLOR_YELLOW}No value provided for arg: ${_arg_name}${COLOR_RESET}"
+                warn "No value provided for arg: ${_arg_name}"
             fi
             # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
             ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
@@ -225,7 +225,7 @@ for _jail in ${JAILS}; do
                     _arg_name=$(get_arg_name "${_args}")
                     _arg_value=$(get_arg_value "${_args}" "$@")
                     if [ -z "${_arg_value}" ]; then
-                        echo -e "${COLOR_YELLOW}No value provided for arg: ${_arg_name}${COLOR_RESET}"
+                        warn "No value provided for arg: ${_arg_name}"
                     fi
                     # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
                     ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
@@ -279,7 +279,7 @@ for _jail in ${JAILS}; do
             # Override default command/args for some hooks. -- cwells
             case ${_hook} in
                 CONFIG)
-                    echo -e "${COLOR_YELLOW}CONFIG deprecated; rename to OVERLAY.${COLOR_RESET}"
+                    warn "CONFIG deprecated; rename to OVERLAY."
                     _args_template='${bastille_template}/${_line} /'
                     _cmd='cp' ;;
                 FSTAB)
@@ -290,7 +290,7 @@ for _jail in ${JAILS}; do
                     _args_template='${bastille_template}/${_line} /'
                     _cmd='cp' ;;
                 PF)
-                    echo -e "${COLOR_GREEN}NOT YET IMPLEMENTED.${COLOR_RESET}"
+                    info "NOT YET IMPLEMENTED."
                     continue ;;
                 PRE)
                     _cmd='cmd' ;;
@@ -300,7 +300,7 @@ for _jail in ${JAILS}; do
                     ;;
             esac
 
-            echo -e "${COLOR_GREEN}[${_jail}]:${_hook} -- START${COLOR_RESET}"
+            info "[${_jail}]:${_hook} -- START"
             if [ "${_hook}" = 'CMD' ] || [ "${_hook}" = 'PRE' ]; then
                 bastille cmd "${_jail}" /bin/sh < "${bastille_template}/${_hook}" || exit 1
             elif [ "${_hook}" = 'PKG' ]; then
@@ -317,11 +317,11 @@ for _jail in ${JAILS}; do
                     bastille "${_cmd}" "${_jail}" ${_args} || exit 1
                 done < "${bastille_template}/${_hook}"
             fi
-            echo -e "${COLOR_GREEN}[${_jail}]:${_hook} -- END${COLOR_RESET}"
+            info "[${_jail}]:${_hook} -- END"
             echo
         fi
     done
 
-    echo -e "${COLOR_GREEN}Template complete.${COLOR_RESET}"
+    info "Template complete."
     echo
 done

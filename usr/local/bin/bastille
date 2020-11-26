@@ -127,7 +127,7 @@ shift
 # Handle special-case commands first.
 case "${CMD}" in
 version|-v|--version)
-    echo -e "${COLOR_GREEN}${BASTILLE_VERSION}${COLOR_RESET}"
+    info "${BASTILLE_VERSION}"
     exit 0
     ;;
 help|-h|--help)

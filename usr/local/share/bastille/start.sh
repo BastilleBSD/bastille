@@ -76,7 +76,7 @@ for _jail in ${JAILS}; do
         fi
 
         ## start the container
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        info "[${_jail}]:"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
 
         ## add rctl limits
