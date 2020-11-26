@@ -89,7 +89,7 @@ while [ $# -gt 0 ]; do
                 usage
             fi
             ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-              printf '%s\nrdr on $ext_if inet proto tcp to port %d -> %s port %d\n' "$EXT_IF" "$2" "$JAIL_IP" "$3" ) \
+              printf '%s\nrdr on $ext_if inet proto tcp to port %s -> %s port %s\n' "$EXT_IF" "$2" "$JAIL_IP" "$3" ) \
                   | pfctl -a "rdr/${JAIL_NAME}" -f-
             shift 3
             ;;
@@ -98,7 +98,7 @@ while [ $# -gt 0 ]; do
                 usage
             fi
             ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-              printf '%s\nrdr on $ext_if inet proto udp to port %d -> %s port %d\n' "$EXT_IF" "$2" "$JAIL_IP" "$3" ) \
+              printf '%s\nrdr on $ext_if inet proto udp to port %s -> %s port %s\n' "$EXT_IF" "$2" "$JAIL_IP" "$3" ) \
                   | pfctl -a "rdr/${JAIL_NAME}" -f-
             shift 3
             ;;
