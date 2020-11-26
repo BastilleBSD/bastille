@@ -164,6 +164,7 @@ bootstrap_directories() {
         else
             mkdir -p "${bastille_templatesdir}"
         fi
+        ln -s "${bastille_sharedir}/templates/default" "${bastille_templatesdir}/default"
     fi
 
     ## ${bastille_releasesdir}
@@ -304,6 +305,7 @@ bootstrap_template() {
         else
             mkdir -p "${bastille_templatesdir}"
         fi
+        ln -s "${bastille_sharedir}/templates/default" "${bastille_templatesdir}/default"
     fi
 
     ## define basic variables

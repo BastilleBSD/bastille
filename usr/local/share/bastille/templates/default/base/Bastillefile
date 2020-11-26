@@ -1,0 +1,11 @@
+ARG HOST_RESOLV_CONF=/etc/resolv.conf
+
+CMD touch /etc/rc.conf
+SYSRC syslogd_flags="-ss"
+SYSRC sendmail_enable="NO"
+SYSRC sendmail_submit_enable="NO"
+SYSRC sendmail_outbound_enable="NO"
+SYSRC sendmail_msp_queue_enable="NO"
+SYSRC cron_flags="-J 60"
+
+CP "${HOST_RESOLV_CONF}" etc/resolv.conf
