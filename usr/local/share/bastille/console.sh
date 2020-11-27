@@ -65,7 +65,7 @@ validate_user() {
 }
 
 for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    info "[${_jail}]:"
     if [ -n "${USER}" ]; then
         validate_user
     else

@@ -49,7 +49,7 @@ fi
 MOUNT_PATH=$1
 
 for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    info "[${_jail}]:"
 
     _jailpath="${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}"
 

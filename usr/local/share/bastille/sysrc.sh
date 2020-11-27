@@ -46,7 +46,7 @@ if [ $# -lt 1 ]; then
 fi
 
 for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    info "[${_jail}]:"
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
     echo -e "${COLOR_RESET}"
 done

@@ -56,7 +56,7 @@ validate_ip() {
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
     if [ -n "${ip6}" ]; then
-        echo -e "${COLOR_GREEN}Valid: (${ip6}).${COLOR_RESET}"
+        info "Valid: (${ip6})."
         IPX_ADDR="ip6.addr"
         IP6_MODE="new"
     else
@@ -72,9 +72,9 @@ validate_ip() {
                 fi
             done
             if ifconfig | grep -qw "${TEST_IP}"; then
-                echo -e "${COLOR_YELLOW}Warning: ip address already in use (${TEST_IP}).${COLOR_RESET}"
+                warn "Warning: IP address already in use (${TEST_IP})."
             else
-                echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
+                info "Valid: (${IP})."
             fi
         else
             error_exit "Invalid: (${IP})."
@@ -85,7 +85,7 @@ validate_ip() {
 validate_netif() {
     local LIST_INTERFACES=$(ifconfig -l)
     if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
-        echo -e "${COLOR_GREEN}Valid: (${INTERFACE}).${COLOR_RESET}"
+        info "Valid: (${INTERFACE})."
     else
         error_exit "Invalid: (${INTERFACE})."
     fi
@@ -248,12 +248,12 @@ create_jail() {
         ## MAKE SURE WE'RE IN THE RIGHT PLACE
         cd "${bastille_jail_path}"
         echo
-        echo -e "${COLOR_GREEN}NAME: ${NAME}.${COLOR_RESET}"
-        echo -e "${COLOR_GREEN}IP: ${IP}.${COLOR_RESET}"
+        info "NAME: ${NAME}."
+        info "IP: ${IP}."
         if [ -n  "${INTERFACE}" ]; then
-            echo -e "${COLOR_GREEN}INTERFACE: ${INTERFACE}.${COLOR_RESET}"
+            info "INTERFACE: ${INTERFACE}."
         fi
-        echo -e "${COLOR_GREEN}RELEASE: ${RELEASE}.${COLOR_RESET}"
+        info "RELEASE: ${RELEASE}."
         echo
 
         if [ -z "${THICK_JAIL}" ]; then
@@ -278,7 +278,7 @@ create_jail() {
                 fi
             done
         else
-            echo -e "${COLOR_GREEN}Creating a thickjail, this may take a while...${COLOR_RESET}"
+            info "Creating a thickjail. This may take a while..."
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     ## perform release base replication
@@ -527,7 +527,7 @@ if [ -z "${EMPTY_JAIL}" ]; then
         validate_netconf
     fi
 else
-    echo -e "${COLOR_GREEN}Creating empty jail: ${NAME}.${COLOR_RESET}"
+    info "Creating empty jail: ${NAME}."
 fi
 
 ## check if a running jail matches name or already exist

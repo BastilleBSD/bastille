@@ -64,7 +64,7 @@ for _jail in ${JAILS}; do
         fi
 
         ## stop container
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        info "[${_jail}]:"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
     fi
     echo

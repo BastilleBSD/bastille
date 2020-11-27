@@ -51,7 +51,7 @@ for _jail in ${JAILS}; do
     if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
         error_notify "htop not found on ${_jail}."
     elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        info "[${_jail}]:"
         jexec -l ${_jail} /usr/local/bin/htop
     fi
     echo -e "${COLOR_RESET}"
