@@ -678,9 +678,10 @@ Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 
 Any name provided in the ARG file can be used as a variable in the other hooks.
 For example, `name=value` in the ARG file will cause instances of `${name}`
-to be replaced with `value`. The `RENDER` hook can be used to specify files or
-directories whose contents should have the variables replaced. Values can be specified
-either through the command line when applying the template or as a default in the ARG file.
+to be replaced with `value`. The `RENDER` hook can be used to specify existing files or
+directories inside the jail whose contents should have the variables replaced. Values can be 
+specified either through the command line when applying the template or as a default in the ARG
+file.
 
 In addition to supporting template hooks, Bastille supports overlaying files
 into the container. This is done by placing the files in their full path, using the
