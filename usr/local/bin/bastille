@@ -84,6 +84,7 @@ Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   cmd         Execute arbitrary command on targeted container(s).
   clone       Clone an existing container.
+  config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
   cp          cp(1) files from host to targeted container(s).
@@ -136,7 +137,7 @@ help|-h|--help)
 bootstrap|create|destroy|import|list|rdr|restart|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'

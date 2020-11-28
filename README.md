@@ -45,6 +45,7 @@ Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   clone       Clone an existing container.
   cmd         Execute arbitrary command on targeted container(s).
+  config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a thin container into a thick container.
   cp          cp(1) files from host to targeted container(s).
