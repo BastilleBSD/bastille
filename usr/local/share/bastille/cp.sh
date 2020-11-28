@@ -50,8 +50,8 @@ CPSOURCE="${1}"
 CPDEST="${2}"
 
 for _jail in ${JAILS}; do
-    bastille_jail_path="$(jls -j "${_jail}" path)"
     info "[${_jail}]:"
+    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     cp -av "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
     RETURN="$?"
     if [ "${TARGET}" = "ALL" ]; then
