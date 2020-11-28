@@ -72,7 +72,7 @@ Available Commands:
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
   verify      Verify bootstrapped release or automation template.
-  zfs         Manage (get|set) zfs attributes on targeted container(s).
+  zfs         Manage (get|set) ZFS attributes on targeted container(s).
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
@@ -680,7 +680,7 @@ Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 Any name provided in the ARG file can be used as a variable in the other hooks.
 For example, `name=value` in the ARG file will cause instances of `${name}`
 to be replaced with `value`. The `RENDER` hook can be used to specify existing files or
-directories inside the jail whose contents should have the variables replaced. Values can be 
+directories inside the jail whose contents should have the variables replaced. Values can be
 specified either through the command line when applying the template or as a default in the ARG
 file.
 
@@ -936,7 +936,7 @@ validation are not used.
 
 bastille zfs
 ------------
-This sub-command allows managing zfs attributes for the targeted container(s).
+This sub-command allows managing ZFS attributes for the targeted container(s).
 Common usage includes setting container quotas.
 
 **set quota**
@@ -962,7 +962,7 @@ Note: On UFS systems containers must be stopped before export.
 ```shell
 ishmael ~ # bastille export folsom
 Exporting 'folsom' to a compressed .xz archive.
-Sending zfs data stream...
+Sending ZFS data stream...
   100 %     1057.2 KiB / 9231.5 KiB = 0.115                   0:01
 Exported '/usr/local/bastille/jails/backups/folsom_2020-01-26-19:23:04.xz' successfully.
 
@@ -977,7 +977,7 @@ ishmael ~ # bastille import folsom_2020-01-26-19:22:23.xz
 Validating file: folsom_2020-01-26-19:22:23.xz...
 File validation successful!
 Importing 'folsom' from compressed .xz archive.
-Receiving zfs data stream...
+Receiving ZFS data stream...
 /usr/local/bastille/jails/backups/folsom_2020-01-26-19:22:23.xz (1/1)
   100 %      626.4 KiB / 9231.5 KiB = 0.068                   0:02
 Container 'folsom' imported successfully.

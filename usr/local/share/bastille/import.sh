@@ -79,7 +79,7 @@ validate_archive() {
 }
 
 update_zfsmount() {
-    # Update the mountpoint property on the received zfs data stream
+    # Update the mountpoint property on the received ZFS data stream
     OLD_ZFS_MOUNTPOINT=$(zfs get -H mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" | awk '{print $3}')
     NEW_ZFS_MOUNTPOINT="${bastille_jailsdir}/${TARGET_TRIM}/root"
     if [ "${NEW_ZFS_MOUNTPOINT}" != "${OLD_ZFS_MOUNTPOINT}" ]; then
@@ -343,7 +343,7 @@ jail_import() {
                 elif [ "${FILE_EXT}" = ".zip" ]; then
                     # Attempt to import a foreign/iocage container
                     info "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
-                    # Sane bastille zfs options
+                    # Sane bastille ZFS options
                     ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
 
                     # Extract required files from the zip archive

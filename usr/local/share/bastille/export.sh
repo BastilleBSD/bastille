@@ -91,7 +91,7 @@ jail_export()
         if [ -n "${bastille_zfs_zpool}" ]; then
             FILE_EXT="xz"
             info "Exporting '${TARGET}' to a compressed .${FILE_EXT} archive."
-            info "Sending zfs data stream..."
+            info "Sending ZFS data stream..."
             # Take a recursive temporary snapshot
             zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
 
