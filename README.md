@@ -679,7 +679,7 @@ Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 Any name provided in the ARG file can be used as a variable in the other hooks.
 For example, `name=value` in the ARG file will cause instances of `${name}`
 to be replaced with `value`. The `RENDER` hook can be used to specify existing files or
-directories inside the jail whose contents should have the variables replaced. Values can be 
+directories inside the jail whose contents should have the variables replaced. Values can be
 specified either through the command line when applying the template or as a default in the ARG
 file.
 
@@ -746,6 +746,11 @@ CMD hostname > /usr/local/www/nginx-dist/hostname.txt
 
 # Forward TCP port 80 on the host to port 80 in the container.
 RDR tcp 80 80
+```
+
+Use the following command to convert a hook-based template into the Bastillefile format:
+```shell
+bastille template --convert my-template
 ```
 
 Applying Templates
