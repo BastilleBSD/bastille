@@ -155,7 +155,7 @@ clone|config|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|ser
                 fi
             done
         else
-            JAILS=$(jls name | awk "/^${TARGET}$/")
+            JAILS="${TARGET}"
 
             # Ensure the target exists. -- cwells
             if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
