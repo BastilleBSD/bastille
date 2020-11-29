@@ -169,11 +169,16 @@ fi
 ## global variables
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
 for _jail in ${JAILS}; do
-    ## jail-specific variables.
-    bastille_jail_path=$(jls -j "${_jail}" path)
-
     info "[${_jail}]:"
     info "Applying template: ${TEMPLATE}..."
+
+    ## jail-specific variables.
+    bastille_jail_path=$(jls -j "${_jail}" path)
+    _jail_ip=$(jls -j "${_jail}" ip4.addr 2>/dev/null)
+    if [ -z "${_jail_ip}" -o "${_jail_ip}" = "-" ]; then
+        error_notify "Jail IP not found: ${_jail}"
+        _jail_ip='' # In case it was -. -- cwells
+    fi
 
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
@@ -189,8 +194,10 @@ for _jail in ${JAILS}; do
         fi
     fi
 
+    # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
+    # Values provided by default (without being defined by the user) are listed here. -- cwells
+    ARG_REPLACEMENTS="-e 's/\${JAIL_IP}/${_jail_ip}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
     # This is parsed outside the HOOKS loop so an ARG file can be used with a Bastillefile. -- cwells
-    ARG_REPLACEMENTS=''
     if [ -s "${bastille_template}/ARG" ]; then
         while read _line; do
             if [ -z "${_line}" ]; then
@@ -201,7 +208,6 @@ for _jail in ${JAILS}; do
             if [ -z "${_arg_value}" ]; then
                 warn "No value provided for arg: ${_arg_name}"
             fi
-            # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
             ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
         done < "${bastille_template}/ARG"
     fi

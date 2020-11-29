@@ -718,7 +718,8 @@ followed by its arguments (omitting the target, which is deduced from the
 Variables can also be defined using `ARG` with one `name=value` pair per
 line. Subsequent references to `${name}` would be replaced by `value`.
 Note that argument values are not available for use until after the point
-at which they are defined in the file.
+at which they are defined in the file. Both `${JAIL_NAME}` and `${JAIL_IP}`
+are made available in templates without having to define them as args.
 
 Bastillefile example:
 
