@@ -71,7 +71,8 @@ for _jail in ${JAILS}; do
         continue
     fi
 
-    MATCH_LINE=$(grep "^\s*${PROPERTY}[ =;]" "${FILE}" 2>/dev/null)
+    ESCAPED_PROPERTY=$(echo "${PROPERTY}" | sed 's/\./\\\./g')
+    MATCH_LINE=$(grep "^ *${ESCAPED_PROPERTY}[ =;]" "${FILE}" 2>/dev/null)
     MATCH_FOUND=$?
 
     if [ "${ACTION}" = 'get' ]; then
@@ -89,6 +90,7 @@ for _jail in ${JAILS}; do
         fi
     else # Setting the value. -- cwells
         if [ -n "${VALUE}" ]; then
+            VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
             if echo "${VALUE}" | grep ' ' > /dev/null 2>&1; then # Contains a space, so wrap in quotes. -- cwells
                 VALUE="'${VALUE}'"
             fi
@@ -100,7 +102,7 @@ for _jail in ${JAILS}; do
         if [ $MATCH_FOUND -ne 0 ]; then # No match, so insert the property at the end. -- cwells
             echo "$(awk -v line="${LINE}" '$0 == "}" { print line; } 1 { print $0; }' "${FILE}")" > "${FILE}"
         else # Replace the existing value. -- cwells
-            sed -i '' -E "s/ *${PROPERTY}[ =;].*/${LINE}/" "${FILE}"
+            sed -i '' -E "s/ *${ESCAPED_PROPERTY}[ =;].*/${LINE}/" "${FILE}"
         fi
     fi
 done
