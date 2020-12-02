@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille update [release|container]"
+    error_exit "Usage: bastille update [release|container] | [option]"
 }
 
 # Handle special-case commands first.
