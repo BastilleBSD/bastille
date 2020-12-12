@@ -97,8 +97,11 @@ get_arg_value() {
 render() {
     _file_path="${1}/${2}"
     if [ -d "${_file_path}" ]; then # Recursively render every file in this directory. -- cwells
+        echo "Rendering Directory: ${_file_path}"
+        find "${_file_path}" \( -type d -name .git -prune \) -o -type f
         find "${_file_path}" \( -type d -name .git -prune \) -o -type f -print0 | $(eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}")
     elif [ -f "${_file_path}" ]; then
+        echo "Rendering File: ${_file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${_file_path}'"
     else
         warn "Path not found for render: ${2}"
