@@ -62,13 +62,15 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
     _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
+    _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
 
     ## if entry doesn't exist, add; else show existing entry
     if ! grep -qs "${_rctl_rule}" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
         echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+        echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
     fi
 
     echo -e "${OPTION} ${VALUE}"
-    rctl -a "${_rctl_rule}"
+    rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
     echo -e "${COLOR_RESET}"
 done
