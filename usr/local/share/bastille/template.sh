@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    error_exit "Usage: bastille template TARGET project/template"
+    error_exit "Usage: bastille template TARGET|--convert project/template"
 }
 
 post_command_hook() {
@@ -119,7 +119,61 @@ if [ $# -lt 1 ]; then
     bastille_usage
 fi
 
+## global variables
 TEMPLATE="${1}"
+bastille_template=${bastille_templatesdir}/${TEMPLATE}
+if [ -z "${HOOKS}" ]; then
+    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
+fi
+
+# Special case conversion of hook-style template files into a Bastillefile. -- cwells
+if [ "${TARGET}" = '--convert' ]; then
+    if [ -d "${TEMPLATE}" ]; then # A relative path was provided. -- cwells
+        cd "${TEMPLATE}"
+    elif [ -d "${bastille_template}" ]; then
+        cd "${bastille_template}"
+    else
+        error_exit "Template not found: ${TEMPLATE}"
+    fi
+
+    echo "Converting template: ${TEMPLATE}"
+
+    HOOKS="ARG ${HOOKS}"
+    for _hook in ${HOOKS}; do
+        if [ -s "${_hook}" ]; then
+            # Default command is the hook name and default args are the line from the file. -- cwells
+            _cmd="${_hook}"
+            _args_template='${_line}'
+
+            # Replace old hook names with Bastille command names. -- cwells
+            case ${_hook} in
+                CONFIG|OVERLAY)
+                    _cmd='CP'
+                    _args_template='${_line} /'
+                    ;;
+                FSTAB)
+                    _cmd='MOUNT' ;;
+                PF)
+                    _cmd='RDR' ;;
+                PRE)
+                    _cmd='CMD' ;;
+            esac
+
+            while read _line; do
+                if [ -z "${_line}" ]; then
+                    continue
+                fi
+                eval "_args=\"${_args_template}\""
+                echo "${_cmd} ${_args}" >> Bastillefile
+            done < "${_hook}"
+            echo '' >> Bastillefile
+            rm "${_hook}"
+        fi
+    done
+
+    info "Template converted: ${TEMPLATE}"
+    exit 0
+fi
 
 case ${TEMPLATE} in
     http?://github.com/*/*|http?://gitlab.com/*/*)
@@ -131,6 +185,7 @@ case ${TEMPLATE} in
             fi
         fi
         TEMPLATE="${TEMPLATE_DIR}"
+        bastille_template=${bastille_templatesdir}/${TEMPLATE}
         ;;
     */*)
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
@@ -143,10 +198,6 @@ esac
 
 if [ -z "${JAILS}" ]; then
     error_exit "Container ${TARGET} is not running."
-fi
-
-if [ -z "${HOOKS}" ]; then
-    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
 fi
 
 # Check for an --arg-file parameter. -- cwells
@@ -169,8 +220,6 @@ if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
     error_exit "File not found: ${ARG_FILE}"
 fi
 
-## global variables
-bastille_template=${bastille_templatesdir}/${TEMPLATE}
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     info "Applying template: ${TEMPLATE}..."
@@ -331,6 +380,6 @@ for _jail in ${JAILS}; do
         fi
     done
 
-    info "Template complete."
+    info "Template applied: ${TEMPLATE}"
     echo
 done

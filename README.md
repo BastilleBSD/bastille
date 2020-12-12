@@ -750,6 +750,11 @@ CMD hostname > /usr/local/www/nginx-dist/hostname.txt
 RDR tcp 80 80
 ```
 
+Use the following command to convert a hook-based template into the Bastillefile format:
+```shell
+bastille template --convert my-template
+```
+
 Applying Templates
 ------------------
 
