@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     error_exit "Usage: bastille console TARGET [user]'"
@@ -64,12 +65,22 @@ validate_user() {
     fi
 }
 
+check_fib() {
+    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+        if [ -n "${fib}" ]; then
+            _setfib="setfib -F ${fib}"
+        else
+            _setfib=""
+        fi
+}
+
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     if [ -n "${USER}" ]; then
         validate_user
     else
-        jexec -l "${_jail}" /usr/bin/login -f root
+        check_fib
+        ${_setfib} jexec -l "${_jail}" /usr/bin/login -f root
     fi
     echo
 done
