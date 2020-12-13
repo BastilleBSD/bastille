@@ -619,14 +619,6 @@ Note: container console logs not destroyed.
 /usr/local/bastille/logs/folsom_console.log
 ```
 
-This command can also be used to destroy old releases that are no longer
-needed.
-
-```shell
-ishmael ~ # bastille destroy 11.1-RELEASE
-Deleting base: 11.1-RELEASE
-```
-
 
 bastille template
 -----------------
