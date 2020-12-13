@@ -617,8 +617,8 @@ ishmael ~ # bastille destroy folsom
 Deleting Container: folsom.
 Note: container console logs not destroyed.
 /usr/local/bastille/logs/folsom_console.log
-```
 
+```
 
 bastille template
 -----------------
