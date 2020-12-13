@@ -76,10 +76,6 @@ host system:
   ## /etc/devfs.rules (NOT .conf)
   
   [bastille_vnet=13]
-  add include $devfsrules_hide_all
-  add include $devfsrules_unhide_basic
-  add include $devfsrules_unhide_login
-  add include $devfsrules_jail
   add path 'bpf*' unhide
 
 Lastly, you may want to consider these three `sysctl` values:

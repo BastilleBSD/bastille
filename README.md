@@ -368,10 +368,6 @@ VNET also requires a custom `devfs` ruleset. Create the file as needed on the ho
 **/etc/devfs.rules**
 ```
 [bastille_vnet=13]
-add include $devfsrules_hide_all
-add include $devfsrules_unhide_basic
-add include $devfsrules_unhide_login
-add include $devfsrules_jail
 add path 'bpf*' unhide
 ```
 
@@ -621,8 +617,16 @@ ishmael ~ # bastille destroy folsom
 Deleting Container: folsom.
 Note: container console logs not destroyed.
 /usr/local/bastille/logs/folsom_console.log
-
 ```
+
+This command can also be used to destroy old releases that are no longer
+needed.
+
+```shell
+ishmael ~ # bastille destroy 11.1-RELEASE
+Deleting base: 11.1-RELEASE
+```
+
 
 bastille template
 -----------------
