@@ -266,7 +266,7 @@ for _jail in ${JAILS}; do
 
     if [ -s "${bastille_template}/Bastillefile" ]; then
         # Ignore blank lines and comments. -- cwells
-        SCRIPT=$(grep -v '^\s*$' "${bastille_template}/Bastillefile" | grep -v '^\s*#')
+        SCRIPT=$(grep -v '^[[:blank:]]*$' "${bastille_template}/Bastillefile" | grep -v '^[[:blank:]]*#')
         # Use a newline as the separator. -- cwells
         IFS='
 '

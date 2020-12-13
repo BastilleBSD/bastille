@@ -72,7 +72,7 @@ for _jail in ${JAILS}; do
     fi
 
     ESCAPED_PROPERTY=$(echo "${PROPERTY}" | sed 's/\./\\\./g')
-    MATCH_LINE=$(grep "^ *${ESCAPED_PROPERTY}[ =;]" "${FILE}" 2>/dev/null)
+    MATCH_LINE=$(grep "^[[:blank:]]*${ESCAPED_PROPERTY}[[:blank:]=;]" "${FILE}" 2>/dev/null)
     MATCH_FOUND=$?
 
     if [ "${ACTION}" = 'get' ]; then
