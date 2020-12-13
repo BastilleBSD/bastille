@@ -368,10 +368,6 @@ VNET also requires a custom `devfs` ruleset. Create the file as needed on the ho
 **/etc/devfs.rules**
 ```
 [bastille_vnet=13]
-add include $devfsrules_hide_all
-add include $devfsrules_unhide_basic
-add include $devfsrules_unhide_login
-add include $devfsrules_jail
 add path 'bpf*' unhide
 ```
 
