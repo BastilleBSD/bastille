@@ -42,7 +42,21 @@ help|-h|--help)
     ;;
 esac
 
-# Validate ZFS parameters first.
+#Validate if ZFS is enabled in rc.conf and bastille.conf.
+if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" ]; then
+    warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
+    read  answer
+    case $answer in
+        no|No|n|N|"")
+            error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
+            ;;
+        yes|Yes|y|Y)
+            continue
+            ;;
+    esac
+fi
+
+# Validate ZFS parameters.
 if [ "${bastille_zfs_enable}" = "YES" ]; then
     ## check for the ZFS pool and bastille prefix
     if [ -z "${bastille_zfs_zpool}" ]; then
@@ -59,19 +73,6 @@ if [ "${bastille_zfs_enable}" = "YES" ]; then
             error_exit "ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset."
         fi
     fi
-fi
-
-if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" ]; then
-    warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
-    read  answer
-    case $answer in
-        no|No|n|N|"")
-            error_exit "ERROR: Bootstrap interrupted"
-            ;;
-        yes|Yes|y|Y)
-            continue
-            ;;
-    esac
 fi
 
 validate_release_url() {
