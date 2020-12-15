@@ -61,6 +61,19 @@ if [ "${bastille_zfs_enable}" = "YES" ]; then
     fi
 fi
 
+if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" ]; then
+    warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
+    read  answer
+    case $answer in
+        no|No|n|N|"")
+            error_exit "ERROR: Bootstrap interrupted"
+            ;;
+        yes|Yes|y|Y)
+            continue
+            ;;
+    esac
+fi
+
 validate_release_url() {
     ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
