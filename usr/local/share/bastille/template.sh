@@ -290,13 +290,15 @@ for _jail in ${JAILS}; do
                     continue
                     ;;
                 cmd)
+                    # Escape single-quotes in the command being executed. -- cwells
+                    _args=$(echo "${_args}" | sed "s/'/'\\\\''/g")
                     # Allow redirection within the jail. -- cwells
                     _args="sh -c '${_args}'"
                     ;;
                 cp|copy)
                     _cmd='cp'
                     # Convert relative "from" path into absolute path inside the template directory. -- cwells
-                    if [ "${_args%${_args#?}}" != '/' ]; then
+                    if [ "${_args%${_args#?}}" != '/' ] && [ "${_args%${_args#??}}" != '"/' ]; then
                         _args="${bastille_template}/${_args}"
                     fi
                     ;;

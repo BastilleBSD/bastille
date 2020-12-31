@@ -1,0 +1,13 @@
+ARG BASE_TEMPLATE=default/base
+ARG HOST_RESOLV_CONF=/etc/resolv.conf
+
+INCLUDE ${BASE_TEMPLATE} --arg HOST_RESOLV_CONF="${HOST_RESOLV_CONF}"
+
+ARG EPAIR
+ARG GATEWAY
+ARG IFCONFIG="SYNCDHCP"
+
+SYSRC ifconfig_${EPAIR}_name=vnet0
+SYSRC ifconfig_vnet0="${IFCONFIG}"
+# GATEWAY will be empty for a DHCP config. -- cwells
+CMD if [ -n "${GATEWAY}" ]; then /usr/sbin/sysrc defaultrouter="${GATEWAY}"; fi
