@@ -226,10 +226,12 @@ for _jail in ${JAILS}; do
 
     ## jail-specific variables.
     bastille_jail_path=$(jls -j "${_jail}" path)
-    _jail_ip=$(jls -j "${_jail}" ip4.addr 2>/dev/null)
-    if [ -z "${_jail_ip}" -o "${_jail_ip}" = "-" ]; then
-        error_notify "Jail IP not found: ${_jail}"
-        _jail_ip='' # In case it was -. -- cwells
+    if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
+        _jail_ip=$(jls -j "${_jail}" ip4.addr 2>/dev/null)
+        if [ -z "${_jail_ip}" -o "${_jail_ip}" = "-" ]; then
+            error_notify "Jail IP not found: ${_jail}"
+            _jail_ip='' # In case it was -. -- cwells
+        fi
     fi
 
     ## TARGET
