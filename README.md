@@ -916,9 +916,19 @@ bastille upgrade
 This sub-command lets you upgrade a release to a new release. Depending on the
 workflow this can be similar to a `bootstrap`.
 
+For standard containers you need to upgrade the shared base jail:
 ```shell
-ishmael ~ # bastille upgrade 11.3-RELEASE 12.0-RELEASE
+ishmael ~ # bastille upgrade 12.1-RELEASE 12.2-RELEASE
 ...
+```
+
+For thick jails you need to upgrade every single container (according the freebsd-update procedure):
+```shell
+ishmael ~ # bastille upgrade folsom 12.2-RELEASE
+ishmael ~ # bastille upgrade folsom install
+...
+ishmael ~ # bastille restart folsom
+ishmael ~ # bastille upgrade folsom install
 ```
 
 
