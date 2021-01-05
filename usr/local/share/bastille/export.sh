@@ -90,8 +90,8 @@ jail_export()
     if [ "${bastille_zfs_enable}" = "YES" ]; then
         if [ -n "${bastille_zfs_zpool}" ]; then
             FILE_EXT="xz"
-            echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive.${COLOR_RESET}"
-            echo -e "${COLOR_GREEN}Sending zfs data stream...${COLOR_RESET}"
+            info "Exporting '${TARGET}' to a compressed .${FILE_EXT} archive."
+            info "Sending ZFS data stream..."
             # Take a recursive temporary snapshot
             zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
 
@@ -104,7 +104,7 @@ jail_export()
     else
         # Create standard backup archive
         FILE_EXT="txz"
-        echo -e "${COLOR_GREEN}Exporting '${TARGET}' to a compressed .${FILE_EXT} archive...${COLOR_RESET}"
+        info "Exporting '${TARGET}' to a compressed .${FILE_EXT} archive..."
         cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
     fi
 
@@ -114,7 +114,7 @@ jail_export()
         # Generate container checksum file
         cd "${bastille_backupsdir}"
         sha256 -q "${TARGET}_${DATE}.${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
-        echo -e "${COLOR_GREEN}Exported '${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}' successfully.${COLOR_RESET}"
+        info "Exported '${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}' successfully."
         exit 0
     fi
 }

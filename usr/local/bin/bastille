@@ -70,7 +70,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.7.20200714"
+BASTILLE_VERSION="0.8.20210101"
 
 usage() {
     cat << EOF
@@ -84,6 +84,7 @@ Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   cmd         Execute arbitrary command on targeted container(s).
   clone       Clone an existing container.
+  config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
   cp          cp(1) files from host to targeted container(s).
@@ -94,6 +95,7 @@ Available Commands:
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
   import      Import a specified container.
+  limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running and stopped).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
@@ -110,7 +112,7 @@ Available Commands:
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
   verify      Compare release against a "known good" index.
-  zfs         Manage (get|set) zfs attributes on targeted container(s).
+  zfs         Manage (get|set) ZFS attributes on targeted container(s).
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
@@ -127,7 +129,7 @@ shift
 # Handle special-case commands first.
 case "${CMD}" in
 version|-v|--version)
-    echo -e "${COLOR_GREEN}${BASTILLE_VERSION}${COLOR_RESET}"
+    info "${BASTILLE_VERSION}"
     exit 0
     ;;
 help|-h|--help)
@@ -136,7 +138,7 @@ help|-h|--help)
 bootstrap|create|destroy|import|list|rdr|restart|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
@@ -153,8 +155,11 @@ clone|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|st
                     JAILS="${JAILS} ${_jail}"
                 fi
             done
+        elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
+            # This command does not act on a jail, so we are temporarily bypassing the presence/started
+            # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
         else
-            JAILS=$(jls name | awk "/^${TARGET}$/")
+            JAILS="${TARGET}"
 
             # Ensure the target exists. -- cwells
             if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then

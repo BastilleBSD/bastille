@@ -56,7 +56,7 @@ validate_ip() {
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
     if [ -n "${ip6}" ]; then
-        echo -e "${COLOR_GREEN}Valid: (${ip6}).${COLOR_RESET}"
+        info "Valid: (${ip6})."
         IPX_ADDR="ip6.addr"
         IP6_MODE="new"
     else
@@ -72,9 +72,9 @@ validate_ip() {
                 fi
             done
             if ifconfig | grep -qw "${TEST_IP}"; then
-                echo -e "${COLOR_YELLOW}Warning: ip address already in use (${TEST_IP}).${COLOR_RESET}"
+                warn "Warning: IP address already in use (${TEST_IP})."
             else
-                echo -e "${COLOR_GREEN}Valid: (${IP}).${COLOR_RESET}"
+                info "Valid: (${IP})."
             fi
         else
             error_exit "Invalid: (${IP})."
@@ -85,7 +85,7 @@ validate_ip() {
 validate_netif() {
     local LIST_INTERFACES=$(ifconfig -l)
     if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
-        echo -e "${COLOR_GREEN}Valid: (${INTERFACE}).${COLOR_RESET}"
+        info "Valid: (${INTERFACE})."
     else
         error_exit "Invalid: (${INTERFACE})."
     fi
@@ -248,12 +248,12 @@ create_jail() {
         ## MAKE SURE WE'RE IN THE RIGHT PLACE
         cd "${bastille_jail_path}"
         echo
-        echo -e "${COLOR_GREEN}NAME: ${NAME}.${COLOR_RESET}"
-        echo -e "${COLOR_GREEN}IP: ${IP}.${COLOR_RESET}"
+        info "NAME: ${NAME}."
+        info "IP: ${IP}."
         if [ -n  "${INTERFACE}" ]; then
-            echo -e "${COLOR_GREEN}INTERFACE: ${INTERFACE}.${COLOR_RESET}"
+            info "INTERFACE: ${INTERFACE}."
         fi
-        echo -e "${COLOR_GREEN}RELEASE: ${RELEASE}.${COLOR_RESET}"
+        info "RELEASE: ${RELEASE}."
         echo
 
         if [ -z "${THICK_JAIL}" ]; then
@@ -278,7 +278,7 @@ create_jail() {
                 fi
             done
         else
-            echo -e "${COLOR_GREEN}Creating a thickjail, this may take a while...${COLOR_RESET}"
+            info "Creating a thickjail. This may take a while..."
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     ## perform release base replication
@@ -326,71 +326,68 @@ create_jail() {
             ln -s usr/home home
         fi
 
-        ## rc.conf
-        ## + syslogd_flags="-ss"
-        ## + sendmail_enable="NO"
-        ## + sendmail_submit_enable="NO"
-        ## + sendmail_outbound_enable="NO"
-        ## + sendmail_msp_queue_enable="NO"
-        ## + cron_flags="-J 60" ## cedwards 20181118
-        if [ ! -f "${bastille_jail_rc_conf}" ]; then
-            touch "${bastille_jail_rc_conf}"
-            sysrc -f "${bastille_jail_rc_conf}" syslogd_flags="-ss"
-            sysrc -f "${bastille_jail_rc_conf}" sendmail_enable="NO"
-            sysrc -f "${bastille_jail_rc_conf}" sendmail_submit_enable="NO"
-            sysrc -f "${bastille_jail_rc_conf}" sendmail_outbound_enable="NO"
-            sysrc -f "${bastille_jail_rc_conf}" sendmail_msp_queue_enable="NO"
-            sysrc -f "${bastille_jail_rc_conf}" cron_flags="-J 60"
+        ## TZ: configurable (default: Etc/UTC)
+        ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
 
-            ## VNET specific
-            if [ -n "${VNET_JAIL}" ]; then
-                ## rename interface to generic vnet0
-                uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
-                /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" "ifconfig_${uniq_epair}_name"=vnet0
+        # Post-creation jail misc configuration
+        # Create a dummy fstab file
+        touch "etc/fstab"
+        # Disables adjkerntz, avoids spurious error messages
+        sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
 
-                ## if 0.0.0.0 set DHCP
-                ## else set static address
-                if [ "${IP}" == "0.0.0.0" ]; then
-                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
-                else
-                    /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
-                    if [ -n "${bastille_network_gateway}" ]; then
-                        /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="${bastille_network_gateway}"
-                    else
-                        /usr/sbin/sysrc -f "${bastille_jail_rc_conf}" defaultrouter="$(netstat -rn | awk '/default/ {print $2}')"
-                    fi
-                fi
-
-                ## VNET requires jib script
-                if [ ! "$(command -v jib)" ]; then
-                    if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
-                        install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
-                    fi
+        ## VNET specific
+        if [ -n "${VNET_JAIL}" ]; then
+            ## VNET requires jib script
+            if [ ! "$(command -v jib)" ]; then
+                if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+                    install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
                 fi
             fi
         fi
-
-        ## resolv.conf (default: copy from host)
-        if [ ! -f "${bastille_jail_resolv_conf}" ]; then
-            cp -L "${bastille_resolv_conf}" "${bastille_jail_resolv_conf}"
-        fi
-
-        ## TZ: configurable (default: Etc/UTC)
-        ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
     else
         ## Generate minimal configuration for empty jail
         generate_minimal_conf
     fi
 
-    # Post-creation jail misc configuration
-    # Creates a dummy fstab file
-    # Disables adjkerntz, avoids spurious error messages
     # Set strict permissions on the jail by default
-    if [ -z "${EMPTY_JAIL}" ]; then
-        touch "etc/fstab"
-        sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
-    fi
     chmod 0700 "${bastille_jailsdir}/${NAME}"
+
+    # Jail must be started before applying the default template. -- cwells
+    bastille start "${NAME}"
+
+    if [ -n "${VNET_JAIL}" ]; then
+        if [ -n ${bastille_template_vnet} ]; then
+            ## rename interface to generic vnet0
+            uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
+
+            _gateway=''
+            _ifconfig=SYNCDHCP
+            if [ "${IP}" != "0.0.0.0" ]; then # not using DHCP, so set static address.
+                _ifconfig="inet ${IP}"
+                if [ -n "${bastille_network_gateway}" ]; then
+                    _gateway="${bastille_network_gateway}"
+                else
+                    _gateway="$(netstat -rn | awk '/default/ {print $2}')"
+                fi
+            fi
+            bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
+        fi
+    elif [ -n "${THICK_JAIL}" ]; then
+        if [ -n ${bastille_template_thick} ]; then
+            bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
+        fi
+    elif [ -n "${EMPTY_JAIL}" ]; then
+        if [ -n ${bastille_template_empty} ]; then
+            bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
+        fi
+    else # Thin jail.
+        if [ -n ${bastille_template_thin} ]; then
+            bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
+        fi
+    fi
+
+    # Apply values changed by the template. -- cwells
+    bastille restart "${NAME}"
 }
 
 # Handle special-case commands first.
@@ -520,19 +517,42 @@ if [ -z "${EMPTY_JAIL}" ]; then
     fi
 
     ## check if interface is valid
-    if [ -n  "${INTERFACE}" ]; then
+    if [ -n "${INTERFACE}" ]; then
         validate_netif
         validate_netconf
     else
         validate_netconf
     fi
 else
-    echo -e "${COLOR_GREEN}Creating empty jail: ${NAME}.${COLOR_RESET}"
+    info "Creating empty jail: ${NAME}."
 fi
 
 ## check if a running jail matches name or already exist
 if [ -n "${NAME}" ]; then
     running_jail
+fi
+
+# May not exist on deployments created before Bastille 0.7.20200714, so creating it. -- cwells
+if [ ! -e "${bastille_templatesdir}/default" ]; then
+    ln -s "${bastille_sharedir}/templates/default" "${bastille_templatesdir}/default"
+fi
+
+# These variables were added after Bastille 0.7.20200714, so they may not exist in the user's config.
+# We're checking for existence of the variables rather than empty since empty is a valid value. -- cwells
+if [ -z ${bastille_template_base+x} ]; then
+    bastille_template_base='default/base'
+fi
+if [ -z ${bastille_template_empty+x} ]; then
+    bastille_template_empty='default/empty'
+fi
+if [ -z ${bastille_template_thick+x} ]; then
+    bastille_template_thick='default/thick'
+fi
+if [ -z ${bastille_template_thin+x} ]; then
+    bastille_template_thin='default/thin'
+fi
+if [ -z ${bastille_template_vnet+x} ]; then
+    bastille_template_vnet='default/vnet'
 fi
 
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"

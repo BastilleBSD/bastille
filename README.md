@@ -45,6 +45,7 @@ Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
   clone       Clone an existing container.
   cmd         Execute arbitrary command on targeted container(s).
+  config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a thin container into a thick container.
   cp          cp(1) files from host to targeted container(s).
@@ -71,14 +72,14 @@ Available Commands:
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
   verify      Verify bootstrapped release or automation template.
-  zfs         Manage (get|set) zfs attributes on targeted container(s).
+  zfs         Manage (get|set) ZFS attributes on targeted container(s).
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.7-beta
+## 0.8-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
@@ -367,10 +368,6 @@ VNET also requires a custom `devfs` ruleset. Create the file as needed on the ho
 **/etc/devfs.rules**
 ```
 [bastille_vnet=13]
-add include $devfsrules_hide_all
-add include $devfsrules_unhide_basic
-add include $devfsrules_unhide_login
-add include $devfsrules_jail
 add path 'bpf*' unhide
 ```
 
@@ -678,9 +675,10 @@ Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 
 Any name provided in the ARG file can be used as a variable in the other hooks.
 For example, `name=value` in the ARG file will cause instances of `${name}`
-to be replaced with `value`. The `RENDER` hook can be used to specify files or
-directories whose contents should have the variables replaced. Values can be specified
-either through the command line when applying the template or as a default in the ARG file.
+to be replaced with `value`. The `RENDER` hook can be used to specify existing files or
+directories inside the jail whose contents should have the variables replaced. Values can be
+specified either through the command line when applying the template or as a default in the ARG
+file.
 
 In addition to supporting template hooks, Bastille supports overlaying files
 into the container. This is done by placing the files in their full path, using the
@@ -716,7 +714,8 @@ followed by its arguments (omitting the target, which is deduced from the
 Variables can also be defined using `ARG` with one `name=value` pair per
 line. Subsequent references to `${name}` would be replaced by `value`.
 Note that argument values are not available for use until after the point
-at which they are defined in the file.
+at which they are defined in the file. Both `${JAIL_NAME}` and `${JAIL_IP}`
+are made available in templates without having to define them as args.
 
 Bastillefile example:
 
@@ -745,6 +744,11 @@ CMD hostname > /usr/local/www/nginx-dist/hostname.txt
 
 # Forward TCP port 80 on the host to port 80 in the container.
 RDR tcp 80 80
+```
+
+Use the following command to convert a hook-based template into the Bastillefile format:
+```shell
+bastille template --convert my-template
 ```
 
 Applying Templates
@@ -943,7 +947,7 @@ validation are not used.
 
 bastille zfs
 ------------
-This sub-command allows managing zfs attributes for the targeted container(s).
+This sub-command allows managing ZFS attributes for the targeted container(s).
 Common usage includes setting container quotas.
 
 **set quota**
@@ -969,7 +973,7 @@ Note: On UFS systems containers must be stopped before export.
 ```shell
 ishmael ~ # bastille export folsom
 Exporting 'folsom' to a compressed .xz archive.
-Sending zfs data stream...
+Sending ZFS data stream...
   100 %     1057.2 KiB / 9231.5 KiB = 0.115                   0:01
 Exported '/usr/local/bastille/jails/backups/folsom_2020-01-26-19:23:04.xz' successfully.
 
@@ -984,7 +988,7 @@ ishmael ~ # bastille import folsom_2020-01-26-19:22:23.xz
 Validating file: folsom_2020-01-26-19:22:23.xz...
 File validation successful!
 Importing 'folsom' from compressed .xz archive.
-Receiving zfs data stream...
+Receiving ZFS data stream...
 /usr/local/bastille/jails/backups/folsom_2020-01-26-19:22:23.xz (1/1)
   100 %      626.4 KiB / 9231.5 KiB = 0.068                   0:02
 Container 'folsom' imported successfully.

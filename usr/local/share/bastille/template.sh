@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    error_exit "Usage: bastille template TARGET project/template"
+    error_exit "Usage: bastille template TARGET|--convert project/template"
 }
 
 post_command_hook() {
@@ -97,11 +97,14 @@ get_arg_value() {
 render() {
     _file_path="${1}/${2}"
     if [ -d "${_file_path}" ]; then # Recursively render every file in this directory. -- cwells
+        echo "Rendering Directory: ${_file_path}"
+        find "${_file_path}" \( -type d -name .git -prune \) -o -type f
         find "${_file_path}" \( -type d -name .git -prune \) -o -type f -print0 | $(eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}")
     elif [ -f "${_file_path}" ]; then
+        echo "Rendering File: ${_file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${_file_path}'"
     else
-        echo -e "${COLOR_YELLOW}Path not found for render: ${2}${COLOR_RESET}"
+        warn "Path not found for render: ${2}"
     fi
 }
 
@@ -116,18 +119,73 @@ if [ $# -lt 1 ]; then
     bastille_usage
 fi
 
+## global variables
 TEMPLATE="${1}"
+bastille_template=${bastille_templatesdir}/${TEMPLATE}
+if [ -z "${HOOKS}" ]; then
+    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
+fi
+
+# Special case conversion of hook-style template files into a Bastillefile. -- cwells
+if [ "${TARGET}" = '--convert' ]; then
+    if [ -d "${TEMPLATE}" ]; then # A relative path was provided. -- cwells
+        cd "${TEMPLATE}"
+    elif [ -d "${bastille_template}" ]; then
+        cd "${bastille_template}"
+    else
+        error_exit "Template not found: ${TEMPLATE}"
+    fi
+
+    echo "Converting template: ${TEMPLATE}"
+
+    HOOKS="ARG ${HOOKS}"
+    for _hook in ${HOOKS}; do
+        if [ -s "${_hook}" ]; then
+            # Default command is the hook name and default args are the line from the file. -- cwells
+            _cmd="${_hook}"
+            _args_template='${_line}'
+
+            # Replace old hook names with Bastille command names. -- cwells
+            case ${_hook} in
+                CONFIG|OVERLAY)
+                    _cmd='CP'
+                    _args_template='${_line} /'
+                    ;;
+                FSTAB)
+                    _cmd='MOUNT' ;;
+                PF)
+                    _cmd='RDR' ;;
+                PRE)
+                    _cmd='CMD' ;;
+            esac
+
+            while read _line; do
+                if [ -z "${_line}" ]; then
+                    continue
+                fi
+                eval "_args=\"${_args_template}\""
+                echo "${_cmd} ${_args}" >> Bastillefile
+            done < "${_hook}"
+            echo '' >> Bastillefile
+            rm "${_hook}"
+        fi
+    done
+
+    info "Template converted: ${TEMPLATE}"
+    exit 0
+fi
 
 case ${TEMPLATE} in
     http?://github.com/*/*|http?://gitlab.com/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
-            echo -e "${COLOR_GREEN}Bootstrapping ${TEMPLATE}...${COLOR_RESET}"
+            info "Bootstrapping ${TEMPLATE}..."
             if ! bastille bootstrap "${TEMPLATE}"; then
                 error_exit "Failed to bootstrap template: ${TEMPLATE}"
             fi
         fi
         TEMPLATE="${TEMPLATE_DIR}"
+        bastille_template=${bastille_templatesdir}/${TEMPLATE}
         ;;
     */*)
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
@@ -140,10 +198,6 @@ esac
 
 if [ -z "${JAILS}" ]; then
     error_exit "Container ${TARGET} is not running."
-fi
-
-if [ -z "${HOOKS}" ]; then
-    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
 fi
 
 # Check for an --arg-file parameter. -- cwells
@@ -166,31 +220,38 @@ if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
     error_exit "File not found: ${ARG_FILE}"
 fi
 
-## global variables
-bastille_template=${bastille_templatesdir}/${TEMPLATE}
 for _jail in ${JAILS}; do
+    info "[${_jail}]:"
+    info "Applying template: ${TEMPLATE}..."
+
     ## jail-specific variables.
     bastille_jail_path=$(jls -j "${_jail}" path)
-
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
-    echo -e "${COLOR_GREEN}Applying template: ${TEMPLATE}...${COLOR_RESET}"
+    if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
+        _jail_ip=$(jls -j "${_jail}" ip4.addr 2>/dev/null)
+        if [ -z "${_jail_ip}" -o "${_jail_ip}" = "-" ]; then
+            error_notify "Jail IP not found: ${_jail}"
+            _jail_ip='' # In case it was -. -- cwells
+        fi
+    fi
 
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
         if grep -qw "${_jail}" "${bastille_template}/TARGET"; then
-            echo -e "${COLOR_GREEN}TARGET: !${_jail}.${COLOR_RESET}"
+            info "TARGET: !${_jail}."
             echo
             continue
         fi
     if ! grep -Eq "(^|\b)(${_jail}|ALL)($|\b)" "${bastille_template}/TARGET"; then
-            echo -e "${COLOR_GREEN}TARGET: ?${_jail}.${COLOR_RESET}"
+            info "TARGET: ?${_jail}."
             echo
             continue
         fi
     fi
 
+    # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
+    # Values provided by default (without being defined by the user) are listed here. -- cwells
+    ARG_REPLACEMENTS="-e 's/\${JAIL_IP}/${_jail_ip}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
     # This is parsed outside the HOOKS loop so an ARG file can be used with a Bastillefile. -- cwells
-    ARG_REPLACEMENTS=''
     if [ -s "${bastille_template}/ARG" ]; then
         while read _line; do
             if [ -z "${_line}" ]; then
@@ -199,16 +260,15 @@ for _jail in ${JAILS}; do
             _arg_name=$(get_arg_name "${_line}")
             _arg_value=$(get_arg_value "${_line}" "$@")
             if [ -z "${_arg_value}" ]; then
-                echo -e "${COLOR_YELLOW}No value provided for arg: ${_arg_name}${COLOR_RESET}"
+                warn "No value provided for arg: ${_arg_name}"
             fi
-            # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
             ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
         done < "${bastille_template}/ARG"
     fi
 
     if [ -s "${bastille_template}/Bastillefile" ]; then
         # Ignore blank lines and comments. -- cwells
-        SCRIPT=$(grep -v '^\s*$' "${bastille_template}/Bastillefile" | grep -v '^\s*#')
+        SCRIPT=$(grep -v '^[[:blank:]]*$' "${bastille_template}/Bastillefile" | grep -v '^[[:blank:]]*#')
         # Use a newline as the separator. -- cwells
         IFS='
 '
@@ -225,20 +285,22 @@ for _jail in ${JAILS}; do
                     _arg_name=$(get_arg_name "${_args}")
                     _arg_value=$(get_arg_value "${_args}" "$@")
                     if [ -z "${_arg_value}" ]; then
-                        echo -e "${COLOR_YELLOW}No value provided for arg: ${_arg_name}${COLOR_RESET}"
+                        warn "No value provided for arg: ${_arg_name}"
                     fi
                     # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
                     ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
                     continue
                     ;;
                 cmd)
+                    # Escape single-quotes in the command being executed. -- cwells
+                    _args=$(echo "${_args}" | sed "s/'/'\\\\''/g")
                     # Allow redirection within the jail. -- cwells
                     _args="sh -c '${_args}'"
                     ;;
                 cp|copy)
                     _cmd='cp'
                     # Convert relative "from" path into absolute path inside the template directory. -- cwells
-                    if [ "${_args%${_args#?}}" != '/' ]; then
+                    if [ "${_args%${_args#?}}" != '/' ] && [ "${_args%${_args#??}}" != '"/' ]; then
                         _args="${bastille_template}/${_args}"
                     fi
                     ;;
@@ -279,7 +341,7 @@ for _jail in ${JAILS}; do
             # Override default command/args for some hooks. -- cwells
             case ${_hook} in
                 CONFIG)
-                    echo -e "${COLOR_YELLOW}CONFIG deprecated; rename to OVERLAY.${COLOR_RESET}"
+                    warn "CONFIG deprecated; rename to OVERLAY."
                     _args_template='${bastille_template}/${_line} /'
                     _cmd='cp' ;;
                 FSTAB)
@@ -290,7 +352,7 @@ for _jail in ${JAILS}; do
                     _args_template='${bastille_template}/${_line} /'
                     _cmd='cp' ;;
                 PF)
-                    echo -e "${COLOR_GREEN}NOT YET IMPLEMENTED.${COLOR_RESET}"
+                    info "NOT YET IMPLEMENTED."
                     continue ;;
                 PRE)
                     _cmd='cmd' ;;
@@ -300,7 +362,7 @@ for _jail in ${JAILS}; do
                     ;;
             esac
 
-            echo -e "${COLOR_GREEN}[${_jail}]:${_hook} -- START${COLOR_RESET}"
+            info "[${_jail}]:${_hook} -- START"
             if [ "${_hook}" = 'CMD' ] || [ "${_hook}" = 'PRE' ]; then
                 bastille cmd "${_jail}" /bin/sh < "${bastille_template}/${_hook}" || exit 1
             elif [ "${_hook}" = 'PKG' ]; then
@@ -317,11 +379,11 @@ for _jail in ${JAILS}; do
                     bastille "${_cmd}" "${_jail}" ${_args} || exit 1
                 done < "${bastille_template}/${_hook}"
             fi
-            echo -e "${COLOR_GREEN}[${_jail}]:${_hook} -- END${COLOR_RESET}"
+            info "[${_jail}]:${_hook} -- END"
             echo
         fi
     done
 
-    echo -e "${COLOR_GREEN}Template complete.${COLOR_RESET}"
+    info "Template applied: ${TEMPLATE}"
     echo
 done

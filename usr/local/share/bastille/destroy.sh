@@ -54,7 +54,7 @@ destroy_jail() {
     fi
 
     if [ -d "${bastille_jail_base}" ]; then
-        echo -e "${COLOR_GREEN}Deleting Jail: ${TARGET}.${COLOR_RESET}"
+        info "Deleting Jail: ${TARGET}."
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 if [ -n "${TARGET}" ]; then
@@ -79,13 +79,13 @@ destroy_jail() {
         ## archive jail log
         if [ -f "${bastille_jail_log}" ]; then
             mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
-            echo -e "${COLOR_GREEN}Note: jail console logs archived.${COLOR_RESET}"
-            echo -e "${COLOR_GREEN}${bastille_jail_log}-$(date +%F)${COLOR_RESET}"
+            info "Note: jail console logs archived."
+            info "${bastille_jail_log}-$(date +%F)"
         fi
 
         ## clear any active rdr rules
         if [ ! -z "$(pfctl -a "rdr/${TARGET}" -Psn 2>/dev/null)" ]; then
-            echo -e "${COLOR_GREEN}Clearing RDR rules:${COLOR_RESET}"
+            info "Clearing RDR rules:"
             pfctl -a "rdr/${TARGET}" -Fn
         fi
         echo
@@ -120,7 +120,7 @@ destroy_rel() {
         error_exit "Release base not found."
     else
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
-            echo -e "${COLOR_GREEN}Deleting base: ${TARGET}.${COLOR_RESET}"
+            info "Deleting base: ${TARGET}"
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${TARGET}" ]; then

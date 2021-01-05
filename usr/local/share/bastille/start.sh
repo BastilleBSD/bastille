@@ -67,16 +67,26 @@ for _jail in ${JAILS}; do
 
     ## test if not running
     elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
+        # Verify that the configured interface exists. -- cwells
+        if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
+            _interface=$(bastille config $_jail get interface)
+            if ! ifconfig | grep "^${_interface}:" >/dev/null; then
+                error_notify "Error: ${_interface} interface does not exist."
+                continue
+            fi
+        fi
+
         ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
         ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
         if [ -n "${ip}" ]; then
             if ifconfig | grep -w "${ip}" >/dev/null; then
-                error_exit "Error: IP address (${ip}) already in use."
+                error_notify "Error: IP address (${ip}) already in use."
+                continue
             fi
         fi
 
         ## start the container
-        echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+        info "[${_jail}]:"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
 
         ## add rctl limits

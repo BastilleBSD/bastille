@@ -59,16 +59,22 @@ OPTION="${1}"
 VALUE="${2}"
 
 for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    info "[${_jail}]:"
 
     _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
+    _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
 
-    ## if entry doesn't exist, add; else show existing entry
-    if ! grep -qs "${_rctl_rule}" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
+    # Check whether the entry already exists and, if so, update it. -- cwells
+    if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
+    	_escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
+    	_escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
+        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+    else # Just append the entry. -- cwells
         echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+        echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
     fi
 
     echo -e "${OPTION} ${VALUE}"
-    rctl -a "${_rctl_rule}"
+    rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
     echo -e "${COLOR_RESET}"
 done

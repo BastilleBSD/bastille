@@ -88,11 +88,11 @@ update_fstab() {
 
 change_name() {
     # Attempt container name change
-    echo -e "${COLOR_GREEN}Attempting to rename '${TARGET}' to ${NEWNAME}...${COLOR_RESET}"
+    info "Attempting to rename '${TARGET}' to ${NEWNAME}..."
     if [ "${bastille_zfs_enable}" = "YES" ]; then
         if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
             # Check and rename container ZFS dataset accordingly
-            # Perform additional checks in case of non-zfs existing containers
+            # Perform additional checks in case of non-ZFS existing containers
             if zfs list | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
                 if ! zfs rename -f "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"; then
                     error_exit "Can't rename '${TARGET}' dataset."
@@ -115,7 +115,7 @@ change_name() {
                     error_exit "Can't rename '${TARGET}' dataset."
                 fi
             else
-                error_exit "Can't determine the zfs origin path of '${TARGET}'."
+                error_exit "Can't determine the ZFS origin path of '${TARGET}'."
             fi
         else
             # Just rename the jail directory
@@ -131,7 +131,7 @@ change_name() {
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
-        echo -e "${COLOR_GREEN}Renamed '${TARGET}' to '${NEWNAME}' successfully.${COLOR_RESET}"
+        info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
     fi
 }
 

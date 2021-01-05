@@ -60,37 +60,37 @@ _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
 ## if any variables are empty, bail out
 if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "${_perms}" ] || [ -z "${_checks}" ]; then
     error_notify "FSTAB format not recognized."
-    echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
-    echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Read: ${_fstab}"
     exit 1
 fi
 
 ## if host path doesn't exist or type is not "nullfs"
 if [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     error_notify "Detected invalid host path or incorrect mount type in FSTAB."
-    echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
-    echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Read: ${_fstab}"
     exit 1
 fi
 
 ## if mount permissions are not "ro" or "rw"
 if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
     error_notify "Detected invalid mount permissions in FSTAB."
-    echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
-    echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Read: ${_fstab}"
     exit 1
 fi
 
 ## if check & pass are not "0 0 - 1 1"; bail out
 if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "0 1" ] && [ "${_checks}" != "1 1" ]; then
     error_notify "Detected invalid fstab options in FSTAB."
-    echo -e "${COLOR_YELLOW}Format: /host/path jail/path nullfs ro 0 0${COLOR_RESET}"
-    echo -e "${COLOR_YELLOW}Read: ${_fstab}${COLOR_RESET}"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Read: ${_fstab}"
     exit 1
 fi
 
 for _jail in ${JAILS}; do
-    echo -e "${COLOR_GREEN}[${_jail}]:${COLOR_RESET}"
+    info "[${_jail}]:"
 
     ## aggregate variables into FSTAB entry
     _jailpath="${bastille_jailsdir}/${_jail}/root/${_jailpath}"
