@@ -38,9 +38,11 @@ if [ $# -gt 0 ]; then
     usage
 fi
 
-ps -axwww -o jail,%mem,%cpu,rss | grep -v "^-" | tail +2 | sort -k 1,1 | awk \
+ps -axwww -o jail,%mem,%cpu,rss | grep -v "^-" | tail +2 | awk \
 '
-BEGIN { jail_string_length = 0}
+BEGIN { 
+    jail_string_length = 0
+}
 
 {
     if (jail_string_length < length($1))
@@ -54,13 +56,13 @@ BEGIN { jail_string_length = 0}
 
 END {
     format1 = "%-" jail_string_length + 2 "s %-5s %-5s %-10s \n"
-    format2 =  "%-" jail_string_length + 2 "s %-5s %-5s %-10.2f \n"
+    format2 = "%-" jail_string_length + 2 "s %-5s %-5s %-10.2f \n"
     print ""
 
     printf format1,"Hostname","%mem","%cpu","rss MB"
 
     for (hostname in jail_hostname)
-        printf format2,hostname,jail[hostname,"%mem"],jail[hostname,"%cpu"],jail[hostname,"rss"] / 1024
+        printf format2,hostname,jail[hostname,"%mem"],jail[hostname,"%cpu"],jail[hostname,"rss"] / 1024 | "sort -k 1,1"
 }'
 
 echo
