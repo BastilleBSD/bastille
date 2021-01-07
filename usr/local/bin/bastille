@@ -103,6 +103,7 @@ Available Commands:
   rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
+  stat        Print jails statistics.
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
@@ -135,7 +136,7 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|import|list|rdr|restart|start|update|upgrade|verify)
+bootstrap|create|destroy|import|list|rdr|restart|start|stat|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
 clone|config|cmd|console|convert|cp|disable|edit|enable|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
