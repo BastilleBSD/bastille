@@ -353,7 +353,9 @@ create_jail() {
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
     # Jail must be started before applying the default template. -- cwells
-    bastille start "${NAME}"
+    if [ -z "${EMPTY_JAIL}" ]; then
+        bastille start "${NAME}"
+    fi
 
     if [ -n "${VNET_JAIL}" ]; then
         if [ -n ${bastille_template_vnet} ]; then
@@ -378,7 +380,9 @@ create_jail() {
         fi
     elif [ -n "${EMPTY_JAIL}" ]; then
         if [ -n ${bastille_template_empty} ]; then
-            bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
+            if [ -s ${bastille_templatesdir}/${bastille_template_empty}/Bastillefile ]; then
+                bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
+            fi
         fi
     else # Thin jail.
         if [ -n ${bastille_template_thin} ]; then
@@ -387,7 +391,9 @@ create_jail() {
     fi
 
     # Apply values changed by the template. -- cwells
-    bastille restart "${NAME}"
+    if [ -z "${EMPTY_JAIL}" ]; then
+        bastille restart "${NAME}"
+    fi
 }
 
 # Handle special-case commands first.
