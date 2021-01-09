@@ -261,6 +261,13 @@ create_jail() {
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
+            # Properly link shared ports on thin jails in read-write.
+            if [ -d "${bastille_releasesdir}/${RELEASE}/usr/ports" ]; then
+                if [ ! -d "${bastille_jail_path}/usr/ports" ]; then
+                    mkdir ${bastille_jail_path}/usr/ports
+                fi
+                echo -e "${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jail_path}/usr/ports nullfs rw 0 0" >> "${bastille_jail_fstab}"
+            fi
         fi
 
         if [ -z "${THICK_JAIL}" ]; then
@@ -363,7 +370,7 @@ create_jail() {
     fi
 
     if [ -n "${VNET_JAIL}" ]; then
-        if [ -n ${bastille_template_vnet} ]; then
+        if [ -n "${bastille_template_vnet}" ]; then
             ## rename interface to generic vnet0
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
 
