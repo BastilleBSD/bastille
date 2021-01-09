@@ -42,9 +42,6 @@ post_command_hook() {
 
     case $_cmd in
         rdr)
-            if ! grep -qs "${_args}" "${bastille_jailsdir}/${_jail}/rdr.conf"; then
-                echo "${_args}" >> "${bastille_jailsdir}/${_jail}/rdr.conf"
-            fi
             echo -e ${_args}
     esac
 }

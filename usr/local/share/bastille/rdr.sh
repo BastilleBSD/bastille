@@ -1,5 +1,8 @@
 #!/bin/sh
 #
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# All rights reserved.
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -29,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rdr TARGET [clear] | [list] | [tcp <host_port> <jail_port>] | [udp <host_port> <jail_port>]"
+    error_exit "Usage: bastille rdr TARGET [clear|list|(tcp|udp host_port jail_port)]"
 }
 
 # Handle special-case commands first.
@@ -51,13 +54,13 @@ if [ "${TARGET}" = 'ALL' ]; then
     error_exit "Can only redirect to a single jail."
 fi
 
-# Check jail name valid
+# Check if jail name is valid
 JAIL_NAME=$(jls -j "${TARGET}" name 2>/dev/null)
 if [ -z "${JAIL_NAME}" ]; then
     error_exit "Jail not found: ${TARGET}"
 fi
 
-# Check jail ip4 address valid
+# Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
 if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
     JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
     if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
@@ -65,16 +68,30 @@ if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
     fi
 fi
 
-# Check rdr-anchor is setup in pf.conf
+# Check if rdr-anchor is defined in pf.conf
 if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
     error_exit "rdr-anchor not found in pf.conf"
 fi
 
-# Check ext_if is setup in pf.conf
+# Check if ext_if is defined in pf.conf
 EXT_IF=$(grep '^[[:space:]]*ext_if[[:space:]]*=' /etc/pf.conf)
-if [ -z "${JAIL_NAME}" ]; then
+if [ -z "${EXT_IF}" ]; then
     error_exit "ext_if not defined in pf.conf"
 fi
+
+# function: write rule to rdr.conf
+persist_rdr_rule() {
+if ! grep -qs "$1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$1 $2 $3" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+fi
+}
+
+# function: load rdr rule via pfctl
+load_rdr_rule() {
+( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  printf '%s\nrdr pass on $ext_if inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$1" "$2" "$JAIL_IP" "$3" ) \
+      | pfctl -a "rdr/${JAIL_NAME}" -f-
+}
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -86,22 +103,12 @@ while [ $# -gt 0 ]; do
             pfctl -a "rdr/${JAIL_NAME}" -Fn
             shift
             ;;
-        tcp)
+        tcp|udp)
             if [ $# -lt 3 ]; then
                 usage
             fi
-            ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-              printf '%s\nrdr pass on $ext_if inet proto tcp to port %s -> %s port %s\n' "$EXT_IF" "$2" "$JAIL_IP" "$3" ) \
-                  | pfctl -a "rdr/${JAIL_NAME}" -f-
-            shift 3
-            ;;
-        udp)
-            if [ $# -lt 3 ]; then
-                usage
-            fi
-            ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-              printf '%s\nrdr pass on $ext_if inet proto udp to port %s -> %s port %s\n' "$EXT_IF" "$2" "$JAIL_IP" "$3" ) \
-                  | pfctl -a "rdr/${JAIL_NAME}" -f-
+            persist_rdr_rule $1 $2 $3
+            load_rdr_rule $1 $2 $3
             shift 3
             ;;
         *)
