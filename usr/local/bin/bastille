@@ -90,7 +90,9 @@ Available Commands:
   cp          cp(1) files from host to targeted container(s).
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
+  disable     Prevent a container auto-start during host reboots.
   edit        Edit container configuration files (advanced).
+  enable      Allow a container auto-start during host reboots.
   export      Exports a specified container.
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
@@ -135,7 +137,7 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|import|list|rdr|restart|start|update|upgrade|verify)
+bootstrap|create|destroy|disable|enable|import|list|rdr|restart|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
 clone|config|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
