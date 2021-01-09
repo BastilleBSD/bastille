@@ -355,6 +355,11 @@ create_jail() {
     # Jail must be started before applying the default template. -- cwells
     if [ -z "${EMPTY_JAIL}" ]; then
         bastille start "${NAME}"
+    elif [ -n "${EMPTY_JAIL}" ]; then
+        # Don't start empty jails unless a template defined.
+        if [ -n "${bastille_template_empty}" ]; then
+            bastille start "${NAME}"
+        fi
     fi
 
     if [ -n "${VNET_JAIL}" ]; then
@@ -375,17 +380,15 @@ create_jail() {
             bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
         fi
     elif [ -n "${THICK_JAIL}" ]; then
-        if [ -n ${bastille_template_thick} ]; then
+        if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     elif [ -n "${EMPTY_JAIL}" ]; then
-        if [ -n ${bastille_template_empty} ]; then
-            if [ -s ${bastille_templatesdir}/${bastille_template_empty}/Bastillefile ]; then
-                bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
-            fi
+        if [ -n "${bastille_template_empty}" ]; then
+            bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     else # Thin jail.
-        if [ -n ${bastille_template_thin} ]; then
+        if [ -n "${bastille_template_thin}" ]; then
             bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     fi
@@ -393,6 +396,11 @@ create_jail() {
     # Apply values changed by the template. -- cwells
     if [ -z "${EMPTY_JAIL}" ]; then
         bastille restart "${NAME}"
+    elif [ -n "${EMPTY_JAIL}" ]; then
+        # Don't restart empty jails unless a template defined.
+        if [ -n "${bastille_template_empty}" ]; then
+            bastille restart "${NAME}"
+        fi
     fi
 }
 
@@ -526,6 +534,11 @@ if [ -z "${EMPTY_JAIL}" ]; then
     if [ -n "${INTERFACE}" ]; then
         validate_netif
         validate_netconf
+    elif [ -z "${INTERFACE}" ]; then
+        if [ -n "${VNET_JAIL}" ]; then
+            # User must specify interface on vnet jails.
+            error_exit "Error: Network interface not defined."
+        fi
     else
         validate_netconf
     fi
