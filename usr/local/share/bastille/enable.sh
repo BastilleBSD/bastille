@@ -50,19 +50,19 @@ TARGET="${1}"
 
 # Gather bastille list info(sysrc targets /etc/rc.conf by default).
 # Default bastille rc vars are bastille_enable and bastille_list.
-BASTILLE_ENABLE_STAT=$(sysrc -qn bastille_enable)
-BASILLE_LIST_CURRENT=$(sysrc -qn bastille_list)
+BASTILLE_LIST_CURRENT=$(sysrc -qn bastille_list)
 BASTILLE_LIST_TARGET=$(sysrc -qn bastille_list | tr -s " " "\n" | awk "/^${TARGET}$/")
 
 bastille_enable_check(){
     # Check bastille enable status.
+    BASTILLE_ENABLE_STAT=$(sysrc -qn bastille_enable)
     if [ "${BASTILLE_ENABLE_STAT}" != "YES" ]; then
         sysrc bastille_enable="YES"
     fi
 }
 
 if [ "${TARGET}" = 'ALL' ]; then
-    if [ -n "${BASILLE_LIST_CURRENT}" ]; then
+    if [ -n "${BASTILLE_LIST_CURRENT}" ]; then
         # Clear current list to re-apply default jail startup list.
         info "Clearing current startup list..."
         sysrc bastille_list=
