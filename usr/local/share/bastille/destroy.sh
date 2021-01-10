@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -74,6 +74,12 @@ destroy_jail() {
 
             ## remove jail base
             rm -rf "${bastille_jail_base}"
+        fi
+
+        # Remove target from bastille_list if exist
+        # Mute sysrc output here as it may be undesirable on large startup list
+        if [ -n "$(sysrc -qn bastille_list | tr -s " " "\n" | awk "/^${TARGET}$/")" ]; then
+            sysrc bastille_list-="${TARGET}" > /dev/null
         fi
 
         ## archive jail log
