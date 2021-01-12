@@ -34,6 +34,9 @@
 usage() {
     error_exit "Usage: bastille create [option] name release ip [interface]"
 }
+usage_vnet() {
+    error_exit "Usage: bastille create -V name release ip interface"
+}
 
 running_jail() {
     if [ -n "$(jls name | awk "/^${NAME}$/")" ]; then
@@ -443,6 +446,10 @@ INTERFACE="$4"
 if [ -n "${EMPTY_JAIL}" ]; then
     if [ $# -ne 1 ]; then
         usage
+    fi
+elif [ -n "${VNET_JAIL}" ]; then
+    if [ $# -ne 4 ]; then
+        usage_vnet
     fi
 else
     if [ $# -gt 4 ] || [ $# -lt 3 ]; then
