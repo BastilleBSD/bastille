@@ -176,7 +176,7 @@ ${NAME} {
 
   vnet;
   vnet.interface = e0b_${uniq_epair};
-  exec.prestart += "jib addm ${uniq_epair} ${INTERFACE}";
+  exec.prestart += "jib addm ${uniq_epair} ${bastille_jail_conf_interface}";
   exec.poststop += "jib destroy ${uniq_epair}";
 }
 EOF
@@ -543,10 +543,14 @@ if [ -z "${EMPTY_JAIL}" ]; then
     if [ -n "${INTERFACE}" ]; then
         validate_netif
         validate_netconf
-    elif [ -z "${INTERFACE}" ]; then
-        if [ -n "${VNET_JAIL}" ]; then
-            # User must specify interface on vnet jails.
-            error_exit "Error: Network interface not defined."
+    elif [ -n "${VNET_JAIL}" ]; then
+        if [ -z "${INTERFACE}" ]; then
+            if [ -z "${bastille_network_shared}" ]; then
+                # User must specify interface on vnet jails.
+                error_exit "Error: Network interface not defined."
+            else
+                validate_netconf
+            fi
         fi
     else
         validate_netconf
