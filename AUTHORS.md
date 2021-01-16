@@ -7,13 +7,21 @@ Christer Edwards [christer.edwards@gmail.com]
 ## Contributors (code)
 - Barry McCormick
 - Brian Downs
+- Carsten Bäcker
+- Chris Wells
 - Dave Cottlehuber
 - Giacomo Olgeni
+- Gleb Popov
 - JP Mens
 - Jose Rivera
+- Juan David Hurtado G.
 - Lars E.
+- Marius van Witzenburg
+- Matt Audesse
 - Paul C.
+- Petru T. Garstea
 - Sven R.
+- Tobias Tom
 
 ### Special thanks
 Software doesn't happen in a vacuum. Thank you to the following people who may
