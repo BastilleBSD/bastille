@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,9 @@ usage() {
 validate_name() {
     local NAME_VERIFY=${NEWNAME}
     local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
-    if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+    if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
+        error_exit "Container names may not begin with (-|_) characters!"
+    elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "Container names may not contain special characters!"
     fi
 }

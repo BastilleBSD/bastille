@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,9 @@ running_jail() {
 validate_name() {
     local NAME_VERIFY=${NAME}
     local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
-    if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+    if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
+        error_exit "Container names may not begin with (-|_) characters!"
+    elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "Container names may not contain special characters!"
     fi
 }
@@ -174,7 +176,7 @@ ${NAME} {
 
   vnet;
   vnet.interface = e0b_${uniq_epair};
-  exec.prestart += "jib addm ${uniq_epair} ${INTERFACE}";
+  exec.prestart += "jib addm ${uniq_epair} ${bastille_jail_conf_interface}";
   exec.poststop += "jib destroy ${uniq_epair}";
 }
 EOF
@@ -261,6 +263,13 @@ create_jail() {
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
+            # Properly link shared ports on thin jails in read-write.
+            if [ -d "${bastille_releasesdir}/${RELEASE}/usr/ports" ]; then
+                if [ ! -d "${bastille_jail_path}/usr/ports" ]; then
+                    mkdir ${bastille_jail_path}/usr/ports
+                fi
+                echo -e "${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jail_path}/usr/ports nullfs rw 0 0" >> "${bastille_jail_fstab}"
+            fi
         fi
 
         if [ -z "${THICK_JAIL}" ]; then
@@ -353,10 +362,17 @@ create_jail() {
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
     # Jail must be started before applying the default template. -- cwells
-    bastille start "${NAME}"
+    if [ -z "${EMPTY_JAIL}" ]; then
+        bastille start "${NAME}"
+    elif [ -n "${EMPTY_JAIL}" ]; then
+        # Don't start empty jails unless a template defined.
+        if [ -n "${bastille_template_empty}" ]; then
+            bastille start "${NAME}"
+        fi
+    fi
 
     if [ -n "${VNET_JAIL}" ]; then
-        if [ -n ${bastille_template_vnet} ]; then
+        if [ -n "${bastille_template_vnet}" ]; then
             ## rename interface to generic vnet0
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
 
@@ -373,21 +389,28 @@ create_jail() {
             bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
         fi
     elif [ -n "${THICK_JAIL}" ]; then
-        if [ -n ${bastille_template_thick} ]; then
+        if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     elif [ -n "${EMPTY_JAIL}" ]; then
-        if [ -n ${bastille_template_empty} ]; then
+        if [ -n "${bastille_template_empty}" ]; then
             bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     else # Thin jail.
-        if [ -n ${bastille_template_thin} ]; then
+        if [ -n "${bastille_template_thin}" ]; then
             bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     fi
 
     # Apply values changed by the template. -- cwells
-    bastille restart "${NAME}"
+    if [ -z "${EMPTY_JAIL}" ]; then
+        bastille restart "${NAME}"
+    elif [ -n "${EMPTY_JAIL}" ]; then
+        # Don't restart empty jails unless a template defined.
+        if [ -n "${bastille_template_empty}" ]; then
+            bastille restart "${NAME}"
+        fi
+    fi
 }
 
 # Handle special-case commands first.
@@ -520,6 +543,15 @@ if [ -z "${EMPTY_JAIL}" ]; then
     if [ -n "${INTERFACE}" ]; then
         validate_netif
         validate_netconf
+    elif [ -n "${VNET_JAIL}" ]; then
+        if [ -z "${INTERFACE}" ]; then
+            if [ -z "${bastille_network_shared}" ]; then
+                # User must specify interface on vnet jails.
+                error_exit "Error: Network interface not defined."
+            else
+                validate_netconf
+            fi
+        fi
     else
         validate_netconf
     fi

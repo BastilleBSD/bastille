@@ -53,6 +53,7 @@ fi
 
 OPTION="${1}"
 EXPATH="${2}"
+SAFE_EXPORT=
 
 # Handle some options
 if [ -n "${OPTION}" ]; then
@@ -61,6 +62,8 @@ if [ -n "${OPTION}" ]; then
             # Temporarily disable ZFS so we can create a standard backup archive
             bastille_zfs_enable="NO"
         fi
+    elif [ "${OPTION}" = "-s" -o "${OPTION}" = "--safe" ]; then
+        SAFE_EXPORT="1"
     elif echo "${OPTION}" | grep -q "\/"; then
         if [ -d "${OPTION}" ]; then
             EXPATH="${OPTION}"
@@ -83,6 +86,12 @@ if [ -n "${EXPATH}" ]; then
     fi
 fi
 
+create_zfs_snap(){
+    # Take a recursive temporary snapshot
+    info "Creating temporary ZFS snapshot for export..."
+    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
+}
+
 jail_export()
 {
     # Attempt to export the container
@@ -90,11 +99,18 @@ jail_export()
     if [ "${bastille_zfs_enable}" = "YES" ]; then
         if [ -n "${bastille_zfs_zpool}" ]; then
             FILE_EXT="xz"
-            info "Exporting '${TARGET}' to a compressed .${FILE_EXT} archive."
-            info "Sending ZFS data stream..."
-            # Take a recursive temporary snapshot
-            zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
 
+            if [ -n "${SAFE_EXPORT}" ]; then
+                info "Safely exporting '${TARGET}' to a compressed .${FILE_EXT} archive."
+                bastille stop ${TARGET}
+                create_zfs_snap
+                bastille start ${TARGET}
+            else
+                info "Hot exporting '${TARGET}' to a compressed .${FILE_EXT} archive."
+                create_zfs_snap
+            fi
+
+            info "Sending ZFS data stream..."
             # Export the container recursively and cleanup temporary snapshots
             zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}" | \
             xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}.${FILE_EXT}"
