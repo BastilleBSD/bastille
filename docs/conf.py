@@ -8,7 +8,7 @@ else:
 # -- Project information -----------------------------------------------------
 
 project = 'Bastille'
-copyright = '2018-2020, Christer Edwards'
+copyright = '2018-2021, Christer Edwards'
 author = 'Christer Edwards'
 
 # The short X.Y version
