@@ -174,7 +174,7 @@ Create the firewall rules:
   rdr-anchor "rdr/*"
 
   block in all
-  pass out quick modulate state
+  pass out quick keep state
   antispoof for $ext_if inet
   pass in inet proto tcp from any to any port ssh flags S/SA modulate state
 
