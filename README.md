@@ -131,7 +131,7 @@ nat on $ext_if from <jails> to any -> ($ext_if:0)
 rdr-anchor "rdr/*"
 
 block in all
-pass out quick modulate state
+pass out quick keep state
 antispoof for $ext_if inet
 pass in inet proto tcp from any to any port ssh flags S/SA keep state
 
