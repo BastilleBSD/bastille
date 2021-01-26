@@ -214,8 +214,7 @@ Two values are required for Bastille to use ZFS. The default values in the
 ## ZFS options
 bastille_zfs_enable=""                                  ## default: ""
 bastille_zfs_zpool=""                                   ## default: ""
-bastille_zfs_prefix="bastille"                          ## default: "${bastille_zfs_zpool}/bastille"
-bastille_zfs_mountpoint=${bastille_prefix}              ## default: "${bastille_prefix}"
+bastille_zfs_prefix="bastille"                          ## default: "bastille"
 bastille_zfs_options="-o compress=lz4 -o atime=off"     ## default: "-o compress=lz4 -o atime=off"
 ```
 
