@@ -233,8 +233,7 @@ not using ZFS and can safely ignore these settings.
 bastille bootstrap
 ------------------
 Before you can begin creating containers, Bastille needs to "bootstrap" a
-release.  Current supported releases are 11.3-RELEASE, 12.0-RELEASE and
-12.1-RELEASE.
+release.  Current supported releases are 11.3-RELEASE, 12.0-RELEASE, 12.1-RELEASE, and 12.2-RELEASE
 
 **Important: If you need ZFS support see the above section BEFORE
 bootstrapping.**
@@ -250,6 +249,11 @@ ishmael ~ # bastille bootstrap 11.3-RELEASE
 **FreeBSD 12.1-RELEASE**
 ```shell
 ishmael ~ # bastille bootstrap 12.1-RELEASE
+```
+
+**FreeBSD 12.2-RELEASE**
+```shell
+ishmael ~ # bastille bootstrap 12.2-RELEASE
 ```
 
 **HardenedBSD 11-STABLE-BUILD-XX**
