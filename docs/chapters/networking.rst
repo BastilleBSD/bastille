@@ -186,10 +186,6 @@ to containers are:
 The `nat` routes traffic from the loopback interface to the external
 interface for outbound access.
 
-The `rdr pass ...` will redirect traffic from the host firewall on port X to
-the ip of Container Y. The example shown redirects web traffic (80 & 443) to the
-containers at `10.17.89.45`.
-
 .. code-block:: shell
 
   rdr-anchor "rdr/*"
@@ -204,9 +200,9 @@ The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
   bastille rdr <jail> list        # List dynamic rdr rules
   bastille rdr <jail> clear       # Clear dynamic rdr rules
 
-  Note that if you are redirecting ports where the host is also listening
-  (eg. ssh) you should make sure that the host service is not listening on
-  the cloned interface - eg. for ssh set sshd_flags in rc.conf
+Note that if you are redirecting ports where the host is also listening (eg.
+ssh) you should make sure that the host service is not listening on the cloned
+interface - eg. for ssh set sshd_flags in rc.conf
 
   sshd_flags="-o ListenAddress=<hostname>"
 
