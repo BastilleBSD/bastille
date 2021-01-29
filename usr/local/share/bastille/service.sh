@@ -41,7 +41,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 1 -o $# -gt 2 ]; then
     usage
 fi
 
