@@ -32,7 +32,11 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille import file [option]"
+    error_exit "Usage: bastille import FILE [option]
+    \n
+    \nOptions:
+    \n
+      -f|--force   -- Force an archive import even if the checksum file is missing or don't match\n"
 }
 
 # Handle special-case commands first
@@ -47,8 +51,21 @@ if [ $# -gt 2 ] || [ $# -lt 1 ]; then
 fi
 
 TARGET="${1}"
-OPTION="${2}"
 shift
+OPT_FORCE=
+
+# Handle and parse option args
+while [ $# -gt 0 ]; do
+    case "${1}" in
+        -f|force|--force)
+            OPT_FORCE="1"
+            shift
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
 
 validate_archive() {
     # Compare checksums on the target archive
@@ -66,7 +83,7 @@ validate_archive() {
                 fi
             else
                 # Check if user opt to force import
-                if [ "${OPTION}" = "-f" -o "${OPTION}" = "force" ]; then
+                if [ -n "${OPT_FORCE}" ]; then
                     warn "Warning: Skipping archive validation!"
                 else
                     error_exit "Checksum file not found. See 'bastille import TARGET -f'."
@@ -403,6 +420,17 @@ jail_import() {
                     else
                         update_config
                     fi
+                elif [ -z "${FILE_EXT}" ]; then
+                    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$'; then
+                    # Based on the file name, looks like we are importing a raw bastille image
+                    # Import from uncompressed image file
+                    info "Importing '${TARGET_TRIM}' from uncompressed image archive."
+                    info "Receiving ZFS data stream..."
+                    zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${bastille_backupsdir}/${TARGET}"
+
+                    # Update ZFS mountpoint property if required
+                    update_zfsmount
+                    fi
                 else
                     error_exit "Unknown archive format."
                 fi
@@ -465,9 +493,9 @@ fi
 # Check if archive exist then trim archive name
 if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
     # Filter unsupported/unknown archives
-    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.xz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.txz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.zip$\|-[0-9]\{12\}.[0-9]\{2\}.tar.gz$\|@[0-9]\{12\}.[0-9]\{2\}.tar$'; then
+    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.xz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.txz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.zip$\|-[0-9]\{12\}.[0-9]\{2\}.tar.gz$\|@[0-9]\{12\}.[0-9]\{2\}.tar$'; then
         if ls "${bastille_backupsdir}" | awk "/^${TARGET}$/" >/dev/null; then
-            TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.xz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.txz//;s/_[0-9]*-[0-9]*-[0-9]*.zip//;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//;s/@[0-9]\{12\}.[0-9]\{2\}.tar//")
+            TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.xz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.txz//;s/_[0-9]*-[0-9]*-[0-9]*.zip//;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//;s/@[0-9]\{12\}.[0-9]\{2\}.tar//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*//")
         fi
     else
         error_exit "Unrecognized archive name."
