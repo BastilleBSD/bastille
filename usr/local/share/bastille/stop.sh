@@ -57,7 +57,7 @@ for _jail in ${JAILS}; do
         fi
 
         # Check if pfctl is present
-        if test -f /sbin/pfctl; then
+        if which -s pfctl; then
             if [ "$(bastille rdr ${_jail} list)" ]; then
                 bastille rdr ${_jail} clear
             fi
