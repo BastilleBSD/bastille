@@ -426,6 +426,38 @@ http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     bootstrap_template
     ;;
+ubuntu_bionic|bionic|ubuntu-bionic)
+    if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
+        warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
+        read  answer
+        case $answer in
+            no|No|n|N|"")
+                error_exit "Exiting."
+                ;;
+            yes|Yes|y|Y)
+                sysrc linux_enable=YES
+                sysrc -f /boot/loader.conf linprocfs_load=YES
+                sysrc -f /boot/loader.conf linsysfs_load=YES
+                sysrc -f /boot/loader.conf tmpfs_load=YES
+                ;;
+        esac
+    fi
+    if which -s debootstrap; then
+        debootstrap --foreign --arch=amd64 --no-check-gpg bionic ${bastille_releasesdir}/Ubuntu_1804
+    else
+        warn "Debootstrap not found. Should it be installed? (N|y)"
+        read  answer
+        case $answer in
+            no|No|n|N|"")
+                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
+                ;;
+            yes|Yes|y|Y)
+                pkg install debootstrap -y
+                debootstrap --foreign --arch=amd64 --no-check-gpg bionic ${bastille_releasesdir}/Ubuntu_1804
+                ;;
+        esac
+    fi
+    ;;
 *)
     usage
     ;;
