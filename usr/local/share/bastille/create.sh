@@ -230,7 +230,8 @@ create_jail() {
         fi
     fi
 
-    if [ -z "${LINUX_JAIL}" ]; then
+    if [ -n "${LINUX_JAIL}" ]; then
+        echo "Hit LinJail" #SRDEBUG
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
         fi
@@ -241,7 +242,11 @@ create_jail() {
         mkdir -p "${bastille_jail_path}/tmp"        
         touch "${bastille_jail_path}/dev/shm"
         touch "${bastille_jail_path}/dev/fd"
-        cp -R ${bastille_releasesdir}/${RELEASE} ${bastille_jail_path}
+        echo "${bastille_releasesdir}/${RELEASE}/" #SRDEBUG
+        echo "${bastille_jail_path}/" #SRDEBUG
+        cp -RPf ${bastille_releasesdir}/${RELEASE}/* ${bastille_jail_path}/
+        ln -s ${bastille_jail_path}/bin/login ${bastille_jail_path}/usr/bin/login
+        echo "CP Done" #SRDEBUG
 
         if [ ! -d "${bastille_jail_template}" ]; then
             mkdir -p "${bastille_jail_template}"
@@ -271,7 +276,7 @@ create_jail() {
         fi
     fi
 
-    if [ -z "${EMPTY_JAIL}" ]; then
+    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
         fi
@@ -302,8 +307,7 @@ create_jail() {
             if [ -n "${INTERFACE}" ]; then
                 local bastille_jail_conf_interface=${INTERFACE}
             fi
-
-            generate_linux_jail_conf
+            generate_jail_conf
         fi
 
         ## using relative paths here
@@ -385,25 +389,25 @@ create_jail() {
                 fi
             fi
         fi
-
-        ## create home directory if missing
-        if [ ! -d "${bastille_jail_path}/usr/home" ]; then
-            mkdir -p "${bastille_jail_path}/usr/home"
+        if [ -n "${VNET_JAIL}" ]; then
+            ## create home directory if missing
+            if [ ! -d "${bastille_jail_path}/usr/home" ]; then
+                mkdir -p "${bastille_jail_path}/usr/home"
+            fi
+            ## link home properly
+            if [ ! -L "home" ]; then
+                ln -s usr/home home
+            fi
+    
+            ## TZ: configurable (default: Etc/UTC)
+            ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+    
+            # Post-creation jail misc configuration
+            # Create a dummy fstab file
+            touch "etc/fstab"
+            # Disables adjkerntz, avoids spurious error messages
+            sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
         fi
-        ## link home properly
-        if [ ! -L "home" ]; then
-            ln -s usr/home home
-        fi
-
-        ## TZ: configurable (default: Etc/UTC)
-        ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
-
-        # Post-creation jail misc configuration
-        # Create a dummy fstab file
-        touch "etc/fstab"
-        # Disables adjkerntz, avoids spurious error messages
-        sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
-
         ## VNET specific
         if [ -n "${VNET_JAIL}" ]; then
             ## VNET requires jib script
@@ -413,6 +417,8 @@ create_jail() {
                 fi
             fi
         fi
+    elif [ -n "${LINUX_JAIL}" ]; then
+        generate_linux_jail_conf
     else
         ## Generate minimal configuration for empty jail
         generate_minimal_conf
@@ -422,8 +428,8 @@ create_jail() {
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
     # Jail must be started before applying the default template. -- cwells
-    if [ -z "${EMPTY_JAIL}" ]; then
-        bastille start "${NAME}"
+    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
+            bastille start "${NAME}"
     elif [ -n "${EMPTY_JAIL}" ]; then
         # Don't start empty jails unless a template defined.
         if [ -n "${bastille_template_empty}" ]; then
@@ -456,6 +462,8 @@ create_jail() {
         if [ -n "${bastille_template_empty}" ]; then
             bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
+    elif [ -n "${LINUX_JAIL}" ]; then
+        warn "Templates not available for Linux jails yet."
     else # Thin jail.
         if [ -n "${bastille_template_thin}" ]; then
             bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
@@ -463,12 +471,14 @@ create_jail() {
     fi
 
     # Apply values changed by the template. -- cwells
-    if [ -z "${EMPTY_JAIL}" ]; then
+    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
         bastille restart "${NAME}"
+        echo "2.1" #SRDEBUG
     elif [ -n "${EMPTY_JAIL}" ]; then
         # Don't restart empty jails unless a template defined.
         if [ -n "${bastille_template_empty}" ]; then
             bastille restart "${NAME}"
+        echo "2.2" #SRDEBUG
         fi
     fi
 }
@@ -543,7 +553,7 @@ if [ -n "${NAME}" ]; then
 fi
 
 
-if [ -z "${LINUX_JAIL}" ]; then
+if [ -n "${LINUX_JAIL}" ]; then
     case "${RELEASE}" in
     bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
         ## check for FreeBSD releases name
