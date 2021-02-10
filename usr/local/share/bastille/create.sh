@@ -458,7 +458,7 @@ create_jail() {
         if [ -n "${bastille_template_empty}" ]; then
             bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
-    ## Using templating function to fetch neccesary packges @hackacad
+    ## Using templating function to fetch necessary packges @hackacad
     elif [ -n "${LINUX_JAIL}" ]; then
         info "Fetchting packages..."
         #jexec -l "${NAME}" /bin/bash -c "export DEBIAN_FRONTEND=noninteractive" #SRDEBUG

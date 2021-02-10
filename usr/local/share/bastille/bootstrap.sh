@@ -426,7 +426,9 @@ http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     bootstrap_template
     ;;
+#adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
 ubuntu_bionic|bionic|ubuntu-bionic)
+    #check and install OS dependencies @hackacad
     if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
         warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
         read  answer
@@ -435,6 +437,9 @@ ubuntu_bionic|bionic|ubuntu-bionic)
                 error_exit "Exiting."
                 ;;
             yes|Yes|y|Y)
+                info "Loading modules"
+                kldload linux linux64 linprocfs linsysfs tmpfs
+                info "Persisting modules"
                 sysrc linux_enable=YES
                 sysrc -f /boot/loader.conf linprocfs_load=YES
                 sysrc -f /boot/loader.conf linsysfs_load=YES
