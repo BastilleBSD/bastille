@@ -448,7 +448,7 @@ ubuntu_bionic|bionic|ubuntu-bionic)
         esac
     fi
     if which -s debootstrap; then
-        debootstrap --foreign --arch=amd64 --no-check-gpg bionic ${bastille_releasesdir}/Ubuntu_1804
+        debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
     else
         warn "Debootstrap not found. Should it be installed? (N|y)"
         read  answer
@@ -458,11 +458,11 @@ ubuntu_bionic|bionic|ubuntu-bionic)
                 ;;
             yes|Yes|y|Y)
                 pkg install debootstrap -y
-                debootstrap --foreign --arch=amd64 --no-check-gpg bionic ${bastille_releasesdir}/Ubuntu_1804
+                debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
                 ;;
         esac
     fi
-    echo "APT::Cache-Start 251658240;" > ${bastille_releasesdir}/Ubuntu_1804/etc/apt/apt.conf.d/00aptitude
+    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Ubuntu_1804/etc/apt/apt.conf.d/00aptitude
     ;;
 ubuntu_focal|focal|ubuntu-focal)
     #check and install OS dependencies @hackacad
@@ -486,7 +486,7 @@ ubuntu_focal|focal|ubuntu-focal)
         esac
     fi
     if which -s debootstrap; then
-        debootstrap --foreign --arch=amd64 --no-check-gpg focal ${bastille_releasesdir}/Ubuntu_2004
+        debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
     else
         warn "Debootstrap not found. Should it be installed? (N|y)"
         read  answer
@@ -496,7 +496,7 @@ ubuntu_focal|focal|ubuntu-focal)
                 ;;
             yes|Yes|y|Y)
                 pkg install debootstrap -y
-                debootstrap --foreign --arch=amd64 --no-check-gpg focal ${bastille_releasesdir}/Ubuntu_2004
+                debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
                 ;;
         esac
     fi

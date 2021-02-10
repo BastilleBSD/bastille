@@ -425,7 +425,7 @@ create_jail() {
 
     # Jail must be started before applying the default template. -- cwells
     if [ -z "${EMPTY_JAIL}" ]; then
-            bastille start "${NAME}"
+        bastille start "${NAME}"
     elif [ -n "${EMPTY_JAIL}" ]; then
         # Don't start empty jails unless a template defined.
         if [ -n "${bastille_template_empty}" ]; then

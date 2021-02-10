@@ -76,11 +76,11 @@ check_fib() {
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    LOGIN="$(jexec -l "${_jail}" which login)" #needs to be added for validate_user as well @hackacad
+    LOGIN="$(jexec -l "${_jail}" which login)"
     if [ -n "${USER}" ]; then
         validate_user
     else
-        LOGIN="$(jexec -l "${_jail}" which login)" #needs to be added for validate_user as well @hackacad
+        LOGIN="$(jexec -l "${_jail}" which login)"
         ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
     echo
