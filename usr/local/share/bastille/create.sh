@@ -424,7 +424,6 @@ create_jail() {
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
     # Jail must be started before applying the default template. -- cwells
-#    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then #SRDEBUB
     if [ -z "${EMPTY_JAIL}" ]; then
             bastille start "${NAME}"
     elif [ -n "${EMPTY_JAIL}" ]; then
@@ -461,10 +460,11 @@ create_jail() {
     ## Using templating function to fetch necessary packges @hackacad
     elif [ -n "${LINUX_JAIL}" ]; then
         info "Fetchting packages..."
-        #jexec -l "${NAME}" /bin/bash -c "export DEBIAN_FRONTEND=noninteractive" #SRDEBUG
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
+        jexec -l "${NAME}" /bin/bash -c "apt update"
     else # Thin jail.
         if [ -n "${bastille_template_thin}" ]; then
             bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
@@ -536,7 +536,7 @@ RELEASE="$2"
 IP="$3"
 INTERFACE="$4"
 
-if [ -n "${EMPTY_JAIL}"; then
+if [ -n "${EMPTY_JAIL}" ]; then
     if [ $# -ne 1 ]; then
         usage
     fi
@@ -557,6 +557,10 @@ if [ -n "${LINUX_JAIL}" ]; then
     bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
         ## check for FreeBSD releases name
         NAME_VERIFY=ubuntu_bionic
+        ;;
+    focal|ubuntu_focal|ubuntu-focal)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=ubuntu_focal
         ;;
     *)
         error_notify "Unknown Linux."
@@ -605,6 +609,10 @@ if [ -z "${EMPTY_JAIL}" ]; then
         ;;
     ubuntu_bionic|bionic|ubuntu-bionic)
         NAME_VERIFY=Ubuntu_1804
+        validate_release
+        ;;
+    ubuntu_focal|focal|ubuntu-focal)
+        NAME_VERIFY=Ubuntu_2004
         validate_release
         ;;
     *)
