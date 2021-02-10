@@ -229,9 +229,8 @@ create_jail() {
             mkdir -p "${bastille_jailsdir}/${NAME}/root"
         fi
     fi
-
+    ## PoC for Linux jails @hackacad
     if [ -n "${LINUX_JAIL}" ]; then
-        echo "Hit LinJail" #SRDEBUG
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
         fi
@@ -242,11 +241,8 @@ create_jail() {
         mkdir -p "${bastille_jail_path}/tmp"        
         touch "${bastille_jail_path}/dev/shm"
         touch "${bastille_jail_path}/dev/fd"
-        echo "${bastille_releasesdir}/${RELEASE}/" #SRDEBUG
-        echo "${bastille_jail_path}/" #SRDEBUG
         cp -RPf ${bastille_releasesdir}/${RELEASE}/* ${bastille_jail_path}/
-        ln -s ${bastille_jail_path}/bin/login ${bastille_jail_path}/usr/bin/login
-        echo "CP Done" #SRDEBUG
+        echo ${NAME} ${bastille_jail_path}/etc/hostname
 
         if [ ! -d "${bastille_jail_template}" ]; then
             mkdir -p "${bastille_jail_template}"
@@ -428,7 +424,8 @@ create_jail() {
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
     # Jail must be started before applying the default template. -- cwells
-    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
+#    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then #SRDEBUB
+    if [ -z "${EMPTY_JAIL}" ]; then
             bastille start "${NAME}"
     elif [ -n "${EMPTY_JAIL}" ]; then
         # Don't start empty jails unless a template defined.
@@ -436,7 +433,6 @@ create_jail() {
             bastille start "${NAME}"
         fi
     fi
-
     if [ -n "${VNET_JAIL}" ]; then
         if [ -n "${bastille_template_vnet}" ]; then
             ## rename interface to generic vnet0
@@ -462,8 +458,13 @@ create_jail() {
         if [ -n "${bastille_template_empty}" ]; then
             bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
+    ## Using templating function to fetch neccesary packges @hackacad
     elif [ -n "${LINUX_JAIL}" ]; then
-        warn "Templates not available for Linux jails yet."
+        info "Fetchting packages..."
+        #jexec -l "${NAME}" /bin/bash -c "export DEBIAN_FRONTEND=noninteractive" #SRDEBUG
+        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
+        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
     else # Thin jail.
         if [ -n "${bastille_template_thin}" ]; then
             bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
@@ -473,12 +474,10 @@ create_jail() {
     # Apply values changed by the template. -- cwells
     if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
         bastille restart "${NAME}"
-        echo "2.1" #SRDEBUG
     elif [ -n "${EMPTY_JAIL}" ]; then
         # Don't restart empty jails unless a template defined.
         if [ -n "${bastille_template_empty}" ]; then
             bastille restart "${NAME}"
-        echo "2.2" #SRDEBUG
         fi
     fi
 }
