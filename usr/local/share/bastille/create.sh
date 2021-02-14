@@ -459,7 +459,7 @@ create_jail() {
         fi
     ## Using templating function to fetch necessary packges @hackacad
     elif [ -n "${LINUX_JAIL}" ]; then
-        info "Fetchting packages..."
+        info "Fetching packages..."
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
