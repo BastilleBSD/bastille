@@ -200,7 +200,7 @@ case "${TARGET}" in
     NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
     destroy_rel
     ;;
-*-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+*-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
     destroy_rel
