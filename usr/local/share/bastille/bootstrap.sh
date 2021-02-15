@@ -370,9 +370,9 @@ case "${1}" in
     PLATFORM_OS="FreeBSD"
     validate_release_url
     ;;
-*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
     ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2]|-BETA[1-5])$' | tr '[:lower:]' '[:upper:]')
     UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
     PLATFORM_OS="FreeBSD"
     validate_release_url
