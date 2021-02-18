@@ -60,11 +60,13 @@ fi
 SAFE_EXPORT=
 RAW_EXPORT=
 DIR_EXPORT=
+TXZ_EXPORT=
 
 # Handle and parse option args
 while [ $# -gt 0 ]; do
     case "${1}" in
         -t|--txz)
+            TXZ_EXPORT="1"
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 bastille_zfs_enable="NO"
             fi
@@ -88,6 +90,17 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
+
+## validate for combined options
+if [ -n "${TXZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
+    error_exit "Error: Archive mode and Safe mode exports can't be used together."
+fi
+if [ -n "${SAFE_EXPORT}" ]; then
+    # Check if container is running, otherwise don't try to stop/start the jail
+    if [ -z "$(jls name | awk "/^${TARGET}$/")" ]; then
+        SAFE_EXPORT=
+    fi
+fi
 
 # Export directory check
 if [ -n "${DIR_EXPORT}" ]; then
