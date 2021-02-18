@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille cp TARGET HOST_PATH CONTAINER_PATH"
+    error_exit "Usage: bastille cp TARGET HOST_PATH CONTAINER_PATH [CP_OPTIONS]"
 }
 
 # Handle special-case commands first.
@@ -48,11 +48,21 @@ fi
 
 CPSOURCE="${1}"
 CPDEST="${2}"
+OPTION="${3}"
+
+case "${OPTION}" in
+    -q|--quiet)
+        OPTION="-a"
+        ;;
+    *)
+        OPTION="-av"
+        ;;
+esac
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    cp -av "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
+    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
     RETURN="$?"
     if [ "${TARGET}" = "ALL" ]; then
         # Display the return status for reference
