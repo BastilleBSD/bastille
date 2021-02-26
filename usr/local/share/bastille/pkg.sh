@@ -47,6 +47,10 @@ fi
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    jexec -l "${_jail}" /usr/sbin/pkg "$@"
+    if [ -f ${_jail}/usr/sbin/pkg ]; then
+        jexec -l "${_jail}" /usr/sbin/pkg "$@"
+    else
+        jexec -l "${_jail}" /usr/sbin/mport "$@"
+    fi
     echo
 done
