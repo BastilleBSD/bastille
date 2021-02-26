@@ -103,7 +103,7 @@ Available Commands:
   rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
-  stat        Print jails statistics.
+  stat        List jails statistics.
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
