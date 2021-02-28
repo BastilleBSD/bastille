@@ -178,7 +178,6 @@ bootstrap_directories() {
         else
             mkdir -p "${bastille_templatesdir}"
         fi
-        ln -s "${bastille_sharedir}/templates/default" "${bastille_templatesdir}/default"
     fi
 
     ## ${bastille_releasesdir}
@@ -216,7 +215,7 @@ bootstrap_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            error_exit "Bootstrap appears complete."
+            error_notify "Bootstrap appears complete."
         else
             info "Bootstrapping additional distfiles..."
         fi
