@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille destroy [option] | [container|release]"
+    error_exit "Usage: bastille destroy [force] | [container|release]"
 }
 
 destroy_jail() {

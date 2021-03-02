@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille import file [option]"
+    error_exit "Usage: bastille import file [force]"
 }
 
 # Handle special-case commands first
