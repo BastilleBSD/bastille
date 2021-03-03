@@ -383,11 +383,11 @@ create_jail() {
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
                 else
-			if [ -z ${ip6} ]; then
-				_gateway="$(netstat -4rn | awk '/default/ {print $2}')"
-			else
-				_gateway="$(netstat -6rn | awk '/default/ {print $2}')"
-			fi
+            if [ -z ${ip6} ]; then
+                _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+            else
+                _gateway="$(netstat -6rn | awk '/default/ {print $2}')"
+            fi
                 fi
             fi
             bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
