@@ -138,6 +138,8 @@ pass in inet proto tcp from any to any port ssh flags S/SA keep state
 ## make sure you also open up ports that you are going to use for dynamic rdr
 # pass in inet proto tcp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
 # pass in inet proto udp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
+## for IPv6 networks please uncomment the following rule
+#pass inet6 proto icmp6 icmp6-type { echoreq, routersol, routeradv, neighbradv, neighbrsol }
 
 ```
 
