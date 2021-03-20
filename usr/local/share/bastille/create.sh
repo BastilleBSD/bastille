@@ -259,17 +259,25 @@ create_jail() {
         echo
 
         if [ -z "${THICK_JAIL}" ]; then
-            LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
+            LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share"
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
-            # Properly link shared ports on thin jails in read-write.
+            # Copy optional distfiles if they exist on the base release.
             if [ -d "${bastille_releasesdir}/${RELEASE}/usr/ports" ]; then
                 if [ ! -d "${bastille_jail_path}/usr/ports" ]; then
-                    mkdir ${bastille_jail_path}/usr/ports
+                    info "Copying ports tree..."
+                    cp -a ${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jail_path}/usr
                 fi
-                echo -e "${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jail_path}/usr/ports nullfs rw 0 0" >> "${bastille_jail_fstab}"
             fi
+            if [ -d "${bastille_releasesdir}/${RELEASE}/usr/src" ]; then
+                if [ ! -d "${bastille_jail_path}/usr/src" ]; then
+                    info "Copying source tree..."
+                    ln -sf usr/src sys
+                    cp -a ${bastille_releasesdir}/${RELEASE}/usr/src ${bastille_jail_path}/usr
+                fi
+            fi
+            echo
         fi
 
         if [ -z "${THICK_JAIL}" ]; then
