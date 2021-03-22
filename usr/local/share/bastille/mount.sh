@@ -110,6 +110,7 @@ for _jail in ${JAILS}; do
         fi
         echo "Added: ${_fstab_entry}"
     else
+        warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
         egrep "[[:blank:]]${_jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
     fi
     mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
