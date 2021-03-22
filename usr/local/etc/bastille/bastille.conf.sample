@@ -33,6 +33,7 @@ bastille_resolv_conf="/etc/resolv.conf"                               ## default
 ## bootstrap urls
 bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"          ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
 bastille_url_hardenedbsd="http://installer.hardenedbsd.org/pub/hardenedbsd/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
+bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"          ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
 ## ZFS options
 bastille_zfs_enable=""                                                ## default: ""
