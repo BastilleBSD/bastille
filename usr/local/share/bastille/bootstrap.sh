@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille bootstrap [release|template] [update|arch]"
+    error_exit "Usage: bastille bootstrap [release|template|list] [update|arch]"
 }
 
 # Handle special-case commands first.
@@ -75,6 +75,15 @@ if [ "${bastille_zfs_enable}" = "YES" ]; then
     fi
 fi
 
+# List available releases
+available_releases() {
+    if [ -d "${bastille_releasesdir}" ]; then
+        RELEASE_LIST=$(ls "${bastille_releasesdir}" | sed "s/\n//g")
+        info "${RELEASE_LIST}"
+    else
+        error_exit "Release directory not found"
+    fi
+}
 validate_release_url() {
     ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
@@ -362,6 +371,9 @@ fi
 
 ## Filter sane release names
 case "${1}" in
+list|show)
+    available_releases
+    ;;
 2.[0-9]*)
     ## check for MidnightBSD releases name
     NAME_VERIFY=$(echo ${RELEASE})
@@ -376,7 +388,7 @@ case "${1}" in
     PLATFORM_OS="FreeBSD"
     validate_release_url
     ;;
-*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
+*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-RC3|*-rc3|*-RC4|*-rc4|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2]|-BETA[1-5])$' | tr '[:lower:]' '[:upper:]')
     UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
