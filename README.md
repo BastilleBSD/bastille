@@ -289,6 +289,8 @@ other use cases for the bootstrap command are when a new FreeBSD version is
 released and you want to start building containers on that version, or
 bootstrapping templates from GitHub or GitLab.
 
+`bastille bootstrap list` will list the boostrapped releases.
+
 See `bastille update` to ensure your bootstrapped releases include the latest
 patches.
 
