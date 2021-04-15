@@ -495,7 +495,7 @@ ubuntu_focal|focal|ubuntu-focal)
                 error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
                 ;;
             yes|Yes|y|Y)
-                pkg install debootstrap -y
+                pkg install -y debootstrap
                 debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
                 ;;
         esac
