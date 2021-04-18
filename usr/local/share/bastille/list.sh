@@ -54,13 +54,15 @@ if [ $# -gt 0 ]; then
         if [ -d "${bastille_jailsdir}" ] && [ "$(find "${bastille_jailsdir}" -type d -links 2)" ]; then
 
             SPACER=4
-            MAX_LENGTH_JAIL_NAME=$(ls "${bastille_jailsdir}" | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_NAME=$(ls ${bastille_jailsdir}/*/jail.conf | sed "s/^.*\/\(.*\)\/jail.conf$/\1/" | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_NAME=${MAX_LENGTH_JAIL_NAME:-3}
+            if [ ${MAX_LENGTH_JAIL_NAME} -lt 3 ]; then MAX_LENGTH_JAIL_NAME=3; fi
             MAX_LENGTH_JAIL_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec grep "ip4.addr" {} \; | sed -ne "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_IP:-10}
             if [ ${MAX_LENGTH_JAIL_IP} -lt 10 ]; then MAX_LENGTH_JAIL_IP=10; fi
             MAX_LENGTH_JAIL_HOSTNAME=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec grep "host.hostname" {} \; | sed -ne "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_HOSTNAME=${MAX_LENGTH_JAIL_HOSTNAME:-8}
+            if [ ${MAX_LENGTH_JAIL_HOSTNAME} -lt 8 ]; then MAX_LENGTH_JAIL_HOSTNAME=8; fi
             MAX_LENGTH_JAIL_PORTS=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name rdr.conf -exec awk '{ lines++; chars += length($0)} END { chars += lines - 1; print chars }' {} \; | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
             if [ ${MAX_LENGTH_JAIL_PORTS} -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
