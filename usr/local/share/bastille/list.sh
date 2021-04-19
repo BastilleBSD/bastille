@@ -67,7 +67,7 @@ if [ $# -gt 0 ]; then
             MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
             if [ ${MAX_LENGTH_JAIL_PORTS} -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
             if [ ${MAX_LENGTH_JAIL_PORTS} -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
-            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" f -name fstab -maxdepth 3 -exec sed "s/^.*releases\/\(.*\) \/.*$/\1/" {} \; | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" -type f -name fstab -maxdepth 3 -exec sed "s/^.*releases\/\(.*\) \/.*$/\1/" {} \; | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_JAIL_RELEASE:-7}
             if [ ${MAX_LENGTH_JAIL_RELEASE} -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
 
