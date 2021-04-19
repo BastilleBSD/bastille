@@ -67,8 +67,11 @@ if [ $# -gt 0 ]; then
             MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
             if [ ${MAX_LENGTH_JAIL_PORTS} -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
             if [ ${MAX_LENGTH_JAIL_PORTS} -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
+            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" f -name fstab -maxdepth 3 -exec sed "s/^.*releases\/\(.*\) \/.*$/\1/" {} \; | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_JAIL_RELEASE:-7}
+            if [ ${MAX_LENGTH_JAIL_RELEASE} -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
 
-            printf " JID%*sState%*sIP Address%*sPublished Ports%*sHostname%*sPath\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" ""
+            printf " JID%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
 
             JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
             for _JAIL in ${JAIL_LIST}; do
@@ -89,8 +92,9 @@ if [ $# -gt 0 ]; then
                         JAIL_IP=${JAIL_IP:-"-"}
                         JAIL_PORTS=${JAIL_PORTS:-"-"}
                         if [ ${#JAIL_PORTS} -gt ${MAX_LENGTH_JAIL_PORTS} ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
+                        JAIL_RELEASE=$(sed "s/^.*releases\/\(.*\) \/.*$/\1/" "${bastille_jailsdir}/${_JAIL}/fstab")
 
-                        printf " ${_JAIL}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JAIL_NAME} - ${#_JAIL} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" ""
+                        printf " ${_JAIL}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JAIL_NAME} - ${#_JAIL} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                 fi
             done
         fi
