@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille list [-j][-a] [release|template|(jail|container)|log|limit|(import|export|backup)]"
+    error_exit "Usage: bastille list [-j|-a] [release|template|(jail|container)|log|limit|(import|export|backup)]"
 }
 
 if [ $# -eq 0 ]; then
@@ -88,7 +88,7 @@ if [ $# -gt 0 ]; then
                                 JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
                         fi
                         if [ ${#JAIL_PORTS} -gt ${MAX_LENGTH_JAIL_PORTS} ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
-                        if [ -f "${bastille_jailsdir}/${_JAIL}/fstab" ]; then JAIL_RELEASE=$(sed "s/^.*releases\/\(.*\) \/.*$/\1/" "${bastille_jailsdir}/${_JAIL}/fstab"); else JAIL_RELEASE=""; fi
+                        if [ -f "${bastille_jailsdir}/${_JAIL}/fstab" ]; then JAIL_RELEASE=$(sed -n "s/^.*releases\/\(.*\) \/.*$/\1/p" "${bastille_jailsdir}/${_JAIL}/fstab" | awk '!_[$0]++'); else JAIL_RELEASE=""; fi
                         JAIL_NAME=${JAIL_NAME:-${DEFAULT_VALUE}}
                         JAIL_STATE=${JAIL_STATE:-${DEFAULT_VALUE}}
                         JAIL_IP=${JAIL_IP:-${DEFAULT_VALUE}}
