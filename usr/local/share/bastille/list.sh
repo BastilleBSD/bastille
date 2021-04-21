@@ -59,7 +59,7 @@ if [ $# -gt 0 ]; then
             if [ ${MAX_LENGTH_JAIL_NAME} -lt 3 ]; then MAX_LENGTH_JAIL_NAME=3; fi
             MAX_LENGTH_JAIL_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" {} \; | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_IP:-10}
-            MAX_LENGTH_JAIL_VNET_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec grep -l "vnet;" {} + | sed 's/\(.*\)jail.conf$/cat \1root\/etc\/rc.conf/' | sh | sed -n 's/^ifconfig_vnet0="inet \(.*\)\/.*$/\1/p' | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_VNET_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec grep -l "vnet;" {} + | sed 's/\(.*\)jail.conf$/cat \1root\/etc\/rc.conf/' | sh | sed -n 's/^ifconfig_vnet0="\(.*\)"$/\1/p' | awk '{ if ($1 == "inet") print length($2); else print 15; }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_VNET_IP=${MAX_LENGTH_JAIL_VNET_IP:-10}
             if [ ${MAX_LENGTH_JAIL_VNET_IP} -gt ${MAX_LENGTH_JAIL_IP} ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP}; fi
             if [ ${MAX_LENGTH_JAIL_IP} -lt 10 ]; then MAX_LENGTH_JAIL_IP=10; fi
@@ -70,7 +70,7 @@ if [ $# -gt 0 ]; then
             MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
             if [ ${MAX_LENGTH_JAIL_PORTS} -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
             if [ ${MAX_LENGTH_JAIL_PORTS} -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
-            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name fstab -exec sed "s/^.*releases\/\(.*\) \/.*$/\1/" {} \; | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name fstab -exec sed "s/^.*releases\/\(.*\) \/.*$/\1/" {} \; | tr -d " " | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_JAIL_RELEASE:-7}
             if [ ${MAX_LENGTH_JAIL_RELEASE} -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
             printf " JID%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
@@ -99,7 +99,7 @@ if [ $# -gt 0 ]; then
                                 JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
                         fi
                         if [ ${#JAIL_PORTS} -gt ${MAX_LENGTH_JAIL_PORTS} ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
-                        if [ -f "${bastille_jailsdir}/${_JAIL}/fstab" ]; then JAIL_RELEASE=$(sed -n "s/^.*releases\/\(.*\) \/.*$/\1/p" "${bastille_jailsdir}/${_JAIL}/fstab" | awk '!_[$0]++'); else JAIL_RELEASE=""; fi
+                        if [ -f "${bastille_jailsdir}/${_JAIL}/fstab" ]; then JAIL_RELEASE=$(sed -n "s/^.*releases\/\(.*\) \/.*$/\1/p" "${bastille_jailsdir}/${_JAIL}/fstab" | tr -d " " | awk '!_[$0]++'); else JAIL_RELEASE=""; fi
                         JAIL_NAME=${JAIL_NAME:-${DEFAULT_VALUE}}
                         JAIL_STATE=${JAIL_STATE:-${DEFAULT_VALUE}}
                         JAIL_IP=${JAIL_IP:-${DEFAULT_VALUE}}
