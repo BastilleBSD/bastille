@@ -57,9 +57,9 @@ if [ $# -gt 0 ]; then
             MAX_LENGTH_JAIL_NAME=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf | sed "s/^.*\/\(.*\)\/jail.conf$/\1/" | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_NAME=${MAX_LENGTH_JAIL_NAME:-3}
             if [ ${MAX_LENGTH_JAIL_NAME} -lt 3 ]; then MAX_LENGTH_JAIL_NAME=3; fi
-            MAX_LENGTH_JAIL_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" {} \; | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" {} \; | sed 's/\// /g' | awk '{ print length($1) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_IP:-10}
-            MAX_LENGTH_JAIL_VNET_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec grep -l "vnet;" {} + | sed 's/\(.*\)jail.conf$/cat \1root\/etc\/rc.conf/' | sh | sed -n 's/^ifconfig_vnet0="\(.*\)"$/\1/p' | awk '{ if ($1 == "inet") print length($2); else print 15; }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_VNET_IP=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name jail.conf -exec grep -l "vnet;" {} + | sed 's/\(.*\)jail.conf$/grep "ifconfig_vnet0=" \1root\/etc\/rc.conf/' | sh | sed -n 's/^ifconfig_vnet0="\(.*\)"$/\1/p' | sed 's/\// /g' | awk '{ if ($1 == "inet") print length($2); else print 15 }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_VNET_IP=${MAX_LENGTH_JAIL_VNET_IP:-10}
             if [ ${MAX_LENGTH_JAIL_VNET_IP} -gt ${MAX_LENGTH_JAIL_IP} ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP}; fi
             if [ ${MAX_LENGTH_JAIL_IP} -lt 10 ]; then MAX_LENGTH_JAIL_IP=10; fi
@@ -90,9 +90,9 @@ if [ $# -gt 0 ]; then
                         else
                                 JAIL_STATE=$(if [ "$(sed -n "/^${_JAIL} {$/,/^}$/p" "${bastille_jailsdir}/${_JAIL}/jail.conf" | awk '$0 ~ /^'${_JAIL}' \{|\}/ { printf "%s",$0 }')" == "${_JAIL} {}" ]; then echo "Down"; else echo "n/a"; fi)
                                 if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${_JAIL}/jail.conf")" ]; then
-                                        JAIL_IP=$(sed -n 's/^ifconfig_vnet0="inet \(.*\)"$/\1/p' "${bastille_jailsdir}/${_JAIL}/root/etc/rc.conf")
+                                        JAIL_IP=$(sed -n 's/^ifconfig_vnet0="\(.*\)"$/\1/p' "${bastille_jailsdir}/${_JAIL}/root/etc/rc.conf" | sed "s/\// /g" | awk '{ if ($1 == "inet") print $2; else print $1 }')
                                 else
-                                        JAIL_IP=$(sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
+                                        JAIL_IP=$(sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf" | sed "s/\// /g" | awk '{ print $1 }')
                                 fi
                                 JAIL_HOSTNAME=$(sed -n "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
                                 if [ -f "${bastille_jailsdir}/${_JAIL}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${_JAIL}/rdr.conf" | sed "s/,$//"); else JAIL_PORTS=""; fi
