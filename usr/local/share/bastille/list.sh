@@ -90,7 +90,7 @@ if [ $# -gt 0 ]; then
                         else
                                 JAIL_STATE=$(if [ "$(sed -n "/^${_JAIL} {$/,/^}$/p" "${bastille_jailsdir}/${_JAIL}/jail.conf" | awk '$0 ~ /^'${_JAIL}' \{|\}/ { printf "%s",$0 }')" == "${_JAIL} {}" ]; then echo "Down"; else echo "n/a"; fi)
                                 if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${_JAIL}/jail.conf")" ]; then
-                                        JAIL_IP=$(sed -n 's/^ifconfig_vnet0="inet \(.*\)\/.*$/\1/p' "${bastille_jailsdir}/${_JAIL}/root/etc/rc.conf")
+                                        JAIL_IP=$(sed -n 's/^ifconfig_vnet0="inet \(.*\)"$/\1/p' "${bastille_jailsdir}/${_JAIL}/root/etc/rc.conf")
                                 else
                                         JAIL_IP=$(sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
                                 fi
