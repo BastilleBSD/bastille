@@ -48,3 +48,13 @@ info() {
 warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
+
+# Used before comparing bastille.conf arguments
+capitalise_conf_yes() {
+  answer=$1
+  case $1 in
+      y|yes|Y|Yes|YEs|yEs|yeS|yES)
+          answer="YES"
+          ;;
+  esac
+}
