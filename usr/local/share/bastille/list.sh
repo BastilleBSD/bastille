@@ -70,7 +70,7 @@ if [ $# -gt 0 ]; then
             MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
             if [ ${MAX_LENGTH_JAIL_PORTS} -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
             if [ ${MAX_LENGTH_JAIL_PORTS} -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
-            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name fstab -exec sed "s/^.*releases\/\(.*\) \/.*$/\1/" {} \; | tr -d " " | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name fstab -exec grep "/releases/" {} \; | sed -n "s/^.*\/releases\/\(.*\) \/.*$/\1/p" | tr -d " " | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_JAIL_RELEASE:-7}
             if [ ${MAX_LENGTH_JAIL_RELEASE} -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
             printf " JID%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
@@ -99,7 +99,7 @@ if [ $# -gt 0 ]; then
                                 JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
                         fi
                         if [ ${#JAIL_PORTS} -gt ${MAX_LENGTH_JAIL_PORTS} ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
-                        if [ -f "${bastille_jailsdir}/${_JAIL}/fstab" ]; then JAIL_RELEASE=$(sed -n "s/^.*releases\/\(.*\) \/.*$/\1/p" "${bastille_jailsdir}/${_JAIL}/fstab" | tr -d " " | awk '!_[$0]++'); else JAIL_RELEASE=""; fi
+                        if [ -f "${bastille_jailsdir}/${_JAIL}/fstab" ]; then JAIL_RELEASE=$(grep "/releases/" "${bastille_jailsdir}/${_JAIL}/fstab" | sed -n "s/^.*\/releases\/\(.*\) \/.*$/\1/p" | tr -d " " | awk '!_[$0]++'); else JAIL_RELEASE=""; fi
                         JAIL_NAME=${JAIL_NAME:-${DEFAULT_VALUE}}
                         JAIL_STATE=${JAIL_STATE:-${DEFAULT_VALUE}}
                         JAIL_IP=${JAIL_IP:-${DEFAULT_VALUE}}
