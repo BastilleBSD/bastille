@@ -178,7 +178,6 @@ bootstrap_directories() {
         else
             mkdir -p "${bastille_templatesdir}"
         fi
-        ln -s "${bastille_sharedir}/templates/default" "${bastille_templatesdir}/default"
     fi
 
     ## ${bastille_releasesdir}
@@ -216,7 +215,7 @@ bootstrap_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            error_exit "Bootstrap appears complete."
+            error_notify "Bootstrap appears complete."
         else
             info "Bootstrapping additional distfiles..."
         fi
@@ -363,6 +362,13 @@ fi
 
 ## Filter sane release names
 case "${1}" in
+2.[0-9]*)
+    ## check for MidnightBSD releases name
+    NAME_VERIFY=$(echo ${RELEASE})
+    UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
+    PLATFORM_OS="MidnightBSD"
+    validate_release_url
+    ;;
 *-CURRENT|*-current)
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
@@ -370,9 +376,9 @@ case "${1}" in
     PLATFORM_OS="FreeBSD"
     validate_release_url
     ;;
-*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-RC3|*-rc3|*-RC4|*-rc4|*-RC5|*-rc5|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
     ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-5]|-BETA[1-5])$' | tr '[:lower:]' '[:upper:]')
     UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
     PLATFORM_OS="FreeBSD"
     validate_release_url

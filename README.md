@@ -138,6 +138,8 @@ pass in inet proto tcp from any to any port ssh flags S/SA keep state
 ## make sure you also open up ports that you are going to use for dynamic rdr
 # pass in inet proto tcp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
 # pass in inet proto udp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
+## for IPv6 networks please uncomment the following rule
+# pass inet6 proto icmp6 icmp6-type { echoreq, routersol, routeradv, neighbradv, neighbrsol }
 
 ```
 
@@ -215,7 +217,7 @@ Two values are required for Bastille to use ZFS. The default values in the
 bastille_zfs_enable=""                                  ## default: ""
 bastille_zfs_zpool=""                                   ## default: ""
 bastille_zfs_prefix="bastille"                          ## default: "${bastille_zfs_zpool}/bastille"
-bastille_zfs_mountpoint=${bastille_prefix}              ## default: "${bastille_prefix}"
+bastille_prefix="/bastille"                             ## default: "/usr/local/bastille". ${bastille_zfs_prefix} gets mounted here
 bastille_zfs_options="-o compress=lz4 -o atime=off"     ## default: "-o compress=lz4 -o atime=off"
 ```
 

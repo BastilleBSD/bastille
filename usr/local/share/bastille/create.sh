@@ -391,7 +391,11 @@ create_jail() {
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
                 else
-                    _gateway="$(netstat -rn | awk '/default/ {print $2}')"
+            if [ -z ${ip6} ]; then
+                _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+            else
+                _gateway="$(netstat -6rn | awk '/default/ {print $2}')"
+            fi
                 fi
             fi
             bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
@@ -493,14 +497,19 @@ fi
 if [ -z "${EMPTY_JAIL}" ]; then
     ## verify release
     case "${RELEASE}" in
+    2.[0-9]*)
+        ## check for MidnightBSD releases name
+        NAME_VERIFY=$(echo "${RELEASE}")
+        validate_release
+        ;;
     *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
         ## check for FreeBSD releases name
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
         validate_release
         ;;
-    *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+    *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
         ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2]|-BETA[1-5])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
         validate_release
         ;;
     *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)

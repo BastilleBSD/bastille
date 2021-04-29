@@ -55,6 +55,11 @@ if [ "${TARGET}" = "ALL" ]; then
     error_exit "Batch upgrade is unsupported."
 fi
 
+if [ -f /bin/midnightbsd-version ]; then
+    echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
+    exit 1
+fi
+
 if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
