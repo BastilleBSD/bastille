@@ -379,7 +379,11 @@ create_jail() {
             _gateway=''
             _ifconfig=SYNCDHCP
             if [ "${IP}" != "0.0.0.0" ]; then # not using DHCP, so set static address.
-                _ifconfig="inet ${IP}"
+                if [ -n "${ip6}" ]; then
+                    _ifconfig="inet6 ${IP}"
+                else
+                    _ifconfig="inet ${IP}"
+                fi
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
                 else
