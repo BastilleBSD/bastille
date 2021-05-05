@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille export TARGET [option] | PATH"
+    error_exit "Usage: bastille export TARGET [safe|tarball] | PATH"
 }
 
 # Handle special-case commands first
@@ -57,12 +57,12 @@ SAFE_EXPORT=
 
 # Handle some options
 if [ -n "${OPTION}" ]; then
-    if [ "${OPTION}" = "-t" -o "${OPTION}" = "--txz" ]; then
+    if [ "${OPTION}" = "-t" -o "${OPTION}" = "--txz" -o ${OPTION} = "tarball" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             # Temporarily disable ZFS so we can create a standard backup archive
             bastille_zfs_enable="NO"
         fi
-    elif [ "${OPTION}" = "-s" -o "${OPTION}" = "--safe" ]; then
+    elif [ "${OPTION}" = "-s" -o "${OPTION}" = "--safe" -o ${OPTION} = "safe" ]; then
         SAFE_EXPORT="1"
     elif echo "${OPTION}" | grep -q "\/"; then
         if [ -d "${OPTION}" ]; then

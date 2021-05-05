@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille create [option] name release ip [interface]"
+    error_exit "Usage: bastille create [empty|thick|vnet] name release ip [interface]"
 }
 
 running_jail() {
