@@ -70,9 +70,11 @@ if [ $# -gt 0 ]; then
             MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
             if [ ${MAX_LENGTH_JAIL_PORTS} -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
             if [ ${MAX_LENGTH_JAIL_PORTS} -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
-            MAX_LENGTH_JAIL_RELEASE=$(find -L ""${bastille_jailsdir}/*/root/etc"" -maxdepth 1 -type f -name os-release 2> /dev/null -exec sed -n "s/^VERSION=\(.*\)$/\1/p" {} \; | awk '{ print length($0) }' | sort -nr | head -n 1)
-            if [ ! ${MAX_LENGTH_JAIL_RELEASE} ]; then MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name fstab -exec grep "/releases/" {} \; | sed -n "s/^.*\/releases\/\(.*\) \/.*$/\1/p" | tr -d " " | awk '{ print length($0) }' | sort -nr | head -n 1); fi
+            MAX_LENGTH_JAIL_RELEASE=$(find "${bastille_jailsdir}" -maxdepth 2 -type f -name fstab 2> /dev/null -exec grep "/releases/.*/root/.bastille nullfs" {} \; | sed -n "s/^\(.*\) \/.*$/grep \"\^USERLAND_VERSION=\" \1\/bin\/freebsd-version 2\> \/dev\/null/p" | awk '!_[$0]++' | sh | sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_JAIL_RELEASE:-7}
+            MAX_LENGTH_THICK_JAIL_RELEASE=$(find ""${bastille_jailsdir}/*/root/bin"" -maxdepth 1 -type f -name freebsd-version 2> /dev/null -exec grep "^USERLAND_VERSION=" {} \; | sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_THICK_JAIL_RELEASE=${MAX_LENGTH_THICK_JAIL_RELEASE:-7}
+            if [ ${MAX_LENGTH_THICK_JAIL_RELEASE} -gt ${MAX_LENGTH_JAIL_RELEASE} ]; then MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_THICK_JAIL_RELEASE}; fi
             if [ ${MAX_LENGTH_JAIL_RELEASE} -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
             printf " JID%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
             JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
@@ -90,7 +92,7 @@ if [ $# -gt 0 ]; then
                                 JAIL_HOSTNAME=$(jls -j ${_JAIL} host.hostname 2> /dev/null)
                                 JAIL_PORTS=$(pfctl -a "rdr/${_JAIL}" -Psn 2> /dev/null | awk '{ printf "%s/%s:%s"",",$7,$14,$18 }' | sed "s/,$//")
                                 JAIL_PATH=$(jls -j ${_JAIL} path 2> /dev/null)
-                                JAIL_RELEASE=$(sed -n "s/^VERSION=\(.*\)$/\1/p" "${JAIL_PATH}/etc/os-release")
+                                JAIL_RELEASE=$(jexec -l ${_JAIL} freebsd-version -u 2> /dev/null)
                         else
                                 JAIL_STATE=$(if [ "$(sed -n "/^${_JAIL} {$/,/^}$/p" "${bastille_jailsdir}/${_JAIL}/jail.conf" | awk '$0 ~ /^'${_JAIL}' \{|\}/ { printf "%s",$0 }')" == "${_JAIL} {}" ]; then echo "Down"; else echo "n/a"; fi)
                                 if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${_JAIL}/jail.conf")" ]; then
@@ -101,10 +103,14 @@ if [ $# -gt 0 ]; then
                                 JAIL_HOSTNAME=$(sed -n "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
                                 if [ -f "${bastille_jailsdir}/${_JAIL}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${_JAIL}/rdr.conf" | sed "s/,$//"); else JAIL_PORTS=""; fi
                                 JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${_JAIL}/jail.conf")
-                                if [ -f "${JAIL_PATH}/etc/os-release" ]; then
-                                        JAIL_RELEASE=$(sed -n "s/^VERSION=\(.*\)$/\1/p" "${JAIL_PATH}/etc/os-release")
+                                if [ ${JAIL_PATH} ]; then
+                                        if [ -f "${JAIL_PATH}/bin/freebsd-version" ]; then
+                                                JAIL_RELEASE=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${JAIL_PATH}/bin/freebsd-version")
+                                        else
+                                                JAIL_RELEASE=$(grep "/releases/.*/root/.bastille nullfs" "${bastille_jailsdir}/${_JAIL}/fstab" 2> /dev/null | sed -n "s/^\(.*\) \/.*$/grep \"\^USERLAND_VERSION=\" \1\/bin\/freebsd-version 2\> \/dev\/null/p" | awk '!_[$0]++' | sh | sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p")
+                                        fi
                                 else
-                                        if [ -f "${bastille_jailsdir}/${_JAIL}/fstab" ]; then JAIL_RELEASE=$(grep "/releases/" "${bastille_jailsdir}/${_JAIL}/fstab" | sed -n "s/^.*\/releases\/\(.*\) \/.*$/\1/p" | tr -d " " | awk '!_[$0]++'); else JAIL_RELEASE=""; fi
+                                        JAIL_RELEASE=""
                                 fi
                         fi
                         if [ ${#JAIL_PORTS} -gt ${MAX_LENGTH_JAIL_PORTS} ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
