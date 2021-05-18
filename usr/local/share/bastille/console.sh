@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille console TARGET [user]'"
+    error_exit "Usage: bastille console TARGET [user]"
 }
 
 # Handle special-case commands first.

@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [option]"
+    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [force]"
 }
 
 # Handle special-case commands first.
