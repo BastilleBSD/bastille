@@ -173,7 +173,7 @@ if [ "${TARGET}" = '--convert' ]; then
 fi
 
 case ${TEMPLATE} in
-    http?://github.com/*/*|http?://gitlab.com/*/*)
+    http?://*/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
             info "Bootstrapping ${TEMPLATE}..."
