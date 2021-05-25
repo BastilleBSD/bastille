@@ -77,7 +77,7 @@ verify_template() {
                     info "[${_hook}]:[${_include}]:"
 
                     case ${_include} in
-                        http?://github.com/*/*|http?://gitlab.com/*/*)
+                        http?://codeberg.org/*/*|http?://github.com/*/*|http?://gitlab.com/*/*)
                             bastille bootstrap "${_include}"
                         ;;
                         */*)

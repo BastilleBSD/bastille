@@ -426,7 +426,7 @@ current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
-http?://github.com/*/*|http?://gitlab.com/*/*)
+http?://codeberg.org/*/*|http?://github.com/*/*|http?://gitlab.com/*/*)
     BASTILLE_TEMPLATE_URL=${1}
     BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
