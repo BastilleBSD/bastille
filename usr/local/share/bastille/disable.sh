@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille cmd TARGET command"
+    error_exit "Usage: bastille disable TARGET"
 }
 
 # Handle special-case commands first.
@@ -41,33 +42,23 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -eq 0 ]; then
+if [ $# -ne 0 ]; then
     usage
 fi
 
-COUNT=0
-RETURN=0
-
 for _jail in ${JAILS}; do
-    COUNT=$(($COUNT+1))
-    info "[${_jail}]:"
-    jexec -l "${_jail}" "$@"
-    ERROR_CODE=$?
-    info "[${_jail} - Return code]: ${ERROR_CODE}"
+    ENABLE_FILE="${bastille_jailsdir}/${_jail}/jail.conf"
+    DISABLE_FILE="${bastille_jailsdir}/${_jail}/jail.conf.disabled"
 
-    if [ "$COUNT" -eq 1 ]; then
-        RETURN=$ERROR_CODE
-    else 
-        RETURN=$(($RETURN+$ERROR_CODE))
+    if [ -f "$ENABLE_FILE" ] && [ -f "$DISABLE_FILE" ]; then
+        error_notify "${_jail}: Both files exist but only one file can exist!!!\n\t${ENABLE_FILE}\n\t${DISABLE_FILE}"
+    elif [ -f "$DISABLE_FILE" ]; then
+        warn "${_jail}: Is already disabled."
+    elif [ -f "$ENABLE_FILE" ]; then
+        info "${_jail}: Disabled." 
+        mv ${ENABLE_FILE} ${DISABLE_FILE}
+    else
+        error_notify "${_jail}: Very strange. Both files are missing. One file must exist!!!\n\t${ENABLE_FILE}\n\t${DISABLE_FILE}"
     fi
 
-    echo
 done
-
-# Check when a command is executed in all running jails. (bastille cmd ALL ...)
-
-if [ "$COUNT" -gt 1 ] && [ "$RETURN" -gt 0 ]; then
-    RETURN=1
-fi 
-
-return "$RETURN"

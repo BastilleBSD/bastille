@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,43 +31,38 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille cmd TARGET command"
+    error_exit "Usage: bastille stat"
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
-if [ $# -eq 0 ]; then
+if [ $# -gt 0 ]; then
     usage
 fi
 
-COUNT=0
-RETURN=0
+ps -axwww -o jail,%mem,%cpu,rss | grep -v "^-" | tail +2 | awk \
+'
+BEGIN { 
+    jail_string_length = 0
+}
 
-for _jail in ${JAILS}; do
-    COUNT=$(($COUNT+1))
-    info "[${_jail}]:"
-    jexec -l "${_jail}" "$@"
-    ERROR_CODE=$?
-    info "[${_jail} - Return code]: ${ERROR_CODE}"
+{
+    if (jail_string_length < length($1))
+        jail_string_length = length($1);
 
-    if [ "$COUNT" -eq 1 ]; then
-        RETURN=$ERROR_CODE
-    else 
-        RETURN=$(($RETURN+$ERROR_CODE))
-    fi
+    jail_hostname[$1] = $1
+    jail[$1,"%mem"] += $2
+    jail[$1,"%cpu"] += $3
+    jail[$1,"rss"]  += $4
+}
 
-    echo
-done
+END {
+    format1 = "%-" jail_string_length + 2 "s %-5s %-5s %-10s \n"
+    format2 = "%-" jail_string_length + 2 "s %-5s %-5s %-10.2f \n"
+    print ""
 
-# Check when a command is executed in all running jails. (bastille cmd ALL ...)
+    printf format1,"Hostname","%mem","%cpu","rss MB"
 
-if [ "$COUNT" -gt 1 ] && [ "$RETURN" -gt 0 ]; then
-    RETURN=1
-fi 
+    for (hostname in jail_hostname)
+        printf format2,hostname,jail[hostname,"%mem"],jail[hostname,"%cpu"],jail[hostname,"rss"] / 1024 | "sort -k 1,1"
+}'
 
-return "$RETURN"
+echo
