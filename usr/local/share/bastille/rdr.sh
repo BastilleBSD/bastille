@@ -66,8 +66,9 @@ if [ "$(bastille config $TARGET get vnet)" = 'enabled' ]; then
 fi
 
 JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
-# Check if the jail has a valid ip4.addr
-if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
+JAIL_IP6=$(jls -j "${TARGET}" ip6.addr 2>/dev/null)
+# Check if the jail has either a valid ip4.addr or a valid ip6.addr (or both)
+if [ \( -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" \) -a \( -z "${JAIL_IP6}" -o "${JAIL_IP6}" = "-" \) ]; then
     error_exit "Jail IP not found: ${TARGET}"
 fi
 
@@ -91,9 +92,15 @@ fi
 
 # function: load rdr rule via pfctl
 load_rdr_rule() {
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass on $ext_if inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$1" "$2" "$JAIL_IP" "$3" ) \
-      | pfctl -a "rdr/${JAIL_NAME}" -f-
+    (   pfctl -a "rdr/${JAIL_NAME}" -Psn;
+        printf '%s\n' "${EXT_IF}"
+        if [ -n "${JAIL_IP}" -a "${JAIL_IP}" != "-" ]; then
+            printf 'rdr pass on $ext_if inet proto %s to port %s -> %s port %s\n' "$1" "$2" "$JAIL_IP" "$3"
+        fi
+        if [ -n "${JAIL_IP6}" -a "${JAIL_IP6}" != "-" ]; then
+            printf 'rdr pass on $ext_if inet6 proto %s to port %s -> %s port %s\n' "$1" "$2" "$JAIL_IP6" "$3"
+        fi
+    ) | pfctl -a "rdr/${JAIL_NAME}" -f-
 }
 
 while [ $# -gt 0 ]; do
