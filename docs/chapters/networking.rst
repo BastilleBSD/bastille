@@ -191,7 +191,7 @@ interface for outbound access.
   rdr-anchor "rdr/*"
 
 The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
-`bastille rdr` command at runtime - eg.
+`bastille rdr` command at runtime for non-VNET jails - eg.
 
 .. code-block:: shell
 
