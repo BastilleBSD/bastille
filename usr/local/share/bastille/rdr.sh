@@ -60,12 +60,15 @@ if [ -z "${JAIL_NAME}" ]; then
     error_exit "Jail not found: ${TARGET}"
 fi
 
-# Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
-if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-    JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
-    if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
-        error_exit "Jail IP not found: ${TARGET}"
-    fi
+# The rdr feature is non-VNET only
+if [ "$(bastille config $TARGET get vnet)" = 'enabled' ]; then
+    error_exit "The rdr feature is for non-VNET jails only"
+fi
+
+JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
+# Check if the jail has a valid ip4.addr
+if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
+    error_exit "Jail IP not found: ${TARGET}"
 fi
 
 # Check if rdr-anchor is defined in pf.conf

@@ -29,7 +29,7 @@ Usage
       list        List containers (running and stopped).
       mount       Mount a volume inside the targeted container(s).
       pkg         Manipulate binary packages within targeted container(s). See pkg(8).
-      rdr         Redirect host port to container port.
+      rdr         Redirect host port to container port (non-VNET jails only).
       rename      Rename a container.
       restart     Restart a running container.
       service     Manage services within targeted container(s).
