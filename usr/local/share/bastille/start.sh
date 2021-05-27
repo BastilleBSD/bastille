@@ -86,6 +86,16 @@ for _jail in ${JAILS}; do
             ## add ip4.addr to firewall table:jails
             pfctl -q -t jails -T add "${ip}"
         fi
+        ## warn if matching configured (but not online) ip6.addr, ignore if there's no ip6.addr entry
+        ip6=$(grep 'ip6.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+        if [ -n "${ip6}" ]; then
+            if ifconfig | grep -w "${ip6}" >/dev/null; then
+                error_notify "Error: IP address (${ip6}) already in use."
+                continue
+            fi
+            ## add ip6.addr to firewall table:jails
+            pfctl -q -t jails -T add "${ip6}"
+        fi
 
         ## start the container
         info "[${_jail}]:"

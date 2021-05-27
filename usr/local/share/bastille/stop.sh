@@ -49,10 +49,15 @@ fi
 for _jail in ${JAILS}; do
     ## test if running
     if [ "$(jls name | awk "/^${_jail}$/")" ]; then
-        ## remove ip4.addr from firewall table:jails
-        if [ -n "${bastille_network_loopback}" ]; then
-            if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
-                pfctl -q -t jails -T delete "$(jls -j ${_jail} ip4.addr)"
+        ## remove jail ips to firewall table:jails
+        if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
+            JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
+            if [ -n "${JAIL_IP}" -a "${JAIL_IP}" != "-" ]; then
+                pfctl -q -t jails -T delete "${JAIL_IP}"
+            fi
+            JAIL_IP6=$(jls -j "${TARGET}" ip6.addr 2>/dev/null)
+            if [ -n "${JAIL_IP6}" -a "${JAIL_IP6}" != "-" ]; then
+                pfctl -q -t jails -T delete "${JAIL_IP6}"
             fi
         fi
 
