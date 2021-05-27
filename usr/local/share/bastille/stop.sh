@@ -58,7 +58,8 @@ for _jail in ${JAILS}; do
 
         # Check if pfctl is present
         if which -s pfctl; then
-            if [ "$(bastille rdr ${_jail} list)" ]; then
+            ## remove rdr rules if any
+            if [ -s "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
                 bastille rdr ${_jail} clear
             fi
         fi
