@@ -93,25 +93,25 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
     ## aggregate variables into FSTAB entry
-    _jailpath="${bastille_jailsdir}/${_jail}/root/${_jailpath}"
-    _fstab_entry="${_hostpath} ${_jailpath} ${_type} ${_perms} ${_checks}"
+    __jailpath="${bastille_jailsdir}/${_jail}/root/${_jailpath}"
+    _fstab_entry="${_hostpath} ${__jailpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells
-    if [ ! -d "${_jailpath}" ]; then
-        if ! mkdir -p "${_jailpath}"; then
+    if [ ! -d "${__jailpath}" ]; then
+        if ! mkdir -p "${__jailpath}"; then
             error_exit "Failed to create mount point inside jail."
         fi
     fi
 
     ## if entry doesn't exist, add; else show existing entry
-    if ! egrep -q "[[:blank:]]${_jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
+    if ! egrep -q "[[:blank:]]${__jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
         if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"; then
             error_exit "Failed to create fstab entry: ${_fstab_entry}"
         fi
         echo "Added: ${_fstab_entry}"
     else
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
-        egrep "[[:blank:]]${_jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
+        egrep "[[:blank:]]${__jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
     fi
     mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
     echo
