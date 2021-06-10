@@ -97,8 +97,8 @@ for _jail in ${JAILS}; do
     _fstab_entry="${_hostpath} ${_jailpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells
-    if [ ! -d "${bastille_jailsdir}/${_jail}/root/${_jailpath}" ]; then
-        if ! mkdir -p "${bastille_jailsdir}/${_jail}/root/${_jailpath}"; then
+    if [ ! -d "${_jailpath}" ]; then
+        if ! mkdir -p "${_jailpath}"; then
             error_exit "Failed to create mount point inside jail."
         fi
     fi
