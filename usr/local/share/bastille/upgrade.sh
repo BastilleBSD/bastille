@@ -28,9 +28,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
-
 usage() {
     error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [force]"
 }
@@ -120,7 +117,7 @@ jail_upgrade() {
 
 jail_updates_install() {
     # Finish installing upgrade on a thick container
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
+    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         jail_check
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" install
     else
@@ -130,7 +127,7 @@ jail_updates_install() {
 
 release_updates_install() {
     # Finish installing upgrade on a release
-    if [ -d "${bastille_releasesdir}/${TARGET}" ]; then 
+    if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" install
     else
         error_exit "${TARGET} not found. See 'bastille bootstrap'."

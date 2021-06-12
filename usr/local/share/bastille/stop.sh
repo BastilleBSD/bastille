@@ -28,9 +28,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
-
 usage() {
     error_exit "Usage: bastille stop TARGET"
 }
@@ -55,7 +52,7 @@ for _jail in ${JAILS}; do
                 pfctl -q -t jails -T delete "$(jls -j ${_jail} ip4.addr)"
             fi
         fi
-        
+
         if [ "$(bastille rdr ${_jail} list)" ]; then
             bastille rdr ${_jail} clear
         fi
