@@ -50,9 +50,7 @@ if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" 
         no|No|n|N|"")
             error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
             ;;
-        yes|Yes|y|Y)
-            # continue
-            ;;
+        yes|Yes|y|Y) ;;
     esac
 fi
 
@@ -266,8 +264,7 @@ bootstrap_release() {
 
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    if ! fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz";
-                    then
+                    if ! fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## alert only if unable to fetch additional dist files
                         error_notify "Failed to fetch ${_archive}.txz."
                     fi
@@ -328,15 +325,15 @@ bootstrap_template() {
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
-    if [ ! -x "$(which git)" ]; then
+    if ! which -s git; then
         error_notify "Git not found."
         error_exit "Not yet implemented."
-    elif [ -x "$(which git)" ]; then
+    else
         if [ ! -d "${_template}/.git" ]; then
-            $(which git) clone "${_url}" "${_template}" ||\
+            git clone "${_url}" "${_template}" ||\
                 error_notify "Clone unsuccessful."
         elif [ -d "${_template}/.git" ]; then
-            (cd "${_template}" && $(which git) pull) ||\
+            git -C "${_template}" pull ||\
                 error_notify "Template update unsuccessful."
         fi
     fi
