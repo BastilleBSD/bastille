@@ -83,6 +83,8 @@ for _jail in ${JAILS}; do
                 error_notify "Error: IP address (${ip}) already in use."
                 continue
             fi
+            ## add ip4.addr to firewall table:jails
+            pfctl -q -t jails -T add "${ip}"
         fi
 
         ## start the container
@@ -101,13 +103,6 @@ for _jail in ${JAILS}; do
             while read _rules; do
                 bastille rdr "${_jail}" ${_rules}
             done < "${bastille_jailsdir}/${_jail}/rdr.conf"
-        fi
-
-        ## add ip4.addr to firewall table:jails
-        if [ -n "${bastille_network_loopback}" ]; then
-            if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
-                pfctl -q -t jails -T add "$(jls -j ${_jail} ip4.addr)"
-            fi
         fi
     fi
     echo
