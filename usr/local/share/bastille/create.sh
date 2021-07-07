@@ -438,32 +438,36 @@ EMPTY_JAIL=""
 THICK_JAIL=""
 VNET_JAIL=""
 
-## handle combined options then shift
-if [ "${1}" = "-T" -o "${1}" = "--thick" -o "${1}" = "thick" ] && \
-    [ "${2}" = "-V" -o "${2}" = "--vnet" -o "${2}" = "vnet" ]; then
-    THICK_JAIL="1"
-    VNET_JAIL="1"
-    shift 2
-else
-    ## handle single options
+# Handle and parse options
+while [ $# -gt 0 ]; do
     case "${1}" in
         -E|--empty|empty)
-            shift
             EMPTY_JAIL="1"
+            shift
             ;;
         -T|--thick|thick)
-            shift
             THICK_JAIL="1"
+            shift
             ;;
         -V|--vnet|vnet)
-            shift
             VNET_JAIL="1"
+            shift
             ;;
-        -*)
+        -*|--*)
             error_notify "Unknown Option."
             usage
             ;;
+       *)
+            break
+            ;;
     esac
+done
+
+## validate for combined options
+if [ -n "${EMPTY_JAIL}" ]; then 
+    if [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ]; then
+        error_exit "Error: Empty jail option can't be used with other options."
+    fi
 fi
 
 NAME="$1"
