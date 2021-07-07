@@ -45,14 +45,12 @@ esac
 #Validate if ZFS is enabled in rc.conf and bastille.conf.
 if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" ]; then
     warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
-    read  answer
+    read answer
     case $answer in
         no|No|n|N|"")
             error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
             ;;
-        yes|Yes|y|Y)
-            continue
-            ;;
+        yes|Yes|y|Y) ;;
     esac
 fi
 
@@ -85,7 +83,7 @@ validate_release_url() {
         info "Bootstrapping ${PLATFORM_OS} distfiles..."
 
         # Alternate RELEASE/ARCH fetch support
-        if [ "${OPTION}" = "--i386" -o "${OPTION}" = "--32bit" ]; then
+        if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
             ARCH="i386"
             RELEASE="${RELEASE}-${ARCH}"
         fi
@@ -253,12 +251,12 @@ bootstrap_release() {
                     fi
                     if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
                         if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
-                            rm -rf "${bastille_cachedir}/${RELEASE}"
+                            rm -rf "${bastille_cachedir:?}/${RELEASE}"
                         fi
                     fi
                     if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
                         if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                            rm -rf "${bastille_releasesdir}/${RELEASE}"
+                            rm -rf "${bastille_releasesdir:?}/${RELEASE}"
                         fi
                     fi
                     error_exit "Bootstrap failed."
@@ -266,8 +264,7 @@ bootstrap_release() {
 
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-                    if [ "$?" -ne 0 ]; then
+                    if ! fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## alert only if unable to fetch additional dist files
                         error_notify "Failed to fetch ${_archive}.txz."
                     fi
@@ -328,15 +325,15 @@ bootstrap_template() {
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
-    if [ ! -x "$(which git)" ]; then
+    if ! which -s git; then
         error_notify "Git not found."
         error_exit "Not yet implemented."
-    elif [ -x "$(which git)" ]; then
+    else
         if [ ! -d "${_template}/.git" ]; then
-            $(which git) clone "${_url}" "${_template}" ||\
+            git clone "${_url}" "${_template}" ||\
                 error_notify "Clone unsuccessful."
         elif [ -d "${_template}/.git" ]; then
-            cd "${_template}" && $(which git) pull ||\
+            git -C "${_template}" pull ||\
                 error_notify "Template update unsuccessful."
         fi
     fi
@@ -352,7 +349,7 @@ OPTION="${2}"
 # Alternate RELEASE/ARCH fetch support(experimental)
 if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != "update" ]; then
     # Supported architectures
-    if [ "${OPTION}" = "--i386" -o "${OPTION}" = "--32bit" ]; then
+    if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
         HW_MACHINE="i386"
         HW_MACHINE_ARCH="i386"
     else
@@ -364,7 +361,7 @@ fi
 case "${1}" in
 2.[0-9]*)
     ## check for MidnightBSD releases name
-    NAME_VERIFY=$(echo ${RELEASE})
+    NAME_VERIFY=$(echo "${RELEASE}")
     UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
     PLATFORM_OS="MidnightBSD"
     validate_release_url
@@ -426,7 +423,7 @@ current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
-http?://github.com/*/*|http?://gitlab.com/*/*)
+http?://*/*/*)
     BASTILLE_TEMPLATE_URL=${1}
     BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
