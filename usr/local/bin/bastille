@@ -138,7 +138,7 @@ help|-h|--help)
 bootstrap|create|destroy|import|list|rdr|restart|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|disable|edit|enable|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
@@ -178,6 +178,10 @@ clone|config|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|ser
                 if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
                     error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
                 fi
+                ;;
+            enable|disable)
+                # Don't care what the status of the jail is. Running or not
+                :
                 ;;
             esac
         fi
