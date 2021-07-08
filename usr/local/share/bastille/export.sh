@@ -40,12 +40,12 @@ usage() {
     cat << EOF
     Options:
 
-              gz | --gz       -- Export a ZFS jail using GZIP(.gz) compressed image.
-    -r |     raw | --raw      -- Export a ZFS jail to an uncompressed RAW image.
-    -s |    safe | --safe     -- Safely stop and start a ZFS jail before the exporting process.
-             tgz | --tgz      -- Export a jail using simple .tgz compressed archive instead.
-             txz | --txz      -- Export a jail using simple .txz compressed archive instead.
-    -v | verbose | --verbose  -- Be more verbose during the ZFS send operation.
+         --gz       -- Export a ZFS jail using GZIP(.gz) compressed image.
+    -r | --raw      -- Export a ZFS jail to an uncompressed RAW image.
+    -s | --safe     -- Safely stop and start a ZFS jail before the exporting process.
+         --tgz      -- Export a jail using simple .tgz compressed archive instead.
+         --txz      -- Export a jail using simple .txz compressed archive instead.
+    -v | --verbose  -- Be more verbose during the ZFS send operation.
 
 EOF
     exit 1

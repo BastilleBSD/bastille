@@ -38,8 +38,8 @@ usage() {
     cat << EOF
     Options:
 
-    -f | force   | --force    -- Force an archive import regardless if the checksum file does not match or missing.
-    -v | verbose | --verbose  -- Be more verbose during the ZFS receive operation.
+    -f | --force    -- Force an archive import regardless if the checksum file does not match or missing.
+    -v | --verbose  -- Be more verbose during the ZFS receive operation.
 
 EOF
     exit 1
