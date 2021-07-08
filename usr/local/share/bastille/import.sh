@@ -33,11 +33,11 @@
 
 usage() {
     # Build an independent usage for the import command
-    echo -e "${COLOR_RED}Usage: bastille import FILE [option]${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille import [option(s)] FILE${COLOR_RESET}"
 
     cat << EOF
     Options:
-    
+
     -f | force   | --force    -- Force an archive import regardless if the checksum file does not match or missing.
     -v | verbose | --verbose  -- Be more verbose during the ZFS receive operation.
 
@@ -57,7 +57,6 @@ if [ $# -gt 3 ] || [ $# -lt 1 ]; then
 fi
 
 TARGET="${1}"
-shift
 OPT_FORCE=
 OPT_ZRECV="-u"
 
@@ -66,14 +65,23 @@ while [ $# -gt 0 ]; do
     case "${1}" in
         -f|force|--force)
             OPT_FORCE="1"
+            TARGET="${2}"
             shift
             ;;
         -v|verbose|--verbose)
             OPT_ZRECV="-u -v"
+            TARGET="${2}"
             shift
             ;;
-        *)
+        -*|--*)
+            error_notify "Unknown Option."
             usage
+            ;;
+        *)
+            if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+                usage
+            fi
+            shift
             ;;
     esac
 done
@@ -369,7 +377,7 @@ jail_import() {
                     info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
                     info "Receiving ZFS data stream..."
                     gzip ${bastille_decompress_gz_options} "${bastille_backupsdir}/${TARGET}" | \
-					zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
 
                     # Update ZFS mountpoint property if required
                     update_zfsmount

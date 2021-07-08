@@ -35,7 +35,7 @@ usage() {
     # Build an independent usage for the export command
     # Valid compress/options for ZFS systems are raw, .gz, .tgz, .txz and .xz(default)
     # Valid compress/options for non ZFS configured systems are .tgz and .txz(default)
-    echo -e "${COLOR_RED}Usage: bastille export TARGET | option(s) | PATH${COLOR_RESET}"
+    echo -e "${COLOR_RED}Usage: bastille export | option(s) | TARGET | PATH${COLOR_RESET}"
 
     cat << EOF
     Options:
@@ -63,7 +63,7 @@ if [ "${TARGET}" = "ALL" ]; then
     error_exit "Batch export is unsupported."
 fi
 
-if [ $# -gt 4 ] || [ $# -lt 0 ]; then
+if [ $# -gt 5 ] || [ $# -lt 1 ]; then
     usage
 fi
 
@@ -74,6 +74,7 @@ zfs_enable_check() {
     fi
 }
 
+TARGET="${1}"
 GZIP_EXPORT=
 SAFE_EXPORT=
 RAW_EXPORT=
@@ -81,41 +82,62 @@ DIR_EXPORT=
 TXZ_EXPORT=
 TGZ_EXPORT=
 OPT_ZSEND="-R"
+COMP_OPTION="0"
+
+opt_count() {
+    COMP_OPTION=$(expr ${COMP_OPTION} + 1)
+}
 
 # Handle and parse option args
 while [ $# -gt 0 ]; do
     case "${1}" in
         gz|--gz)
             GZIP_EXPORT="1"
+            TARGET="${2}"
+            opt_count
             shift
             ;;
         tgz|--tgz)
             TGZ_EXPORT="1"
+            TARGET="${2}"
+            opt_count
             zfs_enable_check
             shift
             ;;
         txz|--txz)
             TXZ_EXPORT="1"
+            TARGET="${2}"
+            opt_count
             zfs_enable_check
             shift
             ;;
         -s|safe|--safe)
             SAFE_EXPORT="1"
+            TARGET="${2}"
             shift
             ;;
         -r|raw|--raw)
             RAW_EXPORT="1"
+            TARGET="${2}"
+            opt_count
             shift
             ;;
         -v|verbose|--verbose)
             OPT_ZSEND="-Rv"
+            TARGET="${2}"
             shift
+            ;;
+        -*|--*)
+            error_notify "Unknown Option."
+            usage
             ;;
         *)
             if echo "${1}" | grep -q "\/"; then
                 DIR_EXPORT="${1}"
             else
-               usage
+                if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+                   usage
+                fi
             fi
             shift
             ;;
@@ -123,14 +145,20 @@ while [ $# -gt 0 ]; do
 done
 
 # Validate for combined options
+if [ "${COMP_OPTION}" -gt "1" ]; then
+    error_exit "Error: Only one compression format can be used during export."
+fi
+
 if [ -n "${TXZ_EXPORT}" -o -n "${TGZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
     error_exit "Error: Simple archive modes with safe ZFS export can't be used together."
 fi
+
 if [ -z "${bastille_zfs_enable}" ]; then
-    if [ -n "${GZIP_EXPORT}" -o -n "${RAW_EXPORT}" -o "${SAFE_EXPORT}" ]; then
-        error_exit "Options --gz, --raw, --safe are valid for ZFS configured systems only."
+    if [ -n "${GZIP_EXPORT}" -o -n "${RAW_EXPORT}" -o "${SAFE_EXPORT}" -o "${OPT_ZSEND}" ]; then
+        error_exit "Options --gz, --raw, --safe, --verbose are valid for ZFS configured systems only."
     fi
 fi
+
 if [ -n "${SAFE_EXPORT}" ]; then
     # Check if container is running, otherwise just ignore
     if [ -z "$(jls name | awk "/^${TARGET}$/")" ]; then
@@ -268,14 +296,17 @@ if [ ! -d "${bastille_backupsdir}" ]; then
     error_exit "Backups directory/dataset does not exist. See 'bastille bootstrap'."
 fi
 
-# Check if is a ZFS system
-if [ "${bastille_zfs_enable}" != "YES" ]; then
-    # Check if container is running and ask for stop in UFS systems
-    if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "${TARGET} is running. See 'bastille stop'."
-    fi
-fi
-
 if [ -n "${TARGET}" ]; then
+    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+        error_exit "[${TARGET}]: Not found."
+    fi
+
+    # Check if is a ZFS system
+    if [ "${bastille_zfs_enable}" != "YES" ]; then
+        # Check if container is running and ask for stop in non ZFS systems
+        if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
+            error_exit "${TARGET} is running. See 'bastille stop'."
+        fi
+    fi
     jail_export
 fi
