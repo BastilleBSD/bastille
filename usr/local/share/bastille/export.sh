@@ -154,7 +154,7 @@ if [ -n "${TXZ_EXPORT}" -o -n "${TGZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
 fi
 
 if [ -z "${bastille_zfs_enable}" ]; then
-    if [ -n "${GZIP_EXPORT}" -o -n "${RAW_EXPORT}" -o "${SAFE_EXPORT}" -o "${OPT_ZSEND}" ]; then
+    if [ -n "${GZIP_EXPORT}" -o -n "${RAW_EXPORT}" -o -n "${SAFE_EXPORT}" -o "${OPT_ZSEND}" = "-Rv" ]; then
         error_exit "Options --gz, --raw, --safe, --verbose are valid for ZFS configured systems only."
     fi
 fi

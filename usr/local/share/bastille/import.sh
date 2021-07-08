@@ -487,6 +487,9 @@ jail_import() {
             if [ "${FILE_EXT}" = ".txz" ]; then
                 info "Extracting files from '${TARGET}' archive..."
                 tar -Jxf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
+            elif [ "${FILE_EXT}" = ".tgz" ]; then
+                info "Extracting files from '${TARGET}' archive..."
+                tar -xf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
             elif [ "${FILE_EXT}" = ".tar.gz" ]; then
                 # Attempt to import/configure foreign/ezjail container
                 info "Extracting files from '${TARGET}' archive..."
