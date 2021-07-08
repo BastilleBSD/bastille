@@ -63,12 +63,12 @@ OPT_ZRECV="-u"
 # Handle and parse option args
 while [ $# -gt 0 ]; do
     case "${1}" in
-        -f|force|--force)
+        -f|--force)
             OPT_FORCE="1"
             TARGET="${2}"
             shift
             ;;
-        -v|verbose|--verbose)
+        -v|--verbose)
             OPT_ZRECV="-u -v"
             TARGET="${2}"
             shift
