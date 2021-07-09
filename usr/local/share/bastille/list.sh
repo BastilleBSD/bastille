@@ -158,7 +158,7 @@ if [ $# -gt 0 ]; then
         rctl -h jail:
         ;;
     import|imports|export|exports|backup|backups)
-        ls "${bastille_backupsdir}" | grep -Ev "*.sha256$"
+        ls "${bastille_backupsdir}" | grep -Ev '*.sha256$'
     exit 0
     ;;
     *)
