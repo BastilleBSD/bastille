@@ -54,7 +54,7 @@ help|-h|--help)
 esac
 
 if [ $# -gt 3 ] || [ $# -lt 1 ]; then
-    #usage
+    usage
 fi
 
 TARGET="${1}"
