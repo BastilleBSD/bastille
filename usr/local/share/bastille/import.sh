@@ -98,29 +98,25 @@ fi
 
 validate_archive() {
     # Compare checksums on the target archive
-    # Skip validation for unsupported archives
-    if [ "${FILE_EXT}" != ".tar.gz" ] && [ "${FILE_EXT}" != ".tar" ]; then
-        if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
-            if [ -f "${bastille_backupsdir}/${FILE_TRIM}.sha256" ]; then
-                info "Validating file: ${TARGET}..."
-                SHA256_DIST=$(cat "${bastille_backupsdir}/${FILE_TRIM}.sha256")
-                SHA256_FILE=$(sha256 -q "${bastille_backupsdir}/${TARGET}")
-                if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
-                    error_exit "Failed validation for ${TARGET}."
-                else
-                    info "File validation successful!"
-                fi
+    # Skip validation for unsupported archive
+    if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
+        if [ -f "${bastille_backupsdir}/${FILE_TRIM}.sha256" ]; then
+            info "Validating file: ${TARGET}..."
+            SHA256_DIST=$(cat "${bastille_backupsdir}/${FILE_TRIM}.sha256")
+            SHA256_FILE=$(sha256 -q "${bastille_backupsdir}/${TARGET}")
+            if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
+                error_exit "Failed validation for ${TARGET}."
             else
-                # Check if user opt to force import
-                if [ -n "${OPT_FORCE}" ]; then
-                    warn "Warning: Skipping archive validation!"
-                else
-                    error_exit "Checksum file not found. See 'bastille import [option(s)] FILE'."
-                fi
+                info "File validation successful!"
+            fi
+        else
+            # Check if user opt to force import
+            if [ -n "${OPT_FORCE}" ]; then
+                warn "Warning: Skipping archive validation!"
+            else
+                error_exit "Checksum file not found. See 'bastille import [option(s)] FILE'."
             fi
         fi
-    else
-        warn "Warning: Skipping archive validation!"
     fi
 }
 
@@ -361,7 +357,6 @@ jail_import() {
     # Attempt to import container from file
     FILE_TRIM=$(echo "${TARGET}" | sed 's/\.xz//g;s/\.gz//g;s/\.tgz//g;s/\.txz//g;s/\.zip//g;s/\.tar\.gz//g;s/\.tar//g')
     FILE_EXT=$(echo "${TARGET}" | sed "s/${FILE_TRIM}//g")
-    #validate_archive
     if [ -d "${bastille_jailsdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
