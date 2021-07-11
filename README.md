@@ -292,6 +292,37 @@ bootstrapping templates from GitHub or GitLab.
 See `bastille update` to ensure your bootstrapped releases include the latest
 patches.
 
+**Ubuntu Linux [new since 0.9]**
+
+The bootstrap process for Linux containers is very different from the *BSD process.
+You will need the package debootstrap and some kernel modules for that.
+But don't worry, Bastille will do that for that for you.
+
+```shell
+ishmael ~ # bastille bootstrap focal
+sysrc: unknown variable 'linprocfs_load'
+sysrc: unknown variable 'linsysfs_load'
+sysrc: unknown variable 'tmpfs_load'
+linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)
+#y
+Loading modules
+Persisting modules
+linux_enable:  -> YES
+linprocfs_load:  -> YES
+linsysfs_load:  -> YES
+tmpfs_load:  -> YES
+Debootstrap not found. Should it be installed? (N|y)
+#y
+FreeBSD repository is up to date.
+All repositories are up to date.
+Checking integrity... done (0 conflicting)
+The following 1 package(s) will be affected (of 0 checked):
+
+New packages to be INSTALLED:
+        debootstrap: 1.0.123_4
+[...]
+```
+As of 0.9.20210714 Bastille supports Ubuntu 18.04 (bionic) and Ubuntu 20.04 (focal).
 
 bastille create
 ---------------
@@ -380,6 +411,15 @@ shared base container is a "thin").
 ```shell
 ishmael ~ # bastille create -T folsom 12.0-RELEASE 10.17.89.10
 ```
+
+**Linux**
+```shell
+ishmael ~ # bastille create folsom focal 10.17.89.10
+```
+
+Systemd is not supported due to the missing boot process.
+
+
 
 I recommend using private (rfc1918) ip address ranges for your containers.
 These ranges include:
