@@ -304,7 +304,13 @@ create_jail() {
             if [ -n "${INTERFACE}" ]; then
                 local bastille_jail_conf_interface=${INTERFACE}
             fi
-            generate_jail_conf
+            
+            ## generate the jail configuration file
+            if [ -n "${VNET_JAIL}" ]; then
+                generate_vnet_jail_conf
+            else
+                generate_jail_conf
+            fi
         fi
 
         ## using relative paths here
