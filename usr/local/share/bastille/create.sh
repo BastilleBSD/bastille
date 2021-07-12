@@ -32,7 +32,20 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille create [empty|thick|vnet] name release ip [interface]"
+    # Build an independent usage for the create command
+    # If no option specified, will create a thin container by default
+    echo -e "${COLOR_RED}Usage: bastille create [option(s)] name release ip [interface]${COLOR_RESET}"
+
+    cat << EOF
+    Options:
+
+    -E | --empty  -- Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -L | --linux  -- This option is intended for testing with Linux jails, this is considered experimental.
+    -T | --thick  -- Creates a thick container, they consume more space as they are self contained and independent.
+    -V | --vnet   -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+
+EOF
+    exit 1
 }
 
 running_jail() {
@@ -148,16 +161,16 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   devfs_ruleset = 4;
-  
+
   exec.start = '/bin/true';
   exec.stop = '/bin/true';
   persist;
-  
+
   mount.devfs;
-  
+
   allow.mount;
   allow.mount.devfs;
-  
+
   interface = ${bastille_jail_conf_interface};
   ${IPX_ADDR} = ${IP};
   ip6 = ${IP6_MODE};
@@ -238,7 +251,7 @@ create_jail() {
         mkdir -p "${bastille_jail_path}/proc"
         mkdir -p "${bastille_jail_path}/sys"
         mkdir -p "${bastille_jail_path}/home"
-        mkdir -p "${bastille_jail_path}/tmp"        
+        mkdir -p "${bastille_jail_path}/tmp"
         touch "${bastille_jail_path}/dev/shm"
         touch "${bastille_jail_path}/dev/fd"
         cp -RPf ${bastille_releasesdir}/${RELEASE}/* ${bastille_jail_path}/
@@ -257,8 +270,8 @@ create_jail() {
         echo -e "linprocfs       ${bastille_jail_path}/proc     linprocfs       rw                      0       0" > "${bastille_jail_fstab}"
         echo -e "linsysfs        ${bastille_jail_path}/sys      linsysfs        rw                      0       0" > "${bastille_jail_fstab}"
         echo -e "/tmp            ${bastille_jail_path}/tmp      nullfs          rw                      0       0" > "${bastille_jail_fstab}"
-## removed temporarely / only for X11 jails? @hackacad
-#        echo -e "/home           ${bastille_jail_path}/home     nullfs          rw                      0       0" > "${bastille_jail_fstab}"
+        ## removed temporarely / only for X11 jails? @hackacad
+        #echo -e "/home           ${bastille_jail_path}/home     nullfs          rw                      0       0" > "${bastille_jail_fstab}"
 
         if [ ! -f "${bastille_jail_conf}" ]; then
             if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
@@ -392,6 +405,7 @@ create_jail() {
                 fi
             fi
         fi
+
         if [ -z "${LINUX_JAIL}" ]; then
             ## create home directory if missing
             if [ ! -d "${bastille_jail_path}/usr/home" ]; then
@@ -401,16 +415,17 @@ create_jail() {
             if [ ! -L "home" ]; then
                 ln -s usr/home home
             fi
-    
+
             ## TZ: configurable (default: Etc/UTC)
             ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
-    
+
             # Post-creation jail misc configuration
             # Create a dummy fstab file
             touch "etc/fstab"
             # Disables adjkerntz, avoids spurious error messages
             sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
         fi
+
         ## VNET specific
         if [ -n "${VNET_JAIL}" ]; then
             ## VNET requires jib script
@@ -421,8 +436,9 @@ create_jail() {
             fi
         fi
     elif [ -n "${LINUX_JAIL}" ]; then
+        ## Generate configuration for Linux jail
         generate_linux_jail_conf
-    else
+    elif [ -n "${EMPTY_JAIL}" ]; then
         ## Generate minimal configuration for empty jail
         generate_minimal_conf
     fi
@@ -439,6 +455,7 @@ create_jail() {
             bastille start "${NAME}"
         fi
     fi
+
     if [ -n "${VNET_JAIL}" ]; then
         if [ -n "${bastille_template_vnet}" ]; then
             ## rename interface to generic vnet0
@@ -455,11 +472,11 @@ create_jail() {
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
                 else
-            if [ -z ${ip6} ]; then
-                _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
-            else
-                _gateway="$(netstat -6rn | awk '/default/ {print $2}')"
-            fi
+                    if [ -z ${ip6} ]; then
+                        _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    else
+                        _gateway="$(netstat -6rn | awk '/default/ {print $2}')"
+                    fi
                 fi
             fi
             bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
@@ -480,7 +497,8 @@ create_jail() {
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
         jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
         jexec -l "${NAME}" /bin/bash -c "apt update"
-    else # Thin jail.
+    else
+        # Thin jail.
         if [ -n "${bastille_template_thin}" ]; then
             bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
@@ -523,8 +541,8 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -L|--linux|linux)
-            shift
             LINUX_JAIL="1"
+            shift
             ;;
         -T|--thick|thick)
             THICK_JAIL="1"
@@ -545,9 +563,13 @@ while [ $# -gt 0 ]; do
 done
 
 ## validate for combined options
-if [ -n "${EMPTY_JAIL}" ]; then 
-    if [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ]; then
+if [ -n "${EMPTY_JAIL}" ]; then
+    if [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
         error_exit "Error: Empty jail option can't be used with other options."
+    fi
+elif [ -n "${LINUX_JAIL}" ]; then
+    if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ]; then
+        error_exit "Error: Linux jail option can't be used with other options."
     fi
 fi
 
@@ -570,7 +592,6 @@ fi
 if [ -n "${NAME}" ]; then
     validate_name
 fi
-
 
 if [ -n "${LINUX_JAIL}" ]; then
     case "${RELEASE}" in
@@ -702,7 +723,7 @@ if [ -z ${bastille_template_empty+x} ]; then
     bastille_template_empty='default/empty'
 fi
 if [ -z ${bastille_template_linux+x} ]; then
-    bastille_template_empty='default/linux'
+    bastille_template_linux='default/linux'
 fi
 if [ -z ${bastille_template_thick+x} ]; then
     bastille_template_thick='default/thick'
