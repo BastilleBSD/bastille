@@ -53,7 +53,7 @@ validate_user() {
         USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
             if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l "${_jail}" /usr/bin/login -f "${USER}"
+                jexec -l "${_jail}" $LOGIN -f "${USER}"
             else
                 echo "Invalid shell for user ${USER}"
             fi
@@ -76,11 +76,12 @@ check_fib() {
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
+    LOGIN="$(jexec -l "${_jail}" which login)"
     if [ -n "${USER}" ]; then
         validate_user
     else
-        check_fib
-        ${_setfib} jexec -l "${_jail}" /usr/bin/login -f root
+        LOGIN="$(jexec -l "${_jail}" which login)"
+        ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
     echo
 done

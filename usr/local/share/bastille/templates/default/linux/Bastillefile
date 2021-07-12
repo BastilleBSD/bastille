@@ -1,0 +1,14 @@
+PRE mkdir -p home
+PRE mkdir -p tmp
+
+
+FSTAB devfs           root/dev      devfs           rw                      0       0
+FSTAB tmpfs           dev/shm  tmpfs           rw,size=1g,mode=1777    0       0
+FSTAB fdescfs         dev/fd   fdescfs         rw,linrdlnk             0       0
+FSTAB linprocfs       proc     linprocfs       rw                      0       0
+FSTAB linsysfs        sys      linsysfs        rw                      0       0
+FSTAB /tmp            tmp      nullfs          rw                      0       0
+FSTAB /home           home     nullfs          rw                      0       0
+
+CMD mkdir etc/apt/apt.conf.d/00aptitude
+CMD echo "APT::Cache-Start 251658240;" > etc/apt/apt.conf.d/00aptitude
