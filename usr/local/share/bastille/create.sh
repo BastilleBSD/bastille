@@ -392,7 +392,7 @@ create_jail() {
                 fi
             fi
         fi
-        if [ -n "${VNET_JAIL}" ]; then
+        if [ -z "${LINUX_JAIL}" ]; then
             ## create home directory if missing
             if [ ! -d "${bastille_jail_path}/usr/home" ]; then
                 mkdir -p "${bastille_jail_path}/usr/home"
