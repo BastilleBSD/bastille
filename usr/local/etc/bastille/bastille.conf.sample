@@ -44,6 +44,8 @@ bastille_zfs_options="-o compress=lz4 -o atime=off"                   ## default
 ## Export/Import options
 bastille_compress_xz_options="-0 -v"                                  ## default "-0 -v"
 bastille_decompress_xz_options="-c -d -v"                             ## default "-c -d -v"
+bastille_compress_gz_options="-1 -v"                                  ## default "-1 -v"
+bastille_decompress_gz_options="-k -d -c -v"                          ## default "-k -d -c -v"
 
 ## Networking
 bastille_network_loopback="bastille0"                                 ## default: "bastille0"

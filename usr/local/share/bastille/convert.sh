@@ -57,6 +57,7 @@ convert_symlinks() {
         done
 
         # Copy new files to destination jail
+        info "Copying required base files to container..."
         for _link in ${SYMLINKS}; do
             if [ ! -d "${_link}" ]; then
                 if [ -d "${bastille_releasesdir}/${RELEASE}/${_link}" ]; then
@@ -100,13 +101,15 @@ revert_convert() {
 
 start_convert() {
     # Attempt container conversion and handle some errors
+    DATE=$(date)
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         info "Converting '${TARGET}' into a thickjail. This may take a while..."
 
         # Set some variables
-        RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])|([0-9]{1,2}-stable-build-[0-9]{1,3})|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)|(current-BUILD-LATEST)' "${bastille_jailsdir}/${TARGET}/fstab")
+        RELEASE=$(grep -w "${bastille_releasesdir}/.* ${bastille_jailsdir}/${TARGET}/root/.bastille" ${bastille_jailsdir}/${TARGET}/fstab | sed "s|${bastille_releasesdir}/||;s| .*||")
         FSTABMOD=$(grep -w "${bastille_releasesdir}/${RELEASE} ${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab")
         SYMLINKS="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/ports usr/sbin usr/share usr/src"
+        HASPORTS=$(grep -w ${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jailsdir}/${TARGET}/fstab)
 
         if [ -n "${RELEASE}" ]; then
             cd "${bastille_jailsdir}/${TARGET}/root"
@@ -115,7 +118,12 @@ start_convert() {
             convert_symlinks
 
             # Comment the line containing .bastille and rename mountpoint
-            sed -i '' -E "s|${FSTABMOD}|# Converted from thin to thick container on $(date)|g" "${bastille_jailsdir}/${TARGET}/fstab"
+            sed -i '' -E "s|${FSTABMOD}|# Converted from thin to thick container on ${DATE}|g" "${bastille_jailsdir}/${TARGET}/fstab"
+            if [ -n "${HASPORTS}" ]; then
+                sed -i '' -E "s|${HASPORTS}|# Ports copied from base to container on ${DATE}|g" "${bastille_jailsdir}/${TARGET}/fstab"
+                info "Copying ports to container..."
+                cp -a "${bastille_releasesdir}/${RELEASE}/usr/ports" "${bastille_jailsdir}/${TARGET}/root/usr"
+            fi
             mv "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/root/.bastille.old"
 
             info "Conversion of '${TARGET}' completed successfully!"

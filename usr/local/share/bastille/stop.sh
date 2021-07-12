@@ -55,9 +55,12 @@ for _jail in ${JAILS}; do
                 pfctl -q -t jails -T delete "$(jls -j ${_jail} ip4.addr)"
             fi
         fi
-        
-        if [ "$(bastille rdr ${_jail} list)" ]; then
-            bastille rdr ${_jail} clear
+
+        # Check if pfctl is present
+        if which -s pfctl; then
+            if [ "$(bastille rdr ${_jail} list)" ]; then
+                bastille rdr ${_jail} clear
+            fi
         fi
 
         ## remove rctl limits
