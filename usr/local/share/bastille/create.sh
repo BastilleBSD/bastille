@@ -505,6 +505,7 @@ fi
 EMPTY_JAIL=""
 THICK_JAIL=""
 VNET_JAIL=""
+LINUX_JAIL=""
 
 ## handle combined options then shift
 if [ "${1}" = "-T" -o "${1}" = "--thick" -o "${1}" = "thick" ] && \
