@@ -28,21 +28,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/etc/bastille/bastille.conf
+COLOR_RED=
+COLOR_GREEN=
+COLOR_YELLOW=
+COLOR_RESET=
 
-# Load text output colors if enabled in config
-# else reset colors variables used by bastille
-case "${bastille_colors_enable}" in
-    [Yy][Ee][Ss])
-        . /usr/local/share/bastille/colors.pre.sh
-        ;;
-    *)
-        COLOR_RED=
-        COLOR_GREEN=
-        COLOR_YELLOW=
-        COLOR_RESET=
-        ;;
-esac
+enable_color() {
+    . /usr/local/share/bastille/colors.pre.sh
+}
+
+# If "NO_COLOR" environment variable is present, disable output colors.
+if ! export | grep -q "NO_COLOR"; then
+    enable_color
+fi
 
 # Notify message on error, but do not exit
 error_notify() {
