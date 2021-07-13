@@ -34,7 +34,7 @@
 usage() {
     # Build an independent usage for the create command
     # If no option specified, will create a thin container by default
-    echo -e "${COLOR_RED}Usage: bastille create [option(s)] name release ip [interface]${COLOR_RESET}"
+    error_notify "Usage: bastille create [option(s)] name release ip [interface]"
 
     cat << EOF
     Options:

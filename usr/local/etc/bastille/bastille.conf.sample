@@ -30,6 +30,9 @@ bastille_tzdata="Etc/UTC"                                             ## default
 ## default jail resolv.conf
 bastille_resolv_conf="/etc/resolv.conf"                               ## default: "/etc/resolv.conf"
 
+## default output colors
+bastille_colors_enable="YES"                                          ## default: "YES"
+
 ## bootstrap urls
 bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"          ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
 bastille_url_hardenedbsd="http://installer.hardenedbsd.org/pub/hardenedbsd/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"

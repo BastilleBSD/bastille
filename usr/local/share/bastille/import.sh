@@ -34,7 +34,7 @@
 usage() {
     # Build an independent usage for the import command
     # If no file/extension specified, will import from standard input
-    echo -e "${COLOR_RED}Usage: bastille import [option(s)] FILE${COLOR_RESET}"
+    error_notify "Usage: bastille import [option(s)] FILE"
 
     cat << EOF
     Options:
