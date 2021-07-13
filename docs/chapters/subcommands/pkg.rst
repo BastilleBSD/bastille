@@ -6,7 +6,7 @@ To manage binary packages within the container use `bastille pkg`.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille pkg folsom 'install vim-console git-lite zsh'
+  ishmael ~ # bastille pkg folsom install vim-console git-lite zsh
   [folsom]:
   The package management tool is not yet installed on your system.
   Do you want to fetch and install it now? [y/N]: y
