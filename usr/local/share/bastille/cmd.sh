@@ -47,6 +47,6 @@ fi
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    jexec -l "${_jail}" "$@"
+    jexec -l -U root "${_jail}" "$@"
     echo
 done
