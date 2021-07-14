@@ -42,6 +42,8 @@ usage() {
     -f | --force    -- Force an archive import regardless if the checksum file does not match or missing.
     -v | --verbose  -- Be more verbose during the ZFS receive operation.
 
+Tip: If no option specified, container should be imported from standard input.
+
 EOF
     exit 1
 }

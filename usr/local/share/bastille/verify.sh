@@ -36,7 +36,7 @@ bastille_usage() {
 }
 
 verify_release() {
-    if [ -f /bin/midnightbsd-version ]; then
+    if [ -f "/bin/midnightbsd-version" ]; then
         echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
         exit 1
     fi
@@ -69,7 +69,7 @@ verify_template() {
                 echo
                 error_exit "Template validation failed."
             ## if INCLUDE; recursive verify
-            elif [ ${_hook} = 'INCLUDE' ]; then
+            elif [ "${_hook}" = 'INCLUDE' ]; then
                 info "[${_hook}]:"
                 cat "${_path}"
                 echo
@@ -92,13 +92,13 @@ verify_template() {
                 done < "${_path}"
 
             ## if tree; tree -a bastille_template/_dir
-            elif [ ${_hook} = 'OVERLAY' ]; then
+            elif [ "${_hook}" = 'OVERLAY' ]; then
                 info "[${_hook}]:"
                 cat "${_path}"
                 echo
                 while read _dir; do
                     info "[${_hook}]:[${_dir}]:"
-                        if [ -x /usr/local/bin/tree ]; then
+                        if [ -x "/usr/local/bin/tree" ]; then
                             /usr/local/bin/tree -a "${_template_path}/${_dir}"
                         else
                            find "${_template_path}/${_dir}" -print | sed -e 's;[^/]*/;|___;g;s;___|; |;g'
@@ -114,7 +114,7 @@ verify_template() {
     done
 
     ## remove bad templates
-    if [ ${_hook_validate} -lt 1 ]; then
+    if [ "${_hook_validate}" -lt 1 ]; then
         error_notify "No valid template hooks found."
         error_notify "Template discarded."
         rm -rf "${bastille_template}"
@@ -122,7 +122,7 @@ verify_template() {
     fi
 
     ## if validated; ready to use
-    if [ ${_hook_validate} -gt 0 ]; then
+    if [ "${_hook_validate}" -gt 0 ]; then
         info "Template ready to use."
     fi
 }

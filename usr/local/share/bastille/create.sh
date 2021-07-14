@@ -358,8 +358,7 @@ create_jail() {
             FILE_LIST=".cshrc .profile COPYRIGHT dev etc media mnt net proc root tmp var usr/obj usr/tests"
             for files in ${FILE_LIST}; do
                 if [ -f "${bastille_releasesdir}/${RELEASE}/${files}" ] || [ -d "${bastille_releasesdir}/${RELEASE}/${files}" ]; then
-                    cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"
-                    if [ "$?" -ne 0 ]; then
+                    if ! cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"; then
                         ## notify and clean stale files/directories
                         bastille destroy "${NAME}"
                         error_exit "Failed to copy release files. Please retry create!"

@@ -436,10 +436,10 @@ ubuntu_bionic|bionic|ubuntu-bionic)
         warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
         read  answer
         case $answer in
-            no|No|n|N|"")
+            [Nn][Oo]|[Nn]|"")
                 error_exit "Exiting."
                 ;;
-            yes|Yes|y|Y)
+            [Yy][Ee][Ss]|[Yy])
                 info "Loading modules"
                 kldload linux linux64 linprocfs linsysfs tmpfs
                 info "Persisting modules"
@@ -456,10 +456,10 @@ ubuntu_bionic|bionic|ubuntu-bionic)
         warn "Debootstrap not found. Should it be installed? (N|y)"
         read  answer
         case $answer in
-            no|No|n|N|"")
+            [Nn][Oo]|[Nn]|"")
                 error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
                 ;;
-            yes|Yes|y|Y)
+            [Yy][Ee][Ss]|[Yy])
                 pkg install -y debootstrap
                 debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
                 ;;
@@ -474,10 +474,10 @@ ubuntu_focal|focal|ubuntu-focal)
         warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
         read  answer
         case $answer in
-            no|No|n|N|"")
+            [Nn][Oo]|[Nn]|"")
                 error_exit "Exiting."
                 ;;
-            yes|Yes|y|Y)
+            [Yy][Ee][Ss]|[Yy])
                 info "Loading modules"
                 kldload linux linux64 linprocfs linsysfs tmpfs
                 info "Persisting modules"
@@ -494,10 +494,10 @@ ubuntu_focal|focal|ubuntu-focal)
         warn "Debootstrap not found. Should it be installed? (N|y)"
         read  answer
         case $answer in
-            no|No|n|N|"")
+            [Nn][Oo]|[Nn]|"")
                 error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
                 ;;
-            yes|Yes|y|Y)
+            [Yy][Ee][Ss]|[Yy])
                 pkg install -y debootstrap
                 debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
                 ;;

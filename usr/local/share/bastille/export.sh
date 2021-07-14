@@ -49,6 +49,8 @@ usage() {
     -v | --verbose  -- Be more verbose during the ZFS send operation.
          --xz       -- Export a ZFS jail using XZ(.xz) compressed image.
 
+Tip: If no option specified, container should be exported to standard output.
+
 EOF
     exit 1
 }
