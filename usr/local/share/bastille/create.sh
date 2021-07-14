@@ -330,13 +330,6 @@ create_jail() {
         ## MAKE SURE WE'RE IN THE RIGHT PLACE
         cd "${bastille_jail_path}"
         echo
-        info "NAME: ${NAME}."
-        info "IP: ${IP}."
-        if [ -n  "${INTERFACE}" ]; then
-            info "INTERFACE: ${INTERFACE}."
-        fi
-        info "RELEASE: ${RELEASE}."
-        echo
 
         if [ -z "${THICK_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
