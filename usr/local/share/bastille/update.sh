@@ -64,7 +64,7 @@ if [ "${TARGET}" = "ALL" ]; then
     error_exit "Batch upgrade is unsupported."
 fi
 
-if [ -f /bin/midnightbsd-version ]; then
+if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
     exit 1
 fi
