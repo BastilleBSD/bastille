@@ -46,6 +46,10 @@ EOF
     exit 1
 }
 
+# Capitalise bastille.conf $bastille_zfs_enable value
+capitalise_conf_yes $bastille_zfs_enable
+bastille_zfs_enable=$answer
+
 # Handle special-case commands first
 case "$1" in
 help|-h|--help)
