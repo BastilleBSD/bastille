@@ -66,7 +66,7 @@ esac
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}${CPDEST}"
+    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
     RETURN="$?"
     if [ "${TARGET}" = "ALL" ]; then
         # Display the return status for reference

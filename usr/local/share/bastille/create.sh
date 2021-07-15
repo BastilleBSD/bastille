@@ -113,6 +113,13 @@ validate_netconf() {
 }
 
 validate_release() {
+    ## ensure the user set the Linux(experimental) option explicitly
+    if [ -n "${UBUNTU}" ]; then
+        if [ -z "${LINUX_JAIL}" ]; then
+            usage
+        fi
+    fi
+
     ## check release name match, else show usage
     if [ -n "${NAME_VERIFY}" ]; then
         RELEASE="${NAME_VERIFY}"
@@ -644,10 +651,12 @@ if [ -z "${EMPTY_JAIL}" ]; then
         validate_release
         ;;
     ubuntu_bionic|bionic|ubuntu-bionic)
+        UBUNTU="1"
         NAME_VERIFY=Ubuntu_1804
         validate_release
         ;;
     ubuntu_focal|focal|ubuntu-focal)
+        UBUNTU="1"
         NAME_VERIFY=Ubuntu_2004
         validate_release
         ;;
