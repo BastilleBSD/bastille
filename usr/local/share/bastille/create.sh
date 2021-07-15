@@ -166,8 +166,6 @@ ${NAME} {
   exec.stop = '/bin/true';
   persist;
 
-  mount.devfs;
-
   allow.mount;
   allow.mount.devfs;
 
