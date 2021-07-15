@@ -264,14 +264,14 @@ create_jail() {
         if [ ! -f "${bastille_jail_fstab}" ]; then
             touch "${bastille_jail_fstab}"
         fi
-        echo -e "devfs           ${bastille_jail_path}/dev      devfs           rw                      0       0" > "${bastille_jail_fstab}"
-        echo -e "tmpfs           ${bastille_jail_path}/dev/shm  tmpfs           rw,size=1g,mode=1777    0       0" > "${bastille_jail_fstab}"
-        echo -e "fdescfs         ${bastille_jail_path}/dev/fd   fdescfs         rw,linrdlnk             0       0" > "${bastille_jail_fstab}"
-        echo -e "linprocfs       ${bastille_jail_path}/proc     linprocfs       rw                      0       0" > "${bastille_jail_fstab}"
-        echo -e "linsysfs        ${bastille_jail_path}/sys      linsysfs        rw                      0       0" > "${bastille_jail_fstab}"
-        echo -e "/tmp            ${bastille_jail_path}/tmp      nullfs          rw                      0       0" > "${bastille_jail_fstab}"
+        echo -e "devfs           ${bastille_jail_path}/dev      devfs           rw                      0       0" >> "${bastille_jail_fstab}"
+        echo -e "tmpfs           ${bastille_jail_path}/dev/shm  tmpfs           rw,size=1g,mode=1777    0       0" >> "${bastille_jail_fstab}"
+        echo -e "fdescfs         ${bastille_jail_path}/dev/fd   fdescfs         rw,linrdlnk             0       0" >> "${bastille_jail_fstab}"
+        echo -e "linprocfs       ${bastille_jail_path}/proc     linprocfs       rw                      0       0" >> "${bastille_jail_fstab}"
+        echo -e "linsysfs        ${bastille_jail_path}/sys      linsysfs        rw                      0       0" >> "${bastille_jail_fstab}"
+        echo -e "/tmp            ${bastille_jail_path}/tmp      nullfs          rw                      0       0" >> "${bastille_jail_fstab}"
         ## removed temporarely / only for X11 jails? @hackacad
-        #echo -e "/home           ${bastille_jail_path}/home     nullfs          rw                      0       0" > "${bastille_jail_fstab}"
+        #echo -e "/home           ${bastille_jail_path}/home     nullfs          rw                      0       0" >> "${bastille_jail_fstab}"
 
         if [ ! -f "${bastille_jail_conf}" ]; then
             if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
