@@ -7,14 +7,14 @@ Templates](https://gitlab.com/BastilleBSD-Templates)?
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the containers automatically.
 
-Currently supported template hooks are: `LIMITS`, `INCLUDE`, `PRE`, `FSTAB`,
-`PKG`, `OVERLAY`, `SYSRC`, `SERVICE`, `CMD`.
+Currently supported template hooks are: `CMD`, `CP`, `INCLUDE`, `LIMITS`, `MOUNT`,
+`PKG`, `RDR`, `SERVICE`, `SYSRC`.
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
 the template hooks.
 
-Bastille 0.7.x
---------------
+Bastille 0.7.x+
+---------------
 Bastille 0.7.x introduces a template syntax that is more flexible and allows
 any-order scripting. Previous versions had a hard template execution order and
 instructions were spread across multiple files. The new syntax is done in a
@@ -27,23 +27,23 @@ Template Automation Hooks
 +---------+-------------------+-----------------------------------------+
 | HOOK    | format            | example                                 |
 +=========+===================+=========================================+
-| LIMITS  | resource value    | memoryuse 1G                            |
+| CMD     | /bin/sh command   | /usr/bin/chsh -s /usr/local/bin/zsh     |
++---------+-------------------+-----------------------------------------+
+| CP      | path(s)           | etc root usr (one per line)             |
 +---------+-------------------+-----------------------------------------+
 | INCLUDE | template path/URL | http?://TEMPLATE_URL or project/path    |
 +---------+-------------------+-----------------------------------------+
-| PRE     | /bin/sh command   | mkdir -p /usr/local/my_app/html         |
+| LIMITS  | resource value    | memoryuse 1G                            |
 +---------+-------------------+-----------------------------------------+
-| FSTAB   | fstab syntax      | /host/path container/path nullfs ro 0 0 |
+| MOUNT   | fstab syntax      | /host/path container/path nullfs ro 0 0 |
 +---------+-------------------+-----------------------------------------+
 | PKG     | port/pkg name(s)  | vim-console zsh git-lite tree htop      |
 +---------+-------------------+-----------------------------------------+
-| OVERLAY | path(s)           | etc root usr (one per line)             |
-+---------+-------------------+-----------------------------------------+
-| SYSRC   | sysrc command(s)  | nginx_enable=YES                        |
+| RDR     | tcp port port     | tcp 2200 22 (hostport jailport)         |
 +---------+-------------------+-----------------------------------------+
 | SERVICE | service command   | 'nginx start' OR 'postfix reload'       |
 +---------+-------------------+-----------------------------------------+
-| CMD     | /bin/sh command   | /usr/bin/chsh -s /usr/local/bin/zsh     |
+| SYSRC   | sysrc command(s)  | nginx_enable=YES                        |
 +---------+-------------------+-----------------------------------------+
 
 Note: SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
@@ -71,7 +71,7 @@ use, be sure to include `usr` in the template OVERLAY definition. eg;
 
 .. code-block:: shell
 
-  echo "usr" > /usr/local/bastille/templates/username/template/OVERLAY
+  echo "CP usr" >> /usr/local/bastille/templates/username/template/Bastillefile
 
 The above example "usr" will include anything under "usr" inside the template.
 You do not need to list individual files. Just include the top-level directory
