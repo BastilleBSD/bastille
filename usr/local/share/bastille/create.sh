@@ -255,7 +255,7 @@ create_jail() {
         touch "${bastille_jail_path}/dev/shm"
         touch "${bastille_jail_path}/dev/fd"
         cp -RPf ${bastille_releasesdir}/${RELEASE}/* ${bastille_jail_path}/
-        echo ${NAME} ${bastille_jail_path}/etc/hostname
+        echo "${NAME}" > ${bastille_jail_path}/etc/hostname
 
         if [ ! -d "${bastille_jail_template}" ]; then
             mkdir -p "${bastille_jail_template}"
