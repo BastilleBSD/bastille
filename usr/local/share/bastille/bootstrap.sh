@@ -470,18 +470,13 @@ http?://*/*/*)
 #adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
 ubuntu_bionic|bionic|ubuntu-bionic)
     check_linux_prerequisites
-
     ensure_debootstrap
-
     debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
-    
     echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Ubuntu_1804/etc/apt/apt.conf.d/00aptitude
     ;;
 ubuntu_focal|focal|ubuntu-focal)
     check_linux_prerequisites
-
     ensure_debootstrap
-
     debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
     ;;
 *)
