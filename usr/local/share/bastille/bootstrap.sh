@@ -373,7 +373,6 @@ ensure_debootstrap() {
                 ;;
             [Yy][Ee][Ss]|[Yy])
                 pkg install -y debootstrap
-                debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
                 ;;
         esac
     fi
