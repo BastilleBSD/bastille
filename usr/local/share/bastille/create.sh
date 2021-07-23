@@ -593,6 +593,10 @@ if [ -n "${LINUX_JAIL}" ]; then
         ## check for FreeBSD releases name
         NAME_VERIFY=ubuntu_focal
         ;;
+    debian_stretch|stretch|debian-stretch)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=stretch
+        ;;
     *)
         error_notify "Unknown Linux."
         usage
@@ -649,6 +653,10 @@ if [ -z "${EMPTY_JAIL}" ]; then
         ;;
     ubuntu_focal|focal|ubuntu-focal)
         NAME_VERIFY=Ubuntu_2004
+        validate_release
+        ;;
+    debian_stretch|stretch|debian-stretch)
+        NAME_VERIFY=Debian9
         validate_release
         ;;
     *)
