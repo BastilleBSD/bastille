@@ -363,6 +363,22 @@ check_linux_prerequisites() {
     fi
 }
 
+ensure_debootstrap() {
+    if ! which -s debootstrap; then
+        warn "Debootstrap not found. Should it be installed? (N|y)"
+        read  answer
+        case $answer in
+            [Nn][Oo]|[Nn]|"")
+                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
+                ;;
+            [Yy][Ee][Ss]|[Yy])
+                pkg install -y debootstrap
+                debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
+                ;;
+        esac
+    fi
+}
+
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 RELEASE="${1}"
@@ -455,41 +471,18 @@ http?://*/*/*)
 ubuntu_bionic|bionic|ubuntu-bionic)
     check_linux_prerequisites
 
-    if which -s debootstrap; then
-        debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
-    else
-        warn "Debootstrap not found. Should it be installed? (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                pkg install -y debootstrap
-                debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
-                ;;
-        esac
-    fi
+    ensure_debootstrap
+
+    debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
+    
     echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Ubuntu_1804/etc/apt/apt.conf.d/00aptitude
     ;;
 ubuntu_focal|focal|ubuntu-focal)
     check_linux_prerequisites
 
-    if which -s debootstrap; then
-        debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
-    else
-        warn "Debootstrap not found. Should it be installed? (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                pkg install -y debootstrap
-                debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
-                ;;
-        esac
-    fi
+    ensure_debootstrap
+
+    debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
     ;;
 *)
     usage
