@@ -478,6 +478,13 @@ ubuntu_focal|focal|ubuntu-focal)
     ensure_debootstrap
     debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
     ;;
+debian_stretch|stretch|debian-stretch)
+    check_linux_prerequisites
+    ensure_debootstrap
+    debootstrap --foreign --arch=amd64 --no-check-gpg stretch "${bastille_releasesdir}"/Debian9
+    echo "Increasing APT::Cache-Start"
+    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Debian9/etc/apt/apt.conf.d/00aptitude
+    ;;
 *)
     usage
     ;;
