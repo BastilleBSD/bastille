@@ -341,6 +341,43 @@ bootstrap_template() {
     bastille verify "${_user}/${_repo}"
 }
 
+check_linux_prerequisites() {
+    #check and install OS dependencies @hackacad
+    if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
+        warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
+        read  answer
+        case $answer in
+            [Nn][Oo]|[Nn]|"")
+                error_exit "Exiting."
+                ;;
+            [Yy][Ee][Ss]|[Yy])
+                info "Loading modules"
+                kldload linux linux64 linprocfs linsysfs tmpfs
+                info "Persisting modules"
+                sysrc linux_enable=YES
+                sysrc -f /boot/loader.conf linprocfs_load=YES
+                sysrc -f /boot/loader.conf linsysfs_load=YES
+                sysrc -f /boot/loader.conf tmpfs_load=YES
+                ;;
+        esac
+    fi
+}
+
+ensure_debootstrap() {
+    if ! which -s debootstrap; then
+        warn "Debootstrap not found. Should it be installed? (N|y)"
+        read  answer
+        case $answer in
+            [Nn][Oo]|[Nn]|"")
+                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
+                ;;
+            [Yy][Ee][Ss]|[Yy])
+                pkg install -y debootstrap
+                ;;
+        esac
+    fi
+}
+
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 RELEASE="${1}"
@@ -431,78 +468,15 @@ http?://*/*/*)
     ;;
 #adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
 ubuntu_bionic|bionic|ubuntu-bionic)
-    #check and install OS dependencies @hackacad
-    if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
-        warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                info "Loading modules"
-                kldload linux linux64 linprocfs linsysfs tmpfs
-                info "Persisting modules"
-                sysrc linux_enable=YES
-                sysrc -f /boot/loader.conf linprocfs_load=YES
-                sysrc -f /boot/loader.conf linsysfs_load=YES
-                sysrc -f /boot/loader.conf tmpfs_load=YES
-                ;;
-        esac
-    fi
-    if which -s debootstrap; then
-        debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
-    else
-        warn "Debootstrap not found. Should it be installed? (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                pkg install -y debootstrap
-                debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
-                ;;
-        esac
-    fi
+    check_linux_prerequisites
+    ensure_debootstrap
+    debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
     echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Ubuntu_1804/etc/apt/apt.conf.d/00aptitude
     ;;
 ubuntu_focal|focal|ubuntu-focal)
-    #check and install OS dependencies @hackacad
-    #ToDo: add function 'linux_pre' for sysrc etc.
-    if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
-        warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                info "Loading modules"
-                kldload linux linux64 linprocfs linsysfs tmpfs
-                info "Persisting modules"
-                sysrc linux_enable=YES
-                sysrc -f /boot/loader.conf linprocfs_load=YES
-                sysrc -f /boot/loader.conf linsysfs_load=YES
-                sysrc -f /boot/loader.conf tmpfs_load=YES
-                ;;
-        esac
-    fi
-    if which -s debootstrap; then
-        debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
-    else
-        warn "Debootstrap not found. Should it be installed? (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                pkg install -y debootstrap
-                debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
-                ;;
-        esac
-    fi
+    check_linux_prerequisites
+    ensure_debootstrap
+    debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
     ;;
 *)
     usage
