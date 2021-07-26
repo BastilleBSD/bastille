@@ -51,6 +51,7 @@ bastille_decompress_gz_options="-k -d -c -v"                          ## default
 bastille_network_loopback="bastille0"                                 ## default: "bastille0"
 bastille_network_shared=""                                            ## default: ""
 bastille_network_gateway=""                                           ## default: ""
+bastille_network_gateway6=""                                          ## default: ""
 
 ## Default Templates
 bastille_template_base="default/base"                                 ## default: "default/base"
