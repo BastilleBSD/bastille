@@ -452,6 +452,7 @@ create_jail() {
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
 
             _gateway=''
+            _gateway6=''
             _ifconfig=SYNCDHCP
             if [ "${IP}" != "0.0.0.0" ]; then # not using DHCP, so set static address.
                 if [ -n "${ip6}" ]; then
@@ -461,6 +462,8 @@ create_jail() {
                 fi
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
+                elif [ -n "${bastille_network_gateway6}" ]; then
+                    _gateway6="${bastille_network_gateway6}"
                 else
                     if [ -z ${ip6} ]; then
                         _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
@@ -469,7 +472,7 @@ create_jail() {
                     fi
                 fi
             fi
-            bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
+            bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}"
         fi
     elif [ -n "${THICK_JAIL}" ]; then
         if [ -n "${bastille_template_thick}" ]; then

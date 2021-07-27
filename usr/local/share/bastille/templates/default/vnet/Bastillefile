@@ -5,9 +5,11 @@ INCLUDE ${BASE_TEMPLATE} --arg HOST_RESOLV_CONF="${HOST_RESOLV_CONF}"
 
 ARG EPAIR
 ARG GATEWAY
+ARG GATEWAY6
 ARG IFCONFIG="SYNCDHCP"
 
 SYSRC ifconfig_${EPAIR}_name=vnet0
 SYSRC ifconfig_vnet0="${IFCONFIG}"
 # GATEWAY will be empty for a DHCP config. -- cwells
 CMD if [ -n "${GATEWAY}" ]; then /usr/sbin/sysrc defaultrouter="${GATEWAY}"; fi
+CMD if [ -n "${GATEWAY6}" ]; then /usr/sbin/sysrc ipv6_defaultrouter="${GATEWAY6}"; fi
