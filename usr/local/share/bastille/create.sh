@@ -600,6 +600,10 @@ if [ -n "${LINUX_JAIL}" ]; then
         ## check for FreeBSD releases name
         NAME_VERIFY=stretch
         ;;
+    debian_buster|buster|debian-buster)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=buster
+        ;;
     *)
         error_notify "Unknown Linux."
         usage
@@ -660,6 +664,10 @@ if [ -z "${EMPTY_JAIL}" ]; then
         ;;
     debian_stretch|stretch|debian-stretch)
         NAME_VERIFY=Debian9
+        validate_release
+        ;;
+    debian_buster|buster|debian-buster)
+        NAME_VERIFY=Debian10
         validate_release
         ;;
     *)
