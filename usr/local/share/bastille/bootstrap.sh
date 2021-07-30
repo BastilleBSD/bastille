@@ -490,7 +490,7 @@ debian_buster|buster|debian-buster)
     ensure_debootstrap
     debootstrap --foreign --arch=amd64 --no-check-gpg buster "${bastille_releasesdir}"/Debian10
     echo "Increasing APT::Cache-Start"
-    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Debian9/etc/apt/apt.conf.d/00aptitude
+    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Debian10/etc/apt/apt.conf.d/00aptitude
     ;;
 *)
     usage
