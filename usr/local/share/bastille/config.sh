@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ for _jail in ${JAILS}; do
     MATCH_FOUND=$?
 
     if [ "${ACTION}" = 'get' ]; then
-        if [ $MATCH_FOUND -ne 0 ]; then
+        if [ "${MATCH_FOUND}" -ne 0 ]; then
             warn "not set"
         elif ! echo "${MATCH_LINE}" | grep '=' > /dev/null 2>&1; then
             echo "enabled"
@@ -99,7 +99,7 @@ for _jail in ${JAILS}; do
             LINE="  ${PROPERTY};"
         fi
 
-        if [ $MATCH_FOUND -ne 0 ]; then # No match, so insert the property at the end. -- cwells
+        if [ "${MATCH_FOUND}" -ne 0 ]; then # No match, so insert the property at the end. -- cwells
             echo "$(awk -v line="${LINE}" '$0 == "}" { print line; } 1 { print $0; }' "${FILE}")" > "${FILE}"
         else # Replace the existing value. -- cwells
             sed -i '' -E "s/ *${ESCAPED_PROPERTY}[ =;].*/${LINE}/" "${FILE}"

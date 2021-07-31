@@ -79,7 +79,7 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.8-beta
+## 0.9-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
@@ -131,13 +131,15 @@ nat on $ext_if from <jails> to any -> ($ext_if:0)
 rdr-anchor "rdr/*"
 
 block in all
-pass out quick modulate state
+pass out quick keep state
 antispoof for $ext_if inet
 pass in inet proto tcp from any to any port ssh flags S/SA keep state
 
 ## make sure you also open up ports that you are going to use for dynamic rdr
 # pass in inet proto tcp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
 # pass in inet proto udp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
+## for IPv6 networks please uncomment the following rule
+# pass inet6 proto icmp6 icmp6-type { echoreq, routersol, routeradv, neighbradv, neighbrsol }
 
 ```
 
@@ -215,7 +217,7 @@ Two values are required for Bastille to use ZFS. The default values in the
 bastille_zfs_enable=""                                  ## default: ""
 bastille_zfs_zpool=""                                   ## default: ""
 bastille_zfs_prefix="bastille"                          ## default: "${bastille_zfs_zpool}/bastille"
-bastille_zfs_mountpoint=${bastille_prefix}              ## default: "${bastille_prefix}"
+bastille_prefix="/bastille"                             ## default: "/usr/local/bastille". ${bastille_zfs_prefix} gets mounted here
 bastille_zfs_options="-o compress=lz4 -o atime=off"     ## default: "-o compress=lz4 -o atime=off"
 ```
 
@@ -234,8 +236,8 @@ not using ZFS and can safely ignore these settings.
 bastille bootstrap
 ------------------
 Before you can begin creating containers, Bastille needs to "bootstrap" a
-release.  Current supported releases are 11.3-RELEASE, 12.0-RELEASE and
-12.1-RELEASE.
+release.  Current supported releases are 11.4-RELEASE, 12.2-RELEASE and
+13.0-RELEASE.
 
 **Important: If you need ZFS support see the above section BEFORE
 bootstrapping.**
@@ -243,14 +245,14 @@ bootstrapping.**
 To `bootstrap` a release, run the bootstrap sub-command with the
 release version as the argument.
 
-**FreeBSD 11.3-RELEASE**
+**FreeBSD 11.4-RELEASE**
 ```shell
-ishmael ~ # bastille bootstrap 11.3-RELEASE
+ishmael ~ # bastille bootstrap 11.4-RELEASE
 ```
 
-**FreeBSD 12.1-RELEASE**
+**FreeBSD 12.2-RELEASE**
 ```shell
-ishmael ~ # bastille bootstrap 12.1-RELEASE
+ishmael ~ # bastille bootstrap 12.2-RELEASE
 ```
 
 **HardenedBSD 11-STABLE-BUILD-XX**
@@ -290,6 +292,37 @@ bootstrapping templates from GitHub or GitLab.
 See `bastille update` to ensure your bootstrapped releases include the latest
 patches.
 
+** Ubuntu Linux [new since 0.9] **
+
+The bootstrap process for Linux containers is very different from the BSD process.
+You will need the package debootstrap and some kernel modules for that.
+But don't worry, Bastille will do that for you.
+
+```shell
+ishmael ~ # bastille bootstrap focal
+sysrc: unknown variable 'linprocfs_load'
+sysrc: unknown variable 'linsysfs_load'
+sysrc: unknown variable 'tmpfs_load'
+linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)
+#y
+Loading modules
+Persisting modules
+linux_enable:  -> YES
+linprocfs_load:  -> YES
+linsysfs_load:  -> YES
+tmpfs_load:  -> YES
+Debootstrap not found. Should it be installed? (N|y)
+#y
+FreeBSD repository is up to date.
+All repositories are up to date.
+Checking integrity... done (0 conflicting)
+The following 1 package(s) will be affected (of 0 checked):
+
+New packages to be INSTALLED:
+        debootstrap: 1.0.123_4
+[...]
+```
+As of 0.9.20210714 Bastille supports Ubuntu 18.04 (bionic) and Ubuntu 20.04 (focal).
 
 bastille create
 ---------------
@@ -306,24 +339,24 @@ IP at container creation.
 
 **ip4**
 ```shell
-ishmael ~ # bastille create folsom 12.1-RELEASE 10.17.89.10
+ishmael ~ # bastille create folsom 12.2-RELEASE 10.17.89.10
 Valid: (10.17.89.10).
 
 NAME: folsom.
 IP: 10.17.89.10.
-RELEASE: 12.1-RELEASE.
+RELEASE: 12.2-RELEASE.
 
 syslogd_flags: -s -> -ss
 sendmail_enable: NO -> NONE
 cron_flags:  -> -J 60
 ```
 
-This command will create a 12.1-RELEASE container assigning the 10.17.89.10 ip
+This command will create a 12.2-RELEASE container assigning the 10.17.89.10 ip
 address to the new system.
 
 **ip6**
 ```shell
-ishmael ~ # bastille create folsom 12.1-RELEASE fd35:f1fd:2cb6:6c5c::13
+ishmael ~ # bastille create folsom 12.2-RELEASE fd35:f1fd:2cb6:6c5c::13
 Valid: (fd35:f1fd:2cb6:6c5c::13).
 
 NAME: folsom.
@@ -335,12 +368,12 @@ sendmail_enable: NO -> NONE
 cron_flags:  -> -J 60
 ```
 
-This command will create a 12.1-RELEASE container assigning the
+This command will create a 12.2-RELEASE container assigning the
 fd35:f1fd:2cb6:6c5c::13  ip address to the new system.
 
 **VNET**
 ```shell
-ishmael ~ # bastille create -V vnetjail 12.1-RELEASE 192.168.87.55/24 em0
+ishmael ~ # bastille create -V vnetjail 12.2-RELEASE 192.168.87.55/24 em0
 Valid: (192.168.87.55/24).
 Valid: (em0).
 
@@ -356,7 +389,7 @@ ifconfig_e0b_bastille0_name:  -> vnet0
 ifconfig_vnet0:  -> inet 192.168.87.55/24
 ```
 
-This command will create a 12.1-RELEASE container assigning the
+This command will create a 12.2-RELEASE container assigning the
 192.168.87.55/24 ip address to the new system.
 
 VNET-enabled containers are attached to a virtual bridge interface for
@@ -376,8 +409,17 @@ private base. This is sometimes referred to as a "thick" container (whereas the
 shared base container is a "thin").
 
 ```shell
-ishmael ~ # bastille create -T folsom 12.0-RELEASE 10.17.89.10
+ishmael ~ # bastille create -T folsom 12.2-RELEASE 10.17.89.10
 ```
+
+**Linux**
+```shell
+ishmael ~ # bastille create folsom focal 10.17.89.10
+```
+
+Systemd is not supported due to the missing boot process.
+
+
 
 I recommend using private (rfc1918) ip address ranges for your containers.
 These ranges include:
@@ -628,9 +670,8 @@ Templates](https://gitlab.com/BastilleBSD-Templates)?
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the container automatically.
 
-Currently supported template hooks are: `ARG`, `LIMITS`, `INCLUDE`, `PRE`,
- `FSTAB`, `PKG`, `OVERLAY`, `SYSRC`, `SERVICE`, `CMD`, `RENDER`.
-Planned template hooks include: `PF`, `LOG`
+Currently supported template hooks are: `ARG`, `LIMITS`, `INCLUDE`,
+ `MOUNT`, `PKG`, `CP`, `SYSRC`, `SERVICE`, `RDR`, `CMD`, `RENDER`.
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
 the template hooks. Simply create a new directory in the format project/repo,
@@ -644,9 +685,9 @@ To leverage a template hook, create an UPPERCASE file in the root of the
 template directory named after the hook you want to execute. eg;
 
 ```shell
-echo "zsh vim-console git-lite htop" > /usr/local/bastille/templates/username/base-template/PKG
-echo "/usr/bin/chsh -s /usr/local/bin/zsh" > /usr/local/bastille/templates/username/base-template/CMD
-echo "usr" > /usr/local/bastille/templates/username/base-template/OVERLAY
+echo "PKG zsh vim-console git-lite htop" >> /usr/local/bastille/templates/username/base-template/Bastillefile
+echo "CMD /usr/bin/chsh -s /usr/local/bin/zsh" >> /usr/local/bastille/templates/username/base-template/Bastillefile
+echo "CP usr" > /usr/local/bastille/templates/username/base-template/Bastillefile
 ```
 
 Template hooks are executed in specific order and require specific syntax to
@@ -665,11 +706,7 @@ work as expected. This table outlines that order and those requirements:
 | SERVICE   | service command(s)    | nginx restart                                  |
 | CMD       | /bin/sh command       | /usr/bin/chsh -s /usr/local/bin/zsh            |
 | RENDER    | paths (one/line)      | /usr/local/etc/nginx                           |
-
-| PLANNED | format           | example                                                        |
-|---------|------------------|----------------------------------------------------------------|
-| RDR     | pf rdr entry     | rdr pass inet proto tcp from any to any port 80 -> 10.17.89.80 |
-| LOG     | path             | /var/log/nginx/access.log                                      |
+| RDR       | protocol port port    | tcp 2200 22                                    |
 
 Note: SYSRC requires NO quotes or that quotes (`"`) be escaped. ie; `\"`)
 
@@ -698,8 +735,8 @@ After populating `usr/local/` with custom config files that your container will
 use, be sure to include `usr` in the template OVERLAY definition. eg;
 
 ```shell
-echo "etc" > /usr/local/bastille/templates/username/base/OVERLAY
-echo "usr" >> /usr/local/bastille/templates/username/base/OVERLAY
+echo "CP etc" >> /usr/local/bastille/templates/username/base/Bastillefile
+echo "CP usr" >> /usr/local/bastille/templates/username/base/Bastillefile
 ```
 
 The above example will include anything under "etc" and "usr" inside
@@ -890,21 +927,21 @@ The `update` command targets a release instead of a container. Because every
 container is based on a release, when the release is updated all the containers
 are automatically updated as well.
 
-To update all containers based on the 11.2-RELEASE `release`:
+To update all containers based on the 11.4-RELEASE `release`:
 
-Up to date 11.2-RELEASE:
+Up to date 11.4-RELEASE:
 ```shell
-ishmael ~ # bastille update 11.2-RELEASE
+ishmael ~ # bastille update 11.4-RELEASE
 Targeting specified release.
-11.2-RELEASE
+11.4-RELEASE
 
 Looking up update.FreeBSD.org mirrors... 2 mirrors found.
-Fetching metadata signature for 11.2-RELEASE from update4.freebsd.org... done.
+Fetching metadata signature for 11.4-RELEASE from update4.freebsd.org... done.
 Fetching metadata index... done.
 Inspecting system... done.
 Preparing to download files... done.
 
-No updates needed to update system to 11.2-RELEASE-p4.
+No updates needed to update system to 11.4-RELEASE-p4.
 No updates are available to install.
 ```
 
@@ -916,9 +953,19 @@ bastille upgrade
 This sub-command lets you upgrade a release to a new release. Depending on the
 workflow this can be similar to a `bootstrap`.
 
+For standard containers you need to upgrade the shared base jail:
 ```shell
-ishmael ~ # bastille upgrade 11.3-RELEASE 12.0-RELEASE
+ishmael ~ # bastille upgrade 12.1-RELEASE 12.2-RELEASE
 ...
+```
+
+For thick jails you need to upgrade every single container (according the freebsd-update procedure):
+```shell
+ishmael ~ # bastille upgrade folsom 12.2-RELEASE
+ishmael ~ # bastille upgrade folsom install
+...
+ishmael ~ # bastille restart folsom
+ishmael ~ # bastille upgrade folsom install
 ```
 
 
@@ -1028,11 +1075,7 @@ Example (create, start, console)
 This example creates, starts and consoles into the container.
 
 ```shell
-ishmael ~ # bastille create alcatraz 11.2-RELEASE 10.17.89.7
-
-RELEASE: 11.2-RELEASE.
-NAME: alcatraz.
-IP: 10.17.89.7.
+ishmael ~ # bastille create alcatraz 11.4-RELEASE 10.17.89.7
 ```
 
 ```shell
@@ -1044,7 +1087,7 @@ alcatraz: created
 ```shell
 ishmael ~ # bastille console alcatraz
 [alcatraz]:
-FreeBSD 11.2-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
+FreeBSD 11.4-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
 
 Welcome to FreeBSD!
 

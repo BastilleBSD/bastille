@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,9 +42,6 @@ post_command_hook() {
 
     case $_cmd in
         rdr)
-            if ! grep -qs "${_args}" "${bastille_jailsdir}/${_jail}/rdr.conf"; then
-                echo "${_args}" >> "${bastille_jailsdir}/${_jail}/rdr.conf"
-            fi
             echo -e ${_args}
     esac
 }
@@ -176,7 +173,7 @@ if [ "${TARGET}" = '--convert' ]; then
 fi
 
 case ${TEMPLATE} in
-    http?://github.com/*/*|http?://gitlab.com/*/*)
+    http?://*/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
             info "Bootstrapping ${TEMPLATE}..."

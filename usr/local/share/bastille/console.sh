@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille console TARGET [user]'"
+    error_exit "Usage: bastille console TARGET [user]"
 }
 
 # Handle special-case commands first.
@@ -53,7 +53,7 @@ validate_user() {
         USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
             if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l "${_jail}" /usr/bin/login -f "${USER}"
+                jexec -l "${_jail}" $LOGIN -f "${USER}"
             else
                 echo "Invalid shell for user ${USER}"
             fi
@@ -76,11 +76,12 @@ check_fib() {
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
+    LOGIN="$(jexec -l "${_jail}" which login)"
     if [ -n "${USER}" ]; then
         validate_user
     else
-        check_fib
-        ${_setfib} jexec -l "${_jail}" /usr/bin/login -f root
+        LOGIN="$(jexec -l "${_jail}" which login)"
+        ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
     echo
 done

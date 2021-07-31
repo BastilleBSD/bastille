@@ -11,7 +11,8 @@ container backups.
   ishmael ~ # bastille export azkaban
 
 The export sub-command supports both UFS and ZFS storage. ZFS based containers
-will use ZFS snapshots. UFS based containers will use `txz` archives.
+will use ZFS snapshots. UFS based containers will use `txz` archives and they
+can be exported only when the jail is not running.
 
 .. code-block:: shell
 

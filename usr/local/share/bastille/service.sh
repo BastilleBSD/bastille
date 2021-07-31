@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 1 -o $# -gt 2 ]; then
     usage
 fi
 

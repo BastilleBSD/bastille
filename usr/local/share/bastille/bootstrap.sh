@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,14 +45,12 @@ esac
 #Validate if ZFS is enabled in rc.conf and bastille.conf.
 if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" ]; then
     warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
-    read  answer
+    read answer
     case $answer in
         no|No|n|N|"")
             error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
             ;;
-        yes|Yes|y|Y)
-            continue
-            ;;
+        yes|Yes|y|Y) ;;
     esac
 fi
 
@@ -85,7 +83,7 @@ validate_release_url() {
         info "Bootstrapping ${PLATFORM_OS} distfiles..."
 
         # Alternate RELEASE/ARCH fetch support
-        if [ "${OPTION}" = "--i386" -o "${OPTION}" = "--32bit" ]; then
+        if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
             ARCH="i386"
             RELEASE="${RELEASE}-${ARCH}"
         fi
@@ -178,7 +176,6 @@ bootstrap_directories() {
         else
             mkdir -p "${bastille_templatesdir}"
         fi
-        ln -s "${bastille_sharedir}/templates/default" "${bastille_templatesdir}/default"
     fi
 
     ## ${bastille_releasesdir}
@@ -216,7 +213,7 @@ bootstrap_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            error_exit "Bootstrap appears complete."
+            error_notify "Bootstrap appears complete."
         else
             info "Bootstrapping additional distfiles..."
         fi
@@ -254,12 +251,12 @@ bootstrap_release() {
                     fi
                     if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
                         if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
-                            rm -rf "${bastille_cachedir}/${RELEASE}"
+                            rm -rf "${bastille_cachedir:?}/${RELEASE}"
                         fi
                     fi
                     if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
                         if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                            rm -rf "${bastille_releasesdir}/${RELEASE}"
+                            rm -rf "${bastille_releasesdir:?}/${RELEASE}"
                         fi
                     fi
                     error_exit "Bootstrap failed."
@@ -267,8 +264,7 @@ bootstrap_release() {
 
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-                    if [ "$?" -ne 0 ]; then
+                    if ! fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## alert only if unable to fetch additional dist files
                         error_notify "Failed to fetch ${_archive}.txz."
                     fi
@@ -329,20 +325,57 @@ bootstrap_template() {
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
-    if [ ! -x "$(which git)" ]; then
+    if ! which -s git; then
         error_notify "Git not found."
         error_exit "Not yet implemented."
-    elif [ -x "$(which git)" ]; then
+    else
         if [ ! -d "${_template}/.git" ]; then
-            $(which git) clone "${_url}" "${_template}" ||\
+            git clone "${_url}" "${_template}" ||\
                 error_notify "Clone unsuccessful."
         elif [ -d "${_template}/.git" ]; then
-            cd "${_template}" && $(which git) pull ||\
+            git -C "${_template}" pull ||\
                 error_notify "Template update unsuccessful."
         fi
     fi
 
     bastille verify "${_user}/${_repo}"
+}
+
+check_linux_prerequisites() {
+    #check and install OS dependencies @hackacad
+    if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
+        warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
+        read  answer
+        case $answer in
+            [Nn][Oo]|[Nn]|"")
+                error_exit "Exiting."
+                ;;
+            [Yy][Ee][Ss]|[Yy])
+                info "Loading modules"
+                kldload linux linux64 linprocfs linsysfs tmpfs
+                info "Persisting modules"
+                sysrc linux_enable=YES
+                sysrc -f /boot/loader.conf linprocfs_load=YES
+                sysrc -f /boot/loader.conf linsysfs_load=YES
+                sysrc -f /boot/loader.conf tmpfs_load=YES
+                ;;
+        esac
+    fi
+}
+
+ensure_debootstrap() {
+    if ! which -s debootstrap; then
+        warn "Debootstrap not found. Should it be installed? (N|y)"
+        read  answer
+        case $answer in
+            [Nn][Oo]|[Nn]|"")
+                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
+                ;;
+            [Yy][Ee][Ss]|[Yy])
+                pkg install -y debootstrap
+                ;;
+        esac
+    fi
 }
 
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
@@ -353,7 +386,7 @@ OPTION="${2}"
 # Alternate RELEASE/ARCH fetch support(experimental)
 if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != "update" ]; then
     # Supported architectures
-    if [ "${OPTION}" = "--i386" -o "${OPTION}" = "--32bit" ]; then
+    if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
         HW_MACHINE="i386"
         HW_MACHINE_ARCH="i386"
     else
@@ -363,6 +396,13 @@ fi
 
 ## Filter sane release names
 case "${1}" in
+2.[0-9]*)
+    ## check for MidnightBSD releases name
+    NAME_VERIFY=$(echo "${RELEASE}")
+    UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
+    PLATFORM_OS="MidnightBSD"
+    validate_release_url
+    ;;
 *-CURRENT|*-current)
     ## check for FreeBSD releases name
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
@@ -370,9 +410,9 @@ case "${1}" in
     PLATFORM_OS="FreeBSD"
     validate_release_url
     ;;
-*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-RC3|*-rc3|*-RC4|*-rc4|*-RC5|*-rc5|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
     ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-2])$' | tr '[:lower:]' '[:upper:]')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-5]|-BETA[1-5])$' | tr '[:lower:]' '[:upper:]')
     UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
     PLATFORM_OS="FreeBSD"
     validate_release_url
@@ -420,16 +460,44 @@ current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
-http?://github.com/*/*|http?://gitlab.com/*/*)
+http?://*/*/*)
     BASTILLE_TEMPLATE_URL=${1}
     BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     bootstrap_template
     ;;
+#adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
+ubuntu_bionic|bionic|ubuntu-bionic)
+    check_linux_prerequisites
+    ensure_debootstrap
+    debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
+    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Ubuntu_1804/etc/apt/apt.conf.d/00aptitude
+    ;;
+ubuntu_focal|focal|ubuntu-focal)
+    check_linux_prerequisites
+    ensure_debootstrap
+    debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
+    ;;
+debian_stretch|stretch|debian-stretch)
+    check_linux_prerequisites
+    ensure_debootstrap
+    debootstrap --foreign --arch=amd64 --no-check-gpg stretch "${bastille_releasesdir}"/Debian9
+    echo "Increasing APT::Cache-Start"
+    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Debian9/etc/apt/apt.conf.d/00aptitude
+    ;;
+debian_buster|buster|debian-buster)
+    check_linux_prerequisites
+    ensure_debootstrap
+    debootstrap --foreign --arch=amd64 --no-check-gpg buster "${bastille_releasesdir}"/Debian10
+    echo "Increasing APT::Cache-Start"
+    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Debian10/etc/apt/apt.conf.d/00aptitude
+    ;;
 *)
     usage
     ;;
 esac
+
+
 
 case "${OPTION}" in
 update)

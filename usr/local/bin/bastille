@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.8.20210101"
+BASTILLE_VERSION="0.9.20210714"
 
 usage() {
     cat << EOF
@@ -135,10 +135,10 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|import|list|rdr|restart|start|update|upgrade|verify)
+bootstrap|create|destroy|export|import|list|rdr|restart|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|export|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'

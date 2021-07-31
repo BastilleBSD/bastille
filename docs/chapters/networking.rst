@@ -165,22 +165,13 @@ Create the firewall rules:
   set skip on lo
 
   table <jails> persist
-  nat on $ext_if from <jails> to any -> ($ext_if)
-
-  ## static rdr example
-  ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
-
-  ## dynamic rdr anchor (see below)
+  nat on $ext_if from <jails> to any -> ($ext_if:0)
   rdr-anchor "rdr/*"
 
   block in all
-  pass out quick modulate state
+  pass out quick keep state
   antispoof for $ext_if inet
   pass in inet proto tcp from any to any port ssh flags S/SA modulate state
-
-  # If you are using dynamic rdr also need to ensure that the external port
-  # range you are using is open
-  # pass in inet proto tcp from any to any port <rdr-start>:<rdr-end>
 
 - Make sure to change the `ext_if` variable to match your host system interface.
 - Make sure to include the last line (`port ssh`) or you'll end up locked out.
@@ -192,30 +183,26 @@ to containers are:
 
   nat on $ext_if from <jails> to any -> ($ext_if)
 
-  ## static rdr example
-  ## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
-
 The `nat` routes traffic from the loopback interface to the external
 interface for outbound access.
 
-The `rdr pass ...` will redirect traffic from the host firewall on port X to
-the ip of Container Y. The example shown redirects web traffic (80 & 443) to the
-containers at `10.17.89.45`.
+.. code-block:: shell
 
-  ## dynamic rdr anchor (see below)
   rdr-anchor "rdr/*"
 
 The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
 `bastille rdr` command at runtime - eg.
+
+.. code-block:: shell
 
   bastille rdr <jail> tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
   bastille rdr <jail> udp 2053 53 # Same for udp
   bastille rdr <jail> list        # List dynamic rdr rules
   bastille rdr <jail> clear       # Clear dynamic rdr rules
 
-  Note that if you are redirecting ports where the host is also listening
-  (eg. ssh) you should make sure that the host service is not listening on
-  the cloned interface - eg. for ssh set sshd_flags in rc.conf
+Note that if you are redirecting ports where the host is also listening (eg.
+ssh) you should make sure that the host service is not listening on the cloned
+interface - eg. for ssh set sshd_flags in rc.conf
 
   sshd_flags="-o ListenAddress=<hostname>"
 

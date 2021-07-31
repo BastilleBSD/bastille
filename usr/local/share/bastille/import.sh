@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,20 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille import file [option]"
+    # Build an independent usage for the import command
+    # If no file/extension specified, will import from standard input
+    error_notify "Usage: bastille import [option(s)] FILE"
+
+    cat << EOF
+    Options:
+
+    -f | --force    -- Force an archive import regardless if the checksum file does not match or missing.
+    -v | --verbose  -- Be more verbose during the ZFS receive operation.
+
+Tip: If no option specified, container should be imported from standard input.
+
+EOF
+    exit 1
 }
 
 # Handle special-case commands first
@@ -42,39 +55,70 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+if [ $# -gt 3 ] || [ $# -lt 1 ]; then
     usage
 fi
 
 TARGET="${1}"
-OPTION="${2}"
-shift
+OPT_FORCE=
+USER_IMPORT=
+OPT_ZRECV="-u"
+
+# Handle and parse option args
+while [ $# -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            OPT_FORCE="1"
+            TARGET="${2}"
+            shift
+            ;;
+        -v|--verbose)
+            OPT_ZRECV="-u -v"
+            TARGET="${2}"
+            shift
+            ;;
+        -*|--*)
+            error_notify "Unknown Option."
+            usage
+            ;;
+        *)
+            if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+                usage
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Fallback to default if missing config parameters
+if [ -z "${bastille_decompress_xz_options}" ]; then
+    bastille_decompress_xz_options="-c -d -v"
+fi
+if [ -z "${bastille_decompress_gz_options}" ]; then
+    bastille_decompress_gz_options="-k -d -c -v"
+fi
 
 validate_archive() {
     # Compare checksums on the target archive
-    # Skip validation for unsupported archives
-    if [ "${FILE_EXT}" != ".tar.gz" ] && [ "${FILE_EXT}" != ".tar" ]; then
-        if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
-            if [ -f "${bastille_backupsdir}/${FILE_TRIM}.sha256" ]; then
-                info "Validating file: ${TARGET}..."
-                SHA256_DIST=$(cat "${bastille_backupsdir}/${FILE_TRIM}.sha256")
-                SHA256_FILE=$(sha256 -q "${bastille_backupsdir}/${TARGET}")
-                if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
-                    error_exit "Failed validation for ${TARGET}."
-                else
-                    info "File validation successful!"
-                fi
+    # Skip validation for unsupported archive
+    if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
+        if [ -f "${bastille_backupsdir}/${FILE_TRIM}.sha256" ]; then
+            info "Validating file: ${TARGET}..."
+            SHA256_DIST=$(cat "${bastille_backupsdir}/${FILE_TRIM}.sha256")
+            SHA256_FILE=$(sha256 -q "${bastille_backupsdir}/${TARGET}")
+            if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
+                error_exit "Failed validation for ${TARGET}."
             else
-                # Check if user opt to force import
-                if [ "${OPTION}" = "-f" -o "${OPTION}" = "force" ]; then
-                    warn "Warning: Skipping archive validation!"
-                else
-                    error_exit "Checksum file not found. See 'bastille import TARGET -f'."
-                fi
+                info "File validation successful!"
+            fi
+        else
+            # Check if user opt to force import
+            if [ -n "${OPT_FORCE}" ]; then
+                warn "Warning: Skipping archive validation!"
+            else
+                error_exit "Checksum file not found. See 'bastille import [option(s)] FILE'."
             fi
         fi
-    else
-        warn "Warning: Skipping archive validation!"
     fi
 }
 
@@ -313,23 +357,34 @@ remove_zfs_datasets() {
 
 jail_import() {
     # Attempt to import container from file
-    FILE_TRIM=$(echo "${TARGET}" | sed 's/\.xz//g;s/\.txz//g;s/\.zip//g;s/\.tar\.gz//g;s/\.tar//g')
+    FILE_TRIM=$(echo "${TARGET}" | sed 's/\.xz//g;s/\.gz//g;s/\.tgz//g;s/\.txz//g;s/\.zip//g;s/\.tar\.gz//g;s/\.tar//g')
     FILE_EXT=$(echo "${TARGET}" | sed "s/${FILE_TRIM}//g")
-    validate_archive
     if [ -d "${bastille_jailsdir}" ]; then
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 if [ "${FILE_EXT}" = ".xz" ]; then
+                    validate_archive
                     # Import from compressed xz on ZFS systems
-                    info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} archive."
+                    info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
                     info "Receiving ZFS data stream..."
                     xz ${bastille_decompress_xz_options} "${bastille_backupsdir}/${TARGET}" | \
-                    zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+
+                    # Update ZFS mountpoint property if required
+                    update_zfsmount
+                elif [ "${FILE_EXT}" = ".gz" ]; then
+                    validate_archive
+                    # Import from compressed xz on ZFS systems
+                    info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
+                    info "Receiving ZFS data stream..."
+                    gzip ${bastille_decompress_gz_options} "${bastille_backupsdir}/${TARGET}" | \
+                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
 
                     # Update ZFS mountpoint property if required
                     update_zfsmount
 
                 elif [ "${FILE_EXT}" = ".txz" ]; then
+                    validate_archive
                     # Prepare the ZFS environment and restore from existing .txz file
                     create_zfs_datasets
 
@@ -340,7 +395,20 @@ jail_import() {
                     if [ "$?" -ne 0 ]; then
                         remove_zfs_datasets
                     fi
+                elif [ "${FILE_EXT}" = ".tgz" ]; then
+                    validate_archive
+                    # Prepare the ZFS environment and restore from existing .tgz file
+                    create_zfs_datasets
+
+                    # Extract required files to the new datasets
+                    info "Extracting files from '${TARGET}' archive..."
+                    tar --exclude='root' -xf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
+                    tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components 2 -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${TARGET_TRIM}/root"
+                    if [ "$?" -ne 0 ]; then
+                        remove_zfs_datasets
+                    fi
                 elif [ "${FILE_EXT}" = ".zip" ]; then
+                    validate_archive
                     # Attempt to import a foreign/iocage container
                     info "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
                     # Sane bastille ZFS options
@@ -353,9 +421,9 @@ jail_import() {
                         rm -f "${FILE_TRIM}" "${FILE_TRIM}_root"
                     fi
                     info "Receiving ZFS data stream..."
-                    zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
+                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
                     zfs set ${ZFS_OPTIONS} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
-                    zfs receive -u "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
+                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
 
                     # Update ZFS mountpoint property if required
                     update_zfsmount
@@ -403,6 +471,27 @@ jail_import() {
                     else
                         update_config
                     fi
+                elif [ -z "${FILE_EXT}" ]; then
+                    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$'; then
+                        validate_archive
+                        # Based on the file name, looks like we are importing a raw bastille image
+                        # Import from uncompressed image file
+                        info "Importing '${TARGET_TRIM}' from uncompressed image archive."
+                        info "Receiving ZFS data stream..."
+                        zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${bastille_backupsdir}/${TARGET}"
+
+                        # Update ZFS mountpoint property if required
+                        update_zfsmount
+                    else
+                        # Based on the file name, looks like we are importing from previous redirected bastille image
+                        # Quietly import from previous redirected bastille image
+                        if ! zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
+                            exit 1
+                        else
+                            # Update ZFS mountpoint property if required
+                            update_zfsmount
+                        fi
+                    fi
                 else
                     error_exit "Unknown archive format."
                 fi
@@ -412,6 +501,9 @@ jail_import() {
             if [ "${FILE_EXT}" = ".txz" ]; then
                 info "Extracting files from '${TARGET}' archive..."
                 tar -Jxf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
+            elif [ "${FILE_EXT}" = ".tgz" ]; then
+                info "Extracting files from '${TARGET}' archive..."
+                tar -xf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
             elif [ "${FILE_EXT}" = ".tar.gz" ]; then
                 # Attempt to import/configure foreign/ezjail container
                 info "Extracting files from '${TARGET}' archive..."
@@ -442,7 +534,9 @@ jail_import() {
             # This is required on foreign imports only
             update_jailconf
             update_fstab
-            info "Container '${TARGET_TRIM}' imported successfully."
+            if [ -z "${USER_IMPORT}" ]; then
+                info "Container '${TARGET_TRIM}' imported successfully."
+            fi
             exit 0
         fi
     else
@@ -465,22 +559,32 @@ fi
 # Check if archive exist then trim archive name
 if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
     # Filter unsupported/unknown archives
-    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.xz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.txz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.zip$\|-[0-9]\{12\}.[0-9]\{2\}.tar.gz$\|@[0-9]\{12\}.[0-9]\{2\}.tar$'; then
+    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.xz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.gz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.tgz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.txz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.zip$\|-[0-9]\{12\}.[0-9]\{2\}.tar.gz$\|@[0-9]\{12\}.[0-9]\{2\}.tar$'; then
         if ls "${bastille_backupsdir}" | awk "/^${TARGET}$/" >/dev/null; then
-            TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.xz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.txz//;s/_[0-9]*-[0-9]*-[0-9]*.zip//;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//;s/@[0-9]\{12\}.[0-9]\{2\}.tar//")
+            TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.xz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.gz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.tgz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.txz//;s/_[0-9]*-[0-9]*-[0-9]*.zip//;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//;s/@[0-9]\{12\}.[0-9]\{2\}.tar//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*//")
         fi
     else
         error_exit "Unrecognized archive name."
     fi
 else
-    error_exit "Archive '${TARGET}' not found."
+    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.*$'; then
+        error_exit "Archive '${TARGET}' not found."
+    else
+        # Assume user will import from standard input
+        TARGET_TRIM=${TARGET}
+        USER_IMPORT="1"
+    fi
 fi
 
 # Check if a running jail matches name or already exist
 if [ -n "$(jls name | awk "/^${TARGET_TRIM}$/")" ]; then
     error_exit "A running jail matches name."
-elif [ -d "${bastille_jailsdir}/${TARGET_TRIM}" ]; then
-    error_exit "Container: ${TARGET_TRIM} already exists."
+elif [ -n "${TARGET_TRIM}" ]; then
+    if [ -d "${bastille_jailsdir}/${TARGET_TRIM}" ]; then
+        error_exit "Container: ${TARGET_TRIM} already exists."
+    fi
 fi
 
-jail_import
+if [ -n "${TARGET}" ]; then
+    jail_import
+fi

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -97,8 +97,8 @@ for _jail in ${JAILS}; do
     _fstab_entry="${_hostpath} ${_jailpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells
-    if [ ! -d "${bastille_jailsdir}/${_jail}/root/${_jailpath}" ]; then
-        if ! mkdir -p "${bastille_jailsdir}/${_jail}/root/${_jailpath}"; then
+    if [ ! -d "${_jailpath}" ]; then
+        if ! mkdir -p "${_jailpath}"; then
             error_exit "Failed to create mount point inside jail."
         fi
     fi
@@ -110,6 +110,7 @@ for _jail in ${JAILS}; do
         fi
         echo "Added: ${_fstab_entry}"
     else
+        warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
         egrep "[[:blank:]]${_jailpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
     fi
     mount -F "${bastille_jailsdir}/${_jail}/fstab" -a

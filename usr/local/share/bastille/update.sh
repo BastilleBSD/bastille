@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille update [release|container] | [option]"
+    error_exit "Usage: bastille update [release|container] | [force]"
 }
 
 # Handle special-case commands first.
@@ -62,6 +62,11 @@ esac
 # Check for unsupported actions
 if [ "${TARGET}" = "ALL" ]; then
     error_exit "Batch upgrade is unsupported."
+fi
+
+if [ -f "/bin/midnightbsd-version" ]; then
+    echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
+    exit 1
 fi
 
 if freebsd-version | grep -qi HBSD; then

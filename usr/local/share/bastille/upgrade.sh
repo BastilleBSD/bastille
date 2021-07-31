@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [option]"
+    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [force]"
 }
 
 # Handle special-case commands first.
@@ -53,6 +53,11 @@ OPTION="$3"
 # Check for unsupported actions
 if [ "${TARGET}" = "ALL" ]; then
     error_exit "Batch upgrade is unsupported."
+fi
+
+if [ -f "/bin/midnightbsd-version" ]; then
+    echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
+    exit 1
 fi
 
 if freebsd-version | grep -qi HBSD; then
@@ -91,7 +96,9 @@ release_upgrade() {
     # Upgrade a release
     if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
         release_check
-        freebsd-update ${OPTION} -b "${bastille_releasesdir}/${TARGET}" -r "${NEWRELEASE}" upgrade
+        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" --currently-running "${TARGET}" -r "${NEWRELEASE}" upgrade
+        echo
+        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
     else
         error_exit "${TARGET} not found. See 'bastille bootstrap'."
     fi
@@ -121,9 +128,22 @@ jail_updates_install() {
     fi
 }
 
+release_updates_install() {
+    # Finish installing upgrade on a release
+    if [ -d "${bastille_releasesdir}/${TARGET}" ]; then 
+        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" install
+    else
+        error_exit "${TARGET} not found. See 'bastille bootstrap'."
+    fi
+}
+
 # Check what we should upgrade
 if echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
-    release_upgrade
+    if [ "${NEWRELEASE}" = "install" ]; then
+        release_updates_install
+    else
+        release_upgrade
+    fi
 elif [ "${NEWRELEASE}" = "install" ]; then
     jail_updates_install
 else

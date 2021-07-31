@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,23 +51,22 @@ RETURN=0
 for _jail in ${JAILS}; do
     COUNT=$(($COUNT+1))
     info "[${_jail}]:"
-    jexec -l "${_jail}" "$@"
+    jexec -l -U root "${_jail}" "$@"
     ERROR_CODE=$?
-    info "[${_jail} - Return code]: ${ERROR_CODE}"
-
+    info "[${_jail}]: ${ERROR_CODE}"
+    
     if [ "$COUNT" -eq 1 ]; then
         RETURN=$ERROR_CODE
     else 
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
-
+    
     echo
 done
 
 # Check when a command is executed in all running jails. (bastille cmd ALL ...)
-
 if [ "$COUNT" -gt 1 ] && [ "$RETURN" -gt 0 ]; then
     RETURN=1
-fi 
+fi
 
 return "$RETURN"

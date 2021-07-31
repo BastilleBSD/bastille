@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,20 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille create [option] name release ip [interface]"
+    # Build an independent usage for the create command
+    # If no option specified, will create a thin container by default
+    error_notify "Usage: bastille create [option(s)] name release ip [interface]"
+
+    cat << EOF
+    Options:
+
+    -E | --empty  -- Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -L | --linux  -- This option is intended for testing with Linux jails, this is considered experimental.
+    -T | --thick  -- Creates a thick container, they consume more space as they are self contained and independent.
+    -V | --vnet   -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+
+EOF
+    exit 1
 }
 
 running_jail() {
@@ -46,7 +59,9 @@ running_jail() {
 validate_name() {
     local NAME_VERIFY=${NAME}
     local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
-    if [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+    if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
+        error_exit "Container names may not begin with (-|_) characters!"
+    elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "Container names may not contain special characters!"
     fi
 }
@@ -139,6 +154,28 @@ ${NAME} {
 EOF
 }
 
+generate_linux_jail_conf() {
+    cat << EOF > "${bastille_jail_conf}"
+${NAME} {
+  host.hostname = ${NAME};
+  mount.fstab = ${bastille_jail_fstab};
+  path = ${bastille_jail_path};
+  devfs_ruleset = 4;
+
+  exec.start = '/bin/true';
+  exec.stop = '/bin/true';
+  persist;
+
+  allow.mount;
+  allow.mount.devfs;
+
+  interface = ${bastille_jail_conf_interface};
+  ${IPX_ADDR} = ${IP};
+  ip6 = ${IP6_MODE};
+}
+EOF
+}
+
 generate_vnet_jail_conf() {
     ## determine number of containers + 1
     ## iterate num and grep all jail configs
@@ -174,7 +211,7 @@ ${NAME} {
 
   vnet;
   vnet.interface = e0b_${uniq_epair};
-  exec.prestart += "jib addm ${uniq_epair} ${INTERFACE}";
+  exec.prestart += "jib addm ${uniq_epair} ${bastille_jail_conf_interface}";
   exec.poststop += "jib destroy ${uniq_epair}";
 }
 EOF
@@ -203,8 +240,51 @@ create_jail() {
             mkdir -p "${bastille_jailsdir}/${NAME}/root"
         fi
     fi
+    ## PoC for Linux jails @hackacad
+    if [ -n "${LINUX_JAIL}" ]; then
+        if [ ! -d "${bastille_jail_base}" ]; then
+            mkdir -p "${bastille_jail_base}"
+        fi
+        mkdir -p "${bastille_jail_path}/dev"
+        mkdir -p "${bastille_jail_path}/proc"
+        mkdir -p "${bastille_jail_path}/sys"
+        mkdir -p "${bastille_jail_path}/home"
+        mkdir -p "${bastille_jail_path}/tmp"
+        touch "${bastille_jail_path}/dev/shm"
+        touch "${bastille_jail_path}/dev/fd"
+        cp -RPf ${bastille_releasesdir}/${RELEASE}/* ${bastille_jail_path}/
+        echo "${NAME}" > ${bastille_jail_path}/etc/hostname
 
-    if [ -z "${EMPTY_JAIL}" ]; then
+        if [ ! -d "${bastille_jail_template}" ]; then
+            mkdir -p "${bastille_jail_template}"
+        fi
+
+        if [ ! -f "${bastille_jail_fstab}" ]; then
+            touch "${bastille_jail_fstab}"
+        fi
+        echo -e "devfs           ${bastille_jail_path}/dev      devfs           rw                      0       0" >> "${bastille_jail_fstab}"
+        echo -e "tmpfs           ${bastille_jail_path}/dev/shm  tmpfs           rw,size=1g,mode=1777    0       0" >> "${bastille_jail_fstab}"
+        echo -e "fdescfs         ${bastille_jail_path}/dev/fd   fdescfs         rw,linrdlnk             0       0" >> "${bastille_jail_fstab}"
+        echo -e "linprocfs       ${bastille_jail_path}/proc     linprocfs       rw                      0       0" >> "${bastille_jail_fstab}"
+        echo -e "linsysfs        ${bastille_jail_path}/sys      linsysfs        rw                      0       0" >> "${bastille_jail_fstab}"
+        echo -e "/tmp            ${bastille_jail_path}/tmp      nullfs          rw                      0       0" >> "${bastille_jail_fstab}"
+        ## removed temporarely / only for X11 jails? @hackacad
+        #echo -e "/home           ${bastille_jail_path}/home     nullfs          rw                      0       0" >> "${bastille_jail_fstab}"
+
+        if [ ! -f "${bastille_jail_conf}" ]; then
+            if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_shared}
+            fi
+            if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_loopback}
+            fi
+            if [ -n "${INTERFACE}" ]; then
+                local bastille_jail_conf_interface=${INTERFACE}
+            fi
+        fi
+    fi
+
+    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
         fi
@@ -235,7 +315,7 @@ create_jail() {
             if [ -n "${INTERFACE}" ]; then
                 local bastille_jail_conf_interface=${INTERFACE}
             fi
-
+            
             ## generate the jail configuration file
             if [ -n "${VNET_JAIL}" ]; then
                 generate_vnet_jail_conf
@@ -248,19 +328,19 @@ create_jail() {
         ## MAKE SURE WE'RE IN THE RIGHT PLACE
         cd "${bastille_jail_path}"
         echo
-        info "NAME: ${NAME}."
-        info "IP: ${IP}."
-        if [ -n  "${INTERFACE}" ]; then
-            info "INTERFACE: ${INTERFACE}."
-        fi
-        info "RELEASE: ${RELEASE}."
-        echo
 
         if [ -z "${THICK_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
+            # Properly link shared ports on thin jails in read-write.
+            if [ -d "${bastille_releasesdir}/${RELEASE}/usr/ports" ]; then
+                if [ ! -d "${bastille_jail_path}/usr/ports" ]; then
+                    mkdir ${bastille_jail_path}/usr/ports
+                fi
+                echo -e "${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jail_path}/usr/ports nullfs rw 0 0" >> "${bastille_jail_fstab}"
+            fi
         fi
 
         if [ -z "${THICK_JAIL}" ]; then
@@ -269,8 +349,7 @@ create_jail() {
             FILE_LIST=".cshrc .profile COPYRIGHT dev etc media mnt net proc root tmp var usr/obj usr/tests"
             for files in ${FILE_LIST}; do
                 if [ -f "${bastille_releasesdir}/${RELEASE}/${files}" ] || [ -d "${bastille_releasesdir}/${RELEASE}/${files}" ]; then
-                    cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"
-                    if [ "$?" -ne 0 ]; then
+                    if ! cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"; then
                         ## notify and clean stale files/directories
                         bastille destroy "${NAME}"
                         error_exit "Failed to copy release files. Please retry create!"
@@ -317,23 +396,25 @@ create_jail() {
             fi
         fi
 
-        ## create home directory if missing
-        if [ ! -d "${bastille_jail_path}/usr/home" ]; then
-            mkdir -p "${bastille_jail_path}/usr/home"
-        fi
-        ## link home properly
-        if [ ! -L "home" ]; then
-            ln -s usr/home home
-        fi
+        if [ -z "${LINUX_JAIL}" ]; then
+            ## create home directory if missing
+            if [ ! -d "${bastille_jail_path}/usr/home" ]; then
+                mkdir -p "${bastille_jail_path}/usr/home"
+            fi
+            ## link home properly
+            if [ ! -L "home" ]; then
+                ln -s usr/home home
+            fi
 
-        ## TZ: configurable (default: Etc/UTC)
-        ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+            ## TZ: configurable (default: Etc/UTC)
+            ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
 
-        # Post-creation jail misc configuration
-        # Create a dummy fstab file
-        touch "etc/fstab"
-        # Disables adjkerntz, avoids spurious error messages
-        sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
+            # Post-creation jail misc configuration
+            # Create a dummy fstab file
+            touch "etc/fstab"
+            # Disables adjkerntz, avoids spurious error messages
+            sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
+        fi
 
         ## VNET specific
         if [ -n "${VNET_JAIL}" ]; then
@@ -344,7 +425,10 @@ create_jail() {
                 fi
             fi
         fi
-    else
+    elif [ -n "${LINUX_JAIL}" ]; then
+        ## Generate configuration for Linux jail
+        generate_linux_jail_conf
+    elif [ -n "${EMPTY_JAIL}" ]; then
         ## Generate minimal configuration for empty jail
         generate_minimal_conf
     fi
@@ -353,41 +437,75 @@ create_jail() {
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
     # Jail must be started before applying the default template. -- cwells
-    bastille start "${NAME}"
+    if [ -z "${EMPTY_JAIL}" ]; then
+        bastille start "${NAME}"
+    elif [ -n "${EMPTY_JAIL}" ]; then
+        # Don't start empty jails unless a template defined.
+        if [ -n "${bastille_template_empty}" ]; then
+            bastille start "${NAME}"
+        fi
+    fi
 
     if [ -n "${VNET_JAIL}" ]; then
-        if [ -n ${bastille_template_vnet} ]; then
+        if [ -n "${bastille_template_vnet}" ]; then
             ## rename interface to generic vnet0
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
 
             _gateway=''
+            _gateway6=''
             _ifconfig=SYNCDHCP
             if [ "${IP}" != "0.0.0.0" ]; then # not using DHCP, so set static address.
-                _ifconfig="inet ${IP}"
+                if [ -n "${ip6}" ]; then
+                    _ifconfig="inet6 ${IP}"
+                else
+                    _ifconfig="inet ${IP}"
+                fi
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
+                elif [ -n "${bastille_network_gateway6}" ]; then
+                    _gateway6="${bastille_network_gateway6}"
                 else
-                    _gateway="$(netstat -rn | awk '/default/ {print $2}')"
+                    if [ -z ${ip6} ]; then
+                        _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    else
+                        _gateway="$(netstat -6rn | awk '/default/ {print $2}')"
+                    fi
                 fi
             fi
-            bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
+            bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}"
         fi
     elif [ -n "${THICK_JAIL}" ]; then
-        if [ -n ${bastille_template_thick} ]; then
+        if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     elif [ -n "${EMPTY_JAIL}" ]; then
-        if [ -n ${bastille_template_empty} ]; then
+        if [ -n "${bastille_template_empty}" ]; then
             bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
-    else # Thin jail.
-        if [ -n ${bastille_template_thin} ]; then
+    ## Using templating function to fetch necessary packges @hackacad
+    elif [ -n "${LINUX_JAIL}" ]; then
+        info "Fetching packages..."
+        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
+        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
+        jexec -l "${NAME}" /bin/bash -c "apt update"
+    else
+        # Thin jail.
+        if [ -n "${bastille_template_thin}" ]; then
             bastille template "${NAME}" ${bastille_template_thin} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     fi
 
     # Apply values changed by the template. -- cwells
-    bastille restart "${NAME}"
+    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
+        bastille restart "${NAME}"
+    elif [ -n "${EMPTY_JAIL}" ]; then
+        # Don't restart empty jails unless a template defined.
+        if [ -n "${bastille_template_empty}" ]; then
+            bastille restart "${NAME}"
+        fi
+    fi
 }
 
 # Handle special-case commands first.
@@ -406,33 +524,46 @@ fi
 EMPTY_JAIL=""
 THICK_JAIL=""
 VNET_JAIL=""
+LINUX_JAIL=""
 
-## handle combined options then shift
-if [ "${1}" = "-T" -o "${1}" = "--thick" -o "${1}" = "thick" ] && \
-    [ "${2}" = "-V" -o "${2}" = "--vnet" -o "${2}" = "vnet" ]; then
-    THICK_JAIL="1"
-    VNET_JAIL="1"
-    shift 2
-else
-    ## handle single options
+# Handle and parse options
+while [ $# -gt 0 ]; do
     case "${1}" in
         -E|--empty|empty)
-            shift
             EMPTY_JAIL="1"
+            shift
+            ;;
+        -L|--linux|linux)
+            LINUX_JAIL="1"
+            shift
             ;;
         -T|--thick|thick)
-            shift
             THICK_JAIL="1"
+            shift
             ;;
         -V|--vnet|vnet)
-            shift
             VNET_JAIL="1"
+            shift
             ;;
-        -*)
+        -*|--*)
             error_notify "Unknown Option."
             usage
             ;;
+       *)
+            break
+            ;;
     esac
+done
+
+## validate for combined options
+if [ -n "${EMPTY_JAIL}" ]; then
+    if [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
+        error_exit "Error: Empty jail option can't be used with other options."
+    fi
+elif [ -n "${LINUX_JAIL}" ]; then
+    if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ]; then
+        error_exit "Error: Linux jail option can't be used with other options."
+    fi
 fi
 
 NAME="$1"
@@ -455,17 +586,47 @@ if [ -n "${NAME}" ]; then
     validate_name
 fi
 
+if [ -n "${LINUX_JAIL}" ]; then
+    case "${RELEASE}" in
+    bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=ubuntu_bionic
+        ;;
+    focal|ubuntu_focal|ubuntu-focal)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=ubuntu_focal
+        ;;
+    debian_stretch|stretch|debian-stretch)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=stretch
+        ;;
+    debian_buster|buster|debian-buster)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=buster
+        ;;
+    *)
+        error_notify "Unknown Linux."
+        usage
+        ;;
+    esac
+fi
+
 if [ -z "${EMPTY_JAIL}" ]; then
     ## verify release
     case "${RELEASE}" in
+    2.[0-9]*)
+        ## check for MidnightBSD releases name
+        NAME_VERIFY=$(echo "${RELEASE}")
+        validate_release
+        ;;
     *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
         ## check for FreeBSD releases name
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
         validate_release
         ;;
-    *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+    *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
         ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2]|-BETA[1-5])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
         validate_release
         ;;
     *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
@@ -491,6 +652,22 @@ if [ -z "${EMPTY_JAIL}" ]; then
     current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
         ## check for HardenedBSD(latest current build release)
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+        validate_release
+        ;;
+    ubuntu_bionic|bionic|ubuntu-bionic)
+        NAME_VERIFY=Ubuntu_1804
+        validate_release
+        ;;
+    ubuntu_focal|focal|ubuntu-focal)
+        NAME_VERIFY=Ubuntu_2004
+        validate_release
+        ;;
+    debian_stretch|stretch|debian-stretch)
+        NAME_VERIFY=Debian9
+        validate_release
+        ;;
+    debian_buster|buster|debian-buster)
+        NAME_VERIFY=Debian10
         validate_release
         ;;
     *)
@@ -520,6 +697,15 @@ if [ -z "${EMPTY_JAIL}" ]; then
     if [ -n "${INTERFACE}" ]; then
         validate_netif
         validate_netconf
+    elif [ -n "${VNET_JAIL}" ]; then
+        if [ -z "${INTERFACE}" ]; then
+            if [ -z "${bastille_network_shared}" ]; then
+                # User must specify interface on vnet jails.
+                error_exit "Error: Network interface not defined."
+            else
+                validate_netconf
+            fi
+        fi
     else
         validate_netconf
     fi
@@ -544,6 +730,9 @@ if [ -z ${bastille_template_base+x} ]; then
 fi
 if [ -z ${bastille_template_empty+x} ]; then
     bastille_template_empty='default/empty'
+fi
+if [ -z ${bastille_template_linux+x} ]; then
+    bastille_template_linux='default/linux'
 fi
 if [ -z ${bastille_template_thick+x} ]; then
     bastille_template_thick='default/thick'

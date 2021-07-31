@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,10 @@ fi
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    jexec -l "${_jail}" /usr/sbin/pkg "$@"
+    if [ -f "/usr/sbin/pkg" ]; then
+        jexec -l "${_jail}" /usr/sbin/pkg "$@"
+    else
+        jexec -l "${_jail}" /usr/sbin/mport "$@"
+    fi
     echo
 done

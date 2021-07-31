@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2020, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille destroy [option] | [container|release]"
+    error_exit "Usage: bastille destroy [force] | [container|release]"
 }
 
 destroy_jail() {
@@ -74,6 +74,12 @@ destroy_jail() {
 
             ## remove jail base
             rm -rf "${bastille_jail_base}"
+        fi
+
+        # Remove target from bastille_list if exist
+        # Mute sysrc output here as it may be undesirable on large startup list
+        if [ -n "$(sysrc -qn bastille_list | tr -s " " "\n" | awk "/^${TARGET}$/")" ]; then
+            sysrc bastille_list-="${TARGET}" > /dev/null
         fi
 
         ## archive jail log
@@ -194,9 +200,9 @@ case "${TARGET}" in
     NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
     destroy_rel
     ;;
-*-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+*-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC1|*-rc1|*-RC2|*-rc2|*-RC3|*-rc3|*-RC4|*-rc4|*-RC5|*-rc5|*-BETA1|*-BETA2|*-BETA3|*-BETA4|*-BETA5)
     ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-5]|-BETA[1-5])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
     destroy_rel
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
