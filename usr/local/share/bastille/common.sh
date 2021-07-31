@@ -38,7 +38,7 @@ enable_color() {
 }
 
 # If "NO_COLOR" environment variable is present, disable output colors.
-if ! export | grep -q "NO_COLOR"; then
+if [ -z "${NO_COLOR}" ]; then
     enable_color
 fi
 
