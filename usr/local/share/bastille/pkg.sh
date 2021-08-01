@@ -47,10 +47,13 @@ fi
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    if [ -f "/usr/sbin/pkg" ]; then
-        jexec -l "${_jail}" /usr/sbin/pkg "$@"
+    bastille_jail_path=$(jls -j "${_jail}" path)
+    if [ -f "/usr/sbin/mport" ]; then
+        jexec -l -U root "${_jail}" /usr/sbin/mport "$@"
+    elif [ -f "${bastille_jail_path}/usr/bin/apt" ]; then
+        jexec -l "${_jail}" /usr/bin/apt "$@"
     else
-        jexec -l "${_jail}" /usr/sbin/mport "$@"
+        jexec -l -U root "${_jail}" /usr/sbin/pkg "$@"
     fi
     echo
 done
