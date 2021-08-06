@@ -132,7 +132,7 @@ if [ $# -gt 0 ]; then
         if [ -d "${bastille_releasesdir}" ]; then
             REL_LIST=$(ls "${bastille_releasesdir}" | sed "s/\n//g")
             for _REL in ${REL_LIST}; do
-                if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ]; then
+                if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" -o -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
                     echo "${_REL}"
                 fi
             done

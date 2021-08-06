@@ -207,27 +207,32 @@ case "${TARGET}" in
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/;s/last/LAST/g')
     destroy_rel
     ;;
 *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
     ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/;s/STABLE/stable/g')
     destroy_rel
     ;;
 *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
     ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/;s/build/BUILD/;s/latest/LATEST/g')
     destroy_rel
     ;;
 current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
     ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/;s/CURRENT/current/g')
     destroy_rel
     ;;
 current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/;s/latest/LATEST/g')
+    destroy_rel
+    ;;
+Ubuntu_1804|Ubuntu_2004|UBUNTU_1804|UBUNTU_2004)
+     ## check for Linux releases
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$' | sed 's/UBUNTU/Ubuntu/;s/ubuntu/Ubuntu/g')
     destroy_rel
     ;;
 *)
