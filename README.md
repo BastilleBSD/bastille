@@ -296,7 +296,7 @@ patches.
 
 The bootstrap process for Linux containers is very different from the BSD process.
 You will need the package debootstrap and some kernel modules for that.
-But don't worry, Bastille will do that for that for you.
+But don't worry, Bastille will do that for you.
 
 ```shell
 ishmael ~ # bastille bootstrap focal

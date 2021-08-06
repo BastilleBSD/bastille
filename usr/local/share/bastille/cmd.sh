@@ -45,8 +45,28 @@ if [ $# -eq 0 ]; then
     usage
 fi
 
+COUNT=0
+RETURN=0
+
 for _jail in ${JAILS}; do
+    COUNT=$(($COUNT+1))
     info "[${_jail}]:"
     jexec -l -U root "${_jail}" "$@"
+    ERROR_CODE=$?
+    info "[${_jail}]: ${ERROR_CODE}"
+    
+    if [ "$COUNT" -eq 1 ]; then
+        RETURN=$ERROR_CODE
+    else 
+        RETURN=$(($RETURN+$ERROR_CODE))
+    fi
+    
     echo
 done
+
+# Check when a command is executed in all running jails. (bastille cmd ALL ...)
+if [ "$COUNT" -gt 1 ] && [ "$RETURN" -gt 0 ]; then
+    RETURN=1
+fi
+
+return "$RETURN"
