@@ -69,34 +69,57 @@ validate_name() {
 }
 
 validate_ip() {
-    IPX_ADDR="ip4.addr"
-    IP6_MODE="disable"
-    ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
+    ipx_addr="ip4.addr"
+    ip="$1"
+    ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
-        IPX_ADDR="ip6.addr"
+        ipx_addr="ip6.addr"
         IP6_MODE="new"
     else
-        local IFS
-        if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${IP}" | cut -d / -f1)
-            IFS=.
-            set ${TEST_IP}
-            for quad in 1 2 3 4; do
-                if eval [ \$$quad -gt 255 ]; then
-                    echo "Invalid: (${TEST_IP})"
-                    exit 1
-                fi
-            done
-            if ifconfig | grep -qw "${TEST_IP}"; then
-                warn "Warning: IP address already in use (${TEST_IP})."
-            else
-                info "Valid: (${IP})."
-            fi
+        if [ "${ip}" = "DHCP" ]; then
+            info "Valid: (${ip})."
         else
-            error_exit "Invalid: (${IP})."
+            local IFS
+            if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+                TEST_IP=$(echo "${ip}" | cut -d / -f1)
+                IFS=.
+                set ${TEST_IP}
+                for quad in 1 2 3 4; do
+                    if eval [ \$$quad -gt 255 ]; then
+                        echo "Invalid: (${TEST_IP})"
+                        exit 1
+                    fi
+                done
+                if ifconfig | grep -qw "${TEST_IP}"; then
+                    warn "Warning: IP address already in use (${TEST_IP})."
+                else
+                    info "Valid: (${ip})."
+                fi
+            else
+                error_exit "Invalid: (${ip})."
+            fi
         fi
     fi
+    if echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
+        if [ "${ipx_addr}" = "ip4.addr" ]; then
+                IP4_ADDR="${ip}"
+                IP4_DEFINITION="${ipx_addr}=${ip};"
+        else
+                IP6_ADDR="${ip}"
+                IP6_DEFINITION="${ipx_addr}=${ip};"
+        fi
+    fi
+}
+validate_ips() {
+    IP6_MODE="disable"
+    IP4_DEFINITION=""
+    IP6_DEFINITION=""
+    IP4_ADDR=""
+    IP6_ADDR=""
+    for ip in ${IP}; do
+        validate_ip "${ip}"
+    done
 }
 
 validate_netif() {
@@ -157,7 +180,8 @@ ${NAME} {
   securelevel = 2;
 
   interface = ${bastille_jail_conf_interface};
-  ${IPX_ADDR} = ${IP};
+  ${IP4_DEFINITION}
+  ${IP6_DEFINITION}
   ip6 = ${IP6_MODE};
 }
 EOF
@@ -332,6 +356,38 @@ create_jail() {
         # Check and apply required settings.
         post_create_jail
 
+        if [ ! -f "${bastille_jail_fstab}" ]; then
+            if [ -z "${THICK_JAIL}" ]; then
+                echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
+            else
+                touch "${bastille_jail_fstab}"
+            fi
+        fi
+
+        if [ ! -f "${bastille_jail_conf}" ]; then
+            if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_shared}
+            fi
+            if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_loopback}
+            fi
+            if [ -n "${INTERFACE}" ]; then
+                local bastille_jail_conf_interface=${INTERFACE}
+            fi
+
+            ## generate the jail configuration file
+            if [ -n "${VNET_JAIL}" ]; then
+                generate_vnet_jail_conf
+            else
+                generate_jail_conf
+            fi
+        fi
+
+        ## using relative paths here
+        ## MAKE SURE WE'RE IN THE RIGHT PLACE
+        cd "${bastille_jail_path}"
+        echo
+
         if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
             info "Creating a thinjail...\n"
@@ -479,25 +535,44 @@ create_jail() {
 
             _gateway=''
             _gateway6=''
-            _ifconfig=SYNCDHCP
-            if [ "${IP}" != "0.0.0.0" ]; then # not using DHCP, so set static address.
-                if [ -n "${ip6}" ]; then
-                    _ifconfig="inet6 ${IP}"
-                else
-                    _ifconfig="inet ${IP}"
-                fi
+            _ifconfig_inet=''
+            _ifconfig_inet6=''
+            if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP)'; then
+                # Enable DHCP if requested
+                _ifconfig_inet=SYNCDHCP
+            else
+                # Else apply the default gateway
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
-                elif [ -n "${bastille_network_gateway6}" ]; then
-                    _gateway6="${bastille_network_gateway6}"
                 else
-                    if [ -z ${ip6} ]; then
-                        _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    _gateway="$(netstat -rn | awk '/default/ {print $2}')"
+                fi
+            fi
+            # Add IPv4 address (this is empty if DHCP is used)
+            if [ -n "${IP4_ADDR}" ]; then
+                    _ifconfig_inet="${_ifconfig_inet} inet ${IP4_ADDR}"
+            fi
+            # Enable IPv6 if used
+            if [ "${IP6_MODE}" != "disable" ]; then
+                _ifconfig_inet6='inet6 -ifdisabled'
+                if echo "${IP}" | grep -qE 'SLAAC'; then
+                    # Enable SLAAC if requested
+                    _ifconfig_inet6="${_ifconfig_inet6} accept_rtadv"
+                else
+                    # Else apply the default gateway
+                    if [ -n "${bastille_network_gateway6}" ]; then
+                        _gateway6="${bastille_network_gateway6}"
                     else
-                        _gateway="$(netstat -6rn | awk '/default/ {print $2}')"
+                        _gateway6="$(netstat -6rn | awk '/default/ {print $2}')"
                     fi
                 fi
             fi
+            # Add IPv6 address (this is empty if SLAAC is used)
+            if [ -n "${IP6_ADDR}" ]; then
+                    _ifconfig_inet6="${_ifconfig_inet6} ${IP6_ADDR}"
+            fi
+            # Join together IPv4 and IPv6 parts of ifconfig
+            _ifconfig="${_ifconfig_inet} ${_ifconfig_inet6}"
             bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}"
         fi
     elif [ -n "${THICK_JAIL}" ]; then
@@ -740,7 +815,7 @@ if [ -z "${EMPTY_JAIL}" ]; then
 
     ## check if ip address is valid
     if [ -n "${IP}" ]; then
-        validate_ip
+        validate_ips
     else
         usage
     fi
