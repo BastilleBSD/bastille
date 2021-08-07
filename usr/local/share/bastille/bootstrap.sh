@@ -370,9 +370,12 @@ debootstrap_release() {
         error_exit "Bootstrap failed."
     fi
 
-    if [ "${UBUNTU_FLAVOR}" = "bionic" ]; then
+    case "${UBUNTU_FLAVOR}" in
+        bionic|stretch|buster)
+        info "Increasing APT::Cache-Start"
         echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
-    fi
+        ;;
+    esac
 
     info "Bootstrap successful."
     info "See 'bastille --help' for available commands."
@@ -516,6 +519,20 @@ ubuntu_focal|focal|ubuntu-focal)
     PLATFORM_OS="Ubuntu/Linux"
     UBUNTU_FLAVOR="focal"
     DIR_BOOTSTRAP="Ubuntu_2004"
+    ARCH_BOOTSTRAP="amd64"
+    debootstrap_release
+    ;;
+debian_stretch|stretch|debian-stretch)
+    PLATFORM_OS="Debian/Linux"
+    UBUNTU_FLAVOR="stretch"
+    DIR_BOOTSTRAP="Debian9"
+    ARCH_BOOTSTRAP="amd64"
+    debootstrap_release
+    ;;
+debian_buster|buster|debian-buster)
+    PLATFORM_OS="Debian/Linux"
+    UBUNTU_FLAVOR="buster"
+    DIR_BOOTSTRAP="Debian10"
     ARCH_BOOTSTRAP="amd64"
     debootstrap_release
     ;;
