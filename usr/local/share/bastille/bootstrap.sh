@@ -353,7 +353,7 @@ debootstrap_release() {
 
     # Fetch the Linux flavor
     info "Bootstrapping ${PLATFORM_OS} distfiles..."
-    if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${UBUNTU_FLAVOR} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
+    if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
         ## perform cleanup only for stale/empty directories on failure
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -370,7 +370,7 @@ debootstrap_release() {
         error_exit "Bootstrap failed."
     fi
 
-    case "${UBUNTU_FLAVOR}" in
+    case "${LINUX_FLAVOR}" in
         bionic|stretch|buster)
         info "Increasing APT::Cache-Start"
         echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
@@ -510,28 +510,28 @@ http?://*/*/*)
 #adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
 ubuntu_bionic|bionic|ubuntu-bionic)
     PLATFORM_OS="Ubuntu/Linux"
-    UBUNTU_FLAVOR="bionic"
+    LINUX_FLAVOR="bionic"
     DIR_BOOTSTRAP="Ubuntu_1804"
     ARCH_BOOTSTRAP="amd64"
     debootstrap_release
     ;;
 ubuntu_focal|focal|ubuntu-focal)
     PLATFORM_OS="Ubuntu/Linux"
-    UBUNTU_FLAVOR="focal"
+    LINUX_FLAVOR="focal"
     DIR_BOOTSTRAP="Ubuntu_2004"
     ARCH_BOOTSTRAP="amd64"
     debootstrap_release
     ;;
 debian_stretch|stretch|debian-stretch)
     PLATFORM_OS="Debian/Linux"
-    UBUNTU_FLAVOR="stretch"
+    LINUX_FLAVOR="stretch"
     DIR_BOOTSTRAP="Debian9"
     ARCH_BOOTSTRAP="amd64"
     debootstrap_release
     ;;
 debian_buster|buster|debian-buster)
     PLATFORM_OS="Debian/Linux"
-    UBUNTU_FLAVOR="buster"
+    LINUX_FLAVOR="buster"
     DIR_BOOTSTRAP="Debian10"
     ARCH_BOOTSTRAP="amd64"
     debootstrap_release
