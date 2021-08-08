@@ -3,7 +3,7 @@
 # Bastille jail startup script
 #
 # PROVIDE: bastille
-# REQUIRE: LOGIN
+# REQUIRE: NETWORKING
 # KEYWORD: shutdown
 
 # Add the following to /etc/rc.conf[.local] to enable this service
