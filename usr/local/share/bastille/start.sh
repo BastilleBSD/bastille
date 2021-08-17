@@ -104,6 +104,9 @@ for _jail in ${JAILS}; do
                 bastille rdr "${_jail}" ${_rules}
             done < "${bastille_jailsdir}/${_jail}/rdr.conf"
         fi
+        
+        ## update hosts file
+        sed -i '' '/localhost/ s/[^[:blank:]]\{1,\}$/'${_jail}'/' "${bastille_jailsdir}/${_jail}/root/etc/hosts"
     fi
     echo
 done
