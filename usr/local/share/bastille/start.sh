@@ -105,8 +105,24 @@ for _jail in ${JAILS}; do
             done < "${bastille_jailsdir}/${_jail}/rdr.conf"
         fi
         
-        ## update hosts file
-        sed -i '' '/localhost/ s/[^[:blank:]]\{1,\}$/'${_jail}'/' "${bastille_jailsdir}/${_jail}/root/etc/hosts"
+        ## resolve hostname to jail IP address
+        HOSTNAME=$(bastille config ${_jail} get host.hostname)
+        HOSTSFILE="${bastille_jailsdir}/${_jail}/root/etc/hosts"
+        EXISTINGENTRY=$(grep '^10\|^172\|^192' "${HOSTSFILE}")
+
+        if [ "$(bastille config ${_jail} get vnet)" = 'enabled' ]; then
+                IP4ADDR=$(jexec -l ${_jail} ifconfig -n vnet0 inet | sed -n "/.inet /{s///;s/ .*//;p;}")
+        else
+                IP4ADDR=$(bastille config ${_jail} get ip4.addr)
+        fi
+
+        UPDATEENTRY="${IP4ADDR} ${HOSTNAME}"
+
+        if [ -z "${EXISTINGENTRY}" ]; then
+                sed -i '' "15s/^.*/${UPDATEENTRY}/" "${HOSTSFILE}"
+        else
+                sed -i '' "s/10.*/${UPDATEENTRY}/; s/172.*/${UPDATEENTRY}/; s/192.*/${UPDATEENTRY}/" "${HOSTSFILE}"
+        fi
     fi
     echo
 done
