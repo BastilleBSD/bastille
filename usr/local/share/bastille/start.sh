@@ -121,7 +121,7 @@ for _jail in ${JAILS}; do
         if [ -z "${EXISTINGENTRY}" ]; then
                 sed -i '' "15s/^.*/${UPDATEENTRY}/" "${HOSTSFILE}"
         else
-                sed -i '' "s/10.*/${UPDATEENTRY}/; s/172.*/${UPDATEENTRY}/; s/192.*/${UPDATEENTRY}/" "${HOSTSFILE}"
+                sed -i '' "15s/^10.*/${UPDATEENTRY}/; 15s/^172.*/${UPDATEENTRY}/; 15s/^192.*/${UPDATEENTRY}/" "${HOSTSFILE}"
         fi
     fi
     echo
