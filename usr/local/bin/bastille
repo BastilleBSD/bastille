@@ -93,6 +93,7 @@ Available Commands:
   edit        Edit container configuration files (advanced).
   export      Exports a specified container.
   help        Help about any command.
+  hosts       Update container hosts file to map hostname to IP address
   htop        Interactive process viewer (requires htop).
   import      Import a specified container.
   limits      Apply resources limits to targeted container(s). See rctl(8).
@@ -138,7 +139,7 @@ help|-h|--help)
 bootstrap|create|destroy|export|import|list|rdr|restart|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|hosts|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
@@ -167,7 +168,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
             fi
 
             case "${CMD}" in
-            cmd|console|htop|pkg|service|stop|sysrc|template|top)
+            cmd|console|hosts|htop|pkg|service|stop|sysrc|template|top)
                 # Require the target to be running. -- cwells
                 if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
                     error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."

@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille start TARGET"
+    error_exit "Usage: bastille start TARGET hosts"
 }
 
 # Handle special-case commands first.
@@ -42,11 +42,12 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
 TARGET="${1}"
+OPTION="${2}"
 shift
 
 if [ "${TARGET}" = 'ALL' ]; then
@@ -105,24 +106,13 @@ for _jail in ${JAILS}; do
             done < "${bastille_jailsdir}/${_jail}/rdr.conf"
         fi
         
-        ## resolve hostname to jail IP address
-        HOSTNAME=$(bastille config ${_jail} get host.hostname)
-        HOSTSFILE="${bastille_jailsdir}/${_jail}/root/etc/hosts"
-        EXISTINGENTRY=$(grep '^10\|^172\|^192' "${HOSTSFILE}")
-
-        if [ "$(bastille config ${_jail} get vnet)" = 'enabled' ]; then
-                IP4ADDR=$(jexec -l ${_jail} ifconfig -n vnet0 inet | sed -n "/.inet /{s///;s/ .*//;p;}")
-        else
-                IP4ADDR=$(bastille config ${_jail} get ip4.addr)
-        fi
-
-        UPDATEENTRY="${IP4ADDR} ${HOSTNAME}"
-
-        if [ -z "${EXISTINGENTRY}" ]; then
-                sed -i '' "15s/^.*/${UPDATEENTRY}/" "${HOSTSFILE}"
-        else
-                sed -i '' "15s/^10.*/${UPDATEENTRY}/; 15s/^172.*/${UPDATEENTRY}/; 15s/^192.*/${UPDATEENTRY}/" "${HOSTSFILE}"
-        fi
+	## update hosts file
+        case "${OPTION}" in
+        hosts)
+           bastille hosts "${_jail}"
+           ;;
+        esac
     fi
     echo
 done
+
