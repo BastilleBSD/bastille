@@ -35,6 +35,10 @@ usage() {
     error_exit "Usage: bastille hosts TARGET"
 }
 
+ipv6_err() {
+    error_exit "Only support IPv4"
+}
+
 # Handle special-case commands first.
 case "$1" in
 help|-h|--help)
@@ -47,17 +51,23 @@ if [ $# -ne 0 ]; then
 fi
 
 for _jail in ${JAILS}; do
-        ## resolve hostname to jail IP address
-        HOSTNAME=$(bastille config ${_jail} get host.hostname)
-        HOSTSFILE="${bastille_jailsdir}/${_jail}/root/etc/hosts"
-        EXISTINGENTRY=$(grep '^10\|^172\|^192' "${HOSTSFILE}")
-
+        ## ipv6 check
         if [ "$(bastille config ${_jail} get vnet)" = 'enabled' ]; then
-                IP4ADDR=$(jexec -l ${_jail} ifconfig -n vnet0 inet | sed -n "/.inet /{s///;s/ .*//;p;}")
+                IP6ADDR=$(jexec -l ${_jail} ifconfig -n vnet0 inet6 | awk '/inet6 / && (!/fe80::/ || !/%vnet0/)' | sed -n "/.inet6 /{s///;s/ .*//;p;}")
+                if [ -n "${IP6ADDR}" ]; then
+                	ipv6_err
+                else
+                	IP4ADDR=$(jexec -l ${_jail} ifconfig -n vnet0 inet | sed -n "/.inet /{s///;s/ .*//;p;}")
+                fi
+        elif [ "$(bastille config ${_jail} get ip6)" = 'new' ]; then
+                ipv6_err
         else
                 IP4ADDR=$(bastille config ${_jail} get ip4.addr)
         fi
-
+        
+        HOSTNAME=$(bastille config ${_jail} get host.hostname)
+        HOSTSFILE="${bastille_jailsdir}/${_jail}/root/etc/hosts"
+        EXISTINGENTRY=$(grep '^10\|^172\|^192' "${HOSTSFILE}")
         UPDATEENTRY="${IP4ADDR} ${HOSTNAME}"
 
         if [ -z "${EXISTINGENTRY}" ]; then
