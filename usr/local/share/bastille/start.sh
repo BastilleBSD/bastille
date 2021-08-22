@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille start TARGET hosts"
+    error_exit "Usage: bastille start TARGET"
 }
 
 # Handle special-case commands first.
@@ -42,12 +42,11 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
 TARGET="${1}"
-OPTION="${2}"
 shift
 
 if [ "${TARGET}" = 'ALL' ]; then
@@ -105,14 +104,6 @@ for _jail in ${JAILS}; do
                 bastille rdr "${_jail}" ${_rules}
             done < "${bastille_jailsdir}/${_jail}/rdr.conf"
         fi
-        
-	## update hosts file
-        case "${OPTION}" in
-        hosts)
-           bastille hosts "${_jail}"
-           ;;
-        esac
     fi
     echo
 done
-
