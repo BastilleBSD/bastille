@@ -67,12 +67,5 @@ for _jail in ${JAILS}; do
         
         HOSTNAME=$(bastille config ${_jail} get host.hostname)
         HOSTSFILE="${bastille_jailsdir}/${_jail}/root/etc/hosts"
-        EXISTINGENTRY=$(grep '^10\|^172\|^192' "${HOSTSFILE}")
-        UPDATEENTRY="${IP4ADDR} ${HOSTNAME}"
-
-        if [ -z "${EXISTINGENTRY}" ]; then
-                sed -i '' "15s/^.*/${UPDATEENTRY}/" "${HOSTSFILE}"
-        else
-                sed -i '' "15s/^10.*/${UPDATEENTRY}/; 15s/^172.*/${UPDATEENTRY}/; 15s/^192.*/${UPDATEENTRY}/" "${HOSTSFILE}"
-        fi
+        sed -i '' "15s/^.*/${IP4ADDR} ${HOSTNAME}/" "${HOSTSFILE}"
 done
