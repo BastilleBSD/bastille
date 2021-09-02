@@ -47,37 +47,42 @@ if [ $# -lt 2 ]; then
 fi
 
 TARGET="${1}"
+JAIL_NAME=""
+JAIL_IP=""
+EXT_IF=""
 shift
 
-# Can only redirect to single jail
-if [ "${TARGET}" = 'ALL' ]; then
-    error_exit "Can only redirect to a single jail."
-fi
-
-# Check if jail name is valid
-JAIL_NAME=$(jls -j "${TARGET}" name 2>/dev/null)
-if [ -z "${JAIL_NAME}" ]; then
-    error_exit "Jail not found: ${TARGET}"
-fi
-
-# Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
-if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-    JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
-    if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
-        error_exit "Jail IP not found: ${TARGET}"
+check_jail_validity() {
+    # Can only redirect to single jail
+    if [ "${TARGET}" = 'ALL' ]; then
+        error_exit "Can only redirect to a single jail."
     fi
-fi
 
-# Check if rdr-anchor is defined in pf.conf
-if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
-    error_exit "rdr-anchor not found in pf.conf"
-fi
+    # Check if jail name is valid
+    JAIL_NAME=$(jls -j "${TARGET}" name 2>/dev/null)
+    if [ -z "${JAIL_NAME}" ]; then
+        error_exit "Jail not found: ${TARGET}"
+    fi
 
-# Check if ext_if is defined in pf.conf
-EXT_IF=$(grep '^[[:space:]]*ext_if[[:space:]]*=' /etc/pf.conf)
-if [ -z "${EXT_IF}" ]; then
-    error_exit "ext_if not defined in pf.conf"
-fi
+    # Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
+    if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
+        JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
+        if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
+            error_exit "Jail IP not found: ${TARGET}"
+        fi
+    fi
+
+    # Check if rdr-anchor is defined in pf.conf
+    if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
+        error_exit "rdr-anchor not found in pf.conf"
+    fi
+
+    # Check if ext_if is defined in pf.conf
+    EXT_IF=$(grep '^[[:space:]]*ext_if[[:space:]]*=' /etc/pf.conf)
+    if [ -z "${EXT_IF}" ]; then
+        error_exit "ext_if not defined in pf.conf"
+    fi
+}
 
 # function: write rule to rdr.conf
 persist_rdr_rule() {
@@ -96,17 +101,34 @@ load_rdr_rule() {
 while [ $# -gt 0 ]; do
     case "$1" in
         list)
-            pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+            if [ "${TARGET}" = 'ALL' ]; then
+                for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    echo "${JAIL_NAME} redirects:"
+                    pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+                done
+            else
+                check_jail_validity
+                pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+            fi
             shift
             ;;
         clear)
-            pfctl -a "rdr/${JAIL_NAME}" -Fn
+            if [ "${TARGET}" = 'ALL' ]; then
+                for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    echo "${JAIL_NAME} redirects:"
+                    pfctl -a "rdr/${JAIL_NAME}" -Fn
+                done
+            else
+                check_jail_validity
+                pfctl -a "rdr/${JAIL_NAME}" -Fn
+            fi
             shift
             ;;
         tcp|udp)
             if [ $# -lt 3 ]; then
                 usage
             fi
+            check_jail_validity
             persist_rdr_rule $1 $2 $3
             load_rdr_rule $1 $2 $3
             shift 3
