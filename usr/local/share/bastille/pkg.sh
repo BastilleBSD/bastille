@@ -53,7 +53,7 @@ for _jail in ${JAILS}; do
     elif [ -f "${bastille_jail_path}/usr/bin/apt" ]; then
         jexec -l "${_jail}" /usr/bin/apt "$@"
     else
-        jexec -l -U root "${_jail}" /usr/sbin/pkg "$@"
+        /usr/sbin/pkg -j "${_jail}" "$@"
     fi
     echo
 done
