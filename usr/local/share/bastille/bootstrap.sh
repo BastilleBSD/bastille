@@ -308,24 +308,46 @@ debootstrap_release() {
 
     #check and install OS dependencies @hackacad
     #ToDo: add function 'linux_pre' for sysrc etc.
-    if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
-        warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting."
+
+    required_mods="linprocfs linsysfs tmpfs"
+    linuxarc_mods="linux linux64"
+    for _req_kmod in ${required_mods}; do
+        if [ ! "$(sysrc -f /boot/loader.conf -qn ${_req_kmod}_load)" = "YES" ]; then
+            warn "${_req_kmod} not enabled in /boot/loader.conf, Should I do that for you?  (N|y)"
+            read  answer
+            case "${answer}" in
+                [Nn][Oo]|[Nn]|"")
+                    error_exit "Exiting."
+                    ;;
+                [Yy][Ee][Ss]|[Yy])
+                    # Skip already loaded known modules.
+                    if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
+                        info "Loading kernel module: ${_req_kmod}"
+                        kldload -v ${_req_kmod}
+                    fi
+                    info "Persisting module: ${_req_kmod}"
+                    sysrc -f /boot/loader.conf ${_req_kmod}_load=YES
                 ;;
-            [Yy][Ee][Ss]|[Yy])
-                info "Loading modules"
-                kldload linux linux64 linprocfs linsysfs tmpfs
-                info "Persisting modules"
-                sysrc linux_enable=YES
-                sysrc -f /boot/loader.conf linprocfs_load=YES
-                sysrc -f /boot/loader.conf linsysfs_load=YES
-                sysrc -f /boot/loader.conf tmpfs_load=YES
-                ;;
-        esac
-    fi
+            esac
+        else
+            # If already set in /boot/loader.conf, check and try to load the module. 
+            if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
+                info "Loading kernel module: ${_req_kmod}"
+                kldload -v ${_req_kmod}
+            fi
+        fi
+    done
+
+        # Mandatory Linux modules/rc.
+        for _lin_kmod in ${linuxarc_mods}; do
+            if ! kldstat -n ${_lin_kmod} >/dev/null 2>&1; then
+                info "Loading kernel module: ${_lin_kmod}"
+                kldload -v ${_lin_kmod}
+            fi
+        done
+        if [ ! "$(sysrc -qn linux_enable)" = "YES" ]; then
+            sysrc linux_enable=YES
+        fi
 
     if ! which -s debootstrap; then
         warn "Debootstrap not found. Should it be installed? (N|y)"
