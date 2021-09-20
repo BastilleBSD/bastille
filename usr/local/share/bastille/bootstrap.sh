@@ -309,7 +309,7 @@ debootstrap_release() {
     #check and install OS dependencies @hackacad
     #ToDo: add function 'linux_pre' for sysrc etc.
 
-    required_mods="linprocfs linsysfs tmpfs"
+    required_mods="fdescfs linprocfs linsysfs tmpfs"
     linuxarc_mods="linux linux64"
     for _req_kmod in ${required_mods}; do
         if [ ! "$(sysrc -f /boot/loader.conf -qn ${_req_kmod}_load)" = "YES" ]; then
