@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille update [release|container] | [force]"
+    error_exit "Usage: bastille update [release|container|template] | [force]"
 }
 
 # Handle special-case commands first.
@@ -110,8 +110,48 @@ release_update() {
     fi
 }
 
+template_update() {
+    # Update a template
+    _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
+    if [ -d $_template_path ]; then
+        info "[${BASTILLE_TEMPLATE}]:"
+        git -C $_template_path pull ||\
+            error_notify "${BASTILLE_TEMPLATE} update unsuccessful."    
+
+        bastille verify "${BASTILLE_TEMPLATE}"
+    else 
+        error_exit "${BASTILLE_TEMPLATE} not found. See 'bastille bootstrap'."
+    fi
+}
+
+templates_update() {
+    # Update all templates
+    _updated_templates=0
+    if [ -d  ${bastille_templatesdir} ]; then
+        for _template_path in $(ls -d ${bastille_templatesdir}/*/*); do
+            if [ -d $_template_path/.git ]; then
+                BASTILLE_TEMPLATE=$(echo "$_template_path" | awk -F / '{ print $(NF-1) "/" $NF }')
+                template_update
+
+                _updated_templates=$((_updated_templates+1))
+            fi
+        done
+    fi
+
+    if [ "$_updated_templates" -ne "0" ]; then
+        info "$_updated_templates templates updated."
+    else 
+        error_exit "no templates found. See 'bastille bootstrap'."
+    fi
+}
+
 # Check what we should update
-if echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
+if [ "${TARGET}" = 'TEMPLATES' ]; then
+    templates_update
+elif echo "${TARGET}" | grep -Eq '^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$'; then
+    BASTILLE_TEMPLATE="${TARGET}"
+    template_update
+elif echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
     release_update
 else
     jail_update
