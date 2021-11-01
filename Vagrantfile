@@ -9,8 +9,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     vm_config.ssh.shell = "sh"
 
-    vm_config.vm.box = "freebsd/FreeBSD-12.1-RELEASE"
-    vm_config.vm.box_version = "2019.11.01"
+    vm_config.vm.box = "freebsd/FreeBSD-13.0-RELEASE"
+    vm_config.vm.box_version = "2021.04.09"
 
     vm_config.vm.provider "virtualbox" do |vb|
       vb.name = "bastille"
@@ -19,6 +19,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
     vm_config.vm.provision "shell", inline: "cd /vagrant; make install"
+    vm_config.vm.provision "shell", inline: "pkg install -y git-lite"
 
   end
 end
