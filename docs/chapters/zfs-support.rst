@@ -1,6 +1,6 @@
 ZFS Support
 ====================
-.. image:: images/bastillebsd-twitter-poll.png
+.. image:: /images/bastillebsd-twitter-poll.png
   :width: 400
   :alt: Alternative text
 
