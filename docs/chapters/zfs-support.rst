@@ -1,6 +1,6 @@
 ZFS Support
 ====================
-.. image:: chapters/bastillebsd.png
+.. image:: chapters/bastilletweet.png
   :width: 400
   :alt: Alternative text
 
@@ -24,4 +24,5 @@ Example
   ishmael ~ # sysrc -f /usr/local/etc/bastille/bastille.conf bastille_zfs_enable=YES
   ishmael ~ # sysrc -f /usr/local/etc/bastille/bastille.conf bastille_zfs_zpool=ZPOOL_NAME
 
-Replace ``ZPOOL_NAME`` with the zpool you want Bastille to use. Tip: ``zpool list`` and ``zpool status`` will help. If you get 'no pools available' you are likely not using ZFS and can safely ignore these settings.
+Replace ``ZPOOL_NAME`` with the zpool you want Bastille to use. Tip: ``zpool list`` and ``zpool status`` will help. 
+If you get 'no pools available' you are likely not using ZFS and can safely ignore these settings.
