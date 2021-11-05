@@ -18,6 +18,7 @@ https://docs.bastillebsd.org.
    chapters/subcommands/index
    chapters/template
    chapters/jail-config
+   chapters/zfs-support
 
    copyright
 
