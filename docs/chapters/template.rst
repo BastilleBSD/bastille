@@ -13,9 +13,9 @@ Currently supported template hooks are: `CMD`, `CP`, `INCLUDE`, `LIMITS`, `MOUNT
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
 the template hooks.
 
-Bastille 0.7.x+
+Bastille 12.2 and 13.0+
 ---------------
-Bastille 0.7.x introduces a template syntax that is more flexible and allows
+Bastille 12.2 and 13.0x introduces a template syntax that is more flexible and allows
 any-order scripting. Previous versions had a hard template execution order and
 instructions were spread across multiple files. The new syntax is done in a
 `Bastillefile` and the template hook (see below) files are replaced with
