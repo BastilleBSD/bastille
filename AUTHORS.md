@@ -22,6 +22,7 @@ Christer Edwards [christer.edwards@gmail.com]
 - Petru T. Garstea
 - Sven R.
 - Tobias Tom
+- Stefano Marinelli
 
 ### Special thanks
 Software doesn't happen in a vacuum. Thank you to the following people who may

@@ -43,7 +43,7 @@ usage() {
     -L | --linux  -- This option is intended for testing with Linux jails, this is considered experimental.
     -T | --thick  -- Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet   -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
-    -B | --bridge   -- Enables VNET, VNET containers are attached to a specified, already existing local bridge.
+    -B | --bridge -- Enables VNET, VNET containers are attached to a specified, already existing external bridge.
 
 EOF
     exit 1

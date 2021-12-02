@@ -109,6 +109,18 @@ To define a default route / gateway for all VNET containers define the value in
 This config change will apply the defined gateway to any new containers.
 Existing containers will need to be manually updated.
 
+Virtual Network (VNET) on External Bridge
+--------------------------------------
+To create a VNET based container and attach it to an external, already existing bridge, use the `-B` option, an IP/netmask and
+external bridge.
+
+.. code-block:: shell
+
+  bastille create -B azkaban 12.1-RELEASE 192.168.1.50/24 bridge0
+
+Bastille will automagically create the interface, attach it to the specified bridge and connect /
+disconnect containers as they are started and stopped. 
+The bridge needs to be created/enabled before creating and starting the jail.
 
 Public Network
 ==============
