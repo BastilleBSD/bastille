@@ -43,6 +43,7 @@ usage() {
     -L | --linux  -- This option is intended for testing with Linux jails, this is considered experimental.
     -T | --thick  -- Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet   -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -B | --bridge -- Enables VNET, VNET containers are attached to a specified, already existing external bridge.
 
 EOF
     exit 1
@@ -185,15 +186,46 @@ generate_vnet_jail_conf() {
         local list_jails_num=$(echo "${jail_list}" | wc -l | awk '{print $1}')
         local num_range=$(expr "${list_jails_num}" + 1)
         for _num in $(seq 0 "${num_range}"); do
-            if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+            if ! grep -q "e${_num}b" "${bastille_jailsdir}"/*/jail.conf; then
                 uniq_epair="bastille${_num}"
+		uniq_epair_bridge="${_num}"
                 break
             fi
         done
     else
         uniq_epair="bastille0"
+        uniq_epair_bridge="0"
     fi
 
+   if [ -n "${VNET_JAIL_BRIDGE}" ]; then
+
+   ## generate bridge config
+    cat << EOF > "${bastille_jail_conf}"
+${NAME} {
+  devfs_ruleset = 13;
+  enforce_statfs = 2;
+  exec.clean;
+  exec.consolelog = ${bastille_jail_log};
+  exec.start = '/bin/sh /etc/rc';
+  exec.stop = '/bin/sh /etc/rc.shutdown';
+  host.hostname = ${NAME};
+  mount.devfs;
+  mount.fstab = ${bastille_jail_fstab};
+  path = ${bastille_jail_path};
+  securelevel = 2;
+
+  exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
+  exec.prestart += "ifconfig ${bastille_jail_conf_interface} addm epair${uniq_epair_bridge}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${NAME}";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${NAME}";
+  exec.poststop += "ifconfig ${bastille_jail_conf_interface} deletem e${uniq_epair_bridge}a_${NAME}";
+  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${NAME} destroy";
+  vnet;
+  vnet.interface = "e${uniq_epair_bridge}b_${NAME}";
+}
+EOF
+
+   else
     ## generate config
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
@@ -215,6 +247,7 @@ ${NAME} {
   exec.poststop += "jib destroy ${uniq_epair}";
 }
 EOF
+fi
 }
 
 create_jail() {
@@ -543,6 +576,11 @@ while [ $# -gt 0 ]; do
             ;;
         -V|--vnet|vnet)
             VNET_JAIL="1"
+            shift
+            ;;
+        -B|--bridge|bridge)
+            VNET_JAIL="1"
+            VNET_JAIL_BRIDGE="1"
             shift
             ;;
         -*|--*)
