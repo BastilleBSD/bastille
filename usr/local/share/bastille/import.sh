@@ -173,6 +173,7 @@ generate_config() {
     # Attempt to read previous config file and set required variables accordingly
     # If we can't get a valid interface, fallback to lo1 and warn user
     info "Generating jail.conf..."
+    DEVFS_RULESET=4
 
     if [ "${FILE_EXT}" = ".zip" ]; then
         # Gather some bits from foreign/iocage config files
@@ -180,6 +181,8 @@ generate_config() {
         if [ -n "${JSON_CONFIG}" ]; then
             IPV4_CONFIG=$(grep -wo '\"ip4_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip4_addr://')
             IPV6_CONFIG=$(grep -wo '\"ip6_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip6_addr://')
+	    DEVFS_RULESET=$(grep -wo '\"devfs_ruleset\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/devfs_ruleset://')
+	    DEVFS_RULESET=${DEVFS_RULESET:-4}
         fi
     elif [ "${FILE_EXT}" = ".tar.gz" ]; then
         # Gather some bits from foreign/ezjail config files
@@ -257,7 +260,7 @@ generate_config() {
     # Generate a basic jail configuration file on foreign imports
     cat << EOF > "${bastille_jailsdir}/${TARGET_TRIM}/jail.conf"
 ${TARGET_TRIM} {
-  devfs_ruleset = 4;
+  devfs_ruleset = ${DEVFS_RULESET};
   enforce_statfs = 2;
   exec.clean;
   exec.consolelog = ${bastille_logsdir}/${TARGET_TRIM}_console.log;
