@@ -51,6 +51,22 @@ verify_release() {
     fi
 }
 
+handle_template_include() {
+    case ${TEMPLATE_INCLUDE} in
+        http?://*/*/*)
+            bastille bootstrap "${TEMPLATE_INCLUDE}"
+        ;;
+        */*)
+            BASTILLE_TEMPLATE_USER=$(echo "${TEMPLATE_INCLUDE}" | awk -F / '{ print $1 }')
+            BASTILLE_TEMPLATE_REPO=$(echo "${TEMPLATE_INCLUDE}" | awk -F / '{ print $2 }')
+            bastille verify "${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}"
+        ;;
+        *)
+            error_exit "Template INCLUDE content not recognized."
+    ;;
+    esac
+}
+
 verify_template() {
     _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
     _hook_validate=0
@@ -75,20 +91,8 @@ verify_template() {
                 echo
                 while read _include; do
                     info "[${_hook}]:[${_include}]:"
-
-                    case ${_include} in
-                        http?://*/*/*)
-                            bastille bootstrap "${_include}"
-                        ;;
-                        */*)
-                            BASTILLE_TEMPLATE_USER=$(echo "${_include}" | awk -F / '{ print $1 }')
-                            BASTILLE_TEMPLATE_REPO=$(echo "${_include}" | awk -F / '{ print $2 }')
-                            bastille verify "${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}"
-                        ;;
-                        *)
-                            error_exit "Template INCLUDE content not recognized."
-                    ;;
-                    esac
+                    TEMPLATE_INCLUDE="${_include}"
+                    handle_template_include
                 done < "${_path}"
 
             ## if tree; tree -a bastille_template/_dir
@@ -105,6 +109,18 @@ verify_template() {
                         fi
                     echo
                 done < "${_path}"
+            elif [ "${_hook}" = 'Bastillefile' ]; then
+                info "[${_hook}]:"
+                cat "${_path}"
+                while read _line; do
+                    _cmd=$(echo "${_line}" | awk '{print tolower($1);}')
+                    ## if include; recursive verify
+                    if [ "${_cmd}" = 'include' ]; then
+                        TEMPLATE_INCLUDE=$(echo "${_line}" | awk '{print $2;}')
+                        handle_template_include
+                    fi
+                done < "${_path}"
+                echo
             else
                 info "[${_hook}]:"
                 cat "${_path}"
