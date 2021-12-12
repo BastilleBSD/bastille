@@ -440,8 +440,13 @@ create_jail() {
                 ln -s usr/home home
             fi
 
-            ## TZ: configurable (default: Etc/UTC)
-            ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+            ## TZ: configurable (default: empty to use host's time zone)
+            if [ -z "${bastille_tzdata}" ]; then
+                # uses cp as a way to prevent issues with symlinks if the host happens to use that for tz configuration
+                cp /etc/localtime etc/localtime
+            else
+                ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+            fi
 
             # Post-creation jail misc configuration
             # Create a dummy fstab file
