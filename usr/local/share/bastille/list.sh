@@ -36,11 +36,11 @@ usage() {
 }
 
 if [ $# -eq 0 ]; then
-   jls -N
+   /usr/sbin/jls -N
 fi
 
 if [ "$1" == "-j" ]; then
-    jls -N --libxo json
+    /usr/sbin/jls -N --libxo json
     exit 0
 fi
 
@@ -80,18 +80,18 @@ if [ $# -gt 0 ]; then
             JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
             for _JAIL in ${JAIL_LIST}; do
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
-                        if [ "$(jls name | awk "/^${_JAIL}$/")" ]; then
+                        if [ "$(/usr/sbin/jls name | awk "/^${_JAIL}$/")" ]; then
                                 JAIL_STATE="Up"
                                 if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${_JAIL}/jail.conf")" ]; then
                                         JAIL_IP=$(jexec -l ${_JAIL} ifconfig -n vnet0 inet 2> /dev/null | sed -n "/.inet /{s///;s/ .*//;p;}")
                                         if [ ! ${JAIL_IP} ]; then JAIL_IP=$(jexec -l ${_JAIL} ifconfig -n vnet0 inet6 2> /dev/null | awk '/inet6 / && (!/fe80::/ || !/%vnet0/)' | sed -n "/.inet6 /{s///;s/ .*//;p;}"); fi
                                 else
-                                        JAIL_IP=$(jls -j ${_JAIL} ip4.addr 2> /dev/null)
-                                        if [ ${JAIL_IP} = "-" ]; then JAIL_IP=$(jls -j ${_JAIL} ip6.addr 2> /dev/null); fi
+                                        JAIL_IP=$(/usr/sbin/jls -j ${_JAIL} ip4.addr 2> /dev/null)
+                                        if [ ${JAIL_IP} = "-" ]; then JAIL_IP=$(/usr/sbin/jls -j ${_JAIL} ip6.addr 2> /dev/null); fi
                                 fi
-                                JAIL_HOSTNAME=$(jls -j ${_JAIL} host.hostname 2> /dev/null)
+                                JAIL_HOSTNAME=$(/usr/sbin/jls -j ${_JAIL} host.hostname 2> /dev/null)
                                 JAIL_PORTS=$(pfctl -a "rdr/${_JAIL}" -Psn 2> /dev/null | awk '{ printf "%s/%s:%s"",",$7,$14,$18 }' | sed "s/,$//")
-                                JAIL_PATH=$(jls -j ${_JAIL} path 2> /dev/null)
+                                JAIL_PATH=$(/usr/sbin/jls -j ${_JAIL} path 2> /dev/null)
                                 JAIL_RELEASE=$(jexec -l ${_JAIL} freebsd-version -u 2> /dev/null)
                         else
                                 JAIL_STATE=$(if [ "$(sed -n "/^${_JAIL} {$/,/^}$/p" "${bastille_jailsdir}/${_JAIL}/jail.conf" | awk '$0 ~ /^'${_JAIL}' \{|\}/ { printf "%s",$0 }')" == "${_JAIL} {}" ]; then echo "Down"; else echo "n/a"; fi)

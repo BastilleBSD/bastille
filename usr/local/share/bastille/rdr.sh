@@ -59,14 +59,14 @@ check_jail_validity() {
     fi
 
     # Check if jail name is valid
-    JAIL_NAME=$(jls -j "${TARGET}" name 2>/dev/null)
+    JAIL_NAME=$(/usr/sbin/jls -j "${TARGET}" name 2>/dev/null)
     if [ -z "${JAIL_NAME}" ]; then
         error_exit "Jail not found: ${TARGET}"
     fi
 
     # Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        JAIL_IP=$(jls -j "${TARGET}" ip4.addr 2>/dev/null)
+        JAIL_IP=$(/usr/sbin/jls -j "${TARGET}" ip4.addr 2>/dev/null)
         if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
             error_exit "Jail IP not found: ${TARGET}"
         fi

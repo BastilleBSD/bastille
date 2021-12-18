@@ -226,9 +226,9 @@ for _jail in ${JAILS}; do
     info "Applying template: ${TEMPLATE}..."
 
     ## jail-specific variables.
-    bastille_jail_path=$(jls -j "${_jail}" path)
+    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        _jail_ip=$(jls -j "${_jail}" ip4.addr 2>/dev/null)
+        _jail_ip=$(/usr/sbin/jls -j "${_jail}" ip4.addr 2>/dev/null)
         if [ -z "${_jail_ip}" -o "${_jail_ip}" = "-" ]; then
             error_notify "Jail IP not found: ${_jail}"
             _jail_ip='' # In case it was -. -- cwells

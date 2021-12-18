@@ -50,7 +50,7 @@ EOF
 }
 
 running_jail() {
-    if [ -n "$(jls name | awk "/^${NAME}$/")" ]; then
+    if [ -n "$(/usr/sbin/jls name | awk "/^${NAME}$/")" ]; then
         error_exit "A running jail matches name."
     elif [ -d "${bastille_jailsdir}/${NAME}" ]; then
         error_exit "Jail: ${NAME} already created."
