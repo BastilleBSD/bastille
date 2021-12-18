@@ -40,7 +40,7 @@ destroy_jail() {
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 
-    if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
+    if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         if [ "${FORCE}" = "1" ]; then
             bastille stop "${TARGET}"
         else

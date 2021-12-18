@@ -47,7 +47,7 @@ if [ $# -ne 0 ]; then
 fi
 
 for _jail in ${JAILS}; do
-    bastille_jail_path=$(jls -j "${_jail}" path)
+    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
         error_notify "htop not found on ${_jail}."
     elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then

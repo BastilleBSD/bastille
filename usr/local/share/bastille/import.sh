@@ -580,7 +580,7 @@ else
 fi
 
 # Check if a running jail matches name or already exist
-if [ -n "$(jls name | awk "/^${TARGET_TRIM}$/")" ]; then
+if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET_TRIM}$/")" ]; then
     error_exit "A running jail matches name."
 elif [ -n "${TARGET_TRIM}" ]; then
     if [ -d "${bastille_jailsdir}/${TARGET_TRIM}" ]; then

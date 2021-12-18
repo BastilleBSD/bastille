@@ -164,7 +164,7 @@ clone_jail() {
         else
             # Just clone the jail directory
             # Check if container is running
-            if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
+            if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
                 error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
             fi
 

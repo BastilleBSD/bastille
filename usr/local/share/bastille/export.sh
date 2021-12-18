@@ -172,7 +172,7 @@ fi
 
 if [ -n "${SAFE_EXPORT}" ]; then
     # Check if container is running, otherwise just ignore
-    if [ -z "$(jls name | awk "/^${TARGET}$/")" ]; then
+    if [ -z "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         SAFE_EXPORT=
     fi
 fi
@@ -212,7 +212,7 @@ clean_zfs_snap() {
 export_check() {
     # Inform the user about the exporting method
     if [ -z "${USER_EXPORT}" ]; then
-        if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
+        if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
             if [ -n "${SAFE_EXPORT}" ]; then
                 EXPORT_AS="Safely exporting"
             else
@@ -336,7 +336,7 @@ if [ -n "${TARGET}" ]; then
     # Check if is a ZFS system
     if [ "${bastille_zfs_enable}" != "YES" ]; then
         # Check if container is running and ask for stop in non ZFS systems
-        if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
+        if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
             error_exit "${TARGET} is running. See 'bastille stop'."
         fi
     fi

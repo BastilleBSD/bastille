@@ -62,11 +62,11 @@ fi
 
 for _jail in ${JAILS}; do
     ## test if running
-    if [ "$(jls name | awk "/^${_jail}$/")" ]; then
+    if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
         error_notify "[${_jail}]: Already started."
 
     ## test if not running
-    elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
+    elif [ ! "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
         # Verify that the configured interface exists. -- cwells
         if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
             _interface=$(bastille config $_jail get interface)

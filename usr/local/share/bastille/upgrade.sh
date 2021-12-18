@@ -76,7 +76,7 @@ esac
 
 jail_check() {
     # Check if the jail is thick and is running
-    if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
+    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
     else
         if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
