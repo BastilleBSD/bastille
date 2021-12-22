@@ -244,7 +244,7 @@ ${NAME} {
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${bastille_jail_conf_interface}";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${NAME}"";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${NAME}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 }
 EOF
