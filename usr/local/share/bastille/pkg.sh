@@ -31,7 +31,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille pkg TARGET command [args]"
+    error_exit "Usage: bastille pkg [-P|--pkg] TARGET command [args]"
 }
 
 # Handle special-case commands first.
@@ -52,6 +52,8 @@ for _jail in ${JAILS}; do
         jexec -l -U root "${_jail}" /usr/sbin/mport "$@"
     elif [ -f "${bastille_jail_path}/usr/bin/apt" ]; then
         jexec -l "${_jail}" /usr/bin/apt "$@"
+    elif [ "${USE_HOST_PKG}" = 1 ]; then
+        /usr/sbin/pkg -j "${_jail}" "$@"
     else
         jexec -l -U root "${_jail}" /usr/sbin/pkg "$@"
     fi
