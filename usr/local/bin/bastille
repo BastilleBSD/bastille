@@ -162,7 +162,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
             shift
 
             # Require the target to be running
-            if [ ! "$(/usr/sbin/jls | awk "/^${TARGET}$/")" ]; then
+            if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
                 error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
             fi
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
