@@ -31,7 +31,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille pkg [-P|--pkg] TARGET command [args]"
+    error_exit "Usage: bastille pkg [-H|--host] TARGET command [args]"
 }
 
 # Handle special-case commands first.
