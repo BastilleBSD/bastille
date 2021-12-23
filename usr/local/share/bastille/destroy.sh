@@ -231,13 +231,13 @@ current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     destroy_rel
     ;;
 Ubuntu_1804|Ubuntu_2004|UBUNTU_1804|UBUNTU_2004)
-     ## check for Linux releases
+    ## check for Linux releases
     NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
     destroy_rel
     ;;
-Debian9|Debian10|DEBIAN9|DEBIAN10)
-     ## check for Linux releases
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian9)$|(Debian10)$' | sed 's/DEBIAN/Debian/g')
+Debian9|Debian10|Debian11|DEBIAN9|DEBIAN10|DEBIAN11)
+    ## check for Linux releases
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian9)$|(Debian10)$|(Debian11)$' | sed 's/DEBIAN/Debian/g')
     destroy_rel
     ;;
 *)

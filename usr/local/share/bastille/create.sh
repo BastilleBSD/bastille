@@ -658,6 +658,10 @@ if [ -n "${LINUX_JAIL}" ]; then
         ## check for FreeBSD releases name
         NAME_VERIFY=buster
         ;;
+    debian_bullseye|bullseye|debian-bullseye)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=bullseye
+        ;;
     *)
         error_notify "Unknown Linux."
         usage
@@ -724,6 +728,10 @@ if [ -z "${EMPTY_JAIL}" ]; then
         ;;
     debian_buster|buster|debian-buster)
         NAME_VERIFY=Debian10
+        validate_release
+        ;;
+    debian_bullseye|bullseye|debian-bullseye)
+        NAME_VERIFY=Debian11
         validate_release
         ;;
     *)
