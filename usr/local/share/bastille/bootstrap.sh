@@ -391,7 +391,7 @@ debootstrap_release() {
     fi
 
     case "${LINUX_FLAVOR}" in
-        bionic|stretch|buster)
+        bionic|stretch|buster|bullseye)
         info "Increasing APT::Cache-Start"
         echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
         ;;
@@ -553,6 +553,13 @@ debian_buster|buster|debian-buster)
     PLATFORM_OS="Debian/Linux"
     LINUX_FLAVOR="buster"
     DIR_BOOTSTRAP="Debian10"
+    ARCH_BOOTSTRAP="amd64"
+    debootstrap_release
+    ;;
+debian_bullseye|bullseye|debian-bullseye)
+    PLATFORM_OS="Debian/Linux"
+    LINUX_FLAVOR="bullseye"
+    DIR_BOOTSTRAP="Debian11"
     ARCH_BOOTSTRAP="amd64"
     debootstrap_release
     ;;
