@@ -155,7 +155,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
                     JAILS="${JAILS} ${_jail}"
                 fi
             done
-        elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-P' ] || [ "${TARGET}" = '--pkg' ]; then
+        elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-H' ] || [ "${TARGET}" = '--host' ]; then
             TARGET="${1}"
             USE_HOST_PKG=1
             JAILS="${TARGET}"
@@ -191,6 +191,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
                 ;;
             esac
         fi
+        export USE_HOST_PKG
         export TARGET
         export JAILS
     fi
