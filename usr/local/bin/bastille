@@ -147,14 +147,24 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
         shift
 
         if [ "${TARGET}" = 'ALL' ]; then
-            _JAILS=$(jls name)
+            _JAILS=$(/usr/sbin/jls name)
             JAILS=""
             for _jail in ${_JAILS}; do
-                _JAILPATH=$(jls -j "${_jail}" path)
+                _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
                 if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
                     JAILS="${JAILS} ${_jail}"
                 fi
             done
+        elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-P' ] || [ "${TARGET}" = '--pkg' ]; then
+            TARGET="${1}"
+            USE_HOST_PKG=1
+            JAILS="${TARGET}"
+            shift
+
+            # Require the target to be running
+            if [ ! "$(/usr/sbin/jls | awk "/^${TARGET}$/")" ]; then
+                error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+            fi
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
             # This command does not act on a jail, so we are temporarily bypassing the presence/started
             # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
@@ -169,13 +179,13 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
             case "${CMD}" in
             cmd|console|htop|pkg|service|stop|sysrc|template|top)
                 # Require the target to be running. -- cwells
-                if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
+                if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
                     error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
                 fi
                 ;;
             convert|rename)
                 # Require the target to be stopped. -- cwells
-                if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
+                if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
                     error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
                 fi
                 ;;
