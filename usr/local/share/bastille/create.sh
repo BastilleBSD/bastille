@@ -195,7 +195,7 @@ generate_vnet_jail_conf() {
         for _num in $(seq 0 "${num_range}"); do
             if ! grep -q "e${_num}b" "${bastille_jailsdir}"/*/jail.conf; then
                 uniq_epair="bastille${_num}"
-		uniq_epair_bridge="${_num}"
+                uniq_epair_bridge="${_num}"
                 break
             fi
         done
