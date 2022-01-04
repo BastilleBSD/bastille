@@ -125,7 +125,6 @@ if [ -n "${bastille_export_options}" ]; then
                 shift;;
             --safe)
                 SAFE_EXPORT="1"
-                opt_count
                 shift;;
             --raw)
                 RAW_EXPORT="1"
