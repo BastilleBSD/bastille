@@ -185,28 +185,7 @@ EOF
 }
 
 generate_vnet_jail_conf() {
-    ## determine number of containers + 1
-    ## iterate num and grep all jail configs
-    ## define uniq_epair
-    local jail_list=$(bastille list jails)
-    if [ -n "${jail_list}" ]; then
-        local list_jails_num=$(echo "${jail_list}" | wc -l | awk '{print $1}')
-        local num_range=$((list_jails_num + 1))
-        for _num in $(seq 0 "${num_range}"); do
-            if ! grep -q "e[0-9]b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                uniq_epair="bastille${_num}"
-                uniq_epair_bridge="${_num}"
-                break
-            fi
-        done
-    else
-        uniq_epair="bastille0"
-        uniq_epair_bridge="0"
-    fi
-
-   if [ -n "${VNET_JAIL_BRIDGE}" ]; then
-
-   ## generate bridge config
+    NETBLOCK=$(generate_vnet_jail_netblock "$NAME" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   devfs_ruleset = 13;
@@ -221,41 +200,9 @@ ${NAME} {
   path = ${bastille_jail_path};
   securelevel = 2;
 
-  exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
-  exec.prestart += "ifconfig ${bastille_jail_conf_interface} addm epair${uniq_epair_bridge}a";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${NAME}";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${NAME}";
-  exec.poststop += "ifconfig ${bastille_jail_conf_interface} deletem e${uniq_epair_bridge}a_${NAME}";
-  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${NAME} destroy";
-  vnet;
-  vnet.interface = "e${uniq_epair_bridge}b_${NAME}";
+${NETBLOCK}
 }
 EOF
-
-   else
-    ## generate config
-    cat << EOF > "${bastille_jail_conf}"
-${NAME} {
-  devfs_ruleset = 13;
-  enforce_statfs = 2;
-  exec.clean;
-  exec.consolelog = ${bastille_jail_log};
-  exec.start = '/bin/sh /etc/rc';
-  exec.stop = '/bin/sh /etc/rc.shutdown';
-  host.hostname = ${NAME};
-  mount.devfs;
-  mount.fstab = ${bastille_jail_fstab};
-  path = ${bastille_jail_path};
-  securelevel = 2;
-
-  vnet;
-  vnet.interface = e0b_${uniq_epair};
-  exec.prestart += "jib addm ${uniq_epair} ${bastille_jail_conf_interface}";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${NAME}\"";
-  exec.poststop += "jib destroy ${uniq_epair}";
-}
-EOF
-fi
 }
 
 create_jail() {
