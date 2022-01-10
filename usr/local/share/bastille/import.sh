@@ -181,15 +181,21 @@ generate_config() {
         if [ -n "${JSON_CONFIG}" ]; then
             IPV4_CONFIG=$(grep -wo '\"ip4_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip4_addr://')
             IPV6_CONFIG=$(grep -wo '\"ip6_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip6_addr://')
-	    DEVFS_RULESET=$(grep -wo '\"devfs_ruleset\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/devfs_ruleset://')
-	    DEVFS_RULESET=${DEVFS_RULESET:-4}
+            DEVFS_RULESET=$(grep -wo '\"devfs_ruleset\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/devfs_ruleset://')
+            DEVFS_RULESET=${DEVFS_RULESET:-4}
+            IS_THIN_JAIL=$(grep -wo '\"basejail\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/basejail://')
+            CONFIG_RELEASE=$(grep -wo '\"release\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/release://' | sed 's/\-[pP].*//')
+            ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED=1
         fi
     elif [ "${FILE_EXT}" = ".tar.gz" ]; then
         # Gather some bits from foreign/ezjail config files
         PROP_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/prop.ezjail-${FILE_TRIM}-*"
         if [ -n "${PROP_CONFIG}" ]; then
             IPVX_CONFIG=$(grep -wo "jail_${TARGET_TRIM}_ip=.*" ${PROP_CONFIG} | tr -d '" ' | sed "s/jail_${TARGET_TRIM}_ip=//")
+            CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
         fi
+        # Always assume it's thin for ezjail
+        IS_THIN_JAIL=1
     fi
 
     # If there are multiple IP/NIC let the user configure network
@@ -238,8 +244,7 @@ generate_config() {
         warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
     fi
 
-    if [ "${FILE_EXT}" = ".tar.gz" ]; then
-        CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
+    if [ "${IS_THIN_JAIL:-0}" = "1" ]; then
         if [ -z "${CONFIG_RELEASE}" ]; then
             # Fallback to host version
             CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
@@ -337,6 +342,13 @@ update_symlinks() {
     for _link in ${SYMLINKS}; do
         if [ -L "${_link}" ]; then
             ln -sf /.bastille/${_link} ${_link}
+        elif [ "${ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED:-0}" = "1" -a -d "${_link}" ]; then
+            # -F will enforce that the directory is empty and replaced by the symlink
+            ln -sfF /.bastille/${_link} ${_link} || EXIT_CODE=$?
+            if [ "${EXIT_CODE:-0}" != "0" ]; then
+                # Assume that the failure was due to the directory not being empty and explain the problem in friendlier terms
+                warn "Warning: directory ${_link} on imported jail was not empty and will not be updated by Bastille"
+            fi
         fi
     done
 }
