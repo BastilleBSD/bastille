@@ -304,6 +304,9 @@ bootstrap_release() {
 
 debootstrap_release() {
 
+    # Make sure to check/bootstrap directories first.
+    bootstrap_directories
+
     #check and install OS dependencies @hackacad
     #ToDo: add function 'linux_pre' for sysrc etc.
 

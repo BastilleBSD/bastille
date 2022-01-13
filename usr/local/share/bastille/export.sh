@@ -49,7 +49,7 @@ usage() {
     -v | --verbose  -- Be more verbose during the ZFS send operation.
          --xz       -- Export a ZFS jail using XZ(.xz) compressed image.
 
-Tip: If no option specified, container should be exported to standard output.
+Note: If no export option specified, the container should be redirected to standard output.
 
 EOF
     exit 1
@@ -80,6 +80,7 @@ zfs_enable_check() {
 
 TARGET="${1}"
 GZIP_EXPORT=
+XZ_EXPORT=
 SAFE_EXPORT=
 USER_EXPORT=
 RAW_EXPORT=
@@ -93,67 +94,112 @@ opt_count() {
     COMP_OPTION=$(expr ${COMP_OPTION} + 1)
 }
 
-# Handle and parse option args
-while [ $# -gt 0 ]; do
-    case "${1}" in
-        --gz)
-            GZIP_EXPORT="1"
-            TARGET="${2}"
-            opt_count
-            shift
-            ;;
-        --xz)
-            XZ_EXPORT="1"
-            TARGET="${2}"
-            opt_count
-            shift
-            ;;
-        --tgz)
-            TGZ_EXPORT="1"
-            TARGET="${2}"
-            opt_count
-            zfs_enable_check
-            shift
-            ;;
-        --txz)
-            TXZ_EXPORT="1"
-            TARGET="${2}"
-            opt_count
-            zfs_enable_check
-            shift
-            ;;
-        -s|--safe)
-            SAFE_EXPORT="1"
-            TARGET="${2}"
-            shift
-            ;;
-        -r|--raw)
-            RAW_EXPORT="1"
-            TARGET="${2}"
-            opt_count
-            shift
-            ;;
-        -v|--verbose)
-            OPT_ZSEND="-Rv"
-            TARGET="${2}"
-            shift
-            ;;
-        -*|--*)
-            error_notify "Unknown Option."
-            usage
-            ;;
-        *)
-            if echo "${1}" | grep -q "\/"; then
-                DIR_EXPORT="${1}"
-            else
-                if [ $# -gt 2 ] || [ $# -lt 1 ]; then
-                   usage
+if [ -n "${bastille_export_options}" ]; then
+    # Overrides the case options by the user defined option(s) automatically.
+    # Add bastille_export_options="--optionA --optionB" to bastille.conf, or simply `export bastille_export_options="--optionA --optionB"` environment variable.
+    # To restore the standard case options, empty bastille_export_options="" in bastille.conf, or `unset bastille_export_options` environment variable.
+    # Reference "/bastille/issues/443"
+
+    DEFAULT_EXPORT_OPTS="${bastille_export_options}"
+    info "Default export option(s): '${DEFAULT_EXPORT_OPTS}'"
+
+    for opt in ${DEFAULT_EXPORT_OPTS}; do
+        case "${opt}" in
+            --gz)
+                GZIP_EXPORT="1"
+                opt_count
+                shift;;
+            --xz)
+                XZ_EXPORT="1"
+                opt_count
+                shift;;
+            --tgz)
+                TGZ_EXPORT="1"
+                opt_count
+                zfs_enable_check
+                shift;;
+            --txz)
+                TXZ_EXPORT="1"
+                opt_count
+                zfs_enable_check
+                shift;;
+            --safe)
+                SAFE_EXPORT="1"
+                shift;;
+            --raw)
+                RAW_EXPORT="1"
+                opt_count
+                shift ;;
+            --verbose)
+                OPT_ZSEND="-Rv"
+                shift;;
+            -*|--*) error_notify "Unknown Option."
+                usage;;
+        esac
+    done
+else
+    # Handle and parse option args
+    while [ $# -gt 0 ]; do
+        case "${1}" in
+            --gz)
+                GZIP_EXPORT="1"
+                TARGET="${2}"
+                opt_count
+                shift
+                ;;
+            --xz)
+                XZ_EXPORT="1"
+                TARGET="${2}"
+                opt_count
+                shift
+                ;;
+            --tgz)
+                TGZ_EXPORT="1"
+                TARGET="${2}"
+                opt_count
+                zfs_enable_check
+                shift
+                ;;
+            --txz)
+                TXZ_EXPORT="1"
+                TARGET="${2}"
+                opt_count
+                zfs_enable_check
+                shift
+                ;;
+            -s|--safe)
+                SAFE_EXPORT="1"
+                TARGET="${2}"
+                shift
+                ;;
+            -r|--raw)
+                RAW_EXPORT="1"
+                TARGET="${2}"
+                opt_count
+                shift
+                ;;
+            -v|--verbose)
+                OPT_ZSEND="-Rv"
+                TARGET="${2}"
+                shift
+                ;;
+            -*|--*)
+                error_notify "Unknown Option."
+                usage
+                ;;
+            *)
+                if echo "${1}" | grep -q "\/"; then
+                    DIR_EXPORT="${1}"
+                else
+                    if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+                       usage
+                    fi
                 fi
-            fi
-            shift
-            ;;
-    esac
-done
+                shift
+                ;;
+        esac
+    done
+fi
 
 # Validate for combined options
 if [ "${COMP_OPTION}" -gt "1" ]; then
@@ -200,13 +246,13 @@ create_zfs_snap() {
     if [ -z "${USER_EXPORT}" ]; then
         info "Creating temporary ZFS snapshot for export..."
     fi
-    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
+    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"
 }
 
 clean_zfs_snap() {
     # Cleanup the recursive temporary snapshot
-    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_export_${DATE}"
-    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
+    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_${TARGET}_${DATE}"
+    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"
 }
 
 export_check() {
@@ -263,7 +309,7 @@ jail_export() {
                 export_check
 
                 # Export the raw container recursively and cleanup temporary snapshots
-                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}" \
+                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" \
                 > "${bastille_backupsdir}/${TARGET}_${DATE}"
                 clean_zfs_snap
             elif [ -n "${GZIP_EXPORT}" ]; then
@@ -271,7 +317,7 @@ jail_export() {
                 export_check
 
                 # Export the raw container recursively and cleanup temporary snapshots
-                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}" | \
+                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | \
                 gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
                 clean_zfs_snap
             elif [ -n "${XZ_EXPORT}" ]; then
@@ -279,7 +325,7 @@ jail_export() {
                 export_check
 
                 # Export the container recursively and cleanup temporary snapshots
-                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}" | \
+                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | \
                 xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
                 clean_zfs_snap
             else
@@ -288,8 +334,10 @@ jail_export() {
                 export_check
 
                 # Quietly export the container recursively, user must redirect standard output
-                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_export_${DATE}"
-                clean_zfs_snap
+                if ! zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"; then
+                    clean_zfs_snap
+                    error_notify "\nError: An export option is required, see 'bastille export, otherwise the user must redirect to standard output."
+                fi
             fi
         fi
     else
