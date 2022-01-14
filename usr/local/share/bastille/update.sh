@@ -73,6 +73,13 @@ if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
 
+# Check for alternate/unsupported archs
+arch_check() {
+    if echo "${TARGET}" | grep -w "[0-9]\{1,2\}\.[0-9]\-RELEASE\-i386"; then
+        ARCH_I386="1"
+    fi
+}
+
 jail_check() {
     # Check if the jail is thick and is running
     if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
@@ -103,8 +110,13 @@ jail_update() {
 release_update() {
     # Update a release base(affects child containers)
     if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
+        TARGET_TRIM="${TARGET}"
+        if [ -n "${ARCH_I386}" ]; then
+            TARGET_TRIM=$(echo "${TARGET}" | sed 's/-i386//')
+        fi
+
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
-        fetch install --currently-running "${TARGET}"
+        fetch install --currently-running "${TARGET_TRIM}"
     else
         error_exit "${TARGET} not found. See 'bastille bootstrap'."
     fi
@@ -152,6 +164,7 @@ elif echo "${TARGET}" | grep -Eq '^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$'; then
     BASTILLE_TEMPLATE="${TARGET}"
     template_update
 elif echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
+    arch_check
     release_update
 else
     jail_update
