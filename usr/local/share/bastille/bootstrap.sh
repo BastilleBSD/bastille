@@ -305,6 +305,7 @@ bootstrap_release() {
 debootstrap_release() {
 
     # Make sure to check/bootstrap directories first.
+    RELEASE="${DIR_BOOTSTRAP}"
     bootstrap_directories
 
     #check and install OS dependencies @hackacad
@@ -313,7 +314,8 @@ debootstrap_release() {
     required_mods="fdescfs linprocfs linsysfs tmpfs"
     linuxarc_mods="linux linux64"
     for _req_kmod in ${required_mods}; do
-        if [ ! "$(sysrc -f /boot/loader.conf -qn ${_req_kmod}_load)" = "YES" ]; then
+        if [ ! "$(sysrc -f /boot/loader.conf -qn ${_req_kmod}_load)" = "YES" ] && \
+            [ ! "$(sysrc -f /boot/loader.conf.local -qn ${_req_kmod}_load)" = "YES" ]; then
             warn "${_req_kmod} not enabled in /boot/loader.conf, Should I do that for you?  (N|y)"
             read  answer
             case "${answer}" in
@@ -346,7 +348,8 @@ debootstrap_release() {
                 kldload -v ${_lin_kmod}
             fi
         done
-        if [ ! "$(sysrc -qn linux_enable)" = "YES" ]; then
+        if [ ! "$(sysrc -qn linux_enable)" = "YES" ] && \
+            [ ! "$(sysrc -f /etc/rc.conf.local -qn linux_enable)" = "YES" ]; then
             sysrc linux_enable=YES
         fi
 
@@ -361,17 +364,6 @@ debootstrap_release() {
                 pkg install -y debootstrap
                 ;;
         esac
-    fi
-
-    # Create subsequent Linux releases datasets
-    if [ ! -d "${bastille_releasesdir}/${DIR_BOOTSTRAP}" ]; then
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}/${DIR_BOOTSTRAP}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${DIR_BOOTSTRAP}"
-            fi
-       else
-           mkdir -p "${bastille_releasesdir}/${DIR_BOOTSTRAP}"
-       fi
     fi
 
     # Fetch the Linux flavor
