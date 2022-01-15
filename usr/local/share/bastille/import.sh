@@ -185,7 +185,13 @@ generate_config() {
             DEVFS_RULESET=${DEVFS_RULESET:-4}
             IS_THIN_JAIL=$(grep -wo '\"basejail\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/basejail://')
             CONFIG_RELEASE=$(grep -wo '\"release\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/release://' | sed 's/\-[pP].*//')
+            IS_VNET_JAIL=$(grep -wo '\"vnet\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/vnet://')
+            VNET_DEFAULT_INTERFACE=$(grep -wo '\"vnet_default_interface\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/vnet_default_interface://')
             ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED=1
+            if [ "${VNET_DEFAULT_INTERFACE}" = "auto" ]; then
+                # Grab the default ipv4 route from netstat and pull out the interface
+                VNET_DEFAULT_INTERFACE=$(netstat -nr4 | grep default | cut -w -f 4)
+            fi
         fi
     elif [ "${FILE_EXT}" = ".tar.gz" ]; then
         # Gather some bits from foreign/ezjail config files
@@ -198,50 +204,62 @@ generate_config() {
         IS_THIN_JAIL=1
     fi
 
-    # If there are multiple IP/NIC let the user configure network
-    if [ -n "${IPV4_CONFIG}" ]; then
-        if ! echo "${IPV4_CONFIG}" | grep -q '.*,.*'; then
-            NETIF_CONFIG=$(echo "${IPV4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-            if [ -z "${NETIF_CONFIG}" ]; then
-                config_netif
+    # See if we need to generate a vnet network section
+    if [ "${IS_VNET_JAIL:-0}" = "1" ]; then
+        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}")
+    else
+        # If there are multiple IP/NIC let the user configure network
+        if [ -n "${IPV4_CONFIG}" ]; then
+            if ! echo "${IPV4_CONFIG}" | grep -q '.*,.*'; then
+                NETIF_CONFIG=$(echo "${IPV4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${NETIF_CONFIG}" ]; then
+                    config_netif
+                fi
+                IPX_ADDR="ip4.addr"
+                IP_CONFIG="${IPV4_CONFIG}"
+                IP6_MODE="disable"
             fi
-            IPX_ADDR="ip4.addr"
-            IP_CONFIG="${IPV4_CONFIG}"
-            IP6_MODE="disable"
-        fi
-    elif [ -n "${IPV6_CONFIG}" ]; then
-        if ! echo "${IPV6_CONFIG}" | grep -q '.*,.*'; then
-            NETIF_CONFIG=$(echo "${IPV6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-            if [ -z "${NETIF_CONFIG}" ]; then
-                config_netif
-            fi
-            IPX_ADDR="ip6.addr"
-            IP_CONFIG="${IPV6_CONFIG}"
-            IP6_MODE="new"
-        fi
-    elif [ -n "${IPVX_CONFIG}" ]; then
-        if ! echo "${IPVX_CONFIG}" | grep -q '.*,.*'; then
-            NETIF_CONFIG=$(echo "${IPVX_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-            if [ -z "${NETIF_CONFIG}" ]; then
-                config_netif
-            fi
-            IPX_ADDR="ip4.addr"
-            IP_CONFIG="${IPVX_CONFIG}"
-            IP6_MODE="disable"
-            if echo "${IPVX_CONFIG}" | sed 's/.*|//' | grep -Eq '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))'; then
+        elif [ -n "${IPV6_CONFIG}" ]; then
+            if ! echo "${IPV6_CONFIG}" | grep -q '.*,.*'; then
+                NETIF_CONFIG=$(echo "${IPV6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${NETIF_CONFIG}" ]; then
+                    config_netif
+                fi
                 IPX_ADDR="ip6.addr"
+                IP_CONFIG="${IPV6_CONFIG}"
                 IP6_MODE="new"
             fi
+        elif [ -n "${IPVX_CONFIG}" ]; then
+            if ! echo "${IPVX_CONFIG}" | grep -q '.*,.*'; then
+                NETIF_CONFIG=$(echo "${IPVX_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${NETIF_CONFIG}" ]; then
+                    config_netif
+                fi
+                IPX_ADDR="ip4.addr"
+                IP_CONFIG="${IPVX_CONFIG}"
+                IP6_MODE="disable"
+                if echo "${IPVX_CONFIG}" | sed 's/.*|//' | grep -Eq '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))'; then
+                    IPX_ADDR="ip6.addr"
+                    IP6_MODE="new"
+                fi
+            fi
         fi
-    fi
 
-    # Let the user configure network manually
-    if [ -z "${NETIF_CONFIG}" ]; then
-        NETIF_CONFIG="lo1"
-        IPX_ADDR="ip4.addr"
-        IP_CONFIG="-"
-        IP6_MODE="disable"
-        warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
+        # Let the user configure network manually
+        if [ -z "${NETIF_CONFIG}" ]; then
+            NETIF_CONFIG="lo1"
+            IPX_ADDR="ip4.addr"
+            IP_CONFIG="-"
+            IP6_MODE="disable"
+            warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
+        fi
+
+        NETBLOCK=$(cat <<-EOF
+  interface = ${NETIF_CONFIG};
+  ${IPX_ADDR} = ${IP_CONFIG};
+  ip6 = ${IP6_MODE};
+EOF
+        )
     fi
 
     if [ "${IS_THIN_JAIL:-0}" = "1" ]; then
@@ -277,9 +295,7 @@ ${TARGET_TRIM} {
   path = ${bastille_jailsdir}/${TARGET_TRIM}/root;
   securelevel = 2;
 
-  interface = ${NETIF_CONFIG};
-  ${IPX_ADDR} = ${IP_CONFIG};
-  ip6 = ${IP6_MODE};
+${NETBLOCK}
 }
 EOF
 }

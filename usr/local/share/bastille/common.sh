@@ -60,3 +60,49 @@ info() {
 warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
+
+generate_vnet_jail_netblock() {
+    local jail_name="$1"
+    local use_unique_bridge="$2"
+    local external_interface="$3"
+    ## determine number of containers + 1
+    ## iterate num and grep all jail configs
+    ## define uniq_epair
+    local jail_list=$(bastille list jails)
+    if [ -n "${jail_list}" ]; then
+        local list_jails_num=$(echo "${jail_list}" | wc -l | awk '{print $1}')
+        local num_range=$((list_jails_num + 1))
+        for _num in $(seq 0 "${num_range}"); do
+            if ! grep -q "e[0-9]b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                local uniq_epair="bastille${_num}"
+                local uniq_epair_bridge="${_num}"
+                break
+            fi
+        done
+    else
+        local uniq_epair="bastille0"
+        local uniq_epair_bridge="0"
+    fi
+    if [ -n "${use_unique_bridge}" ]; then
+        ## generate bridge config
+        cat <<-EOF
+  vnet;
+  vnet.interface = "e${uniq_epair_bridge}b_${jail_name}";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
+  exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
+  exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
+  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
+EOF
+    else
+        ## generate config
+        cat <<-EOF
+  vnet;
+  vnet.interface = e0b_${uniq_epair};
+  exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "jib destroy ${uniq_epair}";
+EOF
+    fi
+}
