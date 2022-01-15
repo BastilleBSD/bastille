@@ -57,5 +57,6 @@ bastille_network_gateway6=""                                          ## default
 bastille_template_base="default/base"                                 ## default: "default/base"
 bastille_template_empty=""                                            ## default: "default/empty"
 bastille_template_thick="default/thick"                               ## default: "default/thick"
+bastille_template_clone="default/clone"                               ## default: "default/clone"
 bastille_template_thin="default/thin"                                 ## default: "default/thin"
 bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -118,6 +118,23 @@ destroy_rel() {
             if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
                 error_notify "Notice: (${_jail}) depends on ${TARGET} base."
                 BASE_HASCHILD="1"
+            elif [ "${bastille_zfs_enable}" = "YES" ]; then
+                if [ -n "${bastille_zfs_zpool}" ]; then
+                    ## check if this release have child clones
+                    if zfs list -H -t snapshot -r "${bastille_rel_base}" > /dev/null 2>&1; then
+                        SNAP_CLONE=$(zfs list -H -t snapshot -r "${bastille_rel_base}" 2> /dev/null | awk '{print $1}')
+                        for _snap_clone in ${SNAP_CLONE}; do
+                            if zfs list -H -o clones "${_snap_clone}" > /dev/null 2>&1; then
+                                CLONE_JAIL=$(zfs list -H -o clones "${_snap_clone}" | tr ',' '\n')
+                                CLONE_CHECK="${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}/root"
+                                if echo "${CLONE_JAIL}" | grep -qw "${CLONE_CHECK}"; then
+                                    error_notify "Notice: (${_jail}) depends on ${TARGET} base."
+                                    BASE_HASCHILD="1"
+                                fi
+                            fi
+                        done
+                    fi
+                fi
             fi
         done
     fi
