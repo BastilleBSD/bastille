@@ -86,6 +86,12 @@ update_fstab() {
             fi
         fi
     fi
+
+    # Update linuxjail fstab name entries
+    LINUX_FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
+    if [ -n "${LINUX_FSTAB_CONFIG}" ]; then
+        sed -i '' "s|${TARGET}|${NEWNAME}|" "${LINUX_FSTAB_CONFIG}"
+    fi
 }
 
 change_name() {
