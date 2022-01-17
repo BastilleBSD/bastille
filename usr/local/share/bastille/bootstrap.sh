@@ -436,6 +436,15 @@ bootstrap_template() {
 
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
+
+# bootstrapping from aarch64/arm64 Debian or Ubuntu require a different value for ARCH
+# create a new variable
+if [ "${HW_MACHINE_ARCH}" == "aarch64" ]; then
+    HW_MACHINE_ARCH_LINUX="arm64"
+else
+    HW_MACHINE_ARCH_LINUX=${HW_MACHINE_ARCH}
+fi
+
 RELEASE="${1}"
 OPTION="${2}"
 
@@ -527,35 +536,35 @@ ubuntu_bionic|bionic|ubuntu-bionic)
     PLATFORM_OS="Ubuntu/Linux"
     LINUX_FLAVOR="bionic"
     DIR_BOOTSTRAP="Ubuntu_1804"
-    ARCH_BOOTSTRAP="amd64"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
 ubuntu_focal|focal|ubuntu-focal)
     PLATFORM_OS="Ubuntu/Linux"
     LINUX_FLAVOR="focal"
     DIR_BOOTSTRAP="Ubuntu_2004"
-    ARCH_BOOTSTRAP="amd64"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
 debian_stretch|stretch|debian-stretch)
     PLATFORM_OS="Debian/Linux"
     LINUX_FLAVOR="stretch"
     DIR_BOOTSTRAP="Debian9"
-    ARCH_BOOTSTRAP="amd64"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
 debian_buster|buster|debian-buster)
     PLATFORM_OS="Debian/Linux"
     LINUX_FLAVOR="buster"
     DIR_BOOTSTRAP="Debian10"
-    ARCH_BOOTSTRAP="amd64"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
 debian_bullseye|bullseye|debian-bullseye)
     PLATFORM_OS="Debian/Linux"
     LINUX_FLAVOR="bullseye"
     DIR_BOOTSTRAP="Debian11"
-    ARCH_BOOTSTRAP="amd64"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
 *)
