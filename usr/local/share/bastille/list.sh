@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille list [-j|-a] [release|template|(jail|container)|log|limit|(import|export|backup)]"
+    error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|(import|export|backup)]"
 }
 
 if [ $# -eq 0 ]; then
@@ -154,7 +154,13 @@ if [ $# -gt 0 ]; then
             REL_LIST=$(ls "${bastille_releasesdir}" | sed "s/\n//g")
             for _REL in ${REL_LIST}; do
                 if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" -o -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
-                    echo "${_REL}"
+                    if [ "$2" == "-p" -a -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
+                        REL_PATCH_LEVEL=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${_REL}/bin/freebsd-version" 2> /dev/null)
+                        REL_PATCH_LEVEL=${REL_PATCH_LEVEL:-${_REL}}
+                        echo "${REL_PATCH_LEVEL}"
+                    else
+                        echo "${_REL}"
+                    fi
                 fi
             done
         fi
