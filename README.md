@@ -292,7 +292,7 @@ bootstrapping templates from GitHub or GitLab.
 See `bastille update` to ensure your bootstrapped releases include the latest
 patches.
 
-** Ubuntu Linux [new since 0.9] **
+**Ubuntu Linux [new since 0.9]**
 
 The bootstrap process for Linux containers is very different from the BSD process.
 You will need the package debootstrap and some kernel modules for that.
