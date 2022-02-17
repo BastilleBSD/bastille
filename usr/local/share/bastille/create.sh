@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@ usage() {
     -L | --linux  -- This option is intended for testing with Linux jails, this is considered experimental.
     -T | --thick  -- Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet   -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -C | --clone  -- Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
     -B | --bridge -- Enables VNET, VNET containers are attached to a specified, already existing external bridge.
 
 EOF
@@ -205,6 +206,43 @@ ${NETBLOCK}
 EOF
 }
 
+post_create_jail() {
+    # Common config checks and settings.
+
+    # Using relative paths here.
+    # MAKE SURE WE'RE IN THE RIGHT PLACE.
+    cd "${bastille_jail_path}"
+    echo
+
+    if [ ! -f "${bastille_jail_conf}" ]; then
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
+        fi
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
+        fi
+        if [ -n "${INTERFACE}" ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
+    fi
+
+    if [ ! -f "${bastille_jail_fstab}" ]; then
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+            echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
+        else
+            touch "${bastille_jail_fstab}"
+        fi
+    fi
+
+    # Generate the jail configuration file.
+    if [ -n "${VNET_JAIL}" ]; then
+        generate_vnet_jail_conf
+    else
+        generate_jail_conf
+    fi
+
+}
+
 create_jail() {
     bastille_jail_base="${bastille_jailsdir}/${NAME}/root/.bastille"  ## dir
     bastille_jail_template="${bastille_jailsdir}/${NAME}/root/.template"  ## dir
@@ -219,8 +257,10 @@ create_jail() {
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 ## create required zfs datasets, mountpoint inherited from system
-                zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
-                if [ -z "${THICK_JAIL}" ]; then
+                if [ -z "${CLONE_JAIL}" ]; then
+                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
+                fi
+                if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
                     zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                 fi
             fi
@@ -228,8 +268,10 @@ create_jail() {
             mkdir -p "${bastille_jailsdir}/${NAME}/root"
         fi
     fi
+
     ## PoC for Linux jails @hackacad
     if [ -n "${LINUX_JAIL}" ]; then
+        info "\nCreating a linuxjail. This may take a while...\n"
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
         fi
@@ -273,55 +315,29 @@ create_jail() {
     fi
 
     if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
-        if [ ! -d "${bastille_jail_base}" ]; then
-            mkdir -p "${bastille_jail_base}"
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+            if [ ! -d "${bastille_jail_base}" ]; then
+                mkdir -p "${bastille_jail_base}"
+            fi
+            if [ ! -d "${bastille_jail_template}" ]; then
+                mkdir -p "${bastille_jail_template}"
+            fi
         fi
 
         if [ ! -d "${bastille_jail_path}/usr/local" ]; then
             mkdir -p "${bastille_jail_path}/usr/local"
         fi
 
-        if [ ! -d "${bastille_jail_template}" ]; then
-            mkdir -p "${bastille_jail_template}"
-        fi
+        # Check and apply required settings.
+        post_create_jail
 
-        if [ ! -f "${bastille_jail_fstab}" ]; then
-            if [ -z "${THICK_JAIL}" ]; then
-                echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
-            else
-                touch "${bastille_jail_fstab}"
-            fi
-        fi
-
-        if [ ! -f "${bastille_jail_conf}" ]; then
-            if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-                local bastille_jail_conf_interface=${bastille_network_shared}
-            fi
-            if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-                local bastille_jail_conf_interface=${bastille_network_loopback}
-            fi
-            if [ -n "${INTERFACE}" ]; then
-                local bastille_jail_conf_interface=${INTERFACE}
-            fi
-            
-            ## generate the jail configuration file
-            if [ -n "${VNET_JAIL}" ]; then
-                generate_vnet_jail_conf
-            else
-                generate_jail_conf
-            fi
-        fi
-
-        ## using relative paths here
-        ## MAKE SURE WE'RE IN THE RIGHT PLACE
-        cd "${bastille_jail_path}"
-        echo
-
-        if [ -z "${THICK_JAIL}" ]; then
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
+            info "Creating a thinjail...\n"
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
+
             # Properly link shared ports on thin jails in read-write.
             if [ -d "${bastille_releasesdir}/${RELEASE}/usr/ports" ]; then
                 if [ ! -d "${bastille_jail_path}/usr/ports" ]; then
@@ -331,7 +347,7 @@ create_jail() {
             fi
         fi
 
-        if [ -z "${THICK_JAIL}" ]; then
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             ## rw
             ## copy only required files for thin jails
             FILE_LIST=".cshrc .profile COPYRIGHT dev etc media mnt net proc root tmp var usr/obj usr/tests"
@@ -345,27 +361,40 @@ create_jail() {
                 fi
             done
         else
-            info "Creating a thickjail. This may take a while..."
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
-                    ## perform release base replication
+                    if [ -n "${CLONE_JAIL}" ]; then
+                        info "Creating a clonejail...\n"
+                        ## clone the release base to the new basejail
+                        SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
+                        zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
-                    ## sane bastille zfs options
-                    ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
+                        zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
+                        "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
-                    ## take a temp snapshot of the base release
-                    SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
-                    zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+                        # Check and apply required settings.
+                        post_create_jail
+                    elif [ -n "${THICK_JAIL}" ]; then
+                        info "Creating a thickjail. This may take a while...\n"
+                        ## perform release base replication
 
-                    ## replicate the release base to the new thickjail and set the default mountpoint
-                    zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
-                    zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                    zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                    zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        ## sane bastille zfs options
+                        ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
 
-                    ## cleanup temp snapshots initially
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
+                        ## take a temp snapshot of the base release
+                        SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
+                        zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+
+                        ## replicate the release base to the new thickjail and set the default mountpoint
+                        zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
+                        zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+
+                        ## cleanup temp snapshots initially
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
+                    fi
 
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
@@ -474,6 +503,10 @@ create_jail() {
         if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
+    elif [ -n "${CLONE_JAIL}" ]; then
+        if [ -n "${bastille_template_clone}" ]; then
+            bastille template "${NAME}" ${bastille_template_clone} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
+        fi
     elif [ -n "${EMPTY_JAIL}" ]; then
         if [ -n "${bastille_template_empty}" ]; then
             bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
@@ -519,6 +552,7 @@ fi
 ## reset this options
 EMPTY_JAIL=""
 THICK_JAIL=""
+CLONE_JAIL=""
 VNET_JAIL=""
 LINUX_JAIL=""
 
@@ -546,6 +580,10 @@ while [ $# -gt 0 ]; do
             VNET_JAIL_BRIDGE="1"
             shift
             ;;
+        -C|--clone|clone)
+            CLONE_JAIL="1"
+            shift
+            ;;
         -*|--*)
             error_notify "Unknown Option."
             usage
@@ -558,13 +596,15 @@ done
 
 ## validate for combined options
 if [ -n "${EMPTY_JAIL}" ]; then
-    if [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
+    if [ -n "${CLONE_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
         error_exit "Error: Empty jail option can't be used with other options."
     fi
 elif [ -n "${LINUX_JAIL}" ]; then
-    if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ]; then
+    if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${CLONE_JAIL}" ]; then
         error_exit "Error: Linux jail option can't be used with other options."
     fi
+elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
+    error_exit "Error: Clonejail and Thickjail can't be used together."
 fi
 
 NAME="$1"
@@ -747,6 +787,9 @@ if [ -z ${bastille_template_linux+x} ]; then
 fi
 if [ -z ${bastille_template_thick+x} ]; then
     bastille_template_thick='default/thick'
+fi
+if [ -z ${bastille_template_clone+x} ]; then
+    bastille_template_clone='default/clone'
 fi
 if [ -z ${bastille_template_thin+x} ]; then
     bastille_template_thin='default/thin'
