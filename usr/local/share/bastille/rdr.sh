@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rdr TARGET [clear|list|(tcp|udp host_port jail_port)]"
+    error_exit "Usage: bastille rdr TARGET [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]"
 }
 
 # Handle special-case commands first.
@@ -91,10 +91,30 @@ if ! grep -qs "$1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
 fi
 }
 
+persist_rdr_log_rule() {
+proto=$1;host_port=$2;jail_port=$3;
+shift 3;
+log=$@;
+if ! grep -qs "$proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+fi
+}
+
+
 # function: load rdr rule via pfctl
 load_rdr_rule() {
 ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
   printf '%s\nrdr pass on $ext_if inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$1" "$2" "$JAIL_IP" "$3" ) \
+      | pfctl -a "rdr/${JAIL_NAME}" -f-
+}
+
+# function: load rdr rule with log via pfctl
+load_rdr_log_rule() {
+proto=$1;host_port=$2;jail_port=$3;
+shift 3;
+log=$@
+( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  printf '%s\nrdr pass %s on $ext_if inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 }
 
@@ -127,11 +147,44 @@ while [ $# -gt 0 ]; do
         tcp|udp)
             if [ $# -lt 3 ]; then
                 usage
+            elif [ $# -eq 3 ]; then
+                check_jail_validity
+                persist_rdr_rule $1 $2 $3
+                load_rdr_rule $1 $2 $3
+                shift 3
+            else
+                case "$4" in
+                    log)
+                        proto=$1
+                        host_port=$2
+                        jail_port=$3
+                        shift 3
+                        if [ $# -gt 3 ]; then
+                            for last in $@; do
+				true
+                            done
+                            if [ $2 == "(" ] && [ $last == ")" ] ; then
+                                check_jail_validity
+                                persist_rdr_log_rule $proto $host_port $jail_port $@
+                                load_rdr_log_rule $proto $host_port $jail_port $@
+                                shift $#
+                            else
+                                usage
+                            fi
+                        elif [ $# -eq 1 ]; then
+                            check_jail_validity
+                            persist_rdr_log_rule $proto $host_port $jail_port $@
+                            load_rdr_log_rule $proto $host_port $jail_port $@
+                            shift 1
+                        else
+                            usage
+                        fi
+                        ;;
+                    *)
+                        usage
+                        ;;
+                esac
             fi
-            check_jail_validity
-            persist_rdr_rule $1 $2 $3
-            load_rdr_rule $1 $2 $3
-            shift 3
             ;;
         *)
             usage
