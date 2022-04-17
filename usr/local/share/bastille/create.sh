@@ -356,38 +356,6 @@ create_jail() {
         # Check and apply required settings.
         post_create_jail
 
-        if [ ! -f "${bastille_jail_fstab}" ]; then
-            if [ -z "${THICK_JAIL}" ]; then
-                echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
-            else
-                touch "${bastille_jail_fstab}"
-            fi
-        fi
-
-        if [ ! -f "${bastille_jail_conf}" ]; then
-            if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-                local bastille_jail_conf_interface=${bastille_network_shared}
-            fi
-            if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-                local bastille_jail_conf_interface=${bastille_network_loopback}
-            fi
-            if [ -n "${INTERFACE}" ]; then
-                local bastille_jail_conf_interface=${INTERFACE}
-            fi
-
-            ## generate the jail configuration file
-            if [ -n "${VNET_JAIL}" ]; then
-                generate_vnet_jail_conf
-            else
-                generate_jail_conf
-            fi
-        fi
-
-        ## using relative paths here
-        ## MAKE SURE WE'RE IN THE RIGHT PLACE
-        cd "${bastille_jail_path}"
-        echo
-
         if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
             info "Creating a thinjail...\n"
