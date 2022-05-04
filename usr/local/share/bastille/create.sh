@@ -170,6 +170,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   devfs_ruleset = 4;
+  enforce_statfs = 1;
 
   exec.start = '/bin/true';
   exec.stop = '/bin/true';
