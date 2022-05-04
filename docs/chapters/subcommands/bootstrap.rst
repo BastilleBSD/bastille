@@ -35,7 +35,7 @@ build version as the argument.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille bootstrap 13.0-stable-build-latest
+  ishmael ~ # bastille bootstrap 13-stable-build-latest
 
 
 This command will ensure the required directory structures are in place and
