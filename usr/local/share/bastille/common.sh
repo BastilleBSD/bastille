@@ -74,9 +74,11 @@ generate_vnet_jail_netblock() {
         local num_range=$((list_jails_num + 1))
         for _num in $(seq 0 "${num_range}"); do
             if ! grep -q "e[0-9]b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                local uniq_epair="bastille${_num}"
-                local uniq_epair_bridge="${_num}"
-                break
+                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                    local uniq_epair="bastille${_num}"
+                    local uniq_epair_bridge="${_num}"
+                    break
+                fi
             fi
         done
     else
