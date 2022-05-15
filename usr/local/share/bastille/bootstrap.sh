@@ -127,19 +127,29 @@ bootstrap_directories() {
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache"
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                # Don't create unused/stale cache/RELEASE directory on Linux jails creation.
+                if [ -z "${NOCACHEDIR}" ]; then
+                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                fi
             fi
         else
-            mkdir -p "${bastille_cachedir}/${RELEASE}"
+            mkdir -p "${bastille_cachedir}"
+            # Don't create unused/stale cache/RELEASE directory on Linux jails creation.
+            if [ -z "${NOCACHEDIR}" ]; then
+                mkdir -p "${bastille_cachedir}/${RELEASE}"
+            fi
         fi
     ## create subsequent cache/XX.X-RELEASE datasets
     elif [ ! -d "${bastille_cachedir}/${RELEASE}" ]; then
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+        # Don't create unused/stale cache/RELEASE directory on Linux jails creation.
+        if [ -z "${NOCACHEDIR}" ]; then
+            if [ "${bastille_zfs_enable}" = "YES" ]; then
+                if [ -n "${bastille_zfs_zpool}" ]; then
+                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                fi
+            else
+                mkdir -p "${bastille_cachedir}/${RELEASE}"
             fi
-        else
-            mkdir -p "${bastille_cachedir}/${RELEASE}"
         fi
     fi
 
@@ -305,6 +315,7 @@ bootstrap_release() {
 debootstrap_release() {
 
     # Make sure to check/bootstrap directories first.
+    NOCACHEDIR=1
     RELEASE="${DIR_BOOTSTRAP}"
     bootstrap_directories
 
@@ -445,6 +456,7 @@ else
     HW_MACHINE_ARCH_LINUX=${HW_MACHINE_ARCH}
 fi
 
+NOCACHEDIR=
 RELEASE="${1}"
 OPTION="${2}"
 
