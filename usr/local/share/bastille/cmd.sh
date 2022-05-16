@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     error_exit "Usage: bastille cmd TARGET command"
@@ -51,12 +52,19 @@ RETURN=0
 for _jail in ${JAILS}; do
     COUNT=$(($COUNT+1))
     info "[${_jail}]:"
-    jexec -l -U root "${_jail}" "$@"
+
+    if grep -qw "linsysfs" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        # Allow executing commands on Linux jails.
+        jexec -l -u root "${_jail}" "$@"
+    else
+        jexec -l -U root "${_jail}" "$@"
+    fi
+
     ERROR_CODE=$?
     info "[${_jail}]: ${ERROR_CODE}"
     
     if [ "$COUNT" -eq 1 ]; then
-        RETURN=$ERROR_CODE
+        RETURN=${ERROR_CODE}
     else 
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
@@ -65,8 +73,8 @@ for _jail in ${JAILS}; do
 done
 
 # Check when a command is executed in all running jails. (bastille cmd ALL ...)
-if [ "$COUNT" -gt 1 ] && [ "$RETURN" -gt 0 ]; then
+if [ "${COUNT}" -gt 1 ] && [ "${RETURN}" -gt 0 ]; then
     RETURN=1
 fi
 
-return "$RETURN"
+return "${RETURN}"
