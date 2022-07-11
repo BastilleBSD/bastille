@@ -735,8 +735,8 @@ After populating `usr/local/` with custom config files that your container will
 use, be sure to include `usr` in the template OVERLAY definition. eg;
 
 ```shell
-echo "CP etc" >> /usr/local/bastille/templates/username/base/Bastillefile
-echo "CP usr" >> /usr/local/bastille/templates/username/base/Bastillefile
+echo "OVERLAY etc" >> /usr/local/bastille/templates/username/base/Bastillefile
+echo "OVERLAY usr" >> /usr/local/bastille/templates/username/base/Bastillefile
 ```
 
 The above example will include anything under "etc" and "usr" inside
