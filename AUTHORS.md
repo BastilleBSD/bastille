@@ -23,6 +23,11 @@ Christer Edwards [christer.edwards@gmail.com]
 - Sven R.
 - Tobias Tom
 - Stefano Marinelli
+- Logan Ellis
+- Chuck Tuffli
+- Niketh Murali
+- Eric Borisch
+- Kevet Duncombe
 
 ### Special thanks
 Software doesn't happen in a vacuum. Thank you to the following people who may
