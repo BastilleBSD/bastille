@@ -109,7 +109,11 @@ update_jailconf_vnet() {
         if [ -n "${jail_list}" ]; then
             if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
                 uniq_epair="bastille${_num}"
+                # Update the exec.* with uniq_epair when cloning jails.
                 sed -i '' "s|vnet.interface = e0b_bastille.*;|vnet.interface = e0b_${uniq_epair};|" "${JAIL_CONFIG}"
+                sed -i '' "s|exec.prestart += \"jib addm bastille[0-9]|exec.prestart += \"jib addm ${uniq_epair}|" "${JAIL_CONFIG}"
+                sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille[0-9].*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
+                sed -i '' "s|exec.poststop += \"jib destroy bastille[0-9]\";|exec.poststop += \"jib destroy ${uniq_epair}\";|" "${JAIL_CONFIG}"
                 break
             fi
         fi
