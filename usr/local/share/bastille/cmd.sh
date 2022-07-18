@@ -53,7 +53,7 @@ for _jail in ${JAILS}; do
     COUNT=$(($COUNT+1))
     info "[${_jail}]:"
 
-    if grep -qw "linsysfs" "${bastille_jailsdir}/${TARGET}/fstab"; then
+    if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
         # Allow executing commands on Linux jails.
         jexec -l -u root "${_jail}" "$@"
     else
