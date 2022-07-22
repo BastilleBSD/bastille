@@ -27,8 +27,8 @@ release version as the argument.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille bootstrap 11.4-RELEASE [update]
-  ishmael ~ # bastille bootstrap 12.1-RELEASE
+  ishmael ~ # bastille bootstrap 12.3-RELEASE [update]
+  ishmael ~ # bastille bootstrap 13.1-RELEASE
 
 To `bootstrap` a HardenedBSD release, run the bootstrap sub-command with the
 build version as the argument.
