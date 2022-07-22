@@ -7,4 +7,4 @@ workflow this can be similar to a `bootstrap`.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille upgrade 12.0-RELEASE 12.1-RELEASE
+  ishmael ~ # bastille upgrade 13.0-RELEASE 13.1-RELEASE

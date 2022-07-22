@@ -30,7 +30,7 @@ you create it. An example:
 
 .. code-block:: shell
 
-  bastille create alcatraz 12.1-RELEASE 192.168.1.50 em0
+  bastille create alcatraz 13.1-RELEASE 192.168.1.50 em0
 
 When the `alcatraz` container is started it will add `192.168.1.50` as an IP
 alias to the `em0` interface. It will then simply be another member of the
@@ -56,7 +56,7 @@ external interface.
 
 .. code-block:: shell
 
-  bastille create -V azkaban 12.1-RELEASE 192.168.1.50/24 em0
+  bastille create -V azkaban 13.1-RELEASE 192.168.1.50/24 em0
 
 Bastille will automagically create the bridge interface and connect /
 disconnect containers as they are started and stopped. A new interface will be
@@ -116,7 +116,7 @@ external bridge.
 
 .. code-block:: shell
 
-  bastille create -B azkaban 12.1-RELEASE 192.168.1.50/24 bridge0
+  bastille create -B azkaban 13.1-RELEASE 192.168.1.50/24 bridge0
 
 Bastille will automagically create the interface, attach it to the specified bridge and connect /
 disconnect containers as they are started and stopped. 
