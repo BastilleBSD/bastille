@@ -35,6 +35,15 @@ usage() {
     error_exit "Usage: bastille config TARGET get|set propertyName [newValue]"
 }
 
+# we need jail(8) to parse the config file so it can expand variables etc
+print_jail_conf() {
+
+    # we need to pass a literal \n to jail to get each parameter on its own
+    # line
+    jail -f "$1" -e '
+'
+} 
+
 # Handle special-case commands first.
 case "$1" in
 help|-h|--help)
@@ -71,22 +80,39 @@ for _jail in ${JAILS}; do
         continue
     fi
 
-    ESCAPED_PROPERTY=$(echo "${PROPERTY}" | sed 's/\./\\\./g')
-    MATCH_LINE=$(grep "^[[:blank:]]*${ESCAPED_PROPERTY}[[:blank:]=;]" "${FILE}" 2>/dev/null)
-    MATCH_FOUND=$?
-
     if [ "${ACTION}" = 'get' ]; then
-        if [ "${MATCH_FOUND}" -ne 0 ]; then
-            warn "not set"
-        elif ! echo "${MATCH_LINE}" | grep '=' > /dev/null 2>&1; then
-            echo "enabled"
+        _output=$(
+            print_jail_conf "${FILE}" | awk -F= -v property="${PROPERTY}" '
+                $1 == property {
+                    # note that we have found the property
+                    found = 1;
+                    # check if there is a value for this property
+                    if (NF == 2) {
+                        # remove any quotes surrounding the string
+                        sub(/^"/, "", $2);
+                        sub(/"$/, "", $2);
+                        print $2;
+                    } else {
+                        # no value, just the property name
+                        print "enabled";
+                    }
+                    exit 0;
+                }
+                END {
+                    # if we have not found anything we need to print a special
+                    # string
+                    if (! found) {
+                        print("not set");
+                        #  let the caller know that this is a warn condition
+                        exit(120);
+                    }
+                }'
+            )
+        # check if our output is a warning or regular
+        if [ $? -eq 120 ]; then
+            warn "${_output}"
         else
-            VALUE=$(echo "${MATCH_LINE}" | sed -E 's/.+= *(.+) *;$/\1/' 2>/dev/null)
-            if [ $? -ne 0 ]; then
-                error_notify "Failed to get value."
-            else
-                echo "${VALUE}"
-            fi
+            echo "${_output}"
         fi
     else # Setting the value. -- cwells
         if [ -n "${VALUE}" ]; then
@@ -99,11 +125,40 @@ for _jail in ${JAILS}; do
             LINE="  ${PROPERTY};"
         fi
 
-        if [ "${MATCH_FOUND}" -ne 0 ]; then # No match, so insert the property at the end. -- cwells
-            echo "$(awk -v line="${LINE}" '$0 == "}" { print line; } 1 { print $0; }' "${FILE}")" > "${FILE}"
-        else # Replace the existing value. -- cwells
-            sed -i '' -E "s/ *${ESCAPED_PROPERTY}[ =;].*/${LINE}/" "${FILE}"
-        fi
+        # add the value to the config file, replacing any existing value or, if
+        # there is none, at the end
+        #
+        # awk doesn't have "inplace" editing so we use a temp file
+        _tmpfile=$(mktemp) || error_exit "unable to set because mktemp failed"
+        cp "${FILE}" "${_tmpfile}" && \
+        awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
+            BEGIN {
+                # build RE as string as we can not expand vars in RE literals
+                prop_re = "^[[:space:]]*" property "[[:space:]]*$";
+            }
+            $1 ~ prop_re && !found {
+                # we already have an entry in the config for this property so
+                # we need to substitute our line here rather than keep the
+                # existing line
+                print(line);
+                # note we have already found the property
+                found = 1;
+                # move onto the next line
+                next;
+            }
+            $1 == "}" {
+                # reached the end of the stanza so if we have not already
+                # added our line we need to do so now
+                if (! found) {
+                    print(line);
+                }
+            }
+            {
+                # print each uninteresting line unchanged
+                print;
+            }
+        ' "${_tmpfile}" > "${FILE}"
+        rm "${_tmpfile}"
     fi
 done
 
