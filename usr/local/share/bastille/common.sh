@@ -38,7 +38,7 @@ enable_color() {
 }
 
 # If "NO_COLOR" environment variable is present, disable output colors.
-if [ -z "${NO_COLOR}" ]; then
+if [ -z "${NO_COLOR}" -a -t 1 ]; then
     enable_color
 fi
 
