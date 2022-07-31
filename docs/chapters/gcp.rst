@@ -80,13 +80,13 @@ Restart the host and make sure everything comes up correctly. You should see the
   	        ifmaxaddr 0 port 1 priority 128 path cost 2000
   	groups: bridge
 
-## Configure router and resolver inside the jail
+## Configure router and resolver for new jails
 
-At this point, you can create a VNET jail with ``bastille create -V myjail 13.1-RELEASE 192.168.1.50/24 vtnet0``
-
-It won't have working network access or DNS yet. Console into the jail and configure them:
+Set the default network gateway for new jails as described in the Networking chapter, and configure a default resolver.
 
 .. code-block:: shell
-  sysrc defaultrouter="192.168.1.1"
+  sysrc -f /usr/local/etc/bastille/bastille.conf bastille_network_gateway="192.168.1.1"
+  echo "nameserver 8.8.8.8" > /usr/local/etc/bastille/resolv.conf
+  sysrc -f /usr/local/etc/bastille/bastille.conf bastille_resolv_conf="/usr/local/etc/bastille/resolv.conf"
 
-  echo "nameserver 8.8.8.8" > /etc/resolv.conf
+You can now create a VNET jail with ``bastille create -V myjail 13.1-RELEASE 192.168.1.50/24 vtnet0``
