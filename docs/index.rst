@@ -19,6 +19,7 @@ https://docs.bastillebsd.org.
    chapters/template
    chapters/jail-config
    chapters/zfs-support
+   chapters/gcp
 
    copyright
 
