@@ -57,7 +57,8 @@ This basic /etc/pf.conf allow incoming packets on the bridge interface, and NATs
   
   set skip on lo
   scrub in
-  
+
+  # permissive NAT allows jail bridge and wireguard tunnels
   nat on $ext_if inet from !($ext_if) -> ($ext_if:0)
   
   block in
