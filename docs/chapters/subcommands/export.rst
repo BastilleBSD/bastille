@@ -20,6 +20,8 @@ can be exported only when the jail is not running.
 
 Available options are:
 
+.. code-block:: shell
+
          --gz       -- Export a ZFS jail using GZIP(.gz) compressed image.
     -r | --raw      -- Export a ZFS jail to an uncompressed RAW image.
     -s | --safe     -- Safely stop and start a ZFS jail before the exporting process.
