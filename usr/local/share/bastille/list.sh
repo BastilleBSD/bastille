@@ -163,6 +163,8 @@ if [ $# -gt 0 ]; then
                     fi
                 fi
             done
+        echo "Available Linux releases are:"
+        echo "(ubuntu_)bionic, (ubuntu_)focal,(debian_)stretch,(debian_),(debian_)bullseye"
         fi
         ;;
     template|templates)
