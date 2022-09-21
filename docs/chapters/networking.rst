@@ -1,13 +1,14 @@
 Network Requirements
 ====================
 Here's the scenario. You've installed Bastille at home or in the cloud and want
-to get started putting applications in secure little containers, but how do I
-get these containers on the network?
+to get started putting applications in secure little containers, but how do you
+get these containers on the network?  There are two parts to this problem.  Being
+able to reach the network from your container, and being able to reach the container 
+from the network.  (Please note that the ping command is disabled within the containers. )
 
 Bastille tries to be flexible about how to network containerized applications.
 Three methods are described here. Consider each options when deciding
-which design work best for your needs. One of the methods works better in the 
-cloud while the others are simpler if used in local area networks.
+which design work best for your needs. 
 
 **Note: if you are running in the cloud and only have a single public IP you
 may want the Public Network option. See below.**
@@ -16,21 +17,22 @@ may want the Public Network option. See below.**
 Local Area Network
 ==================
 I will cover the local area network (LAN) method first. This method is simpler
-to get going and works well in a home network (or similar) where adding alias
-IP addresses is no problem.
+to get going and works well in an environment where adding alias
+IP addresses is no problem. So it works well on your `private home network <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`, 
+or at an ISP like 
+`vultr.com <https://Vultr.com>` which gives you 1 IPV4 address, and lots of IPV6 addresses. 
 
-Shared Interface (IP alias)
----------------------------
+Shared Interface on Home Network(IP alias)
+-----------------------------------------
 In FreeBSD network interfaces have different names, but look something like
-`em0`, `bge0`, `re0`, etc. On a virtual machine it may be `vtnet0`. You get the
-idea...
+`em0`, `bge0`, `re0`, etc. 
 
 Bastille allows you to define the interface you want the IP attached to when
 you create it. An example:
 
 .. code-block:: shell
 
-  bastille create alcatraz 13.1-RELEASE 192.168.1.50 em0
+  bastille create alcatraz 13.1-RELEASE 192.168.1.50 em0 
 
 When the `alcatraz` container is started it will add `192.168.1.50` as an IP
 alias to the `em0` interface. It will then simply be another member of the
@@ -42,6 +44,39 @@ interface and a free IP on your current network.
 
 Bastille tries to verify that the interface name you provide it is a valid
 interface. It also checks for a valid syntax IP4 or IP6 address.
+
+Shared Interface on IPV6 network (vultr.com)
+-------------------------------
+This is much like the home network described above.  
+So first read the above section. 
+
+On a virtual machine such as vultr.com the virtual interface may be `vtnet0`. 
+So we issue the command:
+
+.. code-block:: shell
+
+ bastille create alcatraz 13.1-RELEASE   vtnet0
+
+We could also write the ipv6 address as 2001:19f0:6c01:114c:0:100 
+
+The tricky part are the ipv6 addresses. IPV6 is a string of 8 4 digit 
+hexadecimal characters.  At vultr they said:
+
+Your server was assigned the following six section subnet:
+
+2001:19f0:6c01:114c:: / 64
+
+We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0 
+
+Where the /64 basicaly means that the first 5 4 digit hexadecimals values define the network, and the last set,  we can assign as we want to the Bastille Container. In the actual bastille create command given above, it was defined to be 100.   But we also have to tell vultr that we are now using this address.  This is done on freebsd with the following command
+
+.. code-block:: shell
+
+  ifconfig_vtnet0_alias0="inet6 2001:19f0:6c01:114c::100  prefixlen 64"
+
+At that point your container can talk to the world, and the world can ping your container. Just remember you cannot ping out from the container.  Of course when you reboot the machine, that command will be forgotten  To make it permanent, 
+you have to add it to the file /etc/rc.conf
+
 
 Virtual Network (VNET)
 ----------------------
@@ -124,17 +159,18 @@ The bridge needs to be created/enabled before creating and starting the jail.
 
 Public Network
 ==============
-In this section I'll describe how to network containers in a public network
-such as a cloud hosting provider (AWS, digital ocean, vultr, etc)
+In this section we describe how to network containers in a public network
+such as a cloud hosting provider who only provides you with a single ip address. 
+(AWS, digital ocean, etc)  (The exception is vultr.com, which does 
+provide you with lots of IPV6 addresses and does a great job supporting FreeBSD!)  
 
-In the public cloud you don't often have access to multiple private IP
-addresses for your virtual machines. This means if you want to create multiple
-containers and assign them all IP addresses, you'll need to create a new
+So if you only have a single IP address and if you want to create multiple
+containers and assign them all unique IP addresses, you'll need to create a new
 network.
 
 loopback (bastille0)
 --------------------
-What I recommend is creating a cloned loopback interface (`bastille0`) and
+What we recommend is creating a cloned loopback interface (`bastille0`) and
 assigning all the containers private (rfc1918) addresses on that interface. The
 setup I develop on and use Bastille day-to-day uses the `10.0.0.0/8` address
 range. I have the ability to use whatever address I want within that range
