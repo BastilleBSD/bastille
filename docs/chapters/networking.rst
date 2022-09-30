@@ -4,19 +4,20 @@ Here's the scenario. You've installed Bastille at home or in the cloud and want
 to get started putting applications in secure little containers, but how do you
 get these containers on the network?  There are two parts to this problem.  Being
 able to reach the network from your container, and being able to reach the container 
-from the network.  (Please note that the ping command is disabled within the containers. )
+from the network.  (Please note that the ping command is disabled within the containers, 
+because raw socket access is a security hole. )
 
 Bastille tries to be flexible about how to network containerized applications.
 Three methods are described here. Consider each options when deciding
 which design work best for your needs. 
 
 **Note: if you are running in the cloud and only have a single public IP you
-may want the Public Network option. See below.**
+may want to skip down to the Public Network option. See below.**
 
 
 Local Area Network
 ==================
-I will cover the local area network (LAN) method first. This method is simpler
+The local area network (LAN) method is covered first. This method is simpler
 to get going and works well in an environment where adding alias
 IP addresses is no problem. So it works well on your `private home network <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`, 
 or at an ISP like 
@@ -42,7 +43,7 @@ reach services at that address.
 This method is the simplest. All you need to know is the name of your network
 interface and a free IP on your current network.
 
-Bastille tries to verify that the interface name you provide it is a valid
+Bastille tries to verify that the interface name you provided is a valid
 interface. It also checks for a valid syntax IP4 or IP6 address.
 
 Shared Interface on IPV6 network (vultr.com)
@@ -55,7 +56,7 @@ So we issue the command:
 
 .. code-block:: shell
 
- bastille create alcatraz 13.1-RELEASE   vtnet0
+ bastille create alcatraz 13.1-RELEASE  2001:19f0:6c01:114c::100 vtnet0
 
 We could also write the ipv6 address as 2001:19f0:6c01:114c:0:100 
 
@@ -66,6 +67,8 @@ Your server was assigned the following six section subnet:
 
 2001:19f0:6c01:114c:: / 64
 
+The `vultr ipv6 subnet calculator <https://www.vultr.com/resources/subnet-calculator-ipv6/?prefix_length=64&display=long&ipv6_address=2001%3Adb8%3Aacad%3Ae%3A%3A%2F64>` is helpful in making sense of that ipv6 address. 
+
 We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0 
 
 Where the /64 basicaly means that the first 5 4 digit hexadecimals values define the network, and the last set,  we can assign as we want to the Bastille Container. In the actual bastille create command given above, it was defined to be 100.   But we also have to tell vultr that we are now using this address.  This is done on freebsd with the following command
@@ -74,8 +77,18 @@ Where the /64 basicaly means that the first 5 4 digit hexadecimals values define
 
   ifconfig_vtnet0_alias0="inet6 2001:19f0:6c01:114c::100  prefixlen 64"
 
-At that point your container can talk to the world, and the world can ping your container. Just remember you cannot ping out from the container.  Of course when you reboot the machine, that command will be forgotten  To make it permanent, 
+At that point your container can talk to the world, and the world can ping your container.  Of course when you reboot the machine, that command will be forgotten  To make it permanent, 
 you have to add it to the file /etc/rc.conf
+
+Just remember you cannot ping out from the container. Instead I used wget to test the connectivity. 
+
+Use the bastille pkg command to install wget. 
+
+.. code-block:: shell
+
+   bastille pkg alcatraz install wget
+
+
 
 
 Virtual Network (VNET)
