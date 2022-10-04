@@ -2,38 +2,40 @@ Network Requirements
 ====================
 Here's the scenario. You've installed Bastille at home or in the cloud and want
 to get started putting applications in secure little containers, but how do you
-get these containers on the network?  There are two parts to this problem.  Being
-able to reach the network from your container, and being able to reach the container 
-from the network.  (Please note that the ping command is disabled within the containers, 
-because raw socket access is a security hole. )
+get these containers on the network?  Bastille tries to be flexible about how to 
+network containerized applications.   Four methods are described here.  
 
-Bastille tries to be flexible about how to network containerized applications.
-Three methods are described here. Consider each options when deciding
-which design work best for your needs. 
+1. Home or Small Office
 
-**Note: if you are running in the cloud and only have a single public IP you
-may want to skip down to the Public Network option. See below.**
+2. Cloud with IPV4 and multiple IPV6
+
+3. Could with single IPV4 (internatl bridge)
+
+4. Cloud with a single IPV4 (external bridge) 
 
 
-Local Area Network
-==================
-The local area network (LAN) method is covered first. This method is simpler
-to get going and works well in an environment where adding alias
-IP addresses is no problem. So it works well on your `private home network <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`, 
-or at an ISP like 
-`vultr.com <https://Vultr.com>` which gives you 1 IPV4 address, and lots of IPV6 addresses. 
+Please choose the option which is most appropriate for your environment. 
 
-Shared Interface on Home Network(IP alias)
------------------------------------------
-In FreeBSD network interfaces have different names, but look something like
-`em0`, `bge0`, `re0`, etc. 
 
-Bastille allows you to define the interface you want the IP attached to when
-you create it. An example:
+First a few notes.  Bastille tries to verify that the interface name you provide is a valid
+interface. In FreeBSD network interfaces have different names, but look something like
+`em0`, `bge0`, `re0`,  `vtnet0` etc. Running the ifconfig commend will tell you the name
+of your existing interfaces. Bastille also checks for a valid syntax IP4 or IP6 address.    
+When you are testing calling out from your containers,  please note that the ping command is disabled within the containers, because raw socket access are a security hole.  Instead I install and test with wget instead. 
+
+Shared Interface on Home or Small Office Network
+================================================
+If you have just one computer, or a home or small office network, 
+where you are separated from the rest of the internet by a router.  So you are free to use
+`private IP addresses <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`.
+
+In this environment, to use Bastille, just create the container, give it a unique private ip address, and attach its ip address to your primary interface.  
 
 .. code-block:: shell
 
   bastille create alcatraz 13.1-RELEASE 192.168.1.50 em0 
+
+You may have to change em0
 
 When the `alcatraz` container is started it will add `192.168.1.50` as an IP
 alias to the `em0` interface. It will then simply be another member of the
@@ -41,15 +43,11 @@ hosts network. Other networked systems (firewall permitting) should be able to
 reach services at that address.
 
 This method is the simplest. All you need to know is the name of your network
-interface and a free IP on your current network.
-
-Bastille tries to verify that the interface name you provided is a valid
-interface. It also checks for a valid syntax IP4 or IP6 address.
+interface and a free IP on your local network.
 
 Shared Interface on IPV6 network (vultr.com)
--------------------------------
-This is much like the home network described above.  
-So first read the above section. 
+=======================================
+Some ISP's, such as `vultr.com <https://Vultr.com>`, give you a single ipv4 address, and a large block of ipv6 addresses. You can then assign a unique ipv6 address to each Bastille Container.  
 
 On a virtual machine such as vultr.com the virtual interface may be `vtnet0`. 
 So we issue the command:
@@ -71,7 +69,7 @@ The `vultr ipv6 subnet calculator <https://www.vultr.com/resources/subnet-calcul
 
 We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0 
 
-Where the /64 basicaly means that the first 5 4 digit hexadecimals values define the network, and the last set,  we can assign as we want to the Bastille Container. In the actual bastille create command given above, it was defined to be 100.   But we also have to tell vultr that we are now using this address.  This is done on freebsd with the following command
+Where the /64 basicaly means that the first 64 bits of the address (4x4 character hexadecimal) values define the network, and the remaining characters, we can assign as we want to the Bastille Container. In the actual bastille create command given above, it was defined to be 100.   But we also have to tell the host operating system that we are now using this address.  This is done on freebsd with the following command
 
 .. code-block:: shell
 
@@ -80,7 +78,7 @@ Where the /64 basicaly means that the first 5 4 digit hexadecimals values define
 At that point your container can talk to the world, and the world can ping your container.  Of course when you reboot the machine, that command will be forgotten  To make it permanent, 
 you have to add it to the file /etc/rc.conf
 
-Just remember you cannot ping out from the container. Instead I used wget to test the connectivity. 
+Just remember you cannot ping out from the container. Instead I installed and used wget to test the connectivity. 
 
 Use the bastille pkg command to install wget. 
 
@@ -90,9 +88,8 @@ Use the bastille pkg command to install wget.
 
 
 
-
 Virtual Network (VNET)
-----------------------
+========================
 (Added in 0.6.x) VNET is supported on FreeBSD 12+ only.
 
 Virtual Network (VNET) creates a private network interface for a container.
@@ -158,7 +155,7 @@ This config change will apply the defined gateway to any new containers.
 Existing containers will need to be manually updated.
 
 Virtual Network (VNET) on External Bridge
---------------------------------------
+=======================================
 To create a VNET based container and attach it to an external, already existing bridge, use the `-B` option, an IP/netmask and
 external bridge.
 
