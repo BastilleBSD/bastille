@@ -45,17 +45,32 @@ if [ $# -lt 1 ]; then
     usage
 fi
 
+errors=0
+
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ -f "/usr/sbin/mport" ]; then
-        jexec -l -U root "${_jail}" /usr/sbin/mport "$@"
+        if ! jexec -l -U root "${_jail}" /usr/sbin/mport "$@"; then
+            errors=1
+        fi
     elif [ -f "${bastille_jail_path}/usr/bin/apt" ]; then
-        jexec -l "${_jail}" /usr/bin/apt "$@"
+        if ! jexec -l "${_jail}" /usr/bin/apt "$@"; then
+            errors=1
+        fi
     elif [ "${USE_HOST_PKG}" = 1 ]; then
-        /usr/sbin/pkg -j "${_jail}" "$@"
+        if ! /usr/sbin/pkg -j "${_jail}" "$@"; then
+            errors=1
+        fi
     else
-        jexec -l -U root "${_jail}" /usr/sbin/pkg "$@"
+        if ! jexec -l -U root "${_jail}" /usr/sbin/pkg "$@"; then
+            errors=1
+        fi
     fi
     echo
 done
+
+if [ $errors -ne 0 ]; then
+    error_exit "Failed to apply on some jails, please check logs"
+    exit 1
+fi
