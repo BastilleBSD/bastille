@@ -161,7 +161,7 @@ while [ $# -gt 0 ]; do
                         shift 3
                         if [ $# -gt 3 ]; then
                             for last in $@; do
-				true
+                                true
                             done
                             if [ $2 == "(" ] && [ $last == ")" ] ; then
                                 check_jail_validity

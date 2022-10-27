@@ -37,7 +37,8 @@ enable_color() {
     . /usr/local/share/bastille/colors.pre.sh
 }
 
-# If "NO_COLOR" environment variable is present, disable output colors.
+# If "NO_COLOR" environment variable is present, or we aren't speaking to a
+# tty, disable output colors.
 if [ -z "${NO_COLOR}" -a -t 1 ]; then
     enable_color
 fi
