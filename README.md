@@ -182,7 +182,7 @@ The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
   bastille rdr <jail> clear       # Clear dynamic rdr rules
 ```
 
-  Note that if you are rediirecting ports where the host is also listening
+  Note that if you are redirecting ports where the host is also listening
   (eg. ssh) you should make sure that the host service is not listening on
   the cloned interface - eg. for ssh set sshd_flags in rc.conf
 
