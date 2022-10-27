@@ -1,3 +1,5 @@
+BASTILLE_VERSION=$$(git rev-parse HEAD)
+
 .PHONY: all
 all:
 	@echo "Nothing to be done. Please use make install or make uninstall"
@@ -5,9 +7,13 @@ all:
 install:
 	@echo "Installing Bastille"
 	@echo
+	@echo "Updating Bastille version to match git revision."
+	@echo "BASTILLE_VERSION: ${BASTILLE_VERSION}"
+	@sed -i.orig "s/BASTILLE_VERSION=.*/BASTILLE_VERSION=${BASTILLE_VERSION}/" usr/local/bin/bastille
 	@cp -Rv usr /
 	@echo
-	@echo "This method is for testing / development."
+	@echo "This method is for testing & development."
+	@echo "Please report any issues to https://github.com/BastilleBSD/bastille/issues"
 
 .PHONY: uninstall
 uninstall:
