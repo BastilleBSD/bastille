@@ -51,7 +51,9 @@ bastille_stop()
 
     local _jail
 
-    for _jail in ${bastille_list}; do
+    ## reverse order of list for shutdown ## fixes #389
+    bastille_revlist=$(echo "${bastille_list}" | awk '{ for (i=NF; i>1; i--) printf("%s ",$i); print $1; }')
+    for _jail in ${bastille_revlist}; do
         echo "Stopping Bastille Container: ${_jail}"
         ${command} stop ${_jail}
     done
