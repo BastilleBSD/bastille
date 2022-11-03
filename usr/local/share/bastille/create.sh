@@ -204,7 +204,7 @@ ${NAME} {
   allow.mount.devfs;
 
   interface = ${bastille_jail_conf_interface};
-  ${IPX_ADDR} = ${IP};
+  ${ipx_addr} = ${IP};
   ip6 = ${IP6_MODE};
 }
 EOF
