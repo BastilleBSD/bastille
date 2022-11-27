@@ -54,6 +54,9 @@ bastille_conf_check
 
 ## we only load the config if conf_check passes
 . /usr/local/etc/bastille/bastille.conf
+# Set default values for config properties added during the current major version:
+: "${bastille_network_pf_ext_if:=ext_if}"
+: "${bastille_network_pf_table:=jails}"
 
 ## bastille_prefix should be 0750
 ## this restricts file system access to privileged users
