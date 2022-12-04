@@ -91,7 +91,7 @@ validate_ip() {
                         exit 1
                     fi
                 done
-                if ifconfig | grep -qw "${TEST_IP}"; then
+                if ifconfig | grep -qwF "${TEST_IP}"; then
                     warn "Warning: IP address already in use (${TEST_IP})."
                 else
                     info "Valid: (${ip})."
