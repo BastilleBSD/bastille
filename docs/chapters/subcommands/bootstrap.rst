@@ -61,7 +61,7 @@ before they are extracted for use.
 Tips
 ----
 
-The `bootstrap` sub-command can now take an optional second
+The `bootstrap` sub-command can  take an optional second
 argument of "update". If this argument is used, `bastille update` will be run
 immediately after the bootstrap, effectively bootstrapping and applying
 security patches and errata in all at once.
@@ -78,7 +78,6 @@ command. To upgrade containers to a new version of the operating system, see the
 
 Downloaded artifacts are stored in the `bastille/cache/version` directory.
 "bootstrapped" releases are stored in `bastille/releases/version`.
-
 
 Templates
 =========
