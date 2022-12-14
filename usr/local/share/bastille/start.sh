@@ -77,7 +77,7 @@ for _jail in ${JAILS}; do
         fi
 
         ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
-        ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+        ip=$(bastille config "${_jail}" get ip4.addr)
         if [ -n "${ip}" ]; then
             if ifconfig | grep -w "${ip}" >/dev/null; then
                 error_notify "Error: IP address (${ip}) already in use."
