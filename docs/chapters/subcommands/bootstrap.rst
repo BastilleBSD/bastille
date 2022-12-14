@@ -2,8 +2,8 @@
 bootstrap
 =========
 
-The bootstrap sub-command is used to download and extract releases and
-templates for use with Bastille containers.  In this document we will describe using the `bootstrap` sub-command with both releases and templates. First, some background. 
+The `bootstrap` sub-command is used to download and extract releases and
+templates for use with Bastille containers.   First, some background. 
 
 Background
 ============
@@ -15,7 +15,7 @@ Note: Bastille does error checking on release names, so your mileage
 may vary with unsupported releases and releases newer
 than the host system likely will NOT work at all.
 
-Templates are a powerful part of Bastille and facilitate full container automation.
+Templates facilitate full container automation.
 A template installs sofware into containers on top of the nullfs base layer.
 Multiple templates can install different software into a single container.   
 Templates are optional.  
@@ -23,14 +23,16 @@ Existing templates can be downloaded like releases, or they can be developed in 
 See the documentation on templates for more information on how they work and
 how you can create or customize your own.
 
-If you install the same templates into multiple containers,  then it makes sense to create a new release with the shared tools and libraries.  The way to do this is to create a basic container, install the required software and then create a tar extract (extemded-base.txz) of that entire container.  That will be your new release.    
+If you install the same templates into multiple containers,  then it may make sense to create a new release with the shared tools and libraries.  The way to do this is to create a basic container, install the required software and then create a tar extract (extemded-base.txz) of that entire container.  That will be your new release.    
 Put that tar extract in the 
-cache directory /usr/local/bastille/cache, and the Bastille bootstrap command will find it. 
+cache directory /usr/local/bastille/cache, and 
+the Bastille bootstrap command will find it. 
 But Basille `does error checking on legal release names < https://github.com/BastilleBSD/bastille/blob/0ee17be875633da58ae2397aca77bc13b1213993/usr/local/share/bastille/bootstrap.sh#L475>`_, so you may have to first edit or disable that error checking code. 
 Your mileage may vary.  Please let us know what happens. 
  
 Releases
 ========
+The bootstrap sub-command downloads releases. 
 
 Example
 -------
@@ -59,10 +61,10 @@ before they are extracted for use.
 Tips
 ----
 
-The `bootstrap` sub-command can now take (0.5.20191125+) an optional second
+The `bootstrap` sub-command can now take an optional second
 argument of "update". If this argument is used, `bastille update` will be run
 immediately after the bootstrap, effectively bootstrapping and applying
-security patches and errata in one motion.
+security patches and errata in all at once.
 
 Notes
 -----
