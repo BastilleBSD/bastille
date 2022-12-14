@@ -3,19 +3,32 @@ bootstrap
 =========
 
 The bootstrap sub-command is used to download and extract releases and
-templates for use with Bastille containers. A valid release is needed before
-containers can be created. Templates are optional but are managed in the same
-manner.
+templates for use with Bastille containers.  In this document we will describe using the `bootstrap` sub-command with both releases and templates. First, some background. 
 
-Note: your mileage may vary with unsupported releases and releases newer
-than the host system likely will NOT work at all. Bastille tries to filter for
-valid release names. If you find it will not bootstrap a valid release, please
-let us know.
+Background
+============
 
-In this document we will describe using the `bootstrap` sub-command with both
-releases and templates. We begin with releases.
+A release is a version of the operating system used in jails and shared by one or more Bastille containers. It is mounted in a container as a non-writable  (nullfs) file system. 
+A valid release is needed before containers can be created.  
 
+Note: Bastille does error checking on release names, so your mileage 
+may vary with unsupported releases and releases newer
+than the host system likely will NOT work at all.
 
+Templates are a powerful part of Bastille and facilitate full container automation.
+A template installs sofware into containers on top of the nullfs base layer.
+Multiple templates can install different software into a single container.   
+Templates are optional.  
+Existing templates can be downloaded like releases, or they can be developed in place. 
+See the documentation on templates for more information on how they work and
+how you can create or customize your own.
+
+If you install the same templates into multiple containers,  then it makes sense to create a new release with the shared tools and libraries.  The way to do this is to create a basic container, install the required software and then create a tar extract (extemded-base.txz) of that entire container.  That will be your new release.    
+Put that tar extract in the 
+cache directory /usr/local/bastille/cache, and the Bastille bootstrap command will find it. 
+But Basille `does error checking on legal release names < https://github.com/BastilleBSD/bastille/blob/0ee17be875633da58ae2397aca77bc13b1213993/usr/local/share/bastille/bootstrap.sh#L475>`_, so you may have to first edit or disable that error checking code. 
+Your mileage may vary.  Please let us know what happens. 
+ 
 Releases
 ========
 
@@ -53,20 +66,16 @@ security patches and errata in one motion.
 
 Notes
 -----
-
-The bootstrap subcommand is generally only used once to prepare the system. The
-only other use case for the bootstrap command is when a new FreeBSD version is
-released and you want to start deploying containers on that version.
+You need to bootstrap a release before creating a container with that release.
+The bootstrap command is also used when a new FreeBSD version is
+released and you want download it for creating new containers, or for upgrading existing containers.
 
 To update a release as patches are made available, see the `bastille update`
-command.
+command. To upgrade containers to a new version of the operating system, see the 
+`bastille upgrade` command
 
 Downloaded artifacts are stored in the `bastille/cache/version` directory.
 "bootstrapped" releases are stored in `bastille/releases/version`.
-
-To manually bootstrap a release (aka bring your own archive), place your
-archive in bastille/cache/name and extract to bastille/releases/name. Your
-mileage may vary; let me know what happens.
 
 
 Templates
@@ -89,18 +98,13 @@ Example
 
 Tips
 ----
-See the documentation on templates for more information on how they work and
-how you can create or customize your own. Templates are a powerful part of
-Bastille and facilitate full container automation.
-
-Notes
------
+ 
 If you don't want to bother with git to use templates you can create them
-manually on the Bastille system and apply them.
+manually on the file system and apply them.
 
 Templates are stored in `bastille/templates/namespace/name`. If you'd like to
-create a new template on your local system, simply create a new namespace
-within the templates directory and then one for the template. This namespacing
+create a new template on your local system, simply create a new namespace (directory)
+within the templates directory and then a directory for the template. This namespacing
 allows users and groups to have templates without conflicting template names.
 
 Once you've created the directory structure you can begin filling it with
