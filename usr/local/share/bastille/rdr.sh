@@ -78,9 +78,9 @@ check_jail_validity() {
     fi
 
     # Check if ext_if is defined in pf.conf
-    EXT_IF=$(grep '^[[:space:]]*ext_if[[:space:]]*=' /etc/pf.conf)
+    EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" /etc/pf.conf)
     if [ -z "${EXT_IF}" ]; then
-        error_exit "ext_if not defined in pf.conf"
+        error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
     fi
 }
 
@@ -104,7 +104,7 @@ fi
 # function: load rdr rule via pfctl
 load_rdr_rule() {
 ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass on $ext_if inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$1" "$2" "$JAIL_IP" "$3" ) \
+  printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP" "$3" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 }
 
@@ -114,7 +114,7 @@ proto=$1;host_port=$2;jail_port=$3;
 shift 3;
 log=$@
 ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass %s on $ext_if inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
+  printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 }
 

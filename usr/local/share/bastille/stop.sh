@@ -70,10 +70,10 @@ for _jail in ${JAILS}; do
         info "[${_jail}]:"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
-        ## remove (captured above) ip4.addr from firewall table:jails
+        ## remove (captured above) ip4.addr from firewall table
         if [ -n "${bastille_network_loopback}" -a ! -z "${_ip}" ]; then
             if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
-                pfctl -q -t jails -T delete "${_ip}"
+                pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
             fi
         fi
     fi
