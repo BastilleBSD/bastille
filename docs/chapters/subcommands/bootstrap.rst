@@ -70,7 +70,7 @@ Notes
 -----
 You need to bootstrap a release before creating a container with that release.
 The bootstrap command is also used when a new FreeBSD version is
-released and you want download it for creating new containers, or for upgrading existing containers.
+released and you want to ownload it for creating new containers, or for upgrading existing containers.
 
 To update a release as patches are made available, see the `bastille update`
 command. To upgrade containers to a new version of the operating system, see the 
