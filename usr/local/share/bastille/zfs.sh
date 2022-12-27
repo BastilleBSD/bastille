@@ -43,6 +43,14 @@ for _jail in ${JAILS}; do
 done
 }
 
+zfs_destroy_snapshot() {
+for _jail in ${JAILS}; do
+    info "[${_jail}]:"
+    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+    echo
+done
+}
+
 zfs_set_value() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
@@ -100,6 +108,10 @@ get)
 snap|snapshot)
     TAG=$2
     zfs_snapshot
+    ;;
+destroy_snap|destroy_snapshot)
+    TAG=$2
+    zfs_destroy_snapshot
     ;;
 df|usage)
     zfs_disk_usage
