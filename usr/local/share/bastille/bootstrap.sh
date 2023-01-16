@@ -543,6 +543,13 @@ http?://*/*/*)
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     bootstrap_template
     ;;
+git@*:*/*)
+    BASTILLE_TEMPLATE_URL=${1}
+    git_repository=$(echo "${1}" | awk -F : '{ print $2 }')
+    BASTILLE_TEMPLATE_USER=$(echo "${git_repository}" | awk -F / '{ print $1 }')
+    BASTILLE_TEMPLATE_REPO=$(echo "${git_repository}" | awk -F / '{ print $2 }')
+    bootstrap_template
+    ;;
 #adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
 ubuntu_bionic|bionic|ubuntu-bionic)
     PLATFORM_OS="Ubuntu/Linux"
