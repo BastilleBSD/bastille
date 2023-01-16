@@ -425,7 +425,7 @@ bootstrap_template() {
     ## define basic variables
     _url=${BASTILLE_TEMPLATE_URL}
     _user=${BASTILLE_TEMPLATE_USER}
-    _repo=${BASTILLE_TEMPLATE_REPO}
+    _repo=${BASTILLE_TEMPLATE_REPO%.*} # Remove the trailing ".git"
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
