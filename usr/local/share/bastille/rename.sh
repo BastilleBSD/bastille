@@ -71,7 +71,6 @@ update_jailconf() {
             # Rename vnet interface
             sed -i '' "/vnet.interface/s|_${TARGET}\";|_${NEWNAME}\";|" "${JAIL_CONFIG}"
             sed -i '' "/ifconfig/s|_${TARGET}|_${NEWNAME}|" "${JAIL_CONFIG}"
-
         fi
     fi
 }
