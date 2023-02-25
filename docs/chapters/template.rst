@@ -1,8 +1,7 @@
 ========
 Template
 ========
-Looking for ready made CI/CD validated [Bastille
-Templates](https://gitlab.com/BastilleBSD-Templates)?
+Looking for ready made CI/CD validated `Bastille Templates`_?
 
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the containers automatically.
@@ -139,3 +138,5 @@ directory names in the `bastille/templates` directory.
   Executing final command(s).
   chsh: user information updated
   Template Complete.
+
+.. _Bastille Templates: https://gitlab.com/BastilleBSD-Templates
