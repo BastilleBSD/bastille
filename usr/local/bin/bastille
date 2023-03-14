@@ -73,7 +73,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.9.20220714"
+BASTILLE_VERSION=
 
 usage() {
     cat << EOF
@@ -110,6 +110,7 @@ Available Commands:
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
   template    Apply file templates to targeted container(s).
+  tags        Add or remove tags to targeted container(s).
   top         Display and update information about the top(1) cpu processes.
   umount      Unmount a volume from within the targeted container(s).
   update      Update container base -pX release.
@@ -141,7 +142,7 @@ help|-h|--help)
 bootstrap|create|destroy|export|import|list|rdr|restart|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|stop|sysrc|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|stop|sysrc|tags|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
