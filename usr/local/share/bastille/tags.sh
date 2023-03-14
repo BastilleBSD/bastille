@@ -57,32 +57,32 @@ TAGS="${2}"
 
 for _jail in ${JAILS}; do
     bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"
-    if [ "${ACTION}" = "list" ]; then
-      [ -f "${bastille_jail_tags}" ] && cat "${bastille_jail_tags}"
-      continue
-    fi
-    for _tag in $(echo ${TAGS} | tr , ' '); do
-        case ${ACTION} in
-            add)
+    case ${ACTION} in
+        add)
+        for _tag in $(echo ${TAGS} | tr , ' '); do
             echo ${_tag} >> "${bastille_jail_tags}"
             tmpfile="$(mktemp)"
             sort "${bastille_jail_tags}" | uniq > "${tmpfile}"
             mv "${tmpfile}" "${bastille_jail_tags}"
-            ;;
-            del*)
-            if [ ! -f "${bastille_jail_tags}" ]; then
-                break
-            fi
+        done
+        ;;
+        del*)
+        for _tag in $(echo ${TAGS} | tr , ' '); do
+            [ ! -f "${bastille_jail_tags}" ] && break # skip if no tags file
             tmpfile="$(mktemp)"
             grep -Ev "^${_tag}\$" "${bastille_jail_tags}" > "${tmpfile}"
             mv "${tmpfile}" "${bastille_jail_tags}"
             # delete tags file if empty
             [ ! -s "${bastille_jail_tags}" ] && rm "${bastille_jail_tags}"
-            ;;
-            *)
-            usage
-            ;;
-        esac
-    done
+        done
+        ;;
+        list)
+        [ -f "${bastille_jail_tags}" ] && cat "${bastille_jail_tags}"
+        continue
+        ;;
+        *)
+        usage
+        ;;
+    esac
 done
 
