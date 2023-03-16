@@ -54,6 +54,8 @@ if [ $# -lt 1 -o $# -gt 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 ACTION="${1}"
 TAGS="${2}"
 

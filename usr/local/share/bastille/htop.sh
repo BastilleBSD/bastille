@@ -46,6 +46,8 @@ if [ $# -ne 0 ]; then
     usage
 fi
 
+bastille_root_check
+
 for _jail in ${JAILS}; do
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then

@@ -46,6 +46,8 @@ if [ $# -gt 3 ] || [ $# -lt 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 TARGET="$1"
 NEWRELEASE="$2"
 OPTION="$3"

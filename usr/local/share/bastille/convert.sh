@@ -46,6 +46,8 @@ if [ $# -ne 0 ]; then
     usage
 fi
 
+bastille_root_check
+
 convert_symlinks() {
     # Work with the symlinks, revert on first cp error
     if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then

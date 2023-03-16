@@ -45,6 +45,8 @@ if [ $# -lt 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 errors=0
 
 for _jail in ${JAILS}; do

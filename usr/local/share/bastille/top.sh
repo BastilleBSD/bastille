@@ -45,6 +45,8 @@ if [ $# -ne 0 ]; then
     usage
 fi
 
+bastille_root_check
+
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/bin/top

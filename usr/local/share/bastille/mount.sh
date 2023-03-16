@@ -50,6 +50,8 @@ else
     _fstab="$@"
 fi
 
+bastille_root_check
+
 ## assign needed variables
 _hostpath=$(echo "${_fstab}" | awk '{print $1}')
 _jailpath=$(echo "${_fstab}" | awk '{print $2}')

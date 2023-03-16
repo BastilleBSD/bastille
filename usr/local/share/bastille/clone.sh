@@ -46,6 +46,8 @@ if [ $# -ne 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 NEWNAME="${1}"
 IP="${2}"
 

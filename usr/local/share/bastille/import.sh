@@ -59,6 +59,8 @@ if [ $# -gt 3 ] || [ $# -lt 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 TARGET="${1}"
 OPT_FORCE=
 USER_IMPORT=

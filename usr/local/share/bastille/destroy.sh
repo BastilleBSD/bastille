@@ -210,6 +210,8 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 ## check what should we clean
 case "${TARGET}" in
 *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)

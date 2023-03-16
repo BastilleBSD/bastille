@@ -46,6 +46,8 @@ if [ $# -lt 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 TARGET="${1}"
 JAIL_NAME=""
 JAIL_IP=""

@@ -46,6 +46,8 @@ if [ $# -ne 0 ]; then
     usage
 fi
 
+bastille_root_check
+
 for _jail in ${JAILS}; do
     ## test if running
     if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
