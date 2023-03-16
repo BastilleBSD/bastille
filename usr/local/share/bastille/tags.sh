@@ -33,13 +33,13 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille tags TARGET add tag1,tag2,..."
-    error_notify "       bastille tags TARGET delete tag1,tag2,..."
-    error_notify "       bastille tags TARGET search tag"
-    error_notify "       bastille tags TARGET list"
+    error_notify "Usage: bastille tags TARGET add tag1[,tag2,...]"
+    error_notify "       bastille tags TARGET delete tag1[,tag2,...]"
+    error_notify "       bastille tags TARGET list [tag]"
     echo -e "Example: bastille tags JAILNAME add database,mysql"
     echo -e "         bastille tags JAILNAME delete mysql"
-    echo -e "         bastille tags ALL search mysql"
+    echo -e "         bastille tags ALL list"
+    echo -e "         bastille tags ALL list mysql"
     exit 1
 }
 
@@ -78,19 +78,20 @@ for _jail in ${JAILS}; do
             [ ! -s "${bastille_jail_tags}" ] && rm "${bastille_jail_tags}"
         done
         ;;
-        search)
-        [ -n "$(echo ${TAGS} | grep ,)" ] && usage # Only one tag per query
-        [ ! -f "${bastille_jail_tags}" ] && continue # skip if there is no tags file
-        grep -qE "^${TAGS}\$" "${bastille_jail_tags}"
-        if [ $? -eq 0 ]; then
-          echo "${_jail}"
-          continue
-        fi
-        ;;
         list)
-        if [ -f "${bastille_jail_tags}" ]; then
-            echo -n "${_jail}: "
-            xargs < "${bastille_jail_tags}"
+        if [ -n "${TAGS}" ]; then
+            [ -n "$(echo ${TAGS} | grep ,)" ] && usage # Only one tag per query
+            [ ! -f "${bastille_jail_tags}" ] && continue # skip if there is no tags file
+            grep -qE "^${TAGS}\$" "${bastille_jail_tags}"
+            if [ $? -eq 0 ]; then
+              echo "${_jail}"
+              continue
+            fi
+        else
+            if [ -f "${bastille_jail_tags}" ]; then
+                echo -n "${_jail}: "
+                xargs < "${bastille_jail_tags}"
+            fi
         fi
         ;;
         *)
