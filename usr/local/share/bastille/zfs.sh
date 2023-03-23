@@ -82,6 +82,8 @@ help|-h|--help)
     ;;
 esac
 
+bastille_root_check
+
 ## check ZFS enabled
 if [ ! "${bastille_zfs_enable}" = "YES" ]; then
     error_exit "ZFS not enabled."

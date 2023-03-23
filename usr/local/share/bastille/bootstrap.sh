@@ -42,6 +42,8 @@ help|-h|--help)
     ;;
 esac
 
+bastille_root_check
+
 #Validate if ZFS is enabled in rc.conf and bastille.conf.
 if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" ]; then
     warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"

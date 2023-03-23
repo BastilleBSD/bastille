@@ -46,6 +46,8 @@ if [ $# -eq 0 ]; then
     usage
 fi
 
+bastille_root_check
+
 COUNT=0
 RETURN=0
 

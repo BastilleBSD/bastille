@@ -588,6 +588,8 @@ help|-h|--help)
     ;;
 esac
 
+bastille_root_check
+
 if echo "$3" | grep '@'; then
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')

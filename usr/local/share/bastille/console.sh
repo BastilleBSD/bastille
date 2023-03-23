@@ -46,6 +46,8 @@ if [ $# -gt 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 USER="${1}"
 
 validate_user() {

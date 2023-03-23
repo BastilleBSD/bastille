@@ -55,6 +55,8 @@ if [ $# -ne 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 OPTION="${1}"
 VALUE="${2}"
 

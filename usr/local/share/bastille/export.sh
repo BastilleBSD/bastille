@@ -71,6 +71,8 @@ if [ $# -gt 5 ] || [ $# -lt 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 zfs_enable_check() {
     # Temporarily disable ZFS so we can create a standard backup archive
     if [ "${bastille_zfs_enable}" = "YES" ]; then

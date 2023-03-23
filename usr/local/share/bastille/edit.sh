@@ -48,6 +48,8 @@ elif [ $# -eq 1 ]; then
     TARGET_FILENAME="${1}"
 fi
 
+bastille_root_check
+
 if [ -z "${EDITOR}" ]; then
     EDITOR=vi
 fi

@@ -56,6 +56,8 @@ if [ $# -ne 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 NEWNAME="${1}"
 
 update_jailconf() {

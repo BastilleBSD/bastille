@@ -154,6 +154,8 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     bastille_usage
 fi
 
+bastille_root_check
+
 case "$1" in
 *-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
     RELEASE=$1

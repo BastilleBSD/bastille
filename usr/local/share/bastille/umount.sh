@@ -46,6 +46,8 @@ if [ $# -ne 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 MOUNT_PATH=$1
 
 for _jail in ${JAILS}; do

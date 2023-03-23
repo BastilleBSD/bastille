@@ -35,6 +35,12 @@ usage() {
     error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|(import|export|backup)]"
 }
 
+if [ "$1" = help -o "$1" = "-h" -o "$1" = "--help" ]; then
+    usage
+fi
+
+bastille_root_check
+
 if [ $# -eq 0 ]; then
    /usr/sbin/jls -N
 fi
@@ -47,9 +53,6 @@ fi
 if [ $# -gt 0 ]; then
     # Handle special-case commands first.
     case "$1" in
-    help|-h|--help)
-        usage
-        ;;
     all|-a|--all)
         if [ -d "${bastille_jailsdir}" ]; then
             DEFAULT_VALUE="-"

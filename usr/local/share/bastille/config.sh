@@ -55,6 +55,8 @@ if [ $# -eq 1 ] || [ $# -gt 3 ]; then
     usage
 fi
 
+bastille_root_check
+
 ACTION=$1
 shift
 

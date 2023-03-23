@@ -116,6 +116,8 @@ if [ $# -lt 1 ]; then
     bastille_usage
 fi
 
+bastille_root_check
+
 ## global variables
 TEMPLATE="${1}"
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
