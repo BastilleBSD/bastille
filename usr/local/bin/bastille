@@ -74,8 +74,8 @@ Usage:
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
-  cmd         Execute arbitrary command on targeted container(s).
   clone       Clone an existing container.
+  cmd         Execute arbitrary command on targeted container(s).
   config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
@@ -98,8 +98,8 @@ Available Commands:
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
-  template    Apply file templates to targeted container(s).
   tags        Add or remove tags to targeted container(s).
+  template    Apply file templates to targeted container(s).
   top         Display and update information about the top(1) cpu processes.
   umount      Unmount a volume from within the targeted container(s).
   update      Update container base -pX release.
