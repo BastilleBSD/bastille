@@ -51,6 +51,7 @@ bastille_root_check
 TARGET="${1}"
 JAIL_NAME=""
 JAIL_IP=""
+JAIL_IP6=""
 EXT_IF=""
 shift
 
@@ -72,6 +73,12 @@ check_jail_validity() {
         if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
             error_exit "Jail IP not found: ${TARGET}"
         fi
+    fi
+    # Check if jail ip6 address (ip6.addr) is valid (non-VNET only)
+    if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
+	  if [ "$(bastille config $TARGET get ip6)" != 'disabled' ]; then
+        JAIL_IP6=$(/usr/sbin/jls -j "${TARGET}" ip6.addr 2>/dev/null)
+	  fi
     fi
 
     # Check if rdr-anchor is defined in pf.conf
@@ -108,6 +115,11 @@ load_rdr_rule() {
 ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
   printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP" "$3" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
+if [ -n "$JAIL_IP6" ]; then
+  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP6" "$3" ) \
+    | pfctl -a "rdr/${JAIL_NAME}" -f-
+fi
 }
 
 # function: load rdr rule with log via pfctl
@@ -118,6 +130,12 @@ log=$@
 ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
   printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
+if [ -n "$JAIL_IP6" ]; then
+  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+    | pfctl -a "rdr/${JAIL_NAME}" -f-
+fi
+
 }
 
 while [ $# -gt 0 ]; do
