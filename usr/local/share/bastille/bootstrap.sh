@@ -516,8 +516,8 @@ case "${1}" in
     ## check for HardenedBSD(latest stable build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-BUILD-LATEST//g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-BUILD-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
@@ -534,8 +534,8 @@ current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-BUILD-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
