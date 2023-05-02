@@ -104,10 +104,10 @@ validate_ip() {
     if echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
         if [ "${ipx_addr}" = "ip4.addr" ]; then
                 IP4_ADDR="${ip}"
-                IP4_DEFINITION="${ipx_addr}=${ip};"
+                IP4_DEFINITION="${ipx_addr} = ${ip};"
         else
                 IP6_ADDR="${ip}"
-                IP6_DEFINITION="${ipx_addr}=${ip};"
+                IP6_DEFINITION="${ipx_addr} = ${ip};"
         fi
     fi
 }
