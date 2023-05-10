@@ -119,6 +119,23 @@ EOF
 CMD=$1
 shift
 
+target_all_jails() {
+  _JAILS=$(/usr/sbin/jls name)
+  JAILS=""
+  for _jail in ${_JAILS}; do
+      _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
+      if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
+          JAILS="${JAILS} ${_jail}"
+      fi
+  done
+}
+
+check_target_is_running() {
+  if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
+      error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+  fi
+}
+
 # Handle special-case commands first.
 case "${CMD}" in
 version|-v|--version)
@@ -140,24 +157,17 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
         shift
 
         if [ "${TARGET}" = 'ALL' ]; then
-            _JAILS=$(/usr/sbin/jls name)
-            JAILS=""
-            for _jail in ${_JAILS}; do
-                _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
-                if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
-                    JAILS="${JAILS} ${_jail}"
-                fi
-            done
+            target_all_jails
         elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-H' ] || [ "${TARGET}" = '--host' ]; then
             TARGET="${1}"
             USE_HOST_PKG=1
-            JAILS="${TARGET}"
-            shift
-
-            # Require the target to be running
-            if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-                error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+            if [ "${TARGET}" = 'ALL' ]; then
+              target_all_jails
+            else
+              JAILS="${TARGET}"
+              check_target_is_running
             fi
+            shift
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
             # This command does not act on a jail, so we are temporarily bypassing the presence/started
             # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
@@ -171,10 +181,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|st
 
             case "${CMD}" in
             cmd|console|htop|pkg|service|stop|sysrc|template|top)
-                # Require the target to be running. -- cwells
-                if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-                    error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
-                fi
+                check_target_is_running
                 ;;
             convert|rename)
                 # Require the target to be stopped. -- cwells
