@@ -12,6 +12,7 @@ https://docs.bastillebsd.org.
    :caption: Contents:
 
    chapters/installation
+   chapters/upgrading
    chapters/networking
    chapters/usage
    chapters/targeting
