@@ -683,9 +683,9 @@ if [ -n "${LINUX_JAIL}" ]; then
         ## check for FreeBSD releases name
         NAME_VERIFY=ubuntu_focal
         ;;
-    debian_stretch|stretch|debian-stretch)
+    jammy|ubuntu_jammy|ubuntu-jammy)
         ## check for FreeBSD releases name
-        NAME_VERIFY=stretch
+        NAME_VERIFY=ubuntu_jammy
         ;;
     debian_buster|buster|debian-buster)
         ## check for FreeBSD releases name
@@ -694,6 +694,10 @@ if [ -n "${LINUX_JAIL}" ]; then
     debian_bullseye|bullseye|debian-bullseye)
         ## check for FreeBSD releases name
         NAME_VERIFY=bullseye
+        ;;
+    debian_bookworm|bookworm|debian-bookworm)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=bookworm
         ;;
     *)
         error_notify "Unknown Linux."
