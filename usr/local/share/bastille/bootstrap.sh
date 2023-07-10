@@ -567,6 +567,13 @@ ubuntu_focal|focal|ubuntu-focal)
     ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
+ubuntu_jammy|jammy|ubuntu-jammy)
+    PLATFORM_OS="Ubuntu/Linux"
+    LINUX_FLAVOR="jammy"
+    DIR_BOOTSTRAP="Ubuntu_2204"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
+    ;;
 debian_buster|buster|debian-buster)
     PLATFORM_OS="Debian/Linux"
     LINUX_FLAVOR="buster"
