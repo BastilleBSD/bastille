@@ -399,7 +399,7 @@ debootstrap_release() {
     fi
 
     case "${LINUX_FLAVOR}" in
-        bionic|buster|bullseye|bookworm)
+        bionic|focal|jammy|buster|bullseye|bookworm)
         info "Increasing APT::Cache-Start"
         echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
         ;;
