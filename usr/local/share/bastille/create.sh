@@ -759,6 +759,11 @@ if [ -z "${EMPTY_JAIL}" ]; then
         NAME_VERIFY=Ubuntu_2004
         validate_release
         ;;
+    ubuntu_jammy|jammy|ubuntu-jammy)
+        UBUNTU="1"
+        NAME_VERIFY=Ubuntu_2204
+        validate_release
+        ;;
     debian_buster|buster|debian-buster)
         NAME_VERIFY=Debian10
         validate_release
