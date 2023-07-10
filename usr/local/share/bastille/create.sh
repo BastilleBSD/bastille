@@ -759,16 +759,16 @@ if [ -z "${EMPTY_JAIL}" ]; then
         NAME_VERIFY=Ubuntu_2004
         validate_release
         ;;
-    debian_stretch|stretch|debian-stretch)
-        NAME_VERIFY=Debian9
-        validate_release
-        ;;
     debian_buster|buster|debian-buster)
         NAME_VERIFY=Debian10
         validate_release
         ;;
     debian_bullseye|bullseye|debian-bullseye)
         NAME_VERIFY=Debian11
+        validate_release
+        ;;
+    debian_bookworm|bookworm|debian-bookworm)
+        NAME_VERIFY=Debian12
         validate_release
         ;;
     *)
