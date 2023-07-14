@@ -249,14 +249,14 @@ current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/g;s/latest/LATEST/g')
     destroy_rel
     ;;
-Ubuntu_1804|Ubuntu_2004|UBUNTU_1804|UBUNTU_2004)
+Ubuntu_1804|Ubuntu_2004|Ubuntu_2204|UBUNTU_1804|UBUNTU_2004|UBUNTU_2204)
     ## check for Linux releases
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$|(Ubuntu_2204)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
     destroy_rel
     ;;
-Debian9|Debian10|Debian11|DEBIAN9|DEBIAN10|DEBIAN11)
+Debian10|Debian11|Debian12|DEBIAN10|DEBIAN11|DEBIAN12)
     ## check for Linux releases
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian9)$|(Debian10)$|(Debian11)$' | sed 's/DEBIAN/Debian/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian10)$|(Debian11)$|(Debian12)$' | sed 's/DEBIAN/Debian/g')
     destroy_rel
     ;;
 *)

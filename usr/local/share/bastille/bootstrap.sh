@@ -399,7 +399,7 @@ debootstrap_release() {
     fi
 
     case "${LINUX_FLAVOR}" in
-        bionic|stretch|buster|bullseye)
+        bionic|focal|jammy|buster|bullseye|bookworm)
         info "Increasing APT::Cache-Start"
         echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
         ;;
@@ -567,10 +567,10 @@ ubuntu_focal|focal|ubuntu-focal)
     ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
-debian_stretch|stretch|debian-stretch)
-    PLATFORM_OS="Debian/Linux"
-    LINUX_FLAVOR="stretch"
-    DIR_BOOTSTRAP="Debian9"
+ubuntu_jammy|jammy|ubuntu-jammy)
+    PLATFORM_OS="Ubuntu/Linux"
+    LINUX_FLAVOR="jammy"
+    DIR_BOOTSTRAP="Ubuntu_2204"
     ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
@@ -585,6 +585,13 @@ debian_bullseye|bullseye|debian-bullseye)
     PLATFORM_OS="Debian/Linux"
     LINUX_FLAVOR="bullseye"
     DIR_BOOTSTRAP="Debian11"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
+    ;;
+debian_bookworm|bookworm|debian-bookworm)
+    PLATFORM_OS="Debian/Linux"
+    LINUX_FLAVOR="bookworm"
+    DIR_BOOTSTRAP="Debian12"
     ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
     debootstrap_release
     ;;
