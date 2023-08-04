@@ -959,6 +959,16 @@ For standard containers you need to upgrade the shared base jail:
 ```shell
 ishmael ~ # bastille upgrade 12.1-RELEASE 12.2-RELEASE
 ...
+To install the downloaded upgrades, run "/usr/sbin/freebsd-update install".
+
+Please run 'bastille upgrade 12.2-RELEASE install' to finish installing updates.
+ishmael ~ # bastille upgrade 12.1-RELEASE install
+src component not installed, skipped
+Installing updates...
+Kernel updates have been installed.  Please reboot and run
+"/usr/sbin/freebsd-update install" again to finish installing updates.
+ishmael ~ # bastille upgrade 12.1-RELEASE install
+...
 ```
 
 For thick jails you need to upgrade every single container (according the freebsd-update procedure):
