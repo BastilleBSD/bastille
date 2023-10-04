@@ -76,7 +76,7 @@ check_jail_validity() {
     fi
     # Check if jail ip6 address (ip6.addr) is valid (non-VNET only)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        if [ "$(bastille config $TARGET get ip6)" != 'disabled' ] && [ "$(bastille config $TARGET get ip6)" != 'not set' ]; then
+        if [ "$(bastille config $TARGET get ip6)" != 'disable' ] && [ "$(bastille config $TARGET get ip6)" != 'not set' ]; then
             JAIL_IP6=$(/usr/sbin/jls -j "${TARGET}" ip6.addr 2>/dev/null)
         fi
     fi
