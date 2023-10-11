@@ -96,14 +96,16 @@ configure_zfs() {
     if [ ! "$(kldstat -q -m zfs)" ]; then
         info "ZFS module not loaded; skipping..."
     else
+        ## attempt to determine bastille_zroot from `zpool list`
         bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
         sysrc -f "${bastille_prefix}/bastille.conf" bastille_zfs_enable=YES
         sysrc -f "${bastille_prefix}/bastille.conf" bastille_zfs_zpool="${bastille_zroot}"
     fi
 }
 
-# Run all functions if no args (default)
+# Run all base functions (w/o vnet) if no args
 if [ $# -eq 0 ]; then
+    sysrc bastille_enable=YES
     configure_bastille0
     configure_pf
     configure_zfs
@@ -117,10 +119,13 @@ help|-h|--help)
 pf|firewall)
     configure_pf
     ;;
-bastille0|network)
+bastille0|loopback)
     configure_bastille0
     ;;
-zfs)
+zfs|storage)
     configure_zfs
+    ;;
+bastille1|vnet|bridge)
+    configure_vnet
     ;;
 esac

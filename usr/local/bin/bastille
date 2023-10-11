@@ -62,7 +62,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.10.20230714"
+BASTILLE_VERSION="0.10.20231013"
 
 usage() {
     cat << EOF
@@ -95,6 +95,7 @@ Available Commands:
   rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
+  setup       Attempt to auto-configure network, firewall and storage on new installs.
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).

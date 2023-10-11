@@ -3,37 +3,40 @@ Network Requirements
 Here's the scenario. You've installed Bastille at home or in the cloud and want
 to get started putting applications in secure little containers, but how do you
 get these containers on the network?  Bastille tries to be flexible about how to 
-network containerized applications.   Four methods are described here.  
+network containerized applications. Four methods are described here.
 
 1. Home or Small Office
 
 2. Cloud with IPV4 and multiple IPV6
 
-3. Could with single IPV4 (internatl bridge)
+3. Cloud with single IPV4 (internal bridge)
 
-4. Cloud with a single IPV4 (external bridge) 
+4. Cloud with a single IPV4 (external bridge)
 
+Please choose the option which is most appropriate for your environment.
 
-Please choose the option which is most appropriate for your environment. 
-
-
-First a few notes.  Bastille tries to verify that the interface name you provide is a valid
-interface. In FreeBSD network interfaces have different names, but look something like
-`em0`, `bge0`, `re0`,  `vtnet0` etc. Running the ifconfig commend will tell you the name
-of your existing interfaces. Bastille also checks for a valid syntax IP4 or IP6 address.    
-When you are testing calling out from your containers,  please note that the ping command is disabled within the containers, because raw socket access are a security hole.  Instead I install and test with wget instead. 
+First a few notes. Bastille tries to verify that the interface name you provide
+is a valid interface. In FreeBSD network interfaces have different names, but
+look something like `em0`, `bge0`, `re0`, `vtnet0` etc. Running the ifconfig
+commend will tell you the name of your existing interfaces. Bastille also
+checks for a valid syntax IP4 or IP6 address. When you are testing calling out
+from your containers, please note that the ping command is disabled within the
+containers, because raw socket access are a security hole. Instead, install and
+test with `wget`/`curl`/`fetch` instead.
 
 Shared Interface on Home or Small Office Network
 ================================================
-If you have just one computer, or a home or small office network, 
-where you are separated from the rest of the internet by a router.  So you are free to use
-`private IP addresses <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`.
+If you have just one computer, or a home or small office network, where you are
+separated from the rest of the internet by a router.  So you are free to use
+`private IP addresses
+<https://www.lifewire.com/what-is-a-private-ip-address-2625970>`_.
 
-In this environment, to use Bastille, just create the container, give it a unique private ip address, and attach its ip address to your primary interface.  
+In this environment, to use Bastille, just create the container, give it a
+unique private ip address, and attach its ip address to your primary interface.
 
 .. code-block:: shell
 
-  bastille create alcatraz 13.1-RELEASE 192.168.1.50 em0 
+  bastille create alcatraz 13.2-RELEASE 192.168.1.50 em0
 
 You may have to change em0
 
@@ -46,50 +49,54 @@ This method is the simplest. All you need to know is the name of your network
 interface and a free IP on your local network.
 
 Shared Interface on IPV6 network (vultr.com)
-=======================================
-Some ISP's, such as `vultr.com <https://Vultr.com>`, give you a single ipv4 address, and a large block of ipv6 addresses. You can then assign a unique ipv6 address to each Bastille Container.  
+============================================ 
+Some ISP's, such as `Vultr <https://vultr.com>`_, give you a single ipv4 address,
+and a large block of ipv6 addresses. You can then assign a unique ipv6 address
+to each Bastille Container.
 
-On a virtual machine such as vultr.com the virtual interface may be `vtnet0`. 
+On a virtual machine such as vultr.com the virtual interface may be `vtnet0`.
 So we issue the command:
 
 .. code-block:: shell
 
- bastille create alcatraz 13.1-RELEASE  2001:19f0:6c01:114c::100 vtnet0
+ bastille create alcatraz 13.2-RELEASE 2001:19f0:6c01:114c::100 vtnet0
 
-We could also write the ipv6 address as 2001:19f0:6c01:114c:0:100 
+We could also write the ipv6 address as 2001:19f0:6c01:114c:0:100
 
-The tricky part are the ipv6 addresses. IPV6 is a string of 8 4 digit 
+The tricky part are the ipv6 addresses. IPV6 is a string of 8 4 digit
 hexadecimal characters.  At vultr they said:
 
 Your server was assigned the following six section subnet:
 
 2001:19f0:6c01:114c:: / 64
 
-The `vultr ipv6 subnet calculator <https://www.vultr.com/resources/subnet-calculator-ipv6/?prefix_length=64&display=long&ipv6_address=2001%3Adb8%3Aacad%3Ae%3A%3A%2F64>` is helpful in making sense of that ipv6 address. 
+The `vultr ipv6 subnet calculator
+<https://www.vultr.com/resources/subnet-calculator-ipv6/?prefix_length=64&display=long&ipv6_address=2001%3Adb8%3Aacad%3Ae%3A%3A%2F64>`_
+is helpful in making sense of that ipv6 address. 
 
 We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0 
 
-Where the /64 basicaly means that the first 64 bits of the address (4x4 character hexadecimal) values define the network, and the remaining characters, we can assign as we want to the Bastille Container. In the actual bastille create command given above, it was defined to be 100.   But we also have to tell the host operating system that we are now using this address.  This is done on freebsd with the following command
+Where the /64 basicaly means that the first 64 bits of the address (4x4
+character hexadecimal) values define the network, and the remaining characters,
+we can assign as we want to the Bastille Container. In the actual bastille
+create command given above, it was defined to be 100. But we also have to tell
+the host operating system that we are now using this address. This is done on
+freebsd with the following command
 
 .. code-block:: shell
 
-  ifconfig_vtnet0_alias0="inet6 2001:19f0:6c01:114c::100  prefixlen 64"
+  ifconfig_vtnet0_alias0="inet6 2001:19f0:6c01:114c::100 prefixlen 64"
 
-At that point your container can talk to the world, and the world can ping your container.  Of course when you reboot the machine, that command will be forgotten  To make it permanent, 
-you have to add it to the file /etc/rc.conf
+At that point your container can talk to the world, and the world can ping your
+container.  Of course when you reboot the machine, that command will be
+forgotten. To make it permanent, prefix the same command with `sysrc`
 
-Just remember you cannot ping out from the container. Instead I installed and used wget to test the connectivity. 
-
-Use the bastille pkg command to install wget. 
-
-.. code-block:: shell
-
-   bastille pkg alcatraz install wget
-
+Just remember you cannot ping out from the container. Instead, install and
+use `wget`/`curl`/`fetch` to test the connectivity.
 
 
 Virtual Network (VNET)
-========================
+======================
 (Added in 0.6.x) VNET is supported on FreeBSD 12+ only.
 
 Virtual Network (VNET) creates a private network interface for a container.
@@ -101,12 +108,12 @@ external interface.
 
 .. code-block:: shell
 
-  bastille create -V azkaban 13.1-RELEASE 192.168.1.50/24 em0
+  bastille create -V azkaban 13.2-RELEASE 192.168.1.50/24 em0
 
 Bastille will automagically create the bridge interface and connect /
 disconnect containers as they are started and stopped. A new interface will be
 created on the host matching the pattern `interface0bridge`. In the example
-here, `em0bridge`. 
+here, `em0bridge`.
 
 The `em0` interface will be attached to the bridge along with the unique
 container interfaces as they are started and stopped. These interface names
@@ -135,8 +142,8 @@ Lastly, you may want to consider these three `sysctl` values:
 
 Bastille will attempt to auto-detect the default route from the host system and
 assign it to the VNET container. This auto-detection may not always be accurate
-for your needs for the particular container. In this case you'll need to add
-a default route manually or define the preferred default route in the
+for your needs for the particular container. In this case you'll need to add a
+default route manually or define the preferred default route in the
 `bastille.conf`.
 
 .. code-block:: shell
@@ -155,23 +162,23 @@ This config change will apply the defined gateway to any new containers.
 Existing containers will need to be manually updated.
 
 Virtual Network (VNET) on External Bridge
-=======================================
-To create a VNET based container and attach it to an external, already existing bridge, use the `-B` option, an IP/netmask and
-external bridge.
+=========================================
+To create a VNET based container and attach it to an external, already existing
+bridge, use the `-B` option, an IP/netmask and external bridge.
 
 .. code-block:: shell
 
-  bastille create -B azkaban 13.1-RELEASE 192.168.1.50/24 bridge0
+  bastille create -B azkaban 13.2-RELEASE 192.168.1.50/24 bridge0
 
-Bastille will automagically create the interface, attach it to the specified bridge and connect /
-disconnect containers as they are started and stopped. 
+Bastille will automagically create the interface, attach it to the specified
+bridge and connect / disconnect containers as they are started and stopped.
 The bridge needs to be created/enabled before creating and starting the jail.
 
 Public Network
 ==============
 In this section we describe how to network containers in a public network
 such as a cloud hosting provider who only provides you with a single ip address. 
-(AWS, digital ocean, etc)  (The exception is vultr.com, which does 
+(AWS, Digital Ocean, etc) (The exception is vultr.com, which does 
 provide you with lots of IPV6 addresses and does a great job supporting FreeBSD!)  
 
 So if you only have a single IP address and if you want to create multiple
@@ -239,7 +246,7 @@ to containers are:
 
 .. code-block:: shell
 
-  nat on $ext_if from <jails> to any -> ($ext_if)
+  nat on $ext_if from <jails> to any -> ($ext_if:0)
 
 The `nat` routes traffic from the loopback interface to the external
 interface for outbound access.
@@ -253,16 +260,18 @@ The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
 
 .. code-block:: shell
 
-  bastille rdr <jail> tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
-  bastille rdr <jail> udp 2053 53 # Same for udp
-  bastille rdr <jail> list        # List dynamic rdr rules
-  bastille rdr <jail> clear       # Clear dynamic rdr rules
+  bastille rdr TARGET tcp 2001 22 # Redirects tcp port 2001 on host to 22 on jail
+  bastille rdr TARGET udp 2053 53 # Same for udp
+  bastille rdr TARGET list        # List dynamic rdr rules
+  bastille rdr TARGET clear       # Clear dynamic rdr rules
 
 Note that if you are redirecting ports where the host is also listening (eg.
 ssh) you should make sure that the host service is not listening on the cloned
 interface - eg. for ssh set sshd_flags in rc.conf
 
-  sshd_flags="-o ListenAddress=<hostname>"
+.. code-block:: shell
+
+  sshd_flags="-o ListenAddress=<host-address>"
 
 Finally, start up the firewall:
 
