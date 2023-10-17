@@ -23,9 +23,11 @@ Bastille sub-commands
    rename
    restart
    service
+   setup
    start
    stop
    sysrc
+   tags
    top
    umount
    update
