@@ -49,6 +49,7 @@ bastille_compress_xz_options="-0 -v"                                  ## default
 bastille_decompress_xz_options="-c -d -v"                             ## default "-c -d -v"
 bastille_compress_gz_options="-1 -v"                                  ## default "-1 -v"
 bastille_decompress_gz_options="-k -d -c -v"                          ## default "-k -d -c -v"
+bastille_export_options=""                                            ## default "" predefined export options, e.g. "--safe --gz"
 
 ## Networking
 bastille_network_loopback="bastille0"                                 ## default: "bastille0"
