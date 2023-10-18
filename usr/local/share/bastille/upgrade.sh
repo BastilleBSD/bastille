@@ -89,7 +89,7 @@ jail_check() {
 
 release_check() {
     # Validate the release
-    if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
+    if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
         error_exit "${NEWRELEASE} is not a valid release."
     fi
 }
