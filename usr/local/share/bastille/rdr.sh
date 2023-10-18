@@ -88,9 +88,11 @@ check_jail_validity() {
     fi
 
     # Check if ext_if is defined in pf.conf
-    EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
-    if [ -z "${EXT_IF}" ]; then
-        error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
+    if [ -n "${bastille_pf_conf}" ]; then
+        EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
+        if [ -z "${EXT_IF}" ]; then
+            error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
+        fi
     fi
 }
 
