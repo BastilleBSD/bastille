@@ -42,7 +42,7 @@ fi
 bastille_root_check
 
 if [ $# -eq 0 ]; then
-   /usr/sbin/jls -N
+   /usr/sbin/jls
 fi
 
 if [ "${1}" == "-j" ]; then
