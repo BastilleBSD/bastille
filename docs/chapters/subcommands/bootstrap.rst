@@ -22,13 +22,21 @@ Releases
 Example
 -------
 
-To `bootstrap` a release, run the bootstrap sub-command with the
+To `bootstrap` a FreeBSD release, run the bootstrap sub-command with the
 release version as the argument.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille bootstrap 11.4-RELEASE [update]
-  ishmael ~ # bastille bootstrap 12.1-RELEASE
+  ishmael ~ # bastille bootstrap 12.4-RELEASE [update]
+  ishmael ~ # bastille bootstrap 13.2-RELEASE [update]
+
+To `bootstrap` a HardenedBSD release, run the bootstrap sub-command with the
+build version as the argument.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille bootstrap 13-stable-build-latest
+
 
 This command will ensure the required directory structures are in place and
 download the requested release. For each requested release, `bootstrap` will

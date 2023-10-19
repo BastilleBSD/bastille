@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,14 @@ for _jail in ${JAILS}; do
 done
 }
 
+zfs_destroy_snapshot() {
+for _jail in ${JAILS}; do
+    info "[${_jail}]:"
+    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+    echo
+done
+}
+
 zfs_set_value() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
@@ -74,6 +82,8 @@ help|-h|--help)
     ;;
 esac
 
+bastille_root_check
+
 ## check ZFS enabled
 if [ ! "${bastille_zfs_enable}" = "YES" ]; then
     error_exit "ZFS not enabled."
@@ -100,6 +110,10 @@ get)
 snap|snapshot)
     TAG=$2
     zfs_snapshot
+    ;;
+destroy_snap|destroy_snapshot)
+    TAG=$2
+    zfs_destroy_snapshot
     ;;
 df|usage)
     zfs_disk_usage

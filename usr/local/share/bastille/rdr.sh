@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rdr TARGET [clear|list|(tcp|udp host_port jail_port)]"
+    error_exit "Usage: bastille rdr TARGET [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]"
 }
 
 # Handle special-case commands first.
@@ -46,19 +46,26 @@ if [ $# -lt 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 TARGET="${1}"
+JAIL_NAME=""
+JAIL_IP=""
+JAIL_IP6=""
+EXT_IF=""
 shift
 
-# Can only redirect to single jail
-if [ "${TARGET}" = 'ALL' ]; then
-    error_exit "Can only redirect to a single jail."
-fi
+check_jail_validity() {
+    # Can only redirect to single jail
+    if [ "${TARGET}" = 'ALL' ]; then
+        error_exit "Can only redirect to a single jail."
+    fi
 
-# Check if jail name is valid
-JAIL_NAME=$(jls -j "${TARGET}" name 2>/dev/null)
-if [ -z "${JAIL_NAME}" ]; then
-    error_exit "Jail not found: ${TARGET}"
-fi
+    # Check if jail name is valid
+    JAIL_NAME=$(/usr/sbin/jls -j "${TARGET}" name 2>/dev/null)
+    if [ -z "${JAIL_NAME}" ]; then
+        error_exit "Jail not found: ${TARGET}"
+    fi
 
 # The rdr feature is non-VNET only
 if [ "$(bastille config $TARGET get vnet)" = 'enabled' ]; then
@@ -72,16 +79,19 @@ if [ \( -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" \) -a \( -z "${JAIL_IP6}" -o "${JA
     error_exit "Jail IP not found: ${TARGET}"
 fi
 
-# Check if rdr-anchor is defined in pf.conf
-if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
-    error_exit "rdr-anchor not found in pf.conf"
-fi
+    # Check if rdr-anchor is defined in pf.conf
+    if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
+        error_exit "rdr-anchor not found in pf.conf"
+    fi
 
-# Check if ext_if is defined in pf.conf
-EXT_IF=$(grep '^[[:space:]]*ext_if[[:space:]]*=' /etc/pf.conf)
-if [ -z "${EXT_IF}" ]; then
-    error_exit "ext_if not defined in pf.conf"
-fi
+    # Check if ext_if is defined in pf.conf
+    if [ -n "${bastille_pf_conf}" ]; then
+        EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
+        if [ -z "${EXT_IF}" ]; then
+            error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
+        fi
+    fi
+}
 
 # function: write rule to rdr.conf
 persist_rdr_rule() {
@@ -89,6 +99,16 @@ if ! grep -qs "$1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
     echo "$1 $2 $3" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
 fi
 }
+
+persist_rdr_log_rule() {
+proto=$1;host_port=$2;jail_port=$3;
+shift 3;
+log=$@;
+if ! grep -qs "$proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+fi
+}
+
 
 # function: load rdr rule via pfctl
 load_rdr_rule() {
@@ -103,23 +123,88 @@ load_rdr_rule() {
     ) | pfctl -a "rdr/${JAIL_NAME}" -f-
 }
 
+# function: load rdr rule with log via pfctl
+load_rdr_log_rule() {
+proto=$1;host_port=$2;jail_port=$3;
+shift 3;
+log=$@
+( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
+      | pfctl -a "rdr/${JAIL_NAME}" -f-
+if [ -n "$JAIL_IP6" ]; then
+  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+    | pfctl -a "rdr/${JAIL_NAME}" -f-
+fi
+
+
 while [ $# -gt 0 ]; do
     case "$1" in
         list)
-            pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+            if [ "${TARGET}" = 'ALL' ]; then
+                for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    echo "${JAIL_NAME} redirects:"
+                    pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+                done
+            else
+                check_jail_validity
+                pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+            fi
             shift
             ;;
         clear)
-            pfctl -a "rdr/${JAIL_NAME}" -Fn
+            if [ "${TARGET}" = 'ALL' ]; then
+                for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    echo "${JAIL_NAME} redirects:"
+                    pfctl -a "rdr/${JAIL_NAME}" -Fn
+                done
+            else
+                check_jail_validity
+                pfctl -a "rdr/${JAIL_NAME}" -Fn
+            fi
             shift
             ;;
         tcp|udp)
             if [ $# -lt 3 ]; then
                 usage
+            elif [ $# -eq 3 ]; then
+                check_jail_validity
+                persist_rdr_rule $1 $2 $3
+                load_rdr_rule $1 $2 $3
+                shift 3
+            else
+                case "$4" in
+                    log)
+                        proto=$1
+                        host_port=$2
+                        jail_port=$3
+                        shift 3
+                        if [ $# -gt 3 ]; then
+                            for last in $@; do
+                                true
+                            done
+                            if [ $2 == "(" ] && [ $last == ")" ] ; then
+                                check_jail_validity
+                                persist_rdr_log_rule $proto $host_port $jail_port $@
+                                load_rdr_log_rule $proto $host_port $jail_port $@
+                                shift $#
+                            else
+                                usage
+                            fi
+                        elif [ $# -eq 1 ]; then
+                            check_jail_validity
+                            persist_rdr_log_rule $proto $host_port $jail_port $@
+                            load_rdr_log_rule $proto $host_port $jail_port $@
+                            shift 1
+                        else
+                            usage
+                        fi
+                        ;;
+                    *)
+                        usage
+                        ;;
+                esac
             fi
-            persist_rdr_rule $1 $2 $3
-            load_rdr_rule $1 $2 $3
-            shift 3
             ;;
         *)
             usage

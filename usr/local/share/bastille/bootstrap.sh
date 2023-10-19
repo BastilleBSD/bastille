@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@ help|-h|--help)
     usage
     ;;
 esac
+
+bastille_root_check
 
 #Validate if ZFS is enabled in rc.conf and bastille.conf.
 if [ "$(sysrc -n zfs_enable)" = "YES" ] && [ ! "${bastille_zfs_enable}" = "YES" ]; then
@@ -103,12 +105,11 @@ bootstrap_directories() {
         if [ "${bastille_zfs_enable}" = "YES" ];then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
-                chmod 0750 "${bastille_prefix}"
             fi
         else
             mkdir -p "${bastille_prefix}"
-            chmod 0750 "${bastille_prefix}"
         fi
+        chmod 0750 "${bastille_prefix}"
     fi
 
     ## ${bastille_backupsdir}
@@ -116,12 +117,11 @@ bootstrap_directories() {
         if [ "${bastille_zfs_enable}" = "YES" ];then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 zfs create ${bastille_zfs_options} -o mountpoint="${bastille_backupsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/backups"
-                chmod 0750 "${bastille_backupsdir}"
             fi
         else
             mkdir -p "${bastille_backupsdir}"
-            chmod 0750 "${bastille_backupsdir}"
         fi
+        chmod 0750 "${bastille_backupsdir}"
     fi
 
     ## ${bastille_cachedir}
@@ -129,19 +129,29 @@ bootstrap_directories() {
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache"
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                # Don't create unused/stale cache/RELEASE directory on Linux jails creation.
+                if [ -z "${NOCACHEDIR}" ]; then
+                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                fi
             fi
         else
-            mkdir -p "${bastille_cachedir}/${RELEASE}"
+            mkdir -p "${bastille_cachedir}"
+            # Don't create unused/stale cache/RELEASE directory on Linux jails creation.
+            if [ -z "${NOCACHEDIR}" ]; then
+                mkdir -p "${bastille_cachedir}/${RELEASE}"
+            fi
         fi
     ## create subsequent cache/XX.X-RELEASE datasets
     elif [ ! -d "${bastille_cachedir}/${RELEASE}" ]; then
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+        # Don't create unused/stale cache/RELEASE directory on Linux jails creation.
+        if [ -z "${NOCACHEDIR}" ]; then
+            if [ "${bastille_zfs_enable}" = "YES" ]; then
+                if [ -n "${bastille_zfs_zpool}" ]; then
+                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                fi
+            else
+                mkdir -p "${bastille_cachedir}/${RELEASE}"
             fi
-        else
-            mkdir -p "${bastille_cachedir}/${RELEASE}"
         fi
     fi
 
@@ -304,6 +314,102 @@ bootstrap_release() {
     echo
 }
 
+debootstrap_release() {
+
+    # Make sure to check/bootstrap directories first.
+    NOCACHEDIR=1
+    RELEASE="${DIR_BOOTSTRAP}"
+    bootstrap_directories
+
+    #check and install OS dependencies @hackacad
+    #ToDo: add function 'linux_pre' for sysrc etc.
+
+    required_mods="fdescfs linprocfs linsysfs tmpfs"
+    linuxarc_mods="linux linux64"
+    for _req_kmod in ${required_mods}; do
+        if [ ! "$(sysrc -f /boot/loader.conf -qn ${_req_kmod}_load)" = "YES" ] && \
+            [ ! "$(sysrc -f /boot/loader.conf.local -qn ${_req_kmod}_load)" = "YES" ]; then
+            warn "${_req_kmod} not enabled in /boot/loader.conf, Should I do that for you?  (N|y)"
+            read  answer
+            case "${answer}" in
+                [Nn][Oo]|[Nn]|"")
+                    error_exit "Exiting."
+                    ;;
+                [Yy][Ee][Ss]|[Yy])
+                    # Skip already loaded known modules.
+                    if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
+                        info "Loading kernel module: ${_req_kmod}"
+                        kldload -v ${_req_kmod}
+                    fi
+                    info "Persisting module: ${_req_kmod}"
+                    sysrc -f /boot/loader.conf ${_req_kmod}_load=YES
+                ;;
+            esac
+        else
+            # If already set in /boot/loader.conf, check and try to load the module. 
+            if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
+                info "Loading kernel module: ${_req_kmod}"
+                kldload -v ${_req_kmod}
+            fi
+        fi
+    done
+
+        # Mandatory Linux modules/rc.
+        for _lin_kmod in ${linuxarc_mods}; do
+            if ! kldstat -n ${_lin_kmod} >/dev/null 2>&1; then
+                info "Loading kernel module: ${_lin_kmod}"
+                kldload -v ${_lin_kmod}
+            fi
+        done
+        if [ ! "$(sysrc -qn linux_enable)" = "YES" ] && \
+            [ ! "$(sysrc -f /etc/rc.conf.local -qn linux_enable)" = "YES" ]; then
+            sysrc linux_enable=YES
+        fi
+
+    if ! which -s debootstrap; then
+        warn "Debootstrap not found. Should it be installed? (N|y)"
+        read  answer
+        case $answer in
+            [Nn][Oo]|[Nn]|"")
+                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
+                ;;
+            [Yy][Ee][Ss]|[Yy])
+                pkg install -y debootstrap
+                ;;
+        esac
+    fi
+
+    # Fetch the Linux flavor
+    info "Bootstrapping ${PLATFORM_OS} distfiles..."
+    if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
+        ## perform cleanup only for stale/empty directories on failure
+        if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                if [ ! "$(ls -A "${bastille_releasesdir}/${DIR_BOOTSTRAP}")" ]; then
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${DIR_BOOTSTRAP}"
+                fi
+            fi
+        fi
+        if [ -d "${bastille_releasesdir}/${DIR_BOOTSTRAP}" ]; then
+            if [ ! "$(ls -A "${bastille_releasesdir}/${DIR_BOOTSTRAP}")" ]; then
+                rm -rf "${bastille_releasesdir:?}/${DIR_BOOTSTRAP}"
+            fi
+        fi
+        error_exit "Bootstrap failed."
+    fi
+
+    case "${LINUX_FLAVOR}" in
+        bionic|focal|jammy|buster|bullseye|bookworm)
+        info "Increasing APT::Cache-Start"
+        echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
+        ;;
+    esac
+
+    info "Bootstrap successful."
+    info "See 'bastille --help' for available commands."
+    echo
+}
+
 bootstrap_template() {
 
     ## ${bastille_templatesdir}
@@ -321,7 +427,7 @@ bootstrap_template() {
     ## define basic variables
     _url=${BASTILLE_TEMPLATE_URL}
     _user=${BASTILLE_TEMPLATE_USER}
-    _repo=${BASTILLE_TEMPLATE_REPO}
+    _repo=${BASTILLE_TEMPLATE_REPO%.*} # Remove the trailing ".git"
     _template=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
@@ -341,45 +447,18 @@ bootstrap_template() {
     bastille verify "${_user}/${_repo}"
 }
 
-check_linux_prerequisites() {
-    #check and install OS dependencies @hackacad
-    if [ ! "$(sysrc -f /boot/loader.conf -n linprocfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n linsysfs_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf -n tmpfs_load)" = "YES" ]; then
-        warn "linprocfs_load, linsysfs_load, tmpfs_load not enabled in /boot/loader.conf or linux_enable not active. Should I do that for you?  (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                info "Loading modules"
-                kldload linux linux64 linprocfs linsysfs tmpfs
-                info "Persisting modules"
-                sysrc linux_enable=YES
-                sysrc -f /boot/loader.conf linprocfs_load=YES
-                sysrc -f /boot/loader.conf linsysfs_load=YES
-                sysrc -f /boot/loader.conf tmpfs_load=YES
-                ;;
-        esac
-    fi
-}
-
-ensure_debootstrap() {
-    if ! which -s debootstrap; then
-        warn "Debootstrap not found. Should it be installed? (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                pkg install -y debootstrap
-                ;;
-        esac
-    fi
-}
-
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
+
+# bootstrapping from aarch64/arm64 Debian or Ubuntu require a different value for ARCH
+# create a new variable
+if [ "${HW_MACHINE_ARCH}" == "aarch64" ]; then
+    HW_MACHINE_ARCH_LINUX="arm64"
+else
+    HW_MACHINE_ARCH_LINUX=${HW_MACHINE_ARCH}
+fi
+
+NOCACHEDIR=
 RELEASE="${1}"
 OPTION="${2}"
 
@@ -437,8 +516,8 @@ case "${1}" in
     ## check for HardenedBSD(latest stable build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-BUILD-LATEST//g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-BUILD-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
@@ -455,8 +534,8 @@ current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
     NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
     NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-BUILD-//g')
+    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
     PLATFORM_OS="HardenedBSD"
     validate_release_url
     ;;
@@ -466,31 +545,60 @@ http?://*/*/*)
     BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
     bootstrap_template
     ;;
+git@*:*/*)
+    BASTILLE_TEMPLATE_URL=${1}
+    git_repository=$(echo "${1}" | awk -F : '{ print $2 }')
+    BASTILLE_TEMPLATE_USER=$(echo "${git_repository}" | awk -F / '{ print $1 }')
+    BASTILLE_TEMPLATE_REPO=$(echo "${git_repository}" | awk -F / '{ print $2 }')
+    bootstrap_template
+    ;;
 #adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
 ubuntu_bionic|bionic|ubuntu-bionic)
-    check_linux_prerequisites
-    ensure_debootstrap
-    debootstrap --foreign --arch=amd64 --no-check-gpg bionic "${bastille_releasesdir}"/Ubuntu_1804
-    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Ubuntu_1804/etc/apt/apt.conf.d/00aptitude
+    PLATFORM_OS="Ubuntu/Linux"
+    LINUX_FLAVOR="bionic"
+    DIR_BOOTSTRAP="Ubuntu_1804"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
     ;;
 ubuntu_focal|focal|ubuntu-focal)
-    check_linux_prerequisites
-    ensure_debootstrap
-    debootstrap --foreign --arch=amd64 --no-check-gpg focal "${bastille_releasesdir}"/Ubuntu_2004
+    PLATFORM_OS="Ubuntu/Linux"
+    LINUX_FLAVOR="focal"
+    DIR_BOOTSTRAP="Ubuntu_2004"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
     ;;
-debian_stretch|stretch|debian-stretch)
-    check_linux_prerequisites
-    ensure_debootstrap
-    debootstrap --foreign --arch=amd64 --no-check-gpg stretch "${bastille_releasesdir}"/Debian9
-    echo "Increasing APT::Cache-Start"
-    echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/Debian9/etc/apt/apt.conf.d/00aptitude
+ubuntu_jammy|jammy|ubuntu-jammy)
+    PLATFORM_OS="Ubuntu/Linux"
+    LINUX_FLAVOR="jammy"
+    DIR_BOOTSTRAP="Ubuntu_2204"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
+    ;;
+debian_buster|buster|debian-buster)
+    PLATFORM_OS="Debian/Linux"
+    LINUX_FLAVOR="buster"
+    DIR_BOOTSTRAP="Debian10"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
+    ;;
+debian_bullseye|bullseye|debian-bullseye)
+    PLATFORM_OS="Debian/Linux"
+    LINUX_FLAVOR="bullseye"
+    DIR_BOOTSTRAP="Debian11"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
+    ;;
+debian_bookworm|bookworm|debian-bookworm)
+    PLATFORM_OS="Debian/Linux"
+    LINUX_FLAVOR="bookworm"
+    DIR_BOOTSTRAP="Debian12"
+    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+    debootstrap_release
     ;;
 *)
     usage
     ;;
 esac
-
-
 
 case "${OPTION}" in
 update)

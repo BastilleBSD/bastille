@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ destroy_jail() {
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 
-    if [ "$(jls name | awk "/^${TARGET}$/")" ]; then
+    if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         if [ "${FORCE}" = "1" ]; then
             bastille stop "${TARGET}"
         else
@@ -118,6 +118,23 @@ destroy_rel() {
             if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
                 error_notify "Notice: (${_jail}) depends on ${TARGET} base."
                 BASE_HASCHILD="1"
+            elif [ "${bastille_zfs_enable}" = "YES" ]; then
+                if [ -n "${bastille_zfs_zpool}" ]; then
+                    ## check if this release have child clones
+                    if zfs list -H -t snapshot -r "${bastille_rel_base}" > /dev/null 2>&1; then
+                        SNAP_CLONE=$(zfs list -H -t snapshot -r "${bastille_rel_base}" 2> /dev/null | awk '{print $1}')
+                        for _snap_clone in ${SNAP_CLONE}; do
+                            if zfs list -H -o clones "${_snap_clone}" > /dev/null 2>&1; then
+                                CLONE_JAIL=$(zfs list -H -o clones "${_snap_clone}" | tr ',' '\n')
+                                CLONE_CHECK="${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}/root"
+                                if echo "${CLONE_JAIL}" | grep -qw "${CLONE_CHECK}"; then
+                                    error_notify "Notice: (${_jail}) depends on ${TARGET} base."
+                                    BASE_HASCHILD="1"
+                                fi
+                            fi
+                        done
+                    fi
+                fi
             fi
         done
     fi
@@ -193,6 +210,8 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 ## check what should we clean
 case "${TARGET}" in
 *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
@@ -207,27 +226,37 @@ case "${TARGET}" in
     ;;
 *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
     ## check for HardenedBSD releases name
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g;s/last/LAST/g')
     destroy_rel
     ;;
 *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
     ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g;s/STABLE/stable/g')
     destroy_rel
     ;;
 *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
     ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/;s/build/BUILD/g;s/latest/LATEST/g')
     destroy_rel
     ;;
 current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
     ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g;s/CURRENT/current/g')
     destroy_rel
     ;;
 current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
     ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/g;s/latest/LATEST/g')
+    destroy_rel
+    ;;
+Ubuntu_1804|Ubuntu_2004|Ubuntu_2204|UBUNTU_1804|UBUNTU_2004|UBUNTU_2204)
+    ## check for Linux releases
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$|(Ubuntu_2204)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
+    destroy_rel
+    ;;
+Debian10|Debian11|Debian12|DEBIAN10|DEBIAN11|DEBIAN12)
+    ## check for Linux releases
+    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian10)$|(Debian11)$|(Debian12)$' | sed 's/DEBIAN/Debian/g')
     destroy_rel
     ;;
 *)

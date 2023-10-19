@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,8 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
     usage
 fi
 
+bastille_root_check
+
 TARGET="${1}"
 shift
 
@@ -62,11 +64,11 @@ fi
 
 for _jail in ${JAILS}; do
     ## test if running
-    if [ "$(jls name | awk "/^${_jail}$/")" ]; then
+    if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
         error_notify "[${_jail}]: Already started."
 
     ## test if not running
-    elif [ ! "$(jls name | awk "/^${_jail}$/")" ]; then
+    elif [ ! "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
         # Verify that the configured interface exists. -- cwells
         if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
             _interface=$(bastille config $_jail get interface)
@@ -77,14 +79,14 @@ for _jail in ${JAILS}; do
         fi
 
         ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
-        ip=$(grep 'ip4.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+        ip=$(bastille config "${_jail}" get ip4.addr)
         if [ -n "${ip}" ]; then
-            if ifconfig | grep -w "${ip}" >/dev/null; then
+            if ifconfig | grep -wF "${ip}" >/dev/null; then
                 error_notify "Error: IP address (${ip}) already in use."
                 continue
             fi
-            ## add ip4.addr to firewall table:jails
-            pfctl -q -t jails -T add "${ip}"
+            ## add ip4.addr to firewall table
+            pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
         fi
         ## warn if matching configured (but not online) ip6.addr, ignore if there's no ip6.addr entry
         ip6=$(grep 'ip6.addr' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')

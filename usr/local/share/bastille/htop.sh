@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,10 @@ if [ $# -ne 0 ]; then
     usage
 fi
 
+bastille_root_check
+
 for _jail in ${JAILS}; do
-    bastille_jail_path=$(jls -j "${_jail}" path)
+    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
         error_notify "htop not found on ${_jail}."
     elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then

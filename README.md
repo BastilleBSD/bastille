@@ -3,11 +3,11 @@ Bastille
 [Bastille](https://bastillebsd.org/) is an open-source system for automating
 deployment and management of containerized applications on FreeBSD.
 
-Looking for [Bastille Templates](https://gitlab.com/BastilleBSD-Templates/)?
+[Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
 
 Installation
 ============
-Bastille is available in the official FreeBSD ports tree.
+Bastille is available for installation from the official FreeBSD ports tree.
 
 **pkg**
 ```shell
@@ -22,7 +22,7 @@ make -C /usr/ports/sysutils/bastille install clean
 
 **Git** (bleeding edge / unstable -- primarily for developers)
 ```shell
-git clone https://github.com/BastilleBSD/bastille.git
+git clone https://github.com/bastillebsd/bastille.git
 cd bastille
 make install
 ```
@@ -30,6 +30,7 @@ make install
 **enable at boot**
 ```shell
 sysrc bastille_enable=YES
+sysrc bastille_list="azkaban alcatraz" # (optional whitelist of jails to start at boot; default: ALL)
 ```
 
 Basic Usage
@@ -39,7 +40,7 @@ Bastille is an open-source system for automating deployment and management of
 containerized applications on FreeBSD.
 
 Usage:
-  bastille command TARGET args
+  bastille command TARGET [args]
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
@@ -47,31 +48,34 @@ Available Commands:
   cmd         Execute arbitrary command on targeted container(s).
   config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
-  convert     Convert a thin container into a thick container.
+  convert     Convert a Thin container into a Thick container.
   cp          cp(1) files from host to targeted container(s).
-  create      Create a new thin or thick container.
-  destroy     Destroy a stopped container or a bootstrapped release.
+  create      Create a new thin container or a thick container if -T|--thick option specified.
+  destroy     Destroy a stopped container or a FreeBSD release.
   edit        Edit container configuration files (advanced).
-  export      Exports a container archive or image.
-  help        Help about any command
+  export      Exports a specified container.
+  help        Help about any command.
   htop        Interactive process viewer (requires htop).
-  import      Import a container archive or image.
+  import      Import a specified container.
   limits      Apply resources limits to targeted container(s). See rctl(8).
-  list        List containers, releases, templates, logs, limits or backups.
+  list        List containers (running and stopped).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port (non-VNET jails only).
+  rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
+  setup       Attempt to auto-configure network, firewall and storage on new installs.
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
-  template    Apply automation templates to targeted container(s).
+  tags        Add or remove tags to targeted container(s).
+  template    Apply file templates to targeted container(s).
   top         Display and update information about the top(1) cpu processes.
   umount      Unmount a volume from within the targeted container(s).
   update      Update container base -pX release.
   upgrade     Upgrade container release to X.Y-RELEASE.
-  verify      Verify bootstrapped release or automation template.
+  verify      Compare release against a "known good" index.
   zfs         Manage (get|set) ZFS attributes on targeted container(s).
 
 Use "bastille -v|--version" for version information.
@@ -79,98 +83,28 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.9-beta
+## 0.10-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
-Network Requirements
-====================
-Several networking options can be performed regarding the user needs.  Basic
-containers can support IP alias networking, where the IP address is assigned to
-the host interface and used by the container, generally known as "shared IP"
-based containers.
+Setup Requirements
+==================
+Bastille can now (attempt) to configure the networking, firewall and storage
+automatically. This feature is new since version 0.10.20231013.
 
-If you administer your own network and can assign and remove unallocated IP
-addresses, then "shared IP" is a simple method to get started. If this is the
-case, skip ahead to ZFS Support.
-
-If you are not the administator of the network, or perhaps you're in "the
-cloud" someplace and are only provided a single IP4 address. In this situation
-Bastille can create and attach containers to a private loopback interface. The
-host system then acts as the firewall, permitting and denying traffic as
-needed. (This method has been my primary method for years.)
-
-**bastille0**
-
-First, create the loopback interface:
+**bastille setup**
 
 ```shell
-ishmael ~ # sysrc cloned_interfaces+=lo1
-ishmael ~ # sysrc ifconfig_lo1_name="bastille0"
-ishmael ~ # service netif cloneup
+ishmael ~ # bastille setup -h
+ishmael ~ # Usage: bastille setup [pf|bastille0|zfs|vnet]
 ```
 
-Create the firewall config, or merge as necessary.
+On fresh installations it is likely safe to run `bastille setup` with no
+arguments. This will configure the firewall, the loopback interface and attempt
+to determine ZFS vs UFS storage.
 
-/etc/pf.conf
-------------
-```
-ext_if="vtnet0"
-
-set block-policy return
-scrub in on $ext_if all fragment reassemble
-set skip on lo
-
-table <jails> persist
-nat on $ext_if from <jails> to any -> ($ext_if:0)
-
-## static rdr example
-# rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
-
-## Enable dynamic rdr (see below)
-rdr-anchor "rdr/*"
-
-block in all
-pass out quick keep state
-antispoof for $ext_if inet
-pass in inet proto tcp from any to any port ssh flags S/SA keep state
-
-## make sure you also open up ports that you are going to use for dynamic rdr
-# pass in inet proto tcp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
-# pass in inet proto udp from any to any port <rdr-start>:<rdr-end> flags S/SA keep state
-## for IPv6 networks please uncomment the following rule
-# pass inet6 proto icmp6 icmp6-type { echoreq, routersol, routeradv, neighbradv, neighbrsol }
-
-```
-
-* Make sure to change the `ext_if` variable to match your host system interface.
-* Note that if multiple interface aliases are in place, the index `($ext_if:0)`
-can be changed accordingly; so if you want to send traffic out the second IP alias
-of the interface, change the value to `($ext_if:1)` and so on.
-* Make sure to include the last line (`port ssh`) or you'll end up locked
-out of a remote system.
-
-Note: if you have an existing firewall, the key lines for in/out traffic to
-containers are:
-
-```
-table <jails> persist
-nat on $ext_if from <jails> to any -> ($ext_if:0)
-
-## rdr example
-## rdr pass inet proto tcp from any to any port {80, 443} -> 10.17.89.45
-```
-
-The `nat` routes traffic from the loopback interface to the external interface
-for outbound access.
-
-The `rdr pass ...` will redirect traffic from the host firewall on port X to
-the ip of container Y. The example shown redirects web traffic (80 & 443) to the
-container at `10.17.89.45`.
-
-Finally, enable and (re)start the firewall:
-
-## dynamic rdr
+If you have an existing firewall, or customized network design, you may want to
+run individual options; eg `bastille setup zfs` or `bastille setup vnet`.
 
 The `rdr-anchor "rdr/*"` enables dynamic rdr rules to be setup using the
 `bastille rdr` command at runtime - eg.
@@ -202,7 +136,7 @@ This step only needs to be done once in order to prepare the host.
 
 
 ZFS support
-===========
+
 
 ![BastilleBSD Twitter Poll](/docs/images/bastillebsd-twitter-poll.png)
 
@@ -1073,12 +1007,20 @@ ishmael ~ # bastille umount targetjail container/path
 Unmounted: container/path
 ```
 
+=======
+Note: The `bastille setup` command can configure and enable PF but it does not
+automatically reload the firewall. You will still need to manually `service pf
+start`.  At that point you'll likely be disconnected if configuring a remote
+host. Simply reconnect the ssh session and continue.
+
+This step only needs to be done once in order to prepare the host.
+
 Example (create, start, console)
 ================================
 This example creates, starts and consoles into the container.
 
 ```shell
-ishmael ~ # bastille create alcatraz 11.4-RELEASE 10.17.89.7
+ishmael ~ # bastille create alcatraz 13.2-RELEASE 10.17.89.10
 ```
 
 ```shell
@@ -1090,7 +1032,7 @@ alcatraz: created
 ```shell
 ishmael ~ # bastille console alcatraz
 [alcatraz]:
-FreeBSD 11.4-RELEASE-p4 (GENERIC) #0: Thu Sep 27 08:16:24 UTC 2018
+FreeBSD 13.2-RELEASE-p4 GENERIC
 
 Welcome to FreeBSD!
 
@@ -1098,7 +1040,7 @@ Release Notes, Errata: https://www.FreeBSD.org/releases/
 Security Advisories:   https://www.FreeBSD.org/security/
 FreeBSD Handbook:      https://www.FreeBSD.org/handbook/
 FreeBSD FAQ:           https://www.FreeBSD.org/faq/
-Questions List: https://lists.FreeBSD.org/mailman/listinfo/freebsd-questions/
+Questions List:        https://www.FreeBSD.org/lists/questions/
 FreeBSD Forums:        https://forums.FreeBSD.org/
 
 Documents installed with the system are in the /usr/local/share/doc/freebsd/
@@ -1110,7 +1052,7 @@ Please include that output and any error messages when posting questions.
 Introduction to manual pages:  man man
 FreeBSD directory layout:      man hier
 
-Edit /etc/motd to change this login announcement.
+To change this login announcement, see motd(5).
 root@alcatraz:~ #
 ```
 
@@ -1124,62 +1066,6 @@ root 92441  0.0  0.0 6952 3024  3  IJ   02:21   0:00.00 login [pam] (login)
 root 92565  0.0  0.0 7412 3756  3  SJ   02:21   0:00.01 -csh (csh)
 root@alcatraz:~ #
 ```
-
-
-Project Goals
-=============
-These tools are created initially with the mindset of function over form. I
-want to simply prove the concept is sound for real work. The real work is a
-sort of meta-container-port system. Instead of installing the MySQL port
-directly on a system, you would use Bastille to install the MySQL port within a
-container template built for MySQL. The same goes for DNS servers, and
-everything else in the ports tree.
-
-Eventually I would like to have Bastille templates created for popular
-FreeBSD-based services. From Plex Media Servers to ad-blocking DNS resolvers.
-From tiny SSH containers to dynamic web servers. [COMPLETE]
-
-I don't want to tell you what you can and can't run within this framework.
-There are no arbitrary limitations based on what I think may or may not be the
-best way to design systems. This is not my goal.
-
-My goal is to provide a secure framework where processes and services can run
-isolated. I want to limit the scope and reach of bad actors. I want to severely
-limit the target areas available to anyone that has (or has gained) access.
-
-Networking Tips
-===============
-
-Tip #1:
--------
-Ports and destinations can be defined as lists. eg;
-```
-rdr pass inet proto tcp from any to any port {80, 443} -> {10.17.89.45, 10.17.89.46, 10.17.89.47, 10.17.89.48}
-```
-
-This rule would redirect any traffic to the host on ports 80 or 443 and
-round-robin between containers with ips 45, 46, 47, and 48 (on ports 80 or
-443).
-
-
-Tip #2:
--------
-Ports can redirect to other ports. eg;
-```
-rdr pass inet proto tcp from any to any port 8080 -> 10.17.89.5 port 80
-rdr pass inet proto tcp from any to any port 8081 -> 10.17.89.5 port 8080
-rdr pass inet proto tcp from any to any port 8181 -> 10.17.89.5 port 443
-```
-
-Tip #3:
--------
-Don't worry too much about IP assignments.
-
-Initially I spent time worrying about what IP addresses to assign. In the end
-I've come to the conclusion that it _really_ doesn't matter. Pick *any* private
-address and be done with it.  These are all isolated networks. In the end, what
-matters is you can map host:port to container:port reliably, and we can.
-
 
 Community Support
 =================

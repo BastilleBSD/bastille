@@ -12,12 +12,15 @@ https://docs.bastillebsd.org.
    :caption: Contents:
 
    chapters/installation
+   chapters/upgrading
    chapters/networking
    chapters/usage
    chapters/targeting
    chapters/subcommands/index
    chapters/template
    chapters/jail-config
+   chapters/zfs-support
+   chapters/gcp
 
    copyright
 

@@ -11,6 +11,9 @@ bastille_releasesdir="${bastille_prefix}/releases"                    ## default
 bastille_templatesdir="${bastille_prefix}/templates"                  ## default: "${bastille_prefix}/templates"
 bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
 
+## pf configuration path
+bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
+
 ## bastille scripts directory (assumed by bastille pkg)
 bastille_sharedir="/usr/local/share/bastille"                         ## default: "/usr/local/share/bastille"
 
@@ -25,14 +28,14 @@ bastille_sharedir="/usr/local/share/bastille"                         ## default
 bastille_bootstrap_archives="base"                                    ## default: "base"
 
 ## default timezone
-bastille_tzdata="Etc/UTC"                                             ## default: "Etc/UTC"
+bastille_tzdata=""                                                    ## default: empty to use host's time zone
 
 ## default jail resolv.conf
 bastille_resolv_conf="/etc/resolv.conf"                               ## default: "/etc/resolv.conf"
 
 ## bootstrap urls
 bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"          ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
-bastille_url_hardenedbsd="http://installer.hardenedbsd.org/pub/hardenedbsd/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
+bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
 bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"          ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
 ## ZFS options
@@ -46,15 +49,20 @@ bastille_compress_xz_options="-0 -v"                                  ## default
 bastille_decompress_xz_options="-c -d -v"                             ## default "-c -d -v"
 bastille_compress_gz_options="-1 -v"                                  ## default "-1 -v"
 bastille_decompress_gz_options="-k -d -c -v"                          ## default "-k -d -c -v"
+bastille_export_options=""                                            ## default "" predefined export options, e.g. "--safe --gz"
 
 ## Networking
 bastille_network_loopback="bastille0"                                 ## default: "bastille0"
+bastille_network_pf_ext_if="ext_if"                                   ## default: "ext_if"
+bastille_network_pf_table="jails"                                     ## default: "jails"
 bastille_network_shared=""                                            ## default: ""
 bastille_network_gateway=""                                           ## default: ""
+bastille_network_gateway6=""                                          ## default: ""
 
 ## Default Templates
 bastille_template_base="default/base"                                 ## default: "default/base"
 bastille_template_empty=""                                            ## default: "default/empty"
 bastille_template_thick="default/thick"                               ## default: "default/thick"
+bastille_template_clone="default/clone"                               ## default: "default/clone"
 bastille_template_thin="default/thin"                                 ## default: "default/thin"
 bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"

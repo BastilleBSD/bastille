@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,8 @@ if [ $# -gt 3 ] || [ $# -lt 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 TARGET="$1"
 NEWRELEASE="$2"
 OPTION="$3"
@@ -76,7 +78,7 @@ esac
 
 jail_check() {
     # Check if the jail is thick and is running
-    if [ ! "$(jls name | awk "/^${TARGET}$/")" ]; then
+    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
     else
         if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
@@ -87,7 +89,7 @@ jail_check() {
 
 release_check() {
     # Validate the release
-    if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
+    if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
         error_exit "${NEWRELEASE} is not a valid release."
     fi
 }

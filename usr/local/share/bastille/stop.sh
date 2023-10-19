@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,11 @@ if [ $# -ne 0 ]; then
     usage
 fi
 
+bastille_root_check
+
 for _jail in ${JAILS}; do
     ## test if running
+
     if [ "$(jls name | awk "/^${_jail}$/")" ]; then
         ## remove jail ips to firewall table:jails
         if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
@@ -60,6 +63,7 @@ for _jail in ${JAILS}; do
                 pfctl -q -t jails -T delete "${JAIL_IP6}"
             fi
         fi
+
 
         # Check if pfctl is present
         if which -s pfctl; then
@@ -79,6 +83,13 @@ for _jail in ${JAILS}; do
         ## stop container
         info "[${_jail}]:"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
+
+        ## remove (captured above) ip4.addr from firewall table
+        if [ -n "${bastille_network_loopback}" -a ! -z "${_ip}" ]; then
+            if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
+                pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
+            fi
+        fi
     fi
     echo
 done

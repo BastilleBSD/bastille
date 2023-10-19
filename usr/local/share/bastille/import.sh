@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,8 @@ esac
 if [ $# -gt 3 ] || [ $# -lt 1 ]; then
     usage
 fi
+
+bastille_root_check
 
 TARGET="${1}"
 OPT_FORCE=
@@ -150,6 +152,11 @@ update_jailconf() {
             sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${TARGET_TRIM}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;|" "${JAIL_CONFIG}"
         fi
+
+        # Check for the jib script
+        if grep -qw "vnet" "${JAIL_CONFIG}"; then
+            vnet_requirements
+        fi
     fi
 }
 
@@ -173,6 +180,7 @@ generate_config() {
     # Attempt to read previous config file and set required variables accordingly
     # If we can't get a valid interface, fallback to lo1 and warn user
     info "Generating jail.conf..."
+    DEVFS_RULESET=4
 
     if [ "${FILE_EXT}" = ".zip" ]; then
         # Gather some bits from foreign/iocage config files
@@ -180,63 +188,89 @@ generate_config() {
         if [ -n "${JSON_CONFIG}" ]; then
             IPV4_CONFIG=$(grep -wo '\"ip4_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip4_addr://')
             IPV6_CONFIG=$(grep -wo '\"ip6_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip6_addr://')
+            DEVFS_RULESET=$(grep -wo '\"devfs_ruleset\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/devfs_ruleset://')
+            DEVFS_RULESET=${DEVFS_RULESET:-4}
+            IS_THIN_JAIL=$(grep -wo '\"basejail\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/basejail://')
+            CONFIG_RELEASE=$(grep -wo '\"release\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/release://' | sed 's/\-[pP].*//')
+            IS_VNET_JAIL=$(grep -wo '\"vnet\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/vnet://')
+            VNET_DEFAULT_INTERFACE=$(grep -wo '\"vnet_default_interface\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/vnet_default_interface://')
+            ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED=1
+            if [ "${VNET_DEFAULT_INTERFACE}" = "auto" ]; then
+                # Grab the default ipv4 route from netstat and pull out the interface
+                VNET_DEFAULT_INTERFACE=$(netstat -nr4 | grep default | cut -w -f 4)
+            fi
         fi
     elif [ "${FILE_EXT}" = ".tar.gz" ]; then
         # Gather some bits from foreign/ezjail config files
         PROP_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/prop.ezjail-${FILE_TRIM}-*"
         if [ -n "${PROP_CONFIG}" ]; then
             IPVX_CONFIG=$(grep -wo "jail_${TARGET_TRIM}_ip=.*" ${PROP_CONFIG} | tr -d '" ' | sed "s/jail_${TARGET_TRIM}_ip=//")
+            CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
         fi
+        # Always assume it's thin for ezjail
+        IS_THIN_JAIL=1
     fi
 
-    # If there are multiple IP/NIC let the user configure network
-    if [ -n "${IPV4_CONFIG}" ]; then
-        if ! echo "${IPV4_CONFIG}" | grep -q '.*,.*'; then
-            NETIF_CONFIG=$(echo "${IPV4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-            if [ -z "${NETIF_CONFIG}" ]; then
-                config_netif
+    # See if we need to generate a vnet network section
+    if [ "${IS_VNET_JAIL:-0}" = "1" ]; then
+        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}")
+        vnet_requirements
+    else
+        # If there are multiple IP/NIC let the user configure network
+        if [ -n "${IPV4_CONFIG}" ]; then
+            if ! echo "${IPV4_CONFIG}" | grep -q '.*,.*'; then
+                NETIF_CONFIG=$(echo "${IPV4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${NETIF_CONFIG}" ]; then
+                    config_netif
+                fi
+                IPX_ADDR="ip4.addr"
+                IP_CONFIG="${IPV4_CONFIG}"
+                IP6_MODE="disable"
             fi
-            IPX_ADDR="ip4.addr"
-            IP_CONFIG="${IPV4_CONFIG}"
-            IP6_MODE="disable"
-        fi
-    elif [ -n "${IPV6_CONFIG}" ]; then
-        if ! echo "${IPV6_CONFIG}" | grep -q '.*,.*'; then
-            NETIF_CONFIG=$(echo "${IPV6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-            if [ -z "${NETIF_CONFIG}" ]; then
-                config_netif
-            fi
-            IPX_ADDR="ip6.addr"
-            IP_CONFIG="${IPV6_CONFIG}"
-            IP6_MODE="new"
-        fi
-    elif [ -n "${IPVX_CONFIG}" ]; then
-        if ! echo "${IPVX_CONFIG}" | grep -q '.*,.*'; then
-            NETIF_CONFIG=$(echo "${IPVX_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-            if [ -z "${NETIF_CONFIG}" ]; then
-                config_netif
-            fi
-            IPX_ADDR="ip4.addr"
-            IP_CONFIG="${IPVX_CONFIG}"
-            IP6_MODE="disable"
-            if echo "${IPVX_CONFIG}" | sed 's/.*|//' | grep -Eq '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))'; then
+        elif [ -n "${IPV6_CONFIG}" ]; then
+            if ! echo "${IPV6_CONFIG}" | grep -q '.*,.*'; then
+                NETIF_CONFIG=$(echo "${IPV6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${NETIF_CONFIG}" ]; then
+                    config_netif
+                fi
                 IPX_ADDR="ip6.addr"
+                IP_CONFIG="${IPV6_CONFIG}"
                 IP6_MODE="new"
             fi
+        elif [ -n "${IPVX_CONFIG}" ]; then
+            if ! echo "${IPVX_CONFIG}" | grep -q '.*,.*'; then
+                NETIF_CONFIG=$(echo "${IPVX_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${NETIF_CONFIG}" ]; then
+                    config_netif
+                fi
+                IPX_ADDR="ip4.addr"
+                IP_CONFIG="${IPVX_CONFIG}"
+                IP6_MODE="disable"
+                if echo "${IPVX_CONFIG}" | sed 's/.*|//' | grep -Eq '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))'; then
+                    IPX_ADDR="ip6.addr"
+                    IP6_MODE="new"
+                fi
+            fi
         fi
+
+        # Let the user configure network manually
+        if [ -z "${NETIF_CONFIG}" ]; then
+            NETIF_CONFIG="lo1"
+            IPX_ADDR="ip4.addr"
+            IP_CONFIG="-"
+            IP6_MODE="disable"
+            warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
+        fi
+
+        NETBLOCK=$(cat <<-EOF
+  interface = ${NETIF_CONFIG};
+  ${IPX_ADDR} = ${IP_CONFIG};
+  ip6 = ${IP6_MODE};
+EOF
+        )
     fi
 
-    # Let the user configure network manually
-    if [ -z "${NETIF_CONFIG}" ]; then
-        NETIF_CONFIG="lo1"
-        IPX_ADDR="ip4.addr"
-        IP_CONFIG="-"
-        IP6_MODE="disable"
-        warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
-    fi
-
-    if [ "${FILE_EXT}" = ".tar.gz" ]; then
-        CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
+    if [ "${IS_THIN_JAIL:-0}" = "1" ]; then
         if [ -z "${CONFIG_RELEASE}" ]; then
             # Fallback to host version
             CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
@@ -257,7 +291,7 @@ generate_config() {
     # Generate a basic jail configuration file on foreign imports
     cat << EOF > "${bastille_jailsdir}/${TARGET_TRIM}/jail.conf"
 ${TARGET_TRIM} {
-  devfs_ruleset = 4;
+  devfs_ruleset = ${DEVFS_RULESET};
   enforce_statfs = 2;
   exec.clean;
   exec.consolelog = ${bastille_logsdir}/${TARGET_TRIM}_console.log;
@@ -269,9 +303,7 @@ ${TARGET_TRIM} {
   path = ${bastille_jailsdir}/${TARGET_TRIM}/root;
   securelevel = 2;
 
-  interface = ${NETIF_CONFIG};
-  ${IPX_ADDR} = ${IP_CONFIG};
-  ip6 = ${IP6_MODE};
+${NETBLOCK}
 }
 EOF
 }
@@ -309,6 +341,17 @@ workout_components() {
     fi
 }
 
+vnet_requirements() {
+    # VNET jib script requirement
+    if [ ! "$(command -v jib)" ]; then
+        if [ -f "/usr/share/examples/jails/jib" ] && [ ! -f "/usr/local/bin/jib" ]; then
+            install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+        else
+            warn "Warning: Unable to locate/install jib script required by VNET jails."
+        fi
+    fi
+}
+
 config_netif() {
     # Get interface from bastille configuration
     if [ -n "${bastille_network_loopback}" ]; then
@@ -334,6 +377,13 @@ update_symlinks() {
     for _link in ${SYMLINKS}; do
         if [ -L "${_link}" ]; then
             ln -sf /.bastille/${_link} ${_link}
+        elif [ "${ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED:-0}" = "1" -a -d "${_link}" ]; then
+            # -F will enforce that the directory is empty and replaced by the symlink
+            ln -sfF /.bastille/${_link} ${_link} || EXIT_CODE=$?
+            if [ "${EXIT_CODE:-0}" != "0" ]; then
+                # Assume that the failure was due to the directory not being empty and explain the problem in friendlier terms
+                warn "Warning: directory ${_link} on imported jail was not empty and will not be updated by Bastille"
+            fi
         fi
     done
 }
@@ -577,7 +627,7 @@ else
 fi
 
 # Check if a running jail matches name or already exist
-if [ -n "$(jls name | awk "/^${TARGET_TRIM}$/")" ]; then
+if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET_TRIM}$/")" ]; then
     error_exit "A running jail matches name."
 elif [ -n "${TARGET_TRIM}" ]; then
     if [ -d "${bastille_jailsdir}/${TARGET_TRIM}" ]; then

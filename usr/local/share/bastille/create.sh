@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,13 +43,15 @@ usage() {
     -L | --linux  -- This option is intended for testing with Linux jails, this is considered experimental.
     -T | --thick  -- Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet   -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -C | --clone  -- Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
+    -B | --bridge -- Enables VNET, VNET containers are attached to a specified, already existing external bridge.
 
 EOF
     exit 1
 }
 
 running_jail() {
-    if [ -n "$(jls name | awk "/^${NAME}$/")" ]; then
+    if [ -n "$(/usr/sbin/jls name | awk "/^${NAME}$/")" ]; then
         error_exit "A running jail matches name."
     elif [ -d "${bastille_jailsdir}/${NAME}" ]; then
         error_exit "Jail: ${NAME} already created."
@@ -67,34 +69,57 @@ validate_name() {
 }
 
 validate_ip() {
-    IPX_ADDR="ip4.addr"
-    IP6_MODE="disable"
-    ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
+    ipx_addr="ip4.addr"
+    ip="$1"
+    ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
-        IPX_ADDR="ip6.addr"
+        ipx_addr="ip6.addr"
         IP6_MODE="new"
     else
-        local IFS
-        if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${IP}" | cut -d / -f1)
-            IFS=.
-            set ${TEST_IP}
-            for quad in 1 2 3 4; do
-                if eval [ \$$quad -gt 255 ]; then
-                    echo "Invalid: (${TEST_IP})"
-                    exit 1
-                fi
-            done
-            if ifconfig | grep -qw "${TEST_IP}"; then
-                warn "Warning: IP address already in use (${TEST_IP})."
-            else
-                info "Valid: (${IP})."
-            fi
+        if [ "${ip}" = "DHCP" ]; then
+            info "Valid: (${ip})."
         else
-            error_exit "Invalid: (${IP})."
+            local IFS
+            if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+                TEST_IP=$(echo "${ip}" | cut -d / -f1)
+                IFS=.
+                set ${TEST_IP}
+                for quad in 1 2 3 4; do
+                    if eval [ \$$quad -gt 255 ]; then
+                        echo "Invalid: (${TEST_IP})"
+                        exit 1
+                    fi
+                done
+                if ifconfig | grep -qwF "${TEST_IP}"; then
+                    warn "Warning: IP address already in use (${TEST_IP})."
+                else
+                    info "Valid: (${ip})."
+                fi
+            else
+                error_exit "Invalid: (${ip})."
+            fi
         fi
     fi
+    if echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
+        if [ "${ipx_addr}" = "ip4.addr" ]; then
+                IP4_ADDR="${ip}"
+                IP4_DEFINITION="${ipx_addr} = ${ip};"
+        else
+                IP6_ADDR="${ip}"
+                IP6_DEFINITION="${ipx_addr} = ${ip};"
+        fi
+    fi
+}
+validate_ips() {
+    IP6_MODE="disable"
+    IP4_DEFINITION=""
+    IP6_DEFINITION=""
+    IP4_ADDR=""
+    IP6_ADDR=""
+    for ip in ${IP}; do
+        validate_ip "${ip}"
+    done
 }
 
 validate_netif() {
@@ -113,6 +138,13 @@ validate_netconf() {
 }
 
 validate_release() {
+    ## ensure the user set the Linux(experimental) option explicitly
+    if [ -n "${UBUNTU}" ]; then
+        if [ -z "${LINUX_JAIL}" ]; then
+            usage
+        fi
+    fi
+
     ## check release name match, else show usage
     if [ -n "${NAME_VERIFY}" ]; then
         RELEASE="${NAME_VERIFY}"
@@ -148,7 +180,8 @@ ${NAME} {
   securelevel = 2;
 
   interface = ${bastille_jail_conf_interface};
-  ${IPX_ADDR} = ${IP};
+  ${IP4_DEFINITION}
+  ${IP6_DEFINITION}
   ip6 = ${IP6_MODE};
 }
 EOF
@@ -161,6 +194,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   devfs_ruleset = 4;
+  enforce_statfs = 1;
 
   exec.start = '/bin/true';
   exec.stop = '/bin/true';
@@ -170,31 +204,14 @@ ${NAME} {
   allow.mount.devfs;
 
   interface = ${bastille_jail_conf_interface};
-  ${IPX_ADDR} = ${IP};
+  ${ipx_addr} = ${IP};
   ip6 = ${IP6_MODE};
 }
 EOF
 }
 
 generate_vnet_jail_conf() {
-    ## determine number of containers + 1
-    ## iterate num and grep all jail configs
-    ## define uniq_epair
-    local jail_list=$(bastille list jails)
-    if [ -n "${jail_list}" ]; then
-        local list_jails_num=$(echo "${jail_list}" | wc -l | awk '{print $1}')
-        local num_range=$(expr "${list_jails_num}" + 1)
-        for _num in $(seq 0 "${num_range}"); do
-            if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                uniq_epair="bastille${_num}"
-                break
-            fi
-        done
-    else
-        uniq_epair="bastille0"
-    fi
-
-    ## generate config
+    NETBLOCK=$(generate_vnet_jail_netblock "$NAME" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   devfs_ruleset = 13;
@@ -209,12 +226,46 @@ ${NAME} {
   path = ${bastille_jail_path};
   securelevel = 2;
 
-  vnet;
-  vnet.interface = e0b_${uniq_epair};
-  exec.prestart += "jib addm ${uniq_epair} ${bastille_jail_conf_interface}";
-  exec.poststop += "jib destroy ${uniq_epair}";
+${NETBLOCK}
 }
 EOF
+}
+
+post_create_jail() {
+    # Common config checks and settings.
+
+    # Using relative paths here.
+    # MAKE SURE WE'RE IN THE RIGHT PLACE.
+    cd "${bastille_jail_path}"
+    echo
+
+    if [ ! -f "${bastille_jail_conf}" ]; then
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
+        fi
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
+        fi
+        if [ -n "${INTERFACE}" ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
+    fi
+
+    if [ ! -f "${bastille_jail_fstab}" ]; then
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+            echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
+        else
+            touch "${bastille_jail_fstab}"
+        fi
+    fi
+
+    # Generate the jail configuration file.
+    if [ -n "${VNET_JAIL}" ]; then
+        generate_vnet_jail_conf
+    else
+        generate_jail_conf
+    fi
+
 }
 
 create_jail() {
@@ -231,8 +282,10 @@ create_jail() {
         if [ "${bastille_zfs_enable}" = "YES" ]; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 ## create required zfs datasets, mountpoint inherited from system
-                zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
-                if [ -z "${THICK_JAIL}" ]; then
+                if [ -z "${CLONE_JAIL}" ]; then
+                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
+                fi
+                if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
                     zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                 fi
             fi
@@ -240,8 +293,10 @@ create_jail() {
             mkdir -p "${bastille_jailsdir}/${NAME}/root"
         fi
     fi
+
     ## PoC for Linux jails @hackacad
     if [ -n "${LINUX_JAIL}" ]; then
+        info "\nCreating a linuxjail. This may take a while...\n"
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
         fi
@@ -285,55 +340,29 @@ create_jail() {
     fi
 
     if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
-        if [ ! -d "${bastille_jail_base}" ]; then
-            mkdir -p "${bastille_jail_base}"
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+            if [ ! -d "${bastille_jail_base}" ]; then
+                mkdir -p "${bastille_jail_base}"
+            fi
+            if [ ! -d "${bastille_jail_template}" ]; then
+                mkdir -p "${bastille_jail_template}"
+            fi
         fi
 
         if [ ! -d "${bastille_jail_path}/usr/local" ]; then
             mkdir -p "${bastille_jail_path}/usr/local"
         fi
 
-        if [ ! -d "${bastille_jail_template}" ]; then
-            mkdir -p "${bastille_jail_template}"
-        fi
+        # Check and apply required settings.
+        post_create_jail
 
-        if [ ! -f "${bastille_jail_fstab}" ]; then
-            if [ -z "${THICK_JAIL}" ]; then
-                echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
-            else
-                touch "${bastille_jail_fstab}"
-            fi
-        fi
-
-        if [ ! -f "${bastille_jail_conf}" ]; then
-            if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-                local bastille_jail_conf_interface=${bastille_network_shared}
-            fi
-            if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-                local bastille_jail_conf_interface=${bastille_network_loopback}
-            fi
-            if [ -n "${INTERFACE}" ]; then
-                local bastille_jail_conf_interface=${INTERFACE}
-            fi
-            
-            ## generate the jail configuration file
-            if [ -n "${VNET_JAIL}" ]; then
-                generate_vnet_jail_conf
-            else
-                generate_jail_conf
-            fi
-        fi
-
-        ## using relative paths here
-        ## MAKE SURE WE'RE IN THE RIGHT PLACE
-        cd "${bastille_jail_path}"
-        echo
-
-        if [ -z "${THICK_JAIL}" ]; then
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
+            info "Creating a thinjail...\n"
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
+
             # Properly link shared ports on thin jails in read-write.
             if [ -d "${bastille_releasesdir}/${RELEASE}/usr/ports" ]; then
                 if [ ! -d "${bastille_jail_path}/usr/ports" ]; then
@@ -343,7 +372,7 @@ create_jail() {
             fi
         fi
 
-        if [ -z "${THICK_JAIL}" ]; then
+        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             ## rw
             ## copy only required files for thin jails
             FILE_LIST=".cshrc .profile COPYRIGHT dev etc media mnt net proc root tmp var usr/obj usr/tests"
@@ -357,27 +386,40 @@ create_jail() {
                 fi
             done
         else
-            info "Creating a thickjail. This may take a while..."
             if [ "${bastille_zfs_enable}" = "YES" ]; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
-                    ## perform release base replication
+                    if [ -n "${CLONE_JAIL}" ]; then
+                        info "Creating a clonejail...\n"
+                        ## clone the release base to the new basejail
+                        SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
+                        zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
-                    ## sane bastille zfs options
-                    ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
+                        zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
+                        "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
-                    ## take a temp snapshot of the base release
-                    SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
-                    zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+                        # Check and apply required settings.
+                        post_create_jail
+                    elif [ -n "${THICK_JAIL}" ]; then
+                        info "Creating a thickjail. This may take a while...\n"
+                        ## perform release base replication
 
-                    ## replicate the release base to the new thickjail and set the default mountpoint
-                    zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
-                    zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                    zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                    zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        ## sane bastille zfs options
+                        ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
 
-                    ## cleanup temp snapshots initially
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
+                        ## take a temp snapshot of the base release
+                        SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
+                        zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+
+                        ## replicate the release base to the new thickjail and set the default mountpoint
+                        zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
+                        zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+
+                        ## cleanup temp snapshots initially
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+                        zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
+                    fi
 
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
@@ -406,8 +448,16 @@ create_jail() {
                 ln -s usr/home home
             fi
 
-            ## TZ: configurable (default: Etc/UTC)
-            ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+            ## TZ: configurable (default: empty to use host's time zone)
+            if [ -z "${bastille_tzdata}" ]; then
+                # Note that if host has no time zone, FreeBSD assumes UTC anyway
+                if [ -e /etc/localtime ]; then
+                    # uses cp as a way to prevent issues with symlinks if the host happens to use that for tz configuration
+                    cp /etc/localtime etc/localtime
+                fi
+            else
+                ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
+            fi
 
             # Post-creation jail misc configuration
             # Create a dummy fstab file
@@ -452,28 +502,54 @@ create_jail() {
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
 
             _gateway=''
-            _ifconfig=SYNCDHCP
-            if [ "${IP}" != "0.0.0.0" ]; then # not using DHCP, so set static address.
-                if [ -n "${ip6}" ]; then
-                    _ifconfig="inet6 ${IP}"
-                else
-                    _ifconfig="inet ${IP}"
-                fi
+            _gateway6=''
+            _ifconfig_inet=''
+            _ifconfig_inet6=''
+            if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP)'; then
+                # Enable DHCP if requested
+                _ifconfig_inet=SYNCDHCP
+            else
+                # Else apply the default gateway
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
                 else
-                    if [ -z ${ip6} ]; then
-                        _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    _gateway="$(netstat -rn | awk '/default/ {print $2}')"
+                fi
+            fi
+            # Add IPv4 address (this is empty if DHCP is used)
+            if [ -n "${IP4_ADDR}" ]; then
+                    _ifconfig_inet="${_ifconfig_inet} inet ${IP4_ADDR}"
+            fi
+            # Enable IPv6 if used
+            if [ "${IP6_MODE}" != "disable" ]; then
+                _ifconfig_inet6='inet6 -ifdisabled'
+                if echo "${IP}" | grep -qE 'SLAAC'; then
+                    # Enable SLAAC if requested
+                    _ifconfig_inet6="${_ifconfig_inet6} accept_rtadv"
+                else
+                    # Else apply the default gateway
+                    if [ -n "${bastille_network_gateway6}" ]; then
+                        _gateway6="${bastille_network_gateway6}"
                     else
-                        _gateway="$(netstat -6rn | awk '/default/ {print $2}')"
+                        _gateway6="$(netstat -6rn | awk '/default/ {print $2}')"
                     fi
                 fi
             fi
-            bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg IFCONFIG="${_ifconfig}"
+            # Add IPv6 address (this is empty if SLAAC is used)
+            if [ -n "${IP6_ADDR}" ]; then
+                    _ifconfig_inet6="${_ifconfig_inet6} ${IP6_ADDR}"
+            fi
+            # Join together IPv4 and IPv6 parts of ifconfig
+            _ifconfig="${_ifconfig_inet} ${_ifconfig_inet6}"
+            bastille template "${NAME}" ${bastille_template_vnet} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}" --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}"
         fi
     elif [ -n "${THICK_JAIL}" ]; then
         if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
+        fi
+    elif [ -n "${CLONE_JAIL}" ]; then
+        if [ -n "${bastille_template_clone}" ]; then
+            bastille template "${NAME}" ${bastille_template_clone} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     elif [ -n "${EMPTY_JAIL}" ]; then
         if [ -n "${bastille_template_empty}" ]; then
@@ -512,6 +588,8 @@ help|-h|--help)
     ;;
 esac
 
+bastille_root_check
+
 if echo "$3" | grep '@'; then
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
@@ -520,6 +598,7 @@ fi
 ## reset this options
 EMPTY_JAIL=""
 THICK_JAIL=""
+CLONE_JAIL=""
 VNET_JAIL=""
 LINUX_JAIL=""
 
@@ -542,6 +621,15 @@ while [ $# -gt 0 ]; do
             VNET_JAIL="1"
             shift
             ;;
+        -B|--bridge|bridge)
+            VNET_JAIL="1"
+            VNET_JAIL_BRIDGE="1"
+            shift
+            ;;
+        -C|--clone|clone)
+            CLONE_JAIL="1"
+            shift
+            ;;
         -*|--*)
             error_notify "Unknown Option."
             usage
@@ -554,13 +642,15 @@ done
 
 ## validate for combined options
 if [ -n "${EMPTY_JAIL}" ]; then
-    if [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
+    if [ -n "${CLONE_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
         error_exit "Error: Empty jail option can't be used with other options."
     fi
 elif [ -n "${LINUX_JAIL}" ]; then
-    if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ]; then
+    if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${CLONE_JAIL}" ]; then
         error_exit "Error: Linux jail option can't be used with other options."
     fi
+elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
+    error_exit "Error: Clonejail and Thickjail can't be used together."
 fi
 
 NAME="$1"
@@ -593,9 +683,21 @@ if [ -n "${LINUX_JAIL}" ]; then
         ## check for FreeBSD releases name
         NAME_VERIFY=ubuntu_focal
         ;;
-    debian_stretch|stretch|debian-stretch)
+    jammy|ubuntu_jammy|ubuntu-jammy)
         ## check for FreeBSD releases name
-        NAME_VERIFY=stretch
+        NAME_VERIFY=ubuntu_jammy
+        ;;
+    debian_buster|buster|debian-buster)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=buster
+        ;;
+    debian_bullseye|bullseye|debian-bullseye)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=bullseye
+        ;;
+    debian_bookworm|bookworm|debian-bookworm)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=bookworm
         ;;
     *)
         error_notify "Unknown Linux."
@@ -648,15 +750,30 @@ if [ -z "${EMPTY_JAIL}" ]; then
         validate_release
         ;;
     ubuntu_bionic|bionic|ubuntu-bionic)
+        UBUNTU="1"
         NAME_VERIFY=Ubuntu_1804
         validate_release
         ;;
     ubuntu_focal|focal|ubuntu-focal)
+        UBUNTU="1"
         NAME_VERIFY=Ubuntu_2004
         validate_release
         ;;
-    debian_stretch|stretch|debian-stretch)
-        NAME_VERIFY=Debian9
+    ubuntu_jammy|jammy|ubuntu-jammy)
+        UBUNTU="1"
+        NAME_VERIFY=Ubuntu_2204
+        validate_release
+        ;;
+    debian_buster|buster|debian-buster)
+        NAME_VERIFY=Debian10
+        validate_release
+        ;;
+    debian_bullseye|bullseye|debian-bullseye)
+        NAME_VERIFY=Debian11
+        validate_release
+        ;;
+    debian_bookworm|bookworm|debian-bookworm)
+        NAME_VERIFY=Debian12
         validate_release
         ;;
     *)
@@ -677,7 +794,7 @@ if [ -z "${EMPTY_JAIL}" ]; then
 
     ## check if ip address is valid
     if [ -n "${IP}" ]; then
-        validate_ip
+        validate_ips
     else
         usage
     fi
@@ -725,6 +842,9 @@ if [ -z ${bastille_template_linux+x} ]; then
 fi
 if [ -z ${bastille_template_thick+x} ]; then
     bastille_template_thick='default/thick'
+fi
+if [ -z ${bastille_template_clone+x} ]; then
+    bastille_template_clone='default/clone'
 fi
 if [ -z ${bastille_template_thin+x} ]; then
     bastille_template_thin='default/thin'

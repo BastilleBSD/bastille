@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2021, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,8 @@ if [ $# -ne 2 ]; then
     usage
 fi
 
+bastille_root_check
+
 NEWNAME="${1}"
 IP="${2}"
 
@@ -68,7 +70,7 @@ validate_ip() {
                     error_exit "Invalid: (${TEST_IP})"
                 fi
             done
-            if ifconfig | grep -qw "${TEST_IP}"; then
+            if ifconfig | grep -qwF "${TEST_IP}"; then
                 warn "Warning: IP address already in use (${TEST_IP})."
             else
                 info "Valid: (${IP})."
@@ -109,7 +111,11 @@ update_jailconf_vnet() {
         if [ -n "${jail_list}" ]; then
             if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
                 uniq_epair="bastille${_num}"
+                # Update the exec.* with uniq_epair when cloning jails.
                 sed -i '' "s|vnet.interface = e0b_bastille.*;|vnet.interface = e0b_${uniq_epair};|" "${JAIL_CONFIG}"
+                sed -i '' "s|exec.prestart += \"jib addm bastille[0-9]|exec.prestart += \"jib addm ${uniq_epair}|" "${JAIL_CONFIG}"
+                sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille[0-9].*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
+                sed -i '' "s|exec.poststop += \"jib destroy bastille[0-9]\";|exec.poststop += \"jib destroy ${uniq_epair}\";|" "${JAIL_CONFIG}"
                 break
             fi
         fi
@@ -130,7 +136,7 @@ update_fstab() {
     # Update fstab to use the new name
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
     if [ -f "${FSTAB_CONFIG}" ]; then
-        FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-2])|([0-9]{1,2}-stable-build-[0-9]{1,3})|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)|(current-BUILD-LATEST)' "${FSTAB_CONFIG}")
+        FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-5]|-BETA[1-5]|-CURRENT)|([0-9]{1,2}(-stable-build-[0-9]{1,3}|-stable-LAST))|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)' "${FSTAB_CONFIG}" | uniq)
         FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET}/root/.bastille" "${FSTAB_CONFIG}")
         FSTAB_NEWCONF="${bastille_releasesdir}/${FSTAB_RELEASE} ${bastille_jailsdir}/${NEWNAME}/root/.bastille nullfs ro 0 0"
         if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
@@ -139,6 +145,8 @@ update_fstab() {
                 sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
             fi
         fi
+        # Update additional fstab paths with new jail path
+        sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|" "${FSTAB_CONFIG}"
     fi
 }
 
@@ -164,7 +172,7 @@ clone_jail() {
         else
             # Just clone the jail directory
             # Check if container is running
-            if [ -n "$(jls name | awk "/^${TARGET}$/")" ]; then
+            if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
                 error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
             fi
 
