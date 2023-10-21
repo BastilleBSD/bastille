@@ -21,6 +21,7 @@ https://docs.bastillebsd.org.
    chapters/jail-config
    chapters/zfs-support
    chapters/gcp
+   chapters/migration
 
    copyright
 
