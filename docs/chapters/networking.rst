@@ -138,6 +138,25 @@ Lastly, you may want to consider these three `sysctl` values:
   net.link.bridge.pfil_onlyip=0
   net.link.bridge.pfil_member=0
 
+Below is the definition of what these three parameters are used for and mean:
+
+
+       net.link.bridge.pfil_onlyip  Controls  the  handling  of	non-IP packets
+				    which are not passed to pfil(9).  Set to 1
+				    to only allow IP packets to	pass  (subject
+				    to	firewall  rules), set to 0 to uncondi-
+				    tionally pass all non-IP Ethernet frames.
+
+       net.link.bridge.pfil_member  Set	to 1 to	enable filtering on the	incom-
+				    ing	and outgoing member interfaces,	set to
+				    0 to disable it.
+
+       net.link.bridge.pfil_bridge  Set	to 1 to	enable filtering on the	bridge
+				    interface, set to 0	to disable it.
+
+  
+
+
 **Regarding Routes**
 
 Bastille will attempt to auto-detect the default route from the host system and
