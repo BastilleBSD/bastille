@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,6 @@ PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 . /usr/local/share/bastille/common.sh
 
-## root check first.
-bastille_root_check() {
-    if [ "$(id -u)" -ne 0 ]; then
-        ## permission denied
-        error_notify "Bastille: Permission Denied"
-        error_exit "root / sudo / doas required"
-    fi
-}
-
-bastille_root_check
-
 ## check for config existance
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
@@ -73,7 +62,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.9.20220714"
+BASTILLE_VERSION="0.10.20231013"
 
 usage() {
     cat << EOF
@@ -85,8 +74,8 @@ Usage:
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
-  cmd         Execute arbitrary command on targeted container(s).
   clone       Clone an existing container.
+  cmd         Execute arbitrary command on targeted container(s).
   config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
@@ -107,9 +96,11 @@ Available Commands:
   rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
+  setup       Attempt to auto-configure network, firewall and storage on new installs.
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
+  tags        Add or remove tags to targeted container(s).
   template    Apply file templates to targeted container(s).
   top         Display and update information about the top(1) cpu processes.
   umount      Unmount a volume from within the targeted container(s).
@@ -130,6 +121,23 @@ EOF
 CMD=$1
 shift
 
+target_all_jails() {
+  _JAILS=$(/usr/sbin/jls name)
+  JAILS=""
+  for _jail in ${_JAILS}; do
+      _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
+      if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
+          JAILS="${JAILS} ${_jail}"
+      fi
+  done
+}
+
+check_target_is_running() {
+  if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
+      error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+  fi
+}
+
 # Handle special-case commands first.
 case "${CMD}" in
 version|-v|--version)
@@ -139,10 +147,10 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|export|import|list|rdr|restart|start|update|upgrade|verify)
+bootstrap|create|destroy|export|import|list|rdr|restart|setup|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|service|stop|sysrc|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|service|stop|sysrc|tags|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
@@ -151,24 +159,17 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
         shift
 
         if [ "${TARGET}" = 'ALL' ]; then
-            _JAILS=$(/usr/sbin/jls name)
-            JAILS=""
-            for _jail in ${_JAILS}; do
-                _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
-                if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
-                    JAILS="${JAILS} ${_jail}"
-                fi
-            done
+            target_all_jails
         elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-H' ] || [ "${TARGET}" = '--host' ]; then
             TARGET="${1}"
             USE_HOST_PKG=1
-            JAILS="${TARGET}"
-            shift
-
-            # Require the target to be running
-            if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-                error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+            if [ "${TARGET}" = 'ALL' ]; then
+              target_all_jails
+            else
+              JAILS="${TARGET}"
+              check_target_is_running
             fi
+            shift
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
             # This command does not act on a jail, so we are temporarily bypassing the presence/started
             # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
@@ -182,10 +183,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
 
             case "${CMD}" in
             cmd|console|htop|pkg|service|stop|sysrc|template|top)
-                # Require the target to be running. -- cwells
-                if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-                    error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
-                fi
+                check_target_is_running
                 ;;
             convert|rename)
                 # Require the target to be stopped. -- cwells

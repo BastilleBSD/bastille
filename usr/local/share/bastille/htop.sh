@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,8 @@ esac
 if [ $# -ne 0 ]; then
     usage
 fi
+
+bastille_root_check
 
 for _jail in ${JAILS}; do
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)

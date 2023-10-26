@@ -70,7 +70,7 @@ use, be sure to include `usr` in the template OVERLAY definition. eg;
 
 .. code-block:: shell
 
-  echo "CP usr" >> /usr/local/bastille/templates/username/template/Bastillefile
+  echo "CP usr /" >> /usr/local/bastille/templates/username/template/Bastillefile
 
 The above example "usr" will include anything under "usr" inside the template.
 You do not need to list individual files. Just include the top-level directory

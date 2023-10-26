@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,8 @@ esac
 if [ $# -eq 1 ] || [ $# -gt 3 ]; then
     usage
 fi
+
+bastille_root_check
 
 ACTION=$1
 shift

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -104,10 +104,10 @@ validate_ip() {
     if echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
         if [ "${ipx_addr}" = "ip4.addr" ]; then
                 IP4_ADDR="${ip}"
-                IP4_DEFINITION="${ipx_addr}=${ip};"
+                IP4_DEFINITION="${ipx_addr} = ${ip};"
         else
                 IP6_ADDR="${ip}"
-                IP6_DEFINITION="${ipx_addr}=${ip};"
+                IP6_DEFINITION="${ipx_addr} = ${ip};"
         fi
     fi
 }
@@ -588,6 +588,8 @@ help|-h|--help)
     ;;
 esac
 
+bastille_root_check
+
 if echo "$3" | grep '@'; then
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
@@ -681,9 +683,9 @@ if [ -n "${LINUX_JAIL}" ]; then
         ## check for FreeBSD releases name
         NAME_VERIFY=ubuntu_focal
         ;;
-    debian_stretch|stretch|debian-stretch)
+    jammy|ubuntu_jammy|ubuntu-jammy)
         ## check for FreeBSD releases name
-        NAME_VERIFY=stretch
+        NAME_VERIFY=ubuntu_jammy
         ;;
     debian_buster|buster|debian-buster)
         ## check for FreeBSD releases name
@@ -692,6 +694,10 @@ if [ -n "${LINUX_JAIL}" ]; then
     debian_bullseye|bullseye|debian-bullseye)
         ## check for FreeBSD releases name
         NAME_VERIFY=bullseye
+        ;;
+    debian_bookworm|bookworm|debian-bookworm)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=bookworm
         ;;
     *)
         error_notify "Unknown Linux."
@@ -753,8 +759,9 @@ if [ -z "${EMPTY_JAIL}" ]; then
         NAME_VERIFY=Ubuntu_2004
         validate_release
         ;;
-    debian_stretch|stretch|debian-stretch)
-        NAME_VERIFY=Debian9
+    ubuntu_jammy|jammy|ubuntu-jammy)
+        UBUNTU="1"
+        NAME_VERIFY=Ubuntu_2204
         validate_release
         ;;
     debian_buster|buster|debian-buster)
@@ -763,6 +770,10 @@ if [ -z "${EMPTY_JAIL}" ]; then
         ;;
     debian_bullseye|bullseye|debian-bullseye)
         NAME_VERIFY=Debian11
+        validate_release
+        ;;
+    debian_bookworm|bookworm|debian-bookworm)
+        NAME_VERIFY=Debian12
         validate_release
         ;;
     *)

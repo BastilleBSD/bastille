@@ -11,6 +11,9 @@ bastille_releasesdir="${bastille_prefix}/releases"                    ## default
 bastille_templatesdir="${bastille_prefix}/templates"                  ## default: "${bastille_prefix}/templates"
 bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
 
+## pf configuration path
+bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
+
 ## bastille scripts directory (assumed by bastille pkg)
 bastille_sharedir="/usr/local/share/bastille"                         ## default: "/usr/local/share/bastille"
 
@@ -32,7 +35,7 @@ bastille_resolv_conf="/etc/resolv.conf"                               ## default
 
 ## bootstrap urls
 bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"          ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
-bastille_url_hardenedbsd="http://installer.hardenedbsd.org/pub/hardenedbsd/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
+bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
 bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"          ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
 ## ZFS options
@@ -46,6 +49,7 @@ bastille_compress_xz_options="-0 -v"                                  ## default
 bastille_decompress_xz_options="-c -d -v"                             ## default "-c -d -v"
 bastille_compress_gz_options="-1 -v"                                  ## default "-1 -v"
 bastille_decompress_gz_options="-k -d -c -v"                          ## default "-k -d -c -v"
+bastille_export_options=""                                            ## default "" predefined export options, e.g. "--safe --gz"
 
 ## Networking
 bastille_network_loopback="bastille0"                                 ## default: "bastille0"

@@ -90,4 +90,4 @@ Set the default network gateway for new jails as described in the Networking cha
   echo "nameserver 8.8.8.8" > /usr/local/etc/bastille/resolv.conf
   sysrc -f /usr/local/etc/bastille/bastille.conf bastille_resolv_conf="/usr/local/etc/bastille/resolv.conf"
 
-You can now create a VNET jail with ``bastille create -V myjail 13.1-RELEASE 192.168.1.50/24 vtnet0``
+You can now create a VNET jail with ``bastille create -V myjail 13.2-RELEASE 192.168.1.50/24 vtnet0``

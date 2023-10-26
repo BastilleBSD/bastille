@@ -12,6 +12,7 @@ https://docs.bastillebsd.org.
    :caption: Contents:
 
    chapters/installation
+   chapters/upgrading
    chapters/networking
    chapters/usage
    chapters/targeting
@@ -20,6 +21,7 @@ https://docs.bastillebsd.org.
    chapters/jail-config
    chapters/zfs-support
    chapters/gcp
+   chapters/migration
 
    copyright
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,8 @@ if [ $# -gt 1 ]; then
 elif [ $# -eq 1 ]; then
     TARGET_FILENAME="${1}"
 fi
+
+bastille_root_check
 
 if [ -z "${EDITOR}" ]; then
     EDITOR=vi

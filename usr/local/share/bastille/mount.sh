@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,8 @@ elif [ $# -eq 2 ]; then
 else
     _fstab="$@"
 fi
+
+bastille_root_check
 
 ## assign needed variables
 _hostpath=$(echo "${_fstab}" | awk '{print $1}')

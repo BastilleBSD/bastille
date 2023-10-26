@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,8 @@ esac
 if [ $# -gt 3 ] || [ $# -lt 1 ]; then
     usage
 fi
+
+bastille_root_check
 
 TARGET="${1}"
 OPT_FORCE=
@@ -150,6 +152,11 @@ update_jailconf() {
             sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${TARGET_TRIM}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;|" "${JAIL_CONFIG}"
         fi
+
+        # Check for the jib script
+        if grep -qw "vnet" "${JAIL_CONFIG}"; then
+            vnet_requirements
+        fi
     fi
 }
 
@@ -207,6 +214,7 @@ generate_config() {
     # See if we need to generate a vnet network section
     if [ "${IS_VNET_JAIL:-0}" = "1" ]; then
         NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}")
+        vnet_requirements
     else
         # If there are multiple IP/NIC let the user configure network
         if [ -n "${IPV4_CONFIG}" ]; then
@@ -330,6 +338,17 @@ workout_components() {
         # Workaround to determine the jail.conf path before extract(assumes path/qjail.config/target)
         JAIL_CONF=$(tar -tvf ${bastille_backupsdir}/${TARGET} | grep -wo "/.*/qjail.config/${TARGET_TRIM}")
         CONF_TRIM=$(echo ${JAIL_CONF} | grep -o '/' | wc -l)
+    fi
+}
+
+vnet_requirements() {
+    # VNET jib script requirement
+    if [ ! "$(command -v jib)" ]; then
+        if [ -f "/usr/share/examples/jails/jib" ] && [ ! -f "/usr/local/bin/jib" ]; then
+            install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+        else
+            warn "Warning: Unable to locate/install jib script required by VNET jails."
+        fi
     fi
 }
 

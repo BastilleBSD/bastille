@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,8 @@ esac
 if [ $# -ne 2 ]; then
     usage
 fi
+
+bastille_root_check
 
 case "${OPTION}" in
     -q|--quiet)

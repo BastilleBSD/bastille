@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,14 @@ COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
 COLOR_RESET=
+
+bastille_root_check() {
+    if [ "$(id -u)" -ne 0 ]; then
+        ## permission denied
+        error_notify "Bastille: Permission Denied"
+        error_exit "root / sudo / doas required"
+    fi
+}
 
 enable_color() {
     . /usr/local/share/bastille/colors.pre.sh

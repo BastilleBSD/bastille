@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,8 @@ esac
 if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
+
+bastille_root_check
 
 TARGET="${1}"
 OPTION="${2}"
@@ -116,7 +118,9 @@ release_update() {
         fi
 
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
-        fetch install --currently-running "${TARGET_TRIM}"
+        fetch --currently-running "${TARGET_TRIM}"
+        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
+        install --currently-running "${TARGET_TRIM}"
     else
         error_exit "${TARGET} not found. See 'bastille bootstrap'."
     fi

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # Ressource limits added by Sven R github.com/hackacad
 #
@@ -54,6 +54,8 @@ esac
 if [ $# -ne 2 ]; then
     usage
 fi
+
+bastille_root_check
 
 OPTION="${1}"
 VALUE="${2}"

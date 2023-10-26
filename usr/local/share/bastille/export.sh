@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -70,6 +70,8 @@ fi
 if [ $# -gt 5 ] || [ $# -lt 1 ]; then
     usage
 fi
+
+bastille_root_check
 
 zfs_enable_check() {
     # Temporarily disable ZFS so we can create a standard backup archive
