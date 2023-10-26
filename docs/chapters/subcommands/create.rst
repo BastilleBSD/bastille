@@ -31,3 +31,12 @@ ranges include:
 
 Bastille does its best to validate the submitted ip is valid. This has not been
 thouroughly tested--I generally use the 10/8 range.
+
+A couple of notes about the created jails.  First, MOTD has been disabled inside 
+of the jails because it does not give information about the jail, but about the host 
+system.  This caused confusion for some users, so we implemented the .hushlogin which 
+silences the MOTD at login. 
+
+Also, uname does not work from within a jail.  Much like MOTD, it gives you the version 
+information about the host system instead of the jail.  If you need to check the version
+of freebsd running on the jail use the freebsd-version command to get accurate information.
