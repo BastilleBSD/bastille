@@ -140,3 +140,36 @@ directory names in the `bastille/templates` directory.
   Template Complete.
 
 .. _Bastille Templates: https://gitlab.com/BastilleBSD-Templates
+
+Using Ports in Templates
+------------------------
+
+Sometimes when you make a template you need special options for a package, or you need a newer version than what is in the pkgs.  The solution for these cases, or a case like minecraft server that has NO compiled option, is to use the ports.  A working example of this is the minecraft server template in the template repo.  The main lines needed to use this is first to mount the ports directory, then compile the port.  Below is an example of the minecraft template where this was used.
+
+.. code-block:: shell
+
+  ARG MINECRAFT_MEMX="1024M"
+  ARG MINECRAFT_MEMS="1024M"
+  ARG MINECRAFT_ARGS=""
+  CONFIG set enforce_statfs=1;
+  CONFIG set allow.mount.fdescfs;
+  CONFIG set allow.mount.procfs;
+  RESTART
+  PKG dialog4ports tmux openjdk17
+  MOUNT /usr/ports usr/ports nullfs ro 0 0
+  CP etc /
+  CP var /
+  CMD make -C /usr/ports/games/minecraft-server install clean
+  CP usr /
+  SYSRC minecraft_enable=YES
+  SYSRC minecraft_memx=${MINECRAFT_MEMX}
+  SYSRC minecraft_mems=${MINECRAFT_MEMS}
+  SYSRC minecraft_args=${MINECRAFT_ARGS}
+  SERVICE minecraft restart
+  RDR tcp 25565 25565
+
+The MOUNT line mounts the ports directory, then the CMD make line makes the port.  This can be modified to use any port in the port tree.
+
+
+
+
