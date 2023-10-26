@@ -31,3 +31,12 @@ ranges include:
 
 Bastille does its best to validate the submitted ip is valid. This has not been
 thouroughly tested--I generally use the 10/8 range.
+
+One point to be made about jails.  If you run uname inside a jail you will not
+get the information about the jail, but about the host system.  If you want accurate 
+information about  the jail please use freebsd-version inside the jail.
+
+Also, the MOTD also was reporting the host system instead of the jail.  This 
+caused a lot of confusion for users, so the MOTD was disabled by the use of 
+the .hushlogin file.  This prevents confusing contradictory information to be 
+shown to the user.  
