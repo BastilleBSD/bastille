@@ -91,6 +91,7 @@ Available Commands:
   list        List containers (running and stopped).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+  rcp         reverse cp(1) files from a single container to the host.
   rdr         Redirect host port to container port.
   rename      Rename a container.
   restart     Restart a running container.
@@ -149,7 +150,7 @@ help|-h|--help)
 bootstrap|create|destroy|export|import|list|rdr|restart|setup|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rename|service|stop|sysrc|tags|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|service|stop|sysrc|tags|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
