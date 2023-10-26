@@ -9,20 +9,20 @@ Move the backup files (.zip and .sha256) into Bastille backup dir (default: /usr
 
 .. code-block:: shell
 
-     mv /iocage/images/jailname_2020-03-26.* /usr/local/bastille/backups/
+     mv /iocage/images/jailname_$(date +%F).* /usr/local/bastille/backups/
 
 for remote systems you could use rsync:
 
 .. code-block:: shell
 
-     rsync -avh /iocage/images/jailname_2020-03-26.* root@10.0.1.10:/usr/local/bastille/backups/
+     rsync -avh /iocage/images/jailname_$(date +%F).* root@10.0.1.10:/usr/local/bastille/backups/
 
      
 Import the iocage backup file (use zip file name)
 
 .. code-block:: shell
 
-     bastille import jailname_2020-03-26.zip
+     bastille import jailname_$(date +%F).zip
 
 Set your new ip address and interface:
 
