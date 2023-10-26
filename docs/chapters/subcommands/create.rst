@@ -40,3 +40,4 @@ silences the MOTD at login.
 Also, uname does not work from within a jail.  Much like MOTD, it gives you the version 
 information about the host system instead of the jail.  If you need to check the version
 of freebsd running on the jail use the freebsd-version command to get accurate information.
+
