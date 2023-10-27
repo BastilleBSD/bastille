@@ -35,5 +35,7 @@ Old Releases
 ----------------------------------
 After upgrading all jails from one release to the next you may find that you now have bootstrapped a release that is no longer used. Once you've decided that you no longer need the option to revert the change you can destroy the old release.
 
+
 `bastille list releases` to list all bootstrapped releases.
+
 `bastille destroy X.Y-RELEASE` to fully delete the release. 
