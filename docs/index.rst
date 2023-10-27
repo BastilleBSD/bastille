@@ -16,6 +16,7 @@ https://docs.bastillebsd.org.
    chapters/networking
    chapters/usage
    chapters/targeting
+   chapters/upgrading
    chapters/subcommands/index
    chapters/template
    chapters/jail-config
