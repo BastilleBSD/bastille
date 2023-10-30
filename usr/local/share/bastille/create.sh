@@ -499,7 +499,7 @@ create_jail() {
     if [ -n "${VNET_JAIL}" ]; then
         if [ -n "${bastille_template_vnet}" ]; then
             ## rename interface to generic vnet0
-            uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//')
+            uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//; s/-/_/g')
 
             _gateway=''
             _gateway6=''
