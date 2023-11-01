@@ -93,7 +93,7 @@ fi
 
 # Configure ZFS
 configure_zfs() {
-    if [ ! "$(kldstat -q -m zfs)" ]; then
+    if [ ! "$(kldstat -m zfs)" ]; then
         info "ZFS module not loaded; skipping..."
     else
         ## attempt to determine bastille_zroot from `zpool list`
