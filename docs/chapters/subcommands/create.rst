@@ -22,6 +22,15 @@ bootstrapped release and a private (rfc1918) IP address.
 This command will create a 11.3-RELEASE container assigning the 10.17.89.10 ip
 address to the new system.
 
+.. code-block:: shell
+
+   ishmael ~ # bastille create alcatraz 13.2-RELEASE 10.17.89.113/24
+
+
+The above code will create a jail with a /24 mask.  At the time of this documentation you 
+can only use CIDR notation, and not use a netmask 255.255.255.0 to accomplish this.
+
+
 I recommend using private (rfc1918) ip address ranges for your container.  These
 ranges include:
 
