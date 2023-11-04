@@ -45,6 +45,7 @@ bastille_conf_check
 . /usr/local/etc/bastille/bastille.conf
 # Set default values for config properties added during the current major version:
 : "${bastille_network_pf_ext_if:=ext_if}"
+: "${bastille_network_pf_ext_if:=ext_if6}"
 : "${bastille_network_pf_table:=jails}"
 
 ## bastille_prefix should be 0750
@@ -62,7 +63,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.10.20231013"
+BASTILLE_VERSION=b7d741b5cd3b0c758f0983fd9546e88fba0354d7
 
 usage() {
     cat << EOF
