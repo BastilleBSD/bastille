@@ -157,7 +157,7 @@ fi
 bastille_root_check
 
 case "$1" in
-*-RELEASE|*-release|*-RC1|*-rc1|*-RC2|*-rc2)
+*-RELEASE|*-release|*-RC[1-9]|*-rc[1-9])
     RELEASE=$1
     verify_release
     ;;
