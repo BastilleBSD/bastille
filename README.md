@@ -33,6 +33,19 @@ sysrc bastille_enable=YES
 sysrc bastille_list="azkaban alcatraz" # (optional whitelist of jails to start at boot; default: ALL)
 ```
 
+Upgrading from a previous version
+---------------------------------
+When upgrading from a previous version of bastille (e.g. 0.10.20230714 to 
+0.10.20231013) you will need to update your bastille.conf
+
+```shell
+cd /usr/local/etc/bastille
+vimdiff bastille.conf bastille.conf.sample
+```
+
+Merge the lines that are present in the new bastille.conf.sample into
+your bastille.conf
+
 Basic Usage
 -----------
 ```shell
