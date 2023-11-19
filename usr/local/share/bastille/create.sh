@@ -178,6 +178,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
+  osrelease = ${RELEASE};
 
   interface = ${bastille_jail_conf_interface};
   ${IP4_DEFINITION}
@@ -225,6 +226,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
+  osrelease = ${RELEASE};
 
 ${NETBLOCK}
 }
