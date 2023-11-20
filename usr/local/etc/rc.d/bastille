@@ -8,10 +8,19 @@
 
 # Add the following to /etc/rc.conf[.local] to enable this service
 #
-# bastille_enable (bool):          Set to NO by default.
-#               Set it to YES to enable bastille.
-# bastille_list (string):        Set to "ALL" by default.
-#               Space separated list of jails to start.
+# bastille_enable (bool): Set to "NO" by default.
+#               Set it to "YES" to enable bastille.
+# bastille_conf (bool):   Set to "/usr/local/etc/bastille/bastille.conf" by default.
+#               Path to bastile.conf file. Used if bastille_rcorder="YES".
+# bastille_list (string): Set to "ALL" by default.
+#               Space separated list of jails to start or "ALL" to start all
+#               jails.
+# bastille_rcorder (bool):       Set to "NO" by default.
+#               Set it to "YES" to start all jails in order, defined by
+#               rcorder(8). It starts all jails, except jails with "KEYWORD:
+#               nostart" in jail.conf. Value of bastille_list is ignored in this
+#               case, requires correct path to bastile.conf in bastille_conf
+#               var.
 #
 
 . /etc/rc.subr
@@ -19,24 +28,36 @@
 name=bastille
 rcvar=${name}_enable
 
-: ${bastille_enable:=NO}
+: ${bastille_enable:="NO"}
+: ${bastille_conf:="/usr/local/etc/bastille/bastille.conf"}
 : ${bastille_list:="ALL"}
+: ${bastille_rcorder:="NO"}
 
 command=/usr/local/bin/${name}
 start_cmd="bastille_start"
 stop_cmd="bastille_stop"
 restart_cmd="bastille_stop && bastille_start"
 
+rcordered_list() {
+    local _jailsdir
+    _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
+    bastille_ordered_list=$(rcorder -s nostart ${_jailsdir}/*/jail.conf | xargs dirname | xargs basename | tr "\n" " ")
+}
+
 bastille_start()
 {
-    if [ -z "${bastille_list}" ]; then
-        echo "bastille_list is undefined"
-        return 1
-    fi
-
     local _jail
 
-    for _jail in ${bastille_list}; do
+    if checkyesno bastille_rcorder; then
+        rcordered_list
+    elif [ -z "${bastille_list}" ]; then
+        echo "bastille_list is undefined"
+        return 1
+    else
+        bastille_ordered_list=${bastille_list}
+    fi
+
+    for _jail in ${bastille_ordered_list}; do
         echo "Starting Bastille Container: ${_jail}"
         ${command} start ${_jail}
     done
@@ -44,16 +65,20 @@ bastille_start()
 
 bastille_stop()
 {
-    if [ -z "${bastille_list}" ]; then
+    local _jail _revlist
+
+    if checkyesno bastille_rcorder; then
+        rcordered_list
+    elif [ -z "${bastille_list}" ]; then
         echo "bastille_list is undefined"
         return 1
+    else
+        bastille_ordered_list=${bastille_list}
     fi
 
-    local _jail
-
     ## reverse order of list for shutdown ## fixes #389
-    bastille_revlist=$(echo "${bastille_list}" | awk '{ for (i=NF; i>1; i--) printf("%s ",$i); print $1; }')
-    for _jail in ${bastille_revlist}; do
+    _revlist=$(echo "${bastille_ordered_list}" | awk '{ for (i=NF; i>1; i--) printf("%s ",$i); print $1; }')
+    for _jail in ${_revlist}; do
         echo "Stopping Bastille Container: ${_jail}"
         ${command} stop ${_jail}
     done
