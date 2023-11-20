@@ -27,7 +27,7 @@ release version as the argument.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille bootstrap 12.4-RELEASE [update]
+  ishmael ~ # bastille bootstrap 14.0-RELEASE [update]
   ishmael ~ # bastille bootstrap 13.2-RELEASE [update]
 
 To `bootstrap` a HardenedBSD release, run the bootstrap sub-command with the
@@ -42,6 +42,21 @@ This command will ensure the required directory structures are in place and
 download the requested release. For each requested release, `bootstrap` will
 download the base.txz. These files are verified (sha256 via MANIFEST file)
 before they are extracted for use.
+
+EOL Releases
+------------
+
+It is sometimes necessary to run end-of-life releases for testing or legacy
+application support. Dy default Bastille will only install supported releases
+but you can bootstrap EOL / unsupported releases with a simple trick.
+
+.. code-block:: shell
+
+   ishmael ~ # export BASTILLE_URL_FREEBSD=http://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/
+   ishmael ~ # bastille bootstrap 11.2-RELEASE
+
+By overriding the BASTILLE_URL_FREEBSD variable you can now bootstrap archived
+releases from the FTP archive.
 
 Tips
 ----

@@ -473,6 +473,11 @@ if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != 
     fi
 fi
 
+## allow override bootstrap URLs via environment variables
+[ -n ${BASTILLE_URL_FREEBSD} ] && bastille_url_freebsd="${BASTILLE_URL_FREEBSD}"
+[ -n ${BASTILLE_URL_HARDENEDBSD} ] && bastille_url_hardenedbsd="${BASTILLE_URL_HARDENEDBSD}"
+[ -n ${BASTILLE_URL_MIDNIGHTBSD} ] && bastille_url_midnightbsd="${BASTILLE_URL_MIDNIGHTBSD}"
+
 ## Filter sane release names
 case "${1}" in
 2.[0-9]*)
@@ -491,7 +496,7 @@ case "${1}" in
     ;;
 *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
     ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
+    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]{1,2})\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
     UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
     PLATFORM_OS="FreeBSD"
     validate_release_url
