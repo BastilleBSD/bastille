@@ -53,6 +53,7 @@ JAIL_NAME=""
 JAIL_IP=""
 JAIL_IP6=""
 EXT_IF=""
+EXT_IF6=""
 shift
 
 check_jail_validity() {
@@ -76,7 +77,7 @@ check_jail_validity() {
     fi
     # Check if jail ip6 address (ip6.addr) is valid (non-VNET only)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        if [ "$(bastille config $TARGET get ip6)" != 'disable' ] && [ "$(bastille config $TARGET get ip6)" != 'not set' ]; then
+        if [ "$(bastille config $TARGET get ip6)" != 'disable' ] && [ "$(bastille config $TARGET get ip6.addr)" != 'not set' ]; then
             JAIL_IP6=$(/usr/sbin/jls -j "${TARGET}" ip6.addr 2>/dev/null)
         fi
     fi
@@ -94,6 +95,15 @@ check_jail_validity() {
             error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
         fi
     fi
+    # Check if ext_if6 is defined in pf.conf (non-VNET only)
+    if [ -n "${bastille_pf_conf}" ]; then
+        EXT_IF6=$(grep "^[[:space:]]*${bastille_network_pf_ext_if6}[[:space:]]*=" ${bastille_pf_conf})
+        if [ -z "${EXT_IF6}" ]; then
+            error_exit "bastille_network_pf_ext_if6 (${bastille_network_pf_ext_if6}) not defined in pf.conf"
+        fi
+    fi
+
+
 }
 
 # function: write rule to rdr.conf
@@ -120,7 +130,7 @@ load_rdr_rule() {
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
   ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP6" "$3" ) \
+  printf '%s\nrdr pass on $%s inet6 proto %s to port %s -> %s port %s\n' "$EXT_IF6" "${bastille_network_pf_ext_if6}" "$1" "$2" "$JAIL_IP6" "$3" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
 }
@@ -135,7 +145,7 @@ log=$@
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
   ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+  printf '%s\nrdr pass %s on $%s inet6 proto %s to port %s -> %s port %s\n' "$EXT_IF6" "$log" "${bastille_network_pf_ext_if6}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
 
