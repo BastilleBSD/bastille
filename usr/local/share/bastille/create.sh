@@ -607,36 +607,79 @@ LINUX_JAIL=""
 # Handle and parse options
 while [ $# -gt 0 ]; do
     case "${1}" in
-        -E|--empty|empty)
+        -E|--empty)
             EMPTY_JAIL="1"
             shift
             ;;
-        -L|--linux|linux)
+        -L|--linux)
             LINUX_JAIL="1"
             shift
             ;;
-        -T|--thick|thick)
+        -T|--thick)
             THICK_JAIL="1"
             shift
             ;;
-        -V|--vnet|vnet)
+        -V|--vnet)
             VNET_JAIL="1"
             shift
             ;;
-        -B|--bridge|bridge)
+        -B|--bridge)
             VNET_JAIL="1"
             VNET_JAIL_BRIDGE="1"
             shift
             ;;
-        -C|--clone|clone)
+        -C|--clone)
             CLONE_JAIL="1"
+            shift
+            ;;
+        -CV|-VC|--clone-vnet)
+            VNET_JAIL="1"
+            CLONE_JAIL="1"
+            shift
+            ;;
+        -CB|-BC|--clone-bridge)
+            VNET_JAIL="1"
+            VNET_JAIL_BRIDGE="1"
+            CLONE_JAIL="1"
+            shift
+            ;;
+        -TV|-VT|--thick-vnet)
+            VNET_JAIL="1"
+            THICK_JAIL="1"
+            shift
+            ;;
+        -TB|-BT|--thick-bridge)
+            VNET_JAIL="1"
+            VNET_JAIL_BRIDGE="1"
+            THICK_JAIL="1"
+            shift
+            ;;
+        -EB|-BE|--empty-bridge)
+            VNET_JAIL="1"
+            CLONE_JAIL="1"
+            shift
+            ;;
+        -EV|-VE|--empty-vnet)
+            VNET_JAIL="1"
+            EMPTY_JAIL="1"
+            shift
+            ;;
+        -LV|-VL|--linux-vnet)
+            VNET_JAIL="1"
+            LINUX_JAIL="1"
+            shift
+            ;;
+        -LB|-BL|--linux-bridge)
+            VNET_JAIL="1"
+            VNET_JAIL_BRIDGE="1"
+            LINUX_JAIL="1"
             shift
             ;;
         -*|--*)
             error_notify "Unknown Option."
             usage
             ;;
-       *)
+        *)
             break
             ;;
     esac
