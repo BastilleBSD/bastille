@@ -633,46 +633,47 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -CV|-VC|--clone-vnet)
-            VNET_JAIL="1"
             CLONE_JAIL="1"
+            VNET_JAIL="1"
             shift
             ;;
         -CB|-BC|--clone-bridge)
+            CLONE_JAIL="1"
             VNET_JAIL="1"
             VNET_JAIL_BRIDGE="1"
-            CLONE_JAIL="1"
             shift
             ;;
         -TV|-VT|--thick-vnet)
-            VNET_JAIL="1"
             THICK_JAIL="1"
+            VNET_JAIL="1"
             shift
             ;;
         -TB|-BT|--thick-bridge)
+            THICK_JAIL="1"
             VNET_JAIL="1"
             VNET_JAIL_BRIDGE="1"
-            THICK_JAIL="1"
             shift
             ;;
         -EB|-BE|--empty-bridge)
+            EMPTY_JAIL="1"
             VNET_JAIL="1"
-            CLONE_JAIL="1"
+            VNET_JAIL_BRIDGE="1"
             shift
             ;;
         -EV|-VE|--empty-vnet)
-            VNET_JAIL="1"
             EMPTY_JAIL="1"
+            VNET_JAIL="1"
             shift
             ;;
         -LV|-VL|--linux-vnet)
-            VNET_JAIL="1"
             LINUX_JAIL="1"
+            VNET_JAIL="1"
             shift
             ;;
         -LB|-BL|--linux-bridge)
+            LINUX_JAIL="1"
             VNET_JAIL="1"
             VNET_JAIL_BRIDGE="1"
-            LINUX_JAIL="1"
             shift
             ;;
         -*|--*)
