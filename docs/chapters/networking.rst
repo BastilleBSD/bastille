@@ -128,6 +128,11 @@ host system:
   ## /etc/devfs.rules (NOT .conf)
   
   [bastille_vnet=13]
+  add include $devfsrules_hide_all
+  add include $devfsrules_unhide_basic
+  add include $devfsrules_unhide_login
+  add include $devfsrules_jail
+  add include $devfsrules_jail_vnet
   add path 'bpf*' unhide
 
 Lastly, you may want to consider these three `sysctl` values:
@@ -155,8 +160,6 @@ Below is the definition of what these three parameters are used for and mean:
 				    interface, set to 0	to disable it.
 
   
-
-
 **Regarding Routes**
 
 Bastille will attempt to auto-detect the default route from the host system and

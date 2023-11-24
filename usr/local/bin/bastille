@@ -62,7 +62,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.10.20231013"
+BASTILLE_VERSION="0.10.20231125"
 
 usage() {
     cat << EOF
