@@ -30,7 +30,7 @@ make install
 **enable at boot**
 ```shell
 sysrc bastille_enable=YES
-sysrc bastille_list="azkaban alcatraz" # (optional whitelist of jails to start at boot; default: ALL)
+sysrc bastille_rcorder=YES
 ```
 
 Upgrading from a previous version
@@ -40,7 +40,7 @@ When upgrading from a previous version of bastille (e.g. 0.10.20230714 to
 
 ```shell
 cd /usr/local/etc/bastille
-vimdiff bastille.conf bastille.conf.sample
+diff -u bastille.conf bastille.conf.sample
 ```
 
 Merge the lines that are present in the new bastille.conf.sample into
@@ -75,6 +75,7 @@ Available Commands:
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port.
+  rcp         reverse cp(1) files from a single container to the host.
   rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
@@ -131,7 +132,7 @@ Example (create, start, console)
 This example creates, starts and consoles into the container.
 
 ```shell
-ishmael ~ # bastille create alcatraz 13.2-RELEASE 10.17.89.10
+ishmael ~ # bastille create alcatraz 14.0-RELEASE 10.17.89.10/24
 ```
 
 ```shell
@@ -143,7 +144,7 @@ alcatraz: created
 ```shell
 ishmael ~ # bastille console alcatraz
 [alcatraz]:
-FreeBSD 13.2-RELEASE-p4 GENERIC
+FreeBSD 14.0-RELEASE GENERIC
 
 Welcome to FreeBSD!
 
