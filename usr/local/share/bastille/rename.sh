@@ -105,7 +105,7 @@ update_fstab() {
 change_name() {
     # Attempt container name change
     info "Attempting to rename '${TARGET}' to ${NEWNAME}..."
-    if [ "${bastille_zfs_enable}" = "YES" ]; then
+    if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
             # Check and rename container ZFS dataset accordingly
             # Perform additional checks in case of non-ZFS existing containers
