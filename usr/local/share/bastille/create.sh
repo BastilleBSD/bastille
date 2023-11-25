@@ -281,7 +281,7 @@ create_jail() {
     bastille_jail_resolv_conf="${bastille_jailsdir}/${NAME}/root/etc/resolv.conf" ## file
 
     if [ ! -d "${bastille_jailsdir}/${NAME}" ]; then
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
+        if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 ## create required zfs datasets, mountpoint inherited from system
                 if [ -z "${CLONE_JAIL}" ]; then
@@ -388,7 +388,7 @@ create_jail() {
                 fi
             done
         else
-            if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${CLONE_JAIL}" ]; then
                         info "Creating a clonejail...\n"

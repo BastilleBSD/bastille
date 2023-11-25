@@ -410,7 +410,7 @@ jail_import() {
     FILE_TRIM=$(echo "${TARGET}" | sed 's/\.xz//g;s/\.gz//g;s/\.tgz//g;s/\.txz//g;s/\.zip//g;s/\.tar\.gz//g;s/\.tar//g')
     FILE_EXT=$(echo "${TARGET}" | sed "s/${FILE_TRIM}//g")
     if [ -d "${bastille_jailsdir}" ]; then
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
+        if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 if [ "${FILE_EXT}" = ".xz" ]; then
                     validate_archive

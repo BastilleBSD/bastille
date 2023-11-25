@@ -154,7 +154,7 @@ clone_jail() {
     # Attempt container clone
     info "Attempting to clone '${TARGET}' to ${NEWNAME}..."
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
+        if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 # Replicate the existing container
                 DATE=$(date +%F-%H%M%S)

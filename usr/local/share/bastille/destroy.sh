@@ -55,7 +55,7 @@ destroy_jail() {
 
     if [ -d "${bastille_jail_base}" ]; then
         info "Deleting Jail: ${TARGET}."
-        if [ "${bastille_zfs_enable}" = "YES" ]; then
+        if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 if [ -n "${TARGET}" ]; then
                     OPTIONS="-r"
@@ -118,7 +118,7 @@ destroy_rel() {
             if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
                 error_notify "Notice: (${_jail}) depends on ${TARGET} base."
                 BASE_HASCHILD="1"
-            elif [ "${bastille_zfs_enable}" = "YES" ]; then
+            elif checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     ## check if this release have child clones
                     if zfs list -H -t snapshot -r "${bastille_rel_base}" > /dev/null 2>&1; then
@@ -144,7 +144,7 @@ destroy_rel() {
     else
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
             info "Deleting base: ${TARGET}"
-            if [ "${bastille_zfs_enable}" = "YES" ]; then
+            if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${TARGET}" ]; then
                         OPTIONS="-r"
