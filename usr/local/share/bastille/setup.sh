@@ -57,6 +57,19 @@ configure_vnet() {
 
     info "Bringing up new interface: bastille1"
     service netif cloneup
+
+    if [ ! -f /etc/devfs.rules ]; then
+        info "Creating bastille_vnet devfs.rules"
+        cat << EOF > /etc/devfs.rules
+[bastille_vnet=13]
+add include \$devfsrules_hide_all
+add include \$devfsrules_unhide_basic
+add include \$devfsrules_unhide_login
+add include \$devfsrules_jail
+add include \$devfsrules_jail_vnet
+add path 'bpf*' unhide
+EOF
+    fi
 }
 
 # Configure pf firewall
