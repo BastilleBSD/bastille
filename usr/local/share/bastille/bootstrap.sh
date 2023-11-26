@@ -474,9 +474,9 @@ if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != 
 fi
 
 ## allow override bootstrap URLs via environment variables
-[ -n ${BASTILLE_URL_FREEBSD} ] && bastille_url_freebsd="${BASTILLE_URL_FREEBSD}"
-[ -n ${BASTILLE_URL_HARDENEDBSD} ] && bastille_url_hardenedbsd="${BASTILLE_URL_HARDENEDBSD}"
-[ -n ${BASTILLE_URL_MIDNIGHTBSD} ] && bastille_url_midnightbsd="${BASTILLE_URL_MIDNIGHTBSD}"
+[ -n "${BASTILLE_URL_FREEBSD}" ] && bastille_url_freebsd="${BASTILLE_URL_FREEBSD}"
+[ -n "${BASTILLE_URL_HARDENEDBSD}" ] && bastille_url_hardenedbsd="${BASTILLE_URL_HARDENEDBSD}"
+[ -n "${BASTILLE_URL_MIDNIGHTBSD}" ] && bastille_url_midnightbsd="${BASTILLE_URL_MIDNIGHTBSD}"
 
 ## Filter sane release names
 case "${1}" in
