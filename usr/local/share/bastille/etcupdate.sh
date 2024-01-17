@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-        # Update /etc folder while keeping user changes
+        # Update /etc directory while keeping user changes
         error_notify "Usage: bastille etcupdate [option(s)(optional)] [jailname] [oldrelease] [newrelease]"
 
         cat << EOF
