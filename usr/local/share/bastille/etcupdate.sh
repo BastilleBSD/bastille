@@ -221,29 +221,29 @@ new_basedir="${bastille_releasesdir}/${UPGRADEVERSION}"
 current_basedir="${bastille_releasesdir}/${COMPAREVERSION}"
 
     C1=0
-    C1txt="Condition C1:\nJail's ./etc files that doesn't exist in \
+    C1txt="Condition C1:\nJail's /etc files that doesn't exist in \
 ${COMPAREVERSION} and doesn't exist in ${UPGRADEVERSION} Action: keep current files"
     C2=0
-    C2txt="Condition C2:\nJail's ./etc files that doesn't exist in \
+    C2txt="Condition C2:\nJail's /etc files that doesn't exist in \
 ${COMPAREVERSION} but exist in ${UPGRADEVERSION} Action: keep current files"
     C3=0
-    C3txt="Condition C3:\nJail's ./etc files that weren't modified when compared to \
+    C3txt="Condition C3:\nJail's /etc files that weren't modified when compared to \
 ${COMPAREVERSION} but doesn't exist in ${UPGRADEVERSION} Action: delete current files"
     C4=0
-    C4txt="Condition C4:\nJail's ./etc files that weren't modified when compared to \
+    C4txt="Condition C4:\nJail's /etc files that weren't modified when compared to \
 ${COMPAREVERSION} and exist in ${UPGRADEVERSION} Action: update/copy the newer files"
     C5=0
-    C5txt="Condition C5:\nJail's ./etc files that were modified when compared to \
+    C5txt="Condition C5:\nJail's /etc files that were modified when compared to \
 ${COMPAREVERSION} and exist in ${UPGRADEVERSION} Action: keep the current files"
     C6=0
-    C6txt="Condition C6:\nJail's ./etc files that were modified when compared to \
+    C6txt="Condition C6:\nJail's /etc files that were modified when compared to \
 ${COMPAREVERSION} and doesn't exist in ${UPGRADEVERSION} Action: keep the current files"
     C7=0
     C7txt="Condition C7:\nCreate directories (with permissions) that exist in \
-${UPGRADEVERSION} ./etc but doesn't exist in the jail"
+${UPGRADEVERSION} /etc but doesn't exist in the jail"
     C8=0
     C8txt="Condition C8:\nCopy files (with permissions) that exist in \
-${UPGRADEVERSION} ./etc but doesn't exist in the jail"
+${UPGRADEVERSION} /etc but doesn't exist in the jail"
 diffs=""
 
 C1_C6_conditions
