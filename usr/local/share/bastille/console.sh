@@ -82,6 +82,7 @@ for _jail in ${JAILS}; do
     if [ -n "${USER}" ]; then
         validate_user
     else
+        check_fib
         LOGIN="$(jexec -l "${_jail}" which login)"
         ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
