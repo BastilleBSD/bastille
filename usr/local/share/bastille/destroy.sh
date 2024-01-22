@@ -69,6 +69,11 @@ destroy_jail() {
         fi
 
         if [ -d "${bastille_jail_base}" ]; then
+            ## make sure no filesystem is currently mounted in the jail directory
+            mount_points=$(mount | cut -d ' ' -f 3 | grep "${bastille_jail_base}")
+            if [ $? -eq 0 ]; then
+                error_exit "Jail has mounted filesystems:\n$mount_points"
+            fi
             ## removing all flags
             chflags -R noschg "${bastille_jail_base}"
 
