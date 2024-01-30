@@ -71,7 +71,7 @@ C1_C6_conditions() {
         fi
 
         if [ -f "${currentbasefile}" ]; then
-            diffr=$(diff -u "${jailfile}" "${currentbasefile}")
+            diffr=$(diff -u "${currentbasefile}" "${jailfile}")
             if [ -z "${diffr}" ]; then
                 if [ ! -f "${newbasefile}" ]; then
                     C3=$((C3+1))
