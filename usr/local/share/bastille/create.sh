@@ -285,10 +285,10 @@ create_jail() {
             if [ -n "${bastille_zfs_zpool}" ]; then
                 ## create required zfs datasets, mountpoint inherited from system
                 if [ -z "${CLONE_JAIL}" ]; then
-                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
+                    zfs create -p ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
                 fi
                 if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
-                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                    zfs create -p ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                 fi
             fi
         else
