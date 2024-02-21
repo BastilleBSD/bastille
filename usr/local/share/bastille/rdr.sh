@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rdr TARGET [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]"
+    error_exit "Usage: bastille rdr TARGET [(clear [persistent])|(list [persistent])|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]"
 }
 
 # Handle special-case commands first.
@@ -170,29 +170,59 @@ port_rdr_rule() {
     fi
 }
 
+list_rules() {
+    jail_name=$1
+    persistent=$2
+
+    echo "${jail_name} redirects:"
+    if [ -z $persistent ]; then
+        pfctl -a "rdr/${jail_name}" -Psn 2>/dev/null
+    else
+        cat ${bastille_jailsdir}/${jail_name}/rdr.conf 2>/dev/null
+    fi
+}
+
+clear_rules() {
+    jail_name=$1
+    persistent=$2
+
+    echo "Clearing ${jail_name} redirects."
+    pfctl -a "rdr/${jail_name}" -Fn
+    if [ ! -z $persistent ]; then
+        echo "Clearing ${jail_name} rdr.conf."
+        rm -f ${bastille_jailsdir}/${jail_name}/rdr.conf
+    fi
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
         list)
+            persistent=""
+            if [ "$2" = 'persistent' ]; then
+                persistent="true"
+            fi
             if [ "${TARGET}" = 'ALL' ]; then
-                for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "${JAIL_NAME} redirects:"
-                    pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+                for NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    list_rules $NAME $persistent
                 done
             else
                 check_jail_validity
-                pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
+                list_rules $JAIL_NAME $persistent
             fi
             break
             ;;
         clear)
+            persistent=""
+            if [ "$2" = 'persistent' ]; then
+                persistent="true"
+            fi
             if [ "${TARGET}" = 'ALL' ]; then
-                for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "Clearing ${JAIL_NAME} redirects:"
-                    pfctl -a "rdr/${JAIL_NAME}" -Fn
+                for NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    clear_rules $NAME $persistent
                 done
             else
                 check_jail_validity
-                pfctl -a "rdr/${JAIL_NAME}" -Fn
+                clear_rules $JAIL_NAME $persistent
             fi
             break
             ;;
