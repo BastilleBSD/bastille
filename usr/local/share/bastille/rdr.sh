@@ -32,7 +32,10 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rdr TARGET [(clear [persistent])|(list [persistent])|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]"
+    error_exit "Usage: bastille rdr TARGET \
+[(dev <net_device>)|(ip <destination_ip>)] \
+(clear [persistent])|(list [persistent])|\
+(tcp|udp <host_port> <jail_port> [log ['(' logopts ')'] ] )"
 }
 
 # Handle special-case commands first.
@@ -49,12 +52,15 @@ fi
 bastille_root_check
 
 TARGET="${1}"
+shift
+
 JAIL_NAME=""
 JAIL_IP=""
 JAIL_IP6=""
 EXT_IF=""
+EXT_IP="any"
 RDR_LOG=""
-shift
+RDR_CMD="$@"
 
 check_jail_validity() {
     # Can only redirect to single jail
@@ -89,7 +95,7 @@ check_jail_validity() {
     fi
 
     # Check if ext_if is defined in pf.conf
-    if [ -n "${bastille_pf_conf}" ]; then
+    if [ -n "${bastille_pf_conf}" ] && [ -z $EXT_IF ]; then
         EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | cut -d= -f2 | sed 's/"//g')
         if [ -z "${EXT_IF}" ]; then
             error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
@@ -99,9 +105,8 @@ check_jail_validity() {
 
 # function: write rule to rdr.conf
 persist_rdr_rule() {
-    rule="$@"
-    if ! grep -qs "$rule" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-        echo "$rule" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+    if ! grep -qs "^$RDR_CMD$" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+        echo "$RDR_CMD" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
     fi
 }
 
@@ -111,7 +116,7 @@ load_rdr_rule() {
     host_port=$2
     jail_port=$3
 
-    rule="rdr pass $RDR_LOG on $EXT_IF inet proto $proto from any to any port $host_port -> $JAIL_IP port $jail_port"
+    rule="rdr pass $RDR_LOG on $EXT_IF inet proto $proto from any to $EXT_IP port $host_port -> $JAIL_IP port $jail_port"
 
     (pfctl -a "rdr/${JAIL_NAME}" -Psn ; echo $rule) | pfctl -a "rdr/${JAIL_NAME}" -f-
 }
@@ -124,7 +129,7 @@ port_rdr_rule() {
     check_jail_validity
 
     if [ $# -eq 3 ]; then
-        persist_rdr_rule $@
+        persist_rdr_rule
         load_rdr_rule $@
         if [ -n "$JAIL_IP6" ]; then
             JAIL_IP=$JAIL_IP6
@@ -143,7 +148,7 @@ port_rdr_rule() {
                         true
                     done
                     if [ $2 == "(" ] && [ $last == ")" ] ; then
-                        persist_rdr_rule $proto $host_port $jail_port $RDR_LOG
+                        persist_rdr_rule
                         load_rdr_rule $proto $host_port $jail_port
                         if [ -n "$JAIL_IP6" ]; then
                             JAIL_IP=$JAIL_IP6
@@ -153,7 +158,7 @@ port_rdr_rule() {
                         usage
                     fi
                 elif [ $# -eq 1 ]; then
-                    persist_rdr_rule $proto $host_port $jail_port $RDR_LOG
+                    persist_rdr_rule
                     load_rdr_rule $proto $host_port $jail_port
                     if [ -n "$JAIL_IP6" ]; then
                         JAIL_IP=$JAIL_IP6
@@ -174,7 +179,6 @@ list_rules() {
     jail_name=$1
     persistent=$2
 
-    echo "${jail_name} redirects:"
     if [ -z $persistent ]; then
         pfctl -a "rdr/${jail_name}" -Psn 2>/dev/null
     else
@@ -203,6 +207,7 @@ while [ $# -gt 0 ]; do
             fi
             if [ "${TARGET}" = 'ALL' ]; then
                 for NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    echo "$NAME redirects:"
                     list_rules $NAME $persistent
                 done
             else
@@ -229,6 +234,22 @@ while [ $# -gt 0 ]; do
         tcp|udp)
             port_rdr_rule $@
             break
+            ;;
+        dev)
+            # dev is a modifier not a final command so at least 3 args
+            if [ $# -lt 3 ]; then
+                usage
+            fi
+            EXT_IF=$2
+            shift 2
+            ;;
+        ip)
+            # ip is a modifier not a final command so at least 3 args
+            if [ $# -lt 3 ]; then
+                usage
+            fi
+            EXT_IP=$2
+            shift 2
             ;;
         *)
             usage
