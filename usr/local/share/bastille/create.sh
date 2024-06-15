@@ -69,14 +69,17 @@ validate_name() {
 }
 
 validate_ip() {
-    ipx_addr="ip4.addr"
     ip="$1"
     ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         ipx_addr="ip6.addr"
         IP6_MODE="new"
+    elif [ "${ip}" = "ip_hostname" ]; then
+          info "Valid: (${ip})."
+          IP_HOSTNAME="ip_hostname"
     else
+        ipx_addr="ip4.addr"
         if [ "${ip}" = "DHCP" ]; then
             info "Valid: (${ip})."
         else
@@ -101,7 +104,7 @@ validate_ip() {
             fi
         fi
     fi
-    if echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
+    if echo "${ip}" | grep -qvE '(SLAAC|DHCP|ip_hostname|0[.]0[.]0[.]0)'; then
         if [ "${ipx_addr}" = "ip4.addr" ]; then
                 IP4_ADDR="${ip}"
                 IP4_DEFINITION="${ipx_addr} = ${ip};"
@@ -117,6 +120,7 @@ validate_ips() {
     IP6_DEFINITION=""
     IP4_ADDR=""
     IP6_ADDR=""
+    IP_HOSTNAME=""
     for ip in ${IP}; do
         validate_ip "${ip}"
     done
@@ -181,6 +185,7 @@ ${NAME} {
   osrelease = ${RELEASE};
 
   interface = ${bastille_jail_conf_interface};
+  ${IP_HOSTNAME};
   ${IP4_DEFINITION}
   ${IP6_DEFINITION}
   ip6 = ${IP6_MODE};
