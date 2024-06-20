@@ -212,6 +212,11 @@ bootstrap_directories() {
 }
 
 bootstrap_release() {
+    # Make sure to check/bootstrap directories first.¬
+    NOCACHEDIR=1
+    RELEASE="${DIR_BOOTSTRAP}"
+    bootstrap_directories
+
     ## if release exists quit, else bootstrap additional distfiles
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
         ## check distfiles list and skip existing cached files
@@ -346,7 +351,7 @@ debootstrap_release() {
                 ;;
             esac
         else
-            # If already set in /boot/loader.conf, check and try to load the module. 
+            # If already set in /boot/loader.conf, check and try to load the module.
             if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
                 info "Loading kernel module: ${_req_kmod}"
                 kldload -v ${_req_kmod}
