@@ -14,7 +14,6 @@ Two values are required for Bastille to use ZFS. The default values in the ``bas
   bastille_zfs_enable=""                                  ## default: ""
   bastille_zfs_zpool=""                                   ## default: ""
   bastille_zfs_prefix="bastille"                          ## default: "${bastille_zfs_zpool}/bastille"
-  bastille_prefix="/bastille"                             ## default: "/usr/local/bastille". ${bastille_zfs_prefix} gets mounted here
   bastille_zfs_options="-o compress=lz4 -o atime=off"     ## default: "-o compress=lz4 -o atime=off"
 
 Example
@@ -26,3 +25,8 @@ Example
 
 Replace ``ZPOOL_NAME`` with the zpool you want Bastille to use. Tip: ``zpool list`` and ``zpool status`` will help. 
 If you get 'no pools available' you are likely not using ZFS and can safely ignore these settings.
+
+If you are going to use a zpool other than zroot (eg. ``tank``)  you must also edit the ``bastille_prefix`` (at the top of the ``bastille.conf`` file) to specify the path to the zpool.
+
+Example
+If you choose to run bastille on a pool you have created called ``tank`` you must set ``bastille_prefix=/tank/bastille`` otherwise it will try to use the default ``/usr/local/bastille`` prefix, causing issues with trying to create your containers on your speicified zpool.
