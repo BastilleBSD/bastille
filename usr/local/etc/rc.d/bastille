@@ -41,7 +41,7 @@ restart_cmd="bastille_stop && bastille_start"
 rcordered_list() {
     local _jailsdir
     _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    bastille_ordered_list=$(rcorder -s nostart ${_jailsdir}/*/jail.conf | xargs dirname | xargs basename | tr "\n" " ")
+    bastille_ordered_list=$(rcorder -s nostart ${_jailsdir}/*/jail.conf | xargs dirname | xargs basename -a | tr "\n" " ")
 }
 
 bastille_start()
