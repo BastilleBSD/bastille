@@ -47,7 +47,7 @@ EOL Releases
 ------------
 
 It is sometimes necessary to run end-of-life releases for testing or legacy
-application support. Dy default Bastille will only install supported releases
+application support. By default Bastille will only install supported releases
 but you can bootstrap EOL / unsupported releases with a simple trick.
 
 .. code-block:: shell
