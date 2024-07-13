@@ -112,10 +112,6 @@ configure_zfs() {
     else
         ## attempt to determine bastille_zroot from `zpool list`
         bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
-        zfs create ${bastille_zfs_options} -o mountpoint=${bastille_prefix} ${bastille_zroot}/bastille || \
-          error_exit "Failed to create zfs dataset 'bastille' in pool '${bastille_zroot}'"
-        chown root:root ${bastille_prefix}
-        chmod 0750 ${bastille_prefix}
         sysrc -f "${bastille_config}" bastille_zfs_enable=YES
         sysrc -f "${bastille_config}" bastille_zfs_zpool="${bastille_zroot}"
     fi

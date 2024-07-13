@@ -212,11 +212,6 @@ bootstrap_directories() {
 }
 
 bootstrap_release() {
-    # Make sure to check/bootstrap directories first.¬
-    NOCACHEDIR=1
-    RELEASE="${DIR_BOOTSTRAP}"
-    bootstrap_directories
-
     ## if release exists quit, else bootstrap additional distfiles
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
         ## check distfiles list and skip existing cached files
