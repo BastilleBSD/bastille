@@ -158,6 +158,18 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
         TARGET="${1}"
         shift
 
+        # This is needed to handle the special case of 'bastille rcp' and 'bastille cp' with the '-q' or '--quiet'
+        # option specified before the TARGET. Also seems the cp and rcp commands does not support ALL as a target, so
+        # that's why is handled here. Maybe this behaviour needs an improvement later. -- yaazkal
+        if { [ "${CMD}" = 'rcp' ] || [ "${CMD}" = 'cp' ]; } && \
+           { [ "${TARGET}" = '-q' ] || [ "${TARGET}" = '--quiet' ]; }; then
+          TARGET="${1}"
+          JAILS="${TARGET}"
+          OPTION="-q"
+          export OPTION
+          shift
+        fi
+
         if [ "${TARGET}" = 'ALL' ]; then
             target_all_jails
         elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-H' ] || [ "${TARGET}" = '--host' ]; then
