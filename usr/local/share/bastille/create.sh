@@ -77,7 +77,7 @@ validate_ip() {
         IP6_MODE="new"
     elif [ "${ip}" = "ip_hostname" ]; then
           info "Valid: (${ip})."
-          IP_HOSTNAME="ip_hostname"
+          IP_HOSTNAME="ip_hostname;"
     else
         ipx_addr="ip4.addr"
         if [ "${ip}" = "DHCP" ]; then
@@ -190,7 +190,7 @@ ${NAME} {
   osrelease = ${RELEASE};
 
   interface = ${bastille_jail_conf_interface};
-  ${IP_HOSTNAME};
+  ${IP_HOSTNAME}
   ${IP4_DEFINITION}
   ${IP6_DEFINITION}
   ip6 = ${IP6_MODE};
