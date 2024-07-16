@@ -169,10 +169,15 @@ EOF
 }
 
 generate_jail_conf() {
+    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
+        devfs_ruleset_value=0
+    else
+        devfs_ruleset_value=4
+    fi
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
-  devfs_ruleset = 4;
   enforce_statfs = 2;
+  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
@@ -194,12 +199,17 @@ EOF
 }
 
 generate_linux_jail_conf() {
+    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
+        devfs_ruleset_value=0
+    else
+        devfs_ruleset_value=4
+    fi
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   host.hostname = ${NAME};
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
-  devfs_ruleset = 4;
+  devfs_ruleset = ${devfs_ruleset_value};
   enforce_statfs = 1;
 
   exec.start = '/bin/true';
@@ -217,11 +227,16 @@ EOF
 }
 
 generate_vnet_jail_conf() {
+    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
+        devfs_ruleset_value=0
+    else
+        devfs_ruleset_value=13
+    fi
     NETBLOCK=$(generate_vnet_jail_netblock "$NAME" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
-  devfs_ruleset = 13;
   enforce_statfs = 2;
+  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
