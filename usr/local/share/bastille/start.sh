@@ -35,6 +35,21 @@ usage() {
     error_exit "Usage: bastille start TARGET"
 }
 
+# indicate if an IP configurtaion value (e.g. a value given for ip4 or ip6)
+# requires extra configuration external to the jail
+#
+# success if it does, failure if it does not
+ip_require_config() {
+
+    case "${1}" in
+        disable|inherit|"not set")
+            return 1
+            ;;
+    esac
+
+    return 0
+}
+
 # Handle special-case commands first.
 case "$1" in
 help|-h|--help)
@@ -69,14 +84,18 @@ for _jail in ${JAILS}; do
 
     ## test if not running
     elif [ ! "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
-        # Verify that the configured interface exists. -- cwells
-        if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
-            _interface=$(bastille config $_jail get interface)
-            if ! ifconfig | grep "^${_interface}:" >/dev/null; then
-                error_notify "Error: ${_interface} interface does not exist."
-                continue
+        ## if networking is entirely inherited we can skip any setup
+        _ip4=$(bastille config $_jail get ip4)
+        _ip6=$(bastille config $_jail get ip6)
+        if ip_require_config "${_ip4}" || ip_require_config "${_ip6}"; then
+            # Verify that the configured interface exists. -- cwells
+            if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
+                _interface=$(bastille config $_jail get interface)
+                if ! ifconfig | grep "^${_interface}:" >/dev/null; then
+                    error_notify "Error: ${_interface} interface does not exist."
+                    continue
+                fi
             fi
-        fi
 
         ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
         ip=$(bastille config "${_jail}" get ip4.addr)
