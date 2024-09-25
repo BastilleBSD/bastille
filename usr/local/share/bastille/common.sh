@@ -112,7 +112,7 @@ EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \'vnet host interface for Bastille jail ${jail_name}\'";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
     fi
