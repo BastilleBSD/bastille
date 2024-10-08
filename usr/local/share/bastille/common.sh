@@ -96,7 +96,7 @@ generate_vnet_jail_netblock() {
     fi
     # generate static MAC for jail using host prefix (first half of host MAC)
     local host_mac_prefix="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | cut -d':' -f1-3)"
-	local jail_mac_suffix="$(echo -n ${jail_name} | sha256 | tr -d '\n' | awk '{print substr($0,length($0)-5,2) ":" substr($0,length($0)-3,2) ":" substr($0,length($0)-1,1)}')"
+    local jail_mac_suffix="$(echo -n ${jail_name} | sha256 | tr -d '\n' | awk '{print substr($0,length($0)-5,2) ":" substr($0,length($0)-3,2) ":" substr($0,length($0)-1,1)}')"
     if [ -n "${use_unique_bridge}" ]; then
         ## generate bridge config
         cat <<-EOF
