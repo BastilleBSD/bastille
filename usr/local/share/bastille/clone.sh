@@ -135,7 +135,8 @@ update_jailconf_vnet() {
 
     # Rename interface to new uniq_epair
     sed -i '' "s|ifconfig_e0b_bastille.*_name|ifconfig_e0b_${uniq_epair}_name|" "${bastille_jail_rc_conf}"
-
+    sed -i '' "s|ifconfig_e.*b.*_name|ifconfig_e${uniq_epair_bridge}b_${NEWNAME}_name|" "${bastille_jail_rc_conf}"
+    
     # If 0.0.0.0 set DHCP, else set static IP address
     if [ "${IP}" == "0.0.0.0" ]; then
         sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
