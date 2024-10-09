@@ -86,12 +86,12 @@ update_jailconf() {
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
-            #sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
-            #sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
-            #sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
-            #sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
-            #sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
-            #sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
+            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
+            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
+            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
+            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
+            sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
+            sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
         fi
     fi
 
@@ -114,14 +114,14 @@ update_jailconf_vnet() {
                     local uniq_epair="bastille${_num}"
                     local uniq_epair_bridge="${_num}"
                     local host_mac_prefix="$(cat ${JAIL_CONFIG} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
-		            local jail_mac_suffix="$(echo -n ${NEWNAME} | sha256 | tr -d '\n' | awk '{print substr($0,length($0)-5,2) ":" substr($0,length($0)-3,2) ":" substr($0,length($0)-1,1)}')"
-		            # Update the exec.* with uniq_epair when cloning jails.
-                    #sed -i '' "s|vnet.interface = e[0-9]b_bastille.*;|vnet.interface = e0b_${uniq_epair};|" "${JAIL_CONFIG}"
-                    #sed -i '' "s|exec.prestart += \"jib addm bastille[0-9]|exec.prestart += \"jib addm ${uniq_epair};|" "${JAIL_CONFIG}"
-                    #sed -i '' "s|exec.prestart += \"ifconfig e[0-9]a_bastille[0-9] description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
-                    #sed -i '' "s|exec.poststop += \"jib destroy bastille[0-9]\";|exec.poststop += \"jib destroy ${uniq_epair}\";|" "${JAIL_CONFIG}"
-                    # for bridged jails
-		            sed -i '' "s|${TARGET}|${NEWNAME}|g" "${JAIL_CONFIG}"
+		    local jail_mac_suffix="$(echo -n ${NEWNAME} | sha256 | tr -d '\n' | awk '{print substr($0,length($0)-5,2) ":" substr($0,length($0)-3,2) ":" substr($0,length($0)-1,1)}')"
+		    # Update the exec.* with uniq_epair when cloning jails.
+                    sed -i '' "s|vnet.interface = e[0-9]b_bastille.*;|vnet.interface = e0b_${uniq_epair};|" "${JAIL_CONFIG}"
+                    sed -i '' "s|exec.prestart += \"jib addm bastille[0-9]|exec.prestart += \"jib addm ${uniq_epair};|" "${JAIL_CONFIG}"
+                    sed -i '' "s|exec.prestart += \"ifconfig e[0-9]a_bastille[0-9] description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
+                    sed -i '' "s|exec.poststop += \"jib destroy bastille[0-9]\";|exec.poststop += \"jib destroy ${uniq_epair}\";|" "${JAIL_CONFIG}"
+                    # for bridged VNET jails
+		    sed -i '' "s|${TARGET}|${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|\"e\([0-9]\{1,\}\)|\"e${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
                     sed -i '' "s| e\([0-9]\{1,\}\)| e${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
                     sed -i '' "s| epair\([0-9]\{1,\}\)| epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
