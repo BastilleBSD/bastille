@@ -94,15 +94,19 @@ generate_vnet_jail_netblock() {
         local uniq_epair="bastille0"
         local uniq_epair_bridge="0"
     fi
+	local host_mac_prefix="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | cut -d':' -f1-3)"
+	local jail_mac_suffix="$(echo -n ${jail_name} | sha256 | tr -d '\n' | awk '{print substr($0,length($0)-5,2) ":" substr($0,length($0)-3,2) ":" substr($0,length($0)-1,1)}')"
     if [ -n "${use_unique_bridge}" ]; then
         ## generate bridge config
         cat <<-EOF
   vnet;
-  vnet.interface = "e${uniq_epair_bridge}b_${jail_name}";
+  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
   exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
   exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
   exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
   exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
+  exec.prestart += "ifconfig e${uniq_epair_bridge}a_${jail_name} ether ${host_mac_prefix}:${jail_mac_suffix}a";
+  exec.prestart += "ifconfig e${uniq_epair_bridge}b_${jail_name} ether ${host_mac_prefix}:${jail_mac_suffix}b";
   exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
   exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
 EOF
@@ -112,6 +116,8 @@ EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} ether ${host_mac_prefix}:${jail_mac_suffix}a";
+  exec.prestart += "ifconfig e0b_${uniq_epair} ether ${host_mac_prefix}:${jail_mac_suffix}b";
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
