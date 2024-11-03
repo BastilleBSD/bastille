@@ -51,8 +51,9 @@ bastille_root_check
 for _jail in ${JAILS}; do
     ## test if running
     if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
-        ## Capture ip4.addr address while still running
-        _ip="$(/usr/sbin/jls -j ${_jail} ip4.addr)"
+        ## Capture ipX.addr address while still running
+        ips="$(/usr/sbin/jls -j ${_jail} ip4.addr)"
+        ips="${ips} $(/usr/sbin/jls -j ${_jail} ip6.addr)"
 
         # Check if pfctl is present
         if which -s pfctl; then
@@ -72,10 +73,12 @@ for _jail in ${JAILS}; do
         info "[${_jail}]:"
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
-        ## remove (captured above) ip4.addr from firewall table
-        if [ -n "${bastille_network_loopback}" ] && [ ! -z "${_ip}" ]; then
+        ## remove (captured above) ipX.addr from firewall table
+        if [ -n "${bastille_network_loopback}" && ! -z "${ips}" ]; then
             if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
-                pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
+                for _ip in ${ips}; do
+                    pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
+                done
             fi
         fi
     fi

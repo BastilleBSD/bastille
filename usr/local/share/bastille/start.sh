@@ -78,16 +78,20 @@ for _jail in ${JAILS}; do
             fi
         fi
 
-        ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
-        ip=$(bastille config "${_jail}" get ip4.addr)
-        if [ -n "${ip}" ]; then
+        ## warn if matching configured (but not online) ipX.addr, ignore if there's no ipX.addr entry
+        ips=$(bastille config "${_jail}" get ip4.addr)
+        ips="${ips} $(bastille config "${_jail}" get ip6.addr)"
+        for ip in ${ips}; do
+          ip=$(printf "$ip" | sed -E 's,/[0-9]+,,')
+          if [ -n "${ip}" ]; then
             if ifconfig | grep -wF "${ip}" >/dev/null; then
-                error_notify "Error: IP address (${ip}) already in use."
-                continue
+              error_notify "Error: IP address (${ip}) already in use."
+              continue
             fi
-            ## add ip4.addr to firewall table
+            ## add ipX.addr to firewall table
             pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
-        fi
+          fi
+        done
 
         ## start the container
         info "[${_jail}]:"
