@@ -114,7 +114,7 @@ configure_zfs() {
     if [ ! "$(kldstat -m zfs)" ]; then
         info "ZFS module not loaded; skipping..."
     else
-        if [ -z "${bastille_zfs_pool}" ]; then
+        if [ -z "${bastille_zfs_zpool}" ]; then
             ## attempt to determine bastille_zroot from `zpool list`
             bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
             sysrc -f "${bastille_config}" bastille_zfs_zpool="${bastille_zroot}"
