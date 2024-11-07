@@ -38,4 +38,6 @@ After upgrading all jails from one release to the next you may find that you now
 
 `bastille list releases` to list all bootstrapped releases.
 
-`bastille destroy X.Y-RELEASE` to fully delete the release. 
+`bastille destroy X.Y-RELEASE` to fully delete the release.
+
+`bastille destroy force X.Y-RELEASE` to delete the cache directory as well.
