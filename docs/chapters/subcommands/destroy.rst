@@ -18,10 +18,10 @@ created.  Note: containers must be stopped before destroyed.
   Note: containers console logs not destroyed.
   /usr/local/bastille/logs/folsom_console.log
 
-Release can be detroyed provided there are no child jails. The `force` option
-deletes the release cache directory as well:
+Releases can be detroyed which also deletes the related cache directory. Child
+jails must be destroyed beforehand.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille destroy force 14.0-RELEASE
+  ishmael ~ # bastille destroy 14.0-RELEASE
   Deleting base: 14.0-RELEASE

@@ -152,10 +152,8 @@ destroy_rel() {
                             OPTIONS="-rf"
                         fi
                         zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${TARGET}"
-                        if [ "${FORCE}" = "1" ]; then
-                            if [ -d "${bastille_cachedir}/${TARGET}" ]; then
-                                zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${TARGET}"
-                            fi
+                        if [ -d "${bastille_cachedir}/${TARGET}" ]; then
+                            zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${TARGET}"
                         fi
                     fi
                 fi
@@ -169,11 +167,9 @@ destroy_rel() {
                 rm -rf "${bastille_rel_base}"
             fi
 
-            if [ "${FORCE}" = "1" ]; then
-                ## remove cache on force
-                if [ -d "${bastille_cachedir}/${TARGET}" ]; then
-                    rm -rf "${bastille_cachedir}/${TARGET}"
-                fi
+            ## remove cache
+            if [ -d "${bastille_cachedir}/${TARGET}" ]; then
+                rm -rf "${bastille_cachedir}/${TARGET}"
             fi
             echo
         else
