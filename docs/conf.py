@@ -1,9 +1,9 @@
 import os
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 if on_rtd:
-    html_theme = 'default'
-else:
     html_theme = 'sphinx_rtd_theme'
+else:
+    html_theme = 'default'
 
 # -- Project information -----------------------------------------------------
 
@@ -12,9 +12,11 @@ copyright = '2018-2023, Christer Edwards'
 author = 'Christer Edwards'
 
 # The short X.Y version
-version = '0.10.20231125'
+with open('../usr/local/share/bastille/version.sh') as f:
+    bastille_version = f.read().rstrip()
+    version = bastille_version.split('"')[1]
 # The full version, including alpha/beta/rc tags
-release = '0.10.20231125-beta'
+release = version + '-beta'
 
 
 # -- General configuration ---------------------------------------------------

@@ -61,8 +61,7 @@ bastille_perms_check() {
 
 bastille_perms_check
 
-## version
-BASTILLE_VERSION="0.10.20231125"
+. /usr/local/share/bastille/version.sh
 
 usage() {
     cat << EOF

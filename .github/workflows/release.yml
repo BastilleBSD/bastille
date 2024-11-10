@@ -1,0 +1,42 @@
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'usr/local/share/bastille/version.sh'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bastille-version
+        shell: bash
+        run: |
+          . usr/local/share/bastille/version.sh
+          if ! [[ "$BASTILLE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]{8}$ ]]; then
+              echo "Invalid version format"
+              exit 1
+          fi
+          echo "RELEASE_VERSION=v$BASTILLE_VERSION" >> $GITHUB_ENV
+
+      - name: git-tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag ${RELEASE_VERSION}
+          git push origin ${RELEASE_VERSION}
+
+      - name: gh-release
+        run: |
+          gh release create $RELEASE_VERSION \
+            --verify-tag \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
