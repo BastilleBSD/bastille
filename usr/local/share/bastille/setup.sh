@@ -31,7 +31,7 @@
 bastille_config="/usr/local/etc/bastille/bastille.conf"
 . /usr/local/share/bastille/common.sh
 
-if [ ! -f ${bastille_config} ]; then
+if [ ! -f "${bastille_config}" ]; then
     cp /usr/local/etc/bastille/bastille.conf.sample ${bastille_config}
 fi
 . ${bastille_config}
