@@ -14,7 +14,6 @@ Two values are required for Bastille to use ZFS. The default values in the ``bas
   bastille_zfs_enable=""                                  ## default: ""
   bastille_zfs_zpool=""                                   ## default: ""
   bastille_zfs_prefix="bastille"                          ## default: "${bastille_zfs_zpool}/bastille"
-  bastille_prefix="/bastille"                             ## default: "/usr/local/bastille". ${bastille_zfs_prefix} gets mounted here
   bastille_zfs_options="-o compress=lz4 -o atime=off"     ## default: "-o compress=lz4 -o atime=off"
 
 Example
@@ -26,3 +25,14 @@ Example
 
 Replace ``ZPOOL_NAME`` with the zpool you want Bastille to use. Tip: ``zpool list`` and ``zpool status`` will help. 
 If you get 'no pools available' you are likely not using ZFS and can safely ignore these settings.
+
+By default, bastille will use ``ZPOOL_NAME/bastille`` as its working zfs dataset. If you want it to use a specific dataset
+on your pool, set ``bastille_zfs_prefix`` to the dataset you want bastille to use. DO NOT include the pool name.
+
+Example
+
+.. code-block:: shell
+
+  ishmael ~ # sysrc -f /usr/local/etc/bastille/bastille.conf bastille_zfs_prefix=apps/bastille
+
+The above example will set ``ZPOOL_NAME/apps/bastille`` as the working zfs dataset for bastille.
