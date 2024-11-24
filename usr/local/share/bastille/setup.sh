@@ -30,11 +30,16 @@
 
 bastille_config="/usr/local/etc/bastille/bastille.conf"
 . /usr/local/share/bastille/common.sh
+
+if [ ! -f "${bastille_config}" ]; then
+  cp /usr/local/etc/bastille/bastille.conf.sample ${bastille_config}
+fi
+
 # shellcheck source=/usr/local/etc/bastille/bastille.conf
 . ${bastille_config}
 
 usage() {
-    error_exit "Usage: bastille setup [pf|bastille0|zfs|vnet]"
+    error_exit "Usage: bastille setup [pf|network|zfs|vnet]"
 }
 
 # Check for too many args
@@ -42,13 +47,13 @@ if [ $# -gt 1 ]; then
     usage
 fi
 
-# Configure bastille0 network interface
-configure_bastille0() {
-    info "Configuring bastille0 loopback interface"
+# Configure bastille loopback network interface
+configure_network() {
+    info "Configuring ${bastille_network_loopback} loopback interface"
     sysrc cloned_interfaces+=lo1
-    sysrc ifconfig_lo1_name="bastille0"
+    sysrc ifconfig_lo1_name="${bastille_network_loopback}"
 
-    info "Bringing up new interface: bastille0"
+    info "Bringing up new interface: ${bastille_network_loopback}"
     service netif cloneup
 }
 
@@ -123,7 +128,7 @@ configure_zfs() {
 # Run all base functions (w/o vnet) if no args
 if [ $# -eq 0 ]; then
     sysrc bastille_enable=YES
-    configure_bastille0
+    configure_network
     configure_pf
     configure_zfs
 fi
@@ -136,8 +141,13 @@ help|-h|--help)
 pf|firewall)
     configure_pf
     ;;
-bastille0|loopback)
-    configure_bastille0
+bastille0)
+    # TODO remove in future release 0.13
+    warn "'bastille setup bastille0' will be deprecated in the next 0.13 version."
+    configure_network
+    ;;
+network|loopback)
+    configure_network
     ;;
 zfs|storage)
     configure_zfs
