@@ -185,6 +185,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
             # This command does not act on a jail, so we are temporarily bypassing the presence/started
             # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
+            :
         else
             JAILS="${TARGET}"
 
