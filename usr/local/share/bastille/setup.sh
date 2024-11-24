@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 bastille_config="/usr/local/etc/bastille/bastille.conf"
 . /usr/local/share/bastille/common.sh
 
+# TODO: This not going to take effect since Bastille checks the file
+# before running this subcommand. We will need to check an strategy.
 if [ ! -f "${bastille_config}" ]; then
   cp /usr/local/etc/bastille/bastille.conf.sample ${bastille_config}
 fi
@@ -108,6 +110,7 @@ antispoof for \$ext_if inet
 pass in inet proto tcp from any to any port ssh flags S/SA keep state
 EOF
     sysrc pf_enable=YES
+    warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
     error_exit "${bastille_pf_conf} already exists. Exiting."
 fi

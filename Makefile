@@ -1,4 +1,4 @@
-BASTILLE_VERSION=$$(git rev-parse HEAD)
+BASTILLE_VERSION=$$(git rev-parse --short HEAD)
 
 .PHONY: all
 all:
