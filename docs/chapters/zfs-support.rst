@@ -36,3 +36,6 @@ Example
   ishmael ~ # sysrc -f /usr/local/etc/bastille/bastille.conf bastille_zfs_prefix=apps/bastille
 
 The above example will set ``ZPOOL_NAME/apps/bastille`` as the working zfs dataset for bastille.
+
+Bastille will mount the datasets it creates at ``bastille_prefix`` which defaults to ``/usr/local/bastille``
+If this is not desirable, you can change it at the top of the config file.
