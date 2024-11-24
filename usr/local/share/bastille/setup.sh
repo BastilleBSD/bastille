@@ -108,6 +108,7 @@ antispoof for \$ext_if inet
 pass in inet proto tcp from any to any port ssh flags S/SA keep state
 EOF
     sysrc pf_enable=YES
+    warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
     error_exit "${bastille_pf_conf} already exists. Exiting."
 fi
