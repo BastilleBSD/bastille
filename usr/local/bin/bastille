@@ -216,6 +216,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
     ;;
 esac
 
+# shellcheck disable=SC2154
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 if [ -f "${SCRIPTPATH}" ]; then
     : "${UMASK:=022}"
