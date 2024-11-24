@@ -30,12 +30,12 @@
 
 bastille_config="/usr/local/etc/bastille/bastille.conf"
 . /usr/local/share/bastille/common.sh
-# shellcheck source=/usr/local/etc/bastille/bastille.conf
 
-if [ ! -f "${bastille_config}" ]
-then
+if [ ! -f "${bastille_config}" ]; then
   cp /usr/local/etc/bastille/bastille.conf.sample ${bastille_config}
 fi
+
+# shellcheck source=/usr/local/etc/bastille/bastille.conf
 . ${bastille_config}
 
 usage() {
@@ -141,7 +141,12 @@ help|-h|--help)
 pf|firewall)
     configure_pf
     ;;
-network|bastille0|loopback)
+bastille0)
+    # TODO remove in future release 0.13
+    warn "'bastille setup bastille0' will be deprecated in the next 0.13 version."
+    configure_network
+    ;;
+network|loopback)
     configure_network
     ;;
 zfs|storage)

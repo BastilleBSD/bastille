@@ -110,7 +110,7 @@ automatically. This feature is new since version 0.10.20231013.
 
 ```shell
 ishmael ~ # bastille setup -h
-ishmael ~ # Usage: bastille setup [pf|bastille0|zfs|vnet]
+ishmael ~ # Usage: bastille setup [pf|network|zfs|vnet]
 ```
 
 On fresh installations it is likely safe to run `bastille setup` with no
