@@ -72,8 +72,6 @@ if [ $# -gt 5 ] || [ $# -lt 1 ]; then
 fi
 
 bastille_root_check
-
-# Attempt to autocomplete jail name
 jail_autocomplete
 
 zfs_enable_check() {
