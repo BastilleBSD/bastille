@@ -73,6 +73,9 @@ fi
 
 bastille_root_check
 
+# Attempt to autocomplete jail name
+jail_autocomplete
+
 zfs_enable_check() {
     # Temporarily disable ZFS so we can create a standard backup archive
     if checkyesno bastille_zfs_enable; then
