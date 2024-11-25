@@ -76,6 +76,9 @@ case "${OPTION}" in
         ;;
 esac
 
+# Attempt to autocomplete jail name
+jail_autocomplete
+
 jail_check() {
     # Check if the jail is thick and is running
     if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
