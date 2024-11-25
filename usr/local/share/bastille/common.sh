@@ -70,6 +70,16 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+jail_autocomplete() {
+    AUTOTARGET=$( ls "${bastille_jailsdir}" | grep "${TARGET}" )
+    if [ $( echo "${AUTOTARGET}" | wc -l ) -eq 1 ]; then
+        TARGET="${AUTOTARGET}"
+        return 0
+    else
+        error_exit "Multiple jails found for $TARGET:\n$AUTOTARGET"
+    fi
+}
+
 generate_vnet_jail_netblock() {
     local jail_name="$1"
     local use_unique_bridge="$2"
