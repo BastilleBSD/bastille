@@ -188,6 +188,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
             if [ "${TARGET}" = 'ALL' ]; then
               target_all_jails
             else
+              jail_autocomplete
               JAILS="${TARGET}"
               check_target_is_running
             fi
@@ -197,7 +198,6 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
             # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
             :
         else
-            jail_autocomplete
             JAILS="${TARGET}"
 
             # Ensure the target exists. -- cwells
