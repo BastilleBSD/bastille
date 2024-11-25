@@ -138,16 +138,6 @@ check_target_is_running() {
   fi
 }
 
-jail_autocomplete() {
-    AUTOTARGET=$( ls "${bastille_jailsdir}" | grep "${TARGET}" )
-    if [ $( echo "${AUTOTARGET}" | wc -l ) -eq 1 ]; then
-        TARGET="${AUTOTARGET}"
-        return 0
-    else
-        error_exit "Multiple jails found for $TARGET:\n$AUTOTARGET"
-    fi
-}
-
 # Handle special-case commands first.
 case "${CMD}" in
 version|-v|--version)
@@ -167,7 +157,10 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
     elif [ "${1}" != 'help' ] && [ "${1}" != '-h' ] && [ "${1}" != '--help' ]; then
         TARGET="${1}"
         shift
-
+        # If TARGET is not ALL, attempt to autocomplet given jail name
+        if [ "${TARGET}" != ALL ]; then
+          jail_autocomplete
+        fi
         # This is needed to handle the special case of 'bastille rcp' and 'bastille cp' with the '-q' or '--quiet'
         # option specified before the TARGET. Also seems the cp and rcp commands does not support ALL as a target, so
         # that's why is handled here. Maybe this behaviour needs an improvement later. -- yaazkal
@@ -188,7 +181,6 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
             if [ "${TARGET}" = 'ALL' ]; then
               target_all_jails
             else
-              jail_autocomplete
               JAILS="${TARGET}"
               check_target_is_running
             fi
