@@ -55,6 +55,7 @@ if [ "${TARGET}" = 'ALL' ]; then
     JAILS=$(bastille list jails)
 fi
 if [ "${TARGET}" != 'ALL' ]; then
+    jail_autocomplete
     JAILS=$(bastille list jails | awk "/^${TARGET}$/")
     ## check if exist
     if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
