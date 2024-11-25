@@ -211,6 +211,7 @@ if [ $# -gt 1 ] || [ $# -lt 1 ]; then
 fi
 
 bastille_root_check
+jail_autocomplete
 
 ## check what should we clean
 case "${TARGET}" in
