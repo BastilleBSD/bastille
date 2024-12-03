@@ -17,3 +17,11 @@ created.  Note: containers must be stopped before destroyed.
   Deleting Container: folsom.
   Note: containers console logs not destroyed.
   /usr/local/bastille/logs/folsom_console.log
+
+Releases can be detroyed which also deletes the related cache directory. Child
+jails must be destroyed beforehand.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille destroy 14.0-RELEASE
+  Deleting base: 14.0-RELEASE
