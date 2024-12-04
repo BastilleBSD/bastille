@@ -86,7 +86,12 @@ update_jailconf() {
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
-            sed -i '' "s|${TARGET}|${NEWNAME}|g" "${JAIL_CONFIG}"
+ 	    sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
+            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
+            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
+            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
+            sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
+            sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
             sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
         fi
     fi
