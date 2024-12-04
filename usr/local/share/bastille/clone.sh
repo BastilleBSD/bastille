@@ -92,7 +92,6 @@ update_jailconf() {
             sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
             sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
             sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
-            sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
         fi
     fi
 
