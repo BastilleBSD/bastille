@@ -70,6 +70,14 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+generate_static_mac() {
+    local jail_name="${1}"
+    local external_interface="${2}"
+    local macaddr_prefix="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | cut -d':' -f1-3)"
+    local macaddr_suffix="$(echo -n ${jail_name} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    macaddr="${macaddr_prefix}:${macaddr_suffix}"
+}
+
 generate_vnet_jail_netblock() {
     local jail_name="$1"
     local use_unique_bridge="$2"
