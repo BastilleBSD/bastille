@@ -178,11 +178,11 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
             if [ "${TARGET}" = 'ALL' ]; then
               target_all_jails
             else
-              JAILS="${TARGET}"
               # Ensure the target exists. -- cwells
               if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
                 jail_autocomplete "${TARGET}"
               fi
+              JAILS="${TARGET}"
               check_target_is_running
             fi
             shift
@@ -191,12 +191,11 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
             # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
             :
         else
-            JAILS="${TARGET}"
-
             # Ensure the target exists. -- cwells
             if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
                 jail_autocomplete "${TARGET}"
             fi
+            JAILS="${TARGET}"
 
             case "${CMD}" in
             cmd|console|htop|pkg|service|stop|sysrc|template|top)
