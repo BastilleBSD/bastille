@@ -39,7 +39,12 @@ destroy_jail() {
     local OPTIONS
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
-
+	
+    # Ensure the target exists. -- cwells
+    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+      jail_autocomplete "${TARGET}"
+    fi
+    
     if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         if [ "${FORCE}" = "1" ]; then
             bastille stop "${TARGET}"
