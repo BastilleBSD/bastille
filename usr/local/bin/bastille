@@ -179,7 +179,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
               target_all_jails
             else
               JAILS="${TARGET}"
-              # Ensure the target exists
+              # Ensure the target exists. -- cwells
               if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
                 jail_autocomplete "${TARGET}"
               fi
@@ -195,7 +195,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
 
             # Ensure the target exists. -- cwells
             if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-              jail_autocomplete "${TARGET}"
+                jail_autocomplete "${TARGET}"
             fi
 
             case "${CMD}" in
