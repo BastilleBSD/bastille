@@ -148,7 +148,12 @@ help|-h|--help)
     usage
     ;;
 bootstrap|create|destroy|export|import|list|rdr|restart|setup|start|update|upgrade|verify)
-    # Nothing "extra" to do for these commands. -- cwells
+    # Ensure the target exists
+    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+      if ! jail_autocomplete "${TARGET}"; then
+        error_exit "[${TARGET}]: Not found."
+      fi
+    fi
     ;;
 clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|service|stop|sysrc|tags|template|top|umount|zfs)
     # Parse the target and ensure it exists. -- cwells
