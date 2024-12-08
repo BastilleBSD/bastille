@@ -76,8 +76,10 @@ jail_autocomplete() {
     if [ $( echo "${AUTOTARGET}" | wc -l ) -eq 1 ]; then
         TARGET="${AUTOTARGET}"
         return 0
-    else
+    elif [ $( echo "${AUTOTARGET}" | wc -l ) -gt 1 ]; then
         error_exit "Multiple jails found for $jail_name:\n$AUTOTARGET"
+    else
+        error_exit "[${jail_name}]: Not found."
     fi
 }
 
