@@ -71,12 +71,13 @@ warn() {
 }
 
 jail_autocomplete() {
-    AUTOTARGET=$( ls "${bastille_jailsdir}" | grep "${TARGET}" )
+    local jail_name="${1}"
+    local AUTOTARGET="$( ls "${bastille_jailsdir}" | grep "${jail_name}" )"
     if [ $( echo "${AUTOTARGET}" | wc -l ) -eq 1 ]; then
         TARGET="${AUTOTARGET}"
         return 0
     else
-        error_exit "Multiple jails found for $TARGET:\n$AUTOTARGET"
+        error_exit "Multiple jails found for $jail_name:\n$AUTOTARGET"
     fi
 }
 
