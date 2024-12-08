@@ -71,7 +71,7 @@ Available Commands:
   htop        Interactive process viewer (requires htop).
   import      Import a specified container.
   limits      Apply resources limits to targeted container(s). See rctl(8).
-  list        List containers (running and stopped).
+  list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rdr         Redirect host port to container port.
@@ -110,7 +110,7 @@ automatically. This feature is new since version 0.10.20231013.
 
 ```shell
 ishmael ~ # bastille setup -h
-ishmael ~ # Usage: bastille setup [pf|bastille0|zfs|vnet]
+ishmael ~ # Usage: bastille setup [pf|network|zfs|vnet]
 ```
 
 On fresh installations it is likely safe to run `bastille setup` with no
