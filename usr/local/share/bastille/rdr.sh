@@ -183,21 +183,21 @@ while [ $# -gt 0 ]; do
                         jail_port=$3
                         shift 3
                         if [ $# -gt 3 ]; then
-                            for last in $@; do
+                            for last in "$@"; do
                                 true
                             done
                             if [ $2 == "(" ] && [ $last == ")" ] ; then
                                 check_jail_validity
-                                persist_rdr_log_rule $proto $host_port $jail_port $@
-                                load_rdr_log_rule $proto $host_port $jail_port $@
+                                persist_rdr_log_rule $proto $host_port $jail_port "$@"
+                                load_rdr_log_rule $proto $host_port $jail_port "$@"
                                 shift $#
                             else
                                 usage
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
-                            persist_rdr_log_rule $proto $host_port $jail_port $@
-                            load_rdr_log_rule $proto $host_port $jail_port $@
+                            persist_rdr_log_rule $proto $host_port $jail_port "$@"
+                            load_rdr_log_rule $proto $host_port $jail_port "$@"
                             shift 1
                         else
                             usage

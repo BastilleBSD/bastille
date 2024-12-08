@@ -58,7 +58,7 @@ error_notify() {
 
 # Notify message on error and exit
 error_exit() {
-    error_notify $@
+    error_notify "$@"
     exit 1
 }
 
