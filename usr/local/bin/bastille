@@ -150,9 +150,7 @@ help|-h|--help)
 bootstrap|create|destroy|export|import|list|rdr|restart|setup|start|update|upgrade|verify)
     # Ensure the target exists
     if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-      if ! jail_autocomplete "${TARGET}"; then
-        error_exit "[${TARGET}]: Not found."
-      fi
+      jail_autocomplete "${TARGET}"
     fi
     ;;
 clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|service|stop|sysrc|tags|template|top|umount|zfs)
@@ -186,9 +184,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
               JAILS="${TARGET}"
               # Ensure the target exists
               if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-                if ! jail_autocomplete "${TARGET}"; then
-                  error_exit "[${TARGET}]: Not found."
-                fi
+                jail_autocomplete "${TARGET}"
               fi
               check_target_is_running
             fi
@@ -202,9 +198,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
 
             # Ensure the target exists. -- cwells
             if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-              if ! jail_autocomplete "${TARGET}"; then
-                error_exit "[${TARGET}]: Not found."
-              fi
+              jail_autocomplete "${TARGET}"
             fi
 
             case "${CMD}" in
