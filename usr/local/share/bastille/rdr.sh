@@ -65,6 +65,7 @@ check_jail_validity() {
     JAIL_NAME=$(/usr/sbin/jls -j "${TARGET}" name 2>/dev/null)
     if [ -z "${JAIL_NAME}" ]; then
         jail_autocomplete "${TARGET}"
+        JAIL_NAME="${TARGET}"
     fi
 
     # Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
