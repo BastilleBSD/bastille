@@ -72,16 +72,19 @@ warn() {
 
 jail_autocomplete() {
     local jail_name="${1}"
-    local AUTOTARGET="$( ls "${bastille_jailsdir}" | grep "${jail_name}" )"
-    if [ $( echo "${AUTOTARGET}" | wc -l ) -eq 1 ]; then
-        TARGET="${AUTOTARGET}"
-        return 0
-    elif [ $( echo "${AUTOTARGET}" | wc -l ) -gt 1 ]; then
-        error_exit "Multiple jails found for $jail_name:\n$AUTOTARGET"
+    if ls "${bastille_jailsdir}" | grep "${jail_name}"; then
+        local AUTOTARGET="$( ls "${bastille_jailsdir}" | grep "${jail_name}" )"
     else
         error_exit "[${jail_name}]: Not found."
     fi
+    if [ $( echo "${AUTOTARGET}" | wc -l ) -eq 1 ]; then
+        TARGET="${AUTOTARGET}"
+        return 0
+    else
+        error_exit "Multiple jails found for $jail_name:\n$AUTOTARGET"
+    fi
 }
+
 
 generate_vnet_jail_netblock() {
     local jail_name="$1"
