@@ -92,6 +92,11 @@ TGZ_EXPORT=
 OPT_ZSEND="-R"
 COMP_OPTION="0"
 
+# Ensure the target exists. -- cwells
+if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+  jail_autocomplete "${TARGET}"
+fi
+
 opt_count() {
     COMP_OPTION=$(expr ${COMP_OPTION} + 1)
 }
