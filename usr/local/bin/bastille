@@ -179,6 +179,12 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
               target_all_jails
             else
               JAILS="${TARGET}"
+              # Ensure the target exists
+              if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+                if ! jail_autocomplete "${TARGET}"; then
+                  error_exit "[${TARGET}]: Not found."
+                fi
+              fi
               check_target_is_running
             fi
             shift
@@ -191,7 +197,9 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
 
             # Ensure the target exists. -- cwells
             if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+              if ! jail_autocomplete "${TARGET}"; then
                 error_exit "[${TARGET}]: Not found."
+              fi
             fi
 
             case "${CMD}" in
