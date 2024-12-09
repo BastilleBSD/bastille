@@ -1,0 +1,22 @@
+name: ShellCheck Linting
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: Run ShellCheck
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheckudeeus/action-shellcheck@2.0.0
+        with:
+          scandir: "./usr/local/share/bastille"
+          additional_files: "./usr/local/bin/bastille"
+          ignore_paths: "./usr/local/share/bastille/templates"
