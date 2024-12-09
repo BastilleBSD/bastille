@@ -81,16 +81,17 @@ check_jail_validity() {
         fi
     fi
 
-
     # Check if rdr-anchor is defined in pf.conf
     if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
         error_exit "rdr-anchor not found in pf.conf"
     fi
 
     # Check if ext_if is defined in pf.conf
+    # If EXT_IF is set, use it instead of the default
     if [ -n "${bastille_pf_conf}" ]; then
-        EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
         if [ -z "${EXT_IF}" ]; then
+            EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
+        else
             error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
         fi
     fi
@@ -98,8 +99,8 @@ check_jail_validity() {
 
 # function: write rule to rdr.conf
 persist_rdr_rule() {
-if ! grep -qs "$1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$1 $2 $3" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+if ! grep -qs "$IF_NAME $1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$IF_NAME $1 $2 $3" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
 fi
 }
 
@@ -107,8 +108,8 @@ persist_rdr_log_rule() {
 proto=$1;host_port=$2;jail_port=$3;
 shift 3;
 log=$@;
-if ! grep -qs "$proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+if ! grep -qs "$IF_NAME $proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$IF_NAME $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
 fi
 }
 
@@ -142,6 +143,12 @@ fi
 }
 
 while [ $# -gt 0 ]; do
+    # Check if interface was specified, and use it instead of default
+    if echo "${1}" | ifconfig | grep -wo "${1}"; then
+        IF_NAME="${1}"
+        EXT_IF=ext_if="${1}"
+        shift
+    fi
     case "$1" in
         list)
             if [ "${TARGET}" = 'ALL' ]; then
