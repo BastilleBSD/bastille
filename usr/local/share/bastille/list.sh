@@ -229,8 +229,8 @@ if [ $# -gt 0 ]; then
     ;;
     *)
         # Check if we want to query all info for a specific jail instead.
-        if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
-            TARGET="${1}"
+        if [ ! -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
+	    jail_autocomplete "${1}"
             list_all
         else
             usage
