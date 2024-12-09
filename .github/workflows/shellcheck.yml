@@ -16,8 +16,12 @@ jobs:
 
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
+        env:
+          # Excluding SC3043: In POSIX sh, 'local' is undefined. Ignoring because local is a built-in command in FreeBSD
+          # Excluding SC2154: Variable is referenced but not assigned. Because we include files in the scripts
+          SHELLCHECK_OPTS: -e SC3043 -e SC2154
         with:
           severity: warning
           scandir: "./usr/local/share/bastille"
           additional_files: "./usr/local/bin/bastille"
-          ignore_paths: "./usr/local/share/bastille/templates"
+          ignore_paths: "./usr/local/share/bastille/templates ./usr/local/share/bastille/colors.pre.sh"
