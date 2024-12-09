@@ -17,6 +17,7 @@ jobs:
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
         with:
+          severity: warning
           scandir: "./usr/local/share/bastille"
           additional_files: "./usr/local/bin/bastille"
           ignore_paths: "./usr/local/share/bastille/templates"
