@@ -39,7 +39,7 @@ bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/" ## default: "
 bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"          ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
 ## ZFS options
-bastille_zfs_enable=""                                                ## default: ""
+bastille_zfs_enable="NO"                                              ## default: "NO"
 bastille_zfs_zpool=""                                                 ## default: ""
 bastille_zfs_prefix="bastille"                                        ## default: "bastille"
 bastille_zfs_options="-o compress=lz4 -o atime=off"                   ## default: "-o compress=lz4 -o atime=off"
