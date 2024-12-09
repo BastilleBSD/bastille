@@ -76,6 +76,7 @@ bastille_root_check
 zfs_enable_check() {
     # Temporarily disable ZFS so we can create a standard backup archive
     if checkyesno bastille_zfs_enable; then
+        # shellcheck disable=SC2034
         bastille_zfs_enable="NO"
     fi
 }
@@ -135,7 +136,7 @@ if [ -n "${bastille_export_options}" ]; then
             --verbose)
                 OPT_ZSEND="-Rv"
                 shift;;
-            -*|--*) error_notify "Unknown Option."
+            --*|-*) error_notify "Unknown Option."
                 usage;;
         esac
     done
@@ -185,7 +186,7 @@ else
                 TARGET="${2}"
                 shift
                 ;;
-            -*|--*)
+            --*|-*)
                 error_notify "Unknown Option."
                 usage
                 ;;
@@ -208,12 +209,16 @@ if [ "${COMP_OPTION}" -gt "1" ]; then
     error_exit "Error: Only one compression format can be used during export."
 fi
 
-if [ -n "${TXZ_EXPORT}" -o -n "${TGZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
+if [ -n "${TXZ_EXPORT}" ] || [ -n "${TGZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
     error_exit "Error: Simple archive modes with safe ZFS export can't be used together."
 fi
 
 if ! checkyesno bastille_zfs_enable; then
-    if [ -n "${XZ_EXPORT}" -o -n "${GZIP_EXPORT}" -o -n "${RAW_EXPORT}" -o -n "${SAFE_EXPORT}" -o "${OPT_ZSEND}" = "-Rv" ]; then
+    if [ -n "${XZ_EXPORT}" ] ||
+       [ -n "${GZIP_EXPORT}" ] ||
+       [ -n "${RAW_EXPORT}" ] ||
+       [ -n "${SAFE_EXPORT}" ] ||
+       [ "${OPT_ZSEND}" = "-Rv" ]; then
         error_exit "Options --xz, --gz, --raw, --safe, --verbose are valid for ZFS configured systems only."
     fi
 fi
@@ -270,7 +275,7 @@ export_check() {
             EXPORT_AS="Exporting"
         fi
 
-        if [ "${FILE_EXT}" = ".xz" -o "${FILE_EXT}" = ".gz" -o "${FILE_EXT}" = "" ]; then
+        if [ "${FILE_EXT}" = ".xz" ] || [ "${FILE_EXT}" = ".gz" ] || [ "${FILE_EXT}" = "" ]; then
             EXPORT_TYPE="image"
         else
             EXPORT_TYPE="archive"
@@ -360,6 +365,7 @@ jail_export() {
         fi
     fi
 
+    # shellcheck disable=SC2181
     if [ "$?" -ne 0 ]; then
         error_exit "Failed to export '${TARGET}' container."
     else

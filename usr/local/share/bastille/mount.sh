@@ -45,10 +45,8 @@ esac
 if [ $# -lt 2 ]; then
     usage
 elif [ $# -eq 2 ]; then
-    # shellcheck disable=SC2124
     _fstab="$@ nullfs ro 0 0"
 else
-    # shellcheck disable=SC2124
     _fstab="$@"
 fi
 
