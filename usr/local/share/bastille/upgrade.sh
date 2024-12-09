@@ -57,6 +57,11 @@ if [ "${TARGET}" = "ALL" ]; then
     error_exit "Batch upgrade is unsupported."
 fi
 
+# Ensure the target exists. -- cwells
+if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
+    jail_autocomplete "${TARGET}"
+fi
+    
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
     exit 1
