@@ -203,6 +203,7 @@ list_limit(){
 }
 
 list_import(){
+    # shellcheck disable=SC2010
     ls "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 
