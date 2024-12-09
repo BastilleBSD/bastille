@@ -78,7 +78,7 @@ verify_template() {
             info "Detected ${_hook} hook."
 
             ## line count must match newline count
-            if [ $(wc -l "${_path}" | awk '{print $1}') -ne $(grep -c $'\n' "${_path}") ]; then
+            if [ "$(wc -l "${_path}" | awk '{print $1}')" -ne "$(grep -c printf '\n' "${_path}")" ]; then
                 info "[${_hook}]:"
                 error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."
                 error_notify "Line numbers don't match line breaks."

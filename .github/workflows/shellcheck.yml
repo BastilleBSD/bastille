@@ -21,7 +21,8 @@ jobs:
           # Excluding SC2154: Variable is referenced but not assigned. Because we include files in the scripts
           # Excluding SC3037: In POSIX sh, echo flags are undefined. Ignoring temporarily until we decide to keep it or
           #                   use printf instead
-          SHELLCHECK_OPTS: -e SC3043 -e SC2154 -e SC3037
+          # Excluding SC2155: Declare and assign separately to avoid masking return values.
+          SHELLCHECK_OPTS: -e SC3043 -e SC2154 -e SC3037 -e SC2155
         with:
           severity: warning
           scandir: "./usr/local/share/bastille"
