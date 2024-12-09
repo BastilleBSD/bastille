@@ -380,7 +380,7 @@ for _jail in ${JAILS}; do
                     # Replace "arg" variables in this line with the provided values. -- cwells
                     _line=$(echo "${_line}" | eval "sed ${ARG_REPLACEMENTS}")
                     eval "_args=\"${_args_template}\""
-                    bastille "${_cmd} ${_jail} ${_args}" || error_exit "Failed to execute command."
+                    bastille "${_cmd}" "${_jail}" "${_args}" || error_exit "Failed to execute command."
                 done < "${bastille_template}/${_hook}"
             fi
             info "[${_jail}]:${_hook} -- END"
