@@ -144,7 +144,7 @@ fi
 
 while [ $# -gt 0 ]; do
     # Check if interface was specified, and use it instead of default
-    if echo "${1}" | ifconfig | grep -wo "${1}"; then
+    if ifconfig | grep -wo "${1}"; then
         IF_NAME="${1}"
         EXT_IF=ext_if="${1}"
         shift
