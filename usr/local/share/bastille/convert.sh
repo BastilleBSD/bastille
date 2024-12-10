@@ -114,7 +114,7 @@ start_convert() {
         HASPORTS=$(grep -w ${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jailsdir}/${TARGET}/fstab)
 
         if [ -n "${RELEASE}" ]; then
-            cd "${bastille_jailsdir}/${TARGET}/root"
+            cd "${bastille_jailsdir}/${TARGET}/root" || error_exit "Failed to change directory to ${bastille_jailsdir}/${TARGET}/root"
 
             # Work with the symlinks
             convert_symlinks
@@ -149,6 +149,8 @@ fi
 # Be interactive here since this cannot be easily undone
 while :; do
     error_notify "Warning: container conversion from thin to thick can't be undone!"
+    # shellcheck disable=SC2162
+    # shellcheck disable=SC3045
     read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
     case ${yn} in
     [Yy]) start_convert;;
