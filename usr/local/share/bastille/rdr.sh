@@ -115,11 +115,11 @@ fi
 
 # function: load rdr rule via pfctl
 load_rdr_rule() {
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP" "$3" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
-  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP6" "$3" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
@@ -130,11 +130,11 @@ load_rdr_log_rule() {
 proto=$1;host_port=$2;jail_port=$3;
 shift 3;
 log=$@
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
-  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
