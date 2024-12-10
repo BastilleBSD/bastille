@@ -124,6 +124,9 @@ if [ -n "$JAIL_IP6" ]; then
   printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP6" "$3" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
+local interface="$( echo $EXT_IF | awk -F'"' '{print $2}')"
+info "[${JAIL_NAME}]:"
+info "Redirecting: ${1} port ${2} to ${3} on ${interface}"
 }
 
 # function: load rdr rule with log via pfctl
@@ -139,14 +142,16 @@ if [ -n "$JAIL_IP6" ]; then
   printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
-
+local interface="$( echo $EXT_IF | awk -F'"' '{print $2}')"
+info "[${JAIL_NAME}]:"
+info "Redirecting: ${1} port ${2} to ${3} on ${interface}"
 }
 
 while [ $# -gt 0 ]; do
     # Check if interface was specified, and use it instead of default
     if ifconfig | grep -wo "${1}"; then
         IF_NAME="${1}"
-        EXT_IF=ext_if="${1}"
+        EXT_IF=ext_if=\"${1}\"
         shift
     fi
     case "$1" in
