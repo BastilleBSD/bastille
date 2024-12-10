@@ -209,7 +209,7 @@ if [ "${COMP_OPTION}" -gt "1" ]; then
     error_exit "Error: Only one compression format can be used during export."
 fi
 
-if [ -n "${TXZ_EXPORT}" ] || [ -n "${TGZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
+if { [ -n "${TXZ_EXPORT}" ] || [ -n "${TGZ_EXPORT}" ]; } && [ -n "${SAFE_EXPORT}" ]; then
     error_exit "Error: Simple archive modes with safe ZFS export can't be used together."
 fi
 
