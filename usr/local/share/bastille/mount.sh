@@ -62,7 +62,7 @@ _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
 ## if any variables are empty, bail out
 if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "${_perms}" ] || [ -z "${_checks}" ]; then
     error_notify "FSTAB format not recognized."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -72,7 +72,7 @@ if [ "${_hostpath}" == "tmpfs" -a "$_type" == "tmpfs" ] || [ "${_hostpath}" == "
     warn "Detected advanced mount type ${_hostpath}"
 elif [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     error_notify "Detected invalid host path or incorrect mount type in FSTAB."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -80,7 +80,7 @@ fi
 ## if mount permissions are not "ro" or "rw"
 if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
     error_notify "Detected invalid mount permissions in FSTAB."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -88,7 +88,7 @@ fi
 ## if check & pass are not "0 0 - 1 1"; bail out
 if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "0 1" ] && [ "${_checks}" != "1 1" ]; then
     error_notify "Detected invalid fstab options in FSTAB."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -97,7 +97,7 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
     ## aggregate variables into FSTAB entry
-    _fullpath="${bastille_jailsdir}/${_jail}/root/${_jailpath}"
+    _fullpath="${bastille_jailsdir}/${_jail}/root${_jailpath}"
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells

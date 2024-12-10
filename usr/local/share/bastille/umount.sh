@@ -53,7 +53,7 @@ MOUNT_PATH=$1
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
-    _jailpath="${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}"
+    _jailpath="${bastille_jailsdir}/${_jail}/root${MOUNT_PATH}"
 
     if [ ! -d "${_jailpath}" ]; then
         error_exit "The specified mount point does not exist inside the jail."
