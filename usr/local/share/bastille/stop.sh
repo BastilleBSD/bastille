@@ -52,7 +52,7 @@ for _jail in ${JAILS}; do
     ## test if running
     if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
         ## Capture ip4.addr address while still running
-        _ip4="$( bastille config ${_jail} get ip4.addr )"
+        _ip4="$(bastille config ${_jail} get ip4.addr)"
 
         # Check if pfctl is present
         if [ "${_ip4}" != "not set" ]; then
