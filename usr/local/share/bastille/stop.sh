@@ -52,10 +52,10 @@ for _jail in ${JAILS}; do
     ## test if running
     if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
         ## Capture ip4.addr address while still running
-        _ip="$(/usr/sbin/jls -j ${_jail} ip4.addr)"
+        _ip4="$( bastille config ${_jail} get ip4.addr )"
 
         # Check if pfctl is present
-        if which -s pfctl; then
+        if [ which -s pfctl ] && [ "${_ip4}" != "not set" ]; then
             if [ "$(bastille rdr ${_jail} list)" ]; then
                 bastille rdr ${_jail} clear
             fi
@@ -73,9 +73,9 @@ for _jail in ${JAILS}; do
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
         ## remove (captured above) ip4.addr from firewall table
-        if [ -n "${bastille_network_loopback}" -a ! -z "${_ip}" ]; then
+        if [ -n "${bastille_network_loopback}" ] && [ "${_ip4}" != "not set" ]; then
             if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
-                pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
+                pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip4}"
             fi
         fi
     fi
