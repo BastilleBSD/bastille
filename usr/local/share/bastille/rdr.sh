@@ -81,16 +81,17 @@ check_jail_validity() {
         fi
     fi
 
-
     # Check if rdr-anchor is defined in pf.conf
     if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
         error_exit "rdr-anchor not found in pf.conf"
     fi
 
     # Check if ext_if is defined in pf.conf
+    # If EXT_IF is set, use it instead of the default
     if [ -n "${bastille_pf_conf}" ]; then
-        EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
         if [ -z "${EXT_IF}" ]; then
+            EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
+        else
             error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
         fi
     fi
@@ -98,8 +99,8 @@ check_jail_validity() {
 
 # function: write rule to rdr.conf
 persist_rdr_rule() {
-if ! grep -qs "$1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$1 $2 $3" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+if ! grep -qs "$IF_NAME $1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$IF_NAME $1 $2 $3" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
 fi
 }
 
@@ -107,8 +108,8 @@ persist_rdr_log_rule() {
 proto=$1;host_port=$2;jail_port=$3;
 shift 3;
 log=$@;
-if ! grep -qs "$proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+if ! grep -qs "$IF_NAME $proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$IF_NAME $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
 fi
 }
 
@@ -123,6 +124,9 @@ if [ -n "$JAIL_IP6" ]; then
   printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP6" "$3" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
+local interface="$( echo $EXT_IF | awk -F'"' '{print $2}')"
+info "[${JAIL_NAME}]:"
+info "Redirecting: ${1} port ${2} to ${3} on ${interface}"
 }
 
 # function: load rdr rule with log via pfctl
@@ -138,10 +142,18 @@ if [ -n "$JAIL_IP6" ]; then
   printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
-
+local interface="$( echo $EXT_IF | awk -F'"' '{print $2}')"
+info "[${JAIL_NAME}]:"
+info "Redirecting: ${1} port ${2} to ${3} on ${interface}"
 }
 
 while [ $# -gt 0 ]; do
+    # Check if interface was specified, and use it instead of default
+    if ifconfig | grep -wo "${1}"; then
+        IF_NAME="${1}"
+        EXT_IF=ext_if=\"${1}\"
+        shift
+    fi
     case "$1" in
         list)
             if [ "${TARGET}" = 'ALL' ]; then
