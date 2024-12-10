@@ -55,7 +55,7 @@ for _jail in ${JAILS}; do
         _ip4="$( bastille config ${_jail} get ip4.addr )"
 
         # Check if pfctl is present
-        if [ which -s pfctl ] && [ "${_ip4}" != "not set" ]; then
+        if [ "${_ip4}" != "not set" ]; then
             if [ "$(bastille rdr ${_jail} list)" ]; then
                 bastille rdr ${_jail} clear
             fi
