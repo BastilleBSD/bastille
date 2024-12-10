@@ -216,6 +216,8 @@ bootstrap_release() {
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
         ## check distfiles list and skip existing cached files
         bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/base//")
+        # TODO check how to handle this
+        # shellcheck disable=SC2010
         bastille_cached_files=$(ls "${bastille_cachedir}/${RELEASE}" | grep -v "MANIFEST" | tr -d ".txz")
         for distfile in ${bastille_cached_files}; do
             bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/${distfile}//")
@@ -452,7 +454,7 @@ HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 # bootstrapping from aarch64/arm64 Debian or Ubuntu require a different value for ARCH
 # create a new variable
-if [ "${HW_MACHINE_ARCH}" == "aarch64" ]; then
+if [ "${HW_MACHINE_ARCH}" = "aarch64" ]; then
     HW_MACHINE_ARCH_LINUX="arm64"
 else
     HW_MACHINE_ARCH_LINUX=${HW_MACHINE_ARCH}

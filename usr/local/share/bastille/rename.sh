@@ -37,7 +37,7 @@ usage() {
 
 validate_name() {
     local NAME_VERIFY=${NEWNAME}
-    local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
+    local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Container names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then

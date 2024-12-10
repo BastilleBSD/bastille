@@ -70,7 +70,7 @@ check_jail_validity() {
     # Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
         JAIL_IP=$(/usr/sbin/jls -j "${TARGET}" ip4.addr 2>/dev/null)
-        if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
+        if [ -z "${JAIL_IP}" ] || [ "${JAIL_IP}" = "-" ]; then
             error_exit "Jail IP not found: ${TARGET}"
         fi
     fi
@@ -186,10 +186,10 @@ while [ $# -gt 0 ]; do
                             for last in "$@"; do
                                 true
                             done
-                            if [ $2 == "(" ] && [ $last == ")" ] ; then
+                            if [ "$2" = "(" ] && [ "$last" = ")" ] ; then
                                 check_jail_validity
-                                persist_rdr_log_rule $proto $host_port $jail_port "$@"
-                                load_rdr_log_rule $proto $host_port $jail_port "$@"
+                                persist_rdr_log_rule "$proto" "$host_port" "$jail_port" "$@"
+                                load_rdr_log_rule "$proto" "$host_port" "$jail_port" "$@"
                                 shift $#
                             else
                                 usage
