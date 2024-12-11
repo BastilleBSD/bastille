@@ -2,7 +2,7 @@
 rdr
 ===
 
-`bastille rdr` allows you to configure dynamic rdr rules for your containers
+bastille rdr allows you to configure dynamic rdr rules for your containers
 without modifying pf.conf (assuming you are using the `bastille0` interface
 for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf
 as described in the Networking section).
@@ -41,13 +41,11 @@ specify the interface they run on in rc.conf (or other config files)
     # bastille rdr dev1 clear
     nat cleared
 
-`bastille rdr` includes 3 options.
+The rdr command includes 3 additional options.
 
--i - Set a non-default interface on which to create the rdr rule.
-
--s - Limit the source IP on the rdr rule.
-
--d - Limit the destination IP on the rdr rule.
+  -i | - Set a non-default interface on which to create the rdr rule.
+  -s | - Limit the source IP on the rdr rule.
+  -d | - Limit the destination IP on the rdr rule.
 
 .. code-block:: shell
 
