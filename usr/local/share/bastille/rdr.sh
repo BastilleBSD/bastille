@@ -174,7 +174,7 @@ log=$@
 if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
   printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
   | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-  error_notify "Failed to create logged IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+  error_notify "Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
 else
   info "[${JAIL_NAME}]:"
   info "Redirecting logged IPv4:"
@@ -185,7 +185,7 @@ if [ -n "$JAIL_IP6" ]; then
   if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
     printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-    error_notify "Failed to create logged IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+    error_notify "Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
   else
     info "[${JAIL_NAME}]:"
     info "Redirecting logged IPv6:"
@@ -296,10 +296,15 @@ while [ $# -gt 0 ]; do
             fi
             ;;
         *)
-            if [ $# -ge 6 ]; then
+            if [ $# -eq 6 ]; then
               check_jail_validity
               persist_rdr_rule "$@"
               load_rdr_rule "$@"
+              shift $#
+            elif [ $# -ge 7 ] && [ "${7}" = "log" ]; then
+              check_jail_validity
+              persist_rdr_log_rule "$@"
+              load_rdr_log_rule "$@"
               shift $#
             else
               usage
