@@ -62,7 +62,6 @@ TARGET="${1}"
 JAIL_NAME=""
 JAIL_IP=""
 JAIL_IP6=""
-EXT_IF=""
 RDR_IF=""
 RDR_SRC=""
 RDR_DST=""
@@ -98,16 +97,6 @@ check_jail_validity() {
     if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
         error_exit "rdr-anchor not found in pf.conf"
     fi
-
-    # Check if ext_if is defined in pf.conf
-    # If EXT_IF is set, use it instead of the default
-    if [ -n "${bastille_pf_conf}" ]; then
-        if [ -z "${EXT_IF}" ]; then
-            EXT_IF=$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf})
-        else
-            error_exit "bastille_network_pf_ext_if (${bastille_network_pf_ext_if}) not defined in pf.conf"
-        fi
-    fi
 }
 
 # function: write rule to rdr.conf
@@ -139,27 +128,40 @@ fi
 
 # function: load rdr rule via pfctl
 load_rdr_rule() {
+  local if_name="${1}"
   local if=ext_if=\"${1}\"
   local src="${2}"
   local dst="${3}"
   local proto="${4}"
   local host_port="${5}"
   local jail_port="${6}"
-( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
+# Create IPv4 rdr rule
+if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
-      | pfctl -a "rdr/${JAIL_NAME}" -f-
-if [ -n "$JAIL_IP6" ]; then
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
-    | pfctl -a "rdr/${JAIL_NAME}" -f-
+  | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+  error_notify "Failed to create IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+else
+  info "[${JAIL_NAME}]:"
+  info "Redirecting IPv4:"
+  info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}" 
 fi
-info "[${JAIL_NAME}]:"
-info "Redirecting:"
-info "${proto} ${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
+# Create IPv6 rdr rule (if ip6.addr is enabled)
+if [ -n "$JAIL_IP6" ]; then
+  if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+    printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+    | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+    error_notify "Failed to create IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+  else
+    info "[${JAIL_NAME}]:"
+    info "Redirecting IPv6:"
+    info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+  fi
+fi
 }
 
 # function: load rdr rule with log via pfctl
 load_rdr_log_rule() {
+  local if_name="${1}"
   local if=ext_if=\"${1}\"
   local src="${2}"
   local dst="${3}"
@@ -168,17 +170,28 @@ load_rdr_log_rule() {
   local jail_port="${6}"
 shift 6;
 log=$@
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+# Create IPv4 rule with log
+if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
   printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
-      | pfctl -a "rdr/${JAIL_NAME}" -f-
-if [ -n "$JAIL_IP6" ]; then
-  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
-    | pfctl -a "rdr/${JAIL_NAME}" -f-
+  | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+  error_notify "Failed to create logged IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+else
+  info "[${JAIL_NAME}]:"
+  info "Redirecting logged IPv4:"
+  info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
 fi
-info "[${JAIL_NAME}]:"
-info "Redirecting:"
-info "${proto} ${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
+# Create IPv6 rdr rule with log (if ip6.addr is enabled)
+if [ -n "$JAIL_IP6" ]; then
+  if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+    printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+    | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+    error_notify "Failed to create logged IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+  else
+    info "[${JAIL_NAME}]:"
+    info "Redirecting logged IPv6:"
+    info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+  fi
+fi
 }
 
 
