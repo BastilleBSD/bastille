@@ -32,7 +32,17 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rdr TARGET [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]"
+    error_notify "Usage: bastille rdr TARGET [options(s)] [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]"
+
+    cat << EOF
+    Options:
+
+    -i [interface] | -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s [source ip] | -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -d [destination ip ] | -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+
+EOF
+    exit 1
 }
 
 # Handle special-case commands first.
