@@ -23,7 +23,7 @@ specify the interface they run on in rc.conf (or other config files)
     
     # bastille rdr dev1 tcp 2001 22
     [jail1]:
-    Redirecting:
+    Redirecting IPv4:
     tcp any:2001 -> any:22 on em0
    
     # bastille rdr dev1 list
@@ -51,22 +51,22 @@ The `rdr` command includes 3 additional options:
 
     # bastille rdr dev1 -i vtnet0 udp 2001 22
     [jail1]:
-    Redirecting:
+    Redirecting IPv4:
     tcp any:8000 -> any:80 on vtnet0
     
     # bastille rdr dev1 -s 192.168.0.1 tcp 8080 81
     [jail1]:
-    Redirecting:
+    Redirecting IPv4:
     tcp 192.168.0.1:8080 -> any:81 on em0
 
     # bastille rdr dev1 -d 192.168.0.84 tcp 8082 82
     [jail1]:
-    Redirecting:
+    Redirecting IPv4:
     tcp any:8082 -> 192.168.0.84:82 on em0
 
     # bastille rdr dev1 -i vtnet0 -d 192.168.0.45 tcp 9000 9000
     [jail1]:
-    Redirecting:
+    Redirecting IPv4:
     tcp any:9000 -> 192.168.0.45:9000 on vtnet0
 
     # bastille rdr dev1 list
