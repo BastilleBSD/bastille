@@ -41,11 +41,11 @@ specify the interface they run on in rc.conf (or other config files)
     # bastille rdr dev1 clear
     nat cleared
 
-The rdr command includes 3 additional options.
+The `rdr` command includes 3 additional options:
 
-  -i | - Set a non-default interface on which to create the rdr rule.
-  -s | - Limit the source IP on the rdr rule.
-  -d | - Limit the destination IP on the rdr rule.
+- **-i** | Set a non-default interface on which to create the `rdr` rule.
+- **-s** | Limit the source IP on the `rdr` rule.
+- **-d** | Limit the destination IP on the `rdr` rule.
 
 .. code-block:: shell
 
