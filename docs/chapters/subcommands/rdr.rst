@@ -43,9 +43,9 @@ specify the interface they run on in rc.conf (or other config files)
 
 `bastille rdr` includes 3 options.
 
--i - Set a non-default interface on which to create the rdr rule.
--s - Limit the source IP on the rdr rule.
--d - Limit the destination IP on the rdr rule.
+ -i - Set a non-default interface on which to create the rdr rule.
+ -s - Limit the source IP on the rdr rule.
+ -d - Limit the destination IP on the rdr rule.
 
 .. code-block:: shell
 
