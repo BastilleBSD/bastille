@@ -155,7 +155,7 @@ if [ -n "$JAIL_IP6" ]; then
 fi
 info "[${JAIL_NAME}]:"
 info "Redirecting:"
-info "${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
+info "${proto} ${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
 }
 
 # function: load rdr rule with log via pfctl
@@ -178,7 +178,7 @@ if [ -n "$JAIL_IP6" ]; then
 fi
 info "[${JAIL_NAME}]:"
 info "Redirecting:"
-info "${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
+info "${proto} ${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
 }
 
 
