@@ -283,7 +283,7 @@ while [ $# -gt 0 ]; do
             fi
             ;;
         *)
-            if [ $# -gt 5 ]; then
+            if [ $# -ge 6 ]; then
               check_jail_validity
               persist_rdr_rule "$@"
               load_rdr_rule "$@"
