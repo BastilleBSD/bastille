@@ -53,6 +53,9 @@ JAIL_NAME=""
 JAIL_IP=""
 JAIL_IP6=""
 EXT_IF=""
+RDR_IF=""
+RDR_SRC=""
+RDR_DST=""
 shift
 
 check_jail_validity() {
@@ -99,71 +102,108 @@ check_jail_validity() {
 
 # function: write rule to rdr.conf
 persist_rdr_rule() {
-if ! grep -qs "$IF_NAME $RDR_DST $1 $2 $3" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$IF_NAME $RDR_DST $1 $2 $3" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+  local if="${1}"
+  local src="${2}"
+  local dst="${3}"
+  local proto="${4}"
+  local host_port="${5}"
+  local jail_port="${6}"
+if ! grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$if $src $dst $proto $host_port $jail_port" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
 fi
 }
 
 persist_rdr_log_rule() {
-proto=$1;host_port=$2;jail_port=$3;
-shift 3;
+  local if="${1}"
+  local src="${2}"
+  local dst="${3}"
+  local proto="${4}"
+  local host_port="${5}"
+  local jail_port="${6}"
+shift 6;
 log=$@;
-if ! grep -qs "$IF_NAME $RDR_DST $proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$IF_NAME $RDR_DST $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+if ! grep -qs "$if $src $dst $proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+    echo "$if $src $dst $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
 fi
 }
 
 # function: load rdr rule via pfctl
 load_rdr_rule() {
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass on $%s inet proto %s from any to %s port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$RDR_DST" "$2" "$JAIL_IP" "$3" ) \
+  local if=ext_if=\"${1}\"
+  local src="${2}"
+  local dst="${3}"
+  local proto="${4}"
+  local host_port="${5}"
+  local jail_port="${6}"
+( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
+  printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
-  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass on $%s inet proto %s from any to %s port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$RDR_DST" "$2" "$JAIL_IP6" "$3" ) \
+( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
-local interface="$( echo $EXT_IF | awk -F'"' '{print $2}')"
 info "[${JAIL_NAME}]:"
-if [ "${RDR_DST}" != "any" ]; then
-  info "Redirecting: ${1} port ${2} to ${3} on ${interface}:${RDR_DST}"
-else
-  info "Redirecting: ${1} port ${2} to ${3} on ${interface}"
-fi
+info "Redirecting:"
+info "${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
 }
 
 # function: load rdr rule with log via pfctl
 load_rdr_log_rule() {
-proto=$1;host_port=$2;jail_port=$3;
-shift 3;
+  local if=ext_if=\"${1}\"
+  local src="${2}"
+  local dst="${3}"
+  local proto="${4}"
+  local host_port="${5}"
+  local jail_port="${6}"
+shift 6;
 log=$@
 ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
+  printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
   ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+  printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
-local interface="$( echo $EXT_IF | awk -F'"' '{print $2}')"
 info "[${JAIL_NAME}]:"
-info "Redirecting: ${1} port ${2} to ${3} on ${interface}"
+info "Redirecting:"
+info "${src}:${host_port} -> ${dst}:${jail_port} on ${1}" 
 }
 
+
 while [ $# -gt 0 ]; do
-    # Check if interface was specified, and use it instead of default
-    # Set default RDR rule to "any to any"
+  while getopts "i:s:d:" opt; do
+    case $opt in
+        i) if ifconfig | grep -ow "${OPTARG}:"; then
+             RDR_IF="${OPTARG}"
+           else
+             error_exit "$OPTARG is not a valid interface on this system."
+           fi 
+           ;;
+        s) RDR_SRC="$OPTARG"
+           ;;
+        d) if ifconfig | grep -ow "inet ${OPTARG}"; then
+            RDR_DST="$OPTARG"
+           else
+             error_exit "$OPTARG is not an IP on this system."
+           fi
+           ;;
+        *) usage ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  # Set default interface, source, and destination if not set by options
+  if [ -z $RDR_IF ]; then    
+    RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
+  fi
+  if [ -z $RDR_SRC ]; then
+    RDR_SRC="any"
+  fi
+  if [ -z $RDR_DST ]; then
     RDR_DST="any"
-    if ifconfig | grep -wo "${1}"; then
-      IF_NAME="${1}"
-      EXT_IF=ext_if=\"${1}\"
-      shift
-      # Check if IP was specified for given interface
-      if ifconfig | grep -o "inet ${1}"; then
-        RDR_DST="${1}"
-        shift
-      fi
-    fi
+  fi
 
     case "$1" in
         list)
@@ -195,9 +235,9 @@ while [ $# -gt 0 ]; do
                 usage
             elif [ $# -eq 3 ]; then
                 check_jail_validity
-                persist_rdr_rule $1 $2 $3
-                load_rdr_rule $1 $2 $3
-                shift 3
+                persist_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
+                load_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
+                shift "$#"
             else
                 case "$4" in
                     log)
@@ -211,16 +251,16 @@ while [ $# -gt 0 ]; do
                             done
                             if [ $2 == "(" ] && [ $last == ")" ] ; then
                                 check_jail_validity
-                                persist_rdr_log_rule $proto $host_port $jail_port "$@"
-                                load_rdr_log_rule $proto $host_port $jail_port "$@"
+                                persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                                load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                                 shift $#
                             else
                                 usage
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
-                            persist_rdr_log_rule $proto $host_port $jail_port "$@"
-                            load_rdr_log_rule $proto $host_port $jail_port "$@"
+                            persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                            load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             shift 1
                         else
                             usage
@@ -233,7 +273,14 @@ while [ $# -gt 0 ]; do
             fi
             ;;
         *)
-            usage
+            if [ $# -gt 5 ]; then
+              check_jail_validity
+              persist_rdr_rule "$@"
+              load_rdr_rule "$@"
+              shift $#
+            else
+              usage
+            fi
             ;;
     esac
 done
