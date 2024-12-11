@@ -14,27 +14,64 @@ specify the interface they run on in rc.conf (or other config files)
 .. code-block:: shell
 
     # bastille rdr --help
-    Usage: bastille rdr TARGET [clear] | [list] | [<interface> tcp <host_port> <jail_port>] | [<interface> udp <host_port> <jail_port>]
+    Usage: bastille rdr TARGET [options(s)] [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
+    Options:
+
+    -i [interface]      | -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s [source ip]      | -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -d [destination ip] | -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    
     # bastille rdr dev1 tcp 2001 22
+    [jail1]:
+    Redirecting:
+    tcp any:2001 -> any:22 on em0
+   
     # bastille rdr dev1 list
     rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
+    
     # bastille rdr dev1 udp 2053 53
+    [jail1]:
+    Redirecting:
+    udp any:2001 -> any:22 on em0
+    
     # bastille rdr dev1 list
-    rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
-    rdr on em0 inet proto udp from any to any port = 2053 -> 10.17.89.1 port 53
+    rdr pass on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
+    rdr pass on em0 inet proto udp from any to any port = 2053 -> 10.17.89.1 port 53
+    
     # bastille rdr dev1 clear
     nat cleared
 
-If you have a host with multiple interfaces, and you want to specify which
-one to use, `bastille rdr` allows you to pass any interface to the command.
-If you do not specify an interface, the default one will be used.
+Bastille included 3 options for the three following scenarios.
+- Setting a non-default interface on which to create the rdr rule.
+- Limiting the source IP on the rdr rule.
+- Limiting the destination IP on the rdr rule.
 
 .. code-block:: shell
 
-    # bastille rdr em0 dev1 tcp 2001 22
+    # bastille rdr dev1 -i vtnet0 udp 2001 22
+    [jail1]:
+    Redirecting:
+    tcp any:8000 -> any:80 on vtnet0
+    
+    # bastille rdr dev1 -s 192.168.0.1 tcp 8080 81
+    [jail1]:
+    Redirecting:
+    tcp 192.168.0.1:8080 -> any:81 on em0
+
+    # bastille rdr dev1 -d 192.168.0.84 tcp 8082 82
+    [jail1]:
+    Redirecting:
+    tcp any:8082 -> 192.168.0.84:82 on em0
+
+    # bastille rdr dev1 -i vtnet0 -d 192.168.0.45 tcp 9000 9000
+    [jail1]:
+    Redirecting:
+    tcp any:9000 -> 192.168.0.45:9000 on vtnet0
+
     # bastille rdr dev1 list
-    rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
-    # bastille rdr dev1 vtnet0 udp 2053 53
-    # bastille rdr dev1 list
-    rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
-    rdr on vtnet0 inet proto udp from any to any port = 2053 -> 10.17.89.1 port 53
+    rdr pass on vtnet0 inet proto udp from any to any port = 2001 -> 10.17.89.1 port 22
+    rdr pass on em0 inet proto tcp from 192.168.0.1 to any port = 8080 -> 10.17.89.1 port 81
+    rdr pass on em0 inet proto tcp from any to 192.168.0.84 port = 8082 -> 10.17.89.1 port 82
+    rdr pass on vtnet0 inet proto tcp from any to 192.168.0.45 port = 9000 -> 10.17.89.1 port 9000
+
+The options can be used together, as seen above.
