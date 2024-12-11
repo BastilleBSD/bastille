@@ -37,9 +37,9 @@ usage() {
     cat << EOF
     Options:
 
-    -i [interface] | -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s [source ip] | -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -d [destination ip ] | -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -i [interface]      |      -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s [source ip]      |      -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -d [destination ip] | -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
 
 EOF
     exit 1
