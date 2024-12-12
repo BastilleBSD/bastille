@@ -99,6 +99,29 @@ check_jail_validity() {
     fi
 }
 
+check_rdr_ip_validity() {
+    local ip="$1"
+    local ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
+    if [ -n "${ip6}" ]; then
+        info "Valid: (${ip6})."
+    else
+        local IFS
+        if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+          TEST_IP=$(echo "${ip}" | cut -d / -f1)
+          IFS=.
+          set ${TEST_IP}
+          for quad in 1 2 3 4; do
+            if eval [ \$$quad -gt 255 ]; then
+              error_exit "Invalid: (${TEST_IP})"
+            fi
+          done
+          info "Valid: (${ip})."
+        else
+          error_exit "Invalid: (${ip})."
+       fi
+    fi
+}
+
 # function: write rule to rdr.conf
 persist_rdr_rule() {
   local if="${1}"
@@ -198,15 +221,16 @@ fi
 while [ $# -gt 0 ]; do
   while getopts "i:s:d:" opt; do
     case $opt in
-        i) if ifconfig | grep -ow "${OPTARG}:"; then
+        i) if ifconfig | grep -owq "${OPTARG}:"; then
              RDR_IF="${OPTARG}"
            else
              error_exit "$OPTARG is not a valid interface on this system."
            fi 
            ;;
-        s) RDR_SRC="$OPTARG"
+        s) check_rdr_ip_validity "${OPTARG}"
+           RDR_SRC="$OPTARG"
            ;;
-        d) if ifconfig | grep -ow "inet ${OPTARG}"; then
+        d) if ifconfig | grep -owq "inet ${OPTARG}"; then
             RDR_DST="$OPTARG"
            else
              error_exit "$OPTARG is not an IP on this system."
