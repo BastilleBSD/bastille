@@ -162,7 +162,7 @@ load_rdr_rule() {
 if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
   | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-  error_notify "Failed to create IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+  error_exit "Failed to create IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
 else
   info "[${JAIL_NAME}]:"
   info "Redirecting IPv4:"
@@ -173,7 +173,7 @@ if [ -n "$JAIL_IP6" ]; then
   if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
     printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-    error_notify "Failed to create IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+    error_exit "Failed to create IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
   else
     info "[${JAIL_NAME}]:"
     info "Redirecting IPv6:"
@@ -197,7 +197,7 @@ log=$@
 if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
   printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
   | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-  error_notify "Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+  error_exit "Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
 else
   info "[${JAIL_NAME}]:"
   info "Redirecting logged IPv4:"
@@ -208,7 +208,7 @@ if [ -n "$JAIL_IP6" ]; then
   if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
     printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-    error_notify "Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+    error_exit "Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
   else
     info "[${JAIL_NAME}]:"
     info "Redirecting logged IPv6:"
@@ -282,8 +282,8 @@ while [ $# -gt 0 ]; do
                 usage
             elif [ $# -eq 3 ]; then
                 check_jail_validity
-                persist_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 load_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
+                persist_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 shift "$#"
             else
                 case "$4" in
@@ -298,16 +298,16 @@ while [ $# -gt 0 ]; do
                             done
                             if [ $2 == "(" ] && [ $last == ")" ] ; then
                                 check_jail_validity
-                                persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                                 load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                                persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
                                 shift $#
                             else
                                 usage
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
-                            persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                            persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             shift 1
                         else
                             usage
@@ -322,13 +322,13 @@ while [ $# -gt 0 ]; do
         *)
             if [ $# -eq 6 ]; then
               check_jail_validity
-              persist_rdr_rule "$@"
               load_rdr_rule "$@"
+              persist_rdr_rule "$@"
               shift $#
             elif [ $# -ge 7 ] && [ "${7}" = "log" ]; then
               check_jail_validity
-              persist_rdr_log_rule "$@"
               load_rdr_log_rule "$@"
+              persist_rdr_log_rule "$@"
               shift $#
             else
               usage
