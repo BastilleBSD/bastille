@@ -299,12 +299,16 @@ while [ "$#" -gt 0 ]; do
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
                     pfctl -a "rdr/${JAIL_NAME}" -Fn
-		    rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf
+		    if rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf; then
+                        info "[${JAIL_NAME}]: rdr.conf removed."
+	            fi
                 done
             else
                 check_jail_validity
                 pfctl -a "rdr/${JAIL_NAME}" -Fn
-		rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf
+                if rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf; then
+                    info "[${JAIL_NAME}]: rdr.conf removed."
+	        fi
             fi
             shift
             ;;	    
