@@ -14,7 +14,7 @@ specify the interface they run on in rc.conf (or other config files)
 .. code-block:: shell
 
     # bastille rdr --help
-    Usage: bastille rdr TARGET [options(s)] [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
+    Usage: bastille rdr TARGET [options(s)] [clear|reset|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
     Options:
 
     -i | --interface   [interface]      | -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
