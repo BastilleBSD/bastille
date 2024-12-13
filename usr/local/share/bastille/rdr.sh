@@ -217,42 +217,43 @@ if [ -n "$JAIL_IP6" ]; then
 fi
 }
 
+# Set defaults
+RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
+RDR_SRC="any"
+RDR_DST="any"
 
 while [ $# -gt 0 ]; do
-  while getopts "i:s:d:" opt; do
-    case $opt in
-        i) if ifconfig | grep -owq "${OPTARG}:"; then
-             RDR_IF="${OPTARG}"
-           else
-             error_exit "$OPTARG is not a valid interface on this system."
-           fi 
-           ;;
-        s) check_rdr_ip_validity "${OPTARG}"
-           RDR_SRC="$OPTARG"
-           ;;
-        d) if ifconfig | grep -owq "inet ${OPTARG}"; then
-            RDR_DST="$OPTARG"
-           else
-             error_exit "$OPTARG is not an IP on this system."
-           fi
-           ;;
-        *) usage ;;
-    esac
-  done
-  shift $((OPTIND - 1))
-
-  # Set default interface, source, and destination if not set by options
-  if [ -z $RDR_IF ]; then    
-    RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
-  fi
-  if [ -z $RDR_SRC ]; then
-    RDR_SRC="any"
-  fi
-  if [ -z $RDR_DST ]; then
-    RDR_DST="any"
-  fi
-
     case "$1" in
+        -i|--interface)
+            if [ -z "${2}" ]; then
+                error_exit "Must specify an interface with [-i|--interface]"
+            fi
+            if ifconfig | grep -owq "${1}:"; then
+                RDR_IF="${2}"
+                shift 2
+            else
+                error_exit "${2} is not a valid interface."
+            fi
+            ;;
+        -s|--source)
+            if [ -z "${2}" ]; then
+                error_exit "Must specify a source IP/subnet with [-s|--source]"
+            fi
+            check_ip_validity "${2}"
+            RDR_SRC="${2}"
+            shift 2
+	        ;;
+        -d|--destination)
+            if [ -z "${2}" ]; then
+                error_exit "Must specify a destination IP with [-d|--destination]"
+            fi
+            if ifconfig | grep -owq "inet ${2}"; then
+                RDR_DST="${2}"
+                shift 2
+            else
+                error_exit "${2} is not an IP on this system."
+            fi
+            ;;    
         list)
             if [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
