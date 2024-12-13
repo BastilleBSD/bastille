@@ -221,6 +221,7 @@ fi
 RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
 RDR_SRC="any"
 RDR_DST="any"
+OPTION="0"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -230,6 +231,7 @@ while [ $# -gt 0 ]; do
             fi
             if ifconfig | grep -owq "${1}:"; then
                 RDR_IF="${2}"
+		OPTION="1"
                 shift 2
             else
                 error_exit "${2} is not a valid interface."
@@ -241,6 +243,7 @@ while [ $# -gt 0 ]; do
             fi
             check_ip_validity "${2}"
             RDR_SRC="${2}"
+	    OPTION="1"
             shift 2
 	        ;;
         -d|--destination)
@@ -249,12 +252,16 @@ while [ $# -gt 0 ]; do
             fi
             if ifconfig | grep -owq "inet ${2}"; then
                 RDR_DST="${2}"
+		OPTION="1"
                 shift 2
             else
                 error_exit "${2} is not an IP on this system."
             fi
             ;;    
         list)
+            if [ "${OPTION}" -eq 1 ];then
+                error_exit "Command \"${1}\" cannot be used with options."
+            fi
             if [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
@@ -267,6 +274,9 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         clear)
+            if [ "${OPTION}" -eq 1 ];then
+                error_exit "Command \"${1}\" cannot be used with options."
+            fi	
             if [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
@@ -278,6 +288,23 @@ while [ $# -gt 0 ]; do
             fi
             shift
             ;;
+        reset)
+            if [ "${OPTION}" -eq 1 ];then
+	        error_exit "Command \"${1}\" cannot be used with options."
+            fi
+            if [ "${TARGET}" = 'ALL' ]; then
+                for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
+                    echo "${JAIL_NAME} redirects:"
+                    pfctl -a "rdr/${JAIL_NAME}" -Fn
+		    rm -f "${bastille_jailsdir}"/"${JAIL__NAME}"/rdr.conf
+                done
+            else
+                check_jail_validity
+                pfctl -a "rdr/${JAIL_NAME}" -Fn
+		rm -f "${bastille_jailsdir}"/"${JAIL__NAME}"/rdr.conf
+            fi
+            shift
+            ;;	    
         tcp|udp)
             if [ $# -lt 3 ]; then
                 usage
@@ -321,7 +348,10 @@ while [ $# -gt 0 ]; do
             fi
             ;;
         *)
-            if [ $# -eq 6 ]; then
+            if [ "${OPTION}" -eq 1 ];then
+                usage
+            fi
+            if [ $# -eq 6 ] && [ "${4}" = "tcp" ] || [ "${4}" = "udp" ]; then
               check_jail_validity
               load_rdr_rule "$@"
               persist_rdr_rule "$@"
