@@ -257,7 +257,7 @@ case "$1" in
         else
             error_exit "${2} is not an IP on this system."
         fi
-    ;;   
+        ;;   
 esac
 
 if [ $# -lt 2 ]; then
