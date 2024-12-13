@@ -262,7 +262,8 @@ while [ "$#" -gt 0 ]; do
         *)
 	    break
             ;;
-esac
+    esac
+done
 
 if [ $# -lt 2 ]; then
     usage
