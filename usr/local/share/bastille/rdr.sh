@@ -165,8 +165,7 @@ load_rdr_rule() {
         error_exit "Failed to create IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
     else
         info "[${JAIL_NAME}]:"
-        info "Redirecting IPv4:"
-        info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}" 
+        echo "IPv4 ${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}" 
     fi
     # Create IPv6 rdr rule (if ip6.addr is enabled)
     if [ -n "$JAIL_IP6" ]; then
@@ -176,8 +175,7 @@ load_rdr_rule() {
             error_exit "Failed to create IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
             info "[${JAIL_NAME}]:"
-            info "Redirecting IPv6:"
-            info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+            echo "IPv6 ${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
         fi
     fi
 }
@@ -200,8 +198,7 @@ load_rdr_log_rule() {
         error_exit "Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
     else
         info "[${JAIL_NAME}]:"
-        info "Redirecting logged IPv4:"
-        info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+        echo "IPv4 ${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
     fi
     # Create IPv6 rdr rule with log (if ip6.addr is enabled)
     if [ -n "$JAIL_IP6" ]; then
@@ -211,8 +208,7 @@ load_rdr_log_rule() {
             error_exit "Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
             info "[${JAIL_NAME}]:"
-            info "Redirecting logged IPv6:"
-            info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+            echo "IPv6 ${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
         fi
     fi
 }
