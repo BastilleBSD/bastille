@@ -107,114 +107,114 @@ check_rdr_ip_validity() {
     else
         local IFS
         if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-          TEST_IP=$(echo "${ip}" | cut -d / -f1)
-          IFS=.
-          set ${TEST_IP}
-          for quad in 1 2 3 4; do
-            if eval [ \$$quad -gt 255 ]; then
-              error_exit "Invalid: (${TEST_IP})"
-            fi
-          done
-          info "Valid: (${ip})."
+            TEST_IP=$(echo "${ip}" | cut -d / -f1)
+            IFS=.
+            set ${TEST_IP}
+            for quad in 1 2 3 4; do
+                if eval [ \$$quad -gt 255 ]; then
+                    error_exit "Invalid: (${TEST_IP})"
+                fi
+            done
+            info "Valid: (${ip})."
         else
-          error_exit "Invalid: (${ip})."
-       fi
+            error_exit "Invalid: (${ip})."
+        fi
     fi
 }
 
 # function: write rule to rdr.conf
 persist_rdr_rule() {
-  local if="${1}"
-  local src="${2}"
-  local dst="${3}"
-  local proto="${4}"
-  local host_port="${5}"
-  local jail_port="${6}"
-if ! grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$if $src $dst $proto $host_port $jail_port" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
-fi
+    local if="${1}"
+    local src="${2}"
+    local dst="${3}"
+    local proto="${4}"
+    local host_port="${5}"
+    local jail_port="${6}"
+    if ! grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+        echo "$if $src $dst $proto $host_port $jail_port" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+    fi
 }
 
 persist_rdr_log_rule() {
-  local if="${1}"
-  local src="${2}"
-  local dst="${3}"
-  local proto="${4}"
-  local host_port="${5}"
-  local jail_port="${6}"
-shift 6;
-log=$@;
-if ! grep -qs "$if $src $dst $proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
-    echo "$if $src $dst $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
-fi
+    local if="${1}"
+    local src="${2}"
+    local dst="${3}"
+    local proto="${4}"
+    local host_port="${5}"
+    local jail_port="${6}"
+    shift 6;
+    log=$@;
+    if ! grep -qs "$if $src $dst $proto $host_port $jail_port $log" "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"; then
+        echo "$if $src $dst $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf"
+    fi
 }
 
 # function: load rdr rule via pfctl
 load_rdr_rule() {
-  local if_name="${1}"
-  local if=ext_if=\"${1}\"
-  local src="${2}"
-  local dst="${3}"
-  local proto="${4}"
-  local host_port="${5}"
-  local jail_port="${6}"
-# Create IPv4 rdr rule
-if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
-  printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
-  | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-  error_exit "Failed to create IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
-else
-  info "[${JAIL_NAME}]:"
-  info "Redirecting IPv4:"
-  info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}" 
-fi
-# Create IPv6 rdr rule (if ip6.addr is enabled)
-if [ -n "$JAIL_IP6" ]; then
-  if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-    printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
-    | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-    error_exit "Failed to create IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
-  else
-    info "[${JAIL_NAME}]:"
-    info "Redirecting IPv6:"
-    info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
-  fi
-fi
+    local if_name="${1}"
+    local if=ext_if=\"${1}\"
+    local src="${2}"
+    local dst="${3}"
+    local proto="${4}"
+    local host_port="${5}"
+    local jail_port="${6}"
+    # Create IPv4 rdr rule
+    if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
+        printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
+        | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+        error_exit "Failed to create IPv4 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+    else
+        info "[${JAIL_NAME}]:"
+        info "Redirecting IPv4:"
+        info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}" 
+    fi
+    # Create IPv6 rdr rule (if ip6.addr is enabled)
+    if [ -n "$JAIL_IP6" ]; then
+        if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+            printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+            | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+            error_exit "Failed to create IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+        else
+            info "[${JAIL_NAME}]:"
+            info "Redirecting IPv6:"
+            info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+        fi
+    fi
 }
 
 # function: load rdr rule with log via pfctl
 load_rdr_log_rule() {
-  local if_name="${1}"
-  local if=ext_if=\"${1}\"
-  local src="${2}"
-  local dst="${3}"
-  local proto="${4}"
-  local host_port="${5}"
-  local jail_port="${6}"
-shift 6;
-log=$@
-# Create IPv4 rule with log
-if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-  printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
-  | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-  error_exit "Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
-else
-  info "[${JAIL_NAME}]:"
-  info "Redirecting logged IPv4:"
-  info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
-fi
-# Create IPv6 rdr rule with log (if ip6.addr is enabled)
-if [ -n "$JAIL_IP6" ]; then
-  if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-    printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
-    | pfctl -a "rdr/${JAIL_NAME}" -f-; then
-    error_exit "Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
-  else
-    info "[${JAIL_NAME}]:"
-    info "Redirecting logged IPv6:"
-    info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
-  fi
-fi
+    local if_name="${1}"
+    local if=ext_if=\"${1}\"
+    local src="${2}"
+    local dst="${3}"
+    local proto="${4}"
+    local host_port="${5}"
+    local jail_port="${6}"
+    shift 6;
+    log=$@
+    # Create IPv4 rule with log
+    if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+        printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
+        | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+        error_exit "Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+    else
+        info "[${JAIL_NAME}]:"
+        info "Redirecting logged IPv4:"
+        info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+    fi
+    # Create IPv6 rdr rule with log (if ip6.addr is enabled)
+    if [ -n "$JAIL_IP6" ]; then
+        if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+            printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+            | pfctl -a "rdr/${JAIL_NAME}" -f-; then
+            error_exit "Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+        else
+            info "[${JAIL_NAME}]:"
+            info "Redirecting logged IPv6:"
+            info "${proto}/${src}:${host_port} -> ${dst}:${jail_port} on ${if_name}"
+        fi
+    fi
 }
 
 # Set defaults
@@ -229,10 +229,9 @@ while [ "$#" -gt 0 ]; do
         -i|--interface)
             if [ -z "${2}" ] || [ -z "${3}" ]; then
                 usage
-            fi
-            if ifconfig | grep -owq "${2}:"; then
+            elif ifconfig | grep -owq "${2}:"; then
                 RDR_IF="${2}"
-		OPTION="1"
+		        OPTION="1"
                 shift 2
             else
                 error_exit "${2} is not a valid interface."
@@ -241,19 +240,19 @@ while [ "$#" -gt 0 ]; do
         -s|--source)
             if [ -z "${2}" ] || [ -z "${3}" ]; then
                 usage
+            else
+                check_rdr_ip_validity "${2}"
+                RDR_SRC="${2}"
+	            OPTION="1"
+                shift 2
             fi
-            check_rdr_ip_validity "${2}"
-            RDR_SRC="${2}"
-	    OPTION="1"
-            shift 2
             ;;
         -d|--destination)
             if [ -z "${2}" ] || [ -z "${3}" ]; then
                 usage
-            fi
-            if ifconfig | grep -owq "inet ${2}"; then
+            elif ifconfig | grep -owq "inet ${2}"; then
                 RDR_DST="${2}"
-	        OPTION="1"
+	            OPTION="1"
                 shift 2
             else
                 error_exit "${2} is not an IP on this system."
@@ -262,10 +261,9 @@ while [ "$#" -gt 0 ]; do
         list)
             if [ "${OPTION}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
-	    elif [ -n "${2}" ]; then
+	        elif [ -n "${2}" ]; then
                 usage
-            fi
-            if [ "${TARGET}" = 'ALL' ]; then
+            elif [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
                     pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null
@@ -279,10 +277,9 @@ while [ "$#" -gt 0 ]; do
         clear)
             if [ "${OPTION}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
-	    elif [ -n "${2}" ]; then
+	        elif [ -n "${2}" ]; then
                 usage
-            fi
-            if [ "${TARGET}" = 'ALL' ]; then
+            elif [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
                     pfctl -a "rdr/${JAIL_NAME}" -Fn
@@ -296,10 +293,9 @@ while [ "$#" -gt 0 ]; do
         reset)
             if [ "${OPTION}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
-	    elif [ -n "${2}" ]; then
+	        elif [ -n "${2}" ]; then
                 usage
-            fi
-            if [ "${TARGET}" = 'ALL' ]; then
+            elif [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
                     pfctl -a "rdr/${JAIL_NAME}" -Fn
@@ -357,19 +353,18 @@ while [ "$#" -gt 0 ]; do
         *)
             if [ "${OPTION}" -eq 1 ];then
                 usage
-            fi
-            if [ $# -eq 6 ] && [ "${4}" = "tcp" ] || [ "${4}" = "udp" ]; then
-              check_jail_validity
-              load_rdr_rule "$@"
-              persist_rdr_rule "$@"
-              shift $#
+            elif [ $# -eq 6 ] && [ "${4}" = "tcp" ] || [ "${4}" = "udp" ]; then
+                check_jail_validity
+                load_rdr_rule "$@"
+                persist_rdr_rule "$@"
+                shift $#
             elif [ $# -ge 7 ] && [ "${7}" = "log" ]; then
-              check_jail_validity
-              load_rdr_log_rule "$@"
-              persist_rdr_log_rule "$@"
-              shift $#
+                check_jail_validity
+                load_rdr_log_rule "$@"
+                persist_rdr_log_rule "$@"
+                shift $#
             else
-              usage
+                usage
             fi
             ;;
     esac
