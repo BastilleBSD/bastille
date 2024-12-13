@@ -227,8 +227,8 @@ OPTION="0"
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -i|--interface)
-            if [ -z "${2}" ]; then
-                error_exit "Must specify an interface with [-i|--interface]"
+            if [ -z "${2}" ] || [ -z "${3}" ]; then
+                usage
             fi
             if ifconfig | grep -owq "${2}:"; then
                 RDR_IF="${2}"
@@ -239,8 +239,8 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         -s|--source)
-            if [ -z "${2}" ]; then
-                error_exit "Must specify a source IP/subnet with [-s|--source]"
+            if [ -z "${2}" ] || [ -z "${3}" ]; then
+                usage
             fi
             check_rdr_ip_validity "${2}"
             RDR_SRC="${2}"
@@ -248,8 +248,8 @@ while [ "$#" -gt 0 ]; do
             shift 2
             ;;
         -d|--destination)
-            if [ -z "${2}" ]; then
-                error_exit "Must specify a destination IP with [-d|--destination]"
+            if [ -z "${2}" ] || [ -z "${3}" ]; then
+                usage
             fi
             if ifconfig | grep -owq "inet ${2}"; then
                 RDR_DST="${2}"
@@ -259,21 +259,11 @@ while [ "$#" -gt 0 ]; do
                 error_exit "${2} is not an IP on this system."
             fi
             ;;
-        *)
-	    break
-            ;;
-    esac
-done
-
-if [ $# -lt 2 ]; then
-    usage
-fi
-
-while [ $# -gt 0 ]; do
-    case "$1" in
         list)
             if [ "${OPTION}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
+	    elif [ -n "${2}" ]; then
+                usage
             fi
             if [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
@@ -289,7 +279,9 @@ while [ $# -gt 0 ]; do
         clear)
             if [ "${OPTION}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
-            fi	
+	    elif [ -n "${2}" ]; then
+                usage
+            fi
             if [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
@@ -303,18 +295,20 @@ while [ $# -gt 0 ]; do
             ;;
         reset)
             if [ "${OPTION}" -eq 1 ];then
-	        error_exit "Command \"${1}\" cannot be used with options."
+                error_exit "Command \"${1}\" cannot be used with options."
+	    elif [ -n "${2}" ]; then
+                usage
             fi
             if [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
                     pfctl -a "rdr/${JAIL_NAME}" -Fn
-		    rm -f "${bastille_jailsdir}"/"${JAIL__NAME}"/rdr.conf
+		    rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf
                 done
             else
                 check_jail_validity
                 pfctl -a "rdr/${JAIL_NAME}" -Fn
-		rm -f "${bastille_jailsdir}"/"${JAIL__NAME}"/rdr.conf
+		rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf
             fi
             shift
             ;;	    
