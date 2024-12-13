@@ -300,14 +300,14 @@ while [ "$#" -gt 0 ]; do
                     echo "${JAIL_NAME} redirects:"
                     pfctl -a "rdr/${JAIL_NAME}" -Fn
 		    if rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf; then
-                        info "[${JAIL_NAME}]: rdr.conf removed."
+                        info "[${JAIL_NAME}]: rdr.conf removed"
 	            fi
                 done
             else
                 check_jail_validity
                 pfctl -a "rdr/${JAIL_NAME}" -Fn
                 if rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf; then
-                    info "[${JAIL_NAME}]: rdr.conf removed."
+                    info "[${JAIL_NAME}]: rdr.conf removed"
 	        fi
             fi
             shift
