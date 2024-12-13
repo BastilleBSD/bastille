@@ -223,41 +223,49 @@ RDR_SRC="any"
 RDR_DST="any"
 OPTION="0"
 
-while [ $# -gt 0 ]; do
-    case "$1" in
-        -i|--interface)
-            if [ -z "${2}" ]; then
-                error_exit "Must specify an interface with [-i|--interface]"
-            fi
-            if ifconfig | grep -owq "${2}:"; then
-                RDR_IF="${2}"
-		OPTION="1"
-                shift 2
-            else
-                error_exit "${2} is not a valid interface."
-            fi
-            ;;
-        -s|--source)
-            if [ -z "${2}" ]; then
-                error_exit "Must specify a source IP/subnet with [-s|--source]"
-            fi
-            check_ip_validity "${2}"
-            RDR_SRC="${2}"
+# Check for options
+case "$1" in
+    -i|--interface)
+        if [ -z "${2}" ]; then
+            error_exit "Must specify an interface with [-i|--interface]"
+        fi
+        if ifconfig | grep -owq "${2}:"; then
+            RDR_IF="${2}"
 	    OPTION="1"
             shift 2
-	        ;;
-        -d|--destination)
-            if [ -z "${2}" ]; then
-                error_exit "Must specify a destination IP with [-d|--destination]"
-            fi
-            if ifconfig | grep -owq "inet ${2}"; then
-                RDR_DST="${2}"
-		OPTION="1"
-                shift 2
-            else
-                error_exit "${2} is not an IP on this system."
-            fi
-            ;;    
+        else
+            error_exit "${2} is not a valid interface."
+        fi
+        ;;
+    -s|--source)
+        if [ -z "${2}" ]; then
+            error_exit "Must specify a source IP/subnet with [-s|--source]"
+        fi
+        check_ip_validity "${2}"
+        RDR_SRC="${2}"
+	OPTION="1"
+        shift 2
+        ;;
+    -d|--destination)
+        if [ -z "${2}" ]; then
+            error_exit "Must specify a destination IP with [-d|--destination]"
+        fi
+        if ifconfig | grep -owq "inet ${2}"; then
+            RDR_DST="${2}"
+	    OPTION="1"
+            shift 2
+        else
+            error_exit "${2} is not an IP on this system."
+        fi
+    ;;   
+esac
+
+if [ $# -lt 2 ]; then
+    usage
+fi
+
+while [ $# -gt 0 ]; do
+    case "$1" in
         list)
             if [ "${OPTION}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
