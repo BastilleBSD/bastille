@@ -229,7 +229,7 @@ while [ $# -gt 0 ]; do
             if [ -z "${2}" ]; then
                 error_exit "Must specify an interface with [-i|--interface]"
             fi
-            if ifconfig | grep -owq "${1}:"; then
+            if ifconfig | grep -owq "${2}:"; then
                 RDR_IF="${2}"
 		OPTION="1"
                 shift 2
