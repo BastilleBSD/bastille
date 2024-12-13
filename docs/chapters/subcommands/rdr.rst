@@ -17,9 +17,9 @@ specify the interface they run on in rc.conf (or other config files)
     Usage: bastille rdr TARGET [options(s)] [clear|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
     Options:
 
-    -i [interface]      | -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s [source ip]      | -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -d [destination ip] | -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -i | --interface   [interface]      | -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s | --source      [source ip]      | -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -d | --destination [destination ip] | -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
     
     # bastille rdr dev1 tcp 2001 22
     [jail1]:
