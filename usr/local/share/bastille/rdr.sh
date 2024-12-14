@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille rdr TARGET [options(s)] [clear|reset|list|(tcp|udp)] host_port jail_port [log ['(' logopts ')'] ] )]"
+    error_notify "Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp)] host_port jail_port [log ['(' logopts ')'] ] )]"
 
     cat << EOF
     Options:
