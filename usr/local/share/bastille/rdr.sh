@@ -227,7 +227,7 @@ while [ "$#" -gt 0 ]; do
                 usage
             elif ifconfig | grep -owq "${2}:"; then
                 RDR_IF="${2}"
-		        OPTION="1"
+		OPTION="1"
                 shift 2
             else
                 error_exit "${2} is not a valid interface."
@@ -239,7 +239,7 @@ while [ "$#" -gt 0 ]; do
             else
                 check_rdr_ip_validity "${2}"
                 RDR_SRC="${2}"
-	            OPTION="1"
+	        OPTION="1"
                 shift 2
             fi
             ;;
@@ -248,7 +248,7 @@ while [ "$#" -gt 0 ]; do
                 usage
             elif ifconfig | grep -owq "inet ${2}"; then
                 RDR_DST="${2}"
-	            OPTION="1"
+	        OPTION="1"
                 shift 2
             else
                 error_exit "${2} is not an IP on this system."
@@ -313,8 +313,8 @@ while [ "$#" -gt 0 ]; do
                 usage
             elif [ $# -eq 3 ]; then
                 check_jail_validity
-                load_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
+                load_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 shift "$#"
             else
                 case "$4" in
@@ -329,16 +329,16 @@ while [ "$#" -gt 0 ]; do
                             done
                             if [ $2 == "(" ] && [ $last == ")" ] ; then
                                 check_jail_validity
-                                load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
-                                persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
+                                persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                                load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
                                 shift $#
                             else
                                 usage
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
-                            load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             persist_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                            load_rdr_log_rule $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             shift 1
                         else
                             usage
@@ -355,13 +355,13 @@ while [ "$#" -gt 0 ]; do
                 usage
             elif [ $# -eq 6 ] && [ "${4}" = "tcp" ] || [ "${4}" = "udp" ]; then
                 check_jail_validity
-                load_rdr_rule "$@"
                 persist_rdr_rule "$@"
+                load_rdr_rule "$@"
                 shift $#
             elif [ $# -ge 7 ] && [ "${7}" = "log" ]; then
                 check_jail_validity
-                load_rdr_log_rule "$@"
                 persist_rdr_log_rule "$@"
+                load_rdr_log_rule "$@"
                 shift $#
             else
                 usage
