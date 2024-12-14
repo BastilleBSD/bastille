@@ -207,7 +207,7 @@ list_ports(){
         JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
         for _JAIL in ${JAIL_LIST}; do
             if [ -f "${bastille_jailsdir}/${_JAIL}/rdr.conf" ]; then
-                _PORTS="$(cat "${bastille_jailsdir}"/"${_JAIL}"/rdr.conf | awk '{print $1":"$4"/"$2":"$5" -> "$3":"$6}')"
+                _PORTS="$(cat "${bastille_jailsdir}"/"${_JAIL}"/rdr.conf | awk '{print $1 $2":"$5"/"$3":"$6" -> "$4":"$7}')"
                 info "[${_JAIL}]:"
 		echo "${_PORTS}"
 	    fi
