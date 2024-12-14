@@ -170,7 +170,7 @@ load_rdr_rule() {
     # Create IPv6 rdr rule (if ip6.addr is enabled)
     if [ -n "$JAIL_IP6" ]; then
         if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
-            printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+            printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
             | pfctl -a "rdr/${JAIL_NAME}" -f-; then
             error_exit "Failed to create IPv6 rdr rule \"${1} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
