@@ -48,9 +48,9 @@ EOF
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 if [ $# -lt 2 ]; then
@@ -80,10 +80,11 @@ check_jail_validity() {
     # Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
         JAIL_IP=$(/usr/sbin/jls -j "${TARGET}" ip4.addr 2>/dev/null)
-        if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
+        if [ -z "${JAIL_IP}" ] || [ "${JAIL_IP}" = "-" ]; then
             error_exit "Jail IP not found: ${TARGET}"
         fi
     fi
+    
     # Check if jail ip6 address (ip6.addr) is valid (non-VNET only)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
         if [ "$(bastille config $TARGET get ip6)" != 'disable' ] && [ "$(bastille config $TARGET get ip6)" != 'not set' ]; then
@@ -97,6 +98,7 @@ check_jail_validity() {
     fi
 }
 
+# function: check if IP is valid
 check_rdr_ip_validity() {
     local ip="$1"
     local ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
@@ -228,7 +230,7 @@ RDR_INET="dual"
 OPTION_IF=0
 OPTION_SRC=0
 OPTION_DST=0
-OPTION_TYPE=0
+OPTION_INET_TYPE=0
 
 # Check for options
 while [ "$#" -gt 0 ]; do
@@ -258,8 +260,8 @@ while [ "$#" -gt 0 ]; do
             if [ -z "${2}" ] || [ -z "${3}" ]; then
                 usage
             elif ifconfig | grep -owq "inet ${2}"; then
+	        OPTION_DST=1
                 RDR_DST="${2}"
-                OPTION_DST=1
                 shift 2
             else
                 error_exit "${2} is not an IP on this system."
@@ -271,13 +273,13 @@ while [ "$#" -gt 0 ]; do
             elif [ "${2}" != "ipv4" ] && [ "${2}" != "ipv6" ]; then
                 usage
             else
-                OPTION_TYPE=1
+                OPTION_INET_TYPE=1
                 RDR_INET="${2}"
                 shift 2
             fi
             ;;
         list)
-            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_TYPE}" -eq 1 ];then
+            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
@@ -293,7 +295,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         clear)
-            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_TYPE}" -eq 1 ];then
+            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
@@ -309,7 +311,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         reset)
-            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_TYPE}" -eq 1 ];then
+            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
@@ -333,7 +335,7 @@ while [ "$#" -gt 0 ]; do
         tcp|udp)
             if [ $# -lt 3 ]; then
                 usage
-            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_TYPE}" -ne 1 ];then
+            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ];then
                 error_exit "[-t|--type] must be set when using [-s|--source] or [-d|--destination]"
             elif [ $# -eq 3 ]; then
                 check_jail_validity
