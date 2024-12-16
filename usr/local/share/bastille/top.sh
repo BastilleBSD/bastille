@@ -47,8 +47,7 @@ shift
 if [ "${TARGET}" = "ALL" ]; then
     target_all_jails
 else
-    check_jail_exists "${TARGET}"
-    check_target_is_running "${TARGET}"
+    check_target_exists "${TARGET}"
 fi
 
 if [ $# -ne 0 ]; then
@@ -58,6 +57,7 @@ fi
 bastille_root_check
 
 for _jail in ${JAILS}; do
+    check_target_is_running "${TARGET}"
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/bin/top
     echo -e "${COLOR_RESET}"
