@@ -87,20 +87,20 @@ check_target_exists() {
 
 check_target_is_running() {
     TARGET="${1}"
-  if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-      error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
-  fi
+    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
+        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+    fi
 }
 
 target_all_jails() {
-  _JAILS=$(/usr/sbin/jls name)
-  JAILS=""
-  for _jail in ${_JAILS}; do
-      _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
-      if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
-          JAILS="${JAILS} ${_jail}"
-      fi
-  done
+    _JAILS=$(/usr/sbin/jls name)
+    JAILS=""
+    for _jail in ${_JAILS}; do
+        _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
+        if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
+            JAILS="${JAILS} ${_jail}"
+        fi
+    done
 }
 
 generate_vnet_jail_netblock() {
