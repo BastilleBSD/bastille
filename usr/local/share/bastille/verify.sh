@@ -78,6 +78,8 @@ verify_template() {
             info "Detected ${_hook} hook."
 
             ## line count must match newline count
+            # shellcheck disable=SC2046
+            # shellcheck disable=SC3003
             if [ $(wc -l "${_path}" | awk '{print $1}') -ne $(grep -c $'\n' "${_path}") ]; then
                 info "[${_hook}]:"
                 error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."
