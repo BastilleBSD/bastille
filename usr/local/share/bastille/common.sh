@@ -71,7 +71,7 @@ warn() {
 }
 
 # This is where I am placing all new functions.
-check_if_jail_exists() {
+check_jail_exists() {
     TARGET="${1}"
     JAILS=""
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
