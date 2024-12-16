@@ -37,10 +37,19 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
+
+TARGET="${1}"
+shift
+
+if [ "${TARGET}" = "ALL" ]; then
+    target_all_jails
+else
+    check_target_exists "${TARGET}"
+fi
 
 if [ $# -ne 0 ]; then
     usage
@@ -49,6 +58,7 @@ fi
 bastille_root_check
 
 for _jail in ${JAILS}; do
+    check_target_is_running "${_jail}"
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
         error_notify "htop not found on ${_jail}."
