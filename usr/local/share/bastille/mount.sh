@@ -69,10 +69,10 @@ fi
 
 # if host path doesn't exist, type is not "nullfs" or are using advanced mount type "tmpfs,linprocfs,linsysfs, fdescfs,
 # procfs"
-if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } ||
-   { [ "${_hostpath}" = "linprocfs" ] && [ "${_type}" = "linprocfs" ]; } ||
-   { [ "${_hostpath}" = "linsysfs" ] && [ "${_type}" = "linsysfs" ]; } ||
-   { [ "${_hostpath}" = "proc" ] && [ "${_type}" = "procfs" ]; } ||
+if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
+   { [ "${_hostpath}" = "linprocfs" ] && [ "${_type}" = "linprocfs" ]; } || \
+   { [ "${_hostpath}" = "linsysfs" ] && [ "${_type}" = "linsysfs" ]; } || \
+   { [ "${_hostpath}" = "proc" ] && [ "${_type}" = "procfs" ]; } || \
    { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } then
     warn "Detected advanced mount type ${_hostpath}"
 elif [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
