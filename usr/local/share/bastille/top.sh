@@ -35,11 +35,21 @@ usage() {
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
+
+TARGET="${1}"
+shift
+
+if [ "${TARGET}" = "ALL" ]; then
+    target_all_jails
+else
+    check_jail_exists "${TARGET}"
+    check_target_is_running "${TARGET}"
+fi
 
 if [ $# -ne 0 ]; then
     usage
