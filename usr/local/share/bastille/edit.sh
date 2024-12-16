@@ -51,6 +51,7 @@ fi
 bastille_root_check
 
 if [ -z "${EDITOR}" ]; then
+    # shellcheck disable=SC2209
     EDITOR=vi
 fi
 
