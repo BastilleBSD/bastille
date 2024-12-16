@@ -28,6 +28,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Source config file
+. /usr/local/etc/bastille/bastille.conf
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -74,7 +77,7 @@ warn() {
 check_target_exists() {
     TARGET="${1}"
     JAILS=""
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
+    if [ -d "${bastille_jailsdir}"/"${TARGET}" ]; then
         JAILS="${TARGET}"
         return 0
     else
