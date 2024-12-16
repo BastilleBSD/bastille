@@ -353,7 +353,7 @@ while [ "$#" -gt 0 ]; do
                             for last in "$@"; do
                                 true
                             done
-                            if [ $2 == "(" ] && [ $last == ")" ] ; then
+                            if [ "$2" = "(" ] && [ "$last" = ")" ] ; then
                                 check_jail_validity
                                 persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                                 load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
