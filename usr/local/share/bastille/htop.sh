@@ -42,8 +42,12 @@ case "$1" in
         ;;
 esac
 
-TARGET="${1}"
-shift
+if [ $# -eq 0 ]; then
+    usage
+else
+    TARGET="${1}"
+    shift
+fi
 
 if [ "${TARGET}" = "ALL" ]; then
     target_all_jails
