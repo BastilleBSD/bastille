@@ -60,7 +60,7 @@ running_jail() {
 
 validate_name() {
     local NAME_VERIFY=${NAME}
-    local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
+    local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Container names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
@@ -123,7 +123,7 @@ validate_ips() {
 }
 
 validate_netif() {
-    local LIST_INTERFACES=$(ifconfig -l)
+    local LIST_INTERFACES="$(ifconfig -l)"
     if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         info "Valid: (${INTERFACE})."
     else
@@ -253,7 +253,7 @@ post_create_jail() {
 
     # Using relative paths here.
     # MAKE SURE WE'RE IN THE RIGHT PLACE.
-    cd "${bastille_jail_path}"
+    cd "${bastille_jail_path}" || error_exit "Failed to change directory."
     echo
 
     if [ ! -f "${bastille_jail_conf}" ]; then
@@ -292,7 +292,9 @@ create_jail() {
     bastille_jail_fstab="${bastille_jailsdir}/${NAME}/fstab"  ## file
     bastille_jail_conf="${bastille_jailsdir}/${NAME}/jail.conf"  ## file
     bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
+    # shellcheck disable=SC2034
     bastille_jail_rc_conf="${bastille_jailsdir}/${NAME}/root/etc/rc.conf" ## file
+    # shellcheck disable=SC2034
     bastille_jail_resolv_conf="${bastille_jailsdir}/${NAME}/root/etc/resolv.conf" ## file
 
     if [ ! -d "${bastille_jailsdir}/${NAME}" ]; then
@@ -409,8 +411,10 @@ create_jail() {
                         info "Creating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
+                        # shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
+                        # shellcheck disable=SC2140
                         zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
                         "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
@@ -425,16 +429,20 @@ create_jail() {
 
                         ## take a temp snapshot of the base release
                         SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
+                        # shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
                         ## replicate the release base to the new thickjail and set the default mountpoint
+                        # shellcheck disable=SC2140
                         zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
                         zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         ## cleanup temp snapshots initially
+                        # shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
+                        # shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
                     fi
 
@@ -608,7 +616,9 @@ esac
 bastille_root_check
 
 if echo "$3" | grep '@'; then
+    # shellcheck disable=SC2034
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
+    # shellcheck disable=SC2034
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
 fi
 
@@ -691,7 +701,7 @@ while [ $# -gt 0 ]; do
             VNET_JAIL_BRIDGE="1"
             shift
             ;;
-        -*|--*)
+        --*|-*)
             error_notify "Unknown Option."
             usage
             ;;

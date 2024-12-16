@@ -148,9 +148,10 @@ template_update() {
 templates_update() {
     # Update all templates
     _updated_templates=0
-    if [ -d  ${bastille_templatesdir} ]; then
-        for _template_path in $(ls -d ${bastille_templatesdir}/*/*); do
-            if [ -d $_template_path/.git ]; then
+    if [ -d "${bastille_templatesdir}" ]; then
+        # shellcheck disable=SC2045
+        for _template_path in $(ls -d "${bastille_templatesdir}"/*/*); do
+            if [ -d "$_template_path"/.git ]; then
                 BASTILLE_TEMPLATE=$(echo "$_template_path" | awk -F / '{ print $(NF-1) "/" $NF }')
                 template_update
 
