@@ -57,7 +57,7 @@ fi
 bastille_root_check
 
 for _jail in ${JAILS}; do
-    check_target_is_running "${TARGET}"
+    check_target_is_running "${_jail}"
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/bin/top
     echo -e "${COLOR_RESET}"
