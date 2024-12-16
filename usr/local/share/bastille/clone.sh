@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille clone [TARGET] [NEW_NAME] [IPADRESS]"
+    error_exit "Usage: bastille clone [TARGET] [NEW_NAME] [IPADDRESS]"
 }
 
 # Handle special-case commands first
