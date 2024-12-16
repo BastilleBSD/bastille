@@ -100,7 +100,7 @@ if [ $# -lt 1 ]; then
     usage
 fi
 
-case "$1" in
+case "${1}" in
 set)
     ATTRIBUTE=$2
     zfs_set_value
@@ -113,11 +113,14 @@ snap|snapshot)
     TAG=$2
     zfs_snapshot
     ;;
-destroy_snap|destroy_snapshot)
+destroy_snap|destroy_snapshot|snap_destroy)
     TAG=$2
     zfs_destroy_snapshot
     ;;
 df|usage)
     zfs_disk_usage
+    ;;
+*)
+    usage
     ;;
 esac
