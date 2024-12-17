@@ -100,14 +100,14 @@ check_jail_validity() {
 
 # function: check if IP is valid
 check_rdr_ip_validity() {
-    local ip="$1"
-    local ip6="$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    local ip4="$1"
+    local ip6="$(echo "${ip4}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
     else
         local IFS
-        if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${ip}" | cut -d / -f1)
+        if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+            TEST_IP=$(echo "${ip4}" | cut -d / -f1)
             IFS=.
             set ${TEST_IP}
             for quad in 1 2 3 4; do
@@ -115,9 +115,9 @@ check_rdr_ip_validity() {
                     error_exit "Invalid: (${TEST_IP})"
                 fi
             done
-            info "Valid: (${ip})."
+            info "Valid: (${ip4})."
         else
-            error_exit "Invalid: (${ip})."
+            error_exit "Invalid: (${ip4})."
         fi
     fi
 }
@@ -260,7 +260,7 @@ while [ "$#" -gt 0 ]; do
             if [ -z "${2}" ] || [ -z "${3}" ]; then
                 usage
             elif ifconfig | grep -owq "inet ${2}"; then
-	        OPTION_DST=1
+	              OPTION_DST=1
                 RDR_DST="${2}"
                 shift 2
             else
@@ -281,7 +281,7 @@ while [ "$#" -gt 0 ]; do
         list)
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
-	        elif [ -n "${2}" ]; then
+	          elif [ -n "${2}" ]; then
                 usage
             elif [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
@@ -297,7 +297,7 @@ while [ "$#" -gt 0 ]; do
         clear)
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
-	        elif [ -n "${2}" ]; then
+	          elif [ -n "${2}" ]; then
                 usage
             elif [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
@@ -313,22 +313,22 @@ while [ "$#" -gt 0 ]; do
         reset)
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
-	        elif [ -n "${2}" ]; then
+	          elif [ -n "${2}" ]; then
                 usage
             elif [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
                     echo "${JAIL_NAME} redirects:"
                     pfctl -a "rdr/${JAIL_NAME}" -Fn
-		    if rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf; then
+		                if rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf; then
                         info "[${JAIL_NAME}]: rdr.conf removed"
-	            fi
+	                  fi
                 done
             else
                 check_jail_validity
                 pfctl -a "rdr/${JAIL_NAME}" -Fn
                 if rm -f "${bastille_jailsdir}"/"${JAIL_NAME}"/rdr.conf; then
                     info "[${JAIL_NAME}]: rdr.conf removed"
-	        fi
+	              fi
             fi
             shift
             ;;	    
@@ -377,10 +377,9 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         *)
-            if [ "${OPTION}" -eq 1 ];then
+            if [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ] || [ "${OPTION_IF}" -eq 1 ]; then
                 usage
-            fi
-            if [ "${1}" = "dual" ] || [ "${1}" = "ipv4" ] || [ "${1}" = "ipv6" ]; then
+            elif [ "${1}" = "dual" ] || [ "${1}" = "ipv4" ] || [ "${1}" = "ipv6" ]; then
                 RDR_INET="${1}"
             else 
                 usage
