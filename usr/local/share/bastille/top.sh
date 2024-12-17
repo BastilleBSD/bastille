@@ -48,10 +48,11 @@ if [ $# -eq 0 ] || [ $# -gt 1 ]; then
 fi
 
 TARGET="${1}"
-set_target_single "${TARGET}"
 bastille_root_check
-check_target_is_running "${_jail}"
+set_target_single "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_running "${TARGET}"
 
-info "[${_jail}]:"
-jexec -l "${_jail}" /usr/bin/top
+info "[${TARGET}]:"
+jexec -l "${TARGET}" /usr/bin/top
 echo -e "${COLOR_RESET}"
