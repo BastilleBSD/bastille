@@ -47,12 +47,11 @@ if [ $# -eq 0 ] || [ $# -gt 1 ]; then
     usage
 fi
 
-set_target_single "${1}"
+TARGET="${1}"
+set_target_single "${TARGET}"
 bastille_root_check
+check_target_is_running "${_jail}"
 
-for _jail in "${JAILS}"; do
-    check_target_is_running "${_jail}"
-    info "[${_jail}]:"
-    jexec -l "${_jail}" /usr/bin/top
-    echo -e "${COLOR_RESET}"
-done
+info "[${_jail}]:"
+jexec -l "${_jail}" /usr/bin/top
+echo -e "${COLOR_RESET}"
