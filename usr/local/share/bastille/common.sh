@@ -73,12 +73,9 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
-# This is where I am placing all new functions.
 check_target_exists() {
-    TARGET="${1}"
-    JAILS=""
+    local TARGET="${1}"
     if [ -d "${bastille_jailsdir}"/"${TARGET}" ]; then
-        JAILS="${TARGET}"
         return 0
     else
         error_exit "Jail not found."
@@ -95,6 +92,14 @@ check_target_is_running() {
 set_target() {
     if [ "${1}" = ALL ] || [ "${1}" = all ]; then
         target_all_jails
+    else
+        TARGET="${1}"
+    fi
+}
+
+set_target_single() {
+    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+        error_exit "[all|ALL] not supported with this command."
     else
         TARGET="${1}"
         check_target_exists "${TARGET}"
