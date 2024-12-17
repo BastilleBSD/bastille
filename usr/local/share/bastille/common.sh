@@ -93,10 +93,10 @@ check_target_is_running() {
 }
 
 set_target() {
-    if [ "{1}" = ALL ] || [ "{1}" = all]; then
+    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
         target_all_jails
     else
-        TARGET="{1}"
+        TARGET="${1}"
         check_target_exists "{TARGET}"
     fi
 }
