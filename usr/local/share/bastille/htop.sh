@@ -49,15 +49,16 @@ if [ $# -eq 0 ] || [ $# -gt 1 ]; then
 fi
 
 TARGET="${1}"
-set_target_single "${TARGET}"
 bastille_root_check
+set_target_single "${TARGET}"
+check_target_exists "${TARGET}"
 check_target_is_running "${TARGET}"
 
 bastille_jail_path="$(/usr/sbin/jls -j "${TARGET}" path)"
 if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-    error_notify "htop not found on ${_jail}."
+    error_notify "htop not found on ${TARGET}."
 elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-    info "[${_jail}]:"
-    jexec -l "${_jail}" /usr/local/bin/htop
+    info "[${TARGET}]:"
+    jexec -l "${TARGET}" /usr/local/bin/htop
 fi
 echo -e "${COLOR_RESET}"
