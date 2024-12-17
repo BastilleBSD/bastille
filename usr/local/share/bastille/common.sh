@@ -28,6 +28,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Source config file
+. /usr/local/etc/bastille/bastille.conf
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -68,6 +71,51 @@ info() {
 
 warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+}
+
+check_target_exists() {
+    local TARGET="${1}"
+    if [ -d "${bastille_jailsdir}"/"${TARGET}" ]; then
+        return 0
+    else
+        error_exit "Jail not found."
+    fi
+}
+
+check_target_is_running() {
+    local TARGET="${1}"
+    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
+        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+    else
+        return 0
+    fi
+}
+
+set_target() {
+    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+        target_all_jails
+    else
+        TARGET="${1}"
+    fi
+}
+
+set_target_single() {
+    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+        error_exit "[all|ALL] not supported with this command."
+    else
+        TARGET="${1}"
+    fi
+}
+
+target_all_jails() {
+    _JAILS=$(/usr/sbin/jls name)
+    JAILS=""
+    for _jail in ${_JAILS}; do
+        _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
+        if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
+            JAILS="${JAILS} ${_jail}"
+        fi
+    done
 }
 
 generate_vnet_jail_netblock() {
