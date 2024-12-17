@@ -167,7 +167,7 @@ list_release(){
         REL_LIST="$(ls "${bastille_releasesdir}" | sed "s/\n//g")"
         for _REL in ${REL_LIST}; do
             if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ] || [ -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
-                if [ "${2}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
+                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
                     REL_PATCH_LEVEL=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${_REL}/bin/freebsd-version" 2> /dev/null)
                     REL_PATCH_LEVEL=${REL_PATCH_LEVEL:-${_REL}}
                     echo "${REL_PATCH_LEVEL}"
@@ -214,7 +214,7 @@ if [ $# -gt 0 ]; then
         list_all
         ;;
     release|releases)
-        list_release
+        list_release "${2}"
         ;;
     template|templates)
         list_template
