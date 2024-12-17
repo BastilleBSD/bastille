@@ -86,6 +86,8 @@ check_target_is_running() {
     TARGET="${1}"
     if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+    else
+        return 0
     fi
 }
 
