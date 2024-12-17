@@ -1,3 +1,4 @@
+
 #!/bin/sh
 #
 # Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
@@ -47,17 +48,16 @@ if [ $# -eq 0 ] || [ $# -gt 1 ]; then
     usage
 fi
 
-set_target_single "${1}"
+TARGET="${1}"
+set_target_single "${TARGET}"
 bastille_root_check
+check_target_is_running "${TARGET}"
 
-for _jail in "${JAILS}"; do
-    check_target_is_running "${_jail}"
-    bastille_jail_path="$(/usr/sbin/jls -j "${_jail}" path)"
-    if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        error_notify "htop not found on ${_jail}."
-    elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        info "[${_jail}]:"
-        jexec -l "${_jail}" /usr/local/bin/htop
-    fi
-    echo -e "${COLOR_RESET}"
-done
+bastille_jail_path="$(/usr/sbin/jls -j "${TARGET}" path)"
+if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
+    error_notify "htop not found on ${_jail}."
+elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
+    info "[${_jail}]:"
+    jexec -l "${_jail}" /usr/local/bin/htop
+fi
+echo -e "${COLOR_RESET}"
