@@ -225,7 +225,6 @@ load_rdr_log_rule() {
 RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
 RDR_SRC="any"
 RDR_DST="any"
-OPTION="0"
 RDR_INET="dual"
 OPTION_IF=0
 OPTION_SRC=0
@@ -260,7 +259,7 @@ while [ "$#" -gt 0 ]; do
             if [ -z "${2}" ] || [ -z "${3}" ]; then
                 usage
             elif ifconfig | grep -owq "inet ${2}"; then
-	              OPTION_DST=1
+	        OPTION_DST=1
                 RDR_DST="${2}"
                 shift 2
             else
@@ -279,9 +278,9 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         list)
-            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
+            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ]; then
                 error_exit "Command \"${1}\" cannot be used with options."
-	          elif [ -n "${2}" ]; then
+	    elif [ -n "${2}" ]; then
                 usage
             elif [ "${TARGET}" = 'ALL' ]; then
                 for JAIL_NAME in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
@@ -295,7 +294,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         clear)
-            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
+            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ]; then
                 error_exit "Command \"${1}\" cannot be used with options."
 	          elif [ -n "${2}" ]; then
                 usage
@@ -311,7 +310,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         reset)
-            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
+            if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ]; then
                 error_exit "Command \"${1}\" cannot be used with options."
 	          elif [ -n "${2}" ]; then
                 usage
@@ -335,7 +334,7 @@ while [ "$#" -gt 0 ]; do
         tcp|udp)
             if [ $# -lt 3 ]; then
                 usage
-            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ];then
+            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ]; then
                 error_exit "[-t|--type] must be set when using [-s|--source] or [-d|--destination]"
             elif [ $# -eq 3 ]; then
                 check_jail_validity
