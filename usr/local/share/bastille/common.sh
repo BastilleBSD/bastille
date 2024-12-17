@@ -70,6 +70,24 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+jail_autocomplete() {
+    local jail_name="${1}"
+    # shellcheck disable=SC2010
+    if ls "${bastille_jailsdir}" | grep "${jail_name}"; then
+        local AUTOTARGET="$( ls "${bastille_jailsdir}" | grep "${jail_name}" )"
+    else
+        error_exit "[${jail_name}]: Not found."
+    fi
+    # shellcheck disable=SC2034
+    if [ "$( echo "${AUTOTARGET}" | wc -l )" -eq 1 ]; then
+        TARGET="${AUTOTARGET}"
+        return 0
+    else
+        error_exit "Multiple jails found for $jail_name:\n$AUTOTARGET"
+    fi
+}
+
+
 generate_vnet_jail_netblock() {
     local jail_name="$1"
     local use_unique_bridge="$2"
