@@ -1,4 +1,3 @@
-
 #!/bin/sh
 #
 # Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
