@@ -102,7 +102,6 @@ set_target_single() {
         error_exit "[all|ALL] not supported with this command."
     else
         TARGET="${1}"
-        check_target_exists "${TARGET}"
     fi
 }
 
