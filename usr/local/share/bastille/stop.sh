@@ -74,7 +74,7 @@ for _jail in ${JAILS}; do
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
         ## remove (captured above) ipX.addr from firewall table
-        if [ -n "${bastille_network_loopback}" && ! -z "${ips}" ]; then
+        if [ -n "${bastille_network_loopback}" ] && [ ! -z "${ips}" ]; then
             if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
                 for _ip in ${ips}; do
                     pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"

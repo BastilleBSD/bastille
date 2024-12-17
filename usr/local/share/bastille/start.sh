@@ -82,7 +82,7 @@ for _jail in ${JAILS}; do
         ips=$(bastille config "${_jail}" get ip4.addr)
         ips="${ips} $(bastille config "${_jail}" get ip6.addr)"
         for ip in ${ips}; do
-          ip=$(printf "$ip" | sed -E 's,/[0-9]+,,')
+          ip=${ip%%/*}
           if [ -n "${ip}" ]; then
             if ifconfig | grep -wF "${ip}" >/dev/null; then
               error_notify "Error: IP address (${ip}) already in use."
