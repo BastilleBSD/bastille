@@ -92,6 +92,15 @@ check_target_is_running() {
     fi
 }
 
+set_target() {
+    if [ "{1}" = ALL ] || [ "{1}" = all]; then
+        target_all_jails
+    else
+        TARGET="{1}"
+        check_target_exists "{TARGET}"
+    fi
+}
+
 target_all_jails() {
     _JAILS=$(/usr/sbin/jls name)
     JAILS=""
