@@ -2,8 +2,8 @@ Network Requirements
 ====================
 Here's the scenario. You've installed Bastille at home or in the cloud and want
 to get started putting applications in secure little containers, but how do you
-get these containers on the network?  Bastille tries to be flexible about how to 
-network containerized applications. Four methods are described here.
+get these containers on the network?  Bastille tries to be flexible about how to
+network containerized applications. Multiple methods are described here.
 
 1. Home or Small Office
 
@@ -12,6 +12,8 @@ network containerized applications. Four methods are described here.
 3. Cloud with single IPV4 (internal bridge)
 
 4. Cloud with a single IPV4 (external bridge)
+
+5. Public network
 
 Please choose the option which is most appropriate for your environment.
 
@@ -49,7 +51,7 @@ This method is the simplest. All you need to know is the name of your network
 interface and a free IP on your local network.
 
 Shared Interface on IPV6 network (vultr.com)
-============================================ 
+============================================
 Some ISP's, such as `Vultr <https://vultr.com>`_, give you a single ipv4 address,
 and a large block of ipv6 addresses. You can then assign a unique ipv6 address
 to each Bastille Container.
@@ -72,9 +74,9 @@ Your server was assigned the following six section subnet:
 
 The `vultr ipv6 subnet calculator
 <https://www.vultr.com/resources/subnet-calculator-ipv6/?prefix_length=64&display=long&ipv6_address=2001%3Adb8%3Aacad%3Ae%3A%3A%2F64>`_
-is helpful in making sense of that ipv6 address. 
+is helpful in making sense of that ipv6 address.
 
-We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0 
+We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0
 
 Where the /64 basicaly means that the first 64 bits of the address (4x4
 character hexadecimal) values define the network, and the remaining characters,
@@ -126,7 +128,7 @@ host system:
 .. code-block:: shell
 
   ## /etc/devfs.rules (NOT .conf)
-  
+
   [bastille_vnet=13]
   add include $devfsrules_hide_all
   add include $devfsrules_unhide_basic
@@ -159,7 +161,7 @@ Below is the definition of what these three parameters are used for and mean:
        net.link.bridge.pfil_bridge  Set	to 1 to	enable filtering on the	bridge
 				    interface, set to 0	to disable it.
 
-  
+
 **Regarding Routes**
 
 Bastille will attempt to auto-detect the default route from the host system and
@@ -199,9 +201,9 @@ The bridge needs to be created/enabled before creating and starting the jail.
 Public Network
 ==============
 In this section we describe how to network containers in a public network
-such as a cloud hosting provider who only provides you with a single ip address. 
-(AWS, Digital Ocean, etc) (The exception is vultr.com, which does 
-provide you with lots of IPV6 addresses and does a great job supporting FreeBSD!)  
+such as a cloud hosting provider who only provides you with a single ip address.
+(AWS, Digital Ocean, etc) (The exception is vultr.com, which does
+provide you with lots of IPV6 addresses and does a great job supporting FreeBSD!)
 
 So if you only have a single IP address and if you want to create multiple
 containers and assign them all unique IP addresses, you'll need to create a new
@@ -305,3 +307,9 @@ At this point you'll likely be disconnected from the host. Reconnect the
 ssh session and continue.
 
 This step only needs to be done once in order to prepare the host.
+
+You can then create a container without specifying the interface.
+
+.. code-block:: shell
+
+  bastille create tatouine 13.2-RELEASE '192.168.1.50/24 fd11:ee00:ee00::50/64'
