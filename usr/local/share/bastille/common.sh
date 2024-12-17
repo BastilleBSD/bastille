@@ -97,7 +97,7 @@ set_target() {
         target_all_jails
     else
         TARGET="${1}"
-        check_target_exists "{TARGET}"
+        check_target_exists "${TARGET}"
     fi
 }
 
