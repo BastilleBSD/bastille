@@ -1,6 +1,5 @@
 #!/bin/sh
 #
-set -x
 # Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
@@ -33,144 +32,186 @@ set -x
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille config TARGET get|set propertyName [newValue]"
+    error_exit "Usage: bastille clone TARGET NEW_NAME IPADDRESS"
 }
 
-# we need jail(8) to parse the config file so it can expand variables etc
-print_jail_conf() {
-
-    # we need to pass a literal \n to jail to get each parameter on its own
-    # line
-    jail -f "$1" -e '
-'
-} 
-
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+# Handle special-case commands first
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -eq 2 ] || [ $# -gt 4 ]; then
+if [ $# -ne 3 ]; then
     usage
 fi
-
-bastille_root_check
 
 TARGET="${1}"
-ACTION="${2}"
-shift 2
+NEWNAME="${2}"
+IP="${3}"
 
-set_target "${TARGET}"
+bastille_root_check
+set_target_single "${TARGET}"
 
-case ${ACTION} in
-    get)
-        if [ $# -ne 1 ]; then
-            error_notify 'Too many parameters for a "get" operation.'
-            usage
-        fi
-        ;;
-    set) ;;
-    *) error_exit 'Only get and set are supported.' ;;
-esac
-
-PROPERTY=${1}
-shift
-VALUE="$@"
-
-for _jail in ${JAILS}; do
-    FILE="${bastille_jailsdir}/${_jail}/jail.conf"
-    if [ ! -f "${FILE}" ]; then
-        error_notify "jail.conf does not exist for jail: ${_jail}"
-        continue
-    fi
-
-    if [ "${ACTION}" = 'get' ]; then
-        _output=$(
-            print_jail_conf "${FILE}" | awk -F= -v property="${PROPERTY}" '
-                $1 == property {
-                    # note that we have found the property
-                    found = 1;
-                    # check if there is a value for this property
-                    if (NF == 2) {
-                        # remove any quotes surrounding the string
-                        sub(/^"/, "", $2);
-                        sub(/"$/, "", $2);
-                        print $2;
-                    } else {
-                        # no value, just the property name
-                        print "enabled";
-                    }
-                    exit 0;
-                }
-                END {
-                    # if we have not found anything we need to print a special
-                    # string
-                    if (! found) {
-                        print("not set");
-                        #  let the caller know that this is a warn condition
-                        exit(120);
-                    }
-                }'
-            )
-        # check if our output is a warning or regular
-        if [ $? -eq 120 ]; then
-            warn "${_output}"
-        else
-            echo "${_output}"
-        fi
-    else # Setting the value. -- cwells
-        if [ -n "${VALUE}" ]; then
-            VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
-            if echo "${VALUE}" | grep ' ' > /dev/null 2>&1; then # Contains a space, so wrap in quotes. -- cwells
-                VALUE="'${VALUE}'"
+validate_ip() {
+    IPX_ADDR="ip4.addr"
+    IP6_MODE="disable"
+    ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
+    if [ -n "${ip6}" ]; then
+        info "Valid: (${ip6})."
+        IPX_ADDR="ip6.addr"
+        IP6_MODE="new"
+    else
+        local IFS
+        if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+            TEST_IP=$(echo "${IP}" | cut -d / -f1)
+            IFS=.
+            set ${TEST_IP}
+            for quad in 1 2 3 4; do
+                if eval [ \$$quad -gt 255 ]; then
+                    error_exit "Invalid: (${TEST_IP})"
+                fi
+            done
+            if ifconfig | grep -qwF "${TEST_IP}"; then
+                warn "Warning: IP address already in use (${TEST_IP})."
+            else
+                info "Valid: (${IP})."
             fi
-            LINE="  ${PROPERTY} = ${VALUE};"
         else
-            LINE="  ${PROPERTY};"
+            error_exit "Invalid: (${IP})."
         fi
-
-        # add the value to the config file, replacing any existing value or, if
-        # there is none, at the end
-        #
-        # awk doesn't have "inplace" editing so we use a temp file
-        _tmpfile=$(mktemp) || error_exit "unable to set because mktemp failed"
-        cp "${FILE}" "${_tmpfile}" && \
-        awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
-            BEGIN {
-                # build RE as string as we can not expand vars in RE literals
-                prop_re = "^[[:space:]]*" property "[[:space:]]*$";
-            }
-            $1 ~ prop_re && !found {
-                # we already have an entry in the config for this property so
-                # we need to substitute our line here rather than keep the
-                # existing line
-                print(line);
-                # note we have already found the property
-                found = 1;
-                # move onto the next line
-                next;
-            }
-            $1 == "}" {
-                # reached the end of the stanza so if we have not already
-                # added our line we need to do so now
-                if (! found) {
-                    print(line);
-                }
-            }
-            {
-                # print each uninteresting line unchanged
-                print;
-            }
-        ' "${_tmpfile}" > "${FILE}"
-        rm "${_tmpfile}"
     fi
-done
+}
 
-# Only display this message once at the end (not for every jail). -- cwells
-if [ "${ACTION}" = 'set' ]; then
-    info "A restart is required for the changes to be applied. See 'bastille restart ${TARGET}'."
+update_jailconf() {
+    # Update jail.conf
+    JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    if [ -f "${JAIL_CONFIG}" ]; then
+        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
+            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
+            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
+            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
+            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
+            sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
+            sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
+        fi
+    fi
+
+    if grep -qw "vnet;" "${JAIL_CONFIG}"; then
+        update_jailconf_vnet
+    fi
+}
+
+update_jailconf_vnet() {
+    bastille_jail_rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
+
+    # Determine number of containers and define an uniq_epair
+    local list_jails_num=$(bastille list jails | wc -l | awk '{print $1}')
+    local num_range=$(expr "${list_jails_num}" + 1)
+    jail_list=$(bastille list jail)
+    for _num in $(seq 0 "${num_range}"); do
+        if [ -n "${jail_list}" ]; then
+            if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                    local uniq_epair="bastille${_num}"
+                    local uniq_epair_bridge="${_num}"
+		    # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
+                    # we also do not use the main generate_static_mac function here
+                    local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
+    		    local macaddr_suffix="$(echo -n ${jail_name} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+                    local macaddr="${macaddr_prefix}:${macaddr_suffix}"
+		    # Update the exec.* with uniq_epair when cloning jails.
+                    # for VNET jails
+                    sed -i '' "s|bastille\([0-9]\{1,\}\)|${uniq_epair}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|e\([0-9]\{1,\}\)a_${NEWNAME}|e${uniq_epair_bridge}a_${NEWNAME}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|e\([0-9]\{1,\}\)b_${NEWNAME}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|epair\([0-9]\{1,\}\)|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*a|ether ${macaddr}a|" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*b|ether ${macaddr}b|" "${JAIL_CONFIG}"
+                    break
+                fi
+            fi
+        fi
+    done
+
+    # Rename interface to new uniq_epair
+    sed -i '' "s|ifconfig_e0b_bastille.*_name|ifconfig_e0b_${uniq_epair}_name|" "${bastille_jail_rc_conf}"
+    sed -i '' "s|ifconfig_e.*b_${TARGET}_name|ifconfig_e${uniq_epair_bridge}b_${NEWNAME}_name|" "${bastille_jail_rc_conf}"
+    
+    # If 0.0.0.0 set DHCP, else set static IP address
+    if [ "${IP}" == "0.0.0.0" ]; then
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+    else
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
+    fi
+}
+
+update_fstab() {
+    # Update fstab to use the new name
+    FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
+    if [ -f "${FSTAB_CONFIG}" ]; then
+        FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9]|-CURRENT)|([0-9]{1,2}(-stable-build-[0-9]{1,3}|-stable-LAST))|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)' "${FSTAB_CONFIG}" | uniq)
+        FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET}/root/.bastille" "${FSTAB_CONFIG}")
+        FSTAB_NEWCONF="${bastille_releasesdir}/${FSTAB_RELEASE} ${bastille_jailsdir}/${NEWNAME}/root/.bastille nullfs ro 0 0"
+        if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
+            # If both variables are set, update as needed
+            if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${NEWNAME}/root/.bastille" "${FSTAB_CONFIG}"; then
+                sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
+            fi
+        fi
+        # Update additional fstab paths with new jail path
+        sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|" "${FSTAB_CONFIG}"
+    fi
+}
+
+clone_jail() {
+    # Attempt container clone
+    info "Attempting to clone "${TARGET}" to "${NEWNAME}"..."
+    if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                # Replicate the existing container
+                DATE=$(date +%F-%H%M%S)
+                zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
+                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+
+                # Cleanup source temporary snapshots
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}"
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
+
+                # Cleanup target temporary snapshots
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
+                zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
+            fi
+        else
+            # Just clone the jail directory
+            # Check if container is running
+            if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
+                error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
+            fi
+
+            # Perform container file copy(archive mode)
+            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+        fi
+    else
+        error_exit "${NEWNAME} already exists."
+    fi
+
+    # Generate jail configuration files
+    update_jailconf
+    update_fstab
+
+    # Display the exist status
+    if [ "$?" -ne 0 ]; then
+        error_exit "An error has occurred while attempting to clone '${TARGET}'."
+    else
+        info "Cloned '${TARGET}' to '${NEWNAME}' successfully."
+    fi
+}
+
+## don't allow for dots(.) in container names
+if echo "${NEWNAME}" | grep -q "[.]"; then
+    error_exit "Container names may not contain a dot(.)!"
 fi
 
-exit 0
+clone_jail
