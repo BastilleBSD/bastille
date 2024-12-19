@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,16 +51,19 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -eq 1 ] || [ $# -gt 3 ]; then
+if [ $# -eq 2 ] || [ $# -gt 4 ]; then
     usage
 fi
 
 bastille_root_check
 
-ACTION=$1
-shift
+TARGET="${1}"
+ACTION="${2}"
+shift 2
 
-case $ACTION in
+set_target "${TARGET}"
+
+case ${ACTION} in
     get)
         if [ $# -ne 1 ]; then
             error_notify 'Too many parameters for a "get" operation.'
@@ -71,7 +74,7 @@ case $ACTION in
     *) error_exit 'Only get and set are supported.' ;;
 esac
 
-PROPERTY=$1
+PROPERTY=${1}
 shift
 VALUE="$@"
 
