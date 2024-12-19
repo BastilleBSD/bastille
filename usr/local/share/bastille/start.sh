@@ -37,30 +37,19 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
-bastille_root_check
-
 TARGET="${1}"
-shift
 
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(bastille list jails)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(bastille list jails | awk "/^${TARGET}$/")
-    ## check if exist
-    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-        error_exit "[${TARGET}]: Not found."
-    fi
-fi
+bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     ## test if running
