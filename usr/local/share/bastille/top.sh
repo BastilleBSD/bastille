@@ -29,26 +29,34 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     error_exit "Usage: bastille top TARGET"
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 0 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    jexec -l "${_jail}" /usr/bin/top
-    echo -e "${COLOR_RESET}"
-done
+bastille_root_check
+set_target_single "${TARGET}"
+check_target_is_running "${TARGET}" || exit
+
+bastille_jail_path="$(/usr/sbin/jls -j "${TARGET}" path)"
+if [ ! -x "${bastille_jail_path}/usr/local/bin/top" ]; then
+    error_notify "top not found on ${TARGET}."
+elif [ -x "${bastille_jail_path}/usr/local/bin/top" ]; then
+    info "[${TARGET}]:"
+    jexec -l "${TARGET}" /usr/local/bin/htop
+fi
+echo -e "${COLOR_RESET}"
