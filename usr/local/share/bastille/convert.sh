@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,16 +37,22 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 0 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
 bastille_root_check
+
+TARGET="${1}"
+
+set_target_single "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_stopped "${TARGET}"
 
 convert_symlinks() {
     # Work with the symlinks, revert on first cp error
@@ -114,7 +120,7 @@ start_convert() {
         HASPORTS=$(grep -w ${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jailsdir}/${TARGET}/fstab)
 
         if [ -n "${RELEASE}" ]; then
-            cd "${bastille_jailsdir}/${TARGET}/root" || error_exit "Failed to change directory to ${bastille_jailsdir}/${TARGET}/root"
+            cd "${bastille_jailsdir}/${TARGET}/root"
 
             # Work with the symlinks
             convert_symlinks
@@ -149,8 +155,6 @@ fi
 # Be interactive here since this cannot be easily undone
 while :; do
     error_notify "Warning: container conversion from thin to thick can't be undone!"
-    # shellcheck disable=SC2162
-    # shellcheck disable=SC3045
     read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
     case ${yn} in
     [Yy]) start_convert;;
