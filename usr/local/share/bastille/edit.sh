@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,28 +37,29 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -gt 1 ]; then
+if [ $# -gt 2 ]; then
     usage
-elif [ $# -eq 1 ]; then
-    TARGET_FILENAME="${1}"
+elif [ $# -eq 2 ]; then
+    TARGET_FILENAME="${2}"
+else 
+    TARGET_FILENAME="jail.conf"
 fi
+
+TARGET="${1}"
+
+set_target_single "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_running "${TARGET}"
 
 bastille_root_check
 
 if [ -z "${EDITOR}" ]; then
-    # shellcheck disable=SC2209
     EDITOR=vi
 fi
 
-for _jail in ${JAILS}; do
-    if [ -n "${TARGET_FILENAME}" ]; then
-        "${EDITOR}" "${bastille_jailsdir}/${_jail}/${TARGET_FILENAME}"
-    else
-        "${EDITOR}" "${bastille_jailsdir}/${_jail}/jail.conf"
-    fi
-done
+"${EDITOR}" "${bastille_jailsdir}/${_jail}/${TARGET_FILENAME}"
