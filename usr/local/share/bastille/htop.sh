@@ -42,16 +42,15 @@ case "$1" in
         ;;
 esac
 
-# Accept only one argument.
-if [ $# -eq 0 ] || [ $# -gt 1 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
 TARGET="${1}"
+
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
+check_target_is_running "${TARGET}" || exit 0
 
 bastille_jail_path="$(/usr/sbin/jls -j "${TARGET}" path)"
 if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
