@@ -628,6 +628,7 @@ THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
 LINUX_JAIL=""
+VALIDATE_RELEASE="1"
 
 # Handle and parse options
 while [ $# -gt 0 ]; do
@@ -701,6 +702,10 @@ while [ $# -gt 0 ]; do
             VNET_JAIL_BRIDGE="1"
             shift
             ;;
+        --no-validate|no-validate)
+            VALIDATE_RELEASE=""
+            shift
+            ;;
         --*|-*)
             error_notify "Unknown Option."
             usage
@@ -744,7 +749,7 @@ if [ -n "${NAME}" ]; then
     validate_name
 fi
 
-if [ -n "${LINUX_JAIL}" ]; then
+if [ -n "${LINUX_JAIL}" ] && [ -n "${VALIDATE_RELEASE}" ]; then
     case "${RELEASE}" in
     bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
         ## check for FreeBSD releases name
@@ -778,80 +783,82 @@ if [ -n "${LINUX_JAIL}" ]; then
 fi
 
 if [ -z "${EMPTY_JAIL}" ]; then
-    ## verify release
-    case "${RELEASE}" in
-    2.[0-9]*)
-        ## check for MidnightBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}")
-        validate_release
-        ;;
-    *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-        validate_release
-        ;;
-    *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
-        ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-        validate_release
-        ;;
-    *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-        ## check for HardenedBSD releases name(previous infrastructure)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-        validate_release
-        ;;
-    *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
-        ## check for HardenedBSD(specific stable build releases)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-        validate_release
-        ;;
-    *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
-        ## check for HardenedBSD(latest stable build release)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-        validate_release
-        ;;
-    current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
-        ## check for HardenedBSD(specific current build releases)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
-        validate_release
-        ;;
-    current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
-        ## check for HardenedBSD(latest current build release)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-        validate_release
-        ;;
-    ubuntu_bionic|bionic|ubuntu-bionic)
-        UBUNTU="1"
-        NAME_VERIFY=Ubuntu_1804
-        validate_release
-        ;;
-    ubuntu_focal|focal|ubuntu-focal)
-        UBUNTU="1"
-        NAME_VERIFY=Ubuntu_2004
-        validate_release
-        ;;
-    ubuntu_jammy|jammy|ubuntu-jammy)
-        UBUNTU="1"
-        NAME_VERIFY=Ubuntu_2204
-        validate_release
-        ;;
-    debian_buster|buster|debian-buster)
-        NAME_VERIFY=Debian10
-        validate_release
-        ;;
-    debian_bullseye|bullseye|debian-bullseye)
-        NAME_VERIFY=Debian11
-        validate_release
-        ;;
-    debian_bookworm|bookworm|debian-bookworm)
-        NAME_VERIFY=Debian12
-        validate_release
-        ;;
-    *)
-        error_notify "Unknown Release."
-        usage
-        ;;
-    esac
+    if [ -n "${VALIDATE_RELEASE}" ]; then
+        ## verify release
+        case "${RELEASE}" in
+        2.[0-9]*)
+            ## check for MidnightBSD releases name
+            NAME_VERIFY=$(echo "${RELEASE}")
+            validate_release
+            ;;
+        *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
+            ## check for FreeBSD releases name
+            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+            validate_release
+            ;;
+        *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
+            ## check for FreeBSD releases name
+            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+            validate_release
+            ;;
+        *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+            ## check for HardenedBSD releases name(previous infrastructure)
+            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+            validate_release
+            ;;
+        *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
+            ## check for HardenedBSD(specific stable build releases)
+            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+            validate_release
+            ;;
+        *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
+            ## check for HardenedBSD(latest stable build release)
+            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+            validate_release
+            ;;
+        current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
+            ## check for HardenedBSD(specific current build releases)
+            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+            validate_release
+            ;;
+        current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
+            ## check for HardenedBSD(latest current build release)
+            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+            validate_release
+            ;;
+        ubuntu_bionic|bionic|ubuntu-bionic)
+            UBUNTU="1"
+            NAME_VERIFY=Ubuntu_1804
+            validate_release
+            ;;
+        ubuntu_focal|focal|ubuntu-focal)
+            UBUNTU="1"
+            NAME_VERIFY=Ubuntu_2004
+            validate_release
+            ;;
+        ubuntu_jammy|jammy|ubuntu-jammy)
+            UBUNTU="1"
+            NAME_VERIFY=Ubuntu_2204
+            validate_release
+            ;;
+        debian_buster|buster|debian-buster)
+            NAME_VERIFY=Debian10
+            validate_release
+            ;;
+        debian_bullseye|bullseye|debian-bullseye)
+            NAME_VERIFY=Debian11
+            validate_release
+            ;;
+        debian_bookworm|bookworm|debian-bookworm)
+            NAME_VERIFY=Debian12
+            validate_release
+            ;;
+        *)
+            error_notify "Unknown Release."
+            usage
+            ;;
+        esac
+    fi
 
     ## check for name/root/.bastille
     if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
