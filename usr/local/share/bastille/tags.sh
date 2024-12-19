@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # Ressource limits added by Lars Engels github.com/bsdlme
 #
@@ -45,21 +45,24 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+ACTION="${2}"
+TAGS="${3}"
 
-ACTION="${1}"
-TAGS="${2}"
+bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+    check_target_exists "${_jail}"
     bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"
     case ${ACTION} in
         add)
