@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,10 @@ usage() {
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 if [ $# -eq 0 ]; then
@@ -51,10 +51,16 @@ bastille_root_check
 COUNT=0
 RETURN=0
 
+TARGET="${1}"
+shift 1
+
+set_target "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_running "${TARGET}"
+
 for _jail in ${JAILS}; do
     COUNT=$(($COUNT+1))
     info "[${_jail}]:"
-
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
         # Allow executing commands on Linux jails.
         jexec -l -u root "${_jail}" "$@"
