@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2022, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,35 +35,29 @@ usage() {
     error_exit "Usage: bastille rcp [OPTION] TARGET CONTAINER_PATH HOST_PATH"
 }
 
-CPSOURCE="${1}"
-CPDEST="${2}"
-
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
--q|--quiet)
-    OPTION="${1}"
-    CPSOURCE="${2}"
-    CPDEST="${3}"
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 3 ]; then
     usage
 fi
 
-if [ "${TARGET}" = "ALL" ]; then
-    usage
-fi
+TARGET="${1}"
+CPSOURCE="${2}"
+CPDEST="${3}"
+OPTION="-av"
 
-case "${OPTION}" in
+bastille_root_check
+set_target_single "${TARGET}"
+check_target_exists "${TARGET}"
+
+case "$@" in
     -q|--quiet)
         OPTION="-a"
-        ;;
-    *)
-        OPTION="-av"
         ;;
 esac
 
