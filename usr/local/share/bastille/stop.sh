@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,16 +37,19 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 0 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
+TARGET="${1}"
+
 bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     ## test if running
@@ -55,10 +58,13 @@ for _jail in ${JAILS}; do
         _ip="$(/usr/sbin/jls -j ${_jail} ip4.addr)"
 
         # Check if pfctl is present
-        if which -s pfctl; then
+        # Do not invoke pfctl if no ip4.addr found
+        if [ -n "${_ip}" ]; then
+          if which -s pfctl; then
             if [ "$(bastille rdr ${_jail} list)" ]; then
-                bastille rdr ${_jail} clear
+              bastille rdr ${_jail} clear
             fi
+          fi
         fi
 
         ## remove rctl limits
@@ -73,7 +79,7 @@ for _jail in ${JAILS}; do
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
         ## remove (captured above) ip4.addr from firewall table
-        if [ -n "${bastille_network_loopback}" ] && [ ! -z "${_ip}" ]; then
+        if [ -n "${bastille_network_loopback}" -a ! -z "${_ip}" ]; then
             if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
                 pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
             fi
