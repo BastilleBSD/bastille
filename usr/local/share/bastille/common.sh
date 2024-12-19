@@ -54,7 +54,7 @@ if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
-# Notify message on error, but do not exit
+# Error/Info functions
 error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
@@ -73,49 +73,56 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+# Main functions
 check_target_exists() {
-    local TARGET="${1}"
-    if [ -d "${bastille_jailsdir}"/"${TARGET}" ]; then
-        return 0
+    local _TARGET="${1}"
+    if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+        error_notify "Jail not found \"${_TARGET}\""
+        return 1
     else
-        error_exit "Jail not found."
+        return 0
     fi
 }
 
 check_target_is_running() {
-    local TARGET="${1}"
-    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+    local _TARGET="${1}"
+    if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        error_notify "[${_TARGET}]: Not started. See 'bastille start ${_TARGET}'."
+        return 1
     else
         return 0
     fi
 }
 
-set_target() {
-    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
-        target_all_jails
+check_target_is_stopped() {
+    local _TARGET="${1}"
+    if [ "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        error_notify "${_TARGET} is running. See 'bastille stop ${_TARGET}'."
+        return 1
     else
-        TARGET="${1}"
+        return 0
     fi
 }
 
-set_target_single() {
-    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
-        error_exit "[all|ALL] not supported with this command."
-    else
-        TARGET="${1}"
-    fi
-}
-
-target_all_jails() {
-    _JAILS=$(/usr/sbin/jls name)
-    JAILS=""
-    for _jail in ${_JAILS}; do
-        _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
-        if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
-            JAILS="${JAILS} ${_jail}"
-        fi
-    done
+checkyesno() {
+    ## copied from /etc/rc.subr -- cedwards (20231125)
+    ## issue #368 (lowercase values should be parsed)
+    ## now used for all bastille_zfs_enable=YES|NO tests
+    ## example: if checkyesno bastille_zfs_enable; then ...
+    ## returns 0 for enabled; returns 1 for disabled
+    eval _value=\$${1}
+    case $_value in
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        warn "\$${1} is not set properly - see rc.conf(5)."
+        return 1
+        ;;
+    esac
 }
 
 generate_vnet_jail_netblock() {
@@ -166,23 +173,48 @@ EOF
     fi
 }
 
-checkyesno() {
-    ## copied from /etc/rc.subr -- cedwards (20231125)
-    ## issue #368 (lowercase values should be parsed)
-    ## now used for all bastille_zfs_enable=YES|NO tests
-    ## example: if checkyesno bastille_zfs_enable; then ...
-    ## returns 0 for enabled; returns 1 for disabled
-    eval _value=\$${1}
-    case $_value in
-    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
-        return 0
-        ;;
-    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+set_target() {
+    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+        target_all_jails
+    else
+        TARGET="${1}"
+    fi
+}
+
+set_target() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        target_all_jails
+    else
+        check_target_exists "${_TARGET}"
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
+    fi
+}
+
+set_target_single() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        error_notify "[all|ALL] not supported with this command."
         return 1
-        ;;
-    *)
-        warn "\$${1} is not set properly - see rc.conf(5)."
-        return 1
-        ;;
-    esac
+    else
+        check_target_exists "${_TARGET}"
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
+    fi
+}
+
+target_all_jails() {
+    local _JAILS="$(bastille list jails)"
+    JAILS=""
+    for _jail in ${_JAILS}; do
+        if [ -d "${bastille_jailsdir}/${_jail}" ]; then
+            JAILS="${JAILS} ${_jail}"
+        fi
+    done
+    export JAILS
 }
