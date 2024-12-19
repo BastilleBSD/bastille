@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,14 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille bootstrap [release|template] [update|arch]"
+    error_exit "Usage: bastille bootstrap [RELEASE|TEMPLATE] [update|arch]"
 }
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 bastille_root_check
@@ -52,7 +52,8 @@ if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; the
         no|No|n|N|"")
             error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
             ;;
-        yes|Yes|y|Y) ;;
+        yes|Yes|y|Y) 
+            ;;
     esac
 fi
 
@@ -216,8 +217,6 @@ bootstrap_release() {
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
         ## check distfiles list and skip existing cached files
         bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/base//")
-        # TODO check how to handle this
-        # shellcheck disable=SC2010
         bastille_cached_files=$(ls "${bastille_cachedir}/${RELEASE}" | grep -v "MANIFEST" | tr -d ".txz")
         for distfile in ${bastille_cached_files}; do
             bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/${distfile}//")
@@ -348,7 +347,7 @@ debootstrap_release() {
                 ;;
             esac
         else
-            # If already set in /boot/loader.conf, check and try to load the module.
+            # If already set in /boot/loader.conf, check and try to load the module. 
             if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
                 info "Loading kernel module: ${_req_kmod}"
                 kldload -v ${_req_kmod}
@@ -454,7 +453,7 @@ HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 # bootstrapping from aarch64/arm64 Debian or Ubuntu require a different value for ARCH
 # create a new variable
-if [ "${HW_MACHINE_ARCH}" = "aarch64" ]; then
+if [ "${HW_MACHINE_ARCH}" == "aarch64" ]; then
     HW_MACHINE_ARCH_LINUX="arm64"
 else
     HW_MACHINE_ARCH_LINUX=${HW_MACHINE_ARCH}
@@ -482,133 +481,133 @@ fi
 
 ## Filter sane release names
 case "${1}" in
-2.[0-9]*)
-    ## check for MidnightBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}")
-    UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
-    PLATFORM_OS="MidnightBSD"
-    validate_release_url
-    ;;
-*-CURRENT|*-current)
-    ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
-    UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
-    PLATFORM_OS="FreeBSD"
-    validate_release_url
-    ;;
-*-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
-    ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]{1,2})\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
-    UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
-    PLATFORM_OS="FreeBSD"
-    validate_release_url
-    ;;
-*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-    ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${NAME_VERIFY}"
-    PLATFORM_OS="HardenedBSD"
-    validate_release_url
-    ;;
-*-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
-    ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-build-[0-9]\{1,3\}//g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    PLATFORM_OS="HardenedBSD"
-    validate_release_url
-    ;;
-*-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
-    ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-BUILD-LATEST//g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-BUILD-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
-    PLATFORM_OS="HardenedBSD"
-    validate_release_url
-    ;;
-current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
-    ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
-    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-    PLATFORM_OS="HardenedBSD"
-    validate_release_url
-    ;;
-current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
-    ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-    NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
-    NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-BUILD-//g')
-    UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
-    PLATFORM_OS="HardenedBSD"
-    validate_release_url
-    ;;
-http?://*/*/*)
-    BASTILLE_TEMPLATE_URL=${1}
-    BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
-    BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
-    bootstrap_template
-    ;;
-git@*:*/*)
-    BASTILLE_TEMPLATE_URL=${1}
-    git_repository=$(echo "${1}" | awk -F : '{ print $2 }')
-    BASTILLE_TEMPLATE_USER=$(echo "${git_repository}" | awk -F / '{ print $1 }')
-    BASTILLE_TEMPLATE_REPO=$(echo "${git_repository}" | awk -F / '{ print $2 }')
-    bootstrap_template
-    ;;
-#adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
-ubuntu_bionic|bionic|ubuntu-bionic)
-    PLATFORM_OS="Ubuntu/Linux"
-    LINUX_FLAVOR="bionic"
-    DIR_BOOTSTRAP="Ubuntu_1804"
-    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-    debootstrap_release
-    ;;
-ubuntu_focal|focal|ubuntu-focal)
-    PLATFORM_OS="Ubuntu/Linux"
-    LINUX_FLAVOR="focal"
-    DIR_BOOTSTRAP="Ubuntu_2004"
-    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-    debootstrap_release
-    ;;
-ubuntu_jammy|jammy|ubuntu-jammy)
-    PLATFORM_OS="Ubuntu/Linux"
-    LINUX_FLAVOR="jammy"
-    DIR_BOOTSTRAP="Ubuntu_2204"
-    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-    debootstrap_release
-    ;;
-debian_buster|buster|debian-buster)
-    PLATFORM_OS="Debian/Linux"
-    LINUX_FLAVOR="buster"
-    DIR_BOOTSTRAP="Debian10"
-    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-    debootstrap_release
-    ;;
-debian_bullseye|bullseye|debian-bullseye)
-    PLATFORM_OS="Debian/Linux"
-    LINUX_FLAVOR="bullseye"
-    DIR_BOOTSTRAP="Debian11"
-    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-    debootstrap_release
-    ;;
-debian_bookworm|bookworm|debian-bookworm)
-    PLATFORM_OS="Debian/Linux"
-    LINUX_FLAVOR="bookworm"
-    DIR_BOOTSTRAP="Debian12"
-    ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-    debootstrap_release
-    ;;
-*)
-    usage
-    ;;
+    2.[0-9]*)
+        ## check for MidnightBSD releases name
+        NAME_VERIFY=$(echo "${RELEASE}")
+        UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
+        PLATFORM_OS="MidnightBSD"
+        validate_release_url
+        ;;
+    *-CURRENT|*-current)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
+        UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
+        PLATFORM_OS="FreeBSD"
+        validate_release_url
+        ;;
+    *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
+        ## check for FreeBSD releases name
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]{1,2})\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
+        UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
+        PLATFORM_OS="FreeBSD"
+        validate_release_url
+        ;;
+    *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+        ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
+        UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${NAME_VERIFY}"
+        PLATFORM_OS="HardenedBSD"
+        validate_release_url
+        ;;
+    *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
+        ## check for HardenedBSD(specific stable build releases)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
+        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-build-[0-9]\{1,3\}//g')
+        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
+        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+        PLATFORM_OS="HardenedBSD"
+        validate_release_url
+        ;;
+    *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
+        ## check for HardenedBSD(latest stable build release)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-BUILD-LATEST//g')
+        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-BUILD-//g')
+        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
+        PLATFORM_OS="HardenedBSD"
+        validate_release_url
+        ;;
+    current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
+        ## check for HardenedBSD(specific current build releases)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
+        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
+        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
+        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+        PLATFORM_OS="HardenedBSD"
+        validate_release_url
+        ;;
+    current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
+        ## check for HardenedBSD(latest current build release)
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
+        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
+        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-BUILD-//g')
+        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
+        PLATFORM_OS="HardenedBSD"
+        validate_release_url
+        ;;
+    http?://*/*/*)
+        BASTILLE_TEMPLATE_URL=${1}
+        BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
+        BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
+        bootstrap_template
+        ;;
+    git@*:*/*)
+        BASTILLE_TEMPLATE_URL=${1}
+        git_repository=$(echo "${1}" | awk -F : '{ print $2 }')
+        BASTILLE_TEMPLATE_USER=$(echo "${git_repository}" | awk -F / '{ print $1 }')
+        BASTILLE_TEMPLATE_REPO=$(echo "${git_repository}" | awk -F / '{ print $2 }')
+        bootstrap_template
+        ;;
+    #adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
+    ubuntu_bionic|bionic|ubuntu-bionic)
+        PLATFORM_OS="Ubuntu/Linux"
+        LINUX_FLAVOR="bionic"
+        DIR_BOOTSTRAP="Ubuntu_1804"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        debootstrap_release
+        ;;
+    ubuntu_focal|focal|ubuntu-focal)
+        PLATFORM_OS="Ubuntu/Linux"
+        LINUX_FLAVOR="focal"
+        DIR_BOOTSTRAP="Ubuntu_2004"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        debootstrap_release
+        ;;
+    ubuntu_jammy|jammy|ubuntu-jammy)
+        PLATFORM_OS="Ubuntu/Linux"
+        LINUX_FLAVOR="jammy"
+        DIR_BOOTSTRAP="Ubuntu_2204"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        debootstrap_release
+        ;;
+    debian_buster|buster|debian-buster)
+        PLATFORM_OS="Debian/Linux"
+        LINUX_FLAVOR="buster"
+        DIR_BOOTSTRAP="Debian10"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        debootstrap_release
+        ;;
+    debian_bullseye|bullseye|debian-bullseye)
+        PLATFORM_OS="Debian/Linux"
+        LINUX_FLAVOR="bullseye"
+        DIR_BOOTSTRAP="Debian11"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        debootstrap_release
+        ;;
+    debian_bookworm|bookworm|debian-bookworm)
+        PLATFORM_OS="Debian/Linux"
+        LINUX_FLAVOR="bookworm"
+        DIR_BOOTSTRAP="Debian12"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        debootstrap_release
+        ;;
+    *)
+        usage
+        ;;
 esac
 
 case "${OPTION}" in
-update)
-    bastille update "${RELEASE}"
-    ;;
+    update)
+        bastille update "${RELEASE}"
+        ;;
 esac
