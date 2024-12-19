@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # Ressource limits added by Sven R github.com/hackacad
 #
@@ -40,25 +40,29 @@ usage() {
 
 RACCT_ENABLE=$(sysctl -n kern.racct.enable)
 if [ "${RACCT_ENABLE}" != '1' ]; then
-    echo "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
-#    exit 1
+    error_exit "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
 fi
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 3 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+OPTION="${2}"
+VALUE="${3}"
 
-OPTION="${1}"
-VALUE="${2}"
+
+bastille_root_check
+set_target "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_running "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
