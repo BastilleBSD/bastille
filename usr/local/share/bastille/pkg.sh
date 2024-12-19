@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,16 +36,38 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     usage
 fi
 
+TARGET="${1}"
+
+while [ $# -gt 0 ]; do
+    case "${1}" in
+        -H|--host)
+            USE_HOST_PKG=1
+            TARGET="${2}"
+            shift
+            ;;
+        -*|--*)
+            error_notify ""Unknown option."
+            usage
+            ;;
+        *)
+            break
+            ;;
+    case
+done
+        
 bastille_root_check
+set_target "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_running "${TARGET}"
 
 errors=0
 
