@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,6 @@ usage() {
 zfs_snapshot() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    # shellcheck disable=SC2140
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     echo
 done
@@ -47,7 +46,6 @@ done
 zfs_destroy_snapshot() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    # shellcheck disable=SC2140
     zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     echo
 done
@@ -84,7 +82,14 @@ help|-h|--help)
     ;;
 esac
 
+if [ $# -lt 2 ]; then
+    usage
+fi
+
+TARGET="${1}"
+
 bastille_root_check
+set_target_single "${TARGET}"
 
 ## check ZFS enabled
 if ! checkyesno bastille_zfs_enable; then
@@ -96,25 +101,21 @@ if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "ZFS zpool not defined."
 fi
 
-if [ $# -lt 1 ]; then
-    usage
-fi
-
-case "$1" in
+case "${2}" in
 set)
-    ATTRIBUTE=$2
+    ATTRIBUTE=${3}
     zfs_set_value
     ;;
 get)
-    ATTRIBUTE=$2
+    ATTRIBUTE=${3}
     zfs_get_value
     ;;
 snap|snapshot)
-    TAG=$2
+    TAG=${3}
     zfs_snapshot
     ;;
 destroy_snap|destroy_snapshot)
-    TAG=$2
+    TAG=${3}
     zfs_destroy_snapshot
     ;;
 df|usage)
