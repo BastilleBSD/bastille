@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,16 +35,6 @@ usage() {
     error_exit "Usage: bastille rename TARGET NEW_NAME"
 }
 
-validate_name() {
-    local NAME_VERIFY=${NEWNAME}
-    local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
-    if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
-        error_exit "Container names may not begin with (-|_) characters!"
-    elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
-        error_exit "Container names may not contain special characters!"
-    fi
-}
-
 # Handle special-case commands first
 case "$1" in
 help|-h|--help)
@@ -52,13 +42,27 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+NEWNAME="${2}"
 
-NEWNAME="${1}"
+bastille_root_check
+set_target "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_stopped "${TARGET}"
+
+validate_name() {
+    local NAME_VERIFY=${NEWNAME}
+    local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
+    if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
+        error_exit "Container names may not begin with (-|_) characters!"
+    elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+        error_exit "Container names may not contain special characters!"
+    fi
+}
 
 update_jailconf() {
     # Update jail.conf
