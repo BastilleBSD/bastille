@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,8 +78,6 @@ verify_template() {
             info "Detected ${_hook} hook."
 
             ## line count must match newline count
-            # shellcheck disable=SC2046
-            # shellcheck disable=SC3003
             if [ $(wc -l "${_path}" | awk '{print $1}') -ne $(grep -c $'\n' "${_path}") ]; then
                 info "[${_hook}]:"
                 error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."
@@ -147,18 +145,18 @@ verify_template() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    bastille_usage
-    ;;
+    help|-h|--help)
+        bastille_usage
+        ;;
 esac
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ $# -ne 1 ]; then
     bastille_usage
 fi
 
 bastille_root_check
 
-case "$1" in
+case "${1}" in
 *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9])
     RELEASE=$1
     verify_release
