@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,61 +28,168 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-. /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
+COLOR_RED=
+COLOR_GREEN=
+COLOR_YELLOW=
+COLOR_RESET=
 
-usage() {
-    error_exit "Usage: bastille cmd TARGET command"
+bastille_root_check() {
+    if [ "$(id -u)" -ne 0 ]; then
+        ## permission denied
+        error_notify "Bastille: Permission Denied"
+        error_exit "root / sudo / doas required"
+    fi
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+enable_color() {
+    . /usr/local/share/bastille/colors.pre.sh
+}
 
-if [ $# -eq 0 ]; then
-    usage
+# If "NO_COLOR" environment variable is present, or we aren't speaking to a
+# tty, disable output colors.
+if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
+    enable_color
 fi
 
-bastille_root_check
+# Notify message on error, but do not exit
+error_notify() {
+    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+}
 
-COUNT=0
-RETURN=0
+# Notify message on error and exit
+error_exit() {
+    error_notify "$@"
+    exit 1
+}
 
-TARGET="${1}"
-shift 1
+info() {
+    echo -e "${COLOR_GREEN}$*${COLOR_RESET}"
+}
 
-set_target "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
+warn() {
+    echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+}
 
-for _jail in ${JAILS}; do
-    COUNT=$(($COUNT+1))
-    info "[${_jail}]:"
-    if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
-        # Allow executing commands on Linux jails.
-        jexec -l -u root "${_jail}" "$@"
+check_target_exists() {
+    local _TARGET="${1}"
+    if [ -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+        return 0
     else
-        jexec -l -U root "${_jail}" "$@"
+        error_exit "Jail not found \"${_TARGET}\""
     fi
+}
 
-    ERROR_CODE=$?
-    info "[${_jail}]: ${ERROR_CODE}"
-    
-    if [ "$COUNT" -eq 1 ]; then
-        RETURN=${ERROR_CODE}
-    else 
-        RETURN=$(($RETURN+$ERROR_CODE))
+check_target_is_running() {
+    local _TARGET="${1}"
+  if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+      error_exit "[${_TARGET}]: Not started. See 'bastille start ${_TARGET}'."
+  fi
+}
+
+check_target_is_stopped() {
+    local _TARGET="${1}"
+    if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
+        error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
     fi
-    
-    echo
-done
+}
 
-# Check when a command is executed in all running jails. (bastille cmd ALL ...)
-if [ "${COUNT}" -gt 1 ] && [ "${RETURN}" -gt 0 ]; then
-    RETURN=1
-fi
+set_target() {
+    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+        target_all_jails
+    else
+        check_target_exists "${1}"
+        JAILS="${1}"
+        export JAILS
+    fi
+}
 
-return "${RETURN}"
+set_target_single() {
+    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+        error_exit "[all|ALL] not supported with this command."
+    else
+        check_target_exists "${1}"
+        TARGET="${1}"
+        export TARGET
+    fi
+}
+
+target_all_jails() {
+    local _JAILS=$(/usr/sbin/jls name)
+    JAILS=""
+    for _jail in ${_JAILS}; do
+        _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
+        if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
+            JAILS="${JAILS} ${_jail}"
+        fi
+        export JAILS
+    done
+}
+
+generate_vnet_jail_netblock() {
+    local jail_name="$1"
+    local use_unique_bridge="$2"
+    local external_interface="$3"
+    ## determine number of containers + 1
+    ## iterate num and grep all jail configs
+    ## define uniq_epair
+    local jail_list="$(bastille list jails)"
+    if [ -n "${jail_list}" ]; then
+        local list_jails_num="$(echo "${jail_list}" | wc -l | awk '{print $1}')"
+        local num_range=$((list_jails_num + 1))
+        for _num in $(seq 0 "${num_range}"); do
+            if ! grep -q "e[0-9]b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                    local uniq_epair="bastille${_num}"
+                    local uniq_epair_bridge="${_num}"
+                    break
+                fi
+            fi
+        done
+    else
+        local uniq_epair="bastille0"
+        local uniq_epair_bridge="0"
+    fi
+    if [ -n "${use_unique_bridge}" ]; then
+        ## generate bridge config
+        cat <<-EOF
+  vnet;
+  vnet.interface = "e${uniq_epair_bridge}b_${jail_name}";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
+  exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
+  exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
+  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
+EOF
+    else
+        ## generate config
+        cat <<-EOF
+  vnet;
+  vnet.interface = e0b_${uniq_epair};
+  exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "jib destroy ${uniq_epair}";
+EOF
+    fi
+}
+
+checkyesno() {
+    ## copied from /etc/rc.subr -- cedwards (20231125)
+    ## issue #368 (lowercase values should be parsed)
+    ## now used for all bastille_zfs_enable=YES|NO tests
+    ## example: if checkyesno bastille_zfs_enable; then ...
+    ## returns 0 for enabled; returns 1 for disabled
+    eval _value=\$${1}
+    case $_value in
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        warn "\$${1} is not set properly - see rc.conf(5)."
+        return 1
+        ;;
+    esac
+}
