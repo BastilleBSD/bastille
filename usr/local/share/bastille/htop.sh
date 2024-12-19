@@ -36,25 +36,28 @@ usage() {
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 0 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
 
-for _jail in ${JAILS}; do
-    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
-    if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        error_notify "htop not found on ${_jail}."
-    elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        info "[${_jail}]:"
-        jexec -l ${_jail} /usr/local/bin/htop
-    fi
-    echo -e "${COLOR_RESET}"
-done
+bastille_root_check
+set_target_single "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_running "${TARGET}"
+
+bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
+if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
+    error_notify "htop not found on ${_jail}."
+elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
+    info "[${_jail}]:"
+    jexec -l ${_jail} /usr/local/bin/htop
+fi
+echo -e "${COLOR_RESET}"
