@@ -37,9 +37,10 @@ usage() {
 
 destroy_jail() {
     local OPTIONS
+    check_target_exists "${TARGET}"    
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
-
+	
     if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
         if [ "${FORCE}" = "1" ]; then
             bastille stop "${TARGET}"
@@ -172,7 +173,7 @@ destroy_rel() {
             if [ "${FORCE}" = "1" ]; then
                 ## remove cache on force
                 if [ -d "${bastille_cachedir}/${TARGET}" ]; then
-                    rm -rf "${bastille_cachedir:?}/${TARGET}"
+                    rm -rf "${bastille_cachedir}/${TARGET}"
                 fi
             fi
             echo
