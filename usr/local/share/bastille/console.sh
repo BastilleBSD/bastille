@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,18 +37,23 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+    help|-h|--help)
+        usage
+        ;;
+    esac
 
-if [ $# -gt 1 ]; then
+if [ $# -gt 2 ]; then
     usage
 fi
 
 bastille_root_check
 
-USER="${1}"
+TARGET="${1}"
+USER="${2}"
+
+set_target_single "${TARGET}"
+check_target_exists "${TARGET}"
+check_target_is_running "${TARGET}"
 
 validate_user() {
     if jexec -l "${_jail}" id "${USER}" >/dev/null 2>&1; then
@@ -82,7 +87,6 @@ for _jail in ${JAILS}; do
     if [ -n "${USER}" ]; then
         validate_user
     else
-        check_fib
         LOGIN="$(jexec -l "${_jail}" which login)"
         ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
