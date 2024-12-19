@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,18 +36,23 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+    help|-h|--help)
+        usage
+        ;;
+    esac
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     usage
 fi
 
+TARGET="${1}"
+
 bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+    check_target_exists "${_jail}"
+    check_target_is_running "${_jail}"
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
     echo -e "${COLOR_RESET}"
