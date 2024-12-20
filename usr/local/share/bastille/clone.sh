@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille clone [TARGET] [NEW_NAME] [IPADDRESS]"
+    error_exit "Usage: bastille clone TARGET NEW_NAME IPADDRESS"
 }
 
 # Handle special-case commands first
@@ -114,18 +114,18 @@ update_jailconf_vnet() {
                 if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
                     local uniq_epair="bastille${_num}"
                     local uniq_epair_bridge="${_num}"
-		            # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
+	            # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
                     # we also do not use the main generate_static_mac function here
                     local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
-    		        local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    	            local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
                     local macaddr="${macaddr_prefix}:${macaddr_suffix}"
-		            # Update the exec.* with uniq_epair when cloning jails.
+	            # Update the exec.* with uniq_epair when cloning jails.
                     # for VNET jails
                     sed -i '' "s|bastille\([0-9]\{1,\}\)|${uniq_epair}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|e\([0-9]\{1,\}\)a_${NEWNAME}|e${uniq_epair_bridge}a_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|e\([0-9]\{1,\}\)b_${NEWNAME}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|epair\([0-9]\{1,\}\)|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
-		            sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille\([0-9]\{1,\}\).*description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
+		    sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille\([0-9]\{1,\}\).*description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
                     sed -i '' "s|ether.*:.*:.*:.*:.*:.*a|ether ${macaddr}a|" "${JAIL_CONFIG}"
                     sed -i '' "s|ether.*:.*:.*:.*:.*:.*b|ether ${macaddr}b|" "${JAIL_CONFIG}"
                     break
