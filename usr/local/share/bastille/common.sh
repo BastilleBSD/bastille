@@ -174,19 +174,11 @@ EOF
 }
 
 set_target() {
-    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
-        target_all_jails
-    else
-        TARGET="${1}"
-    fi
-}
-
-set_target() {
     local _TARGET="${1}"
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         target_all_jails
     else
-        check_target_exists "${_TARGET}"
+        check_target_exists "${_TARGET}" || exit
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
         export JAILS
@@ -197,10 +189,9 @@ set_target() {
 set_target_single() {
     local _TARGET="${1}"
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
-        error_notify "[all|ALL] not supported with this command."
-        return 1
+        error_exit "[all|ALL] not supported with this command."
     else
-        check_target_exists "${_TARGET}"
+        check_target_exists "${_TARGET}" || exit
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
         export JAILS
