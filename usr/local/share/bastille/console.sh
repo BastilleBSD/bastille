@@ -36,27 +36,25 @@ usage() {
 }
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         usage
         ;;
-    esac
+esac
 
-if [ $# -gt 2 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     usage
 fi
-
-bastille_root_check
 
 TARGET="${1}"
 USER="${2}"
 
+bastille_root_check
 set_target_single "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
+check_target_is_running "${TARGET}" || exit
 
 validate_user() {
-    if jexec -l "${_jail}" id "${USER}" >/dev/null 2>&1; then
+    if jexec -l "${TARGET}" id "${USER}" >/dev/null 2>&1; then
         USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
             if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
@@ -81,14 +79,11 @@ check_fib() {
         fi
 }
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    LOGIN="$(jexec -l "${_jail}" which login)"
-    if [ -n "${USER}" ]; then
-        validate_user
-    else
-        LOGIN="$(jexec -l "${_jail}" which login)"
-        ${_setfib} jexec -l "${_jail}" $LOGIN -f root
-    fi
-    echo
-done
+info "[${TARGET}]:"
+LOGIN="$(jexec -l "${TARGET}" which login)"
+if [ -n "${USER}" ]; then
+    validate_user
+else
+    LOGIN="$(jexec -l "${TARGET}" which login)"
+    ${_setfib} jexec -l "${TARGET}" $LOGIN -f root
+fi
