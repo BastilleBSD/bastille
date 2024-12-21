@@ -46,31 +46,7 @@ EOF
     exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ $# -lt 2 ]; then
-    usage
-fi
-
-bastille_root_check
-
-TARGET="${1}"
-JAIL_NAME=""
-JAIL_IP=""
-JAIL_IP6=""
-shift
-
 check_jail_validity() {
-    # Can only redirect to single jail
-    if [ "${TARGET}" = 'ALL' ]; then
-        error_exit "Can only redirect to a single jail."
-    fi
-
     # Check if jail name is valid
     JAIL_NAME=$(/usr/sbin/jls -j "${TARGET}" name 2>/dev/null)
     if [ -z "${JAIL_NAME}" ]; then
@@ -221,6 +197,26 @@ load_rdr_log_rule() {
     fi
 }
 
+# Handle special-case commands first.
+case "$1" in
+    help|-h|--help)
+        usage
+        ;;
+esac
+
+if [ $# -lt 2 ]; then
+    usage
+fi
+
+TARGET="${1}"
+JAIL_NAME=""
+JAIL_IP=""
+JAIL_IP6=""
+shift
+
+bastille_root_check
+set_target_single "${TARGET}"
+
 # Set defaults
 RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
 RDR_SRC="any"
@@ -232,7 +228,6 @@ OPTION_SRC=0
 OPTION_DST=0
 OPTION_INET_TYPE=0
 
-# Check for options
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -i|--interface)
