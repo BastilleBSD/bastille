@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [force]"
+    error_exit "Usage: bastille upgrade [option(s)] [RELEASE NEW_RELEASE (install)] [TARGET NEW_RELEASE (install)]"
 }
 
 # Handle special-case commands first.
@@ -46,17 +46,22 @@ if [ $# -gt 3 ] || [ $# -lt 2 ]; then
     usage
 fi
 
-# Handle options
-case "${1}" in
-    -f|--force)
-        OPTION="-F"
-        TARGET="${2}"
-        shift
-        ;;
-    *)
-        OPTION=""
-        ;;
-esac
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            OPTION="-F"
+            shift
+            ;;
+        -*|--*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
 NEWRELEASE="${2}"
