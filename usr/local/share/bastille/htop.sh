@@ -50,8 +50,7 @@ TARGET="${1}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
+check_target_is_running "${TARGET}" || exit
 
 bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
 if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
