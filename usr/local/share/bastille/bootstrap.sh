@@ -35,47 +35,6 @@ usage() {
     error_exit "Usage: bastille bootstrap [RELEASE|TEMPLATE] [update|arch]"
 }
 
-# Handle special-case commands first.
-case "$1" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-bastille_root_check
-
-#Validate if ZFS is enabled in rc.conf and bastille.conf.
-if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; then
-    warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
-    read answer
-    case $answer in
-        no|No|n|N|"")
-            error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
-            ;;
-        yes|Yes|y|Y) 
-            ;;
-    esac
-fi
-
-# Validate ZFS parameters.
-if checkyesno bastille_zfs_enable; then
-    ## check for the ZFS pool and bastille prefix
-    if [ -z "${bastille_zfs_zpool}" ]; then
-        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_zpool."
-    elif [ -z "${bastille_zfs_prefix}" ]; then
-        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_prefix."
-    elif ! zfs list "${bastille_zfs_zpool}" > /dev/null 2>&1; then
-        error_exit "ERROR: ${bastille_zfs_zpool} is not a ZFS pool."
-    fi
-
-    ## check for the ZFS dataset prefix if already exist
-    if [ -d "/${bastille_zfs_zpool}/${bastille_zfs_prefix}" ]; then
-        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" > /dev/null 2>&1; then
-            error_exit "ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset."
-        fi
-    fi
-fi
-
 validate_release_url() {
     ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
@@ -448,8 +407,52 @@ bootstrap_template() {
     bastille verify "${_user}/${_repo}"
 }
 
+# Handle special-case commands first.
+case "$1" in
+    help|-h|--help)
+        usage
+        ;;
+esac
+
+RELEASE="${1}"
+OPTION="${2}"
+NOCACHEDIR=
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
+
+bastille_root_check
+
+#Validate if ZFS is enabled in rc.conf and bastille.conf.
+if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; then
+    warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
+    read answer
+    case $answer in
+        no|No|n|N|"")
+            error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
+            ;;
+        yes|Yes|y|Y) 
+            ;;
+    esac
+fi
+
+# Validate ZFS parameters.
+if checkyesno bastille_zfs_enable; then
+    ## check for the ZFS pool and bastille prefix
+    if [ -z "${bastille_zfs_zpool}" ]; then
+        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_zpool."
+    elif [ -z "${bastille_zfs_prefix}" ]; then
+        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_prefix."
+    elif ! zfs list "${bastille_zfs_zpool}" > /dev/null 2>&1; then
+        error_exit "ERROR: ${bastille_zfs_zpool} is not a ZFS pool."
+    fi
+
+    ## check for the ZFS dataset prefix if already exist
+    if [ -d "/${bastille_zfs_zpool}/${bastille_zfs_prefix}" ]; then
+        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" > /dev/null 2>&1; then
+            error_exit "ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset."
+        fi
+    fi
+fi
 
 # bootstrapping from aarch64/arm64 Debian or Ubuntu require a different value for ARCH
 # create a new variable
@@ -458,10 +461,6 @@ if [ "${HW_MACHINE_ARCH}" == "aarch64" ]; then
 else
     HW_MACHINE_ARCH_LINUX=${HW_MACHINE_ARCH}
 fi
-
-NOCACHEDIR=
-RELEASE="${1}"
-OPTION="${2}"
 
 # Alternate RELEASE/ARCH fetch support(experimental)
 if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != "update" ]; then
