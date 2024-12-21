@@ -29,10 +29,21 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille pkg [-H|--host] TARGET command [args]"
+    error_exit "Usage: bastille pkg [option(s)] TARGET COMMAND [args]"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+    -h | --host  -- Use the hosts pkg command.
+
+EOF
+    exit 1
 }
+
 
 # Handle special-case commands first.
 case "$1" in
@@ -45,33 +56,41 @@ if [ $# -lt 2 ]; then
     usage
 fi
 
-TARGET="${1}"
-
-while [ $# -gt 0 ]; do
+# Handle options.
+FORCE=0
+USE_HOST_PKG=0
+while [ "$#" -gt 0 ]; do
     case "${1}" in
-        -H|--host)
+        -h|--host)
             USE_HOST_PKG=1
-            TARGET="${2}"
+            shift
+            ;;
+        -f|--force)
+            FORCE=1
             shift
             ;;
         -*|--*)
-            error_notify ""Unknown option."
-            usage
+            error_exit "Unknown option: \"${1}\""
             ;;
         *)
             break
             ;;
-    case
+    esac
 done
+
+TARGET="${1}"
         
 bastille_root_check
 set_target "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
 
 errors=0
 
 for _jail in ${JAILS}; do
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else
+        continue
+    fi
     info "[${_jail}]:"
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ -f "/usr/sbin/mport" ]; then
