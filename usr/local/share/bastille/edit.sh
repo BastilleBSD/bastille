@@ -42,24 +42,45 @@ case "$1" in
         ;;
 esac
 
-if [ $# -gt 2 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     usage
-elif [ $# -eq 2 ]; then
+fi
+
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force|force)
+            FORCE="1"
+            shift
+            ;;
+        -*|--*)
+            error_exit "Unknown Option: \"${1}\""
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+TARGET="${1}"
+if [ "$#" -eq 2 ]; then
     TARGET_FILENAME="${2}"
 else 
     TARGET_FILENAME="jail.conf"
 fi
 
-TARGET="${1}"
-
-set_target_single "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
-
 bastille_root_check
-
-if [ -z "${EDITOR}" ]; then
-    EDITOR=vi
+set_target_single "${TARGET}"
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else
+    exit
 fi
 
-"${EDITOR}" "${bastille_jailsdir}/${_jail}/${TARGET_FILENAME}"
+if [ -z "${EDITOR}" ]; then
+    EDITOR=nano
+fi
+
+"${EDITOR}" "${bastille_jailsdir}/${TARGET}/${TARGET_FILENAME}"
