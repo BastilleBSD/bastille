@@ -324,7 +324,7 @@ update_config() {
     >> "${bastille_jailsdir}/${TARGET_TRIM}/fstab"
 
     # Work with the symlinks
-    cd "${bastille_jailsdir}/${TARGET_TRIM}/root"
+    cd "${bastille_jailsdir}/${TARGET_TRIM}/root" || error_exit "Could not cd to ${bastille_jailsdir}/${TARGET_TRIM}/root"
     update_symlinks
 }
 

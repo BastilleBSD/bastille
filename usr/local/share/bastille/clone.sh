@@ -59,13 +59,13 @@ if echo "${NEWNAME}" | grep -q "[.]"; then
 fi
 
 validate_ip() {
-    # shellcheck disable=SC2034
     IPX_ADDR="ip4.addr"
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         IPX_ADDR="ip6.addr"
+		# shellcheck disable=SC2034
         IP6_MODE="new"
     else
         local IFS

@@ -55,7 +55,7 @@ fi
 
 bootstrap_etc_release() {
     local _release="${1}"
-    local _release_version=$( echo "${1}" | awk -F "-" '{print $1}' )
+    local _release_version="$( echo "${1}" | awk -F "-" '{print $1}' )"
     if [ ! -d /usr/local/bastille/source/"${_release}" ]; then
         if ! git clone --branch releng/"${_release_version}" --depth 1 https://git.FreeBSD.org/src.git /usr/local/bastille/source/"${_release}"; then
             error_exit "Failed to bootstrap etcupdate release \"${_release}\""
