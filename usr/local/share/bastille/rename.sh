@@ -33,26 +33,55 @@
 
 usage() {
     error_exit "Usage: bastille rename TARGET NEW_NAME"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Stop the jail if it is running.
+
+EOF
+    exit 1
 }
+
 
 # Handle special-case commands first
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     usage
 fi
+
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*|--*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
 NEWNAME="${2}"
 
 bastille_root_check
-set_target "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_stopped "${TARGET}"
+set_target_single "${TARGET}"
+check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille stop "${TARGET}"
+else
+    usage
+fi
 
 validate_name() {
     local NAME_VERIFY=${NEWNAME}
@@ -155,7 +184,7 @@ change_name() {
     fi
 }
 
-## validate jail name
+## Validate new name.
 if [ -n "${NEWNAME}" ]; then
     validate_name
 fi
