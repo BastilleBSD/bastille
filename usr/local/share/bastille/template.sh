@@ -96,7 +96,7 @@ render() {
     if [ -d "${_file_path}" ]; then # Recursively render every file in this directory. -- cwells
         echo "Rendering Directory: ${_file_path}"
         find "${_file_path}" \( -type d -name .git -prune \) -o -type f
-        find "${_file_path}" \( -type d -name .git -prune \) -o -type f -print0 | $(eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}")
+        find "${_file_path}" \( -type d -name .git -prune \) -o -type f -print0 | "$(eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}")"
     elif [ -f "${_file_path}" ]; then
         echo "Rendering File: ${_file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${_file_path}'"
@@ -130,9 +130,9 @@ check_target_is_running "${TARGET}"
 # Special case conversion of hook-style template files into a Bastillefile. -- cwells
 if [ "${TARGET}" = '--convert' ]; then
     if [ -d "${TEMPLATE}" ]; then # A relative path was provided. -- cwells
-        cd "${TEMPLATE}"
+        cd "${TEMPLATE}" || error_exit "Could not cd to ${TEMPLATE}"
     elif [ -d "${bastille_template}" ]; then
-        cd "${bastille_template}"
+        cd "${bastille_template}" || error_exit "Could not cd to ${bastille_template}"
     else
         error_exit "Template not found: ${TEMPLATE}"
     fi
@@ -234,7 +234,7 @@ for _jail in ${JAILS}; do
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
         _jail_ip=$(/usr/sbin/jls -j "${_jail}" ip4.addr 2>/dev/null)
         _jail_ip6=$(/usr/sbin/jls -j "${_jail}" ip6.addr 2>/dev/null)
-        if [ -z "${_jail_ip}" -o "${_jail_ip}" = "-" ]; then
+        if [ -z "${_jail_ip}" ] || [ "${_jail_ip}" = "-" ]; then
             error_notify "Jail IP not found: ${_jail}"
             _jail_ip='' # In case it was -. -- cwells
         fi
@@ -301,7 +301,7 @@ for _jail in ${JAILS}; do
                     # Escape single-quotes in the command being executed. -- cwells
                     _args=$(echo "${_args}" | sed "s/'/'\\\\''/g")
                     # Allow redirection within the jail. -- cwells
-                    _args="sh -c \"${_args}\""
+                    _args="sh -c ${_args}"
                     ;;
                 cp|copy)
                     _cmd='cp'
@@ -372,7 +372,7 @@ for _jail in ${JAILS}; do
             if [ "${_hook}" = 'CMD' ] || [ "${_hook}" = 'PRE' ]; then
                 bastille cmd "${_jail}" /bin/sh < "${bastille_template}/${_hook}" || exit 1
             elif [ "${_hook}" = 'PKG' ]; then
-                bastille pkg "${_jail}" install -y $(cat "${bastille_template}/PKG") || exit 1
+                bastille pkg "${_jail}" install -y "$(cat "${bastille_template}/PKG")" || exit 1
                 bastille pkg "${_jail}" audit -F
             else
                 while read _line; do
@@ -382,7 +382,7 @@ for _jail in ${JAILS}; do
                     # Replace "arg" variables in this line with the provided values. -- cwells
                     _line=$(echo "${_line}" | eval "sed ${ARG_REPLACEMENTS}")
                     eval "_args=\"${_args_template}\""
-                    bastille "${_cmd}" "${_jail}" ${_args} || exit 1
+                    bastille "${_cmd}" "${_jail}" "${_args}" || exit 1
                 done < "${bastille_template}/${_hook}"
             fi
             info "[${_jail}]:${_hook} -- END"

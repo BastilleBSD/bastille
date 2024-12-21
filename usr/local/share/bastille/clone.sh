@@ -59,6 +59,7 @@ if echo "${NEWNAME}" | grep -q "[.]"; then
 fi
 
 validate_ip() {
+    # shellcheck disable=SC2034
     IPX_ADDR="ip4.addr"
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
@@ -111,9 +112,9 @@ update_jailconf_vnet() {
     bastille_jail_rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
 
     # Determine number of containers and define an uniq_epair
-    local list_jails_num=$(bastille list jails | wc -l | awk '{print $1}')
-    local num_range=$(expr "${list_jails_num}" + 1)
-    jail_list=$(bastille list jail)
+    local list_jails_num="$(bastille list jails | wc -l | awk '{print $1}')"
+    local num_range="$(expr "${list_jails_num}" + 1)"
+    jail_list="$(bastille list jails)"
     for _num in $(seq 0 "${num_range}"); do
         if [ -n "${jail_list}" ]; then
             if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
@@ -145,7 +146,7 @@ update_jailconf_vnet() {
     sed -i '' "s|ifconfig_e.*b_${TARGET}_name|ifconfig_e${uniq_epair_bridge}b_${NEWNAME}_name|" "${bastille_jail_rc_conf}"
     
     # If 0.0.0.0 set DHCP, else set static IP address
-    if [ "${IP}" == "0.0.0.0" ]; then
+    if [ "${IP}" = "0.0.0.0" ]; then
         sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
     else
         sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="inet ${IP}"
@@ -172,7 +173,7 @@ update_fstab() {
 
 clone_jail() {
     # Attempt container clone
-    info "Attempting to clone "${TARGET}" to "${NEWNAME}"..."
+    info "Attempting to clone ${TARGET} to ${NEWNAME}..."
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then

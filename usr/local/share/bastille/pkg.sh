@@ -69,7 +69,7 @@ while [ "$#" -gt 0 ]; do
             FORCE=1
             shift
             ;;
-        -*|--*)
+        -*)
             error_exit "Unknown option: \"${1}\""
             ;;
         *)

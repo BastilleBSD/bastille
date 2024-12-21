@@ -37,6 +37,7 @@ usage() {
 
 zfs_snapshot() {
 for _jail in ${JAILS}; do
+    # shellcheck disable=SC2140
     info "[${_jail}]:"
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     echo
@@ -45,6 +46,7 @@ done
 
 zfs_destroy_snapshot() {
 for _jail in ${JAILS}; do
+    # shellcheck disable=SC2140
     info "[${_jail}]:"
     zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     echo

@@ -79,7 +79,7 @@ while [ $# -gt 0 ]; do
             TARGET="${2}"
             shift
             ;;
-        -*|--*)
+        -*)
             error_notify "Unknown Option."
             usage
             ;;
@@ -281,7 +281,7 @@ EOF
         >> "${bastille_jailsdir}/${TARGET_TRIM}/fstab"
 
         # Work with the symlinks
-        cd "${bastille_jailsdir}/${TARGET_TRIM}/root"
+        cd "${bastille_jailsdir}/${TARGET_TRIM}/root" || error_exit "Could not cd to ${bastille_jailsdir}/${TARGET_TRIM}/root"
         update_symlinks
     else
         # Generate new empty fstab file
@@ -377,7 +377,7 @@ update_symlinks() {
     for _link in ${SYMLINKS}; do
         if [ -L "${_link}" ]; then
             ln -sf /.bastille/${_link} ${_link}
-        elif [ "${ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED:-0}" = "1" -a -d "${_link}" ]; then
+        elif [ "${ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED:-0}" = "1" ] && [ -d "${_link}" ]; then
             # -F will enforce that the directory is empty and replaced by the symlink
             ln -sfF /.bastille/${_link} ${_link} || EXIT_CODE=$?
             if [ "${EXIT_CODE:-0}" != "0" ]; then

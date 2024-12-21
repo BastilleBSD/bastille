@@ -205,7 +205,7 @@ if [ "${COMP_OPTION}" -gt "1" ]; then
     error_exit "Error: Only one compression format can be used during export."
 fi
 
-if [ -n "${TXZ_EXPORT}" -o -n "${TGZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
+if [ -n "${TXZ_EXPORT}" ] || [ -n "${TGZ_EXPORT}" ] && [ -n "${SAFE_EXPORT}" ]; then
     error_exit "Error: Simple archive modes with safe ZFS export can't be used together."
 fi
 
@@ -362,7 +362,7 @@ jail_export() {
     else
         if [ -z "${USER_EXPORT}" ]; then
             # Generate container checksum file
-            cd "${bastille_backupsdir}" || error_exit "Could not cd to "${bastille_backupsdir}""
+            cd "${bastille_backupsdir}" || error_exit "Could not cd to ${bastille_backupsdir}"
             sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
             info "Exported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
         fi

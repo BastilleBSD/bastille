@@ -148,7 +148,7 @@ start_convert() {
         HASPORTS=$(grep -w ${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jailsdir}/${TARGET}/fstab)
 
         if [ -n "${RELEASE}" ]; then
-            cd "${bastille_jailsdir}/${TARGET}/root" || error_exit "Could not cd to "${bastille_jailsdir}"/"${TARGET}"/root"
+            cd "${bastille_jailsdir}/${TARGET}/root" || error_exit "Could not cd to ${bastille_jailsdir}/${TARGET}/root"
 
             # Work with the symlinks
             convert_symlinks

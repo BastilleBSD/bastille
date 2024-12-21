@@ -63,7 +63,7 @@ while [ "$#" -gt 0 ]; do
             OPTION="-F"
             shift
             ;;
-        -*|--*)
+        -*)
             error_exit "Unknown option: \"${1}\""
             ;;
         *)
@@ -152,6 +152,7 @@ template_update() {
 
 templates_update() {
     # Update all templates
+	# shellcheck disable=SC2045
     _updated_templates=0
     if [ -d  ${bastille_templatesdir} ]; then
         for _template_path in $(ls -d ${bastille_templatesdir}/*/*); do

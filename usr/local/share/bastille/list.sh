@@ -46,7 +46,7 @@ if [ $# -eq 0 ]; then
    /usr/sbin/jls
 fi
 
-if [ "${1}" == "-j" ]; then
+if [ "${1}" = "-j" ]; then
     /usr/sbin/jls -N --libxo json
     exit 0
 fi
@@ -62,7 +62,7 @@ list_all(){
             if [ "${MAX_LENGTH_JAIL_NAME}" -lt 3 ]; then MAX_LENGTH_JAIL_NAME=3; fi
             MAX_LENGTH_JAIL_IP=$(find ""${bastille_jailsdir}/*/jail.conf"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 sed -n "s/^[ ]*ip[4,6].addr[ ]*=[ ]*\(.*\);$/\1 /p" | sed 's/\// /g' | awk '{ print length($1) }' | sort -nr | head -n 1)
             MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_IP:-10}
-            MAX_LENGTH_JAIL_VNET_IP=$(find ""${bastille_jailsdir}/*/jail.conf"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet0=" $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | sed -n "s/^ifconfig_vnet0=\"\(.*\)\"$/\1/p"| sed "s/\// /g" | awk '{ if ($1 ~ /^[inet|inet6]/) print length($2); else print 15 }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_VNET_IP="$(find ""${bastille_jailsdir}/*/jail.conf"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet0=" $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | sed -n "s/^ifconfig_vnet0=\"\(.*\)\"$/\1/p"| sed "s/\// /g" | awk '{ if ($1 ~ /^[inet|inet6]/) print length($2); else print 15 }' | sort -nr | head -n 1)"
             MAX_LENGTH_JAIL_VNET_IP=${MAX_LENGTH_JAIL_VNET_IP:-10}
             if [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_IP}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP}; fi
             if [ "${MAX_LENGTH_JAIL_IP}" -lt 10 ]; then MAX_LENGTH_JAIL_IP=10; fi
@@ -73,11 +73,11 @@ list_all(){
             MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
             if [ "${MAX_LENGTH_JAIL_PORTS}" -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
             if [ "${MAX_LENGTH_JAIL_PORTS}" -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
-            MAX_LENGTH_JAIL_RELEASE=$(find ""${bastille_jailsdir}/*/fstab"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h "/releases/.*/root/.bastille.*nullfs" | grep -hE "^USERLAND_VERSION=" $(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++') | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_JAIL_RELEASE="$(find ""${bastille_jailsdir}/*/fstab"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h "/releases/.*/root/.bastille.*nullfs" | grep -hE "^USERLAND_VERSION=" $(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++') | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)"
             MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_JAIL_RELEASE:-7}
-            MAX_LENGTH_THICK_JAIL_RELEASE=$(find ""${bastille_jailsdir}/*/root/bin/freebsd-version"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -hE "^USERLAND_VERSION=" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
+            MAX_LENGTH_THICK_JAIL_RELEASE="$(find ""${bastille_jailsdir}/*/root/bin/freebsd-version"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -hE "^USERLAND_VERSION=" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)"
             MAX_LENGTH_THICK_JAIL_RELEASE=${MAX_LENGTH_THICK_JAIL_RELEASE:-7}
-            MAX_LENGTH_LINUX_JAIL_RELEASE=$(find ""${bastille_jailsdir}/*/fstab"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h "/jails/.*/root/proc.*linprocfs" | grep -hE "^NAME=|^VERSION_ID=|^VERSION_CODENAME=" $(sed -n "s/^linprocfs *\(.*\)\/.*$/\1\/etc\/os-release/p") 2> /dev/null | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | sed "N;N;s/\n/;/g" | sed -n "s/^NAME=\(.*\);VERSION_ID=\(.*\);VERSION_CODENAME=\(.*\)$/\1 \2 (\3)/p" | awk '{ print length($0) }' | sort -nr | head -n 1) 
+            MAX_LENGTH_LINUX_JAIL_RELEASE="$(find ""${bastille_jailsdir}/*/fstab"" -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h "/jails/.*/root/proc.*linprocfs" | grep -hE "^NAME=|^VERSION_ID=|^VERSION_CODENAME=" $(sed -n "s/^linprocfs *\(.*\)\/.*$/\1\/etc\/os-release/p") 2> /dev/null | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | sed "N;N;s/\n/;/g" | sed -n "s/^NAME=\(.*\);VERSION_ID=\(.*\);VERSION_CODENAME=\(.*\)$/\1 \2 (\3)/p" | awk '{ print length($0) }' | sort -nr | head -n 1)" 
             MAX_LENGTH_LINUX_JAIL_RELEASE=${MAX_LENGTH_LINUX_JAIL_RELEASE:-7}
             if [ "${MAX_LENGTH_THICK_JAIL_RELEASE}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_THICK_JAIL_RELEASE}; fi
             if [ "${MAX_LENGTH_LINUX_JAIL_RELEASE}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_LINUX_JAIL_RELEASE}; fi
@@ -94,7 +94,7 @@ list_all(){
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                     JAIL_NAME=$(grep -h -m 1 -e "^.* {$" "${bastille_jailsdir}/${_JAIL}/jail.conf" 2> /dev/null | awk '{ print $1 }')
                     IS_FREEBSD_JAIL=0
-                    if [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/bin/freebsd-version" -o -f "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille/bin/freebsd-version" -o "$(grep -c "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_FREEBSD_JAIL=1; fi
+                    if [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/bin/freebsd-version" ] || [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille/bin/freebsd-version" ] || [ "$(grep -c "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_FREEBSD_JAIL=1; fi
                     IS_FREEBSD_JAIL=${IS_FREEBSD_JAIL:-0}
                     IS_LINUX_JAIL=0
                     if [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
@@ -163,8 +163,8 @@ list_release(){
     if [ -d "${bastille_releasesdir}" ]; then
         REL_LIST=$(ls "${bastille_releasesdir}" | sed "s/\n//g")
         for _REL in ${REL_LIST}; do
-            if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" -o -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
-                if [ "${1}" == "-p" -a -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
+            if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ] || [ -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
+                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
                     REL_PATCH_LEVEL=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${_REL}/bin/freebsd-version" 2> /dev/null)
                     REL_PATCH_LEVEL=${REL_PATCH_LEVEL:-${_REL}}
                     echo "${REL_PATCH_LEVEL}"
@@ -200,6 +200,7 @@ list_limit(){
 }
 
 list_import(){
+    # shellcheck disable=SC2010
     ls "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 

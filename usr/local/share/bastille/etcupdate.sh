@@ -1,9 +1,7 @@
-#!/bin
+#!/bin/sh
 # Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
-set -x
-
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -99,15 +97,7 @@ while [ "$#" -gt 0 ]; do
                 shift
             fi
             ;;
-        -m|--mode)
-            if [ -z "${2}" ] || [ -z "${3}" ]; then
-                usage
-            else
-                MODE="${2}"
-                shift 2
-            fi
-            ;;
-        -*|--*)
+        -*)
             error_exit "Unknown option: \"${1}\""
             ;;
         bootstrap)

@@ -60,7 +60,7 @@ running_jail() {
 
 validate_name() {
     local NAME_VERIFY=${NAME}
-    local NAME_SANITY=$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')
+    local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Container names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
@@ -123,7 +123,7 @@ validate_ips() {
 }
 
 validate_netif() {
-    local LIST_INTERFACES=$(ifconfig -l)
+    local LIST_INTERFACES="$(ifconfig -l)"
     if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         info "Valid: (${INTERFACE})."
     else
@@ -238,7 +238,7 @@ post_create_jail() {
 
     # Using relative paths here.
     # MAKE SURE WE'RE IN THE RIGHT PLACE.
-    cd "${bastille_jail_path}"
+    cd "${bastille_jail_path}" || error_exit "Could not cd to ${bastille_jail_path}"
     echo
 
     if [ ! -f "${bastille_jail_conf}" ]; then
@@ -271,6 +271,7 @@ post_create_jail() {
 }
 
 create_jail() {
+    # shellcheck disable=SC2034
     bastille_jail_base="${bastille_jailsdir}/${NAME}/root/.bastille"  ## dir
     bastille_jail_template="${bastille_jailsdir}/${NAME}/root/.template"  ## dir
     bastille_jail_path="${bastille_jailsdir}/${NAME}/root"  ## dir
@@ -394,9 +395,10 @@ create_jail() {
                         info "Creating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
+						# shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-
-                        zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
+                        
+						zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
                         "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         # Check and apply required settings.
@@ -593,6 +595,7 @@ esac
 bastille_root_check
 
 if echo "$3" | grep '@'; then
+    # shellcheck disable=SC2034
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
 fi
@@ -676,7 +679,7 @@ while [ $# -gt 0 ]; do
             VNET_JAIL_BRIDGE="1"
             shift
             ;;
-        -*|--*)
+        -*)
             error_notify "Unknown Option."
             usage
             ;;
