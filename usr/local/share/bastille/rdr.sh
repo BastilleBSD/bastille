@@ -77,7 +77,7 @@ check_jail_validity() {
 # function: check if IP is valid
 check_rdr_ip_validity() {
     local ip="$1"
-    local ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
+    local ip6="$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
     else
@@ -138,6 +138,7 @@ load_rdr_rule() {
     local host_port="${6}"
     local jail_port="${7}"
     # Create IPv4 rdr rule
+	# shellcheck disable=SC2193
     if [ "${inet}" = "ipv4" ] || [ "${inet}" = "dual" ]; then
         if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
             printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
@@ -149,6 +150,7 @@ load_rdr_rule() {
         fi
     fi
     # Create IPv6 rdr rule (if ip6.addr is enabled)
+	# shellcheck disable=SC2193
     if [ -n "$JAIL_IP6" ] && [ "${inet}" = "ipv6" ] || [ "${inet}" = "dual" ]; then
         if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
             printf '%s\nrdr pass on $%s inet6 proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
@@ -174,7 +176,8 @@ load_rdr_log_rule() {
     shift 7;
     log=$@
     # Create IPv4 rule with log
-    if [ "${inet} = "ipv4" ] || [ "${inet} = "dual" ]; then
+	# shellcheck disable=SC2193
+    if [ "${inet}" = "ipv4" ] || [ "${inet}" = "dual" ]; then
         if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
             printf '%s\nrdr pass %s on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
             | pfctl -a "rdr/${JAIL_NAME}" -f-; then
@@ -185,7 +188,8 @@ load_rdr_log_rule() {
         fi
     fi
     # Create IPv6 rdr rule with log (if ip6.addr is enabled)
-    if [ -n "$JAIL_IP6" ] && [ "${inet} = "ipv6" ] || [ "${inet} = "dual" ]; then 
+	# shellcheck disable=SC2193
+    if [ -n "${JAIL_IP6}" ] && [ "${inet}" = "ipv6" ] || [ "${inet}" = "dual" ]; then 
         if ! ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
             printf '%s\nrdr pass %s on $%s inet6 proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
             | pfctl -a "rdr/${JAIL_NAME}" -f-; then
@@ -344,11 +348,11 @@ while [ "$#" -gt 0 ]; do
                         host_port=$2
                         jail_port=$3
                         shift 3
-                        if [ $# -gt 3 ]; then
+                        if [ "$#" -gt 3 ]; then
                             for last in "$@"; do
                                 true
                             done
-                            if [ $2 == "(" ] && [ $last == ")" ] ; then
+                            if [ "${2}" = "(" ] && [ "${last}" == ")" ] ; then
                                 check_jail_validity
                                 persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                                 load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                

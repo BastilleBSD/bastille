@@ -63,7 +63,7 @@ while [ "$#" -gt 0 ]; do
             FORCE=1
             shift
             ;;
-        -*|--*)
+        -*)
             error_exit "Unknown option: \"${1}\""
             ;;
         *)
@@ -148,7 +148,7 @@ start_convert() {
         HASPORTS=$(grep -w ${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jailsdir}/${TARGET}/fstab)
 
         if [ -n "${RELEASE}" ]; then
-            cd "${bastille_jailsdir}/${TARGET}/root"
+            cd "${bastille_jailsdir}/${TARGET}/root" || error_exit "Could not cd to "${bastille_jailsdir}"/"${TARGET}"/root"
 
             # Work with the symlinks
             convert_symlinks
@@ -183,7 +183,7 @@ fi
 # Be interactive here since this cannot be easily undone
 while :; do
     error_notify "Warning: container conversion from thin to thick can't be undone!"
-    read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
+    read "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
     case ${yn} in
     [Yy]) start_convert;;
     [Nn]) exit 0;;

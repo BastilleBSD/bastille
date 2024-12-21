@@ -54,7 +54,7 @@ while [ "$#" -gt 0 ]; do
             OPTION="-F"
             shift
             ;;
-        -*|--*)
+        -*)
             error_exit "Unknown option: \"${1}\""
             ;;
         *)
