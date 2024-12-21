@@ -28,6 +28,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+. /usr/local/etc/bastille/bastille.conf
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -72,63 +74,84 @@ warn() {
 
 check_target_exists() {
     local _TARGET="${1}"
-    if [ -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
-        return 0
+    if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+        error_notify "Jail not found \"${_TARGET}\""
+        return 1
     else
-        error_exit "Jail not found \"${_TARGET}\""
+        return 0
     fi
 }
 
 check_target_is_running() {
     local _TARGET="${1}"
-  if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
-      error_exit "[${_TARGET}]: Not started. See 'bastille start ${_TARGET}'."
-  fi
+    if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        error_notify "[${_TARGET}]: Not started. See 'bastille start ${_TARGET}'."
+        return 1
+    else
+        return 0
+    fi
 }
 
 check_target_is_stopped() {
     local _TARGET="${1}"
-    if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
+    if [ "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        error_notify "${_TARGET} is running. See 'bastille stop ${_TARGET}'."
+        return 1
+    else
+        return 0
     fi
 }
 
 set_target() {
-    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         target_all_jails
     else
-        check_target_exists "${1}"
-        JAILS="${1}"
+        check_target_exists "${_TARGET}" || exit
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
         export JAILS
+        export TARGET
     fi
 }
 
 set_target_single() {
-    if [ "${1}" = ALL ] || [ "${1}" = all ]; then
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
     else
-        check_target_exists "${1}"
-        TARGET="${1}"
+        check_target_exists "${_TARGET}" || exit
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
         export TARGET
     fi
 }
 
 target_all_jails() {
-    local _JAILS=$(/usr/sbin/jls name)
+    local _JAILS="$(bastille list jails)"
     JAILS=""
     for _jail in ${_JAILS}; do
-        _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
-        if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
+        if [ -d "${bastille_jailsdir}/${_jail}" ]; then
             JAILS="${JAILS} ${_jail}"
         fi
-        export JAILS
     done
+    export JAILS
+}
+
+generate_static_mac() {
+    local jail_name="${1}"
+    local external_interface="${2}"
+    local macaddr_prefix="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | cut -d':' -f1-3)"
+    local macaddr_suffix="$(echo -n ${jail_name} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    macaddr="${macaddr_prefix}:${macaddr_suffix}"
 }
 
 generate_vnet_jail_netblock() {
-    local jail_name="$1"
-    local use_unique_bridge="$2"
-    local external_interface="$3"
+    local jail_name="${1}"
+    local use_unique_bridge="${2}"
+    local external_interface="${3}"
+    generate_static_mac "${jail_name}" "${external_interface}"
     ## determine number of containers + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
@@ -153,11 +176,13 @@ generate_vnet_jail_netblock() {
         ## generate bridge config
         cat <<-EOF
   vnet;
-  vnet.interface = "e${uniq_epair_bridge}b_${jail_name}";
+  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
   exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
   exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
   exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
   exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
+  exec.prestart += "ifconfig e${uniq_epair_bridge}a_${jail_name} ether ${macaddr}a";
+  exec.prestart += "ifconfig e${uniq_epair_bridge}b_${jail_name} ether ${macaddr}b";
   exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
   exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
 EOF
@@ -167,12 +192,13 @@ EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} ether ${macaddr}a";
+  exec.prestart += "ifconfig e0b_${uniq_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
     fi
 }
-
 checkyesno() {
     ## copied from /etc/rc.subr -- cedwards (20231125)
     ## issue #368 (lowercase values should be parsed)
