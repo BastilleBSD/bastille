@@ -1,8 +1,9 @@
-#!/bin/sh
-#
+#!/bin
 # Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
+set -x
+
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -32,7 +33,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille etcupdate [option(s)] [update TARGET|bootstrap] RELEASE"
+    error_exit "Usage: bastille etcupdate [option(s)] [TARGET|bootstrap RELEASE]"
 
     cat << EOF
     Options:
@@ -44,19 +45,21 @@ EOF
 }
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         usage
         ;;
-    esac
+esac
 
-bastille_root_check
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+    usage
+fi
 
 bootstrap_etc_release() {
     local _release="${1}"
     local _release_version=$( echo "${1}" | awk -F "-" '{print $1}' )
     if [ ! -d /usr/local/bastille/source/"${_release}" ]; then
-        if ! git clone --branch releng/"${_release_version}" --depth 1 https://git.FreeBSD.org/src.git /usr/local/bastille/source/"${_release}" 2>/dev/null; then
+        if ! git clone --branch releng/"${_release_version}" --depth 1 https://git.FreeBSD.org/src.git /usr/local/bastille/source/"${_release}"; then
             error_exit "Failed to bootstrap etcupdate release \"${_release}\""
         fi
     fi
@@ -65,7 +68,7 @@ bootstrap_etc_release() {
 bootstrap_etc_tarball() {
     local _release="${1}"
     if [ ! -f /usr/local/bastille/source/"${_release}".tbz2 ]; then
-        if ! etcupdate build -d /tmp/etcupdate -s /usr/local/bastille/releases/"${_release}" "${_release}".tbz2; then
+        if ! etcupdate build -d /tmp/etcupdate -s /usr/local/bastille/source/"${_release}" "${_release}".tbz2; then
             error_exit "Failed to build etcupdate tarball \"${_release}.tbz2\""
         fi
     else
@@ -85,25 +88,50 @@ update_jail_etc() {
     fi
 }
 
-DRY_RUN=0
-
-while [ $# -gt 0 ]; do
+# Handle options.
+while [ "$#" -gt 0 ]; do
     case "${1}" in
         -d|--dry-run)
-            DRY_RUN=1
-            shift 1
+            if [ -z "${2}" ] || [ -z "${3}" ]; then
+                usage
+            else
+                DRY_RUN=1
+                shift
+            fi
+            ;;
+        -m|--mode)
+            if [ -z "${2}" ] || [ -z "${3}" ]; then
+                usage
+            else
+                MODE="${2}"
+                shift 2
+            fi
+            ;;
+        -*|--*)
+            error_exit "Unknown option: \"${1}\""
             ;;
         bootstrap)
-            bootstrap_etc_release "${2}"
-            bootstrap_etc_tarball "${2}"
-            shift $#
-            ;;
-        update)
-            update_jail_etc "${2}" "${3}"
-            shift $#
+            if [ -z "${2}" ]; then
+                usage
+            else
+                RELEASE="${2}"
+                bootstrap_etc_release "${RELEASE}"
+                bootstrap_etc_tarball "${RELEASE}"
+                shift $#
+            fi
             ;;
         *)
-            usage
+            if [ -z "${2}" ]; then
+                usage
+            else
+                TARGET="${1}"
+                RELEASE="${2}"
+            fi
+            if [ -z "${DRY_RUN}" ]; then
+                DRY_RUN=0
+            fi
+            update_jail_etc "${TARGET}" "${RELEASE}"
+            shift "$#"
             ;;
     esac
 done
