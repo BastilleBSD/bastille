@@ -32,27 +32,55 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille convert TARGET"
+    error_exit "Usage: bastille convert [option(s)] TARGET"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Stop the jail if it is running.
+
+EOF
+    exit 1
 }
 
+
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         usage
         ;;
 esac
 
-if [ $# -ne 1 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     usage
 fi
 
-bastille_root_check
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*|--*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
 
+bastille_root_check
 set_target_single "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_stopped "${TARGET}"
+check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille stop "${TARGET}"
+else
+    exit
+fi
 
 convert_symlinks() {
     # Work with the symlinks, revert on first cp error
