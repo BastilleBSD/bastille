@@ -32,28 +32,28 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille service TARGET service_name action"
+    error_exit "Usage: bastille service TARGET SERVICE_NAME ACTION"
 }
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         usage
         ;;
-    esac
+esac
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
 
 TARGET="${1}"
+shift
 
 bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    check_target_exists "${_jail}"
-    check_target_is_running "${_jail}"
+    check_target_is_running "${_jail}" || continue
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/sbin/service "$@"
     echo
