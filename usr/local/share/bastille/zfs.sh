@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille zfs TARGET [set|get|snap] [key=value|date]'"
+    error_exit "Usage: bastille zfs TARGET [set|get|snap] [key=value|date]"
 }
 
 zfs_snapshot() {
@@ -77,9 +77,9 @@ done
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 if [ $# -lt 2 ]; then
@@ -102,23 +102,23 @@ if [ -z "${bastille_zfs_zpool}" ]; then
 fi
 
 case "${2}" in
-set)
-    ATTRIBUTE=${3}
-    zfs_set_value
-    ;;
-get)
-    ATTRIBUTE=${3}
-    zfs_get_value
-    ;;
-snap|snapshot)
-    TAG=${3}
-    zfs_snapshot
-    ;;
-destroy_snap|destroy_snapshot)
-    TAG=${3}
-    zfs_destroy_snapshot
-    ;;
-df|usage)
-    zfs_disk_usage
-    ;;
+    set)
+        ATTRIBUTE=${3}
+        zfs_set_value
+        ;;
+    get)
+        ATTRIBUTE=${3}
+        zfs_get_value
+        ;;
+    snap|snapshot)
+        TAG=${3}
+        zfs_snapshot
+        ;;
+    destroy_snap|destroy_snapshot)
+        TAG=${3}
+        zfs_destroy_snapshot
+        ;;
+    df|usage)
+        zfs_disk_usage
+        ;;
 esac
