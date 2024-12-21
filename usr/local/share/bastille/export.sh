@@ -66,23 +66,6 @@ if [ $# -gt 5 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-bastille_root_check
-
-TARGET="${1}"
-GZIP_EXPORT=
-XZ_EXPORT=
-SAFE_EXPORT=
-USER_EXPORT=
-RAW_EXPORT=
-DIR_EXPORT=
-TXZ_EXPORT=
-TGZ_EXPORT=
-OPT_ZSEND="-R"
-COMP_OPTION="0"
-
-set_target_single "${TARGET}"
-check_target_exists "${TARGET}"
-
 zfs_enable_check() {
     # Temporarily disable ZFS so we can create a standard backup archive
     if checkyesno bastille_zfs_enable; then
@@ -200,6 +183,21 @@ else
         esac
     done
 fi
+
+TARGET="${1}"
+GZIP_EXPORT=
+XZ_EXPORT=
+SAFE_EXPORT=
+USER_EXPORT=
+RAW_EXPORT=
+DIR_EXPORT=
+TXZ_EXPORT=
+TGZ_EXPORT=
+OPT_ZSEND="-R"
+COMP_OPTION="0"
+
+bastille_root_check
+set_target_single "${TARGET}"
 
 # Validate for combined options
 if [ "${COMP_OPTION}" -gt "1" ]; then
