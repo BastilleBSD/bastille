@@ -8,4 +8,4 @@ SYSRC sendmail_outbound_enable="NO"
 SYSRC sendmail_msp_queue_enable="NO"
 SYSRC cron_flags="-J 60"
 
-CP "${HOST_RESOLV_CONF}" etc/resolv.conf
+CP "${HOST_RESOLV_CONF}" /etc/resolv.conf
