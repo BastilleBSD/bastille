@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille clone TARGET NEW_NAME IPADDRESS"
+    error_exit "Usage: bastille clone TARGET NEW_NAME IP_ADDRESS"
 }
 
 # Handle special-case commands first
@@ -52,6 +52,11 @@ IP="${3}"
 
 bastille_root_check
 set_target_single "${TARGET}"
+
+## don't allow for dots(.) in container names
+if echo "${NEWNAME}" | grep -q "[.]"; then
+    error_exit "Container names may not contain a dot(.)!"
+fi
 
 validate_ip() {
     IPX_ADDR="ip4.addr"
@@ -118,7 +123,7 @@ update_jailconf_vnet() {
 		    # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
                     # we also do not use the main generate_static_mac function here
                     local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
-    		    local macaddr_suffix="$(echo -n ${jail_name} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    		    local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
                     local macaddr="${macaddr_prefix}:${macaddr_suffix}"
 		    # Update the exec.* with uniq_epair when cloning jails.
                     # for VNET jails
@@ -126,6 +131,7 @@ update_jailconf_vnet() {
                     sed -i '' "s|e\([0-9]\{1,\}\)a_${NEWNAME}|e${uniq_epair_bridge}a_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|e\([0-9]\{1,\}\)b_${NEWNAME}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|epair\([0-9]\{1,\}\)|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille\([0-9]\{1,\}\).*description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
                     sed -i '' "s|ether.*:.*:.*:.*:.*:.*a|ether ${macaddr}a|" "${JAIL_CONFIG}"
                     sed -i '' "s|ether.*:.*:.*:.*:.*:.*b|ether ${macaddr}b|" "${JAIL_CONFIG}"
                     break
@@ -209,9 +215,12 @@ clone_jail() {
     fi
 }
 
-## don't allow for dots(.) in container names
-if echo "${NEWNAME}" | grep -q "[.]"; then
-    error_exit "Container names may not contain a dot(.)!"
+# Check if IP address is valid.
+if [ -n "${IP}" ]; then
+    validate_ip
+else
+    usage
 fi
 
 clone_jail
+
