@@ -52,11 +52,7 @@ bastille_root_check
 set_target_single "${TARGET}"
 check_target_is_running "${TARGET}" || exit
 
-bastille_jail_path="$(/usr/sbin/jls -j "${TARGET}" path)"
-if [ ! -x "${bastille_jail_path}/usr/local/bin/top" ]; then
-    error_notify "top not found on ${TARGET}."
-elif [ -x "${bastille_jail_path}/usr/local/bin/top" ]; then
-    info "[${TARGET}]:"
-    jexec -l "${TARGET}" /usr/local/bin/htop
-fi
+
+info "[${TARGET}]:"
+jexec -l "${TARGET}" /usr/bin/top
 echo -e "${COLOR_RESET}"
