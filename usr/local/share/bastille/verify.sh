@@ -157,22 +157,22 @@ fi
 bastille_root_check
 
 case "${1}" in
-*-RELEASE|*-release|*-RC[1-9]|*-rc[1-9])
-    RELEASE=$1
-    verify_release
-    ;;
-*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-    RELEASE=$1
-    verify_release
-    ;;
-http?*)
-    bastille_usage
-    ;;
-*/*)
-    BASTILLE_TEMPLATE=$1
-    verify_template
-    ;;
-*)
-    bastille_usage
-    ;;
+    *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9])
+        RELEASE="${1}"
+        verify_release
+        ;;
+    *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+        RELEASE="${1}"
+        verify_release
+        ;;
+    http?*)
+        bastille_usage
+        ;;
+    */*)
+        BASTILLE_TEMPLATE="${1}"
+        verify_template
+        ;;
+    *)
+        bastille_usage
+        ;;
 esac
