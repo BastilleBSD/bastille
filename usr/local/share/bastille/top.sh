@@ -50,7 +50,8 @@ TARGET="${1}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_running "${TARGET}"
+check_target_is_running "${TARGET}" || exit
+
 
 info "[${TARGET}]:"
 jexec -l "${TARGET}" /usr/bin/top
