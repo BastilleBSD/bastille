@@ -45,7 +45,7 @@ EOF
 
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         usage
         ;;

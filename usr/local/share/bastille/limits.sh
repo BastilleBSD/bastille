@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # Ressource limits added by Sven R github.com/hackacad
 #
@@ -39,7 +39,7 @@ usage() {
 }
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         usage
         ;;
