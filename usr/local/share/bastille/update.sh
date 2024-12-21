@@ -32,8 +32,17 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille update [option(s)] [release|container|template]"
+    error_exit "Usage: bastille update [option(s)] [RELEASE|JAIL|TEMPLATE]"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Force update a release.
+
+EOF
+    exit 1
 }
+
 
 # Handle special-case commands first.
 case "$1" in
@@ -46,18 +55,26 @@ if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-TARGET="${1}"
+# Handle options.
 OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            OPTION="-F"
+            shift
+            ;;
+        -*|--*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+TARGET="${1}"
 
 bastille_root_check
-
-# Handle options
-case "${1}" in
-    -f|--force)
-        OPTION="-F"
-        TARGET="${2}"
-        ;;
-esac
 
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
