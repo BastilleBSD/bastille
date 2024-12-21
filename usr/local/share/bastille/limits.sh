@@ -33,15 +33,10 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille limits TARGET option value"
+    error_notify "Usage: bastille limits TARGET OPTION VALUE"
     echo -e "Example: bastille limits JAILNAME memoryuse 1G"
     exit 1
 }
-
-RACCT_ENABLE=$(sysctl -n kern.racct.enable)
-if [ "${RACCT_ENABLE}" != '1' ]; then
-    error_exit "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
-fi
 
 # Handle special-case commands first.
 case "$1" in
@@ -57,12 +52,14 @@ fi
 TARGET="${1}"
 OPTION="${2}"
 VALUE="${3}"
-
+RACCT_ENABLE=$(sysctl -n kern.racct.enable)
+if [ "${RACCT_ENABLE}" != '1' ]; then
+    error_exit "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
+fi
 
 bastille_root_check
 set_target "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
+check_target_is_running "${TARGET}" || exit
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
