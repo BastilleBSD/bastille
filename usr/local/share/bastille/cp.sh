@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille cp [OPTION] TARGET HOST_PATH CONTAINER_PATH"
+    error_exit "Usage: bastille cp [option(s)] TARGET HOST_PATH CONTAINER_PATH"
 }
 
 # Handle special-case commands first.
@@ -42,29 +42,38 @@ case "${1}" in
         ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 3 ] || [ $# -gt 4 ]; then
     usage
 fi
+
+# Handle options.
+OPTION="-av"
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -q|--quiet)
+            OPTION="-a"
+            shift
+            ;;
+        -*|--*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
 CPSOURCE="${2}"
 CPDEST="${3}"
-OPTION="-av"
 
 bastille_root_check
-set_target_single "${TARGET}"
-check_target_exists "${TARGET}"
-
-case "$@" in
-    -q|--quiet)
-        OPTION="-a"
-        ;;
-esac
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
+    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}${CPDEST}"
     RETURN="$?"
     if [ "${TARGET}" = "ALL" ]; then
         # Display the return status for reference
