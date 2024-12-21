@@ -124,7 +124,8 @@ if [ -z "${HOOKS}" ]; then
 fi
 
 bastille_root_check
-set_target_single "${TARGET}"
+set_target "${TARGET}"
+check_target_is_running "${TARGET}"
 
 # Special case conversion of hook-style template files into a Bastillefile. -- cwells
 if [ "${TARGET}" = '--convert' ]; then
@@ -226,7 +227,7 @@ fi
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    info "Applying template: ${TEMPLATE}..."
+    echo "Applying template: ${TEMPLATE}..."
 
     ## jail-specific variables.
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
