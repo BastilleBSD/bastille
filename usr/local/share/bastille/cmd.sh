@@ -48,17 +48,16 @@ fi
 
 bastille_root_check
 
+TARGET="${1}"
+shift 1
 COUNT=0
 RETURN=0
 
-TARGET="${1}"
-shift 1
-
 set_target "${TARGET}"
-check_target_exists "${TARGET}"
-check_target_is_running "${TARGET}"
 
 for _jail in ${JAILS}; do
+    # If target is stopped or not found, continue...
+    check_target_is_running "${_jail}" || continue
     COUNT=$(($COUNT+1))
     info "[${_jail}]:"
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
@@ -67,17 +66,15 @@ for _jail in ${JAILS}; do
     else
         jexec -l -U root "${_jail}" "$@"
     fi
-
     ERROR_CODE=$?
-    info "[${_jail}]: ${ERROR_CODE}"
-    
+    if [ "${ERROR_CODE}" -ne 0 ]; then
+        warn "[${_jail}]: ${ERROR_CODE}"
+    fi
     if [ "$COUNT" -eq 1 ]; then
         RETURN=${ERROR_CODE}
     else 
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
-    
-    echo
 done
 
 # Check when a command is executed in all running jails. (bastille cmd ALL ...)
