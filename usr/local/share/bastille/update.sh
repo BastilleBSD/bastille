@@ -32,39 +32,49 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille update [release|container|template] | [force]"
+    error_exit "Usage: bastille update [option(s)] [RELEASE|JAIL|TEMPLATE]"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Force update a release.
+
+EOF
+    exit 1
 }
 
+
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-bastille_root_check
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            OPTION="-F"
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
-OPTION="${2}"
 
-# Handle options
-case "${OPTION}" in
-    -f|--force)
-        OPTION="-F"
-        ;;
-    *)
-        OPTION=
-        ;;
-esac
-
-# Check for unsupported actions
-if [ "${TARGET}" = "ALL" ]; then
-    error_exit "Batch upgrade is unsupported."
-fi
+bastille_root_check
 
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
@@ -143,10 +153,10 @@ template_update() {
 templates_update() {
     # Update all templates
     _updated_templates=0
-    if [ -d "${bastille_templatesdir}" ]; then
-        # shellcheck disable=SC2045
-        for _template_path in $(ls -d "${bastille_templatesdir}"/*/*); do
-            if [ -d "$_template_path"/.git ]; then
+    if [ -d  ${bastille_templatesdir} ]; then
+	    # shellcheck disable=SC2045
+        for _template_path in $(ls -d ${bastille_templatesdir}/*/*); do
+            if [ -d $_template_path/.git ]; then
                 BASTILLE_TEMPLATE=$(echo "$_template_path" | awk -F / '{ print $(NF-1) "/" $NF }')
                 template_update
 

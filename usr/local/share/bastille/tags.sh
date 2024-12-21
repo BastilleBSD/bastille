@@ -44,20 +44,22 @@ usage() {
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+ACTION="${2}"
+TAGS="${3}"
 
-ACTION="${1}"
-TAGS="${2}"
+bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"

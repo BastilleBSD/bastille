@@ -32,43 +32,48 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille cp [OPTION] TARGET HOST_PATH CONTAINER_PATH"
+    error_exit "Usage: bastille cp [option(s)] TARGET HOST_PATH CONTAINER_PATH"
 }
 
-CPSOURCE="${1}"
-CPDEST="${2}"
-
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
--q|--quiet)
-    OPTION="${1}"
-    CPSOURCE="${2}"
-    CPDEST="${3}"
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 3 ] || [ $# -gt 4 ]; then
     usage
 fi
 
-bastille_root_check
+# Handle options.
+OPTION="-av"
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -q|--quiet)
+            OPTION="-a"
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-case "${OPTION}" in
-    -q|--quiet)
-        OPTION="-a"
-        ;;
-    *)
-        OPTION="-av"
-        ;;
-esac
+TARGET="${1}"
+CPSOURCE="${2}"
+CPDEST="${3}"
+
+bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}/${CPDEST}"
+    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}${CPDEST}"
     RETURN="$?"
     if [ "${TARGET}" = "ALL" ]; then
         # Display the return status for reference

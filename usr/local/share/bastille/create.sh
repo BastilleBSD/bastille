@@ -165,15 +165,10 @@ EOF
 }
 
 generate_jail_conf() {
-    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
-        devfs_ruleset_value=0
-    else
-        devfs_ruleset_value=4
-    fi
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
+  devfs_ruleset = 4;
   enforce_statfs = 2;
-  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
@@ -194,17 +189,12 @@ EOF
 }
 
 generate_linux_jail_conf() {
-    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
-        devfs_ruleset_value=0
-    else
-        devfs_ruleset_value=4
-    fi
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   host.hostname = ${NAME};
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
-  devfs_ruleset = ${devfs_ruleset_value};
+  devfs_ruleset = 4;
   enforce_statfs = 1;
 
   exec.start = '/bin/true';
@@ -222,16 +212,11 @@ EOF
 }
 
 generate_vnet_jail_conf() {
-    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
-        devfs_ruleset_value=0
-    else
-        devfs_ruleset_value=13
-    fi
     NETBLOCK=$(generate_vnet_jail_netblock "$NAME" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
+  devfs_ruleset = 13;
   enforce_statfs = 2;
-  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
@@ -253,7 +238,7 @@ post_create_jail() {
 
     # Using relative paths here.
     # MAKE SURE WE'RE IN THE RIGHT PLACE.
-    cd "${bastille_jail_path}" || error_exit "Failed to change directory."
+    cd "${bastille_jail_path}" || error_exit "Could not cd to ${bastille_jail_path}"
     echo
 
     if [ ! -f "${bastille_jail_conf}" ]; then
@@ -292,9 +277,9 @@ create_jail() {
     bastille_jail_fstab="${bastille_jailsdir}/${NAME}/fstab"  ## file
     bastille_jail_conf="${bastille_jailsdir}/${NAME}/jail.conf"  ## file
     bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
-    # shellcheck disable=SC2034
+	# shellcheck disable=SC2034
     bastille_jail_rc_conf="${bastille_jailsdir}/${NAME}/root/etc/rc.conf" ## file
-    # shellcheck disable=SC2034
+	# shellcheck disable=SC2034
     bastille_jail_resolv_conf="${bastille_jailsdir}/${NAME}/root/etc/resolv.conf" ## file
 
     if [ ! -d "${bastille_jailsdir}/${NAME}" ]; then
@@ -411,11 +396,11 @@ create_jail() {
                         info "Creating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-
-                        # shellcheck disable=SC2140
-                        zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
+                        
+						# shellcheck disable=SC2140
+						zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
                         "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         # Check and apply required settings.
@@ -429,20 +414,20 @@ create_jail() {
 
                         ## take a temp snapshot of the base release
                         SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
                         ## replicate the release base to the new thickjail and set the default mountpoint
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
                         zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         ## cleanup temp snapshots initially
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
                     fi
 
@@ -618,7 +603,7 @@ bastille_root_check
 if echo "$3" | grep '@'; then
     # shellcheck disable=SC2034
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
-    # shellcheck disable=SC2034
+	# shellcheck disable=SC2034
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
 fi
 
@@ -701,7 +686,7 @@ while [ $# -gt 0 ]; do
             VNET_JAIL_BRIDGE="1"
             shift
             ;;
-        --*|-*)
+        -*)
             error_notify "Unknown Option."
             usage
             ;;

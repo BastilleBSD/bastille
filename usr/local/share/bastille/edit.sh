@@ -37,28 +37,50 @@ usage() {
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -gt 1 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     usage
-elif [ $# -eq 1 ]; then
-    TARGET_FILENAME="${1}"
+fi
+
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force|force)
+            FORCE="1"
+            shift
+            ;;
+        -*)
+            error_notify "Unknown Option: \"${1}\""
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+TARGET="${1}"
+if [ "$#" -eq 2 ]; then
+    TARGET_FILENAME="${2}"
+else 
+    TARGET_FILENAME="jail.conf"
 fi
 
 bastille_root_check
-
-if [ -z "${EDITOR}" ]; then
-    # shellcheck disable=SC2209
-    EDITOR=vi
+set_target_single "${TARGET}"
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else
+    exit
 fi
 
-for _jail in ${JAILS}; do
-    if [ -n "${TARGET_FILENAME}" ]; then
-        "${EDITOR}" "${bastille_jailsdir}/${_jail}/${TARGET_FILENAME}"
-    else
-        "${EDITOR}" "${bastille_jailsdir}/${_jail}/jail.conf"
-    fi
-done
+if [ -z "${EDITOR}" ]; then
+    EDITOR=nano
+fi
+
+"${EDITOR}" "${bastille_jailsdir}/${TARGET}/${TARGET_FILENAME}"

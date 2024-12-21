@@ -32,31 +32,47 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [force]"
+    error_exit "Usage: bastille upgrade [option(s)] [RELEASE NEW_RELEASE (install)] [TARGET NEW_RELEASE (install)]"
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 if [ $# -gt 3 ] || [ $# -lt 2 ]; then
     usage
 fi
 
-bastille_root_check
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            OPTION="-F"
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-TARGET="$1"
-NEWRELEASE="$2"
-OPTION="$3"
+TARGET="${1}"
+NEWRELEASE="${2}"
+
+bastille_root_check
 
 # Check for unsupported actions
 if [ "${TARGET}" = "ALL" ]; then
     error_exit "Batch upgrade is unsupported."
 fi
-
+    
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
     exit 1
@@ -65,16 +81,6 @@ fi
 if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
-
-# Handle options
-case "${OPTION}" in
-    -f|--force)
-        OPTION="-F"
-        ;;
-    *)
-        OPTION=
-        ;;
-esac
 
 jail_check() {
     # Check if the jail is thick and is running

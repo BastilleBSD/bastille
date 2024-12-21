@@ -32,28 +32,29 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille umount TARGET container_path"
+    error_exit "Usage: bastille umount TARGET JAIL_PATH"
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+MOUNT_PATH="${2}"
 
-MOUNT_PATH=$1
+bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-
-    _jailpath="${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}"
+    _jailpath="${bastille_jailsdir}${_jail}/root${MOUNT_PATH}"
 
     if [ ! -d "${_jailpath}" ]; then
         error_exit "The specified mount point does not exist inside the jail."
