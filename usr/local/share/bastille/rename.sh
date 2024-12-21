@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rename TARGET NEW_NAME"
+    error_exit "Usage: bastille rename [option(s)] TARGET NEW_NAME"
 
     cat << EOF
     Options:
@@ -96,6 +96,7 @@ validate_name() {
 update_jailconf() {
     # Update jail.conf
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    BASTILLE_JAIL_RC_CONF="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
             sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
@@ -103,9 +104,11 @@ update_jailconf() {
             sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
             sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${JAIL_CONFIG}"
-            # Rename vnet interface
-            sed -i '' "/vnet.interface/s|_${TARGET}\";|_${NEWNAME}\";|" "${JAIL_CONFIG}"
+            # update vnet config
+	        sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|" "${JAIL_CONFIG}"
+	        sed -i '' "/vnet.interface/s|_${TARGET};|_${NEWNAME};|" "${JAIL_CONFIG}"
             sed -i '' "/ifconfig/s|_${TARGET}|_${NEWNAME}|" "${JAIL_CONFIG}"
+            sed -i '' "/ifconfig/s|_${TARGET}_name=|_${NEWNAME}_name=|" "${BASTILLE_JAIL_RC_CONF}"			
         fi
     fi
 }
@@ -113,25 +116,9 @@ update_jailconf() {
 update_fstab() {
     # Update fstab to use the new name
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
-    if [ -f "${FSTAB_CONFIG}" ]; then
-        # Skip if fstab is empty, e.g newly created thick or clone jails
-        if [ -s "${FSTAB_CONFIG}" ]; then
-            FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-9])|([0-9]{1,2}-stable-build-[0-9]{1,3})|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)|(current-BUILD-LATEST)' "${FSTAB_CONFIG}")
-            FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET}/root/.bastille" "${FSTAB_CONFIG}")
-            FSTAB_NEWCONF="${bastille_releasesdir}/${FSTAB_RELEASE} ${bastille_jailsdir}/${NEWNAME}/root/.bastille nullfs ro 0 0"
-            if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
-                # If both variables are set, update as needed
-                if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${NEWNAME}/root/.bastille" "${FSTAB_CONFIG}"; then
-                    sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
-                fi
-            fi
-
-            # Update linuxjail fstab name entries
-            # Search for either linprocfs/linsysfs, if true assume is a linux jail
-            if grep -qwE "linprocfs|linsysfs" "${FSTAB_CONFIG}"; then
-                sed -i '' "s|.${bastille_jailsdir}/${TARGET}/|${bastille_jailsdir}/${NEWNAME}/|" "${FSTAB_CONFIG}"
-            fi
-        fi
+    if [ -f "${FSTAB_CONFIG}" ] && [ -s "${FSTAB_CONFIG}" ]; then
+        # Update fstab paths with new jail path
+        sed -i '' "s|\ ${bastille_jailsdir}/${TARGET}/root/|\ ${bastille_jailsdir}/${NEWNAME}/root/|g" "${FSTAB_CONFIG}"
     fi
 }
 
