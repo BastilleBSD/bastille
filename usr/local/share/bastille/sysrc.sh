@@ -29,30 +29,31 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     error_exit "Usage: bastille sysrc TARGET args"
 }
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         usage
         ;;
-    esac
+esac
 
 if [ $# -lt 2 ]; then
     usage
 fi
 
 TARGET="${1}"
+shift
 
 bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    check_target_exists "${_jail}"
-    check_target_is_running "${_jail}"
+    check_target_is_running "${_jail}" || continue
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
     echo -e "${COLOR_RESET}"
