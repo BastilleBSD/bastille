@@ -32,14 +32,14 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille mount TARGET host_path container_path [filesystem_type options dump pass_number]"
+    error_exit "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 if [ $# -lt 2 ]; then
@@ -62,7 +62,7 @@ _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
 ## if any variables are empty, bail out
 if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "${_perms}" ] || [ -z "${_checks}" ]; then
     error_notify "FSTAB format not recognized."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -77,7 +77,7 @@ if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
     warn "Detected advanced mount type ${_hostpath}"
 elif [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     error_notify "Detected invalid host path or incorrect mount type in FSTAB."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -85,7 +85,7 @@ fi
 ## if mount permissions are not "ro" or "rw"
 if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
     error_notify "Detected invalid mount permissions in FSTAB."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -93,7 +93,7 @@ fi
 ## if check & pass are not "0 0 - 1 1"; bail out
 if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "0 1" ] && [ "${_checks}" != "1 1" ]; then
     error_notify "Detected invalid fstab options in FSTAB."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
+    warn "Format: /host/path jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -102,7 +102,7 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
     ## aggregate variables into FSTAB entry
-    _fullpath="${bastille_jailsdir}/${_jail}/root${_jailpath}"
+    _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath} 2>/dev/null | sed 's#//#/#' )"
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells
