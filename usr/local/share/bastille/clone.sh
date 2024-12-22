@@ -138,7 +138,7 @@ update_fstab() {
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
     if [ -f "${FSTAB_CONFIG}" ]; then
         # Update fstab paths with new jail path
-        sed -i '' "s| ${bastille_jailsdir}/${TARGET}/root/| ${bastille_jailsdir}/${NEWNAME}/root/|g" "${FSTAB_CONFIG}"
+        sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|g" "${FSTAB_CONFIG}"
     fi
 }
 
