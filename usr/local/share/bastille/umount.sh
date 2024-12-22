@@ -54,7 +54,7 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root${MOUNT_PATH}" 2>/dev/null | sed '#//#/#' )"
+    _jailpath="$( echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" 2>/dev/null | sed '#//#/#' )"
 
     if [ ! -e "${_jailpath}" ]; then
         error_exit "The specified mount point does not exist inside the jail."
