@@ -108,7 +108,7 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
     ## aggregate variables into FSTAB entry
-    _fullpath="${bastille_jailsdir}/${_jail}/root${_jailpath}"
+    _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root${_jailpath} 2>/dev/null | sed 's#//#/#' )"
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells
