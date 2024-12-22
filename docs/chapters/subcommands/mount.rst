@@ -13,7 +13,7 @@ To mount storage within the container use `bastille mount`.
   [azkaban]:
   Added: /media/bar /usr/local/bastille/jails/azkaban/root/media/bar
 
-Notice the format can be /media/foo or simply media/bar. The leading slash is optional.
+Notice the JAIL_PATH format can be /media/foo or simply media/bar. The leading slash / is optional. The HOST_PATH howerver, must be the full path including the leading slash /.
 
 Syntax follows standard `/etc/fstab` format:
 
