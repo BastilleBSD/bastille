@@ -112,10 +112,11 @@ for _jail in ${JAILS}; do
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells
-    if [ ! -d "${_fullpath}" ]; then
-        if ! mkdir -p "${_fullpath}"; then
-            error_exit "Failed to create mount point inside jail."
-        fi
+    if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
+        mkdir -p "${_fullpath}" || error_exit "Failed to create mount point inside jail."
+    elif [ -f "${_hostpath}" ] && [ ! -f "${_fullpath}" ]; then
+        mkdir -p "$( dirname ${_fullpath} )" || error_exit "Failed to create mount point inside jail."
+        touch "${_fullpath}" || error_exit "Failed to create mount point inside jail."
     fi
 
     ## if entry doesn't exist, add; else show existing entry
