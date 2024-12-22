@@ -60,6 +60,12 @@ destroy_jail() {
     fi
 
     if [ -d "${bastille_jail_base}" ]; then
+	    ## make sure no filesystem is currently mounted in the jail directory
+        mount_points="$(mount | cut -d ' ' -f 3 | grep "${bastille_jail_base}"/root/)"
+        if [ "$?" -eq 0 ]; then
+            error_notify "Failed to destroy jail: ${TARGET}"
+            error_exit "Jail has mounted filesystems:\n$mount_points"
+        fi
         info "Deleting Jail: ${TARGET}."
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then

@@ -63,14 +63,14 @@ for _jail in ${JAILS}; do
     fi
 
     ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
-    _ip="$(bastille config "${_jail}" get ip4.addr)"
-    if [ "${_ip}" != "not set" ]; then
-        if ifconfig | grep -wF "${_ip}" >/dev/null; then
-            error_notify "Error: IP address (${_ip}) already in use."
+    _ip4="$(bastille config "${_jail}" get ip4.addr)"
+    if [ "${_ip4}" != "not set" ]; then
+        if ifconfig | grep -wF "${_ip4}" >/dev/null; then
+            error_notify "Error: IP address (${_ip4}) already in use."
             continue
         fi
         ## add ip4.addr to firewall table
-        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
     fi
 
     ## start the container

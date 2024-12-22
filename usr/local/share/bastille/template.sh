@@ -198,7 +198,11 @@ case ${TEMPLATE} in
         fi
         ;;
     *)
-        error_exit "Template name/URL not recognized."
+        if [ ! -f ${TEMPLATE}/Bastillefile ]; then
+            error_exit "${TEMPLATE} not found."
+        else
+            bastille_template=${TEMPLATE}
+        fi
 esac
 
 if [ -z "${JAILS}" ]; then
@@ -301,7 +305,7 @@ for _jail in ${JAILS}; do
                     # Escape single-quotes in the command being executed. -- cwells
                     _args=$(echo "${_args}" | sed "s/'/'\\\\''/g")
                     # Allow redirection within the jail. -- cwells
-                    _args="sh -c ${_args}"
+                    _args="sh -c \"${_args}\""
                     ;;
                 cp|copy)
                     _cmd='cp'

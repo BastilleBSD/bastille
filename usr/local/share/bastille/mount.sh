@@ -83,7 +83,7 @@ if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
     warn "Detected advanced mount type ${_hostpath}"
 elif [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     error_notify "Detected invalid host path or incorrect mount type in FSTAB."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
     exit 1
 fi
@@ -108,7 +108,7 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
     ## aggregate variables into FSTAB entry
-    _fullpath="${bastille_jailsdir}${_jail}/root/${_jailpath}"
+    _fullpath="${bastille_jailsdir}/${_jail}/root${_jailpath}"
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
 
     ## Create mount point if it does not exist. -- cwells
@@ -119,15 +119,15 @@ for _jail in ${JAILS}; do
     fi
 
     ## if entry doesn't exist, add; else show existing entry
-    if ! egrep -q "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}${_jail}/fstab" 2> /dev/null; then
-        if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}${_jail}/fstab"; then
+    if ! egrep -q "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
+        if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"; then
             error_exit "Failed to create fstab entry: ${_fstab_entry}"
         fi
         echo "Added: ${_fstab_entry}"
     else
-        warn "Mountpoint already present in ${bastille_jailsdir}${_jail}/fstab"
-        egrep "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}${_jail}/fstab"
+        warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
+        egrep "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
     fi
-    mount -F "${bastille_jailsdir}${_jail}/fstab" -a
+    mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
     echo
 done
