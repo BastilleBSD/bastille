@@ -33,6 +33,13 @@
 
 usage() {
     error_exit "Usage: bastille top TARGET"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
 # Handle special-case commands first.
@@ -42,15 +49,36 @@ case "${1}" in
         ;;
 esac
 
-if [ $# -ne 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
+
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_running "${TARGET}" || exit
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else
+    exit
+fi
 
 
 info "[${TARGET}]:"

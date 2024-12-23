@@ -42,7 +42,7 @@ case "${1}" in
         ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ "$#" -ne 2 ]; then
     usage
 fi
 
@@ -54,22 +54,28 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    _jailpath="${bastille_jailsdir}/${_jail}/root${MOUNT_PATH}"
+    _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' )"
+    _mount="$( mount | grep -o ${_jailpath} )"
+    _fstab_entry="$( cat ${bastille_jailsdir}/${_jail}/fstab | grep -o ${_jailpath} )"
 
-    if [ ! -d "${_jailpath}" ]; then
+    # Exit if mount point non-existent
+    if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
         error_exit "The specified mount point does not exist inside the jail."
     fi
 
-    # Unmount the volume. -- cwells
-    if ! umount "${_jailpath}"; then
-        error_exit "Failed to unmount volume: ${MOUNT_PATH}"
+    # Unmount
+    if [ -n "${_mount}" ]; then
+        if ! umount "${_jailpath}"; then
+            error_exit "Failed to unmount volume: ${MOUNT_PATH}"
+        fi
     fi
 
-    # Remove the entry from fstab so it is not automounted in the future. -- cwells
-    if ! sed -E -i '' "\, +${_jailpath} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
-        error_exit "Failed to delete fstab entry: ${_fstab_entry}"
+    # Remove entry from fstab
+    if [ -n "${_fstab_entry}" ]; then
+        if ! sed -E -i '' "\, +${_jailpath} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
+            error_exit "Failed to delete fstab entry: ${MOUNT_PATH}"
+        fi
     fi
 
     echo "Unmounted: ${MOUNT_PATH}"
-    echo
 done
