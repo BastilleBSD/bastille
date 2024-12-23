@@ -53,29 +53,34 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    info "[${_jail}]:"
+
     _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' )"
     _mount="$( mount | grep -o ${_jailpath} )"
     _fstab_entry="$( cat ${bastille_jailsdir}/${_jail}/fstab | grep -o ${_jailpath} )"
 
+    info "[${_jail}]:"
+
     # Exit if mount point non-existent
     if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
-        error_exit "The specified mount point does not exist inside the jail."
+        error_continue "The specified mount point does not exist inside the jail."
     fi
 
     # Unmount
     if [ -n "${_mount}" ]; then
-        if ! umount "${_jailpath}"; then
-            error_exit "Failed to unmount volume: ${MOUNT_PATH}"
-        fi
+        umount "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
     fi
 
     # Remove entry from fstab
     if [ -n "${_fstab_entry}" ]; then
         if ! sed -E -i '' "\, +${_jailpath} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
-            error_exit "Failed to delete fstab entry: ${MOUNT_PATH}"
+            error_continue "Failed to delete fstab entry: ${MOUNT_PATH}"
         fi
     fi
 
+    # Delete if mount point was a file
+    if [ -f "${_jailpath}" ]; then
+        rm -f "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
+    fi
+    
     echo "Unmounted: ${MOUNT_PATH}"
 done

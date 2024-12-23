@@ -42,7 +42,7 @@ case "${1}" in
         ;;
 esac
 
-if [ "$#" -lt 3 ]; then
+if [ "$#" -lt 3 ] || [ "$#" -gt 6 ]; then
     usage
 fi
 
@@ -87,7 +87,7 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     usage
 fi
 
-## Mount permission need to be "ro" or "rw"
+# Mount permission need to be "ro" or "rw"
 if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
@@ -95,7 +95,7 @@ if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
     usage
 fi
 
-## Dump and pass need to be "0 0 - 1 1"
+# Dump and pass need to be "0 0 - 1 1"
 if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "0 1" ] && [ "${_checks}" != "1 1" ]; then
     error_notify "Detected invalid fstab options in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
@@ -104,29 +104,52 @@ if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "
 fi
 
 for _jail in ${JAILS}; do
-    info "[${_jail}]:"
 
-    ## aggregate variables into FSTAB entry
     _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath} 2>/dev/null | sed 's#//#/#' )"
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
 
-    ## Create mount point if it does not exist
-    if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
-        mkdir -p "${_fullpath}" || error_exit "Failed to create mount point inside jail."
-    elif [ -f "${_hostpath}" ] && [ ! -f "${_fullpath}" ]; then
-        mkdir -p "$( dirname ${_fullpath} )" || error_exit "Failed to create mount point inside jail."
-        touch "${_fullpath}" || error_exit "Failed to create mount point inside jail."
-    fi    
-    
-    ## If entry doesn't exist, add, else show existing entry
-    if ! grep -Eq "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
-        if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"; then
-            error_exit "Failed to create fstab entry: ${_fstab_entry}"
-        fi
-        echo "Added: ${_fstab_entry}"
-    else
+    info "[${_jail}]:"
+
+    # Check if mount point has already been added
+    if grep -Eq "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
         grep -E "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
+        continue
     fi
-    mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
+
+    ## Create mount point if it does not exist
+    if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
+        mkdir -p "${_fullpath}" || error_continue "Failed to create mount point inside jail."
+    elif [ -f "${_hostpath}" ] ; then
+        _filename="$( basename ${_hostpath} )"
+        if  echo "${_fullpath}" 2>/dev/null | grep -qo "${_filename}"; then
+            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point inside jail."
+            if [ ! -f "${_fullpath}" ]; then
+                touch "${_fullpath}" || error_continue "Failed to create mount point inside jail."
+            else
+                error_notify "Failed. File exists at mount point."
+                warn "${_fullpath}"
+                continue
+            fi
+        else
+            _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath}/${_filename} 2>/dev/null | sed 's#//#/#' )"
+            _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
+            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point inside jail."
+            if [ ! -f "${_fullpath}" ]; then
+                touch "${_fullpath}" || error_continue "Failed to create mount point inside jail."
+            else
+                error_notify "Failed. File exists at mount point."
+                warn "${_fullpath}"
+                continue
+            fi
+        fi
+    fi   
+    
+    # Add entry to fstab and mount
+    if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"; then
+        error_continue "Failed to create fstab entry: ${_fstab_entry}"
+    else
+        mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
+        echo "Added: ${_fstab_entry}"
+    fi
 done

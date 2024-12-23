@@ -53,6 +53,12 @@ if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
+# Notify message on error, and continue to next jail
+error_continue() {
+    error_notify "$@"
+	continue
+fi
+
 # Notify message on error, but do not exit
 error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
