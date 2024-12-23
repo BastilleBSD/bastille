@@ -104,11 +104,10 @@ if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "
 fi
 
 for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-
-    ## aggregate variables into FSTAB entry
     _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath} 2>/dev/null | sed 's#//#/#' )"
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
+
+    info "[${_jail}]:"
 
     ## Create mount point if it does not exist
     if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
