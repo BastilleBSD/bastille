@@ -65,7 +65,7 @@ _type=$(echo "${_fstab}" | awk '{print $3}')
 _perms=$(echo "${_fstab}" | awk '{print $4}')
 _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
 
-## Exit if any variables are empty
+# Exit if any variables are empty
 if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "${_perms}" ] || [ -z "${_checks}" ]; then
     error_notify "FSTAB format not recognized."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
@@ -87,7 +87,7 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     usage
 fi
 
-## Mount permission need to be "ro" or "rw"
+## Mount permissions need to be "ro" or "rw"
 if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
