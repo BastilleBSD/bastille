@@ -56,8 +56,8 @@ fi
 # Notify message on error, and continue to next jail
 error_continue() {
     error_notify "$@"
-	continue
-fi
+    continue
+}
 
 # Notify message on error, but do not exit
 error_notify() {
