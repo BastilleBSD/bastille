@@ -53,10 +53,11 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    info "[${_jail}]:"
     _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' )"
     _mount="$( mount | grep -o ${_jailpath} )"
     _fstab_entry="$( cat ${bastille_jailsdir}/${_jail}/fstab | grep -o ${_jailpath} )"
+
+    info "[${_jail}]:"
 
     # Exit if mount point non-existent
     if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
