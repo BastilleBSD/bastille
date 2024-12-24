@@ -58,6 +58,8 @@ error_notify() {
 
 error_continue() {
     error_notify "$@"
+    # Disabling this shellcheck as we only ever call it inside of a loop
+    # shellcheck disable=SC2104
     continue
 }
 
