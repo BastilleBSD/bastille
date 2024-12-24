@@ -62,7 +62,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -ne 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 

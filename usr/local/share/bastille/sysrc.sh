@@ -42,21 +42,13 @@ EOF
     exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-    usage
-fi
-
 # Handle options.
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+	    -h|--help|help)
+		    usage
+			;;
         -f|--force)
             FORCE=1
             shift
@@ -69,6 +61,10 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+if [ "$#" -lt 2 ]; then
+    usage
+fi
 
 TARGET="${1}"
 shift

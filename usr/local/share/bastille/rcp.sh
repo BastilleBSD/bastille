@@ -35,21 +35,13 @@ usage() {
     error_exit "Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH"
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ $# -lt 3 ] || [ $# -gt 4 ]; then
-    usage
-fi
-
 # Handle options.
 OPTION="-av"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+	    -h|--help|help)
+		    usage
+			;;
         -q|--quiet)
             OPTION="-a"
             shift
@@ -62,6 +54,10 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+if [ "$#" -ne 3 ]; then
+    usage
+fi
 
 TARGET="${1}"
 CPSOURCE="${2}"

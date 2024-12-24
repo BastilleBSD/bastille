@@ -78,4 +78,3 @@ fi
 
 info "[${TARGET}]:"
 jexec -l "${TARGET}" /usr/bin/top
-echo -e "${COLOR_RESET}"

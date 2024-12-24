@@ -55,7 +55,7 @@ set_target "${TARGET}"
 for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
-set -x
+
     _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' )"
     _mount="$( mount | grep -ow ${_jailpath} )"
     _fstab_entry="$( cat ${bastille_jailsdir}/${_jail}/fstab | grep -ow ${_jailpath} )"
@@ -83,4 +83,5 @@ set -x
     fi
     
     echo "Unmounted: ${MOUNT_PATH}"
+	
 done

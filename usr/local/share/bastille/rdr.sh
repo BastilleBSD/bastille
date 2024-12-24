@@ -67,7 +67,6 @@ check_jail_validity() {
     fi
 }
 
-# function: check if IP is valid
 check_rdr_ip_validity() {
     local ip="${1}"
     local ip6="$( echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
@@ -91,7 +90,6 @@ check_rdr_ip_validity() {
     fi
 }
 
-# function: write rule to rdr.conf
 persist_rdr_rule() {
     local inet="${1}"
     local if="${2}"
@@ -130,7 +128,6 @@ persist_rdr_log_rule() {
     fi
 }
 
-# function: load rdr rule via pfctl
 load_rdr_rule() {
     local inet="${1}"
     local if_name="${2}"
@@ -166,7 +163,6 @@ load_rdr_rule() {
     fi
 }
 
-# function: load rdr rule with log via pfctl
 load_rdr_log_rule() {
     local inet="${1}"
     local if_name="${2}"
@@ -204,13 +200,6 @@ load_rdr_log_rule() {
     fi
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
 # Handle options.
 RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
 RDR_SRC="any"
@@ -222,6 +211,9 @@ OPTION_DST=0
 OPTION_INET_TYPE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+	    -h|--help|help)
+		    usage
+			;;
         -i|--interface)
             if ifconfig | grep -owq "${2}:"; then
                 OPTION_IF=1

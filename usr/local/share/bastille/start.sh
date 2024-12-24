@@ -53,7 +53,7 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     
-	# test if running
+	# Check if jail is running
     check_target_is_stopped "${_jail}" || continue
     if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
         _interface="$(bastille config ${_jail} get interface)"

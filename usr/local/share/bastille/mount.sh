@@ -117,7 +117,7 @@ for _jail in ${JAILS}; do
         continue
     fi
 
-    ## Create mount point if it does not exist
+    # Create mount point if it does not exist
     if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
         mkdir -p "${_fullpath}" || error_continue "Failed to create mount point."
     elif [ -f "${_hostpath}" ] ; then
