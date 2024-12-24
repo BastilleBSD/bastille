@@ -33,7 +33,6 @@
 
 usage() {
     error_notify "Usage: bastille destroy [option(s)] [JAIL|RELEASE]"
-
     cat << EOF
     Options:
 
@@ -50,19 +49,16 @@ destroy_jail() {
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 	
-    if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        if [ "${FORCE}" = "1" ]; then
-            bastille stop "${TARGET}"
-        else
-            error_notify "Jail running."
-            error_exit "See 'bastille stop ${TARGET}'."
-        fi
+    check_target_is_running "${TARGET}" || if [ "${FORCE}" = "1" ]; then
+        bastille stop "${TARGET}"
+    else
+        exit
     fi
 
     if [ -d "${bastille_jail_base}" ]; then
 	    ## make sure no filesystem is currently mounted in the jail directory
         mount_points="$(mount | cut -d ' ' -f 3 | grep "${bastille_jail_base}"/root/)"
-        if [ "$?" -eq 0 ]; then
+        if [ -n "${mount_points}" ]; then
             error_notify "Failed to destroy jail: ${TARGET}"
             error_exit "Jail has mounted filesystems:\n$mount_points"
         fi
@@ -194,17 +190,13 @@ destroy_rel() {
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
 # Handle options.
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+	    -h|--help|help)
+		    usage
+			;;
         -f|--force|force)
             FORCE="1"
             shift
@@ -219,7 +211,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 

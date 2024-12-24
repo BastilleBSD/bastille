@@ -84,7 +84,7 @@ case "$1" in
         ;;
 esac
 
-if [ $# -lt 2 ]; then
+if [ "$#" -lt 2 ]; then
     usage
 fi
 
@@ -93,31 +93,31 @@ TARGET="${1}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-## check ZFS enabled
+# Check if ZFS is enabled
 if ! checkyesno bastille_zfs_enable; then
     error_exit "ZFS not enabled."
 fi
 
-## check zpool defined
+# Check if zpool is defined
 if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "ZFS zpool not defined."
 fi
 
 case "${2}" in
     set)
-        ATTRIBUTE=${3}
+        ATTRIBUTE="${3}"
         zfs_set_value
         ;;
     get)
-        ATTRIBUTE=${3}
+        ATTRIBUTE="${3}"
         zfs_get_value
         ;;
     snap|snapshot)
-        TAG=${3}
+        TAG="${3}"
         zfs_snapshot
         ;;
     destroy_snap|destroy_snapshot)
-        TAG=${3}
+        TAG="${3}"
         zfs_destroy_snapshot
         ;;
     df|usage)

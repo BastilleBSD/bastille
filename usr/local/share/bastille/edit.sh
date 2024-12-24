@@ -32,28 +32,15 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille edit TARGET [filename]"
+    error_exit "Usage: bastille edit [option(s)] TARGET [filename]"
 }
 
-# Handle special-case commands first.
-case "$1" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-    usage
-fi
-
 # Handle options.
-FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-        -f|--force|force)
-            FORCE="1"
-            shift
-            ;;
+	    -h|--help|help)
+		    usage
+			;;
         -*)
             error_notify "Unknown Option: \"${1}\""
             usage
@@ -64,6 +51,10 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+    usage
+fi
+
 TARGET="${1}"
 if [ "$#" -eq 2 ]; then
     TARGET_FILENAME="${2}"
@@ -73,11 +64,6 @@ fi
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
-    bastille start "${TARGET}"
-else
-    exit
-fi
 
 if [ -z "${EDITOR}" ]; then
     EDITOR=nano

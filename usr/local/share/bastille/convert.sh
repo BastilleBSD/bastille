@@ -43,7 +43,6 @@ EOF
     exit 1
 }
 
-
 # Handle special-case commands first.
 case "${1}" in
     help|-h|--help)

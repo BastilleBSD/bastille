@@ -33,7 +33,6 @@
 
 usage() {
     error_exit "Usage: bastille rename [option(s)] TARGET NEW_NAME"
-
     cat << EOF
     Options:
 
@@ -43,22 +42,13 @@ EOF
     exit 1
 }
 
-
-# Handle special-case commands first
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-    usage
-fi
-
 # Handle options.
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+	    -h|--help|help)
+		    usage
+			;;
         -f|--force)
             FORCE=1
             shift
@@ -72,6 +62,10 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$#" -ne 2 ]; then
+    usage
+fi
+
 TARGET="${1}"
 NEWNAME="${2}"
 
@@ -84,7 +78,7 @@ else
 fi
 
 validate_name() {
-    local NAME_VERIFY=${NEWNAME}
+    local NAME_VERIFY="${NEWNAME}"
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Container names may not begin with (-|_) characters!"
@@ -118,7 +112,7 @@ update_fstab() {
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
     if [ -f "${FSTAB_CONFIG}" ] && [ -s "${FSTAB_CONFIG}" ]; then
         # Update fstab paths with new jail path
-        sed -i '' "s|\ ${bastille_jailsdir}/${TARGET}/root/|\ ${bastille_jailsdir}/${NEWNAME}/root/|g" "${FSTAB_CONFIG}"
+        sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|g" "${FSTAB_CONFIG}"
     fi
 }
 

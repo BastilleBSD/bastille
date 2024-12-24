@@ -33,6 +33,13 @@
 
 usage() {
     error_exit "Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH"
+    cat << EOF
+    Options:
+
+    -q | --	quiet -- Suppress output.
+
+EOF
+    exit 1
 }
 
 # Handle options.
