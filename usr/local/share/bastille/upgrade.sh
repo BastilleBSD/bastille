@@ -33,23 +33,29 @@
 
 usage() {
     error_exit "Usage: bastille upgrade [option(s)] [RELEASE NEW_RELEASE (install)] [TARGET NEW_RELEASE (install)]"
+
+    cat << EOF
+    Options:
+
+    -s | --start -- Start the jail if it is stopped.
+    -f | --force -- Force upgrade a release.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ $# -gt 3 ] || [ $# -lt 2 ]; then
-    usage
-fi
 
 # Handle options.
 OPTION=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -s|--start)
+            FORCE=1
+            shift
+            ;;
         -f|--force)
             OPTION="-F"
             shift
@@ -63,16 +69,16 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+    usage
+fi
+
 TARGET="${1}"
 NEWRELEASE="${2}"
 
 bastille_root_check
 
-# Check for unsupported actions
-if [ "${TARGET}" = "ALL" ]; then
-    error_exit "Batch upgrade is unsupported."
-fi
-    
+# Check for unsupported actions    
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
     exit 1
@@ -83,13 +89,16 @@ if freebsd-version | grep -qi HBSD; then
 fi
 
 jail_check() {
+
     # Check if the jail is thick and is running
-    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+    set_target_single "${TARGET}"
+    check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${TARGET}"
     else
-        if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-            error_exit "${TARGET} is not a thick container."
-        fi
+        exit
+    fi
+    if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        error_exit "${TARGET} is not a thick container."
     fi
 }
 
@@ -114,16 +123,12 @@ release_upgrade() {
 
 jail_upgrade() {
     # Upgrade a thick container
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        jail_check
-        release_check
-        CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version)
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" --currently-running "${CURRENT_VERSION}" -r ${NEWRELEASE} upgrade
-        echo
-        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
-    else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
-    fi
+    jail_check
+    release_check
+    CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version)
+    env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" --currently-running "${CURRENT_VERSION}" -r ${NEWRELEASE} upgrade
+    echo
+    echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
 }
 
 jail_updates_install() {

@@ -246,9 +246,9 @@ if [ "$#" -gt 0 ]; then
             list_import
             exit 0
             ;;
-		-*)
-		    error_exit "Unknown option: \"${1}\""
-			;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
         *)
             # Check if we want to query all info for a specific jail instead.
             if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then

@@ -53,7 +53,7 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     
-	# Check if jail is running
+    # Check if jail is running
     check_target_is_stopped "${_jail}" || continue
     if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
         _interface="$(bastille config ${_jail} get interface)"
@@ -72,7 +72,7 @@ for _jail in ${JAILS}; do
         else
             ## add ip4.addr to firewall table
             pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
-		fi
+        fi
     fi
 
     # Start jail

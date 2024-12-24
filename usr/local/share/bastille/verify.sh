@@ -31,8 +31,8 @@
 . /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
-bastille_usage() {
-    error_exit "Usage: bastille verify [release|template]"
+usage() {
+    error_exit "Usage: bastille verify [RELEASE|TEMPLATE]"
 }
 
 verify_release() {
@@ -145,14 +145,14 @@ verify_template() {
 }
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
     help|-h|--help)
         bastille_usage
         ;;
 esac
 
-if [ $# -ne 1 ]; then
-    bastille_usage
+if [ "$#" -ne 1 ]; then
+    usage
 fi
 
 bastille_root_check

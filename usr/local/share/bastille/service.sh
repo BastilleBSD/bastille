@@ -33,6 +33,7 @@
 
 usage() {
     error_exit "Usage: bastille service [options(s)] TARGET SERVICE_NAME ACTION"
+
     cat << EOF
     Options:
 
@@ -46,9 +47,9 @@ EOF
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-		    usage
-			;;
+        -h|--help|help)
+            usage
+            ;;
         -f|--force)
             FORCE=1
             shift
@@ -62,7 +63,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
+if [ "$#" -ne 3 ]; then
     usage
 fi
 

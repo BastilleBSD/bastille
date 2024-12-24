@@ -38,18 +38,16 @@ usage() {
 zfs_snapshot() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-	# shellcheck disable=SC2140
+    # shellcheck disable=SC2140
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
-    echo
 done
 }
 
 zfs_destroy_snapshot() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-	# shellcheck disable=SC2140
+    # shellcheck disable=SC2140
     zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
-    echo
 done
 }
 
@@ -57,7 +55,6 @@ zfs_set_value() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-    echo
 done
 }
 

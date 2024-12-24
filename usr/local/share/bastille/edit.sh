@@ -38,9 +38,9 @@ usage() {
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-		    usage
-			;;
+        -h|--help|help)
+            usage
+            ;;
         -*)
             error_notify "Unknown Option: \"${1}\""
             usage

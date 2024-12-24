@@ -33,6 +33,7 @@
 
 usage() {
     error_exit "Usage: bastille sysrc [option(s)] TARGET ARGS"
+
     cat << EOF
     Options:
 
@@ -46,9 +47,9 @@ EOF
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-		    usage
-			;;
+	-h|--help|help)
+            usage
+            ;;
         -f|--force)
             FORCE=1
             shift

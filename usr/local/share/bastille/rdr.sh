@@ -33,6 +33,7 @@
 
 usage() {
     error_notify "Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ] )]"
+
     cat << EOF
     Options:
 
@@ -57,7 +58,7 @@ check_jail_validity() {
     # Check if jail ip6 address (ip6.addr) is valid (non-VNET only)
     if [ "$( bastille config $TARGET get vnet )" != 'enabled' ]; then
         if [ "$( bastille config $TARGET get ip6 )" != 'disable' ] && [ "$( bastille config $TARGET get ip6 )" != 'not set' ]; then
-            JAIL_IP6="$( bastille config ${TARGET} get ip6 )"
+            JAIL_IP6="$( bastille config ${TARGET} get ip6.addr )"
         fi
     fi
 

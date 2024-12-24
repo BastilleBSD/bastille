@@ -33,14 +33,35 @@
 
 usage() {
     error_exit "Usage: bastille cmd TARGET command"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+	-f|--force)
+	    FORCE=1
+	    shift
+	    ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ $# -eq 0 ]; then
     usage
@@ -57,14 +78,21 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     # If target is stopped or not found, continue...
-    check_target_is_running "${_jail}" || continue
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else
+        continue
+    fi
+    
     COUNT=$(($COUNT+1))
     info "[${_jail}]:"
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
         # Allow executing commands on Linux jails.
         jexec -l -u root "${_jail}" "$@"
+        echo "$@"
     else
         jexec -l -U root "${_jail}" "$@"
+        echo "$@"
     fi
     ERROR_CODE=$?
     if [ "${ERROR_CODE}" -ne 0 ]; then

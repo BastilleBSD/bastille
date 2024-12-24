@@ -33,6 +33,7 @@
 
 usage() {
     error_exit "Usage: bastille top [options(s)] TARGET"
+
     cat << EOF
     Options:
 

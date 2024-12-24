@@ -217,9 +217,7 @@ fi
 
 if [ -n "${SAFE_EXPORT}" ]; then
     # Check if container is running, otherwise just ignore
-    if [ -z "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        SAFE_EXPORT=
-    fi
+    check_target_is_stopped "${TARGET}" || SAFE_EXPORT=""
 fi
 
 # Export directory check

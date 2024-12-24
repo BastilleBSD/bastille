@@ -33,10 +33,11 @@
 
 usage() {
     error_exit "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
+
     cat << EOF
     Options:
 
-    -q | --	quiet -- Suppress output.
+    -q | --quiet    -- Suppress output.
 
 EOF
     exit 1
@@ -46,9 +47,9 @@ EOF
 OPTION="-av"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-		    usage
-			;;
+	-h|--help|help)
+	    usage
+	    ;;
         -q|--quiet)
             OPTION="-a"
             shift
@@ -78,6 +79,5 @@ for _jail in ${JAILS}; do
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}${CPDEST}"
     RETURN="$?"
-    echo
     return "${RETURN}"
 done

@@ -38,30 +38,21 @@ usage() {
     Options:
 
     -f | --force -- Start the jail if it is stopped.
-    -h | --host  -- Use the hosts pkg command.
+    -p | --host  -- Use the hosts pkg command.
 
 EOF
     exit 1
 }
-
-
-# Handle special-case commands first.
-case "$1" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ $# -lt 2 ]; then
-    usage
-fi
 
 # Handle options.
 FORCE=0
 USE_HOST_PKG=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-        -h|--host)
+        -h|--help|help)
+            usage
+            ;;
+        -p|--host)
             USE_HOST_PKG=1
             shift
             ;;
@@ -78,6 +69,10 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ $# -lt 2 ]; then
+    usage
+fi
+
 TARGET="${1}"
         
 bastille_root_check
@@ -92,7 +87,7 @@ for _jail in ${JAILS}; do
         continue
     fi
     info "[${_jail}]:"
-    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
+    bastille_jail_path="$( ${bastille_jailsdir}/${_jail}/root )"
     if [ -f "/usr/sbin/mport" ]; then
         if ! jexec -l -U root "${_jail}" /usr/sbin/mport "$@"; then
             errors=1
@@ -110,10 +105,8 @@ for _jail in ${JAILS}; do
             errors=1
         fi
     fi
-    echo
 done
 
 if [ $errors -ne 0 ]; then
     error_exit "Failed to apply on some jails, please check logs"
-    exit 1
 fi

@@ -59,10 +59,15 @@ fi
 
 bastille_root_check
 set_target "${TARGET}"
-check_target_is_running "${TARGET}" || exit
 
 for _jail in ${JAILS}; do
+
     info "[${_jail}]:"
+    check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else
+        exit
+    fi
 
     _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
     _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
@@ -79,5 +84,5 @@ for _jail in ${JAILS}; do
 
     echo -e "${OPTION} ${VALUE}"
     rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
-    echo -e "${COLOR_RESET}"
+
 done

@@ -33,6 +33,7 @@
 
 usage() {
     error_notify "Usage: bastille destroy [option(s)] [JAIL|RELEASE]"
+
     cat << EOF
     Options:
 
@@ -49,15 +50,21 @@ destroy_jail() {
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 	
-    check_target_is_running "${TARGET}" || if [ "${FORCE}" = "1" ]; then
+    check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq "1" ]; then
         bastille stop "${TARGET}"
     else
         exit
     fi
 
     if [ -d "${bastille_jail_base}" ]; then
-	    ## make sure no filesystem is currently mounted in the jail directory
-        mount_points="$(mount | cut -d ' ' -f 3 | grep "${bastille_jail_base}"/root/)"
+        # Force unmount an existing mount points
+        mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
+        for _mount in ${mount_points}; do
+            echo "Unmounting: \"${_mount}\""
+            umount -f "${_mount}" || error_exit "Failed to unmount: \"${_mount}\""
+        done
+
+        ## make sure no filesystem is currently mounted in the jail directory
         if [ -n "${mount_points}" ]; then
             error_notify "Failed to destroy jail: ${TARGET}"
             error_exit "Jail has mounted filesystems:\n$mount_points"
@@ -102,7 +109,6 @@ destroy_jail() {
             info "Clearing RDR rules:"
             pfctl -a "rdr/${TARGET}" -Fn
         fi
-        echo
     fi
 }
 
@@ -183,7 +189,6 @@ destroy_rel() {
                     rm -rf "${bastille_cachedir:?}/${TARGET:?}"
                 fi
             fi
-            echo
         else
             error_notify "Cannot destroy base with child containers."
         fi
@@ -194,9 +199,9 @@ destroy_rel() {
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-		    usage
-			;;
+        -h|--help|help)
+            usage
+            ;;
         -f|--force|force)
             FORCE="1"
             shift

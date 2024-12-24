@@ -33,6 +33,7 @@
 
 usage() {
     error_exit "Usage: bastille rename [option(s)] TARGET NEW_NAME"
+
     cat << EOF
     Options:
 
@@ -46,9 +47,9 @@ EOF
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-		    usage
-			;;
+        -h|--help|help)
+            usage
+            ;;
         -f|--force)
             FORCE=1
             shift
@@ -99,8 +100,8 @@ update_jailconf() {
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
             sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${JAIL_CONFIG}"
             # update vnet config
-	        sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|" "${JAIL_CONFIG}"
-	        sed -i '' "/vnet.interface/s|_${TARGET};|_${NEWNAME};|" "${JAIL_CONFIG}"
+            sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|" "${JAIL_CONFIG}"
+            sed -i '' "/vnet.interface/s|_${TARGET};|_${NEWNAME};|" "${JAIL_CONFIG}"
             sed -i '' "/ifconfig/s|_${TARGET}|_${NEWNAME}|" "${JAIL_CONFIG}"
             sed -i '' "/ifconfig/s|_${TARGET}_name=|_${NEWNAME}_name=|" "${BASTILLE_JAIL_RC_CONF}"			
         fi
@@ -161,6 +162,9 @@ change_name() {
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
+        if [ "${FORCE}" -eq 1 ]; then
+            bastille start "${NEWNAME}"
+        fi
         info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
     fi
 }

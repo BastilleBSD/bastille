@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    error_exit "Usage: bastille template TARGET|--convert project/template"
+    error_exit "Usage: bastille template TARGET [--convert|project/template|template]"
 }
 
 post_command_hook() {
@@ -125,7 +125,6 @@ fi
 
 bastille_root_check
 set_target "${TARGET}"
-check_target_is_running "${TARGET}"
 
 # Special case conversion of hook-style template files into a Bastillefile. -- cwells
 if [ "${TARGET}" = '--convert' ]; then
@@ -230,17 +229,22 @@ if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
 fi
 
 for _jail in ${JAILS}; do
+
+    check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${TARGET}" || continue
+    fi
+
     info "[${_jail}]:"
     echo "Applying template: ${TEMPLATE}..."
 
     ## jail-specific variables.
-    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
+    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        _jail_ip=$(/usr/sbin/jls -j "${_jail}" ip4.addr 2>/dev/null)
-        _jail_ip6=$(/usr/sbin/jls -j "${_jail}" ip6.addr 2>/dev/null)
-        if [ -z "${_jail_ip}" ] || [ "${_jail_ip}" = "-" ]; then
-            error_notify "Jail IP not found: ${_jail}"
-            _jail_ip='' # In case it was -. -- cwells
+        if [ "$( bastille config ${TARGET} get ip4.addr )" != 'disable' ] && [ "$( bastille config ${TARGET} get ip4.addr )" != 'not set' ]; then
+            _jail_ip="$( bastille config ${TARGET} get ip4.addr )"
+        fi
+        if [ "$( bastille config $TARGET get ip6 )" != 'disable' ] && [ "$( bastille config $TARGET get ip6 )" != 'not set' ]; then
+            _jail_ip6="$( bastille config ${TARGET} get ip6.addr )"
         fi
     fi
 
@@ -395,5 +399,5 @@ for _jail in ${JAILS}; do
     done
 
     info "Template applied: ${TEMPLATE}"
-    echo
+
 done

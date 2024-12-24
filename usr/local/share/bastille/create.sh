@@ -34,7 +34,7 @@
 usage() {
     # Build an independent usage for the create command
     # If no option specified, will create a thin container by default
-    error_notify "Usage: bastille create [option(s)] name release ip [interface]"
+    error_notify "Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [interface]"
 
     cat << EOF
     Options:
@@ -111,6 +111,7 @@ validate_ip() {
         fi
     fi
 }
+
 validate_ips() {
     IP6_MODE="disable"
     IP4_DEFINITION=""
@@ -239,7 +240,6 @@ post_create_jail() {
     # Using relative paths here.
     # MAKE SURE WE'RE IN THE RIGHT PLACE.
     cd "${bastille_jail_path}" || error_exit "Could not cd to ${bastille_jail_path}"
-    echo
 
     if [ ! -f "${bastille_jail_conf}" ]; then
         if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
@@ -277,9 +277,9 @@ create_jail() {
     bastille_jail_fstab="${bastille_jailsdir}/${NAME}/fstab"  ## file
     bastille_jail_conf="${bastille_jailsdir}/${NAME}/jail.conf"  ## file
     bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
-	# shellcheck disable=SC2034
+    # shellcheck disable=SC2034
     bastille_jail_rc_conf="${bastille_jailsdir}/${NAME}/root/etc/rc.conf" ## file
-	# shellcheck disable=SC2034
+    # shellcheck disable=SC2034
     bastille_jail_resolv_conf="${bastille_jailsdir}/${NAME}/root/etc/resolv.conf" ## file
 
     if [ ! -d "${bastille_jailsdir}/${NAME}" ]; then
@@ -362,7 +362,7 @@ create_jail() {
 
         if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
-            info "Creating a thinjail...\n"
+            info "Creating a thinjail..."
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
@@ -591,19 +591,12 @@ create_jail() {
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
 bastille_root_check
 
-if echo "$3" | grep '@'; then
+if echo "${3}" | grep '@'; then
     # shellcheck disable=SC2034
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
-	# shellcheck disable=SC2034
+    # shellcheck disable=SC2034
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
 fi
 
@@ -617,6 +610,9 @@ LINUX_JAIL=""
 # Handle and parse options
 while [ $# -gt 0 ]; do
     case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
         -E|--empty)
             EMPTY_JAIL="1"
             shift
@@ -687,7 +683,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -*)
-            error_notify "Unknown Option."
+            error_notify "Unknown option: \"${1}\""
             usage
             ;;
         *)
