@@ -56,6 +56,11 @@ error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
+error_continue() {
+    error_notify "$@"
+    continue
+}
+
 # Notify message on error and exit
 error_exit() {
     error_notify "$@"
@@ -115,6 +120,19 @@ EOF
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
+    fi
+}
+
+set_target() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        target_all_jails
+    else
+        check_target_exists "${_TARGET}" || exit
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
     fi
 }
 
