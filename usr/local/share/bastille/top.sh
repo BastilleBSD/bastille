@@ -32,17 +32,37 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille top TARGET"
+    error_exit "Usage: bastille top [options(s)] TARGET"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -ne 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 
@@ -50,7 +70,11 @@ TARGET="${1}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_running "${TARGET}" || exit
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else
+    exit
+fi
 
 info "[${TARGET}]:"
 jexec -l "${TARGET}" /usr/bin/top
