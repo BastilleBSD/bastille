@@ -42,7 +42,7 @@ case "${1}" in
         ;;
 esac
 
-if [ $# -ne 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 
@@ -52,8 +52,9 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+
     check_target_is_running "${_jail}" || continue
-    ## Capture ip4.addr address while still running
+    # Capture ip4.addr address while still running
     _ip4="$(bastille config ${_jail} get ip4.addr)"
 
     # Check if pfctl is present
@@ -61,23 +62,23 @@ for _jail in ${JAILS}; do
     if [ "${_ip4}" != "not set" ]; then
         if which -s pfctl; then
             if [ "$(bastille rdr ${_jail} list)" ]; then
-                bastille rdr ${_jail} clear
+                bastille rdr "${_jail}" clear
             fi
         fi
     fi
 
-    ## remove rctl limits
+    # Remove rctl limits
     if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
         while read _limits; do
             rctl -r "${_limits}"
         done < "${bastille_jailsdir}/${_jail}/rctl.conf"
     fi
 
-    ## stop container
+    # Stop jail
     info "[${_jail}]:"
     jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
-    ## remove (captured above) ip4.addr from firewall table
+    # Remove (captured above) ip4.addr from firewall table
     if [ -n "${bastille_network_loopback}" ] && [ "${_ip4}" != "not set" ]; then
         if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip4}"

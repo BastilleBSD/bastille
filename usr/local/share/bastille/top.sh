@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille top TARGET"
+    error_exit "Usage: bastille top [options(s)] TARGET"
     cat << EOF
     Options:
 
@@ -42,21 +42,13 @@ EOF
     exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ "$#" -ne 1 ]; then
-    usage
-fi
-
 # Handle options.
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
         -f|--force)
             FORCE=1
             shift
@@ -69,6 +61,10 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+if [ "$#" -ne 1 ]; then
+    usage
+fi
 
 TARGET="${1}"
 

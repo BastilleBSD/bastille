@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille htop TARGET"
+    error_exit "Usage: bastille htop [option(s)] TARGET"
     cat << EOF
     Options:
 
@@ -42,21 +42,13 @@ EOF
     exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ $# -ne 1 ]; then
-    usage
-fi
-
 # Handle options.
 FORCE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
         -f|--force)
             FORCE=1
             shift
@@ -70,6 +62,10 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ $# -ne 1 ]; then
+    usage
+fi
+
 TARGET="${1}"
 
 bastille_root_check
@@ -80,11 +76,10 @@ else
     exit
 fi
 
-bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
+bastille_jail_path="${bastille_jailsdir}/${TARGET}/root"
 if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-    error_notify "htop not found on ${_jail}."
+    error_notify "htop not found on ${TARGET}."
 elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-    info "[${_jail}]:"
-    jexec -l ${_jail} /usr/local/bin/htop
+    info "[${TARGET}]:"
+    jexec -l ${TARGET} /usr/local/bin/htop
 fi
-echo -e "${COLOR_RESET}"

@@ -32,7 +32,14 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille service TARGET SERVICE_NAME ACTION"
+    error_exit "Usage: bastille service [options(s)] TARGET SERVICE_NAME ACTION"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
 # Handle special-case commands first.
@@ -42,9 +49,26 @@ case "${1}" in
         ;;
 esac
 
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
     usage
 fi
+
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
 shift
@@ -53,8 +77,11 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    check_target_is_running "${_jail}" || continue
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+	    bastille start "${_jail}"
+	else
+	    continue
+    fi
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/sbin/service "$@"
-    echo
 done
