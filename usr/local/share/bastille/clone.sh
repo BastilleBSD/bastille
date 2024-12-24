@@ -38,8 +38,6 @@ usage() {
     Options:
 
     -f | --force   -- Start the jail if it is stopped.
-    -u | --unsafe  -- Force clone even if the jail is running.
-                      Only works with ZFS for now.
 
 EOF
     exit 1
@@ -47,15 +45,10 @@ EOF
 
 # Handle options.
 FORCE=0
-UNSAFE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
-            ;;
-        -u|--unsafe)
-            UNSAFE=1
-            shift
             ;;
         -f|--force)
             FORCE=1
@@ -205,7 +198,7 @@ clone_jail() {
 
     check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
         bastille stop "${TARGET}"
-    elif [ "${UNSAFE}" -ne 1 ] || [ ! checkyesno bastille_zfs_enable ]; then
+    else
         exit
     fi
 

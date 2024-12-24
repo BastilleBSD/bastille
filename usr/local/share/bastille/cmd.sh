@@ -88,13 +88,13 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
         # Allow executing commands on Linux jails.
+        echo "$@"
         jexec -l -u root "${_jail}" "$@"
-        echo "$@"
     else
-        jexec -l -U root "${_jail}" "$@"
         echo "$@"
+        jexec -l -U root "${_jail}" "$@"
     fi
-    ERROR_CODE=$?
+    ERROR_CODE="$?"
     if [ "${ERROR_CODE}" -ne 0 ]; then
         warn "[${_jail}]: ${ERROR_CODE}"
     fi
