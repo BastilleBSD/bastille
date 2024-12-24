@@ -119,7 +119,7 @@ for _jail in ${JAILS}; do
 
     ## Create mount point if it does not exist
     if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
-        mkdir -p "${_fullpath}" || error_continue"Failed to create mount point."
+        mkdir -p "${_fullpath}" || error_continue "Failed to create mount point."
     elif [ -f "${_hostpath}" ] ; then
         _filename="$( basename ${_hostpath} )"
         if  echo "${_fullpath}" 2>/dev/null | grep -qow "${_filename}"; then
