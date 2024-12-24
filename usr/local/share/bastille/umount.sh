@@ -54,15 +54,15 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' )"
-    _mount="$( mount | grep -o ${_jailpath} )"
-    _fstab_entry="$( cat ${bastille_jailsdir}/${_jail}/fstab | grep -o ${_jailpath} )"
-
     info "[${_jail}]:"
+set -x
+    _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' )"
+    _mount="$( mount | grep -ow ${_jailpath} )"
+    _fstab_entry="$( cat ${bastille_jailsdir}/${_jail}/fstab | grep -ow ${_jailpath} )"
 
     # Exit if mount point non-existent
     if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
-        error_continue "The specified mount point does not exist inside the jail."
+        error_continue "The specified mount point does not exist."
     fi
 
     # Unmount

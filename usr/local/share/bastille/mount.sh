@@ -105,27 +105,27 @@ fi
 
 for _jail in ${JAILS}; do
 
+    info "[${_jail}]:"
+
     _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath} 2>/dev/null | sed 's#//#/#' )"
     _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
 
-    info "[${_jail}]:"
-
     # Check if mount point has already been added
-    if grep -Eq "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
+    if grep -Eq "[[:blank:]]${_fullpath}" "${bastille_jailsdir}/${_jail}/fstab"; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
-        grep -E "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
+        grep -E "[[:blank:]]${_fullpath}" "${bastille_jailsdir}/${_jail}/fstab"
         continue
     fi
 
     ## Create mount point if it does not exist
     if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
-        mkdir -p "${_fullpath}" || error_continue "Failed to create mount point inside jail."
+        mkdir -p "${_fullpath}" || error_continue"Failed to create mount point."
     elif [ -f "${_hostpath}" ] ; then
         _filename="$( basename ${_hostpath} )"
-        if  echo "${_fullpath}" 2>/dev/null | grep -qo "${_filename}"; then
-            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point inside jail."
+        if  echo "${_fullpath}" 2>/dev/null | grep -qow "${_filename}"; then
+            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point."
             if [ ! -f "${_fullpath}" ]; then
-                touch "${_fullpath}" || error_continue "Failed to create mount point inside jail."
+                touch "${_fullpath}" || error_continue "Failed to create mount point."
             else
                 error_notify "Failed. File exists at mount point."
                 warn "${_fullpath}"
@@ -134,9 +134,9 @@ for _jail in ${JAILS}; do
         else
             _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath}/${_filename} 2>/dev/null | sed 's#//#/#' )"
             _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
-            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point inside jail."
+            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point."
             if [ ! -f "${_fullpath}" ]; then
-                touch "${_fullpath}" || error_continue "Failed to create mount point inside jail."
+                touch "${_fullpath}" || error_continue "Failed to create mount point."
             else
                 error_notify "Failed. File exists at mount point."
                 warn "${_fullpath}"
@@ -146,10 +146,7 @@ for _jail in ${JAILS}; do
     fi   
     
     # Add entry to fstab and mount
-    if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"; then
-        error_continue "Failed to create fstab entry: ${_fstab_entry}"
-    else
-        mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
-        echo "Added: ${_fstab_entry}"
-    fi
+    echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab" || error_continue "Failed to create fstab entry: ${_fstab_entry}"
+    mount -F "${bastille_jailsdir}/${_jail}/fstab" -a || error_continue "Failed to mount volume: ${_fullpath}"
+    echo "Added: ${_fstab_entry}"
 done
