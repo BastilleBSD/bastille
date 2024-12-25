@@ -35,13 +35,9 @@ usage() {
     error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|(import|export|backup)]"
 }
 
-if [ "${1}" = help ] || [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
-    usage
-fi
-
 bastille_root_check
 
-if [ $# -eq 0 ]; then
+if [ "$#" -eq 0 ]; then
    /usr/sbin/jls
 fi
 
@@ -207,39 +203,60 @@ list_import(){
     ls "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 
-if [ $# -gt 0 ]; then
-    # Handle special-case commands first.
+list_ports() {
+    if [ -d "${bastille_jailsdir}" ]; then
+        JAIL_LIST="$(ls "${bastille_jailsdir}" | sed "s/\n//g")"
+        for _JAIL in ${JAIL_LIST}; do
+            if [ -f "${bastille_jailsdir}/${_JAIL}/rdr.conf" ]; then
+                _PORTS="$(cat "${bastille_jailsdir}"/"${_JAIL}"/rdr.conf)"
+                info "[$_JAIL]:"
+                echo "${_PORTS}"
+            fi
+        done
+    fi
+}
+
+if [ "$#" -gt 0 ]; then
     case "${1}" in
-    all|-a|--all)
-        list_all
-        ;;
-    release|releases)
-        list_release "${2}"
-        ;;
-    template|templates)
-        list_template
-        ;;
-    jail|jails|container|containers)
-        list_jail
-        ;;
-    log|logs)
-        list_log
-        ;;
-    limit|limits)
-        list_limit
-        ;;
-    import|imports|export|exports|backup|backups)
-        list_import
-    exit 0
-    ;;
-    *)
-        # Check if we want to query all info for a specific jail instead.
-        if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
-            TARGET="${1}"
-            list_all
-        else
+        -h|--help|help)
             usage
-        fi
-        ;;
+            ;;
+        all|-a|--all)
+            list_all
+            ;;
+        port|ports)
+            list_ports
+            ;;
+        release|releases)
+            list_release "${2}"
+            ;;
+        template|templates)
+            list_template
+            ;;
+        jail|jails|container|containers)
+            list_jail
+            ;;
+        log|logs)
+            list_log
+            ;;
+        limit|limits)
+            list_limit
+            ;;
+        import|imports|export|exports|backup|backups)
+            list_import
+            exit 0
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            # Check if we want to query all info for a specific jail instead.
+            if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
+                TARGET="${1}"
+                list_all
+            else
+                usage
+            fi
+            ;;
     esac
 fi

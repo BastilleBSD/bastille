@@ -32,21 +32,50 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille convert TARGET"
+    error_exit "Usage: bastille convert [option(s)] TARGET"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Stop the jail if it is running.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -ne 0 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 
+TARGET="${1}"
+
 bastille_root_check
+set_target_single "${TARGET}"
+check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille stop "${TARGET}"
+else
+    exit
+fi
 
 convert_symlinks() {
     # Work with the symlinks, revert on first cp error
@@ -114,7 +143,7 @@ start_convert() {
         HASPORTS=$(grep -w ${bastille_releasesdir}/${RELEASE}/usr/ports ${bastille_jailsdir}/${TARGET}/fstab)
 
         if [ -n "${RELEASE}" ]; then
-            cd "${bastille_jailsdir}/${TARGET}/root" || error_exit "Failed to change directory to ${bastille_jailsdir}/${TARGET}/root"
+            cd "${bastille_jailsdir}/${TARGET}/root" || error_exit "Could not cd to ${bastille_jailsdir}/${TARGET}/root"
 
             # Work with the symlinks
             convert_symlinks
@@ -149,9 +178,7 @@ fi
 # Be interactive here since this cannot be easily undone
 while :; do
     error_notify "Warning: container conversion from thin to thick can't be undone!"
-    # shellcheck disable=SC2162
-    # shellcheck disable=SC3045
-    read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
+    read "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
     case ${yn} in
     [Yy]) start_convert;;
     [Nn]) exit 0;;

@@ -29,26 +29,56 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille sysrc TARGET args"
+    error_exit "Usage: bastille sysrc [option(s)] TARGET ARGS"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -lt 1 ]; then
+if [ "$#" -lt 2 ]; then
     usage
 fi
 
+TARGET="${1}"
+shift
+
 bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+	    bastille start "${_jail}"
+	else
+	    continue
+    fi
     info "[${_jail}]:"
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
-    echo -e "${COLOR_RESET}"
 done

@@ -32,28 +32,43 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille destroy [force] | [container|release]"
+    error_notify "Usage: bastille destroy [option(s)] [JAIL|RELEASE]"
+
+    cat << EOF
+    Options:
+
+    -f | --force -- Stop the jail if it is running.
+
+EOF
+    exit 1
 }
 
+
 destroy_jail() {
-    local OPTIONS
+    local TARGET="${1}"
+    local OPTIONS    
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
-
-    if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        if [ "${FORCE}" = "1" ]; then
-            bastille stop "${TARGET}"
-        else
-            error_notify "Jail running."
-            error_exit "See 'bastille stop ${TARGET}'."
-        fi
-    fi
-
-    if [ ! -d "${bastille_jail_base}" ]; then
-        error_exit "Jail not found."
+	
+    check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq "1" ]; then
+        bastille stop "${TARGET}"
+    else
+        exit
     fi
 
     if [ -d "${bastille_jail_base}" ]; then
+        # Force unmount an existing mount points
+        mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
+        for _mount in ${mount_points}; do
+            echo "Unmounting: \"${_mount}\""
+            umount -f "${_mount}" || error_exit "Failed to unmount: \"${_mount}\""
+        done
+
+        ## make sure no filesystem is currently mounted in the jail directory
+        if [ -n "${mount_points}" ]; then
+            error_notify "Failed to destroy jail: ${TARGET}"
+            error_exit "Jail has mounted filesystems:\n$mount_points"
+        fi
         info "Deleting Jail: ${TARGET}."
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -94,7 +109,6 @@ destroy_jail() {
             info "Clearing RDR rules:"
             pfctl -a "rdr/${TARGET}" -Fn
         fi
-        echo
     fi
 }
 
@@ -172,95 +186,94 @@ destroy_rel() {
             if [ "${FORCE}" = "1" ]; then
                 ## remove cache on force
                 if [ -d "${bastille_cachedir}/${TARGET}" ]; then
-                    rm -rf "${bastille_cachedir:?}/${TARGET}"
+                    rm -rf "${bastille_cachedir:?}/${TARGET:?}"
                 fi
             fi
-            echo
         else
             error_notify "Cannot destroy base with child containers."
         fi
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force|force)
+            FORCE="1"
+            shift
+            ;;
+        -*)
+            error_exit "Unknown Option: \"${1}\""
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-## reset this options
-FORCE=""
-
-## handle additional options
-case "${1}" in
-    -f|--force|force)
-        FORCE="1"
-        shift
-        ;;
-    -*)
-        error_notify "Unknown Option."
-        usage
-        ;;
-esac
-
-TARGET="${1}"
-
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
+
+TARGET="${1}"
 
 bastille_root_check
 
 ## check what should we clean
 case "${TARGET}" in
-*-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
-    ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-    destroy_rel
-    ;;
-*-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
-    ## check for FreeBSD releases name
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-    destroy_rel
-    ;;
-*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-    ## check for HardenedBSD releases name
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g;s/last/LAST/g')
-    destroy_rel
-    ;;
-*-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
-    ## check for HardenedBSD(specific stable build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g;s/STABLE/stable/g')
-    destroy_rel
-    ;;
-*-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
-    ## check for HardenedBSD(latest stable build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/;s/build/BUILD/g;s/latest/LATEST/g')
-    destroy_rel
-    ;;
-current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
-    ## check for HardenedBSD(specific current build releases)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g;s/CURRENT/current/g')
-    destroy_rel
-    ;;
-current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
-    ## check for HardenedBSD(latest current build release)
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/g;s/latest/LATEST/g')
-    destroy_rel
-    ;;
-Ubuntu_1804|Ubuntu_2004|Ubuntu_2204|UBUNTU_1804|UBUNTU_2004|UBUNTU_2204)
-    ## check for Linux releases
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$|(Ubuntu_2204)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
-    destroy_rel
-    ;;
-Debian10|Debian11|Debian12|DEBIAN10|DEBIAN11|DEBIAN12)
-    ## check for Linux releases
-    NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian10)$|(Debian11)$|(Debian12)$' | sed 's/DEBIAN/Debian/g')
-    destroy_rel
-    ;;
-*)
-    ## just destroy a jail
-    destroy_jail
-    ;;
+    *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
+        ## check for FreeBSD releases name
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+        destroy_rel
+        ;;
+    *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
+        ## check for FreeBSD releases name
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+        destroy_rel
+        ;;
+    *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+        ## check for HardenedBSD releases name
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g;s/last/LAST/g')
+        destroy_rel
+        ;;
+    *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
+        ## check for HardenedBSD(specific stable build releases)
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g;s/STABLE/stable/g')
+        destroy_rel
+        ;;
+    *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
+        ## check for HardenedBSD(latest stable build release)
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/;s/build/BUILD/g;s/latest/LATEST/g')
+        destroy_rel
+        ;;
+    current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
+        ## check for HardenedBSD(specific current build releases)
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g;s/CURRENT/current/g')
+        destroy_rel
+        ;;
+    current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
+        ## check for HardenedBSD(latest current build release)
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/g;s/latest/LATEST/g')
+        destroy_rel
+        ;;
+    Ubuntu_1804|Ubuntu_2004|Ubuntu_2204|UBUNTU_1804|UBUNTU_2004|UBUNTU_2204)
+        ## check for Linux releases
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$|(Ubuntu_2204)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
+        destroy_rel
+        ;;
+    Debian10|Debian11|Debian12|DEBIAN10|DEBIAN11|DEBIAN12)
+        ## check for Linux releases
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian10)$|(Debian11)$|(Debian12)$' | sed 's/DEBIAN/Debian/g')
+        destroy_rel
+        ;;
+    *)
+        ## just destroy a jail
+        set_target_single "${TARGET}"
+        destroy_jail "${TARGET}"
+        ;;
 esac

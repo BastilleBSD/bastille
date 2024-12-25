@@ -34,7 +34,7 @@
 usage() {
     # Build an independent usage for the create command
     # If no option specified, will create a thin container by default
-    error_notify "Usage: bastille create [option(s)] name release ip [interface]"
+    error_notify "Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [interface]"
 
     cat << EOF
     Options:
@@ -111,6 +111,7 @@ validate_ip() {
         fi
     fi
 }
+
 validate_ips() {
     IP6_MODE="disable"
     IP4_DEFINITION=""
@@ -165,15 +166,10 @@ EOF
 }
 
 generate_jail_conf() {
-    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
-        devfs_ruleset_value=0
-    else
-        devfs_ruleset_value=4
-    fi
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
+  devfs_ruleset = 4;
   enforce_statfs = 2;
-  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
@@ -194,17 +190,12 @@ EOF
 }
 
 generate_linux_jail_conf() {
-    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
-        devfs_ruleset_value=0
-    else
-        devfs_ruleset_value=4
-    fi
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   host.hostname = ${NAME};
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
-  devfs_ruleset = ${devfs_ruleset_value};
+  devfs_ruleset = 4;
   enforce_statfs = 1;
 
   exec.start = '/bin/true';
@@ -222,16 +213,11 @@ EOF
 }
 
 generate_vnet_jail_conf() {
-    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
-        devfs_ruleset_value=0
-    else
-        devfs_ruleset_value=13
-    fi
     NETBLOCK=$(generate_vnet_jail_netblock "$NAME" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
+  devfs_ruleset = 13;
   enforce_statfs = 2;
-  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
@@ -253,8 +239,7 @@ post_create_jail() {
 
     # Using relative paths here.
     # MAKE SURE WE'RE IN THE RIGHT PLACE.
-    cd "${bastille_jail_path}" || error_exit "Failed to change directory."
-    echo
+    cd "${bastille_jail_path}" || error_exit "Could not cd to ${bastille_jail_path}"
 
     if [ ! -f "${bastille_jail_conf}" ]; then
         if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
@@ -377,7 +362,7 @@ create_jail() {
 
         if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
-            info "Creating a thinjail...\n"
+            info "Creating a thinjail..."
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
@@ -411,11 +396,11 @@ create_jail() {
                         info "Creating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-
-                        # shellcheck disable=SC2140
-                        zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
+                        
+						# shellcheck disable=SC2140
+						zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
                         "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         # Check and apply required settings.
@@ -429,20 +414,20 @@ create_jail() {
 
                         ## take a temp snapshot of the base release
                         SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
                         ## replicate the release base to the new thickjail and set the default mountpoint
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
                         zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         ## cleanup temp snapshots initially
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-                        # shellcheck disable=SC2140
+						# shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
                     fi
 
@@ -606,16 +591,9 @@ create_jail() {
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
 bastille_root_check
 
-if echo "$3" | grep '@'; then
+if echo "${3}" | grep '@'; then
     # shellcheck disable=SC2034
     BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
     # shellcheck disable=SC2034
@@ -632,6 +610,9 @@ LINUX_JAIL=""
 # Handle and parse options
 while [ $# -gt 0 ]; do
     case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
         -E|--empty)
             EMPTY_JAIL="1"
             shift
@@ -701,8 +682,8 @@ while [ $# -gt 0 ]; do
             VNET_JAIL_BRIDGE="1"
             shift
             ;;
-        --*|-*)
-            error_notify "Unknown Option."
+        -*)
+            error_notify "Unknown option: \"${1}\""
             usage
             ;;
         *)

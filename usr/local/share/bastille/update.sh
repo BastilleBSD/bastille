@@ -32,39 +32,50 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille update [release|container|template] | [force]"
-}
+    error_exit "Usage: bastille update [option(s)] [RELEASE|JAIL|TEMPLATE]"
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+    cat << EOF
+    Options:
+
+    -s | --start -- Start the jail if it is stopped.
+    -f | --force -- Force update a release.
+
+EOF
+    exit 1
+}
 
 if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-bastille_root_check
+# Handle options.
+OPTION=""
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -s|--start)
+            FORCE=1
+            shift
+            ;;
+        -f|--force)
+            OPTION="-F"
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 TARGET="${1}"
-OPTION="${2}"
 
-# Handle options
-case "${OPTION}" in
-    -f|--force)
-        OPTION="-F"
-        ;;
-    *)
-        OPTION=
-        ;;
-esac
-
-# Check for unsupported actions
-if [ "${TARGET}" = "ALL" ]; then
-    error_exit "Batch upgrade is unsupported."
-fi
+bastille_root_check
 
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
@@ -84,28 +95,26 @@ arch_check() {
 
 jail_check() {
     # Check if the jail is thick and is running
-    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
+    set_target_single "${TARGET}"
+    check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${TARGET}"
     else
-        if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-            error_exit "${TARGET} is not a thick container."
-        fi
+        exit
+    fi
+    if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        error_exit "${TARGET} is not a thick container."
     fi
 }
 
 jail_update() {
     # Update a thick container
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        jail_check    
-        CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-        if [ -z "${CURRENT_VERSION}" ]; then
-            error_exit "Can't determine '${TARGET}' version."
-        else
-            env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" \
-            fetch install --currently-running "${CURRENT_VERSION}"
-        fi
+    jail_check    
+    CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+    if [ -z "${CURRENT_VERSION}" ]; then
+        error_exit "Can't determine '${TARGET}' version."
     else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
+        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" \
+        fetch install --currently-running "${CURRENT_VERSION}"
     fi
 }
 
@@ -143,10 +152,10 @@ template_update() {
 templates_update() {
     # Update all templates
     _updated_templates=0
-    if [ -d "${bastille_templatesdir}" ]; then
-        # shellcheck disable=SC2045
-        for _template_path in $(ls -d "${bastille_templatesdir}"/*/*); do
-            if [ -d "$_template_path"/.git ]; then
+    if [ -d  ${bastille_templatesdir} ]; then
+	    # shellcheck disable=SC2045
+        for _template_path in $(ls -d ${bastille_templatesdir}/*/*); do
+            if [ -d $_template_path/.git ]; then
                 BASTILLE_TEMPLATE=$(echo "$_template_path" | awk -F / '{ print $(NF-1) "/" $NF }')
                 template_update
 

@@ -32,24 +32,52 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille clone [TARGET] [NEW_NAME] [IPADRESS]"
+    error_exit "Usage: bastille clone TARGET NEW_NAME IP_ADDRESS"
+
+    cat << EOF
+    Options:
+
+    -f | --force   -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 3 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+NEWNAME="${2}"
+IP="${3}"
 
-NEWNAME="${1}"
-IP="${2}"
+bastille_root_check
+set_target_single "${TARGET}"
+
+## don't allow for dots(.) in container names
+if echo "${NEWNAME}" | grep -q "[.]"; then
+    error_exit "Container names may not contain a dot(.)!"
+fi
 
 validate_ip() {
     IPX_ADDR="ip4.addr"
@@ -58,7 +86,7 @@ validate_ip() {
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         IPX_ADDR="ip6.addr"
-        # shellcheck disable=SC2034
+		# shellcheck disable=SC2034
         IP6_MODE="new"
     else
         local IFS
@@ -107,24 +135,37 @@ update_jailconf_vnet() {
     # Determine number of containers and define an uniq_epair
     local list_jails_num="$(bastille list jails | wc -l | awk '{print $1}')"
     local num_range="$(expr "${list_jails_num}" + 1)"
-    jail_list=$(bastille list jail)
+    jail_list="$(bastille list jails)"
     for _num in $(seq 0 "${num_range}"); do
         if [ -n "${jail_list}" ]; then
             if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                uniq_epair="bastille${_num}"
-                # Update the exec.* with uniq_epair when cloning jails.
-                sed -i '' "s|vnet.interface = e0b_bastille.*;|vnet.interface = e0b_${uniq_epair};|" "${JAIL_CONFIG}"
-                sed -i '' "s|exec.prestart += \"jib addm bastille[0-9]|exec.prestart += \"jib addm ${uniq_epair}|" "${JAIL_CONFIG}"
-                sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille[0-9].*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
-                sed -i '' "s|exec.poststop += \"jib destroy bastille[0-9]\";|exec.poststop += \"jib destroy ${uniq_epair}\";|" "${JAIL_CONFIG}"
-                break
+                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                    local uniq_epair="bastille${_num}"
+                    local uniq_epair_bridge="${_num}"
+		    # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
+                    # we also do not use the main generate_static_mac function here
+                    local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
+    		    local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+                    local macaddr="${macaddr_prefix}:${macaddr_suffix}"
+		    # Update the exec.* with uniq_epair when cloning jails.
+                    # for VNET jails
+                    sed -i '' "s|bastille\([0-9]\{1,\}\)|${uniq_epair}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|e\([0-9]\{1,\}\)a_${NEWNAME}|e${uniq_epair_bridge}a_${NEWNAME}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|e\([0-9]\{1,\}\)b_${NEWNAME}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|epair\([0-9]\{1,\}\)|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille\([0-9]\{1,\}\).*description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*a|ether ${macaddr}a|" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*b|ether ${macaddr}b|" "${JAIL_CONFIG}"
+                    break
+                fi
             fi
         fi
     done
 
     # Rename interface to new uniq_epair
     sed -i '' "s|ifconfig_e0b_bastille.*_name|ifconfig_e0b_${uniq_epair}_name|" "${bastille_jail_rc_conf}"
-
+    sed -i '' "s|ifconfig_e.*b_${TARGET}_name|ifconfig_e${uniq_epair_bridge}b_${NEWNAME}_name|" "${bastille_jail_rc_conf}"
+    
     # If 0.0.0.0 set DHCP, else set static IP address
     if [ "${IP}" = "0.0.0.0" ]; then
         sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
@@ -152,8 +193,15 @@ update_fstab() {
 }
 
 clone_jail() {
-    # Attempt container clone
-    info "Attempting to clone '${TARGET}' to ${NEWNAME}..."
+
+    info "Attempting to clone ${TARGET} to ${NEWNAME}..."
+
+    check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille stop "${TARGET}"
+    else
+        exit
+    fi
+
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -171,13 +219,7 @@ clone_jail() {
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
             fi
         else
-            # Just clone the jail directory
-            # Check if container is running
-            if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-                error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
-            fi
-
-            # Perform container file copy(archive mode)
+            # Perform container file copy (archive mode)
             cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
         fi
     else
@@ -196,12 +238,7 @@ clone_jail() {
     fi
 }
 
-## don't allow for dots(.) in container names
-if echo "${NEWNAME}" | grep -q "[.]"; then
-    error_exit "Container names may not contain a dot(.)!"
-fi
-
-## check if ip address is valid
+# Check if IP address is valid.
 if [ -n "${IP}" ]; then
     validate_ip
 else
@@ -209,3 +246,4 @@ else
 fi
 
 clone_jail
+
