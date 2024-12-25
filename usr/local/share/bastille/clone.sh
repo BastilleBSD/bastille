@@ -37,7 +37,8 @@ usage() {
     cat << EOF
     Options:
 
-    -f | --force   -- Start the jail if it is stopped.
+    -f | --force   -- Stop the jail if it is running.
+                      Mandatory for UFS, optional for ZFS.
 
 EOF
     exit 1
@@ -196,14 +197,11 @@ clone_jail() {
 
     info "Attempting to clone ${TARGET} to ${NEWNAME}..."
 
-    check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
-        bastille stop "${TARGET}"
-    else
-        exit
-    fi
-
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
         if checkyesno bastille_zfs_enable; then
+            check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+                bastille stop "${TARGET}"
+            fi
             if [ -n "${bastille_zfs_zpool}" ]; then
                 # Replicate the existing container
                 DATE=$(date +%F-%H%M%S)
@@ -220,7 +218,12 @@ clone_jail() {
             fi
         else
             # Perform container file copy (archive mode)
-            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+                bastille stop "${TARGET}"
+                cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            else
+                exit
+            fi
         fi
     else
         error_exit "${NEWNAME} already exists."
