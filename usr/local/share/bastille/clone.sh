@@ -36,9 +36,10 @@ usage() {
 
     cat << EOF
     Options:
-
-    -f | --force   -- Stop the jail if it is running.
-                      Mandatory for UFS, optional for ZFS.
+    
+    -r | --restart   -- Start/Restart jail(s) on completion.
+    -f | --force     -- Stop the jail if it is running.
+                        Mandatory for UFS, optional for ZFS.
 
 EOF
     exit 1
@@ -46,10 +47,15 @@ EOF
 
 # Handle options.
 FORCE=0
+RESTART=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -r|--restart)
+            RESTART=1
+            shift
             ;;
         -f|--force)
             FORCE=1
