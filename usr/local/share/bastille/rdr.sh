@@ -101,11 +101,6 @@ persist_rdr_rule() {
     local jail_port="${7}"
     if ! grep -qs "$inet $if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         echo "$inet $if $src $dst $proto $host_port $jail_port" >> "${bastille_jailsdir}/${TARGET}/rdr.conf"
-    else
-        info "[${TARGET}]:"
-        warn "Rule already exists in rdr.conf"
-        echo "$inet $if $src $dst $proto $host_port $jail_port"
-        exit 1
     fi
 }
 
@@ -121,11 +116,6 @@ persist_rdr_log_rule() {
     log=$@;
     if ! grep -qs "$inet $if $src $dst $proto $host_port $jail_port $log" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         echo "$inet $if $src $dst $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${TARGET}/rdr.conf"
-    else
-        info "[${TARGET}]:"
-        warn "Rule already exists in rdr.conf"
-        echo "$inet $if $src $dst $proto $host_port $jail_port $log"
-        exit 1
     fi
 }
 
