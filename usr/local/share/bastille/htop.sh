@@ -62,7 +62,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -ne 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 
@@ -70,16 +70,18 @@ TARGET="${1}"
 
 bastille_root_check
 set_target_single "${TARGET}"
+
+info "[${TARGET}]:"
 check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
     bastille start "${TARGET}"
-else
-    exit
+else   
+    error_notify "Jail is not running."
+    error_continue "Use [-f|--force] to force start the jail."
 fi
 
 bastille_jail_path="${bastille_jailsdir}/${TARGET}/root"
 if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
     error_notify "htop not found on ${TARGET}."
 elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-    info "[${TARGET}]:"
     jexec -l ${TARGET} /usr/local/bin/htop
 fi
