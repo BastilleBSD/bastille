@@ -8,10 +8,10 @@ To mount storage within the container use `bastille mount`.
 
   ishmael ~ # bastille mount azkaban /storage/foo media/foo nullfs ro 0 0
   [azkaban]:
-  Added: /media/foo /usr/local/bastille/jails/azkaban/root/media/foo
+  Added: /media/foo /usr/local/bastille/jails/azkaban/root/media/foo nullfs ro 0 0
   ishmael ~ # bastille mount azkaban /storage/bar /media/bar nullfs ro 0 0
   [azkaban]:
-  Added: /media/bar /usr/local/bastille/jails/azkaban/root/media/bar
+  Added: /media/bar /usr/local/bastille/jails/azkaban/root/media/bar nullfs ro 0 0
 
 Notice the JAIL_PATH format can be /media/foo or simply media/bar. The leading slash / is optional. The HOST_PATH howerver, must be the full path including the leading slash /.
 
@@ -23,10 +23,10 @@ If you do not specify a file name, bastille will mount the file underneath the s
 
   ishmael ~ # bastille mount azkaban /etc/rc.conf /mnt/etc/rc.conf nullfs ro 0 0
   [azkaban]:
-  Added: /etc/rc.conf /usr/local/bastille/jails/azkaban/root/mnt/etc/rc.conf
+  Added: /etc/rc.conf /usr/local/bastille/jails/azkaban/root/mnt/etc/rc.conf nullfs ro 0 0
   ishmael ~ # bastille mount azkaban /etc/rc.conf /media/bar nullfs ro 0 0
   [azkaban]:
-  Added: /etc/rc.conf usr/local/bastille/jails/azkaban/root/media/bar/rc.conf
+  Added: /etc/rc.conf usr/local/bastille/jails/azkaban/root/media/bar/rc.conf nullfs ro 0 0
 
 It is also possible (but not recommended) to have spaces in the directories that are mounted.
 It is necessary to escape each space with a backslash \ and enclose the mount point in quotes "" as seen below.
@@ -36,7 +36,7 @@ It is possible to do the same for the jail path, but again, not recommemded.
 
   ishmael ~ # bastille mount azkaban "/storage/my\ directory\ with\ spaces" /media/foo nullfs ro 0 0
   [azkaban]:
-  Added: /storage/my\040directory\040with\040spaces /usr/local/bastille/jails/azkaban/root/media/foo
+  Added: /storage/my\040directory\040with\040spaces /usr/local/bastille/jails/azkaban/root/media/foo nullfs ro 0 0
 
 Syntax follows standard `/etc/fstab` format:
 
