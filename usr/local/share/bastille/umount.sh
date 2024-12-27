@@ -57,8 +57,8 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
 
     _jailpath="$( echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"
-    _mount="$( mount | grep -ow "${_jailpath}" )"
-    _jailpath_fstab="$(echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" | sed 's#//#/#' | sed 's#\\ #\\\\040#g')"
+    _mount="$( mount | grep -Eo "[[:blank:]]${_jailpath}[[:blank:]]" )"
+    _jailpath_fstab="$(echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" | sed 's#//#/#g' | sed 's# #\\#g' | sed 's#\\#\\\\040#g')"
     _fstab_entry="$(grep -Eo "[[:blank:]]${_jailpath_fstab}[[:blank:]]" ${bastille_jailsdir}/${_jail}/fstab)"
 
     # Exit if mount point non-existent
