@@ -56,9 +56,10 @@ for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
 
-    _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' )"
-    _mount="$( mount | grep -ow ${_jailpath} )"
-    _fstab_entry="$( cat ${bastille_jailsdir}/${_jail}/fstab | grep -ow ${_jailpath} )"
+    _jailpath="$( echo ${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH} 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"
+    _mount="$( mount | grep -ow "${_jailpath}" )"
+    _jailpath_fstab="$(echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" | sed 's#//#/#' | sed 's#\\ #\\\\040#g')"
+    _fstab_entry="$(grep -Eow "${_jailpath_fstab}" ${bastille_jailsdir}/${_jail}/fstab)"
 
     # Exit if mount point non-existent
     if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
@@ -72,7 +73,7 @@ for _jail in ${JAILS}; do
 
     # Remove entry from fstab
     if [ -n "${_fstab_entry}" ]; then
-        if ! sed -E -i '' "\, +${_jailpath} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
+        if ! sed -E -i '' "\, +${_jailpath_fstab} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
             error_continue "Failed to delete fstab entry: ${MOUNT_PATH}"
         fi
     fi
@@ -82,6 +83,6 @@ for _jail in ${JAILS}; do
         rm -f "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
     fi
     
-    echo "Unmounted: ${MOUNT_PATH}"
+    echo "Unmounted: ${_jailpath}"
 	
 done

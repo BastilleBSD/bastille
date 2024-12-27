@@ -32,8 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH"
-
+    error_notify "Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH"
     cat << EOF
     Options:
 
@@ -77,7 +76,7 @@ set_target "${TARGET}"
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    cp "${OPTION}" "${bastille_jail_path}/${CPSOURCE}" "${CPDEST}"
-    RETURN="$?"
-    return "${RETURN}"
+    if ! cp "${OPTION}" "${bastille_jail_path}${CPSOURCE}" "${CPDEST}"; then
+        error_continue "RCP failed: ${CPSOURCE} -> ${bastille_jail_path}${CPDEST}"
+    fi
 done

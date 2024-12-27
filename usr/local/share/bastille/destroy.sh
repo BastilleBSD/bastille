@@ -33,7 +33,6 @@
 
 usage() {
     error_notify "Usage: bastille destroy [option(s)] [JAIL|RELEASE]"
-
     cat << EOF
     Options:
 
@@ -50,10 +49,11 @@ destroy_jail() {
     bastille_jail_base="${bastille_jailsdir}/${TARGET}"            ## dir
     bastille_jail_log="${bastille_logsdir}/${TARGET}_console.log"  ## file
 	
-    check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq "1" ]; then
+    check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
         bastille stop "${TARGET}"
-    else
-        exit
+    else   
+        error_notify "Jail is running."
+        error_exit "Use [-f|--force] to force stop the jail."
     fi
 
     if [ -d "${bastille_jail_base}" ]; then

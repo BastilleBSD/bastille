@@ -32,8 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
-
+    error_notify "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
     cat << EOF
     Options:
 
@@ -77,7 +76,7 @@ set_target "${TARGET}"
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}${CPDEST}"
-    RETURN="$?"
-    return "${RETURN}"
+    if ! cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}${CPDEST}"; then
+        error_continue "CP failed: ${CPSOURCE} -> ${bastille_jail_path}${CPDEST}"
+    fi
 done

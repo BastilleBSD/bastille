@@ -32,8 +32,16 @@
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    error_exit "Usage: bastille template TARGET [--convert|project/template|template]"
+    error_notify "Usage: bastille template [option(s)] TARGET [--convert|project/template|template]"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
+
 
 post_command_hook() {
     _jail=$1
@@ -105,12 +113,25 @@ render() {
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-    help|-h|--help)
-        bastille_usage
-        ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+	-f|--force)
+	    FORCE=1
+	    shift
+	    ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ $# -lt 2 ]; then
     bastille_usage
@@ -230,11 +251,15 @@ fi
 
 for _jail in ${JAILS}; do
 
-    check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
-        bastille start "${TARGET}" || continue
+    info "[${_jail}]:"
+
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-f|--force] to force start the jail."
     fi
 
-    info "[${_jail}]:"
     echo "Applying template: ${TEMPLATE}..."
 
     ## jail-specific variables.

@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille convert [option(s)] TARGET"
+    error_notify "Usage: bastille convert [option(s)] TARGET"
 
     cat << EOF
     Options:
@@ -73,8 +73,9 @@ bastille_root_check
 set_target_single "${TARGET}"
 check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
     bastille stop "${TARGET}"
-else
-    exit
+else   
+    error_notify "Jail is running."
+    error_exit "Use [-f|--force] to force stop the jail."
 fi
 
 convert_symlinks() {

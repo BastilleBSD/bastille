@@ -32,8 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille sysrc [option(s)] TARGET ARGS"
-
+    error_notify "Usage: bastille sysrc [option(s)] TARGET ARGS"
     cat << EOF
     Options:
 
@@ -74,11 +73,12 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
-	    bastille start "${_jail}"
-	else
-	    continue
-    fi
     info "[${_jail}]:"
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-f|--force] to force start the jail."
+    fi
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
 done

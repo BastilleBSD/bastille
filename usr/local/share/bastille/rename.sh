@@ -32,12 +32,12 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rename [option(s)] TARGET NEW_NAME"
-
+    error_notify "Usage: bastille rename [option(s)] TARGET NEW_NAME"
     cat << EOF
     Options:
 
-    -f | --force -- Stop the jail if it is running.
+    -f | --force   -- Stop the jail if it is running.
+    -s | --start   -- Start jail(s) when complete.
 
 EOF
     exit 1
@@ -45,10 +45,15 @@ EOF
 
 # Handle options.
 FORCE=0
+START=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -s|--start)
+            START=1
+            shift
             ;;
         -f|--force)
             FORCE=1
@@ -74,8 +79,9 @@ bastille_root_check
 set_target_single "${TARGET}"
 check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
     bastille stop "${TARGET}"
-else
-    usage
+else   
+    error_notify "Jail is running."
+    error_exit "Use [-f|--force] to force stop the jail."
 fi
 
 validate_name() {
@@ -162,10 +168,10 @@ change_name() {
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
-        if [ "${FORCE}" -eq 1 ]; then
+        info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
+        if [ "${START}" -eq 1 ]; then
             bastille start "${NEWNAME}"
         fi
-        info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
     fi
 }
 

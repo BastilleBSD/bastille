@@ -31,12 +31,11 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille etcupdate [option(s)] [TARGET|bootstrap RELEASE]"
-
+    error_notify "Usage: bastille etcupdate [option(s)] [TARGET|bootstrap RELEASE]"
     cat << EOF
     Options:
 
-    -d | --dry-run | -- Only show output of what etcupdate will do.
+    -d | --dry-run   -- Only show output of what etcupdate will do.
 
 EOF
     exit 1
@@ -75,7 +74,7 @@ update_jail_etc() {
     fi
 }
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
 

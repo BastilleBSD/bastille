@@ -82,7 +82,6 @@ warn() {
 check_target_exists() {
     local _TARGET="${1}"
     if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
-        error_notify "Jail not found \"${_TARGET}\""
         return 1
     else
         return 0
@@ -92,7 +91,6 @@ check_target_exists() {
 check_target_is_running() {
     local _TARGET="${1}"
     if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
-        error_notify "[${_TARGET}]: Not started. See 'bastille start ${_TARGET}'."
         return 1
     else
         return 0
@@ -102,7 +100,6 @@ check_target_is_running() {
 check_target_is_stopped() {
     local _TARGET="${1}"
     if [ "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
-        error_notify "${_TARGET} is running. See 'bastille stop ${_TARGET}'."
         return 1
     else
         return 0
@@ -114,7 +111,7 @@ set_target() {
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         target_all_jails
     else
-        check_target_exists "${_TARGET}" || exit
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
         export JAILS
@@ -127,7 +124,7 @@ set_target_single() {
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
     else
-        check_target_exists "${_TARGET}" || exit
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
         export JAILS

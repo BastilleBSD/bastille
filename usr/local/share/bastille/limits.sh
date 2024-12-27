@@ -33,8 +33,14 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille limits TARGET OPTION VALUE"
+    error_notify "Usage: bastille limits [option(s)] TARGET OPTION VALUE"
     echo -e "Example: bastille limits JAILNAME memoryuse 1G"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
     exit 1
 }
 
@@ -63,10 +69,12 @@ set_target "${TARGET}"
 for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
-    check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
         bastille start "${_jail}"
-    else
-        exit
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-f|--force] to force start the jail."
     fi
 
     _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"

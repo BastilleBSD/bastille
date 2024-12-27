@@ -506,6 +506,12 @@ create_jail() {
         fi
     fi
 
+    # Exit if jail was not started, which means something is wrong.
+    if ! check_target_is_running "${NAME}"; then
+        bastille destroy "${NAME}"
+        error_exit "[${NAME}]: Failed to create jail..."
+    fi
+
     if [ -n "${VNET_JAIL}" ]; then
         if [ -n "${bastille_template_vnet}" ]; then
             ## rename interface to generic vnet0

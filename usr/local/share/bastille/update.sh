@@ -32,8 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille update [option(s)] [RELEASE|JAIL|TEMPLATE]"
-
+    error_notify "Usage: bastille update [option(s)] [RELEASE|JAIL|TEMPLATE]"
     cat << EOF
     Options:
 
@@ -98,8 +97,9 @@ jail_check() {
     set_target_single "${TARGET}"
     check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
         bastille start "${TARGET}"
-    else
-        exit
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-s|--start] to force start the jail."
     fi
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         error_exit "${TARGET} is not a thick container."

@@ -32,13 +32,12 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille pkg [option(s)] TARGET COMMAND [args]"
-
+    error_notify "Usage: bastille pkg [option(s)] TARGET COMMAND [args]"
     cat << EOF
     Options:
 
     -f | --force -- Start the jail if it is stopped.
-    -p | --host  -- Use the hosts pkg command.
+    -H | --host  -- Use the hosts pkg command.
 
 EOF
     exit 1
@@ -52,7 +51,7 @@ while [ "$#" -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
-        -p|--host)
+        -H|--host)
             USE_HOST_PKG=1
             shift
             ;;
@@ -74,6 +73,7 @@ if [ $# -lt 2 ]; then
 fi
 
 TARGET="${1}"
+shift
         
 bastille_root_check
 set_target "${TARGET}"
@@ -81,13 +81,17 @@ set_target "${TARGET}"
 errors=0
 
 for _jail in ${JAILS}; do
+
+    info "[${_jail}]:"
+
     check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
         bastille start "${_jail}"
-    else
-        continue
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-f|--force] to force start the jail."
     fi
-    info "[${_jail}]:"
-    bastille_jail_path="$( ${bastille_jailsdir}/${_jail}/root )"
+
+    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     if [ -f "/usr/sbin/mport" ]; then
         if ! jexec -l -U root "${_jail}" /usr/sbin/mport "$@"; then
             errors=1

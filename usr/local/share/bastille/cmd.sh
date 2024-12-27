@@ -32,8 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille cmd TARGET command"
-
+    error_notify "Usage: bastille cmd TARGET command"
     cat << EOF
     Options:
 
@@ -77,15 +76,17 @@ RETURN=0
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    # If target is stopped or not found, continue...
+
+    info "[${_jail}]:"
+
     check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
         bastille start "${_jail}"
-    else
-        continue
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-f|--force] to force start the jail."
     fi
     
     COUNT=$(($COUNT+1))
-    info "[${_jail}]:"
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
         # Allow executing commands on Linux jails.
         echo "$@"
@@ -94,7 +95,7 @@ for _jail in ${JAILS}; do
         echo "$@"
         jexec -l -U root "${_jail}" "$@"
     fi
-    ERROR_CODE="$?"
+    ERROR_CODE=$?
     if [ "${ERROR_CODE}" -ne 0 ]; then
         warn "[${_jail}]: ${ERROR_CODE}"
     fi

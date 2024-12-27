@@ -35,7 +35,6 @@ usage() {
     # Build an independent usage for the import command
     # If no file/extension specified, will import from standard input
     error_notify "Usage: bastille import [option(s)] FILE"
-
     cat << EOF
     Options:
 

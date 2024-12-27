@@ -37,7 +37,6 @@ usage() {
     # Valid compress/options for non ZFS configured systems are .tgz and .txz
     # If no compression option specified, user must redirect standard output
     error_notify "Usage: bastille export | option(s) | TARGET | PATH"
-
     cat << EOF
     Options:
 

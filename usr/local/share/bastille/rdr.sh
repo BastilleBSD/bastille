@@ -33,7 +33,6 @@
 
 usage() {
     error_notify "Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ] )]"
-
     cat << EOF
     Options:
 
@@ -53,6 +52,8 @@ check_jail_validity() {
         if [ "$( bastille config ${TARGET} get ip4.addr )" != 'disable' ] && [ "$( bastille config ${TARGET} get ip4.addr )" != 'not set' ]; then
             JAIL_IP="$( bastille config ${TARGET} get ip4.addr )"
         fi
+    else
+        error_exit "VNET jails do not support rdr."
     fi
     
     # Check if jail ip6 address (ip6.addr) is valid (non-VNET only)
@@ -202,9 +203,9 @@ OPTION_DST=0
 OPTION_INET_TYPE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-		    usage
-			;;
+        -h|--help|help)
+            usage
+            ;;
         -i|--interface)
             if ifconfig | grep -owq "${2}:"; then
                 OPTION_IF=1
@@ -360,15 +361,12 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         *)
-            if [ "${OPTION}" -eq 1 ];then
-                usage
-            fi
             if [ "${1}" = "dual" ] || [ "${1}" = "ipv4" ] || [ "${1}" = "ipv6" ]; then
                 RDR_INET="${1}"
             else 
                 usage
             fi
-            if [ "$#" -eq 7 ] && [ "${5}" = "tcp" ] || [ "${5}" = "udp" ]; then
+            if [ "$#" -eq 7 ] && { [ "${5}" = "tcp" ] || [ "${5}" = "udp" ]; } then
                 check_jail_validity
                 persist_rdr_rule "$@"
                 load_rdr_rule "$@"

@@ -32,33 +32,48 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille clone TARGET NEW_NAME IP_ADDRESS"
-
+    error_notify "Usage: bastille clone [option(s)] TARGET NEW_NAME IP_ADDRESS"
     cat << EOF
     Options:
-    
-    -r | --restart   -- Start/Restart jail(s) on completion.
-    -f | --force     -- Stop the jail if it is running.
-                        Mandatory for UFS, optional for ZFS.
+
+    -l | --live    -- Clone a running jail. ZFS only.
+                      Jail must be running.
+                      Cannot be used with [-f|--force].
+    -f | --force   -- Stop the jail if it is running.
+                      Cannot be used with [-l|--live].
+    -s | --start   -- Start jail(s) when complete.
 
 EOF
     exit 1
 }
 
 # Handle options.
+LIVE=0
 FORCE=0
-RESTART=0
+START=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
             ;;
-        -r|--restart)
-            RESTART=1
-            shift
+        -l|--live)
+            if ! checkyesno bastille_zfs_enable; then
+                error_exit "[-l|--live] can only be used with ZFS."
+            else
+                LIVE=1
+                shift
+            fi
             ;;
         -f|--force)
-            FORCE=1
+            if [ "${LIVE}" -eq 1 ]; then
+                error_exit "[-f|--force] cannot be used with [-l|--live]."
+            else
+                FORCE=1
+                shift
+            fi
+            ;;
+        -s|--start)
+            START=1
             shift
             ;;
         -*)
@@ -161,8 +176,8 @@ update_jailconf_vnet() {
                     sed -i '' "s|e\([0-9]\{1,\}\)b_${NEWNAME}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|epair\([0-9]\{1,\}\)|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille\([0-9]\{1,\}\).*description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
-                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*a|ether ${macaddr}a|" "${JAIL_CONFIG}"
-                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*b|ether ${macaddr}b|" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*a |ether ${macaddr}a |" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*b |ether ${macaddr}b |" "${JAIL_CONFIG}"
                     break
                 fi
             fi
@@ -205,8 +220,13 @@ clone_jail() {
 
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
         if checkyesno bastille_zfs_enable; then
-            check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
-                bastille stop "${TARGET}"
+            if [ "${LIVE}" -eq 1 ]; then
+                check_target_is_running "${TARGET}" || error_exit "[-l|--live] can only be used with a running jail."
+            elif [ "${FORCE}" -eq 1 ]; then
+                check_target_is_stopped "${TARGET}" || bastille stop "${TARGET}"
+            else
+                error_notify "Jail is running."
+                error_exit "Use [-f|--force] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
             fi
             if [ -n "${bastille_zfs_zpool}" ]; then
                 # Replicate the existing container
@@ -226,10 +246,11 @@ clone_jail() {
             # Perform container file copy (archive mode)
             check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
                 bastille stop "${TARGET}"
-                cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
             else
-                exit
+                error_notify "Jail is running."
+                error_exit "Use [-f|--force] to force stop the jail."
             fi
+            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
         fi
     else
         error_exit "${NEWNAME} already exists."
@@ -244,6 +265,12 @@ clone_jail() {
         error_exit "An error has occurred while attempting to clone '${TARGET}'."
     else
         info "Cloned '${TARGET}' to '${NEWNAME}' successfully."
+    fi
+    if [ "${START}" -eq 1 ]; then
+        if [ "${LIVE}" -eq 0 ]; then
+            bastille start "${TARGET}"
+        fi
+        bastille start "${NEWNAME}"
     fi
 }
 

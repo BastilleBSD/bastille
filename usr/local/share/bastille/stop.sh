@@ -53,7 +53,9 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    check_target_is_running "${_jail}" || continue
+    info "[${_jail}]:"
+
+    check_target_is_running "${_jail}" || error_continue "Jail is already stopped."
     # Capture ip4.addr address while still running
     _ip4="$(bastille config ${_jail} get ip4.addr)"
 
@@ -75,7 +77,6 @@ for _jail in ${JAILS}; do
     fi
 
     # Stop jail
-    info "[${_jail}]:"
     jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
     # Remove (captured above) ip4.addr from firewall table

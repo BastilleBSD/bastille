@@ -52,10 +52,11 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    
-    # Check if jail is running
-    check_target_is_stopped "${_jail}" || continue
-    if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
+
+    info "[${_jail}]:"
+        
+    check_target_is_stopped "${_jail}" || error_continue "Jail is already running."
+    if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
         _interface="$(bastille config ${_jail} get interface)"
         if ! ifconfig | grep "^${_interface}:" >/dev/null; then
             error_notify "Error: ${_interface} interface does not exist."
@@ -76,7 +77,6 @@ for _jail in ${JAILS}; do
     fi
 
     # Start jail
-    info "[${_jail}]:"
     jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
 
     # Add rctl limits
@@ -89,7 +89,7 @@ for _jail in ${JAILS}; do
     # Add rdr rules
     if [ -s "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
         while read _rules; do
-            bastille rdr "${_jail}" ${_rules}
+            bastille rdr ${_jail} ${_rules}
         done < "${bastille_jailsdir}/${_jail}/rdr.conf"
     fi
 done

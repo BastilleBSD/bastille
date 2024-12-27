@@ -50,17 +50,19 @@ TARGET="${1}"
 shift
 
 if [ "$#" -eq 2 ]; then
-    _fstab="$@ nullfs ro 0 0"
+    _fstab="$(echo "$@ nullfs ro 0 0" | sed 's#\\ #\\040#g')"
 else
-    _fstab="$@"
+    _fstab="$(echo "$@" | sed 's#\\ #\\040#g')"
 fi
 
 bastille_root_check
 set_target "${TARGET}"
 
 # Assign variables
-_hostpath=$(echo "${_fstab}" | awk '{print $1}')
-_jailpath=$(echo "${_fstab}" | awk '{print $2}')
+_hostpath_fstab=$(echo "${_fstab}" | awk '{print $1}')
+_hostpath="$(echo ${_hostpath_fstab} 2>/dev/null | sed 's#\\040# #g')"
+_jailpath_fstab=$(echo "${_fstab}" | awk '{print $2}')
+_jailpath="$(echo "${_jailpath_fstab}" 2>/dev/null | sed 's#\\040# #g')"
 _type=$(echo "${_fstab}" | awk '{print $3}')
 _perms=$(echo "${_fstab}" | awk '{print $4}')
 _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
@@ -107,13 +109,15 @@ for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
 
+    _fullpath_fstab="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab} 2>/dev/null | sed 's#//#/#' )"
     _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath} 2>/dev/null | sed 's#//#/#' )"
-    _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
+    _fstab_entry="${_hostpath_fstab} ${_fullpath_fstab} ${_type} ${_perms} ${_checks}"
 
     # Check if mount point has already been added
-    if grep -Eq "[[:blank:]]${_fullpath}" "${bastille_jailsdir}/${_jail}/fstab"; then
+    _existing_mount="$(echo ${_fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#')"
+    if grep -Eq "[[:blank:]]${_existing_mount}" "${bastille_jailsdir}/${_jail}/fstab"; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
-        grep -E "[[:blank:]]${_fullpath}" "${bastille_jailsdir}/${_jail}/fstab"
+        grep -E "[[:blank:]]${_existing_mount}" "${bastille_jailsdir}/${_jail}/fstab"
         continue
     fi
 
@@ -132,8 +136,9 @@ for _jail in ${JAILS}; do
                 continue
             fi
         else
+            _fullpath_fstab="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab}/${_filename} 2>/dev/null | sed 's#//#/#' )"
             _fullpath="$( echo ${bastille_jailsdir}/${_jail}/root/${_jailpath}/${_filename} 2>/dev/null | sed 's#//#/#' )"
-            _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
+            _fstab_entry="${_hostpath_fstab} ${_fullpath} ${_type} ${_perms} ${_checks}"
             mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point."
             if [ ! -f "${_fullpath}" ]; then
                 touch "${_fullpath}" || error_continue "Failed to create mount point."
