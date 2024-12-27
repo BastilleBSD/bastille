@@ -50,9 +50,9 @@ TARGET="${1}"
 shift
 
 if [ "$#" -eq 2 ]; then
-    _fstab="$(echo "$@ nullfs ro 0 0" | sed 's#\\ #\\040#g')"
+    _fstab="$(echo "$* nullfs ro 0 0" | sed 's#\\ #\\040#g')"
 else
-    _fstab="$(echo "$@" | sed 's#\\ #\\040#g')"
+    _fstab="$(echo "$*" | sed 's#\\ #\\040#g')"
 fi
 
 bastille_root_check
