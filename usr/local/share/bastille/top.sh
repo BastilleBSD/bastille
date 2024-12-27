@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille top [options(s)] TARGET"
+    error_notify "Usage: bastille top [options(s)] TARGET"
     cat << EOF
     Options:
 
@@ -70,12 +70,12 @@ TARGET="${1}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
-    bastille start "${TARGET}"
-else
-    exit
-fi
 
 info "[${TARGET}]:"
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else   
+    error_notify "Jail is not running."
+    error_continue "Use [-f|--force] to force start the jail."
+fi
 jexec -l "${TARGET}" /usr/bin/top
-echo -e "${COLOR_RESET}"
