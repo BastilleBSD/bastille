@@ -77,6 +77,15 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+check_target_exists() {
+    local _TARGET="${1}"
+    if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
@@ -143,7 +152,7 @@ set_target() {
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         target_all_jails
     else
-        check_target_exists "${_TARGET}" || exit
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
         export JAILS
