@@ -164,12 +164,13 @@ update_jailconf_vnet() {
                 if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
                     local uniq_epair="bastille${_num}"
                     local uniq_epair_bridge="${_num}"
-		    # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
+      	            # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
                     # we also do not use the main generate_static_mac function here
                     local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
-    		    local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+                    local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    	              local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
                     local macaddr="${macaddr_prefix}:${macaddr_suffix}"
-		    # Update the exec.* with uniq_epair when cloning jails.
+	                  # Update the exec.* with uniq_epair when cloning jails.
                     # for VNET jails
                     sed -i '' "s|bastille\([0-9]\{1,\}\)|${uniq_epair}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|e\([0-9]\{1,\}\)a_${NEWNAME}|e${uniq_epair_bridge}a_${NEWNAME}|g" "${JAIL_CONFIG}"
@@ -200,15 +201,6 @@ update_fstab() {
     # Update fstab to use the new name
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
     if [ -f "${FSTAB_CONFIG}" ]; then
-        FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9]|-CURRENT)|([0-9]{1,2}(-stable-build-[0-9]{1,3}|-stable-LAST))|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)' "${FSTAB_CONFIG}" | uniq)
-        FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET}/root/.bastille" "${FSTAB_CONFIG}")
-        FSTAB_NEWCONF="${bastille_releasesdir}/${FSTAB_RELEASE} ${bastille_jailsdir}/${NEWNAME}/root/.bastille nullfs ro 0 0"
-        if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
-            # If both variables are set, update as needed
-            if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${NEWNAME}/root/.bastille" "${FSTAB_CONFIG}"; then
-                sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
-            fi
-        fi
         # Update additional fstab paths with new jail path
         sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|" "${FSTAB_CONFIG}"
     fi
