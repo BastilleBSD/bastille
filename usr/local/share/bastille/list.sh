@@ -150,7 +150,22 @@ list_all(){
                         JAIL_HOSTNAME=${JAIL_HOSTNAME:-${DEFAULT_VALUE}}
                         JAIL_RELEASE=${JAIL_RELEASE:-${DEFAULT_VALUE}}
                         JAIL_PATH=${JAIL_PATH:-${DEFAULT_VALUE}}
-                        printf " ${JAIL_NAME}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+                        JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
+                        if [ ${JAIL_IP_COUNT} -gt 1 ]; then
+                            # vnet0 has more than one IPs assigned.
+                            # Put each IP in its own line below the jails first address. For instance:
+                            #  JID     State  IP Address       Published Ports  Hostname  Release          Path
+                            #  foo     Up     10.10.10.10      -                foo       14.0-RELEASE-p5  /usr/local/bastille/jails/foo/root
+                            #                 10.10.10.11
+                            #                 10.10.10.12
+                            FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
+                            printf " ${JAIL_NAME}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+                            for IP in $(echo "${JAIL_IP}" | tail -n +2); do
+                                printf "%*s %*s${IP}\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
+                            done
+                        else
+                            printf " ${JAIL_NAME}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+                        fi
                 fi
             done
         else
@@ -167,7 +182,7 @@ list_release(){
         REL_LIST="$(ls "${bastille_releasesdir}" | sed "s/\n//g")"
         for _REL in ${REL_LIST}; do
             if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ] || [ -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
-                if [ "${2}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
+                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
                     REL_PATCH_LEVEL=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${_REL}/bin/freebsd-version" 2> /dev/null)
                     REL_PATCH_LEVEL=${REL_PATCH_LEVEL:-${_REL}}
                     echo "${REL_PATCH_LEVEL}"
@@ -214,7 +229,7 @@ if [ $# -gt 0 ]; then
         list_all
         ;;
     release|releases)
-        list_release
+        list_release "${2}"
         ;;
     template|templates)
         list_template
