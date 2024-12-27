@@ -178,7 +178,7 @@ set_target() {
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         target_all_jails
     else
-        check_target_exists "${_TARGET}" || exit
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
         export JAILS
@@ -191,7 +191,7 @@ set_target_single() {
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
     else
-        check_target_exists "${_TARGET}" || exit
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
         export JAILS
@@ -209,3 +209,4 @@ target_all_jails() {
     done
     export JAILS
 }
+
