@@ -114,7 +114,7 @@ for _jail in ${JAILS}; do
     _fstab_entry="${_hostpath_fstab} ${_fullpath_fstab} ${_type} ${_perms} ${_checks}"
 
     # Check if mount point has already been added
-    _existing_mount="$(echo ${_fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#')"
+    _existing_mount="$(echo ${_fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#g')"
     if grep -Eoq "[[:blank:]]${_existing_mount}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
         grep -Eo "[[:blank:]]${_existing_mount}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
@@ -127,7 +127,7 @@ for _jail in ${JAILS}; do
     elif [ -f "${_hostpath}" ] ; then
         _filename="$( basename ${_hostpath} )"
         if  echo "${_fullpath}" 2>/dev/null | grep -qow "${_filename}"; then
-            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point."
+            mkdir -p "$( dirname "${_fullpath}" )" || error_continue "Failed to create mount point."
             if [ ! -f "${_fullpath}" ]; then
                 touch "${_fullpath}" || error_continue "Failed to create mount point."
             else
@@ -138,8 +138,8 @@ for _jail in ${JAILS}; do
         else
             _fullpath_fstab="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab}/${_filename}" 2>/dev/null | sed 's#//#/#' )"
             _fullpath="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath}/${_filename}" 2>/dev/null | sed 's#//#/#' )"
-            _fstab_entry="${_hostpath_fstab} ${_fullpath} ${_type} ${_perms} ${_checks}"
-            mkdir -p "$( dirname ${_fullpath} )" || error_continue "Failed to create mount point."
+            _fstab_entry="${_hostpath_fstab} ${_fullpath_fstab} ${_type} ${_perms} ${_checks}"
+            mkdir -p "$( dirname "${_fullpath}" )" || error_continue "Failed to create mount point."
             if [ ! -f "${_fullpath}" ]; then
                 touch "${_fullpath}" || error_continue "Failed to create mount point."
             else
