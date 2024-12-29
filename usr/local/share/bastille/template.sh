@@ -188,9 +188,11 @@ case ${TEMPLATE} in
         ;;
     */*)
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
+            if [ ! -d ${TEMPLATE} ]; then
                 error_exit "${TEMPLATE} not found."
-        else
+            else
                 bastille_template=${TEMPLATE}
+            fi
         fi
         ;;
     *)
