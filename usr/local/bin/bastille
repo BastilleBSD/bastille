@@ -32,10 +32,20 @@ PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 . /usr/local/share/bastille/common.sh
 
-## check for config existance
+## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        error_exit "Missing Configuration"
+        warn "Configuration file not found. Do yu want to create it with default values? [y/N]"
+        read  answer
+            case "${answer}" in
+                [Nn][Oo]|[Nn]|"")
+                    error_exit "No configuration file has been generated. Exiting."
+                ;;
+                [Yy][Ee][Ss]|[Yy])
+                    cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+                    info "Configuration file has been generated. Continuing with default values"
+                ;;
+            esac
     fi
 }
 
