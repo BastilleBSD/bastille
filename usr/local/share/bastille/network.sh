@@ -37,6 +37,7 @@ usage() {
     cat << EOF
     Options:
 
+    -f | --force                Start the jail it it is stopped.
     -r | --restart              Restart jail on completion.
     -v | --vnet                 Adds a VNET interface to an existing jail.
     -b | --bridge               Adds a bridged VNET interface to an existing jail.
