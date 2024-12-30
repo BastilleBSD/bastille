@@ -83,7 +83,7 @@ generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
     local macaddr_prefix="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | cut -d':' -f1-3)"
-    local macaddr_suffix="$(echo -n ${jail_name} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    local macaddr_suffix="$(echo -n "${external_interface}${jail_name}" | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
     if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
         error_notify "Failed to generate MAC address."
     fi
@@ -92,26 +92,39 @@ generate_static_mac() {
 }
 
 generate_vnet_jail_netblock() {
-    local jail_name="$1"
-    local use_unique_bridge="$2"
-    local external_interface="$3"
+    local jail_name="${1}"
+    local use_unique_bridge="${2}"
+    local external_interface="${3}"
     generate_static_mac "${jail_name}" "${external_interface}"
     ## determine number of containers + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
-    local _if_count="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
-    local num_range=$((_if_count + 1))
-    if [ "${_if_count}" -gt 0 ]; then  
-       for _num in $(seq 0 "${num_range}"); do
-            if ! grep -Eq "epair${_num}|bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                local uniq_epair="bastille${_num}"
-                local uniq_epair_bridge="${_num}"
-                break
-            fi
-        done
+    local _epair_if_count="$(grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _vnet_if_count="$(grep -Eos 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local epair_num_range=$((_epair_if_count + 1))
+    local vnet_num_range=$((_vnet_if_count + 1))
+    if [ -n "${use_unique_bridge}" ]; then
+        if [ "${_epair_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${epair_num_range}"); do
+                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                    local uniq_epair_bridge="${_num}"
+                    break
+                fi
+            done
+        else
+            local uniq_epair_bridge="0"
+        fi
     else
-        local uniq_epair="bastille0"
-        local uniq_epair_bridge="0"
+        if [ "${_vnet_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${vnet_num_range}"); do
+                if ! grep -Eosq "bastillle${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                    local uniq_epair="${_num}"
+                    break
+                fi
+            done
+        else
+            local uniq_epair="bastille0"
+        fi
     fi
     if [ -n "${use_unique_bridge}" ]; then
         ## generate bridge config
