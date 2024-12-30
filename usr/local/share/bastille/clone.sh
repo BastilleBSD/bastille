@@ -140,7 +140,7 @@ update_jailconf_vnet() {
                     local _if_epaira="$(grep "${_if}" ${JAIL_CONFIG} | grep -Eo "e[0-9]+a_${TARGET}")"
                     local _if_epairb="$(grep "${_if}" ${JAIL_CONFIG} | grep -Eo "e[0-9]+b_${TARGET}")"
                     sed -i '' "s|${_if}|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
-                    sed -i '' "s|${_if_epaira}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|${_if_epaira}|e${uniq_epair_bridge}a_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|${_if_epairb}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|e${uniq_epair}a_${TARGET} ether.*:.*:.*:.*:.*:.*a\";|e${uniq_epair}a_${NEWNAME} ether ${macaddr}a\";|" "${JAIL_CONFIG}"
                     sed -i '' "s|e${uniq_epair}b_${TARGET} ether.*:.*:.*:.*:.*:.*b\";|e${uniq_epair}b_${NEWNAME} ether ${macaddr}b\";|" "${JAIL_CONFIG}"
