@@ -37,7 +37,8 @@ usage() {
     cat << EOF
     Options:
 
-    -r | --restart              Restart jail on completion.
+    -f | --force                Stop the jail if it is running.
+    -s | --start                Start jail on completion.
     -v | --vnet                 Adds a VNET interface to an existing jail.
     -b | --bridge               Adds a bridged VNET interface to an existing jail.
 
@@ -47,7 +48,7 @@ EOF
 
 # Handle options.
 FORCE=0
-RESTART=0
+START=0
 VNET_JAIL=0
 BRIDGE_VNET_JAIL=0
 while [ "$#" -gt 0 ]; do
@@ -60,14 +61,14 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -r|--restart)
-            RESTART=1
+            START=1
             shift
             ;;
-        -v|--vnet)
+        -v|-V|--vnet)
             VNET_JAIL=1
             shift
             ;;
-        -b|--bridge)
+        -b|-B|--bridge)
             BRIDGE_VNET_JAIL=1
             shift
             ;;
@@ -102,6 +103,12 @@ IP="${4}"
 
 bastille_root_check
 set_target_single "${TARGET}"
+check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille stop "${TARGET}"
+else   
+    error_notify "Jail is running."
+    error_continue "Use [-f|--force] to force stop the jail."
+fi
 
 validate_ip() {
     local ip="${1}"
@@ -342,8 +349,8 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
                 add_vnet_interface_block "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ "${RESTART}" -eq 1 ]; then
-                    bastille restart "${TARGET}"
+                if [ "${START}" -eq 1 ]; then
+                    bastille start "${TARGET}"
                 fi
             fi
         elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
@@ -351,8 +358,8 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
                 add_bridge_interface_block "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ "${RESTART}" -eq 1 ]; then
-                    bastille restart "${TARGET}"
+                if [ "${START}" -eq 1 ]; then
+                    bastille start "${TARGET}"
                 fi
             fi
         fi
@@ -365,13 +372,13 @@ case "${ACTION}" in
         else
             if grep "${INTERFACE}" ${bastille_jailsdir}/${TARGET}/jail.conf 2>/dev/null | grep -qE '[[:blank:]]bastille[0-9]+'; then
                 remove_vnet_interface_block "${TARGET}" "${INTERFACE}"
-                if [ "${RESTART}" -eq 1 ]; then
-                    bastille restart "${TARGET}"
+                if [ "${START}" -eq 1 ]; then
+                    bastille start "${TARGET}"
                 fi
             elif grep "${INTERFACE}" ${bastille_jailsdir}/${TARGET}/jail.conf 2>/dev/null | grep -qE '[[:blank:]]epair[0-9]+'; then
                 remove_bridge_interface_block "${TARGET}" "${INTERFACE}"
-                if [ "${RESTART}" -eq 1 ]; then
-                    bastille restart "${TARGET}"
+                if [ "${START}" -eq 1 ]; then
+                    bastille start "${TARGET}"
                 fi
             fi
         fi
@@ -380,3 +387,4 @@ case "${ACTION}" in
         error_exit "Only [add|remove] are supported."
         ;;
 esac
+
