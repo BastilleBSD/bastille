@@ -37,7 +37,6 @@ usage() {
     cat << EOF
     Options:
 
-    -f | --force                Start the jail it it is stopped.
     -r | --restart              Restart jail on completion.
     -v | --vnet                 Adds a VNET interface to an existing jail.
     -b | --bridge               Adds a bridged VNET interface to an existing jail.
@@ -106,12 +105,12 @@ set_target_single "${TARGET}"
 
 validate_ip() {
     local ip="${1}"
-    local ip6="$( echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
+    local ip6="$( echo "${ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
     else
         local IFS
-        if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+        if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
             TEST_IP=$(echo "${ip}" | cut -d / -f1)
             IFS=.
             set ${TEST_IP}
@@ -129,8 +128,7 @@ validate_ip() {
 
 validate_netif() {
     local _interface="${1}"
-    local _list_interfaces="$(ifconfig -l)"
-    if echo "${_list_interfaces} VNET" | grep -qwo "${_interface}"; then
+    if ifconfig -l | grep -qwo ${_interface}; then
         info "Valid: (${_interface})."
     else
         error_exit "Invalid: (${_interface})."
@@ -160,12 +158,12 @@ add_vnet_interface_block() {
     local _ip="${3}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-    local _if_count="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _if_count="$(grep -Eo 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet="vnet$((_if_vnet_count + 1))"
     local num_range=$((_if_count + 1))
         for _num in $(seq 0 "${num_range}"); do
-            if ! grep -Eq "epair${_num}|bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+            if ! grep -Eq "bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
                     local uniq_epair="bastille${_num}"
                     break
             fi
@@ -185,12 +183,12 @@ add_vnet_interface_block() {
 EOF
 
     # add config to /etc/rc.conf
-    bastille sysrc ${_jailname} ifconfig_e0b_${uniq_epair}_name="${_if_vnet}"
+    sysrc -f "${_jail_rc_config}" ifconfig_e0b_${uniq_epair}_name="${_if_vnet}"
     # If 0.0.0.0 set DHCP, else set static IP address
     if [ "${_ip}" = "0.0.0.0" ]; then
-        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}="SYNCDHCP"
+        sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
     else
-        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}=" inet ${_ip} "
+        sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
     fi
 
     info "[${_jailname}]:"
@@ -203,12 +201,12 @@ add_bridge_interface_block() {
     local _ip="${3}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-    local _if_count="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _if_count="$(grep -Eo 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
-    local _if_vnet=$((_if_vnet_count + 1))
+    local _if_vnet=vnet$((_if_vnet_count + 1))
     local num_range=$((_if_count + 1))
         for _num in $(seq 0 "${num_range}"); do
-            if ! grep -Eq "epair${_num}|bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+            if ! grep -Eq "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
                     local uniq_epair="${_num}"
                     break
             fi
@@ -231,12 +229,12 @@ add_bridge_interface_block() {
 EOF
 
     # Add config to /etc/rc.conf
-    bastille sysrc ${_jailname} ifconfig_e${uniq_epair}b_${_jailname}_name="${_if_vnet}"
+    sysrc -f "${_jail_rc_config}" ifconfig_e${uniq_epair}b_${_jailname}_name="${_if_vnet}"
     # If 0.0.0.0 set DHCP, else set static IP address
     if [ "${_ip}" = "0.0.0.0" ]; then
-        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}="SYNCDHCP"
+        sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
     else
-        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}=" inet ${_ip} "
+        sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
     fi
 
     info "[${_jailname}]:"
@@ -333,12 +331,6 @@ remove_bridge_interface_block() {
 
 case "${ACTION}" in
     add)
-        check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
-            bastille start "${TARGET}"
-        else   
-            error_notify "Jail is not running."
-            error_exit "Use [-f|--force] to force start the jail."
-        fi
         validate_netconf
         validate_netif "${INTERFACE}"
         if check_interface_added "${TARGET}" "${INTERFACE}"; then
@@ -388,4 +380,3 @@ case "${ACTION}" in
         error_exit "Only [add|remove] are supported."
         ;;
 esac
-
