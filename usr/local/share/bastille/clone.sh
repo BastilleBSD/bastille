@@ -103,7 +103,6 @@ update_jailconf() {
 
 update_jailconf_vnet() {
     bastille_jail_rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
-
     # Determine number of interfaces and define a uniq_epair
     local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${JAIL_CONFIG} | sort -u)"
     for _if in ${_if_list}; do
