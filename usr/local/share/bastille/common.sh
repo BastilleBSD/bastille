@@ -74,8 +74,12 @@ generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
     local macaddr_prefix="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | cut -d':' -f1-3)"
-    local macaddr_suffix="$(echo -n ${jail_name} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    local macaddr_suffix="$(echo -n "${external_interface}${jail_name}" | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
+        error_notify "Failed to generate MAC address."
+    fi
     macaddr="${macaddr_prefix}:${macaddr_suffix}"
+    export macaddr
 }
 
 generate_vnet_jail_netblock() {
