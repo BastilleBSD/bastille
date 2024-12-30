@@ -162,7 +162,7 @@ add_vnet_interface_block() {
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
     local _if_count="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
-    local _if_vnet=$((_if_vnet_count + 1))
+    local _if_vnet="vnet$((_if_vnet_count + 1))"
     local num_range=$((_if_count + 1))
         for _num in $(seq 0 "${num_range}"); do
             if ! grep -Eq "epair${_num}|bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
@@ -185,8 +185,13 @@ add_vnet_interface_block() {
 EOF
 
     # add config to /etc/rc.conf
-    bastille sysrc ${_jailname} ifconfig_e0b_${uniq_epair}_name="vnet${_num}"
-    bastille sysrc ${_jailname} ifconfig_vnet${_num}=" inet ${_ip} "
+    bastille sysrc ${_jailname} ifconfig_e0b_${uniq_epair}_name="${_if_vnet}"
+    # If 0.0.0.0 set DHCP, else set static IP address
+    if [ "${_ip}" = "0.0.0.0" ]; then
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}="SYNCDHCP"
+    else
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}=" inet ${_ip} "
+    fi
 
     info "[${_jailname}]:"
     echo "Added interface: \"${_if}\""
@@ -226,8 +231,13 @@ add_bridge_interface_block() {
 EOF
 
     # Add config to /etc/rc.conf
-    bastille sysrc ${_jailname} ifconfig_e${uniq_epair}b_${_jailname}_name="vnet${_num}"
-    bastille sysrc ${_jailname} ifconfig_vnet${_num}=" inet ${_ip} "
+    bastille sysrc ${_jailname} ifconfig_e${uniq_epair}b_${_jailname}_name="${_if_vnet}"
+    # If 0.0.0.0 set DHCP, else set static IP address
+    if [ "${_ip}" = "0.0.0.0" ]; then
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}="SYNCDHCP"
+    else
+        sysrc -f "${bastille_jail_rc_conf}" ifconfig_${_if_vnet}=" inet ${_ip} "
+    fi
 
     info "[${_jailname}]:"
     echo "Added interface: \"${_if}\""
