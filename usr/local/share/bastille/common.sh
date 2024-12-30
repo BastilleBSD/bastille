@@ -70,12 +70,25 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+check_target_is_running() {
+    local _TARGET="${1}"
+    if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
     local macaddr_prefix="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | cut -d':' -f1-3)"
     local macaddr_suffix="$(echo -n ${jail_name} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
+        error_notify "Failed to generate MAC address."
+    fi
     macaddr="${macaddr_prefix}:${macaddr_suffix}"
+    export macaddr
 }
 
 generate_vnet_jail_netblock() {
@@ -86,17 +99,14 @@ generate_vnet_jail_netblock() {
     ## determine number of containers + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
-    local jail_list="$(bastille list jails)"
-    if [ -n "${jail_list}" ]; then
-        local list_jails_num="$(echo "${jail_list}" | wc -l | awk '{print $1}')"
-        local num_range=$((list_jails_num + 1))
-        for _num in $(seq 0 "${num_range}"); do
-            if ! grep -q "e[0-9]b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                    local uniq_epair="bastille${_num}"
-                    local uniq_epair_bridge="${_num}"
-                    break
-                fi
+    local _if_count="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local num_range=$((_if_count + 1))
+    if [ "${_if_count}" -gt 0 ]; then  
+       for _num in $(seq 0 "${num_range}"); do
+            if ! grep -Eq "epair${_num}|bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                local uniq_epair="bastille${_num}"
+                local uniq_epair_bridge="${_num}"
+                break
             fi
         done
     else
