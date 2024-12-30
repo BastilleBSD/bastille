@@ -157,7 +157,7 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|export|import|list|rdr|restart|setup|start|update|upgrade|verify)
+bootstrap|create|destroy|export|import|list|network|rdr|restart|setup|start|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
 clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|service|stop|sysrc|tags|template|top|umount|zfs)
