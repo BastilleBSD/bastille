@@ -120,4 +120,7 @@ case "${2}" in
     df|usage)
         zfs_disk_usage
         ;;
+    *)
+        usage
+        ;;
 esac

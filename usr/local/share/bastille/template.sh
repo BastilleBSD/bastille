@@ -223,6 +223,7 @@ case ${TEMPLATE} in
         else
             bastille_template=${TEMPLATE}
         fi
+        ;;
 esac
 
 if [ -z "${JAILS}" ]; then

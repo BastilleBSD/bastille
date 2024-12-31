@@ -577,7 +577,7 @@ create_jail() {
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
-        jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
+        jexec -l "${NAME}" /bin/bash -c "chmod 1777 /tmp"
         jexec -l "${NAME}" /bin/bash -c "apt update"
     else
         # Thin jail.
