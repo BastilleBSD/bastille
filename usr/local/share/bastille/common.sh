@@ -56,6 +56,13 @@ error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
+error_continue() {
+    error_notify "$@"
+    # Disabling this shellcheck as we only ever call it inside of a loop
+    # shellcheck disable=SC2104
+    continue
+}
+
 # Notify message on error and exit
 error_exit() {
     error_notify "$@"
@@ -68,6 +75,15 @@ info() {
 
 warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+}
+
+check_target_exists() {
+    local _TARGET="${1}"
+    if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+        return 1
+    else
+        return 0
+    fi
 }
 
 generate_static_mac() {
@@ -128,6 +144,19 @@ EOF
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
+    fi
+}
+
+set_target() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        target_all_jails
+    else
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
     fi
 }
 
