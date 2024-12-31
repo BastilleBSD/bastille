@@ -129,8 +129,8 @@ checkyesno() {
 
 jail_autocomplete() {
     local _TARGET="${1}"
-    local _AUTOTARGET=$( ls "${bastille_jailsdir}" 2>/dev/null | grep ${_TARGET} 2>/dev/null )
-    if [ $( echo "${_AUTOTARGET}" 2>/dev/null | wc -l ) -eq 1 ]; then
+    local _AUTOTARGET="$( ls "${bastille_jailsdir}" 2>/dev/null | grep ${_TARGET} 2>/dev/null )"
+    if [ "$( echo "${_AUTOTARGET}" 2>/dev/null | wc -l )" -eq 1 ]; then
         return 0
     else
         error_continue "Multiple jails found for ${_TARGET}:\n${_AUTOTARGET}"
