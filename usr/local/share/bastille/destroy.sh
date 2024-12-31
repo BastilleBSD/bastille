@@ -56,7 +56,7 @@ destroy_jail() {
     if [ -d "${bastille_jail_base}" ]; then
         ## make sure no filesystem is currently mounted in the jail directory
         mount_points=$(mount | cut -d ' ' -f 3 | grep "${bastille_jail_base}"/root/)
-        if [ $? -eq 0 ]; then
+        if [ -n "${mount_points}" ]; then
             error_notify "Failed to destroy jail: ${TARGET}"
             error_exit "Jail has mounted filesystems:\n$mount_points"
         fi
