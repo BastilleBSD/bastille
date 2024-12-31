@@ -79,6 +79,15 @@ check_target_is_running() {
     fi
 }
 
+check_target_is_stopped() {
+    local _TARGET="${1}"
+    if [ "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
