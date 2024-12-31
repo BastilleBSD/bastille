@@ -30,13 +30,6 @@
 
 bastille_config="/usr/local/etc/bastille/bastille.conf"
 . /usr/local/share/bastille/common.sh
-
-# TODO: This not going to take effect since Bastille checks the file
-# before running this subcommand. We will need to check an strategy.
-if [ ! -f "${bastille_config}" ]; then
-  cp /usr/local/etc/bastille/bastille.conf.sample ${bastille_config}
-fi
-
 # shellcheck source=/usr/local/etc/bastille/bastille.conf
 . ${bastille_config}
 

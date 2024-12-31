@@ -59,6 +59,13 @@ error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
+error_continue() {
+    error_notify "$@"
+    # Disabling this shellcheck as we only ever call it inside of a loop
+    # shellcheck disable=SC2104
+    continue
+}
+
 # Notify message on error and exit
 error_exit() {
     error_notify "$@"
@@ -73,11 +80,9 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
-# Main functions
 check_target_exists() {
     local _TARGET="${1}"
     if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
-        error_notify "Jail not found \"${_TARGET}\""
         return 1
     else
         return 0
@@ -102,27 +107,6 @@ check_target_is_stopped() {
     else
         return 0
     fi
-}
-
-checkyesno() {
-    ## copied from /etc/rc.subr -- cedwards (20231125)
-    ## issue #368 (lowercase values should be parsed)
-    ## now used for all bastille_zfs_enable=YES|NO tests
-    ## example: if checkyesno bastille_zfs_enable; then ...
-    ## returns 0 for enabled; returns 1 for disabled
-    eval _value=\$${1}
-    case $_value in
-    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
-        return 0
-        ;;
-    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
-        return 1
-        ;;
-    *)
-        warn "\$${1} is not set properly - see rc.conf(5)."
-        return 1
-        ;;
-    esac
 }
 
 generate_static_mac() {
@@ -221,5 +205,25 @@ target_all_jails() {
         fi
     done
     export JAILS
+
+checkyesno() {
+    ## copied from /etc/rc.subr -- cedwards (20231125)
+    ## issue #368 (lowercase values should be parsed)
+    ## now used for all bastille_zfs_enable=YES|NO tests
+    ## example: if checkyesno bastille_zfs_enable; then ...
+    ## returns 0 for enabled; returns 1 for disabled
+    eval _value=\$${1}
+    case $_value in
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        warn "\$${1} is not set properly - see rc.conf(5)."
+        return 1
+        ;;
+    esac
 }
 

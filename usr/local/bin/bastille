@@ -32,10 +32,20 @@ PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 . /usr/local/share/bastille/common.sh
 
-## check for config existance
+## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        error_exit "Missing Configuration"
+        warn "Configuration file not found. Do yu want to create it with default values? [y/N]"
+        read  answer
+            case "${answer}" in
+                [Nn][Oo]|[Nn]|"")
+                    error_exit "No configuration file has been generated. Exiting."
+                ;;
+                [Yy][Ee][Ss]|[Yy])
+                    cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+                    info "Configuration file has been generated. Continuing with default values"
+                ;;
+            esac
     fi
 }
 
@@ -147,10 +157,10 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|export|htop|import|list|rdr|restart|setup|start|top|update|upgrade|verify)
+bootstrap|create|destroy|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|limits|mount|pkg|rcp|rename|service|stop|sysrc|tags|template|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|limits|pkg|rcp|rename|service|stop|sysrc|tags|template|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
