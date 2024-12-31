@@ -106,14 +106,49 @@ check_target_is_stopped() {
     fi
 }
 
-set_target() {
+checkyesno() {
+    ## copied from /etc/rc.subr -- cedwards (20231125)
+    ## issue #368 (lowercase values should be parsed)
+    ## now used for all bastille_zfs_enable=YES|NO tests
+    ## example: if checkyesno bastille_zfs_enable; then ...
+    ## returns 0 for enabled; returns 1 for disabled
+    eval _value=\$${1}
+    case $_value in
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        warn "\$${1} is not set properly - see rc.conf(5)."
+        return 1
+        ;;
+    esac
+}
+
+jail_autocomplete() {
     local _TARGET="${1}"
+    local _AUTOTARGET=$( ls "${bastille_jailsdir}" 2>/dev/null | grep ${_TARGET} 2>/dev/null )
+    if [ $( echo "${_AUTOTARGET}" 2>/dev/null | wc -l ) -eq 1 ]; then
+        return 0
+    else
+        error_continue "Multiple jails found for ${_TARGET}:\n${_AUTOTARGET}"
+        return 1
+    fi
+}
+
+set_target() {
+    local _TARGET=${1}
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         target_all_jails
     else
-        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
-        JAILS="${_TARGET}"
-        TARGET="${_TARGET}"
+        for _jail in ${_TARGET}; do
+            jail_autocomplete "${_jail}"
+            check_target_exists "${_jail}" || error_continue "Jail not found \"${_jail}\""
+            JAILS="${JAILS} ${_jail}"
+            TARGET="${TARGET} ${_jail}"
+        done
         export JAILS
         export TARGET
     fi
@@ -124,6 +159,7 @@ set_target_single() {
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
     else
+        jail_autocomplete "${_TARGET}"
         check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
         JAILS="${_TARGET}"
         TARGET="${_TARGET}"
@@ -217,25 +253,4 @@ EOF
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
     fi
-}
-
-checkyesno() {
-    ## copied from /etc/rc.subr -- cedwards (20231125)
-    ## issue #368 (lowercase values should be parsed)
-    ## now used for all bastille_zfs_enable=YES|NO tests
-    ## example: if checkyesno bastille_zfs_enable; then ...
-    ## returns 0 for enabled; returns 1 for disabled
-    eval _value=\$${1}
-    case $_value in
-    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
-        return 0
-        ;;
-    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
-        return 1
-        ;;
-    *)
-        warn "\$${1} is not set properly - see rc.conf(5)."
-        return 1
-        ;;
-    esac
 }
