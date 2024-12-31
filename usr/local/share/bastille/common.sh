@@ -92,7 +92,6 @@ check_target_exists() {
 check_target_is_running() {
     local _TARGET="${1}"
     if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
-        error_notify "[${_TARGET}]: Not started. See 'bastille start ${_TARGET}'."
         return 1
     else
         return 0
@@ -102,7 +101,6 @@ check_target_is_running() {
 check_target_is_stopped() {
     local _TARGET="${1}"
     if [ "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
-        error_notify "${_TARGET} is running. See 'bastille stop ${_TARGET}'."
         return 1
     else
         return 0
