@@ -115,11 +115,12 @@ for _jail in ${JAILS}; do
 
     # Check if mount point has already been added
     _existing_mount="$(echo ${_fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#g')"
-    if grep -Eoq "[[:blank:]]${_existing_mount}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
+    if grep -Eq "[[:blank:]]${_existing_mount}.*[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
-        grep -Eo "[[:blank:]]${_existing_mount}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
+        grep -E "[[:blank:]]${_existing_mount}" "${bastille_jailsdir}/${_jail}/fstab"
         continue
     fi
+
 
     # Create mount point if it does not exist
     if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
