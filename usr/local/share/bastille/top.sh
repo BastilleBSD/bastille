@@ -29,26 +29,53 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille top TARGET"
+    error_notify "Usage: bastille top [options(s)] TARGET"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -ne 0 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    jexec -l "${_jail}" /usr/bin/top
-    echo -e "${COLOR_RESET}"
-done
+bastille_root_check
+set_target_single "${TARGET}"
+
+info "[${TARGET}]:"
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else   
+    error_notify "Jail is not running."
+    error_continue "Use [-f|--force] to force start the jail."
+fi
+jexec -l "${TARGET}" /usr/bin/top
