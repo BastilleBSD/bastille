@@ -205,6 +205,7 @@ target_all_jails() {
         fi
     done
     export JAILS
+}
 
 checkyesno() {
     ## copied from /etc/rc.subr -- cedwards (20231125)
