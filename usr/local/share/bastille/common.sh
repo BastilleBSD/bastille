@@ -28,6 +28,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Source config file
+. /usr/local/etc/bastille/bastille.conf
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -51,9 +54,16 @@ if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
-# Notify message on error, but do not exit
+# Error/Info functions
 error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+}
+
+error_continue() {
+    error_notify "$@"
+    # Disabling this shellcheck as we only ever call it inside of a loop
+    # shellcheck disable=SC2104
+    continue
 }
 
 # Notify message on error and exit
@@ -68,6 +78,15 @@ info() {
 
 warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+}
+
+check_target_exists() {
+    local _TARGET="${1}"
+    if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+        return 1
+    else
+        return 0
+    fi
 }
 
 check_target_is_running() {
@@ -164,6 +183,43 @@ EOF
     fi
 }
 
+set_target() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        target_all_jails
+    else
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
+    fi
+}
+
+set_target_single() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        error_exit "[all|ALL] not supported with this command."
+    else
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
+    fi
+}
+
+target_all_jails() {
+    local _JAILS="$(bastille list jails)"
+    JAILS=""
+    for _jail in ${_JAILS}; do
+        if [ -d "${bastille_jailsdir}/${_jail}" ]; then
+            JAILS="${JAILS} ${_jail}"
+        fi
+    done
+    export JAILS
+}
+
 checkyesno() {
     ## copied from /etc/rc.subr -- cedwards (20231125)
     ## issue #368 (lowercase values should be parsed)
@@ -184,3 +240,4 @@ checkyesno() {
         ;;
     esac
 }
+
