@@ -126,8 +126,8 @@ update_jailconf_vnet() {
                     sed -i '' "s|e\([0-9]\{1,\}\)b_${NEWNAME}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
                     sed -i '' "s|epair\([0-9]\{1,\}\)|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
 		    sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille\([0-9]\{1,\}\).*description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
-                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*a |ether ${macaddr}a |" "${JAIL_CONFIG}"
-                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*b |ether ${macaddr}b |" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*a\";|ether ${macaddr}a\";|" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*b\";|ether ${macaddr}b\";|" "${JAIL_CONFIG}"
                     break
                 fi
             fi
