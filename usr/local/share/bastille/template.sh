@@ -196,7 +196,12 @@ case ${TEMPLATE} in
         fi
         ;;
     *)
-        error_exit "Template name/URL not recognized."
+        if [ ! -f ${TEMPLATE}/Bastillefile ]; then
+            error_exit "${TEMPLATE} not found."
+        else
+            bastille_template=${TEMPLATE}
+        fi
+        ;;
 esac
 
 if [ -z "${JAILS}" ]; then
