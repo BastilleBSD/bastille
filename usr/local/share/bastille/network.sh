@@ -78,8 +78,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _o in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_o} in
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
                     b|B) BRIDGE_VNET_JAIL=1 ;;
                     f) FORCE=1 ;;
                     m) STATIC_MAC=1 ;;
