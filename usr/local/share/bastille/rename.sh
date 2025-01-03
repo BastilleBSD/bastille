@@ -97,7 +97,6 @@ validate_name() {
 update_jailconf() {
     # Update jail.conf
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
-    BASTILLE_JAIL_RC_CONF="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
             sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"

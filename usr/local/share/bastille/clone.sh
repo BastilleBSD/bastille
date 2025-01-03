@@ -157,9 +157,9 @@ update_jailconf_vnet() {
     local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${JAIL_CONFIG} | sort -u)"
     for _if in ${_if_list}; do
         local _epair_if_count="$(grep -Eo 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
-        local _vnet_if_count="$(grep -Eo 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+        local _bastille_if_count="$(grep -Eo 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
         local epair_num_range=$((_epair_if_count + 1))
-        local vnet_num_range=$((_vnet_if_count + 1))
+        local bastille_num_range=$((_vnet_if_count + 1))
         if echo ${_if} 2>/dev/null | grep -Eoq 'epair[0-9]+'; then
             # Update bridged VNET config
             for _num in $(seq 0 "${epair_num_range}"); do
@@ -308,3 +308,4 @@ else
 fi
 
 clone_jail
+

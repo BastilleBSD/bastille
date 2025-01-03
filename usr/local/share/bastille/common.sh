@@ -109,8 +109,8 @@ check_target_is_stopped() {
 jail_autocomplete() {
     local _TARGET="${1}"
     # shellcheck disable=SC2010
-    local _AUTOTARGET=$( grep -Eo "^${_TARGET}" "${bastille_jailsdir}" 2>/dev/null )
-    if [ $( echo "^${_AUTOTARGET}" 2>/dev/null | wc -l ) -eq 1 ]; then
+    local _AUTOTARGET="$(grep -Eo "^${_TARGET}" "${bastille_jailsdir}" 2>/dev/null)"
+    if [ "$(echo "^${_AUTOTARGET}" 2>/dev/null | wc -l)" -eq 1 ]; then
         return 0
     else
         error_continue "Multiple jails found for ${_TARGET}:\n${_AUTOTARGET}"
@@ -130,7 +130,7 @@ set_target() {
             JAILS="${JAILS} ${_jail}"
         done
     fi
-    if [ $( echo "${JAILS}" 2>/dev/null | wc -l ) -eq 1 ]; then
+    if [ "$(echo "${JAILS}" 2>/dev/null | wc -l)" -eq 1 ]; then
         TARGET="${JAILS}"
         export TARGET
         export JAILS
@@ -214,7 +214,7 @@ generate_vnet_jail_netblock() {
     fi
     ## If BRIDGE is enabled, generate bridge config, else generate VNET config
     if [ -n "${use_unique_bridge}" ]; then
-        if [ "${STATIC_MAC}" -eq 1 ]; then
+        if [ "${static_mac}" -eq 1 ]; then
             ## Generate bridged VNET config with static MAC address
             generate_static_mac "${jail_name}" "${external_interface}"
             cat <<-EOF
@@ -241,7 +241,7 @@ EOF
 EOF
         fi
     else
-        if [ "${STATIC_MAC}" -eq 1 ]; then
+        if [ "${static_mac}" -eq 1 ]; then
             ## Generate VNET config with static MAC address
             generate_static_mac "${jail_name}" "${external_interface}"
             cat <<-EOF
