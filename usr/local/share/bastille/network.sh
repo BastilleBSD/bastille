@@ -204,7 +204,7 @@ add_interface() {
   exec.prestart += "ifconfig ${_if} addm ${bridge_epair}a";
   exec.prestart += "ifconfig ${bridge_epair}a ether ${macaddr}a";
   exec.prestart += "ifconfig ${bridge_epair}b ether ${macaddr}b";
-  exec.prestart += "ifconfig ${bridge_epair}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig ${bridge_epair}a description \"vnet host interface for Bastille jail ${_jailname}\"";
   exec.poststop += "ifconfig ${_if} deletem ${bridge_epair}a";
   exec.poststop += "ifconfig ${bridge_epair}a destroy";
 }
@@ -216,7 +216,7 @@ EOF
   vnet.interface += ${bridge_epair}b;
   exec.prestart += "ifconfig ${bridge_epair} create";
   exec.prestart += "ifconfig ${_if} addm ${bridge_epair}a";
-  exec.prestart += "ifconfig ${bridge_epair}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig ${bridge_epair}a description \"vnet host interface for Bastille jail ${_jailname}\"";
   exec.poststop += "ifconfig ${_if} deletem ${bridge_epair}a";
   exec.poststop += "ifconfig ${bridge_epair}a destroy";
 }
