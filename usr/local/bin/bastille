@@ -32,30 +32,12 @@ PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 . /usr/local/share/bastille/common.sh
 
-## check for config existence
+## check for config existance
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        warn "Configuration file not found. Do yu want to create it with default values? [y/N]"
-        read  answer
-            case "${answer}" in
-                [Nn][Oo]|[Nn]|"")
-                    error_exit "No configuration file has been generated. Exiting."
-                ;;
-                [Yy][Ee][Ss]|[Yy])
-                    cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
-                    info "Configuration file has been generated. Continuing with default values"
-                ;;
-            esac
+        error_exit "Missing Configuration"
     fi
 }
-
-bastille_conf_check
-
-## we only load the config if conf_check passes
-. /usr/local/etc/bastille/bastille.conf
-# Set default values for config properties added during the current major version:
-: "${bastille_network_pf_ext_if:=ext_if}"
-: "${bastille_network_pf_table:=jails}"
 
 ## bastille_prefix should be 0750
 ## this restricts file system access to privileged users
@@ -69,6 +51,10 @@ bastille_perms_check() {
     fi
 }
 
+## we only load the config if conf_check passes
+. /usr/local/etc/bastille/bastille.conf
+
+bastille_conf_check
 bastille_perms_check
 
 ## version
@@ -100,6 +86,7 @@ Available Commands:
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
+  network     Add or remove interfaces from targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rcp         reverse cp(1) files from a single container to the host.
   rdr         Redirect host port to container port.
@@ -126,104 +113,62 @@ EOF
     exit 1
 }
 
-[ $# -lt 1 ] && usage
-
-CMD=$1
-shift
-
-target_all_jails() {
-  _JAILS=$(/usr/sbin/jls name)
-  JAILS=""
-  for _jail in ${_JAILS}; do
-      _JAILPATH=$(/usr/sbin/jls -j "${_jail}" path)
-      if [ -z ${_JAILPATH##${bastille_jailsdir}*} ]; then
-          JAILS="${JAILS} ${_jail}"
-      fi
-  done
-}
-
-check_target_is_running() {
-  if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-      error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
-  fi
-}
+if [ "$#" -lt 1 ]; then
+    usage
+else
+    CMD="${1}"
+    shift
+fi
 
 # Handle special-case commands first.
 case "${CMD}" in
-version|-v|--version)
-    info "${BASTILLE_VERSION}"
-    exit 0
-    ;;
-help|-h|--help)
-    usage
-    ;;
-bootstrap|create|destroy|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
-    # Nothing "extra" to do for these commands. -- cwells
-    ;;
-clone|config|cmd|console|convert|cp|edit|limits|pkg|rcp|rename|service|stop|sysrc|tags|template|zfs)
-    # Parse the target and ensure it exists. -- cwells
-    if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
-        PARAMS='help'
-    elif [ "${1}" != 'help' ] && [ "${1}" != '-h' ] && [ "${1}" != '--help' ]; then
-        TARGET="${1}"
-        shift
-
-        # This is needed to handle the special case of 'bastille rcp' and 'bastille cp' with the '-q' or '--quiet'
-        # option specified before the TARGET. Also seems the cp and rcp commands does not support ALL as a target, so
-        # that's why is handled here. Maybe this behaviour needs an improvement later. -- yaazkal
-        if { [ "${CMD}" = 'rcp' ] || [ "${CMD}" = 'cp' ]; } && \
-           { [ "${TARGET}" = '-q' ] || [ "${TARGET}" = '--quiet' ]; }; then
-          TARGET="${1}"
-          JAILS="${TARGET}"
-          OPTION="-q"
-          export OPTION
-          shift
-        fi
-
-        if [ "${TARGET}" = 'ALL' ]; then
-            target_all_jails
-        elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-H' ] || [ "${TARGET}" = '--host' ]; then
-            TARGET="${1}"
-            USE_HOST_PKG=1
-            if [ "${TARGET}" = 'ALL' ]; then
-              target_all_jails
-            else
-              JAILS="${TARGET}"
-              check_target_is_running
-            fi
-            shift
-        elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
-            # This command does not act on a jail, so we are temporarily bypassing the presence/started
-            # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
-            :
-        else
-            JAILS="${TARGET}"
-
-            # Ensure the target exists. -- cwells
-            if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-                error_exit "[${TARGET}]: Not found."
-            fi
-
-            case "${CMD}" in
-            cmd|console|pkg|service|stop|sysrc|template)
-                check_target_is_running
-                ;;
-            convert|rename)
-                # Require the target to be stopped. -- cwells
-                if [ "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-                    error_exit "${TARGET} is running. See 'bastille stop ${TARGET}'."
-                fi
-                ;;
-            esac
-        fi
-        export USE_HOST_PKG
-        export TARGET
-        export JAILS
-    fi
-    ;;
-*) # Filter out all non-commands
-    usage
-    ;;
+    version|-v|--version)
+        info "${BASTILLE_VERSION}"
+        exit 0
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    bootstrap| \
+    clone| \
+    cmd| \
+    config| \
+    console| \
+    convert| \
+    cp| \
+    create| \
+    destroy| \
+    edit| \
+    etcupdate| \
+    export| \
+    htop| \
+    import| \
+    limits| \
+    list| \
+    mount| \
+    network| \
+    pkg| \
+    rcp| \
+    rdr| \
+    rename| \
+    restart| \
+    service| \
+    setup| \
+    start| \
+    stop| \
+    sysrc| \
+    tags| \
+    template| \
+    top| \
+    umount| \
+    update| \
+    upgrade| \
+    verify| \
+    zfs)
+        ;;
+    *)
+        usage
+        ;;
 esac
 
 # shellcheck disable=SC2154
@@ -231,14 +176,8 @@ SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 if [ -f "${SCRIPTPATH}" ]; then
     : "${UMASK:=022}"
     umask "${UMASK}"
-
     : "${SH:=sh}"
-
-    if [ -n "${PARAMS}" ]; then
-        exec "${SH}" "${SCRIPTPATH}" "${PARAMS}"
-    else
-        exec "${SH}" "${SCRIPTPATH}" "$@"
-    fi
+    exec "${SH}" "${SCRIPTPATH}" "$@"
 else
     error_exit "${SCRIPTPATH} not found."
 fi

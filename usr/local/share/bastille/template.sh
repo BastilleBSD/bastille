@@ -32,8 +32,16 @@
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    error_exit "Usage: bastille template TARGET|--convert project/template"
+    error_notify "Usage: bastille template [option(s)] TARGET [--convert|project/template|template]"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
+
 
 post_command_hook() {
     _jail=$1
@@ -96,7 +104,7 @@ render() {
     if [ -d "${_file_path}" ]; then # Recursively render every file in this directory. -- cwells
         echo "Rendering Directory: ${_file_path}"
         find "${_file_path}" \( -type d -name .git -prune \) -o -type f
-        find "${_file_path}" \( -type d -name .git -prune \) -o -type f -print0 | eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}"
+        find "${_file_path}" \( -type d -name .git -prune \) -o -type f -print0 | "$(eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}")"
     elif [ -f "${_file_path}" ]; then
         echo "Rendering File: ${_file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${_file_path}'"
@@ -105,32 +113,46 @@ render() {
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    bastille_usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+	-f|--force)
+	    FORCE=1
+	    shift
+	    ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     bastille_usage
 fi
 
-bastille_root_check
-
-## global variables
-TEMPLATE="${1}"
+TARGET="${1}"
+TEMPLATE="${2}"
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
 if [ -z "${HOOKS}" ]; then
     HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
 fi
 
+bastille_root_check
+set_target "${TARGET}"
+
 # Special case conversion of hook-style template files into a Bastillefile. -- cwells
 if [ "${TARGET}" = '--convert' ]; then
     if [ -d "${TEMPLATE}" ]; then # A relative path was provided. -- cwells
-        cd "${TEMPLATE}" || error_exit "Failed to change to directory: ${TEMPLATE}"
+        cd "${TEMPLATE}" || error_exit "Could not cd to ${TEMPLATE}"
     elif [ -d "${bastille_template}" ]; then
-        cd "${bastille_template}" || error_exit "Failed to change to directory: ${TEMPLATE}"
+        cd "${bastille_template}" || error_exit "Could not cd to ${bastille_template}"
     else
         error_exit "Template not found: ${TEMPLATE}"
     fi
@@ -196,7 +218,12 @@ case ${TEMPLATE} in
         fi
         ;;
     *)
-        error_exit "Template name/URL not recognized."
+        if [ ! -f ${TEMPLATE}/Bastillefile ]; then
+            error_exit "${TEMPLATE} not found."
+        else
+            bastille_template=${TEMPLATE}
+        fi
+        ;;
 esac
 
 if [ -z "${JAILS}" ]; then
@@ -224,17 +251,26 @@ if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
 fi
 
 for _jail in ${JAILS}; do
+
     info "[${_jail}]:"
-    info "Applying template: ${TEMPLATE}..."
+
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-f|--force] to force start the jail."
+    fi
+
+    echo "Applying template: ${TEMPLATE}..."
 
     ## jail-specific variables.
-    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
+    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        _jail_ip=$(/usr/sbin/jls -j "${_jail}" ip4.addr 2>/dev/null)
-        _jail_ip6=$(/usr/sbin/jls -j "${_jail}" ip6.addr 2>/dev/null)
-        if [ -z "${_jail_ip}" ] || [ "${_jail_ip}" = "-" ]; then
-            error_notify "Jail IP not found: ${_jail}"
-            _jail_ip='' # In case it was -. -- cwells
+        if [ "$( bastille config ${TARGET} get ip4.addr )" != 'disable' ] && [ "$( bastille config ${TARGET} get ip4.addr )" != 'not set' ]; then
+            _jail_ip="$( bastille config ${TARGET} get ip4.addr )"
+        fi
+        if [ "$( bastille config $TARGET get ip6 )" != 'disable' ] && [ "$( bastille config $TARGET get ip6 )" != 'not set' ]; then
+            _jail_ip6="$( bastille config ${TARGET} get ip6.addr )"
         fi
     fi
 
@@ -281,7 +317,7 @@ for _jail in ${JAILS}; do
             # First word converted to lowercase is the Bastille command. -- cwells
             _cmd=$(echo "${_line}" | awk '{print tolower($1);}')
             # Rest of the line with "arg" variables replaced will be the arguments. -- cwells
-            _args=$(echo "${_line}" | awk '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
+            _args=$(echo "${_line}" | awk -F '[ ]' '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
 
             # Apply overrides for commands/aliases and arguments. -- cwells
             case $_cmd in
@@ -304,7 +340,7 @@ for _jail in ${JAILS}; do
                 cp|copy)
                     _cmd='cp'
                     # Convert relative "from" path into absolute path inside the template directory. -- cwells
-                    if [ "${_args%"${_args#?}"}" != '/' ] && [ "${_args%"${_args#??}"}" != '"/' ]; then
+                    if [ "${_args%${_args#?}}" != '/' ] && [ "${_args%${_args#??}}" != '"/' ]; then
                         _args="${bastille_template}/${_args}"
                     fi
                     ;;
@@ -368,9 +404,9 @@ for _jail in ${JAILS}; do
 
             info "[${_jail}]:${_hook} -- START"
             if [ "${_hook}" = 'CMD' ] || [ "${_hook}" = 'PRE' ]; then
-                bastille cmd "${_jail}" /bin/sh < "${bastille_template}/${_hook}" || error_exit "Failed to execute command."
+                bastille cmd "${_jail}" /bin/sh < "${bastille_template}/${_hook}" || exit 1
             elif [ "${_hook}" = 'PKG' ]; then
-                bastille pkg "${_jail}" install -y "$(cat "${bastille_template}/PKG")" || error_exit "Failed to install packages."
+                bastille pkg "${_jail}" install -y "$(cat "${bastille_template}/PKG")" || exit 1
                 bastille pkg "${_jail}" audit -F
             else
                 while read _line; do
@@ -380,7 +416,7 @@ for _jail in ${JAILS}; do
                     # Replace "arg" variables in this line with the provided values. -- cwells
                     _line=$(echo "${_line}" | eval "sed ${ARG_REPLACEMENTS}")
                     eval "_args=\"${_args_template}\""
-                    bastille "${_cmd}" "${_jail}" "${_args}" || error_exit "Failed to execute command."
+                    bastille "${_cmd}" "${_jail}" "${_args}" || exit 1
                 done < "${bastille_template}/${_hook}"
             fi
             info "[${_jail}]:${_hook} -- END"
@@ -389,5 +425,5 @@ for _jail in ${JAILS}; do
     done
 
     info "Template applied: ${TEMPLATE}"
-    echo
+
 done

@@ -29,29 +29,69 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille pkg [-H|--host] TARGET command [args]"
+    error_notify "Usage: bastille pkg [option(s)] TARGET COMMAND [args]"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+    -H | --host  -- Use the hosts pkg command.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+USE_HOST_PKG=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -H|--host)
+            USE_HOST_PKG=1
+            shift
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     usage
 fi
 
+TARGET="${1}"
+shift
+        
 bastille_root_check
+set_target "${TARGET}"
 
 errors=0
 
 for _jail in ${JAILS}; do
+
     info "[${_jail}]:"
-    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
+
+    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-f|--force] to force start the jail."
+    fi
+
+    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     if [ -f "/usr/sbin/mport" ]; then
         if ! jexec -l -U root "${_jail}" /usr/sbin/mport "$@"; then
             errors=1
@@ -69,10 +109,8 @@ for _jail in ${JAILS}; do
             errors=1
         fi
     fi
-    echo
 done
 
 if [ $errors -ne 0 ]; then
     error_exit "Failed to apply on some jails, please check logs"
-    exit 1
 fi

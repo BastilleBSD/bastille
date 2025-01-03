@@ -35,7 +35,6 @@ usage() {
     # Build an independent usage for the import command
     # If no file/extension specified, will import from standard input
     error_notify "Usage: bastille import [option(s)] FILE"
-
     cat << EOF
     Options:
 
@@ -49,22 +48,22 @@ EOF
 }
 
 # Handle special-case commands first
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
 if [ $# -gt 3 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-bastille_root_check
-
 TARGET="${1}"
 OPT_FORCE=
 USER_IMPORT=
 OPT_ZRECV="-u"
+
+bastille_root_check
 
 # Handle and parse option args
 while [ $# -gt 0 ]; do
@@ -79,7 +78,7 @@ while [ $# -gt 0 ]; do
             TARGET="${2}"
             shift
             ;;
-        --*|-*)
+        -*)
             error_notify "Unknown Option."
             usage
             ;;
@@ -281,7 +280,7 @@ EOF
         >> "${bastille_jailsdir}/${TARGET_TRIM}/fstab"
 
         # Work with the symlinks
-        cd "${bastille_jailsdir}/${TARGET_TRIM}/root" || error_exit "Failed to change directory."
+        cd "${bastille_jailsdir}/${TARGET_TRIM}/root" || error_exit "Could not cd to ${bastille_jailsdir}/${TARGET_TRIM}/root"
         update_symlinks
     else
         # Generate new empty fstab file
@@ -324,7 +323,7 @@ update_config() {
     >> "${bastille_jailsdir}/${TARGET_TRIM}/fstab"
 
     # Work with the symlinks
-    cd "${bastille_jailsdir}/${TARGET_TRIM}/root" || error_exit "Failed to change directory."
+    cd "${bastille_jailsdir}/${TARGET_TRIM}/root" || error_exit "Could not cd to ${bastille_jailsdir}/${TARGET_TRIM}/root"
     update_symlinks
 }
 

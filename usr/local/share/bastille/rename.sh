@@ -32,11 +32,60 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rename TARGET NEW_NAME"
+    error_notify "Usage: bastille rename [option(s)] TARGET NEW_NAME"
+    cat << EOF
+    Options:
+
+    -f | --force   -- Stop the jail if it is running.
+    -s | --start   -- Start jail(s) when complete.
+
+EOF
+    exit 1
 }
 
+# Handle options.
+FORCE=0
+START=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -s|--start)
+            START=1
+            shift
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ "$#" -ne 2 ]; then
+    usage
+fi
+
+TARGET="${1}"
+NEWNAME="${2}"
+
+bastille_root_check
+set_target_single "${TARGET}"
+check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille stop "${TARGET}"
+else   
+    error_notify "Jail is running."
+    error_exit "Use [-f|--force] to force stop the jail."
+fi
+
 validate_name() {
-    local NAME_VERIFY=${NEWNAME}
+    local NAME_VERIFY="${NEWNAME}"
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Container names may not begin with (-|_) characters!"
@@ -44,21 +93,6 @@ validate_name() {
         error_exit "Container names may not contain special characters!"
     fi
 }
-
-# Handle special-case commands first
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
-if [ $# -ne 1 ]; then
-    usage
-fi
-
-bastille_root_check
-
-NEWNAME="${1}"
 
 update_jailconf() {
     # Update jail.conf
@@ -70,9 +104,8 @@ update_jailconf() {
             sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
             sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${JAIL_CONFIG}"
-            # Rename vnet interface
-            sed -i '' "/vnet.interface/s|_${TARGET}\";|_${NEWNAME}\";|" "${JAIL_CONFIG}"
-            sed -i '' "/ifconfig/s|_${TARGET}|_${NEWNAME}|" "${JAIL_CONFIG}"
+            # update vnet config
+            sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${JAIL_CONFIG}"
         fi
     fi
 }
@@ -80,25 +113,9 @@ update_jailconf() {
 update_fstab() {
     # Update fstab to use the new name
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
-    if [ -f "${FSTAB_CONFIG}" ]; then
-        # Skip if fstab is empty, e.g newly created thick or clone jails
-        if [ -s "${FSTAB_CONFIG}" ]; then
-            FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RC[1-9])|([0-9]{1,2}-stable-build-[0-9]{1,3})|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)|(current-BUILD-LATEST)' "${FSTAB_CONFIG}")
-            FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET}/root/.bastille" "${FSTAB_CONFIG}")
-            FSTAB_NEWCONF="${bastille_releasesdir}/${FSTAB_RELEASE} ${bastille_jailsdir}/${NEWNAME}/root/.bastille nullfs ro 0 0"
-            if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
-                # If both variables are set, update as needed
-                if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${NEWNAME}/root/.bastille" "${FSTAB_CONFIG}"; then
-                    sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
-                fi
-            fi
-
-            # Update linuxjail fstab name entries
-            # Search for either linprocfs/linsysfs, if true assume is a linux jail
-            if grep -qwE "linprocfs|linsysfs" "${FSTAB_CONFIG}"; then
-                sed -i '' "s|.${bastille_jailsdir}/${TARGET}/|${bastille_jailsdir}/${NEWNAME}/|" "${FSTAB_CONFIG}"
-            fi
-        fi
+    if [ -f "${FSTAB_CONFIG}" ] && [ -s "${FSTAB_CONFIG}" ]; then
+        # Update fstab paths with new jail path
+        sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|g" "${FSTAB_CONFIG}"
     fi
 }
 
@@ -148,10 +165,13 @@ change_name() {
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
         info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
+        if [ "${START}" -eq 1 ]; then
+            bastille start "${NEWNAME}"
+        fi
     fi
 }
 
-## validate jail name
+## Validate new name.
 if [ -n "${NEWNAME}" ]; then
     validate_name
 fi
