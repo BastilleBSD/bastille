@@ -107,9 +107,6 @@ update_jailconf() {
             sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${JAIL_CONFIG}"
             # update vnet config
             sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${JAIL_CONFIG}"
-            sed -i '' "/vnet.interface/s|_${TARGET};|_${NEWNAME};|g" "${JAIL_CONFIG}"
-            sed -i '' "/ifconfig/s|_${TARGET}|_${NEWNAME}|g" "${JAIL_CONFIG}"
-            sed -i '' "/ifconfig/s|_${TARGET}_name=|_${NEWNAME}_name=|g" "${BASTILLE_JAIL_RC_CONF}"			
         fi
     fi
 }

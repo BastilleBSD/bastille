@@ -68,7 +68,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 2 ]; then
+if [ $# -lt 2 ]; then
     usage
 fi
 

@@ -51,7 +51,7 @@ case "${1}" in
         ;;
 esac
 
-if [ "$#" -ne 3 ]; then
+if [ $# -ne 3 ]; then
     usage
 fi
 

@@ -57,14 +57,8 @@ destroy_jail() {
     fi
 
     if [ -d "${bastille_jail_base}" ]; then
-        # Force unmount an existing mount points
-        mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
-        for _mount in ${mount_points}; do
-            echo "Unmounting: \"${_mount}\""
-            umount -f "${_mount}" || error_exit "Failed to unmount: \"${_mount}\""
-        done
-
         ## make sure no filesystem is currently mounted in the jail directory
+        mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
         if [ -n "${mount_points}" ]; then
             error_notify "Failed to destroy jail: ${TARGET}"
             error_exit "Jail has mounted filesystems:\n$mount_points"

@@ -31,11 +31,11 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille etcupdate [option(s)] [TARGET|bootstrap RELEASE]"
+    error_notify "Usage: bastille etcupdate [option(s)] [TARGET|bootstrap] RELEASE"
     cat << EOF
     Options:
 
-    -d | --dry-run   -- Only show output of what etcupdate will do.
+    -d | --dry-run          Show output, but do not apply.
 
 EOF
     exit 1
@@ -43,22 +43,27 @@ EOF
 
 bootstrap_etc_release() {
     local _release="${1}"
-    local _release_version="$( echo "${1}" | awk -F "-" '{print $1}' )"
-    if [ ! -d /usr/local/bastille/source/"${_release}" ]; then
-        if ! git clone --branch releng/"${_release_version}" --depth 1 https://git.FreeBSD.org/src.git /usr/local/bastille/source/"${_release}"; then
-            error_exit "Failed to bootstrap etcupdate release \"${_release}\""
+    local _current="$(sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives | awk -F': ' '{print $2}')"
+    if [ ! ls -A "${bastille_releasesdir}"/${_release}/usr/src 2>/dev/null ]; then
+        sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives=src
+        if ! bastille bootstrap "${_release}"; then
+            error_notify "Failed to bootstrap etcupdate \"${_release}\""
         fi
+        sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
     fi
 }
 
 bootstrap_etc_tarball() {
     local _release="${1}"
-    if [ ! -f /usr/local/bastille/source/"${_release}".tbz2 ]; then
-        if ! etcupdate build -d /tmp/etcupdate -s /usr/local/bastille/source/"${_release}" "${_release}".tbz2; then
+    if [ ! -f ${bastille_cachedir}/${_release}.tbz2 ]; then
+        if ! etcupdate build -d /tmp/etcupdate -s ${bastille_releasesdir}/${_release}/usr/src ${bastille_cachedir}/${_release}.tbz2; then
             error_exit "Failed to build etcupdate tarball \"${_release}.tbz2\""
+        else
+            info "Etcupdate bootstrap complete: \"${_release}\""
         fi
     else
-        info "\"${_release}\" has already been bootstrapped."
+        info "Etcupdate release has already been prepared for application: \"${_release}\""
+        exit 0
     fi
 }
 
@@ -67,14 +72,14 @@ update_jail_etc() {
     local _release="${2}"
     if [ "${DRY_RUN}" -eq 1 ]; then
         info "[_jail]: --dry-run"
-        etcupdate -n -D "${bastille_jailsdir}"/"${_jail}"/root -t /usr/local/bastille/source/"${_release}".tbz2
+        etcupdate -n -D "${bastille_jailsdir}"/"${_jail}"/root -t ${bastille_cachedir}/${_release}.tbz2
     else
         info "[_jail]:"
-        etcupdate -D "${bastille_jailsdir}"/"${_jail}"/root -t /usr/local/bastille/source/"${_release}".tbz2
+        etcupdate -D "${bastille_jailsdir}"/"${_jail}"/root -t ${bastille_cachedir}/${_release}.tbz2
     fi
 }
 
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     usage
 fi
 

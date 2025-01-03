@@ -106,32 +106,11 @@ check_target_is_stopped() {
     fi
 }
 
-checkyesno() {
-    ## copied from /etc/rc.subr -- cedwards (20231125)
-    ## issue #368 (lowercase values should be parsed)
-    ## now used for all bastille_zfs_enable=YES|NO tests
-    ## example: if checkyesno bastille_zfs_enable; then ...
-    ## returns 0 for enabled; returns 1 for disabled
-    eval _value=\$${1}
-    case $_value in
-    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
-        return 0
-        ;;
-    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
-        return 1
-        ;;
-    *)
-        warn "\$${1} is not set properly - see rc.conf(5)."
-        return 1
-        ;;
-    esac
-}
-
 jail_autocomplete() {
     local _TARGET="${1}"
     # shellcheck disable=SC2010
-    local _AUTOTARGET="$( ls "${bastille_jailsdir}" 2>/dev/null | grep "${_TARGET}" 2>/dev/null )"
-    if [ "$( echo "${_AUTOTARGET}" 2>/dev/null | wc -l )" -eq 1 ]; then
+    local _AUTOTARGET=$( grep -Eo "^${_TARGET}" "${bastille_jailsdir}" 2>/dev/null )
+    if [ $( echo "^${_AUTOTARGET}" 2>/dev/null | wc -l ) -eq 1 ]; then
         return 0
     else
         error_continue "Multiple jails found for ${_TARGET}:\n${_AUTOTARGET}"
@@ -141,6 +120,7 @@ jail_autocomplete() {
 
 set_target() {
     local _TARGET=${1}
+    JAILS=
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         target_all_jails
     else
@@ -148,10 +128,14 @@ set_target() {
             jail_autocomplete "${_jail}"
             check_target_exists "${_jail}" || error_continue "Jail not found \"${_jail}\""
             JAILS="${JAILS} ${_jail}"
-            TARGET="${TARGET} ${_jail}"
         done
-        export JAILS
+    fi
+    if [ $( echo "${JAILS}" 2>/dev/null | wc -l ) -eq 1 ]; then
+        TARGET="${JAILS}"
         export TARGET
+        export JAILS
+    else
+        export JAILS
     fi
 }
 
@@ -197,8 +181,8 @@ generate_vnet_jail_netblock() {
     local jail_name="${1}"
     local use_unique_bridge="${2}"
     local external_interface="${3}"
-    generate_static_mac "${jail_name}" "${external_interface}"
-    ## determine number of containers + 1
+    local static_mac="${4}"
+    ## determine number of interfaces + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
     local _epair_if_count="$(grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
@@ -228,23 +212,39 @@ generate_vnet_jail_netblock() {
             local uniq_epair="bastille0"
         fi
     fi
+    ## If BRIDGE is enabled, generate bridge config, else generate VNET config
     if [ -n "${use_unique_bridge}" ]; then
-        ## generate bridge config
-        cat <<-EOF
+        if [ "${STATIC_MAC}" -eq 1 ]; then
+            ## Generate bridged VNET config with static MAC address
+            generate_static_mac "${jail_name}" "${external_interface}"
+            cat <<-EOF
   vnet;
-  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
+  vnet.interface = epair${uniq_epair_bridge}b;
   exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
   exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
-  exec.prestart += "ifconfig e${uniq_epair_bridge}a_${jail_name} ether ${macaddr}a";
-  exec.prestart += "ifconfig e${uniq_epair_bridge}b_${jail_name} ether ${macaddr}b";
-  exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
-  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a ether ${macaddr}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}b ether ${macaddr}b";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "ifconfig ${external_interface} deletem epair${uniq_epair_bridge}a";
+  exec.poststop += "ifconfig epair${uniq_epair_bridge}a destroy";
 EOF
+        else
+            ## Generate bridged VNET config without static MAC address
+            cat <<-EOF
+  vnet;
+  vnet.interface = epair${uniq_epair_bridge}b;
+  exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
+  exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "ifconfig ${external_interface} deletem epair${uniq_epair_bridge}a";
+  exec.poststop += "ifconfig epair${uniq_epair_bridge}a destroy";
+EOF
+        fi
     else
-        ## generate config
-        cat <<-EOF
+        if [ "${STATIC_MAC}" -eq 1 ]; then
+            ## Generate VNET config with static MAC address
+            generate_static_mac "${jail_name}" "${external_interface}"
+            cat <<-EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
@@ -253,5 +253,36 @@ EOF
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
+        else
+            ## Generate VNET config without static MAC address
+            cat <<-EOF
+  vnet;
+  vnet.interface = e0b_${uniq_epair};
+  exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "jib destroy ${uniq_epair}";
+EOF
+        fi
     fi
+}
+
+checkyesno() {
+    ## copied from /etc/rc.subr -- cedwards (20231125)
+    ## issue #368 (lowercase values should be parsed)
+    ## now used for all bastille_zfs_enable=YES|NO tests
+    ## example: if checkyesno bastille_zfs_enable; then ...
+    ## returns 0 for enabled; returns 1 for disabled
+    eval _value=\$${1}
+    case $_value in
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        warn "\$${1} is not set properly - see rc.conf(5)."
+        return 1
+        ;;
+    esac
 }
