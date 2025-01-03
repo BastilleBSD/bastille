@@ -281,7 +281,7 @@ for _jail in ${JAILS}; do
             # First word converted to lowercase is the Bastille command. -- cwells
             _cmd=$(echo "${_line}" | awk '{print tolower($1);}')
             # Rest of the line with "arg" variables replaced will be the arguments. -- cwells
-            _args=$(echo "${_line}" | awk '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
+            _args=$(echo "${_line}" | awk -F '[ ]' '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
 
             # Apply overrides for commands/aliases and arguments. -- cwells
             case $_cmd in
