@@ -146,7 +146,7 @@ case "${CMD}" in
     limits| \
     list| \
     mount| \
-	network| \
+    network| \
     pkg| \
     rcp| \
     rdr| \
