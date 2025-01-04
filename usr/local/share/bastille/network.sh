@@ -342,7 +342,7 @@ remove_interface() {
         fi
     else
         # Remove interface from jail.conf (non-VNET)
-        if [ -n ${_if} ]; then
+        if [ -n "${_if}" ]; then
             if grep ${_if} ${_jail_config} 2>/dev/null | grep -qo " = "; then
                 error_exit "Default interface cannot be removed."
             else
