@@ -39,7 +39,7 @@ usage() {
     cat << EOF
     Options:
 
-    -M | --static-mac          Generate a static MAC address for the jail.
+    -M | --static-mac          Generate a static MAC address for the jail (VNET only).
     -E | --empty               Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
     -L | --linux               This option is intended for testing with Linux jails, this is considered experimental.
     -T | --thick               Creates a thick container, they consume more space as they are self contained and independent.
@@ -70,20 +70,18 @@ validate_name() {
 }
 
 validate_ip() {
-    ipx_addr="ip4.addr"
-    ip="${1}"
-    ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
-    if [ -n "${ip6}" ]; then
-        info "Valid: (${ip6})."
+    _ip="${1}"
+    _ip6=$(echo "${_ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
+    if [ -n "${_ip6}" ]; then
+        info "Valid: (${_ip6})."
         ipx_addr="ip6.addr"
-        IP6_MODE="new"
     else
-        if [ "${ip}" = "DHCP" ] || [ "${ip}" = "inherit" ]; then
-            info "Valid: (${ip})."
+        if [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
+            info "Valid: (${_ip})."
         else
             local IFS
-            if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-                TEST_IP=$(echo "${ip}" | cut -d / -f1)
+            if echo "${_ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+                TEST_IP=$(echo "${_ip}" | cut -d / -f1)
                 IFS=.
                 set ${TEST_IP}
                 for quad in 1 2 3 4; do
@@ -95,13 +93,15 @@ validate_ip() {
                 if ifconfig | grep -qwF "${TEST_IP}"; then
                     warn "Warning: IP address already in use (${TEST_IP})."
                 else
-                    info "Valid: (${ip})."
+                    ipx_addr="ip4.addr"
+                    info "Valid: (${_ip})."
                 fi
             else
-                error_exit "Invalid: (${ip})."
+                error_exit "Invalid: (${_ip})."
             fi
         fi
     fi
+    # Set interface value
     if [ ! -f "${bastille_jail_conf}" ]; then
         if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
             local bastille_jail_conf_interface=${bastille_network_shared}
@@ -113,17 +113,38 @@ validate_ip() {
             local bastille_jail_conf_interface=${INTERFACE}
         fi
     fi
-    if [ "${ip}" = "inherit" ]; then
-        IP4_DEFINITION="ip4 = ${ip};"
-        IP6_DEFINITION="ip6 = ${ip};"
-        IP6_MODE="new"
-    elif echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
-        if [ "${ipx_addr}" = "ip4.addr" ]; then
-                IP4_ADDR="${ip}"
-                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
+    # Determine IP/Interface mode
+    if [ "${_ip}" = "inherit" ]; then
+        if [ -n "${_ip6}" ]; then
+            IP4_DEFINITION=""
+            IP6_DEFINITION="ip6 = ${_ip};"
+            IP6_MODE="new"
         else
-                IP6_ADDR="${ip}"
-                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
+            IP4_DEFINITION="ip4 = ${_ip};"
+            IP6_DEFINITION=""
+            IP6_MODE="disable"
+        fi
+    elif [ "${_ip}" = "ip_hostname" ]; then
+        if [ -n "${_ip6}" ]; then
+            IP_HOSTNAME="${_ip}"
+            IP4_DEFINITION=""
+            IP6_DEFINITION="${IP_HOSTNAME};"
+            IP6_MODE="new"
+        else
+            IP_HOSTNAME="${_ip}"
+            IP4_DEFINITION="${IP_HOSTNAME};"
+            IP6_DEFINITION=""
+            IP6_MODE="disable"
+        fi
+    elif echo "${_ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
+        if [ "${ipx_addr}" = "ip4.addr" ]; then
+                IP4_ADDR="${_ip}"
+                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
+                IP6_MODE="disable"
+        elif [ "${ipx_addr}" = "ip6.addr" ]; then
+                IP6_ADDR="${_ip}"
+                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
+                IP6_MODE="new"
         fi
     fi
 }
@@ -134,6 +155,7 @@ validate_ips() {
     IP6_DEFINITION=""
     IP4_ADDR=""
     IP6_ADDR=""
+    IP_HOSTNAME=""
     for ip in ${IP}; do
         validate_ip "${ip}"
     done
@@ -627,7 +649,7 @@ THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
 LINUX_JAIL=""
-STATIC_MAC=0
+STATIC_MAC=""
 
 # Handle and parse options
 while [ $# -gt 0 ]; do

@@ -204,7 +204,7 @@ generate_vnet_jail_netblock() {
         if [ "${_vnet_if_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${vnet_num_range}"); do
                 if ! grep -Eosq "bastillle${_num}" ${bastille_jailsdir}/*/jail.conf; then
-                    local uniq_epair="${_num}"
+                    local uniq_epair="bastille${_num}"
                     break
                 fi
             done
@@ -214,7 +214,7 @@ generate_vnet_jail_netblock() {
     fi
     ## If BRIDGE is enabled, generate bridge config, else generate VNET config
     if [ -n "${use_unique_bridge}" ]; then
-        if [ "${static_mac}" -eq 1 ]; then
+        if [ -n "${static_mac}" ]; then
             ## Generate bridged VNET config with static MAC address
             generate_static_mac "${jail_name}" "${external_interface}"
             cat <<-EOF
@@ -241,7 +241,7 @@ EOF
 EOF
         fi
     else
-        if [ "${static_mac}" -eq 1 ]; then
+        if [ -n "${static_mac}" ]; then
             ## Generate VNET config with static MAC address
             generate_static_mac "${jail_name}" "${external_interface}"
             cat <<-EOF

@@ -231,7 +231,7 @@ update_jailconf_vnet() {
                     fi
                     sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${JAIL_CONFIG}"
                     # Update /etc/rc.conf
-                    sed -i '' "s|ifconfig_${_if}_name|ifconfig_${uniq_epair}_name|" "${bastille_jail_rc_conf}"
+                    sed -i '' "s|ifconfig_e0b_${_if}_name|ifconfig_e0b_${uniq_epair}_name|" "${bastille_jail_rc_conf}"
                     if grep "vnet0" "${bastille_jail_rc_conf}" | grep -q ${uniq_epair}; then
                         if [ "${IP}" = "0.0.0.0" ]; then
                             sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
