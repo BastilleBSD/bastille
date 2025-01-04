@@ -74,9 +74,9 @@ bastille_root_check
 set_target_single "${TARGET}"
 check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
     bastille start "${TARGET}"
-else   
+else
     error_notify "Jail is not running."
-    error_continue "Use [-f|--force] to force start the jail."
+    error_exit "Use [-f|--force] to force start the jail."
 fi
 
 validate_user() {

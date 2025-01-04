@@ -53,27 +53,61 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    info "[${_jail}]:"
-        
+    info "[${_jail}]:"        
     check_target_is_stopped "${_jail}" || error_continue "Jail is already running."
+
+    # Validate interfaces
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
-        _interface="$(bastille config ${_jail} get interface)"
-        if ! ifconfig | grep "^${_interface}:" >/dev/null; then
-            error_notify "Error: ${_interface} interface does not exist."
-            continue
+        _ip4_interfaces="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
+        _ip6_interfaces="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
+        # IP4
+        if [ "${_ip4_interfaces}" != "not set" ]; then
+            for _interface in ${_ip4_interfaces}; do
+                _interface="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
+                if ! ifconfig | grep "^${_interface}:" >/dev/null; then
+                    error_notify "Error: ${_interface} interface does not exist."
+                    continue
+                fi
+            done
+        fi
+        # IP6
+        if [ "${_ip6_interfaces}" != "not set" ]; then
+            for _interface in ${_ip6_interfaces}; do
+                _interface="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
+                if ! ifconfig | grep "^${_interface}:" >/dev/null; then
+                    error_notify "Error: ${_interface} interface does not exist."
+                    continue
+                fi
+            done
         fi
     fi
 
-    # warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
-    _ip4="$(bastille config "${_jail}" get ip4.addr)"
+    # Validate and/or add IP to firewall table (in use or not in use)
+    _ip4="$(bastille config "${_jail}" get ip4.addr | sed 's/,/ /g')"
+    _ip6="$(bastille config "${_jail}" get ip6.addr | sed 's/,/ /g')"
+    # IP4
     if [ "${_ip4}" != "not set" ]; then
-        if ifconfig | grep -wF "${_ip4}" >/dev/null; then
-            error_notify "Error: IP address (${_ip4}) already in use."
-            continue
-        else
-            ## add ip4.addr to firewall table
-            pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
-        fi
+        for _ip in ${_ip4}; do
+            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+            if ifconfig | grep -wF "${_ip}" >/dev/null; then
+                error_notify "Error: IP address (${_ip}) already in use."
+                continue
+            else
+                pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+            fi
+        done
+    fi
+    # IP6
+    if [ "${_ip6}" != "not set" ]; then
+        for _ip in ${_ip6}; do
+            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+            if ifconfig | grep -wF "${_ip}" >/dev/null; then
+                error_notify "Error: IP address (${_ip}) already in use."
+                continue
+            else
+                pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+            fi
+        done
     fi
 
     # Start jail

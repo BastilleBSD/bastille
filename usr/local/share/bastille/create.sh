@@ -71,14 +71,14 @@ validate_name() {
 
 validate_ip() {
     ipx_addr="ip4.addr"
-    ip="$1"
+    ip="${1}"
     ip6=$(echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         ipx_addr="ip6.addr"
         IP6_MODE="new"
     else
-        if [ "${ip}" = "DHCP" ]; then
+        if [ "${ip}" = "DHCP" ] || [ "${ip}" = "inherit" ]; then
             info "Valid: (${ip})."
         else
             local IFS
@@ -102,13 +102,28 @@ validate_ip() {
             fi
         fi
     fi
-    if echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
+    if [ ! -f "${bastille_jail_conf}" ]; then
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
+        fi
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
+        fi
+        if [ -n "${INTERFACE}" ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
+    fi
+    if [ "${ip}" = "inherit" ]; then
+        IP4_DEFINITION="ip4 = ${ip};"
+        IP6_DEFINITION="ip6 = ${ip};"
+        IP6_MODE="new"
+    elif echo "${ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
         if [ "${ipx_addr}" = "ip4.addr" ]; then
                 IP4_ADDR="${ip}"
-                IP4_DEFINITION="${ipx_addr} = ${ip};"
+                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
         else
                 IP6_ADDR="${ip}"
-                IP6_DEFINITION="${ipx_addr} = ${ip};"
+                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
         fi
     fi
 }
@@ -182,7 +197,6 @@ ${NAME} {
   securelevel = 2;
   osrelease = ${RELEASE};
 
-  interface = ${bastille_jail_conf_interface};
   ${IP4_DEFINITION}
   ${IP6_DEFINITION}
   ip6 = ${IP6_MODE};
@@ -206,8 +220,8 @@ ${NAME} {
   allow.mount;
   allow.mount.devfs;
 
-  interface = ${bastille_jail_conf_interface};
-  ${ipx_addr} = ${IP};
+  ${IP4_DEFINITION}
+  ${IP6_DEFINITION}
   ip6 = ${IP6_MODE};
 }
 EOF

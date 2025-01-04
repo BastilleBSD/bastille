@@ -97,6 +97,7 @@ for _jail in ${JAILS}; do
                     # check if there is a value for this property
                     if (NF == 2) {
                         # remove any quotes surrounding the string
+                        #sub(",[^|]*\\|", ",", $2);
                         sub(/^"/, "", $2);
                         sub(/"$/, "", $2);
                         print $2;

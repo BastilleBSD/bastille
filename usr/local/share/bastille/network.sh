@@ -32,15 +32,16 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille network [option(s)] TARGET [remove|add] INTERFACE [IP_ADDRESS]"
+    error_notify "Usage: bastille network [option(s)] TARGET [remove|add|change] INTERFACE [IP_ADDRESS]"
     cat << EOF
     Options:
 
-    -b | --bridge              Add a bridged VNET interface to an existing jail.
+    -b | --bridge              Add a bridged VNET interface to an existing VNET jail.
+    -c | --classic             Add an interface to a classic (non-VNET) jail.
     -f | --force               Stop the jail if it is running.
-    -m | --static-mac          Generate a static MAC address for the interface.
+    -m | --static-mac          Generate a static MAC address for the VNET interface.
     -s | --start               Start jail on completion.
-    -v | --vnet                Add a VNET interface to an existing jail.
+    -v | --vnet                Add a VNET interface to an existing VNET jail.
 
 EOF
     exit 1
@@ -48,6 +49,7 @@ EOF
 
 # Handle options.
 BRIDGE_VNET_JAIL=0
+CLASSIC_JAIL=0
 FORCE=0
 STATIC_MAC=0
 START=0
@@ -61,7 +63,11 @@ while [ "$#" -gt 0 ]; do
             BRIDGE_VNET_JAIL=1
             shift
             ;;
-        -f|--force)
+        -c|--classic)
+            CLASSIC_JAIL=1
+            shift
+            ;; 
+       -f|--force)
             FORCE=1
             shift
             ;;
@@ -81,6 +87,7 @@ while [ "$#" -gt 0 ]; do
             for _o in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${_o} in
                     b|B) BRIDGE_VNET_JAIL=1 ;;
+                    c) CLASSIC_JAIL=1 ;;
                     f) FORCE=1 ;;
                     m|M) STATIC_MAC=1 ;;
                     s) START=1 ;;
@@ -95,6 +102,7 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+set -x
 
 TARGET="${1}"
 ACTION="${2}"
@@ -102,11 +110,13 @@ INTERFACE="${3}"
 IP="${4}"
 
 if [ "${ACTION}" = "add" ]; then
-    if [ "${VNET_JAIL}" -eq 1 ] && [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
-        error_notify "Error: [-v|-V|--vnet] and [-b|-B|--bridge] cannot both be set."
+    if { [ "${VNET_JAIL}" -eq 1 ] && [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } || \
+       { [ "${VNET_JAIL}" -eq 1 ] && [ "${CLASSIC_JAIL}" -eq 1 ]; } || \
+       { [ "${CLASSIC_JAIL}" -eq 1 ] && [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } then
+        error_notify "Error: Only one of [-b|-B|--bridge], [-c|--classic] or [-v|-V|--vnet] should be set."
         usage
-    elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ]; then 
-        error_notify "Error: [-v|-V|--vnet] or [-b|-B|--bridge] must be set."
+    elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${CLASSIC_JAIL}" -eq 0 ]; then 
+        error_notify "Error: [-c|--classic], [-b|-B|--bridge] or [-v|-V|--vnet] must be set."
         usage
     fi
 fi
@@ -125,14 +135,20 @@ else
 fi
 
 validate_ip() {
-    local ip="${1}"
-    local ip6="$( echo "${ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
-    if [ -n "${ip6}" ]; then
-        info "Valid: (${ip6})."
+    IP6_ENABLE=0
+    local _ip="${1}"
+    local _jail_config="${bastille_jailsdir}/${TARGET}/jail.conf"
+    if grep -Eqo ${_ip} ${_jail_config}; then
+        error_exit "Error: IP already present in jail.conf"
+    fi
+    local _ip6="$( echo "${_ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
+    if [ -n "${_ip6}" ]; then
+        info "Valid: (${_ip6})."
+        IP6_ENABLE=1
     else
         local IFS
-        if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${ip}" | cut -d / -f1)
+        if echo "${_ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+            TEST_IP=$(echo "${_ip}" | cut -d / -f1)
             IFS=.
             set ${TEST_IP}
             for quad in 1 2 3 4; do
@@ -140,9 +156,9 @@ validate_ip() {
                     error_exit "Invalid: (${TEST_IP})"
                 fi
             done
-            info "Valid: (${ip})."
+            info "Valid: (${_ip})."
         else
-            error_exit "Invalid: (${ip})."
+            error_exit "Invalid: (${_ip})."
         fi
     fi
 }
@@ -156,21 +172,53 @@ validate_netif() {
     fi
 }
 
-validate_netconf() {
-    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        error_exit "Invalid network configuration."
-    fi
-}
-
 check_interface_added() {
     local _jailname="${1}"
     local _if="${2}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf" 
-    if grep -o "${_if}" "${_jail_config}"; then
+    if grep -qo "${_if}" "${_jail_config}"; then
         return 0
     else 
         return 1
     fi
+}
+
+change_ip() {
+    local _jailname="${1}"
+    local _if="${2}"
+    local _ip="${3}"
+    local _type="${4}"
+    local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf" 
+    local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
+    local _epair="$(grep -E ${_if} ${_jail_config} | grep -Eo -m 1 'epair[0-9]+|bastille[0-9]+')"
+    local _jail_vnet="$(grep -E ${_epair} ${_jail_rc_config} | grep -Eo -m 1 'vnet[0-9]+')"
+    sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}=" inet ${IP} "        
+}
+
+test_change_ip() {
+    local _jailname="${1}"
+    local _if="${2}"
+    local _ip="${3}"
+    local _type="${4}"
+    local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf" 
+    if [ "${_type}" = "vnet" ]; then
+        local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
+        local _epair="$(grep -E ${_if} ${_jail_config} | grep -Eo -m 1 'epair[0-9]+|bastille[0-9]+')"
+        local _jail_vnet="$(grep -E ${_epair} ${_jail_rc_config} | grep -Eo -m 1 'vnet[0-9]+')"
+        sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}=" inet ${IP} "
+    elif [ "${_type}" = "classic" ]; then
+        if [ "${IP6_ENABLE}" -eq 1 ]; then
+            local _ip6="$(bastille config ${_jailname} get ip6.addr | sed 's/,/ /g' | grep -F ${_if})"
+            if [ "${_ip6}" != "not set" ]; then
+                sed -i '' "s/${_if}|.*/${_if}|${_ip};/" "${_jail_config}"
+            fi
+        else
+            local _ip4="$(bastille config ${_jailname} get ip4.addr | sed 's/,/ /g' | grep -F ${_if})"
+            if [ "${_ip4}" != "not set" ]; then
+                sed -i '' "s/${_if}|.*/${_if}|${_ip};/" "${_jail_config}"
+            fi
+        fi
+    fi          
 }
 
 add_interface() {
@@ -278,62 +326,93 @@ EOF
 
         info "[${_jailname}]:"
         echo "Added VNET interface: \"${_if}\""
+        
+    elif [ "${CLASSIC_JAIL}" -eq 1 ]; then
+        if [ "${IP6_ENABLE}" -eq 1 ]; then
+            if [ "$(bastille config ${TARGET} get ip6)" = "disable" ]; then
+                error_exit "Error: IPv6 is not enabled for this jail."
+            else
+                sed -i '' "s/ip6.addr = .*/&\n  ip6.addr += ${_if}|${_ip};/" ${_jail_config}
+            fi
+        else
+            if [ "$(bastille config ${TARGET} get ip4)" = "disable" ]; then
+                error_exit "Error: IPv4 is not enabled for this jail."
+            else
+                sed -i '' "s/ip4.addr = .*/&\n  ip4.addr += ${_if}|${_ip};/" ${_jail_config}
+            fi
+        fi
     fi
+
+    info "[${_jailname}]:"
+    echo "Added interface: \"${_if}\""
 }
 
 remove_interface() {
     local _jailname="${1}"
     local _if="${2}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
-    local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-    local _if_jail="$(grep ${_if} ${_jail_config} | grep -Eo -m 1 'epair[0-9]+|bastille[0-9]+')"
-    if grep -o "${_if_jail}" ${_jail_rc_config}; then
-        local _if_vnet="$(grep ${_if_jail} ${_jail_rc_config} | grep -Eo 'vnet[0-9]+')"
-    else
-        error_exit "Interface not found: ${_if_jail}"
-    fi
+    # Skip next block in case of classic jail
+    if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
+        local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
+        local _if_jail="$(grep ${_if} ${_jail_config} | grep -Eo -m 1 'epair[0-9]+|bastille[0-9]+')"
+
+        if grep -o "${_if_jail}" ${_jail_rc_config}; then
+            local _if_vnet="$(grep ${_if_jail} ${_jail_rc_config} | grep -Eo 'vnet[0-9]+')"
+        else
+            error_exit "Interface not found: ${_if_jail}"
+        fi
     
-    # Do not allow removing default vnet0 interface
-    if [ "${_if_vnet}" = "vnet0" ]; then
-        error_exit "Default interface cannot be removed."
-    fi
+        # Do not allow removing default vnet0 interface
+        if [ "${_if_vnet}" = "vnet0" ]; then
+            error_exit "Default interface cannot be removed."
+        fi
 
-    # Avoid removing entire file contents if variables aren't set for some reason
-    if [ -z "${_if_jail}" ]; then
-        error_exit "Error: Could not find specifed interface."
-    fi
-
-    # Remove interface from jail.conf
-    if [ -n "${_if_jail}" ]; then
-        sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}"
-    else
-        error_exit "Failed to remove interface from jail.conf"
-    fi
+        # Avoid removing entire file contents if variables aren't set for some reason
+        if [ -z "${_if_jail}" ]; then
+            error_exit "Error: Could not find specifed interface."
+        fi
+       
+         # Remove interface from /etc/rc.conf
+        if [ -n "${_if_vnet}" ] && echo ${_if_vnet} 2>/dev/null | grep -Eo 'vnet[0-9]+'; then
+            sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
+        else
+            error_exit "Failed to remove interface from /etc/rc.conf"
+        fi
     
-    # Remove interface from /etc/rc.conf
-    if [ -n "${_if_vnet}" ] && echo ${_if_vnet} 2>/dev/null | grep -Eo 'vnet[0-9]+'; then
-        sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
+        # Remove VNET interface from jail.conf (VNET)
+        if [ -n "${_if_jail}" ]; then
+            sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}"
+        else
+            error_exit "Failed to remove interface from jail.conf"
+        fi
     else
-        error_exit "Failed to remove interface from /etc/rc.conf"
+        # Remove interface from jail.conf (non-VNET)
+        if [ -n "${_if}" ]; then
+            if grep ${_if} ${_jail_config} 2>/dev/null | grep -qo " = "; then
+                error_exit "Default interface cannot be removed."
+            else
+                sed -i '' "/.*${_if}.*/d" "${_jail_config}"
+            fi
+        else
+            error_exit "Failed to remove interface from jail.conf"
+        fi
     fi
-
+   
     info "[${_jailname}]:"
     echo "Removed interface: \"${_if}\""
 }
 
 case "${ACTION}" in
     add)
-        validate_netconf
         validate_netif "${INTERFACE}"
-        if check_interface_added "${TARGET}" "${INTERFACE}"; then
-            error_exit "Interface is already added: \"${INTERFACE}\""
-        fi
         if [ -z "${IP}" ] || [ "${IP}" = "0.0.0.0" ]; then
             IP="SYNCDHCP"
+            IP6_ENABLE=0
         else
             validate_ip "${IP}"
         fi
         if [ "${VNET_JAIL}" -eq 1 ]; then
+        ! check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface is already added: \"${INTERFACE}\""
             if ifconfig | grep "${INTERFACE}" | grep -q bridge; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
@@ -343,8 +422,22 @@ case "${ACTION}" in
                 fi
             fi
         elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
+        ! check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface is already added: \"${INTERFACE}\""
             if ! ifconfig | grep "${INTERFACE}" | grep -q bridge; then
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
+            else
+                add_interface "${TARGET}" "${INTERFACE}" "${IP}"
+                if [ "${START}" -eq 1 ]; then
+                    bastille start "${TARGET}"
+                fi
+            fi
+        elif [ "${CLASSIC_JAIL}" -eq 1 ]; then
+            if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
+                error_exit "Error: ${TARGET} is a VNET jail."
+            elif [ "$(bastille config ${TARGET} get ip4)" = "inherit" ] || [ "$(bastille config ${TARGET} get ip6)" = "inherit" ]; then
+                error_exit "Error: Jail IP mode is set to inherit."
+            elif [ "${IP}" = "SYNCDHCP" ]; then
+                error_exit "Error: Valid IP is required for non-VNET jails."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
                 if [ "${START}" -eq 1 ]; then
@@ -356,17 +449,29 @@ case "${ACTION}" in
     remove|delete)
         check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\"" 
         validate_netif "${INTERFACE}"
-        if ! grep -q "${INTERFACE}" ${bastille_jailsdir}/${TARGET}/jail.conf; then
-            error_exit "Interface not found in jail.conf: \"${INTERFACE}\""
-        else
-            remove_interface "${TARGET}" "${INTERFACE}"
+        remove_interface "${TARGET}" "${INTERFACE}"
+        if [ "${START}" -eq 1 ]; then
+            bastille start "${TARGET}"
+        fi
+        ;;
+    change)
+        validate_netif "${INTERFACE}"
+        check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\""
+        if grep -qo "vnet;" "${bastille_jailsdir}/${TARGET}/jail.conf"; then
+            if [ -z "${IP}" ] || [ "${IP}" = "0.0.0.0" ]; then
+                IP="SYNCDHCP"
+            fi
+            validate_ip "${IP}"
+            change_ip "${TARGET}" "${INTERFACE}" "${IP}"
             if [ "${START}" -eq 1 ]; then
                 bastille start "${TARGET}"
             fi
-        fi
+        else
+            error_notify "Error: Changing IP is not supported for non-VNET jails."
+            error_exit "Please use [add] to add an additional IP to a classic, non-VNET jail."
+        fi   
         ;;
     *)
-        error_exit "Only [add|remove] are supported."
+        error_exit "Only [add|remove|change] are supported."
         ;;
 esac
-

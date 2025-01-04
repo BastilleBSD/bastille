@@ -54,17 +54,17 @@ set_target "${TARGET}"
 for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
-
     check_target_is_running "${_jail}" || error_continue "Jail is already stopped."
-    # Capture ip4.addr address while still running
-    _ip4="$(bastille config ${_jail} get ip4.addr)"
 
-    # Check if pfctl is present
-    # Do not invoke pfctl if no ip4.addr found
-    if [ "${_ip4}" != "not set" ]; then
-        if which -s pfctl; then
-            if [ "$(bastille rdr ${_jail} list)" ]; then
-                bastille rdr "${_jail}" clear
+    # Remove RDR rules
+    if [ "$(bastille config ${_jail} get vnet)" != "enabled" ]; then
+        _ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
+        _ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
+        if [ "${_ip4}" != "not set" ] || [ "${_ip6}" != "not set" ]; then
+            if which -s pfctl; then
+                if [ "$(bastille rdr ${_jail} list)" ]; then
+                    bastille rdr "${_jail}" clear
+                fi
             fi
         fi
     fi
@@ -79,10 +79,17 @@ for _jail in ${JAILS}; do
     # Stop jail
     jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
-    # Remove (captured above) ip4.addr from firewall table
-    if [ -n "${bastille_network_loopback}" ] && [ "${_ip4}" != "not set" ]; then
-        if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
-            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip4}"
-        fi
+    # Remove (captured above) ipX.addr from firewall table
+    if [ "${_ip4}" != "not set" ]; then
+        for _ip in ${_ip4}; do
+            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
+        done
+    fi
+    if [ "${_ip6}" != "not set" ]; then
+        for _ip in ${_ip6}; do
+            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
+        done
     fi
 done

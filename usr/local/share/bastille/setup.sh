@@ -38,7 +38,7 @@ usage() {
 }
 
 # Check for too many args
-if [ $# -gt 1 ]; then
+if [ "$#" -gt 1 ]; then
     usage
 fi
 

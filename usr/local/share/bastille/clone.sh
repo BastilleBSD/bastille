@@ -108,7 +108,7 @@ validate_ip() {
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         IPX_ADDR="ip6.addr"
-		# shellcheck disable=SC2034
+        # shellcheck disable=SC2034
         IP6_MODE="new"
     else
         local IFS
@@ -142,12 +142,30 @@ update_jailconf() {
             sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
             sed -i '' "s|${TARGET} {|${NEWNAME} {|" "${JAIL_CONFIG}"
-            sed -i '' "s|${IPX_ADDR} = .*;|${IPX_ADDR} = ${IP};|" "${JAIL_CONFIG}"
         fi
     fi
 
     if grep -qw "vnet;" "${JAIL_CONFIG}"; then
         update_jailconf_vnet
+    else
+        _ip4="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
+        _ip6="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
+        # IP4
+        if [ "${_ip4}" != "not set" ]; then
+            for _ip in ${_ip4}; do
+                _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+                sed -i '' "/${IPX_ADDR} = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                sed -i '' "/${IPX_ADDR} += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
+            done
+        fi
+        # IP6
+        if [ "${_ip6}" != "not set" ]; then
+            for _ip in ${_ip6}; do
+                _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+                sed -i '' "/${IPX_ADDR} = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                sed -i '' "/${IPX_ADDR} += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
+            done
+        fi
     fi
 }
 
@@ -308,4 +326,3 @@ else
 fi
 
 clone_jail
-
