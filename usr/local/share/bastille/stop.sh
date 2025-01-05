@@ -32,7 +32,16 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille stop TARGET"
+    # Build an independent usage for the stop command.
+    error_notify "Usage: bastille stop TARGET [option]"
+
+    cat << EOF
+    Options:
+
+    -x | --debug  -- Stop the Jail(s) with debug mode to track down stop issues.
+
+EOF
+    exit 1
 }
 
 # Handle special-case commands first.

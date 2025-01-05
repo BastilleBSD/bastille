@@ -32,7 +32,16 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille start TARGET"
+    # Build an independent usage for the start command.
+    error_notify "Usage: bastille start TARGET [option]"
+
+    cat << EOF
+    Options:
+
+    -x | --debug  -- Start the Jail(s) with debug mode to track down startup issues.
+
+EOF
+    exit 1
 }
 
 # Handle special-case commands first.
