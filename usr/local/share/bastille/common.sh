@@ -28,6 +28,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Source config file
+. /usr/local/etc/bastille/bastille.conf
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -51,9 +54,16 @@ if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
-# Notify message on error, but do not exit
+# Error/Info functions
 error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+}
+
+error_continue() {
+    error_notify "$@"
+    # Disabling this shellcheck as we only ever call it inside of a loop
+    # shellcheck disable=SC2104
+    continue
 }
 
 # Notify message on error and exit
@@ -70,10 +80,51 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+check_target_exists() {
+    local _TARGET="${1}"
+    if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+check_target_is_running() {
+    local _TARGET="${1}"
+    if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+check_target_is_stopped() {
+    local _TARGET="${1}"
+    if [ "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+generate_static_mac() {
+    local jail_name="${1}"
+    local external_interface="${2}"
+    local external_interface_mac="$(ifconfig ${external_interface} | grep ether | awk '{print $2}' | sed 's#:##g')"
+    local macaddr_prefix="$(echo -n "${external_interface_mac}" | sha256 | cut -b -6 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    local macaddr_suffix="$(echo -n "${jail_name}" | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
+        error_notify "Failed to generate MAC address."
+    fi
+    macaddr="${macaddr_prefix}:${macaddr_suffix}"
+    export macaddr
+}
+
 generate_vnet_jail_netblock() {
     local jail_name="$1"
     local use_unique_bridge="$2"
     local external_interface="$3"
+    generate_static_mac "${jail_name}" "${external_interface}"
     ## determine number of containers + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
@@ -98,11 +149,13 @@ generate_vnet_jail_netblock() {
         ## generate bridge config
         cat <<-EOF
   vnet;
-  vnet.interface = "e${uniq_epair_bridge}b_${jail_name}";
+  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
   exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
   exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
   exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
   exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
+  exec.prestart += "ifconfig e${uniq_epair_bridge}a_${jail_name} ether ${macaddr}a";
+  exec.prestart += "ifconfig e${uniq_epair_bridge}b_${jail_name} ether ${macaddr}b";
   exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
   exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
 EOF
@@ -112,10 +165,49 @@ EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} ether ${macaddr}a";
+  exec.prestart += "ifconfig e0b_${uniq_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
     fi
+}
+
+set_target() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        target_all_jails
+    else
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
+    fi
+}
+
+set_target_single() {
+    local _TARGET="${1}"
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        error_exit "[all|ALL] not supported with this command."
+    else
+        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
+        JAILS="${_TARGET}"
+        TARGET="${_TARGET}"
+        export JAILS
+        export TARGET
+    fi
+}
+
+target_all_jails() {
+    local _JAILS="$(bastille list jails)"
+    JAILS=""
+    for _jail in ${_JAILS}; do
+        if [ -d "${bastille_jailsdir}/${_jail}" ]; then
+            JAILS="${JAILS} ${_jail}"
+        fi
+    done
+    export JAILS
 }
 
 checkyesno() {
@@ -138,3 +230,4 @@ checkyesno() {
         ;;
     esac
 }
+

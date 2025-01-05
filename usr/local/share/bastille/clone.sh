@@ -32,7 +32,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille clone [TARGET] [NEW_NAME] [IPADRESS]"
+    error_exit "Usage: bastille clone TARGET NEW_NAME IPADDRESS"
 }
 
 # Handle special-case commands first
@@ -87,7 +87,7 @@ update_jailconf() {
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
-            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
+ 	    sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
             sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
             sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
@@ -111,20 +111,33 @@ update_jailconf_vnet() {
     for _num in $(seq 0 "${num_range}"); do
         if [ -n "${jail_list}" ]; then
             if ! grep -q "e0b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                uniq_epair="bastille${_num}"
-                # Update the exec.* with uniq_epair when cloning jails.
-                sed -i '' "s|vnet.interface = e0b_bastille.*;|vnet.interface = e0b_${uniq_epair};|" "${JAIL_CONFIG}"
-                sed -i '' "s|exec.prestart += \"jib addm bastille[0-9]|exec.prestart += \"jib addm ${uniq_epair}|" "${JAIL_CONFIG}"
-                sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille[0-9].*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
-                sed -i '' "s|exec.poststop += \"jib destroy bastille[0-9]\";|exec.poststop += \"jib destroy ${uniq_epair}\";|" "${JAIL_CONFIG}"
-                break
+                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
+                    local uniq_epair="bastille${_num}"
+                    local uniq_epair_bridge="${_num}"
+	            # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
+                    # we also do not use the main generate_static_mac function here
+                    local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
+    	            local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+                    local macaddr="${macaddr_prefix}:${macaddr_suffix}"
+	            # Update the exec.* with uniq_epair when cloning jails.
+                    # for VNET jails
+                    sed -i '' "s|bastille\([0-9]\{1,\}\)|${uniq_epair}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|e\([0-9]\{1,\}\)a_${NEWNAME}|e${uniq_epair_bridge}a_${NEWNAME}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|e\([0-9]\{1,\}\)b_${NEWNAME}|e${uniq_epair_bridge}b_${NEWNAME}|g" "${JAIL_CONFIG}"
+                    sed -i '' "s|epair\([0-9]\{1,\}\)|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
+		    sed -i '' "s|exec.prestart += \"ifconfig e0a_bastille\([0-9]\{1,\}\).*description.*|exec.prestart += \"ifconfig e0a_${uniq_epair} description \\\\\"vnet host interface for Bastille jail ${NEWNAME}\\\\\"\";|" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*a\";|ether ${macaddr}a\";|" "${JAIL_CONFIG}"
+                    sed -i '' "s|ether.*:.*:.*:.*:.*:.*b\";|ether ${macaddr}b\";|" "${JAIL_CONFIG}"
+                    break
+                fi
             fi
         fi
     done
 
     # Rename interface to new uniq_epair
     sed -i '' "s|ifconfig_e0b_bastille.*_name|ifconfig_e0b_${uniq_epair}_name|" "${bastille_jail_rc_conf}"
-
+    sed -i '' "s|ifconfig_e.*b_${TARGET}_name|ifconfig_e${uniq_epair_bridge}b_${NEWNAME}_name|" "${bastille_jail_rc_conf}"
+    
     # If 0.0.0.0 set DHCP, else set static IP address
     if [ "${IP}" = "0.0.0.0" ]; then
         sysrc -f "${bastille_jail_rc_conf}" ifconfig_vnet0="SYNCDHCP"
@@ -137,15 +150,6 @@ update_fstab() {
     # Update fstab to use the new name
     FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
     if [ -f "${FSTAB_CONFIG}" ]; then
-        FSTAB_RELEASE=$(grep -owE '([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9]|-CURRENT)|([0-9]{1,2}(-stable-build-[0-9]{1,3}|-stable-LAST))|(current-build)-([0-9]{1,3})|(current-BUILD-LATEST)|([0-9]{1,2}-stable-BUILD-LATEST)' "${FSTAB_CONFIG}" | uniq)
-        FSTAB_CURRENT=$(grep -w ".*/releases/.*/jails/${TARGET}/root/.bastille" "${FSTAB_CONFIG}")
-        FSTAB_NEWCONF="${bastille_releasesdir}/${FSTAB_RELEASE} ${bastille_jailsdir}/${NEWNAME}/root/.bastille nullfs ro 0 0"
-        if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
-            # If both variables are set, update as needed
-            if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${NEWNAME}/root/.bastille" "${FSTAB_CONFIG}"; then
-                sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
-            fi
-        fi
         # Update additional fstab paths with new jail path
         sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|" "${FSTAB_CONFIG}"
     fi
