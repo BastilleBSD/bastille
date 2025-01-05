@@ -97,6 +97,8 @@ stop_loop() {
     done
 }
 
+DEBUG_MODE="0"
+
 # Handle and parse options.
 while [ $# -gt 0 ]; do
     case "${1}" in

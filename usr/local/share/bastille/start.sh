@@ -122,6 +122,7 @@ start_loop() {
     done
 }
 
+DEBUG_MODE="0"
 TARGET="${1}"
 shift
 
