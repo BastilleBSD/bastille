@@ -147,6 +147,7 @@ validate_ip() {
         local _ip6="$( echo "${_ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
         if [ -n "${_ip6}" ]; then
             info "Valid: (${_ip6})."
+            # shellcheck disable=SC2034
             IP6="${_ip6}"
         else
             local IFS
