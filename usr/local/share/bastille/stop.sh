@@ -36,48 +36,76 @@ usage() {
 }
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
 help|-h|--help)
     usage
     ;;
 esac
 
-if [ $# -ne 0 ]; then
+if [ $# -gt 2 ] || [ $# -lt 0 ]; then
     usage
 fi
 
 bastille_root_check
 
-for _jail in ${JAILS}; do
-    ## test if running
-    if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
-        ## Capture ip4.addr address while still running
-        _ip4="$(bastille config ${_jail} get ip4.addr)"
+stop_loop() {
 
-        # Check if pfctl is present
-        if [ "${_ip4}" != "not set" ]; then
-            if [ "$(bastille rdr ${_jail} list)" ]; then
-                bastille rdr ${_jail} clear
+    for _jail in ${JAILS}; do
+        ## test if running
+        if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
+            ## Capture ip4.addr address while still running
+            _ip4="$(bastille config ${_jail} get ip4.addr)"
+
+            # Check if pfctl is present
+            if [ "${_ip4}" != "not set" ]; then
+                if [ "$(bastille rdr ${_jail} list)" ]; then
+                    bastille rdr ${_jail} clear
+                fi
+            fi
+
+            ## remove rctl limits
+            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+                while read _limits; do
+                    rctl -r "${_limits}"
+                done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+            fi
+
+            ## stop container
+            info "[${_jail}]:"
+            jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
+
+            ## remove (captured above) ip4.addr from firewall table
+            if [ -n "${bastille_network_loopback}" ] && [ "${_ip4}" != "not set" ]; then
+                if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
+                    pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip4}"
+                fi
             fi
         fi
-
-        ## remove rctl limits
-        if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-            while read _limits; do
-                rctl -r "${_limits}"
-            done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+        echo
+        if [ "${DEBUG_MODE}" -eq "1" ]; then
+            warn "***DEBUG MODE END***"
         fi
+    done
+}
 
-        ## stop container
-        info "[${_jail}]:"
-        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
-
-        ## remove (captured above) ip4.addr from firewall table
-        if [ -n "${bastille_network_loopback}" ] && [ "${_ip4}" != "not set" ]; then
-            if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
-                pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip4}"
-            fi
-        fi
-    fi
-    echo
+# Handle and parse options.
+while [ $# -gt 0 ]; do
+    case "${1}" in
+        -[xX]|--debug)
+            DEBUG_MODE="1"
+            enable_debug
+            shift
+            ;;
+        --*|-*)
+            error_notify "Unknown Option."
+            usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
 done
+
+# Stop loop.
+stop_loop
+

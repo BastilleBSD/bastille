@@ -44,6 +44,12 @@ bastille_root_check() {
     fi
 }
 
+enable_debug() {
+    # Enable debug mode.
+	warn "***DEBUG MODE START***"
+    set -x
+}
+
 enable_color() {
     . /usr/local/share/bastille/colors.pre.sh
 }
