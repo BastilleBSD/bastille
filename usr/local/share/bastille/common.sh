@@ -164,9 +164,9 @@ set_target() {
             fi
             TARGET="${TARGET} ${_jail}"
             JAILS="${JAILS} ${_jail}"
-            export TARGET
-            export JAILS
         done
+        export TARGET
+        export JAILS
     fi
 }
 
