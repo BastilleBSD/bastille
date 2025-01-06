@@ -56,6 +56,7 @@ bootstrap_etc_release() {
 bootstrap_etc_tarball() {
     local _release="${1}"
     if [ ! -f ${bastille_cachedir}/${_release}.tbz2 ]; then
+        echo "Building tarball, please wait..."
         if ! etcupdate build -d /tmp/etcupdate -s ${bastille_releasesdir}/${_release}/usr/src ${bastille_cachedir}/${_release}.tbz2; then
             error_exit "Failed to build etcupdate tarball \"${_release}.tbz2\""
         else
