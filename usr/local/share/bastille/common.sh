@@ -28,7 +28,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Source config file
 . /usr/local/etc/bastille/bastille.conf
 
 COLOR_RED=
@@ -48,22 +47,28 @@ enable_color() {
     . /usr/local/share/bastille/colors.pre.sh
 }
 
+enable_debug() {
+    # Enable debug mode.
+    warn "***DEBUG MODE START***"
+    set -x
+} 
+
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.
 if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
-# Error/Info functions
-error_notify() {
-    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
-}
-
+# Notify message on error, and continue to next jail
 error_continue() {
     error_notify "$@"
-    # Disabling this shellcheck as we only ever call it inside of a loop
     # shellcheck disable=SC2104
     continue
+}
+
+# Notify message on error, but do not exit
+error_notify() {
+    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
 # Notify message on error and exit
@@ -82,7 +87,8 @@ warn() {
 
 check_target_exists() {
     local _TARGET="${1}"
-    if [ ! -d "${bastille_jailsdir}"/"${_TARGET}" ]; then
+    local _jaillist="$(bastille list jails)"
+    if ! echo "${_jaillist}" | grep -Eq "^${_TARGET}$"; then
         return 1
     else
         return 0
@@ -91,7 +97,7 @@ check_target_exists() {
 
 check_target_is_running() {
     local _TARGET="${1}"
-    if [ ! "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+    if ! jls name | grep -Eq "^${_TARGET}$"; then
         return 1
     else
         return 0
@@ -100,11 +106,107 @@ check_target_is_running() {
 
 check_target_is_stopped() {
     local _TARGET="${1}"
-    if [ "$(/usr/sbin/jls name | awk "/^${_TARGET}$/")" ]; then
+    if jls name | grep -Eq "^${_TARGET}$"; then
         return 1
     else
         return 0
     fi
+}
+
+get_jail_name() {
+    local _JID="${1}"
+    local _jailname="$(jls -j ${_JID} name 2>/dev/null)"
+    if [ -z "${_jailname}" ]; then
+        return 1
+    else
+        echo "${_jailname}"
+    fi
+}
+
+jail_autocomplete() {
+    local _TARGET="${1}"
+    local _jaillist="$(bastille list jails)"
+    local _AUTOTARGET="$(echo "${_jaillist}" | grep -E "^${_TARGET}")"
+    if [ -n "${_AUTOTARGET}" ]; then
+        if [ "$(echo "${_AUTOTARGET}" | wc -l)" -eq 1 ]; then
+            echo "${_AUTOTARGET}"
+        else
+            error_continue "Multiple jails found for ${_TARGET}:\n${_AUTOTARGET}"
+            return 1
+        fi
+    else
+        return 2
+    fi
+}
+
+set_target() {
+    local _TARGET=${1}
+    JAILS=""
+    TARGET=""
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        target_all_jails
+    else
+        for _jail in ${_TARGET}; do
+            if echo "${_jail}" | grep -Eq '^[0-9]+$'; then
+                if get_jail_name "${_jail}" > /dev/null; then
+                    _jail="$(get_jail_name ${_jail})"
+                else
+                    error_continue "Error: JID \"${_jail}\" not found. Is jail running?"
+                fi
+            elif ! check_target_exists "${_jail}"; then
+                if jail_autocomplete "${_jail}" > /dev/null; then
+                    _jail="$(jail_autocomplete ${_jail})"
+                elif [ $? -eq 2 ]; then
+                    error_continue "Jail not found \"${_jail}\""
+                else
+                    exit 1
+                fi
+            fi
+            TARGET="${TARGET} ${_jail}"
+            JAILS="${JAILS} ${_jail}"
+            export TARGET
+            export JAILS
+        done
+    fi
+}
+
+set_target_single() {
+    local _TARGET="${1}"
+    local _status=0
+    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+        error_exit "[all|ALL] not supported with this command."
+    elif echo "${_TARGET}" > /dev/null | grep -Eq '^[0-9]+$'; then
+        if get_jail_name "${_TARGET}" > /dev/null; then
+            _TARGET="$(get_jail_name ${_TARGET})"
+        else
+            error_exit "Error: JID \"${_TARGET}\" not found. Is jail running?"
+        fi
+    elif
+        ! check_target_exists "${_TARGET}"; then
+            if jail_autocomplete "${_TARGET}" > /dev/null; then
+                _TARGET="$(jail_autocomplete ${_TARGET})"
+            elif [ $? -eq 2 ]; then
+                error_exit "Jail not found \"${_jail}\""
+            else
+                exit 1
+            fi
+    else
+        TARGET="${_TARGET}"
+        JAILS="${_TARGET}"
+        export TARGET
+        export JAILS
+    fi
+}
+
+target_all_jails() {
+    local _JAILS="$(bastille list jails)"
+    JAILS=""
+    for _jail in ${_JAILS}; do
+        if [ -d "${bastille_jailsdir}/${_jail}" ]; then
+            JAILS="${JAILS} ${_jail}"
+        fi
+    done
+    export JAILS
 }
 
 generate_static_mac() {
@@ -121,47 +223,74 @@ generate_static_mac() {
 }
 
 generate_vnet_jail_netblock() {
-    local jail_name="$1"
-    local use_unique_bridge="$2"
-    local external_interface="$3"
-    generate_static_mac "${jail_name}" "${external_interface}"
-    ## determine number of containers + 1
+    local jail_name="${1}"
+    local use_unique_bridge="${2}"
+    local external_interface="${3}"
+    # setting this to 1 temprarily until we integrate the -M switch
+    local static_mac=1
+    ## determine number of interfaces + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
-    local jail_list="$(bastille list jails)"
-    if [ -n "${jail_list}" ]; then
-        local list_jails_num="$(echo "${jail_list}" | wc -l | awk '{print $1}')"
-        local num_range=$((list_jails_num + 1))
-        for _num in $(seq 0 "${num_range}"); do
-            if ! grep -q "e[0-9]b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                    local uniq_epair="bastille${_num}"
+    local _epair_if_count="$(grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _vnet_if_count="$(grep -Eos 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local epair_num_range=$((_epair_if_count + 1))
+    local vnet_num_range=$((_vnet_if_count + 1))
+    if [ -n "${use_unique_bridge}" ]; then
+        if [ "${_epair_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${epair_num_range}"); do
+                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     local uniq_epair_bridge="${_num}"
                     break
                 fi
-            fi
-        done
+            done
+        else
+            local uniq_epair_bridge="0"
+        fi
     else
-        local uniq_epair="bastille0"
-        local uniq_epair_bridge="0"
+        if [ "${_vnet_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${vnet_num_range}"); do
+                if ! grep -Eosq "bastillle${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                    local uniq_epair="bastille${_num}"
+                    break
+                fi
+            done
+        else
+            local uniq_epair="bastille0"
+        fi
     fi
+    ## If BRIDGE is enabled, generate bridge config, else generate VNET config
     if [ -n "${use_unique_bridge}" ]; then
-        ## generate bridge config
-        cat <<-EOF
+        if [ -n "${static_mac}" ]; then
+            ## Generate bridged VNET config with static MAC address
+            generate_static_mac "${jail_name}" "${external_interface}"
+            cat <<-EOF
   vnet;
-  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
+  vnet.interface = epair${uniq_epair_bridge}b;
   exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
   exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
-  exec.prestart += "ifconfig e${uniq_epair_bridge}a_${jail_name} ether ${macaddr}a";
-  exec.prestart += "ifconfig e${uniq_epair_bridge}b_${jail_name} ether ${macaddr}b";
-  exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
-  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a ether ${macaddr}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}b ether ${macaddr}b";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "ifconfig ${external_interface} deletem epair${uniq_epair_bridge}a";
+  exec.poststop += "ifconfig epair${uniq_epair_bridge}a destroy";
 EOF
+        else
+            ## Generate bridged VNET config without static MAC address
+            cat <<-EOF
+  vnet;
+  vnet.interface = epair${uniq_epair_bridge}b;
+  exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
+  exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "ifconfig ${external_interface} deletem epair${uniq_epair_bridge}a";
+  exec.poststop += "ifconfig epair${uniq_epair_bridge}a destroy";
+EOF
+        fi
     else
-        ## generate config
-        cat <<-EOF
+        if [ -n "${static_mac}" ]; then
+            ## Generate VNET config with static MAC address
+            generate_static_mac "${jail_name}" "${external_interface}"
+            cat <<-EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
@@ -170,44 +299,17 @@ EOF
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
-    fi
-}
-
-set_target() {
-    local _TARGET="${1}"
-    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
-        target_all_jails
-    else
-        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
-        JAILS="${_TARGET}"
-        TARGET="${_TARGET}"
-        export JAILS
-        export TARGET
-    fi
-}
-
-set_target_single() {
-    local _TARGET="${1}"
-    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
-        error_exit "[all|ALL] not supported with this command."
-    else
-        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
-        JAILS="${_TARGET}"
-        TARGET="${_TARGET}"
-        export JAILS
-        export TARGET
-    fi
-}
-
-target_all_jails() {
-    local _JAILS="$(bastille list jails)"
-    JAILS=""
-    for _jail in ${_JAILS}; do
-        if [ -d "${bastille_jailsdir}/${_jail}" ]; then
-            JAILS="${JAILS} ${_jail}"
+        else
+            ## Generate VNET config without static MAC address
+            cat <<-EOF
+  vnet;
+  vnet.interface = e0b_${uniq_epair};
+  exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "jib destroy ${uniq_epair}";
+EOF
         fi
-    done
-    export JAILS
+    fi
 }
 
 checkyesno() {
@@ -230,4 +332,3 @@ checkyesno() {
         ;;
     esac
 }
-
