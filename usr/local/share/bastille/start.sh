@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -79,14 +79,14 @@ for _jail in ${JAILS}; do
         fi
 
         ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
-        ip=$(bastille config "${_jail}" get ip4.addr)
-        if [ -n "${ip}" ]; then
-            if ifconfig | grep -wF "${ip}" >/dev/null; then
-                error_notify "Error: IP address (${ip}) already in use."
+        _ip4=$(bastille config "${_jail}" get ip4.addr)
+        if [ "${_ip4}" != "not set" ]; then
+            if ifconfig | grep -wF "${_ip4}" >/dev/null; then
+                error_notify "Error: IP address (${_ip4}) already in use."
                 continue
             fi
             ## add ip4.addr to firewall table
-            pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
+            pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
         fi
 
         ## start the container

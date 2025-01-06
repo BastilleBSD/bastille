@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,8 @@ verify_template() {
             info "Detected ${_hook} hook."
 
             ## line count must match newline count
+            # shellcheck disable=SC2046
+            # shellcheck disable=SC3003
             if [ $(wc -l "${_path}" | awk '{print $1}') -ne $(grep -c $'\n' "${_path}") ]; then
                 info "[${_hook}]:"
                 error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."

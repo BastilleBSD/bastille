@@ -26,7 +26,7 @@ Usage
       htop        Interactive process viewer (requires htop).
       import      Import a specified container.
       limits      Apply resources limits to targeted container(s). See rctl(8).
-      list        List containers (running and stopped).
+      list        List containers (running).
       mount       Mount a volume inside the targeted container(s).
       pkg         Manipulate binary packages within targeted container(s). See pkg(8).
       rdr         Redirect host port to container port.

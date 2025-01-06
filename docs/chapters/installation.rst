@@ -4,7 +4,7 @@ Bastille is available in the official FreeBSD ports tree at
 `sysutils/bastille`. Binary packages available in `quarterly` and `latest`
 repositories.
 
-Current version is `0.10.20231125`.
+Current version is `0.12.20241124`.
 
 To install from the FreeBSD package repository:
 

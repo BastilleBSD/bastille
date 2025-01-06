@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -172,7 +172,7 @@ destroy_rel() {
             if [ "${FORCE}" = "1" ]; then
                 ## remove cache on force
                 if [ -d "${bastille_cachedir}/${TARGET}" ]; then
-                    rm -rf "${bastille_cachedir}/${TARGET}"
+                    rm -rf "${bastille_cachedir:?}/${TARGET}"
                 fi
             fi
             echo

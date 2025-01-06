@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,29 +32,56 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille htop TARGET"
+    error_exit "Usage: bastille htop [option(s)] TARGET"
+    cat << EOF
+    Options:
+
+    -f | --force -- Start the jail if it is stopped.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -ne 0 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
 
-for _jail in ${JAILS}; do
-    bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
-    if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        error_notify "htop not found on ${_jail}."
-    elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
-        info "[${_jail}]:"
-        jexec -l ${_jail} /usr/local/bin/htop
-    fi
-    echo -e "${COLOR_RESET}"
-done
+bastille_root_check
+set_target_single "${TARGET}"
+
+info "[${TARGET}]:"
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else   
+    error_notify "Jail is not running."
+    error_continue "Use [-f|--force] to force start the jail."
+fi
+
+bastille_jail_path="${bastille_jailsdir}/${TARGET}/root"
+if [ ! -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
+    error_notify "htop not found on ${TARGET}."
+elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
+    jexec -l ${TARGET} /usr/local/bin/htop
+fi

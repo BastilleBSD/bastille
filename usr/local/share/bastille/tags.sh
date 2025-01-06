@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # Ressource limits added by Lars Engels github.com/bsdlme
 #
@@ -50,7 +50,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -lt 1 -o $# -gt 2 ]; then
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
     usage
 fi
 

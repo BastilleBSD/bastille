@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,20 @@ PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 . /usr/local/share/bastille/common.sh
 
-## check for config existance
+## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        error_exit "Missing Configuration"
+        warn "Configuration file not found. Do yu want to create it with default values? [y/N]"
+        read  answer
+            case "${answer}" in
+                [Nn][Oo]|[Nn]|"")
+                    error_exit "No configuration file has been generated. Exiting."
+                ;;
+                [Yy][Ee][Ss]|[Yy])
+                    cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+                    info "Configuration file has been generated. Continuing with default values"
+                ;;
+            esac
     fi
 }
 
@@ -62,7 +72,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.10.20231125"
+BASTILLE_VERSION="0.12.20241124"
 
 usage() {
     cat << EOF
@@ -88,7 +98,7 @@ Available Commands:
   htop        Interactive process viewer (requires htop).
   import      Import a specified container.
   limits      Apply resources limits to targeted container(s). See rctl(8).
-  list        List containers (running and stopped).
+  list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rcp         reverse cp(1) files from a single container to the host.
@@ -147,10 +157,10 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|export|import|list|rdr|restart|setup|start|update|upgrade|verify)
+bootstrap|create|destroy|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|service|stop|sysrc|tags|template|top|umount|zfs)
+clone|config|cmd|console|convert|cp|edit|limits|pkg|rcp|rename|service|stop|sysrc|tags|template|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
@@ -185,6 +195,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
             # This command does not act on a jail, so we are temporarily bypassing the presence/started
             # checks. The command will simply convert a template from hooks to a Bastillefile. -- cwells
+            :
         else
             JAILS="${TARGET}"
 
@@ -194,7 +205,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
             fi
 
             case "${CMD}" in
-            cmd|console|htop|pkg|service|stop|sysrc|template|top)
+            cmd|console|pkg|service|stop|sysrc|template)
                 check_target_is_running
                 ;;
             convert|rename)
@@ -215,6 +226,7 @@ clone|config|cmd|console|convert|cp|edit|htop|limits|mount|pkg|rcp|rename|servic
     ;;
 esac
 
+# shellcheck disable=SC2154
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 if [ -f "${SCRIPTPATH}" ]; then
     : "${UMASK:=022}"

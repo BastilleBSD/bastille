@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ usage() {
 zfs_snapshot() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
+    # shellcheck disable=SC2140
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     echo
 done
@@ -46,6 +47,7 @@ done
 zfs_destroy_snapshot() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
+    # shellcheck disable=SC2140
     zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     echo
 done

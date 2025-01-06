@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,91 +32,127 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille mount TARGET host_path container_path [filesystem_type options dump pass_number]"
+    error_exit "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
 }
 
 # Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -lt 2 ]; then
+if [ "$#" -lt 3 ] || [ "$#" -gt 6 ]; then
     usage
-elif [ $# -eq 2 ]; then
-    _fstab="$@ nullfs ro 0 0"
+fi
+
+TARGET="${1}"
+shift
+
+if [ "$#" -eq 2 ]; then
+    _fstab="$(echo "$* nullfs ro 0 0" | sed 's#\\ #\\040#g')"
 else
-    _fstab="$@"
+    _fstab="$(echo "$*" | sed 's#\\ #\\040#g')"
 fi
 
 bastille_root_check
+set_target "${TARGET}"
 
-## assign needed variables
-_hostpath=$(echo "${_fstab}" | awk '{print $1}')
-_jailpath=$(echo "${_fstab}" | awk '{print $2}')
+# Assign variables
+_hostpath_fstab=$(echo "${_fstab}" | awk '{print $1}')
+_hostpath="$(echo "${_hostpath_fstab}" 2>/dev/null | sed 's#\\040# #g')"
+_jailpath_fstab=$(echo "${_fstab}" | awk '{print $2}')
+_jailpath="$(echo "${_jailpath_fstab}" 2>/dev/null | sed 's#\\040# #g')"
 _type=$(echo "${_fstab}" | awk '{print $3}')
 _perms=$(echo "${_fstab}" | awk '{print $4}')
 _checks=$(echo "${_fstab}" | awk '{print $5" "$6}')
 
-## if any variables are empty, bail out
+# Exit if any variables are empty
 if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "${_perms}" ] || [ -z "${_checks}" ]; then
     error_notify "FSTAB format not recognized."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    exit 1
+    usage
 fi
 
-## if host path doesn't exist, type is not "nullfs" or are using advanced mount type "tmpfs,linprocfs,linsysfs, fdescfs, procfs"	
-if [ "${_hostpath}" == "tmpfs" -a "$_type" == "tmpfs" ] || [ "${_hostpath}" == "linprocfs" -a "${_type}" == "linprocfs" ] || [ "${_hostpath}" == "linsysfs" -a "${_type}" == "linsysfs" ] || [ "${_hostpath}" == "proc" -a "${_type}" == "procfs" ] || [ "${_hostpath}" == "fdesc" -a "${_type}" == "fdescfs" ]  ;  then
+# Exit if host path doesn't exist, type is not "nullfs", or mount is an advanced mount type "tmpfs,linprocfs,linsysfs,fdescfs,procfs"
+if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
+   { [ "${_hostpath}" = "linprocfs" ] && [ "${_type}" = "linprocfs" ]; } || \
+   { [ "${_hostpath}" = "linsysfs" ] && [ "${_type}" = "linsysfs" ]; } || \
+   { [ "${_hostpath}" = "proc" ] && [ "${_type}" = "procfs" ]; } || \
+   { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } then
     warn "Detected advanced mount type ${_hostpath}"
-elif [ ! -d "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
-    error_notify "Detected invalid host path or incorrect mount type in FSTAB."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
+    error_notify "Invalid host path or incorrect mount type in FSTAB."
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    exit 1
+    usage
 fi
 
-## if mount permissions are not "ro" or "rw"
+# Mount permissions need to be "ro" or "rw"
 if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
     error_notify "Detected invalid mount permissions in FSTAB."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    exit 1
+    usage
 fi
 
-## if check & pass are not "0 0 - 1 1"; bail out
+# Dump and pass need to be "0 0 - 1 1"
 if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "0 1" ] && [ "${_checks}" != "1 1" ]; then
     error_notify "Detected invalid fstab options in FSTAB."
-    warn "Format: /host/path jail/path nullfs ro 0 0"
+    warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    exit 1
+    usage
 fi
 
 for _jail in ${JAILS}; do
+
     info "[${_jail}]:"
 
-    ## aggregate variables into FSTAB entry
-    _fullpath="${bastille_jailsdir}/${_jail}/root/${_jailpath}"
-    _fstab_entry="${_hostpath} ${_fullpath} ${_type} ${_perms} ${_checks}"
+    _fullpath_fstab="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab}" 2>/dev/null | sed 's#//#/#' )"
+    _fullpath="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath}" 2>/dev/null | sed 's#//#/#' )"
+    _fstab_entry="${_hostpath_fstab} ${_fullpath_fstab} ${_type} ${_perms} ${_checks}"
 
-    ## Create mount point if it does not exist. -- cwells
-    if [ ! -d "${_fullpath}" ]; then
-        if ! mkdir -p "${_fullpath}"; then
-            error_exit "Failed to create mount point inside jail."
-        fi
-    fi
-
-    ## if entry doesn't exist, add; else show existing entry
-    if ! egrep -q "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab" 2> /dev/null; then
-        if ! echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab"; then
-            error_exit "Failed to create fstab entry: ${_fstab_entry}"
-        fi
-        echo "Added: ${_fstab_entry}"
-    else
+    # Check if mount point has already been added
+    _existing_mount="$(echo ${_fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#g')"
+    if grep -Eq "[[:blank:]]${_existing_mount}.*[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
-        egrep "[[:blank:]]${_fullpath}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"
+        grep -E "[[:blank:]]${_existing_mount}" "${bastille_jailsdir}/${_jail}/fstab"
+        continue
     fi
-    mount -F "${bastille_jailsdir}/${_jail}/fstab" -a
-    echo
+
+
+    # Create mount point if it does not exist
+    if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
+        mkdir -p "${_fullpath}" || error_continue "Failed to create mount point."
+    elif [ -f "${_hostpath}" ] ; then
+        _filename="$( basename ${_hostpath} )"
+        if  echo "${_fullpath}" 2>/dev/null | grep -qow "${_filename}"; then
+            mkdir -p "$( dirname "${_fullpath}" )" || error_continue "Failed to create mount point."
+            if [ ! -f "${_fullpath}" ]; then
+                touch "${_fullpath}" || error_continue "Failed to create mount point."
+            else
+                error_notify "Failed. File exists at mount point."
+                warn "${_fullpath}"
+                continue
+            fi
+        else
+            _fullpath_fstab="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab}/${_filename}" 2>/dev/null | sed 's#//#/#' )"
+            _fullpath="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath}/${_filename}" 2>/dev/null | sed 's#//#/#' )"
+            _fstab_entry="${_hostpath_fstab} ${_fullpath_fstab} ${_type} ${_perms} ${_checks}"
+            mkdir -p "$( dirname "${_fullpath}" )" || error_continue "Failed to create mount point."
+            if [ ! -f "${_fullpath}" ]; then
+                touch "${_fullpath}" || error_continue "Failed to create mount point."
+            else
+                error_notify "Failed. File exists at mount point."
+                warn "${_fullpath}"
+                continue
+            fi
+        fi
+    fi   
+    
+    # Add entry to fstab and mount
+    echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab" || error_continue "Failed to create fstab entry: ${_fstab_entry}"
+    mount -F "${bastille_jailsdir}/${_jail}/fstab" -a || error_continue "Failed to mount volume: ${_fullpath}"
+    echo "Added: ${_fstab_entry}"
 done

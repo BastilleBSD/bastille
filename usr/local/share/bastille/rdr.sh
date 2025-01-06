@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2023, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ check_jail_validity() {
     # Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
     if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
         JAIL_IP=$(/usr/sbin/jls -j "${TARGET}" ip4.addr 2>/dev/null)
-        if [ -z "${JAIL_IP}" -o "${JAIL_IP}" = "-" ]; then
+        if [ -z "${JAIL_IP}" ] || [ "${JAIL_IP}" = "-" ]; then
             error_exit "Jail IP not found: ${TARGET}"
         fi
     fi
@@ -115,11 +115,11 @@ fi
 
 # function: load rdr rule via pfctl
 load_rdr_rule() {
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP" "$3" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
-  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "${bastille_network_pf_ext_if}" "$1" "$2" "$JAIL_IP6" "$3" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
@@ -130,11 +130,11 @@ load_rdr_log_rule() {
 proto=$1;host_port=$2;jail_port=$3;
 shift 3;
 log=$@
-( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP" "$jail_port" ) \
       | pfctl -a "rdr/${JAIL_NAME}" -f-
 if [ -n "$JAIL_IP6" ]; then
-  ( pfctl -a "rdr/${JAIL_NAME}" -Psn;
+  ( pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null;
   printf '%s\nrdr pass %s on $%s inet proto %s to port %s -> %s port %s\n' "$EXT_IF" "$log" "${bastille_network_pf_ext_if}" "$proto" "$host_port" "$JAIL_IP6" "$jail_port" ) \
     | pfctl -a "rdr/${JAIL_NAME}" -f-
 fi
@@ -183,21 +183,21 @@ while [ $# -gt 0 ]; do
                         jail_port=$3
                         shift 3
                         if [ $# -gt 3 ]; then
-                            for last in $@; do
+                            for last in "$@"; do
                                 true
                             done
-                            if [ $2 == "(" ] && [ $last == ")" ] ; then
+                            if [ "$2" = "(" ] && [ "$last" = ")" ] ; then
                                 check_jail_validity
-                                persist_rdr_log_rule $proto $host_port $jail_port $@
-                                load_rdr_log_rule $proto $host_port $jail_port $@
+                                persist_rdr_log_rule "$proto" "$host_port" "$jail_port" "$@"
+                                load_rdr_log_rule "$proto" "$host_port" "$jail_port" "$@"
                                 shift $#
                             else
                                 usage
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
-                            persist_rdr_log_rule $proto $host_port $jail_port $@
-                            load_rdr_log_rule $proto $host_port $jail_port $@
+                            persist_rdr_log_rule $proto $host_port $jail_port "$@"
+                            load_rdr_log_rule $proto $host_port $jail_port "$@"
                             shift 1
                         else
                             usage

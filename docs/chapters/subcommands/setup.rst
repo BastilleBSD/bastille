@@ -9,7 +9,7 @@ options for a Bastille host with one command.
 .. code-block:: shell
 
   ishmael ~ # bastille setup -h        ## display setup help
-  ishmael ~ # bastille setup bastille0 ## only configure loopback interface
+  ishmael ~ # bastille setup network   ## only configure loopback interface
   ishmael ~ # bastille setup pf        ## only configure default firewall
   ishmael ~ # bastille setup zfs       ## only configure ZFS storage
   ishmael ~ # bastille setup vnet      ## only configure VNET bridge
