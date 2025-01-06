@@ -190,12 +190,11 @@ set_target_single() {
             else
                 exit 1
             fi
-    else
-        TARGET="${_TARGET}"
-        JAILS="${_TARGET}"
-        export TARGET
-        export JAILS
     fi
+    TARGET="${_TARGET}"
+    JAILS="${_TARGET}"
+    export TARGET
+    export JAILS
 }
 
 target_all_jails() {
