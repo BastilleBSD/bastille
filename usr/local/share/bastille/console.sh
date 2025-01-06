@@ -32,26 +32,60 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille console TARGET [user]"
+    error_notify "Usage: bastille console [option(s)] TARGET [user]"
+    cat << EOF
+    Options:
+
+    -f | --force          Start the jail if it is stopped.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_notify "Unknown Option: \"${1}\""
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -gt 1 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+USER="${2}"
 
-USER="${1}"
+bastille_root_check
+set_target_single "${TARGET}"
+check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else
+    error_notify "Jail is not running."
+    error_exit "Use [-f|--force] to force start the jail."
+fi
 
 validate_user() {
-    if jexec -l "${_jail}" id "${USER}" >/dev/null 2>&1; then
+    if jexec -l "${TARGET}" id "${USER}" >/dev/null 2>&1; then
         USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
             if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
@@ -76,15 +110,11 @@ check_fib() {
         fi
 }
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    LOGIN="$(jexec -l "${_jail}" which login)"
-    if [ -n "${USER}" ]; then
-        validate_user
-    else
-        check_fib
-        LOGIN="$(jexec -l "${_jail}" which login)"
-        ${_setfib} jexec -l "${_jail}" $LOGIN -f root
-    fi
-    echo
-done
+info "[${TARGET}]:"
+LOGIN="$(jexec -l "${TARGET}" which login)"
+if [ -n "${USER}" ]; then
+    validate_user
+else
+    LOGIN="$(jexec -l "${TARGET}" which login)"
+    ${_setfib} jexec -l "${TARGET}" $LOGIN -f root
+fi
