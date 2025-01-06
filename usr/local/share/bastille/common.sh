@@ -230,8 +230,8 @@ generate_vnet_jail_netblock() {
     ## determine number of interfaces + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
-    local _epair_if_count="$(grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
-    local _vnet_if_count="$(grep -Eos 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _epair_if_count="$(grep -Eos 'epair[1-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _vnet_if_count="$(grep -Eos 'bastille[1-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
     local epair_num_range=$((_epair_if_count + 1))
     local vnet_num_range=$((_vnet_if_count + 1))
     if [ -n "${use_unique_bridge}" ]; then
@@ -243,7 +243,7 @@ generate_vnet_jail_netblock() {
                 fi
             done
         else
-            local uniq_epair_bridge="0"
+            local uniq_epair_bridge="1"
         fi
     else
         if [ "${_vnet_if_count}" -gt 0 ]; then  
@@ -254,7 +254,7 @@ generate_vnet_jail_netblock() {
                 fi
             done
         else
-            local uniq_epair="bastille0"
+            local uniq_epair="bastille1"
         fi
     fi
     ## If BRIDGE is enabled, generate bridge config, else generate VNET config
