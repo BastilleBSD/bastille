@@ -122,7 +122,7 @@ update_jailconf_vnet() {
                     sed -i '' "s|${_if}|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
                     # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
                     # we also do not use the main generate_static_mac function here
-                    if grep -Eo "${_if}" ${JAIL_CONFIG} | grep -oq ether; then
+                    if grep -oq "${_if}" ${JAIL_CONFIG} | grep -oq ether; then
                         local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep ${_if} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
                         local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
                         local macaddr="${macaddr_prefix}:${macaddr_suffix}"
@@ -154,7 +154,7 @@ update_jailconf_vnet() {
                     sed -i '' "s|${_if}|${uniq_epair}|g" "${JAIL_CONFIG}"
                     # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
                     # we also do not use the main generate_static_mac function here
-                    if grep -Eo ${_if} ${JAIL_CONFIG} | grep -oq ether; then
+                    if grep -oq ${_if} ${JAIL_CONFIG} | grep -oq ether; then
                         local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep ${_if} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
                         local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
                         local macaddr="${macaddr_prefix}:${macaddr_suffix}"
