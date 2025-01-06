@@ -42,7 +42,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -ne 2 ]; then
+if [ "$#" -ne 2 ]; then
     usage
 fi
 
@@ -112,8 +112,8 @@ update_jailconf_vnet() {
         local bastille_num_range=$((_vnet_if_count + 1))
         if echo ${_if} | grep -Eoq 'epair[1-9]+'; then
             # Update bridged VNET config
-            for _num in $(seq 0 "${epair_num_range}"); do
-                if ! grep -Eoq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
+            for _num in $(seq 1 "${epair_num_range}"); do
+                if ! grep -oq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     # Update jail.conf epair name
                     local uniq_epair_bridge="${_num}"
                     local _if_epaira="$(grep "${_if}" ${JAIL_CONFIG} | grep -Eo -m 1 "epair[1-9]+a")"
@@ -144,10 +144,10 @@ update_jailconf_vnet() {
                     break
                 fi
             done
-        elif echo ${_if} | grep -Eoq 'bastille[0-9]+'; then
+        elif echo ${_if} | grep -Eoq 'bastille[1-9]+'; then
             # Update VNET config
-            for _num in $(seq 0 "${bastille_num_range}"); do
-                if ! grep -Eoq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
+            for _num in $(seq 1 "${bastille_num_range}"); do
+                if ! grep -oq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     # Update jail.conf epair name
                     local uniq_epair="bastille${_num}"
                     local _if_vnet="$(grep ${_if} "${bastille_jail_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
