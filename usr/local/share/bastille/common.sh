@@ -175,7 +175,7 @@ set_target_single() {
     local _status=0
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
-    elif echo "${_TARGET}" > /dev/null | grep -Eq '^[0-9]+$'; then
+    elif echo "${_TARGET}" | grep -Eq '^[0-9]+$'; then
         if get_jail_name "${_TARGET}" > /dev/null; then
             _TARGET="$(get_jail_name ${_TARGET})"
         else
