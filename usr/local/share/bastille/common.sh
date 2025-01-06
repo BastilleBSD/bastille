@@ -236,8 +236,8 @@ generate_vnet_jail_netblock() {
     local vnet_num_range=$((_vnet_if_count + 1))
     if [ -n "${use_unique_bridge}" ]; then
         if [ "${_epair_if_count}" -gt 0 ]; then  
-            for _num in $(seq 0 "${epair_num_range}"); do
-                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
+            for _num in $(seq 1 "${epair_num_range}"); do
+                if ! grep -osq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     local uniq_epair_bridge="${_num}"
                     break
                 fi
@@ -247,8 +247,8 @@ generate_vnet_jail_netblock() {
         fi
     else
         if [ "${_vnet_if_count}" -gt 0 ]; then  
-            for _num in $(seq 0 "${vnet_num_range}"); do
-                if ! grep -Eosq "bastillle${_num}" ${bastille_jailsdir}/*/jail.conf; then
+            for _num in $(seq 1 "${vnet_num_range}"); do
+                if ! grep -osq "bastillle${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     local uniq_epair="bastille${_num}"
                     break
                 fi
