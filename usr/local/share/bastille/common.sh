@@ -88,7 +88,7 @@ warn() {
 check_target_exists() {
     local _TARGET="${1}"
     local _jaillist="$(bastille list jails)"
-    if ! echo "${_jaillist}" | grep -Eq "^${_TARGET}$"; then
+    if ! echo "${_jaillist}" | grep -Eoq "^${_TARGET}$"; then
         return 1
     else
         return 0
@@ -97,7 +97,7 @@ check_target_exists() {
 
 check_target_is_running() {
     local _TARGET="${1}"
-    if ! jls name | grep -Eq "^${_TARGET}$"; then
+    if ! jls name | grep -Eoq "^${_TARGET}$"; then
         return 1
     else
         return 0
@@ -106,7 +106,7 @@ check_target_is_running() {
 
 check_target_is_stopped() {
     local _TARGET="${1}"
-    if jls name | grep -Eq "^${_TARGET}$"; then
+    if jls name | grep -Eoq "^${_TARGET}$"; then
         return 1
     else
         return 0
