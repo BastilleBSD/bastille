@@ -46,12 +46,12 @@ EOF
 
 # Handle special-case commands first.
 case "${1}" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+if [ $# -gt 2 -a $# -lt 1 ]; then
     usage
 fi
 
@@ -116,13 +116,9 @@ start_loop() {
             fi
         fi
         echo
-        if [ "${DEBUG_MODE}" -eq "1" ]; then
-            warn "***DEBUG MODE END***"
-        fi
     done
 }
 
-DEBUG_MODE="0"
 TARGET="${1}"
 shift
 
@@ -130,11 +126,10 @@ shift
 while [ $# -gt 0 ]; do
     case "${1}" in
         -[xX]|--debug)
-            DEBUG_MODE="1"
             enable_debug
             shift
             ;;
-        --*|-*)
+        -*|--*)
             error_notify "Unknown Option."
             usage
             ;;

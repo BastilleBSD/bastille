@@ -46,7 +46,7 @@ bastille_root_check() {
 
 enable_debug() {
     # Enable debug mode.
-    warn "***DEBUG MODE START***"
+    warn "***DEBUG MODE***"
     set -x
 }
 
