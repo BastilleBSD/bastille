@@ -51,7 +51,7 @@ case "${1}" in
         ;;
 esac
 
-if [ $# -gt 2 -a $# -lt 0 ]; then
+if [ $# -gt 2 ] || [ $# -lt 0 ]; then
     usage
 fi
 
@@ -101,7 +101,7 @@ while [ $# -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*|--*)
+        --*|-*)
             error_notify "Unknown Option."
             usage
             ;;
