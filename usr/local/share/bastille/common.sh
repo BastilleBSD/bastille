@@ -49,7 +49,7 @@ enable_color() {
 
 enable_debug() {
     # Enable debug mode.
-    warn "***DEBUG MODE START***"
+    warn "***DEBUG MODE***"
     set -x
 } 
 
