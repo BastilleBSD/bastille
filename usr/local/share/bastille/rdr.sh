@@ -100,7 +100,7 @@ validate_rdr_rule() {
     local jail_port="${6}"
     if grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         error_notify "Error: Ports already in use on this interface."
-        error_exit "See 'bastille list ports' or 'bastille rdr TARGET reset'."
+        error_exit "See 'bastille list ports' or 'bastille rdr TARGET clear'."
     fi
 }
 
@@ -283,11 +283,6 @@ while [ "$#" -gt 0 ]; do
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
-            elif [ "${TARGET}" = 'ALL' ]; then
-                for _jail in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "${_jail} redirects:"
-                    pfctl -a "rdr/${_jail}" -Psn 2>/dev/null
-                done
             else
                 check_jail_validity
                 pfctl -a "rdr/${TARGET}" -Psn 2>/dev/null
@@ -299,14 +294,10 @@ while [ "$#" -gt 0 ]; do
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
-            elif [ "${TARGET}" = 'ALL' ]; then
-                for _jail in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "${_jail} redirects:"
-                    pfctl -a "rdr/${_jail}" -Fn
-                done
             else
                 check_jail_validity
-                pfctl -a "rdr/${TARGET}" -Fn
+                echo "${_jail} redirects:"
+                pfctl -a "rdr/${_jail}" -Fn
             fi
             shift
             ;;
@@ -315,19 +306,12 @@ while [ "$#" -gt 0 ]; do
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
-            elif [ "${TARGET}" = 'ALL' ]; then
-                for _jail in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "${_jail} redirects:"
-                    pfctl -a "rdr/${_jail}" -Fn
-		    if rm -f "${bastille_jailsdir}"/"${_jail}"/rdr.conf; then
-                        info "[${_jail}]: rdr.conf removed"
-	            fi
-                done
             else
                 check_jail_validity
-                pfctl -a "rdr/${TARGET}" -Fn
-                if rm -f "${bastille_jailsdir}"/"${_jail}"/rdr.conf; then
-                    info "[${TARGET}]: rdr.conf removed"
+                echo "${_jail} redirects:"
+                pfctl -a "rdr/${_jail}" -Fn
+		if rm -f "${bastille_jailsdir}/${_jail}/rdr.conf"; then
+                    info "[${_jail}]: rdr.conf removed"
 	        fi
             fi
             shift
