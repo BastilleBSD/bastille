@@ -47,6 +47,8 @@ EOF
 }
 
 check_jail_validity() {
+
+    # Validate jail network type and set IP4/6
     if [ "$( bastille config ${TARGET} get vnet )" != 'enabled' ]; then
         _ip4_interfaces="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
         _ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
@@ -218,6 +220,15 @@ while [ "$#" -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
+        -d|--destination)
+            if ifconfig | grep -owq "inet ${2}"; then
+	        OPTION_DST=1
+                RDR_DST="${2}"
+                shift 2
+            else
+                error_exit "${2} is not an IP on this system."
+            fi
+            ;;
         -i|--interface)
             if ifconfig | grep -owq "${2}:"; then
                 OPTION_IF=1
@@ -232,15 +243,6 @@ while [ "$#" -gt 0 ]; do
             OPTION_SRC=1
             RDR_SRC="${2}"
             shift 2
-            ;;
-        -d|--destination)
-            if ifconfig | grep -owq "inet ${2}"; then
-	        OPTION_DST=1
-                RDR_DST="${2}"
-                shift 2
-            else
-                error_exit "${2} is not an IP on this system."
-            fi
             ;;
         -t|--type)
             if [ "${2}" != "ipv4" ] && [ "${2}" != "ipv6" ]; then
@@ -296,8 +298,8 @@ while [ "$#" -gt 0 ]; do
                 usage
             else
                 check_jail_validity
-                echo "${_jail} redirects:"
-                pfctl -a "rdr/${_jail}" -Fn
+                echo "${TARGET} redirects:"
+                pfctl -a "rdr/${TARGET}" -Fn
             fi
             shift
             ;;
@@ -308,10 +310,10 @@ while [ "$#" -gt 0 ]; do
                 usage
             else
                 check_jail_validity
-                echo "${_jail} redirects:"
-                pfctl -a "rdr/${_jail}" -Fn
+                echo "${TARGET} redirects:"
+                pfctl -a "rdr/${TARGET}" -Fn
 		if rm -f "${bastille_jailsdir}/${_jail}/rdr.conf"; then
-                    info "[${_jail}]: rdr.conf removed"
+                    info "[${TARGET}]: rdr.conf removed"
 	        fi
             fi
             shift
