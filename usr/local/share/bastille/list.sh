@@ -224,11 +224,11 @@ list_import(){
 
 list_ports(){
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
-        for _JAIL in ${JAIL_LIST}; do
-            if [ -f "${bastille_jailsdir}/${_JAIL}/rdr.conf" ]; then
-                _PORTS="$(cat "${bastille_jailsdir}"/"${_JAIL}"/rdr.conf)"
-                info "[${_JAIL}]:"
+        JAIL_LIST="$(bastille list jails)"
+        for _jail in ${JAIL_LIST}; do
+            if [ -f "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
+                _PORTS="$(cat ${bastille_jailsdir}/${_jail}/rdr.conf)"
+                info "[${_jail}]:"
 		echo "${_PORTS}"
 	    fi
         done
