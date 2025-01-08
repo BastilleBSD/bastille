@@ -53,11 +53,11 @@ check_jail_validity() {
         _ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
         # Check if jail ip4.addr is valid (non-VNET only)
         if [ "${_ip4_interfaces}" != "not set" ] && [ "${_ip4_interfaces}" != "disable" ]; then
-            JAIL_IP="$(bastille config ${TARGET} get ip4.addr | awk '{print $1}' | awk -F"|" '{print $2}')"
+            JAIL_IP="$(echo ${_ip4_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}')"
         fi
         # Check if jail ip6.addr is valid (non-VNET only)
         if [ "${_ip6_interfaces}" != "not set" ] && [ "${_ip6_interfaces}" != "disable" ]; then
-            JAIL_IP6="$(bastille config ${TARGET} get ip6.addr | awk '{print $1}' | awk -F"|" '{print $2}')"
+            JAIL_IP6="$(echo ${_ip6_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}')"
         fi
     else
         error_exit "VNET jails do not support rdr."
