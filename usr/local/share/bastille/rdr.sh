@@ -47,7 +47,6 @@ EOF
 }
 
 check_jail_validity() {
-
     if [ "$( bastille config ${TARGET} get vnet )" != 'enabled' ]; then
         _ip4_interfaces="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
         _ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
@@ -89,6 +88,19 @@ check_rdr_ip_validity() {
         else
             error_exit "Invalid: (${ip})."
         fi
+    fi
+}
+
+validate_rdr_rule() {
+    local if="${1}"
+    local src="${2}"
+    local dst="${3}"
+    local proto="${4}"
+    local host_port="${5}"
+    local jail_port="${6}"
+    if grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
+        error_notify "Error: Ports already in use on this interface."
+        error_exit "See 'bastille list ports' or 'bastille rdr TARGET clear'."
     fi
 }
 
@@ -239,6 +251,10 @@ while [ "$#" -gt 0 ]; do
                 shift 2
             fi
             ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
         -*)
             error_exit "Unknown option: \"${1}\""
             ;;
@@ -323,6 +339,7 @@ while [ "$#" -gt 0 ]; do
                 error_exit "[-t|--type] must be set when using [-s|--source] or [-d|--destination]"
             elif [ "$#" -eq 3 ]; then
                 check_jail_validity
+                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 load_rdr_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 shift "$#"
@@ -339,6 +356,7 @@ while [ "$#" -gt 0 ]; do
                             done
                             if [ "${2}" = "(" ] && [ "${last}" = ")" ] ; then
                                 check_jail_validity
+                                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                                 persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                                 load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
                                 shift $#
@@ -347,6 +365,7 @@ while [ "$#" -gt 0 ]; do
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
+                            validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                             persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             shift 1
@@ -368,11 +387,13 @@ while [ "$#" -gt 0 ]; do
             fi
             if [ "$#" -eq 7 ] && { [ "${5}" = "tcp" ] || [ "${5}" = "udp" ]; } then
                 check_jail_validity
+                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_rule "$@"
                 load_rdr_rule "$@"
                 shift "$#"
             elif [ "$#" -ge 8 ] && [ "${8}" = "log" ]; then
                 check_jail_validity
+                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_log_rule "$@"
                 load_rdr_log_rule "$@"
                 shift "$#"
