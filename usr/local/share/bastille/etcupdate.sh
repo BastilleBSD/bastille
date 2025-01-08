@@ -47,9 +47,11 @@ bootstrap_etc_release() {
     if ls -A "${bastille_releasesdir}/${_release}/usr/src" 2>/dev/null; then
         sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives=src
         if ! bastille bootstrap "${_release}"; then
-            error_notify "Failed to bootstrap etcupdate \"${_release}\""
+            sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
+            error_exit "Failed to bootstrap etcupdate \"${_release}\""
+        else
+            sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
         fi
-        sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
     fi
 }
 
@@ -71,6 +73,9 @@ bootstrap_etc_tarball() {
 update_jail_etc() {
     local _jail="${1}"
     local _release="${2}"
+    if [ ! -f ${bastille_cachedir}/${_release}.tbz2 ]; then
+        error_exit "Error: Please run \"bastille etcupdate bootstrap RELEASE\" first."
+    fi
     if [ "${DRY_RUN}" -eq 1 ]; then
         info "[_jail]: --dry-run"
         etcupdate -n -D "${bastille_jailsdir}"/"${_jail}"/root -t ${bastille_cachedir}/${_release}.tbz2
