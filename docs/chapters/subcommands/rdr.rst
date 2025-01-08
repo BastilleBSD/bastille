@@ -2,7 +2,7 @@
 rdr
 ===
 
-bastille rdr allows you to configure dynamic rdr rules for your containers
+`bastille rdr` allows you to configure dynamic rdr rules for your containers
 without modifying pf.conf (assuming you are using the `bastille0` interface
 for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf
 as described in the Networking section).
@@ -17,11 +17,11 @@ specify the interface they run on in rc.conf (or other config files)
     Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
     Options:
 
-    -i | --interface   [interface]      | -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s | --source      [source ip]      | -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -d | --destination [destination ip] | -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -t | --type        [ipv4|ipv6]      | -- Specify IP type. Must be used if -s or -d are used. Defaults to both.
-
+    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -x | --debug                                 Enable debug mode.
     
     # bastille rdr dev1 tcp 2001 22
     [jail1]:
@@ -41,11 +41,12 @@ specify the interface they run on in rc.conf (or other config files)
     # bastille rdr dev1 clear
     nat cleared
 
-The `rdr` command includes 3 additional options:
+The `rdr` command includes 4 additional options:
 
 - **-i** | Set a non-default interface on which to create the `rdr` rule.
 - **-s** | Limit the source IP on the `rdr` rule.
 - **-d** | Limit the destination IP on the `rdr` rule.
+- **-t** | Specify network type. Can be "ipv4" or "ipv6". Default is "dual".
 
 .. code-block:: shell
 
@@ -72,3 +73,6 @@ The `rdr` command includes 3 additional options:
     rdr pass on vtnet0 inet proto tcp from any to 192.168.0.45 port = 9000 -> 10.17.89.1 port 9000
 
 The options can be used together, as seen above.
+
+If you have multiple interfaces assigned to your jail, `bastille rdr` will
+only redirect using the default one.
