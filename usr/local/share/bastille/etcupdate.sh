@@ -111,10 +111,6 @@ update_jail_etc() {
     fi
 }
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
-    usage
-fi
-
 # Handle options.
 DRY_RUN=0
 FORCE=0
@@ -152,6 +148,10 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    usage
+fi
+
 # Main commands
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -166,31 +166,32 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         *)
-            if [ -z "${2}" ]; then
-                usage
-            else
-                TARGET="${1}"
-                ACTION="${2}"
-                RELEASE="${3}"
-                set_target_single "${TARGET}"
-                case "${ACTION}" in
-                    diff)
-                        diff_review "${TARGET}"
-                        shift "$#"
-                        ;;
-                    resolve)
-                        resolve_conflicts "${TARGET}"
-                        shift "$#"
-                        ;;
-                    update)
+            TARGET="${1}"
+            ACTION="${2}"
+            RELEASE="${3}"
+            set_target_single "${TARGET}"
+            case "${ACTION}" in
+                diff)
+                    diff_review "${TARGET}"
+                    shift "$#"
+                    ;;
+                resolve)
+                    resolve_conflicts "${TARGET}"
+                    shift "$#"
+                    ;;
+                update)
+                    if [ -z "${RELEASE}" ]; then
+                        usage
+                    else
                         update_jail_etc "${TARGET}" "${RELEASE}"
                         shift "$#"
-                        ;;
-                    *)
-                    error_exit "Unknown action: \"${ACTION}\""
+                    fi
                     ;;
-                esac
-            fi
-            ;;
+                *)
+                error_exit "Unknown action: \"${ACTION}\""
+                ;;
+            esac
+        fi
+        ;;
     esac
 done
