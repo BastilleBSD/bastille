@@ -31,7 +31,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille etcupdate [option(s)] [bootstrap|TARGET] [update RELEASE|resolve]"
+    error_notify "Usage: bastille etcupdate [option(s)] [bootstrap|TARGET] [diff|resolve|update RELEASE]"
     cat << EOF
     Options:
 
