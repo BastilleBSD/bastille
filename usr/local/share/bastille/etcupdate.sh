@@ -99,6 +99,9 @@ resolve_conflicts() {
 update_jail_etc() {
     local _jail="${1}"
     local _release="${2}"
+    if [ ! -f ${bastille_cachedir}/${_release}.tbz2 ]; then
+        error_exit "Error: Please run \"bastille etcupdate bootstrap RELEASE\" first."
+    fi
     if [ "${DRY_RUN}" -eq 1 ]; then
         info "[_jail]: update --dry-run"
         etcupdate -n -D "${bastille_jailsdir}/${_jail}/root" -t ${bastille_cachedir}/${_release}.tbz2
