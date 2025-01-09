@@ -121,6 +121,7 @@ LOGIN="$(jexec -l "${TARGET}" which login)"
 if [ -n "${USER}" ]; then
     validate_user
 else
+    check_fib
     LOGIN="$(jexec -l "${TARGET}" which login)"
     ${_setfib} jexec -l "${TARGET}" $LOGIN -f root
 fi
