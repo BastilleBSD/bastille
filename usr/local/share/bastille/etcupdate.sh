@@ -46,12 +46,14 @@ EOF
 bootstrap_etc_release() {
     local _release="${1}"
     local _current="$(sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives | awk -F': ' '{print $2}')"
-    if ls -A "${bastille_releasesdir}/${_release}/usr/src" 2>/dev/null; then
+    if ! ls -A "${bastille_releasesdir}/${_release}/usr/src" 2>/dev/null; then
         sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives=src
-        if ! bastille bootstrap "${_release}"; then
-            error_notify "Failed to bootstrap etcupdate: ${_release}"
+        if ! bastille bootstrap "${_release}" > /dev/null; then
+            sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
+            error_exit "Failed to bootstrap etcupdate: ${_release}"
+        else
+            sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
         fi
-        sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
     fi
 }
 
@@ -68,7 +70,7 @@ bootstrap_etc_tarball() {
         rm -f "${bastille_cachedir}/${_release}.tbz2"
         echo "Building tarball, please wait..."
         if ! etcupdate build -d /tmp/etcupdate -s ${bastille_releasesdir}/${_release}/usr/src ${bastille_cachedir}/${_release}.tbz2; then
-            error_exit "Failed to build etcupdate tarball \"${_release}.tbz2\""
+            error_exit "Failed to build etcupdate tarball: ${_release}.tbz2"
         else
             info "Etcupdate bootstrap complete: ${_release}"
         fi
@@ -77,13 +79,19 @@ bootstrap_etc_tarball() {
     fi
 }
 
+diff_review() {
+    local _jail="${1}"
+    info "[_jail]: diff"
+    etcupdate diff -D "${bastille_jailsdir}/${_jail}/root"  
+}
+
 resolve_conflicts() {
     local _jail="${1}"
     if [ "${DRY_RUN}" -eq 1 ]; then
-        info "[_jail]: --dry-run"
+        info "[_jail]: resolve --dry-run"
         etcupdate resolve -n -D "${bastille_jailsdir}/${_jail}/root"
     else
-        info "[_jail]:"
+        info "[_jail]: resolve"
         etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"
     fi   
 }
@@ -92,10 +100,10 @@ update_jail_etc() {
     local _jail="${1}"
     local _release="${2}"
     if [ "${DRY_RUN}" -eq 1 ]; then
-        info "[_jail]: --dry-run"
+        info "[_jail]: update --dry-run"
         etcupdate -n -D "${bastille_jailsdir}/${_jail}/root" -t ${bastille_cachedir}/${_release}.tbz2
     else
-        info "[_jail]:"
+        info "[_jail]: update"
         etcupdate -D "${bastille_jailsdir}/${_jail}/root" -t ${bastille_cachedir}/${_release}.tbz2
     fi
 }
@@ -161,17 +169,25 @@ while [ "$#" -gt 0 ]; do
                 TARGET="${1}"
                 ACTION="${2}"
                 RELEASE="${3}"
+                set_target_single "${TARGET}"
+                case "${ACTION}" in
+                    diff)
+                        diff_review "${TARGET}"
+                        shift "$#"
+                        ;;
+                    resolve)
+                        resolve_conflicts "${TARGET}"
+                        shift "$#"
+                        ;;
+                    update)
+                        update_jail_etc "${TARGET}" "${RELEASE}"
+                        shift "$#"
+                        ;;
+                    *)
+                    error_exit "Unknown action: \"${ACTION}\""
+                    ;;
+                esac
             fi
-            case "${ACTION}" in
-                resolve)
-                    resolve_conflicts "${TARGET}"
-                    shift "$#"
-                    ;;
-                update)
-                    update_jail_etc "${TARGET}" "${RELEASE}"
-                    shift "$#"
-                    ;;
-            esac
             ;;
     esac
 done
