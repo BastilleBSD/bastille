@@ -188,10 +188,9 @@ while [ "$#" -gt 0 ]; do
                     fi
                     ;;
                 *)
-                error_exit "Unknown action: \"${ACTION}\""
-                ;;
+                    error_exit "Unknown action: \"${ACTION}\""
+                    ;;
             esac
-        fi
         ;;
     esac
 done
