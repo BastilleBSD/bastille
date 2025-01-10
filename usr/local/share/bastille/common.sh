@@ -147,7 +147,7 @@ set_target() {
         target_all_jails
     else
         for _jail in ${_TARGET}; do
-            if [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && [ echo "${_jail}" | grep -Eq '^[0-9]+$' ]; then
+            if [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_jail}" | grep -Eq '^[0-9]+$'; then
                 if get_jail_name "${_jail}" > /dev/null; then
                     _jail="$(get_jail_name ${_jail})"
                 else
