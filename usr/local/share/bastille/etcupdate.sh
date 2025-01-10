@@ -87,13 +87,8 @@ diff_review() {
 
 resolve_conflicts() {
     local _jail="${1}"
-    if [ "${DRY_RUN}" -eq 1 ]; then
-        info "[${_jail}]: etcupdate resolve --dry-run"
-        etcupdate resolve -n -D "${bastille_jailsdir}/${_jail}/root"
-    else
-        info "[${_jail}]: etcupdate resolve"
-        etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"
-    fi   
+    info "[${_jail}]: etcupdate resolve"
+    etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"  
 }
 
 update_jail_etc() {
