@@ -448,6 +448,7 @@ set -x
         fi
     fi
     if [ "${MULTI_REPO}" -eq 1 ]; then
+        # shellcheck disable=SC2045
         for _template_dir in $(ls ${_template}); do
             if [ -f ${_template}/${_template_dir}/Bastillefile ]; then
                 bastille verify "${_repo}/${_template_dir}"
@@ -599,7 +600,6 @@ case "${1}" in
         BASTILLE_TEMPLATE_URL=${1}
         BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
         BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
-        BASTILLE_TEMPLATE_DIR=$(echo "${1}" | awk -F / '{ print $6 }')
         bootstrap_template
         ;;
     git@*:*/*)

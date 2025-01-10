@@ -86,7 +86,7 @@ while [ "$#" -gt 0 ]; do
         -*)
             for _opt in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    a) FORCE=1 ;;
+                    a) AUTO=1 ;;
                     b|B) BRIDGE_VNET_JAIL=1 ;;
                     c|C) CLASSIC_JAIL=1 ;;
                     m|M) STATIC_MAC=1 ;;
@@ -146,6 +146,7 @@ validate_ip() {
         local _ip6="$( echo "${_ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
         if [ -n "${_ip6}" ]; then
             info "Valid: (${_ip6})."
+            # shellcheck disable=SC2034
             IP6="${_ip6}"
         else
             local IFS

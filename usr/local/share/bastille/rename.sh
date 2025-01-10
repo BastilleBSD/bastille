@@ -50,8 +50,8 @@ while [ "$#" -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
-        -s|--start)
-            START=1
+        -a|--auto)
+            AUTO=1
             shift
             ;;
         -a|--auto)

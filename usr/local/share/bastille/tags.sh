@@ -33,7 +33,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille tags TARGET [add|delete|list] [tag1,tag2]
+    error_notify "Usage: bastille tags TARGET [add|delete|list] [tag1,tag2]"
     cat << EOF
     Options:
 

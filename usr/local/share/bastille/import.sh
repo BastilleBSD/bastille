@@ -73,7 +73,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     f) FORCE=1 ;;
-                    v) ZRECV="-u -v"
+                    v) ZRECV="-u -v" ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
                 esac
