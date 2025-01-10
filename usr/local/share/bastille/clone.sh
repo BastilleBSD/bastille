@@ -36,25 +36,26 @@ usage() {
     cat << EOF
     Options:
 
-    -l | --live    -- Clone a running jail. ZFS only.
-                      Jail must be running.
-                      Cannot be used with [-f|--force].
-    -f | --force   -- Stop the jail if it is running.
-                      Cannot be used with [-l|--live].
-    -s | --start   -- Start jail(s) when complete.
+    -f | --force          Stop the jail if it is running. Cannot be used with [-l|--live].
+    -l | --live           Clone a running jail. ZFS only. Jail must be running. Cannot be used with [-f|--force].
+    -s | --start          Start jail(s) when complete.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
+AUTO=0
 LIVE=0
-FORCE=0
-START=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
             ;;
         -l|--live)
             if ! checkyesno bastille_zfs_enable; then
@@ -64,26 +65,30 @@ while [ "$#" -gt 0 ]; do
                 shift
             fi
             ;;
-        -f|--force)
-            if [ "${LIVE}" -eq 1 ]; then
-                error_exit "[-f|--force] cannot be used with [-l|--live]."
-            else
-                FORCE=1
-                shift
-            fi
-            ;;
-        -s|--start)
-            START=1
+        -x|--debug)
+            enable_debug
             shift
             ;;
-        -*)
-            error_exit "Unknown option: \"${1}\""
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    l) LIVE=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
             ;;
     esac
 done
+
+if [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
+    error_exit "[-a|--auto] cannot be used with [-l|--live]"
+fi
 
 if [ $# -ne 3 ]; then
     usage
@@ -153,7 +158,7 @@ update_jailconf() {
         # IP4
         if [ "${_ip4}" != "not set" ]; then
             for _ip in ${_ip4}; do
-                _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+                _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 sed -i '' "/${IPX_ADDR} = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
                 sed -i '' "/${IPX_ADDR} += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
             done
@@ -161,7 +166,7 @@ update_jailconf() {
         # IP6
         if [ "${_ip6}" != "not set" ]; then
             for _ip in ${_ip6}; do
-                _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+                _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 sed -i '' "/${IPX_ADDR} = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
                 sed -i '' "/${IPX_ADDR} += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
             done
@@ -178,19 +183,19 @@ update_jailconf_vnet() {
         local _bastille_if_count="$(grep -Eo 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
         local epair_num_range=$((_epair_if_count + 1))
         local bastille_num_range=$((_vnet_if_count + 1))
-        if echo ${_if} 2>/dev/null | grep -Eoq 'epair[0-9]+'; then
+        if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
             # Update bridged VNET config
             for _num in $(seq 0 "${epair_num_range}"); do
-                if ! grep -Eoq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                if ! grep -oq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     # Update jail.conf epair name
                     local uniq_epair_bridge="${_num}"
-                    local _if_epaira="$(grep "${_if}" ${JAIL_CONFIG} | grep -Eo -m 1 "epair[0-9]+a")"
-                    local _if_epairb="$(grep "${_if}" ${JAIL_CONFIG} | grep -Eo -m 1 "epair[0-9]+b")"
-                    local _if_vnet="$(grep ${_if_epairb} "${bastille_jail_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
+                    local _if_epaira="$(grep "${_if}" ${JAIL_CONFIG} | grep -Eo -m 1 "epair[1-9]+a")"
+                    local _if_epairb="$(grep "${_if}" ${JAIL_CONFIG} | grep -Eo -m 1 "epair[1-9]+b")"
+                    local _if_vnet="$(grep ${_if_epairb} "${bastille_jail_rc_conf}" | grep -Eo -m 1 "vnet[1-9]+")"
                     sed -i '' "s|${_if}|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
                     # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
                     # we also do not use the main generate_static_mac function here
-                    if grep -Eo "${_if}" ${JAIL_CONFIG} | grep -oq ether; then
+                    if grep -oq ${_if} ${JAIL_CONFIG} | grep -oq ether; then
                         local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep ${_if} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
                         local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
                         local macaddr="${macaddr_prefix}:${macaddr_suffix}"
@@ -212,17 +217,17 @@ update_jailconf_vnet() {
                     break
                 fi
             done
-        elif echo ${_if} 2>/dev/null | grep -Eoq 'bastille[0-9]+'; then
+        elif echo ${_if} | grep -Eoq 'bastille[0-9]+'; then
             # Update VNET config
             for _num in $(seq 0 "${bastille_num_range}"); do
-                if ! grep -Eoq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                if ! grep -oq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     # Update jail.conf epair name
                     local uniq_epair="bastille${_num}"
                     local _if_vnet="$(grep ${_if} "${bastille_jail_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     sed -i '' "s|${_if}|${uniq_epair}|g" "${JAIL_CONFIG}"
                     # since we don't have access to the external_interface variable, we cat the jail.conf file to retrieve the mac prefix
                     # we also do not use the main generate_static_mac function here
-                    if grep -Eo ${_if} ${JAIL_CONFIG} | grep -oq ether; then
+                    if grep -oq ${_if} ${JAIL_CONFIG} | grep -oq ether; then
                         local macaddr_prefix="$(cat ${JAIL_CONFIG} | grep ${_if} | grep -m 1 ether | grep -oE '([0-9a-f]{2}(:[0-9a-f]{2}){5})' | awk -F: '{print $1":"$2":"$3}')"
                         local macaddr_suffix="$(echo -n ${NEWNAME} | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
                         local macaddr="${macaddr_prefix}:${macaddr_suffix}"
@@ -246,15 +251,6 @@ update_jailconf_vnet() {
             done
         fi
     done
-}
-
-update_fstab() {
-    # Update fstab to use the new name
-    FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
-    if [ -f "${FSTAB_CONFIG}" ]; then
-        # Update fstab paths with new jail path
-        sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|" "${FSTAB_CONFIG}"
-    fi
 }
 
 clone_jail() {
@@ -302,7 +298,7 @@ clone_jail() {
 
     # Generate jail configuration files
     update_jailconf
-    update_fstab
+    update_fstab "${TARGET}" "${NEWNAME}"
 
     # Display the exist status
     if [ "$?" -ne 0 ]; then

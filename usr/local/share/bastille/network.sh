@@ -36,28 +36,32 @@ usage() {
     cat << EOF
     Options:
 
+    -a | --auto                Auto mode. Start/stop jail(s) if required.
     -b | --bridge              Add a bridged VNET interface to an existing VNET jail.
     -c | --classic             Add an interface to a classic (non-VNET) jail.
-    -f | --force               Stop the jail if it is running.
     -m | --static-mac          Generate a static MAC address for the VNET interface.
     -s | --start               Start jail on completion.
     -v | --vnet                Add a VNET interface to an existing VNET jail.
+    -x | --debug               Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
+AUTO=0
 BRIDGE_VNET_JAIL=0
 CLASSIC_JAIL=0
-FORCE=0
 STATIC_MAC=0
-START=0
 VNET_JAIL=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
             ;;
         -b|-B|--bridge)
             BRIDGE_VNET_JAIL=1
@@ -66,32 +70,28 @@ while [ "$#" -gt 0 ]; do
         -c|--classic)
             CLASSIC_JAIL=1
             shift
-            ;; 
-       -f|--force)
-            FORCE=1
-            shift
             ;;
         -m|-M|--static-mac)
             STATIC_MAC=1
-            shift
-            ;;
-        -s|--start)
-            START=1
             shift
             ;;
         -v|-V|--vnet)
             VNET_JAIL=1
             shift
             ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
         -*)
             for _opt in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
+                    a) FORCE=1 ;;
                     b|B) BRIDGE_VNET_JAIL=1 ;;
-                    c) CLASSIC_JAIL=1 ;;
-                    f) FORCE=1 ;;
+                    c|C) CLASSIC_JAIL=1 ;;
                     m|M) STATIC_MAC=1 ;;
-                    s) START=1 ;;
                     v|V) VNET_JAIL=1 ;;
+                    x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
                 esac
             done
@@ -102,7 +102,6 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
-set -x
 
 TARGET="${1}"
 ACTION="${2}"
@@ -127,11 +126,11 @@ fi
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
-    error_exit "Use [-f|--force] to force stop the jail."
+    error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
 validate_ip() {
@@ -147,7 +146,6 @@ validate_ip() {
         local _ip6="$( echo "${_ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
         if [ -n "${_ip6}" ]; then
             info "Valid: (${_ip6})."
-            # shellcheck disable=SC2034
             IP6="${_ip6}"
         else
             local IFS
@@ -417,7 +415,7 @@ case "${ACTION}" in
                 error_exit "Error: Valid IP is required for non-VNET jails."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ "${START}" -eq 1 ]; then
+                if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
             fi
@@ -427,7 +425,7 @@ case "${ACTION}" in
         check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\"" 
         validate_netif "${INTERFACE}"
         remove_interface "${TARGET}" "${INTERFACE}"
-        if [ "${START}" -eq 1 ]; then
+        if [ "${AUTO}" -eq 1 ]; then
             bastille start "${TARGET}"
         fi
         ;;
@@ -440,7 +438,7 @@ case "${ACTION}" in
             fi
             validate_ip "${IP}"
             change_ip "${TARGET}" "${INTERFACE}" "${IP}"
-            if [ "${START}" -eq 1 ]; then
+            if [ "${AUTO}" -eq 1 ]; then
                 bastille start "${TARGET}"
             fi
         else

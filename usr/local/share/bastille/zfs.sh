@@ -32,8 +32,16 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille zfs TARGET [set|get|snap] [key=value|date]"
+    error_notify "Usage: bastille zfs TARGET [set|get|snap|destroy_snap|df|usage] [key=value|date]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
+
 
 zfs_snapshot() {
 for _jail in ${JAILS}; do
@@ -86,9 +94,10 @@ if [ "$#" -lt 2 ]; then
 fi
 
 TARGET="${1}"
+ACTION="${2}"
 
 bastille_root_check
-set_target_single "${TARGET}"
+set_target "${TARGET}"
 
 # Check if ZFS is enabled
 if ! checkyesno bastille_zfs_enable; then
@@ -100,7 +109,7 @@ if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "ZFS zpool not defined."
 fi
 
-case "${2}" in
+case "${ACTION}" in
     set)
         ATTRIBUTE="${3}"
         zfs_set_value

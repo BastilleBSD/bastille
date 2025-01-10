@@ -32,8 +32,47 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille bootstrap [RELEASE|TEMPLATE] [update|arch]"
+    error_notify "Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]"
+    cat << EOF
+    Options:
+
+    -r | --repo           Bootstrap multiple templates inside one repository.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
+
+# Handle options.
+MULTI_REPO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -r|--repo)
+            MULTI_REPO=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    r) MULTI_REPO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 validate_release_url() {
     ## check upstream url, else warn user
@@ -389,8 +428,12 @@ bootstrap_template() {
     _url=${BASTILLE_TEMPLATE_URL}
     _user=${BASTILLE_TEMPLATE_USER}
     _repo=${BASTILLE_TEMPLATE_REPO%.*} # Remove the trailing ".git"
-    _template=${bastille_templatesdir}/${_user}/${_repo}
-
+    if [ "${MULTI_REPO}" -eq 1 ]; then
+        _template=${bastille_templatesdir}/${_repo}
+    else
+        _template=${bastille_templatesdir}/${_user}/${_repo}
+    fi
+set -x
     ## support for non-git
     if ! which -s git; then
         error_notify "Git not found."
@@ -404,8 +447,15 @@ bootstrap_template() {
                 error_notify "Template update unsuccessful."
         fi
     fi
-
-    bastille verify "${_user}/${_repo}"
+    if [ "${MULTI_REPO}" -eq 1 ]; then
+        for _template_dir in $(ls ${_template}); do
+            if [ -f ${_template}/${_template_dir}/Bastillefile ]; then
+                bastille verify "${_repo}/${_template_dir}"
+            fi
+        done
+    else
+        bastille verify "${_user}/${_repo}"
+    fi
 }
 
 # Handle special-case commands first.
@@ -549,6 +599,7 @@ case "${1}" in
         BASTILLE_TEMPLATE_URL=${1}
         BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
         BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
+        BASTILLE_TEMPLATE_DIR=$(echo "${1}" | awk -F / '{ print $6 }')
         bootstrap_template
         ;;
     git@*:*/*)

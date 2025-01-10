@@ -38,8 +38,9 @@ usage() {
     cat << EOF
     Options:
 
-    -f | --force    -- Force an archive import regardless if the checksum file does not match or missing.
-    -v | --verbose  -- Be more verbose during the ZFS receive operation.
+    -f | --force            Force an archive import regardless if the checksum file does not match or missing.
+    -v | --verbose          Be more verbose during the ZFS receive operation.
+    -x | --debug            Enable debug mode.
 
 Tip: If no option specified, container should be imported from standard input.
 
@@ -47,49 +48,51 @@ EOF
     exit 1
 }
 
-# Handle special-case commands first
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+FORCE=0
+ZRECV="-u"
+USER_IMPORT=
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+        -f|--force)
+            FORCE="1"
+            shift
+            ;;
+        -v|--verbose)
+            ZRECV="-u -v"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    f) FORCE=1 ;;
+                    v) ZRECV="-u -v"
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ $# -gt 3 ] || [ $# -lt 1 ]; then
     usage
 fi
 
 TARGET="${1}"
-OPT_FORCE=
-USER_IMPORT=
-OPT_ZRECV="-u"
 
 bastille_root_check
-
-# Handle and parse option args
-while [ $# -gt 0 ]; do
-    case "${1}" in
-        -f|--force)
-            OPT_FORCE="1"
-            TARGET="${2}"
-            shift
-            ;;
-        -v|--verbose)
-            OPT_ZRECV="-u -v"
-            TARGET="${2}"
-            shift
-            ;;
-        -*)
-            error_notify "Unknown Option."
-            usage
-            ;;
-        *)
-            if [ $# -gt 1 ] || [ $# -lt 1 ]; then
-                usage
-            fi
-            shift
-            ;;
-    esac
-done
 
 # Fallback to default if missing config parameters
 if [ -z "${bastille_decompress_xz_options}" ]; then
@@ -114,7 +117,7 @@ validate_archive() {
             fi
         else
             # Check if user opt to force import
-            if [ -n "${OPT_FORCE}" ]; then
+            if [ -n "${FORCE}" ]; then
                 warn "Warning: Skipping archive validation!"
             else
                 error_exit "Checksum file not found. See 'bastille import [option(s)] FILE'."
@@ -417,7 +420,7 @@ jail_import() {
                     info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
                     info "Receiving ZFS data stream..."
                     xz ${bastille_decompress_xz_options} "${bastille_backupsdir}/${TARGET}" | \
-                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+                    zfs receive ${ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
 
                     # Update ZFS mountpoint property if required
                     update_zfsmount
@@ -427,7 +430,7 @@ jail_import() {
                     info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
                     info "Receiving ZFS data stream..."
                     gzip ${bastille_decompress_gz_options} "${bastille_backupsdir}/${TARGET}" | \
-                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+                    zfs receive ${ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
 
                     # Update ZFS mountpoint property if required
                     update_zfsmount
@@ -470,9 +473,9 @@ jail_import() {
                         rm -f "${FILE_TRIM}" "${FILE_TRIM}_root"
                     fi
                     info "Receiving ZFS data stream..."
-                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
+                    zfs receive ${ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
                     zfs set ${ZFS_OPTIONS} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
-                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
+                    zfs receive ${ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
 
                     # Update ZFS mountpoint property if required
                     update_zfsmount
@@ -527,14 +530,14 @@ jail_import() {
                         # Import from uncompressed image file
                         info "Importing '${TARGET_TRIM}' from uncompressed image archive."
                         info "Receiving ZFS data stream..."
-                        zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${bastille_backupsdir}/${TARGET}"
+                        zfs receive ${ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${bastille_backupsdir}/${TARGET}"
 
                         # Update ZFS mountpoint property if required
                         update_zfsmount
                     else
                         # Based on the file name, looks like we are importing from previous redirected bastille image
                         # Quietly import from previous redirected bastille image
-                        if ! zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
+                        if ! zfs receive ${ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"; then
                             exit 1
                         else
                             # Update ZFS mountpoint property if required

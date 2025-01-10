@@ -32,7 +32,14 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille edit [option(s)] TARGET [filename]"
+    error_notify "Usage: bastille edit [option(s)] TARGET [filename]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
 # Handle options.
@@ -40,6 +47,10 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
             ;;
         -*)
             error_notify "Unknown Option: \"${1}\""

@@ -32,14 +32,15 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ] )]"
+    error_notify "Usage: bastille rdr [option(s)] TARGET [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ] )]"
     cat << EOF
     Options:
 
-    -i | --interface   [interface]       -- Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s | --source      [source ip]       -- Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -d | --destination [destination ip]  -- Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -t | --type        [ipv4|ipv6]       -- Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -x | --debug                                 Enable debug mode.
 
 EOF
     exit 1
@@ -47,22 +48,22 @@ EOF
 
 check_jail_validity() {
 
-    # Check if jail ip4 address (ip4.addr) is valid (non-VNET only)
+    # Validate jail network type and set IP4/6
     if [ "$( bastille config ${TARGET} get vnet )" != 'enabled' ]; then
-        if [ "$( bastille config ${TARGET} get ip4.addr )" != 'disable' ] && [ "$( bastille config ${TARGET} get ip4.addr )" != 'not set' ]; then
-            JAIL_IP="$( bastille config ${TARGET} get ip4.addr )"
+        _ip4_interfaces="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
+        _ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
+        # Check if jail ip4.addr is valid (non-VNET only)
+        if [ "${_ip4_interfaces}" != "not set" ] && [ "${_ip4_interfaces}" != "disable" ]; then
+            JAIL_IP="$(echo ${_ip4_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}')"
+        fi
+        # Check if jail ip6.addr is valid (non-VNET only)
+        if [ "${_ip6_interfaces}" != "not set" ] && [ "${_ip6_interfaces}" != "disable" ]; then
+            JAIL_IP6="$(echo ${_ip6_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}')"
         fi
     else
         error_exit "VNET jails do not support rdr."
     fi
     
-    # Check if jail ip6 address (ip6.addr) is valid (non-VNET only)
-    if [ "$( bastille config $TARGET get vnet )" != 'enabled' ]; then
-        if [ "$( bastille config $TARGET get ip6 )" != 'disable' ] && [ "$( bastille config $TARGET get ip6 )" != 'not set' ]; then
-            JAIL_IP6="$( bastille config ${TARGET} get ip6.addr )"
-        fi
-    fi
-
     # Check if rdr-anchor is defined in pf.conf
     if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
         error_exit "rdr-anchor not found in pf.conf"
@@ -89,6 +90,19 @@ check_rdr_ip_validity() {
         else
             error_exit "Invalid: (${ip})."
         fi
+    fi
+}
+
+validate_rdr_rule() {
+    local if="${1}"
+    local src="${2}"
+    local dst="${3}"
+    local proto="${4}"
+    local host_port="${5}"
+    local jail_port="${6}"
+    if grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
+        error_notify "Error: Ports already in use on this interface."
+        error_exit "See 'bastille list ports' or 'bastille rdr TARGET clear'."
     fi
 }
 
@@ -206,6 +220,15 @@ while [ "$#" -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
+        -d|--destination)
+            if ifconfig | grep -owq "inet ${2}"; then
+	        OPTION_DST=1
+                RDR_DST="${2}"
+                shift 2
+            else
+                error_exit "${2} is not an IP on this system."
+            fi
+            ;;
         -i|--interface)
             if ifconfig | grep -owq "${2}:"; then
                 OPTION_IF=1
@@ -221,15 +244,6 @@ while [ "$#" -gt 0 ]; do
             RDR_SRC="${2}"
             shift 2
             ;;
-        -d|--destination)
-            if ifconfig | grep -owq "inet ${2}"; then
-	        OPTION_DST=1
-                RDR_DST="${2}"
-                shift 2
-            else
-                error_exit "${2} is not an IP on this system."
-            fi
-            ;;
         -t|--type)
             if [ "${2}" != "ipv4" ] && [ "${2}" != "ipv6" ]; then
                 error_exit "[-t|--type] must be [ipv4|ipv6]"
@@ -238,6 +252,10 @@ while [ "$#" -gt 0 ]; do
                 RDR_INET="${2}"
                 shift 2
             fi
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
             ;;
         -*)
             error_exit "Unknown option: \"${1}\""
@@ -261,17 +279,12 @@ bastille_root_check
 set_target_single "${TARGET}"
 
 while [ "$#" -gt 0 ]; do
-    case "$1" in
+    case "${1}" in
         list)
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
-            elif [ "${TARGET}" = 'ALL' ]; then
-                for _jail in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "${_jail} redirects:"
-                    pfctl -a "rdr/${_jail}" -Psn 2>/dev/null
-                done
             else
                 check_jail_validity
                 pfctl -a "rdr/${TARGET}" -Psn 2>/dev/null
@@ -283,13 +296,9 @@ while [ "$#" -gt 0 ]; do
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
-            elif [ "${TARGET}" = 'ALL' ]; then
-                for _jail in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "${_jail} redirects:"
-                    pfctl -a "rdr/${_jail}" -Fn
-                done
             else
                 check_jail_validity
+                echo "${TARGET} redirects:"
                 pfctl -a "rdr/${TARGET}" -Fn
             fi
             shift
@@ -299,18 +308,11 @@ while [ "$#" -gt 0 ]; do
                 error_exit "Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
                 usage
-            elif [ "${TARGET}" = 'ALL' ]; then
-                for _jail in $(ls "${bastille_jailsdir}" | sed "s/\n//g"); do
-                    echo "${_jail} redirects:"
-                    pfctl -a "rdr/${_jail}" -Fn
-		    if rm -f "${bastille_jailsdir}"/"${_jail}"/rdr.conf; then
-                        info "[${_jail}]: rdr.conf removed"
-	            fi
-                done
             else
                 check_jail_validity
+                echo "${TARGET} redirects:"
                 pfctl -a "rdr/${TARGET}" -Fn
-                if rm -f "${bastille_jailsdir}"/"${_jail}"/rdr.conf; then
+		if rm -f "${bastille_jailsdir}/${_jail}/rdr.conf"; then
                     info "[${TARGET}]: rdr.conf removed"
 	        fi
             fi
@@ -323,6 +325,7 @@ while [ "$#" -gt 0 ]; do
                 error_exit "[-t|--type] must be set when using [-s|--source] or [-d|--destination]"
             elif [ "$#" -eq 3 ]; then
                 check_jail_validity
+                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 load_rdr_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 shift "$#"
@@ -339,6 +342,7 @@ while [ "$#" -gt 0 ]; do
                             done
                             if [ "${2}" = "(" ] && [ "${last}" = ")" ] ; then
                                 check_jail_validity
+                                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                                 persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                                 load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
                                 shift $#
@@ -347,6 +351,7 @@ while [ "$#" -gt 0 ]; do
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
+                            validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                             persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             shift 1
@@ -368,11 +373,13 @@ while [ "$#" -gt 0 ]; do
             fi
             if [ "$#" -eq 7 ] && { [ "${5}" = "tcp" ] || [ "${5}" = "udp" ]; } then
                 check_jail_validity
+                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_rule "$@"
                 load_rdr_rule "$@"
                 shift "$#"
             elif [ "$#" -ge 8 ] && [ "${8}" = "log" ]; then
                 check_jail_validity
+                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_log_rule "$@"
                 load_rdr_log_rule "$@"
                 shift "$#"

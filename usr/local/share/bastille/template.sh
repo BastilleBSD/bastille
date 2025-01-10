@@ -32,11 +32,12 @@
 . /usr/local/etc/bastille/bastille.conf
 
 bastille_usage() {
-    error_notify "Usage: bastille template [option(s)] TARGET [--convert|project/template|template]"
+    error_notify "Usage: bastille template [option(s)] TARGET [--convert|project/template]"
     cat << EOF
     Options:
 
-    -f | --force -- Start the jail if it is stopped.
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
@@ -114,18 +115,29 @@ render() {
 }
 
 # Handle options.
-FORCE=0
+AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
 	-h|--help|help)
 	    usage
 	    ;;
-	-f|--force)
-	    FORCE=1
+	-a|--auto)
+	    AUTO=1
 	    shift
 	    ;;
-        -*)
-            error_exit "Unknown option: \"${1}\""
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -218,12 +230,7 @@ case ${TEMPLATE} in
         fi
         ;;
     *)
-        if [ ! -f ${TEMPLATE}/Bastillefile ]; then
-            error_exit "${TEMPLATE} not found."
-        else
-            bastille_template=${TEMPLATE}
-        fi
-        ;;
+        error_exit "Template name/URL not recognized."
 esac
 
 if [ -z "${JAILS}" ]; then
@@ -254,23 +261,27 @@ for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
 
-    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else   
         error_notify "Jail is not running."
-        error_continue "Use [-f|--force] to force start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
     echo "Applying template: ${TEMPLATE}..."
 
-    ## jail-specific variables.
+    # Get default IPv4 and IPv6 addresses
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        if [ "$( bastille config ${TARGET} get ip4.addr )" != 'disable' ] && [ "$( bastille config ${TARGET} get ip4.addr )" != 'not set' ]; then
-            _jail_ip="$( bastille config ${TARGET} get ip4.addr )"
+    if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
+        _ip4_interfaces="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
+        _ip6_interfaces="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
+        # IP4
+        if [ "${_ip4_interfaces}" != "not set" ]; then
+            _jail_ip="$(echo ${_ip4_interface} 2>/dev/null | awk -F"|" '{print $2}')"
         fi
-        if [ "$( bastille config $TARGET get ip6 )" != 'disable' ] && [ "$( bastille config $TARGET get ip6 )" != 'not set' ]; then
-            _jail_ip6="$( bastille config ${TARGET} get ip6.addr )"
+        # IP6
+        if [ "${_ip6_interfaces}" != "not set" ]; then
+            _jail_ip="$(echo ${_ip6_interface} 2>/dev/null | awk -F"|" '{print $2}')"
         fi
     fi
 

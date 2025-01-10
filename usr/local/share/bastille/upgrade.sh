@@ -32,12 +32,13 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille upgrade [option(s)] [RELEASE NEW_RELEASE (install)] [TARGET NEW_RELEASE (install)]"
+    error_notify "Usage: bastille upgrade [option(s)] [RELEASE NEW_RELEASE install] [TARGET NEW_RELEASE install]"
     cat << EOF
     Options:
 
-    -s | --start --   Start the jail if it is stopped.
-    -f | --force --   Force upgrade a release.
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -f | --force          Force upgrade a release.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
@@ -50,16 +51,28 @@ while [ "$#" -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
-        -s|--start)
-            FORCE=1
+        -a|--auto)
+            AUTO=1
             shift
             ;;
         -f|--force)
             OPTION="-F"
             shift
             ;;
-        -*)
-            error_exit "Unknown option: \"${1}\""
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    f) OPTION="-F" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -89,11 +102,11 @@ fi
 jail_check() {
     # Check if the jail is thick and is running
     set_target_single "${TARGET}"
-    check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+    check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${TARGET}"
     else   
         error_notify "Jail is not running."
-        error_continue "Use [-s|--start] to force start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         error_exit "${TARGET} is not a thick container."

@@ -39,7 +39,8 @@ usage() {
     cat << EOF
     Options:
 
-    -M | --static-mac          Generate a static MAC address for the jail (VNET only).
+    -D | --dual                Creates the jails with bot IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
+    -M | --static-mac          Generate a static MAC address for jail (VNET only).
     -E | --empty               Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
     -L | --linux               This option is intended for testing with Linux jails, this is considered experimental.
     -T | --thick               Creates a thick container, they consume more space as they are self contained and independent.
@@ -49,14 +50,6 @@ usage() {
 
 EOF
     exit 1
-}
-
-running_jail() {
-    if [ -n "$(/usr/sbin/jls name | awk "/^${NAME}$/")" ]; then
-        error_exit "A running jail matches name."
-    elif [ -d "${bastille_jailsdir}/${NAME}" ]; then
-        error_exit "Jail: ${NAME} already created."
-    fi
 }
 
 validate_name() {
@@ -71,12 +64,12 @@ validate_name() {
 
 validate_ip() {
     _ip="${1}"
-    _ip6=$(echo "${_ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
+    _ip6=$(echo "${_ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
     if [ -n "${_ip6}" ]; then
         info "Valid: (${_ip6})."
         ipx_addr="ip6.addr"
     else
-        if [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
+        if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
             info "Valid: (${_ip})."
         else
             local IFS
@@ -86,8 +79,7 @@ validate_ip() {
                 set ${TEST_IP}
                 for quad in 1 2 3 4; do
                     if eval [ \$$quad -gt 255 ]; then
-                        echo "Invalid: (${TEST_IP})"
-                        exit 1
+                        error_continue "Invalid: (${TEST_IP})"
                     fi
                 done
                 if ifconfig | grep -qwF "${TEST_IP}"; then
@@ -97,7 +89,7 @@ validate_ip() {
                     info "Valid: (${_ip})."
                 fi
             else
-                error_exit "Invalid: (${_ip})."
+                error_continue "Invalid: (${_ip})."
             fi
         fi
     fi
@@ -115,8 +107,8 @@ validate_ip() {
     fi
     # Determine IP/Interface mode
     if [ "${_ip}" = "inherit" ]; then
-        if [ -n "${_ip6}" ]; then
-            IP4_DEFINITION=""
+        if [ -n "${DUAL_STACK}" ]; then
+            IP4_DEFINITION="ip4 = ${_ip};"
             IP6_DEFINITION="ip6 = ${_ip};"
             IP6_MODE="new"
         else
@@ -125,9 +117,9 @@ validate_ip() {
             IP6_MODE="disable"
         fi
     elif [ "${_ip}" = "ip_hostname" ]; then
-        if [ -n "${_ip6}" ]; then
+        if [ -n "${DUAL_STACK}" ]; then
             IP_HOSTNAME="${_ip}"
-            IP4_DEFINITION=""
+            IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION="${IP_HOSTNAME};"
             IP6_MODE="new"
         else
@@ -138,13 +130,12 @@ validate_ip() {
         fi
     elif echo "${_ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
         if [ "${ipx_addr}" = "ip4.addr" ]; then
-                IP4_ADDR="${_ip}"
-                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
-                IP6_MODE="disable"
+            IP4_ADDR="${_ip}"
+            IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
         elif [ "${ipx_addr}" = "ip6.addr" ]; then
-                IP6_ADDR="${_ip}"
-                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
-                IP6_MODE="new"
+            IP6_ADDR="${_ip}"
+            IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
+            IP6_MODE="new"
         fi
     fi
 }
@@ -643,19 +634,22 @@ if echo "${3}" | grep '@'; then
     BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
 fi
 
-## reset this options
+# Handle options.
 EMPTY_JAIL=""
 THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
 LINUX_JAIL=""
 STATIC_MAC=""
-
-# Handle and parse options
+DUAL_STACK=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -D|--dual)
+            DUAL_STACK="1"
+            shift
             ;;
         -M|--static-mac)
             STATIC_MAC="1"
@@ -686,53 +680,22 @@ while [ $# -gt 0 ]; do
             CLONE_JAIL="1"
             shift
             ;;
-        -CV|-VC|--clone-vnet)
-            CLONE_JAIL="1"
-            VNET_JAIL="1"
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    B) VNET_JAIL=1 VNET_JAIL_BRIDGE=1 ;;
+                    C) CLONE_JAIL=1 ;;
+                    D) DUAL_STACK=1 ;;
+                    E) EMPTY_JAIL=1 ;;
+                    L) LINUX_JAIL=1 ;;
+                    M) STATIC_MAC=1 ;;
+                    T) THICK_JAIL=1 ;;
+                    V) VNET_JAIL=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
             shift
-            ;;
-        -CB|-BC|--clone-bridge)
-            CLONE_JAIL="1"
-            VNET_JAIL="1"
-            VNET_JAIL_BRIDGE="1"
-            shift
-            ;;
-        -TV|-VT|--thick-vnet)
-            THICK_JAIL="1"
-            VNET_JAIL="1"
-            shift
-            ;;
-        -TB|-BT|--thick-bridge)
-            THICK_JAIL="1"
-            VNET_JAIL="1"
-            VNET_JAIL_BRIDGE="1"
-            shift
-            ;;
-        -EB|-BE|--empty-bridge)
-            EMPTY_JAIL="1"
-            VNET_JAIL="1"
-            VNET_JAIL_BRIDGE="1"
-            shift
-            ;;
-        -EV|-VE|--empty-vnet)
-            EMPTY_JAIL="1"
-            VNET_JAIL="1"
-            shift
-            ;;
-        -LV|-VL|--linux-vnet)
-            LINUX_JAIL="1"
-            VNET_JAIL="1"
-            shift
-            ;;
-        -LB|-BL|--linux-bridge)
-            LINUX_JAIL="1"
-            VNET_JAIL="1"
-            VNET_JAIL_BRIDGE="1"
-            shift
-            ;;
-        -*)
-            error_notify "Unknown option: \"${1}\""
-            usage
             ;;
         *)
             break
@@ -740,7 +703,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-## validate for combined options
+# Validate options
 if [ -n "${EMPTY_JAIL}" ]; then
     if [ -n "${CLONE_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
         error_exit "Error: Empty jail option can't be used with other options."
@@ -919,11 +882,6 @@ else
     info "Creating empty jail: ${NAME}."
 fi
 
-## check if a running jail matches name or already exist
-if [ -n "${NAME}" ]; then
-    running_jail
-fi
-
 # May not exist on deployments created before Bastille 0.7.20200714, so creating it. -- cwells
 if [ ! -e "${bastille_templatesdir}/default" ]; then
     ln -s "${bastille_sharedir}/templates/default" "${bastille_templatesdir}/default"
@@ -953,4 +911,7 @@ if [ -z ${bastille_template_vnet+x} ]; then
     bastille_template_vnet='default/vnet'
 fi
 
+if check_target_exists "${NAME}"; then
+    error_exit "Error: Existing jail found: ${NAME}"
+fi
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"

@@ -32,15 +32,34 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille umount TARGET JAIL_PATH"
+    error_notify "Usage: bastille umount [option(s)] TARGET JAIL_PATH"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -ne 2 ]; then
     usage

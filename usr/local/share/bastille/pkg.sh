@@ -36,31 +36,44 @@ usage() {
     cat << EOF
     Options:
 
-    -f | --force -- Start the jail if it is stopped.
-    -H | --host  -- Use the hosts pkg command.
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -H | --host           Use the hosts pkg command.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
-FORCE=0
+AUTO=0
 USE_HOST_PKG=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
             ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
         -H|--host)
             USE_HOST_PKG=1
             shift
             ;;
-        -f|--force)
-            FORCE=1
+        -x|--debug)
+            enable_debug
             shift
             ;;
-        -*)
-            error_exit "Unknown option: \"${1}\""
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    H) USE_HOST_PKG=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -84,11 +97,11 @@ for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
 
-    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else   
         error_notify "Jail is not running."
-        error_continue "Use [-f|--force] to force start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"

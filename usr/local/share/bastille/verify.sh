@@ -32,8 +32,16 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille verify [RELEASE|TEMPLATE]"
+    error_notify "Usage: bastille verify [RELEASE|TEMPLATE]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
+
 
 verify_release() {
     if [ -f "/bin/midnightbsd-version" ]; then
@@ -133,23 +141,37 @@ verify_template() {
     ## remove bad templates
     if [ "${_hook_validate}" -lt 1 ]; then
         error_notify "No valid template hooks found."
-        error_notify "Template discarded."
-        rm -rf "${bastille_template}"
+        error_notify "Template discarded: ${BASTILLE_TEMPLATE}"
+        echo
+        rm -rf "${_template_path}"
         exit 1
     fi
 
     ## if validated; ready to use
     if [ "${_hook_validate}" -gt 0 ]; then
-        info "Template ready to use."
+        info "Template ready to use: ${BASTILLE_TEMPLATE}"
+        echo
     fi
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        bastille_usage
-        ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+	        ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            error_exit "Unknown Option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -ne 1 ]; then
     usage
@@ -174,6 +196,6 @@ case "${1}" in
         verify_template
         ;;
     *)
-        bastille_usage
+        usage
         ;;
 esac

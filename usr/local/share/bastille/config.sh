@@ -42,7 +42,7 @@ help|-h|--help)
     ;;
 esac
 
-if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
     usage
 fi
 
@@ -56,7 +56,7 @@ set_target "${TARGET}"
 
 case "${ACTION}" in
     get)
-        if [ $# -ne 1 ]; then
+        if [ "$#" -ne 1 ]; then
             error_notify 'Too many parameters for a "get" operation.'
             usage
         fi
@@ -143,7 +143,7 @@ for _jail in ${JAILS}; do
         awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
             BEGIN {
                 # build RE as string as we can not expand vars in RE literals
-                prop_re = "^[[:space:]]*" property "[[:space:]]*$";
+                prop_re = "^[[:space:]]*" property "[[:space:]]*;?$";
             }
             $1 ~ prop_re && !found {
                 # we already have an entry in the config for this property so

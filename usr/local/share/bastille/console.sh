@@ -36,26 +36,37 @@ usage() {
     cat << EOF
     Options:
 
-    -f | --force -- Start the jail if it is stopped.
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
-FORCE=0
+AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
             ;;
-        -f|--force)
-            FORCE=1
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
             shift
             ;;
         -*)
-            error_notify "Unknown Option: \"${1}\""
-            usage
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -72,11 +83,11 @@ USER="${2}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_running "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille start "${TARGET}"
 else
     error_notify "Jail is not running."
-    error_exit "Use [-f|--force] to force start the jail."
+    error_exit "Use [-a|--auto] to auto-start the jail."
 fi
 
 validate_user() {
@@ -110,6 +121,7 @@ LOGIN="$(jexec -l "${TARGET}" which login)"
 if [ -n "${USER}" ]; then
     validate_user
 else
+    check_fib
     LOGIN="$(jexec -l "${TARGET}" which login)"
     ${_setfib} jexec -l "${TARGET}" $LOGIN -f root
 fi

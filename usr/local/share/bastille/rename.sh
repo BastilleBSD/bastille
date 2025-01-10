@@ -36,16 +36,15 @@ usage() {
     cat << EOF
     Options:
 
-    -f | --force   -- Stop the jail if it is running.
-    -s | --start   -- Start jail(s) when complete.
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
-FORCE=0
-START=0
+AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -55,12 +54,19 @@ while [ "$#" -gt 0 ]; do
             START=1
             shift
             ;;
-        -f|--force)
-            FORCE=1
+        -a|--auto)
+            AUTO=1
             shift
             ;;
-        -*)
-            error_exit "Unknown option: \"${1}\""
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -77,11 +83,11 @@ NEWNAME="${2}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
-    error_exit "Use [-f|--force] to force stop the jail."
+    error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
 validate_name() {
@@ -107,15 +113,6 @@ update_jailconf() {
             # update vnet config
             sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${JAIL_CONFIG}"
         fi
-    fi
-}
-
-update_fstab() {
-    # Update fstab to use the new name
-    FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
-    if [ -f "${FSTAB_CONFIG}" ] && [ -s "${FSTAB_CONFIG}" ]; then
-        # Update fstab paths with new jail path
-        sed -i '' "s|${bastille_jailsdir}/${TARGET}/root/|${bastille_jailsdir}/${NEWNAME}/root/|g" "${FSTAB_CONFIG}"
     fi
 }
 
@@ -156,27 +153,27 @@ change_name() {
         fi
     fi
 
-    # Update jail configuration files accordingly
+    # Update jail conf files
     update_jailconf
-    update_fstab
+    update_fstab "${TARGET}" "${NEWNAME}"
 
     # Check exit status and notify
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
         info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
-        if [ "${START}" -eq 1 ]; then
+        if [ "${AUTO}" -eq 1 ]; then
             bastille start "${NEWNAME}"
         fi
     fi
 }
 
-## Validate new name.
+# Validate NEW_NAME
 if [ -n "${NEWNAME}" ]; then
     validate_name
 fi
 
-## check if a jail already exists with the new name
+# Check if a jail already exists with NEW_NAME
 if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
     error_exit "Jail: ${NEWNAME} already exists."
 fi

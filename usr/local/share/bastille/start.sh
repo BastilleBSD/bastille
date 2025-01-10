@@ -32,15 +32,47 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille start TARGET"
+    error_notify "Usage: bastille start TARGET"
+    cat << EOF
+    Options:
+
+    -v | --verbose          Print every action on jail start.
+    -x | --debug             Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -v|--verbose)
+            OPTION="-v"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    v) OPTION="-v" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -ne 1 ]; then
     usage
@@ -65,8 +97,7 @@ for _jail in ${JAILS}; do
             for _interface in ${_ip4_interfaces}; do
                 _interface="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
                 if ! ifconfig | grep "^${_interface}:" >/dev/null; then
-                    error_notify "Error: ${_interface} interface does not exist."
-                    continue
+                    error_continue "Error: ${_interface} interface does not exist."
                 fi
             done
         fi
@@ -75,8 +106,7 @@ for _jail in ${JAILS}; do
             for _interface in ${_ip6_interfaces}; do
                 _interface="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
                 if ! ifconfig | grep "^${_interface}:" >/dev/null; then
-                    error_notify "Error: ${_interface} interface does not exist."
-                    continue
+                    error_continue "Error: ${_interface} interface does not exist."
                 fi
             done
         fi
@@ -90,8 +120,7 @@ for _jail in ${JAILS}; do
         for _ip in ${_ip4}; do
             _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
             if ifconfig | grep -wF "${_ip}" >/dev/null; then
-                error_notify "Error: IP address (${_ip}) already in use."
-                continue
+                error_continue "Error: IP address (${_ip}) already in use."
             else
                 pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
             fi
@@ -102,8 +131,7 @@ for _jail in ${JAILS}; do
         for _ip in ${_ip6}; do
             _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
             if ifconfig | grep -wF "${_ip}" >/dev/null; then
-                error_notify "Error: IP address (${_ip}) already in use."
-                continue
+                error_continue "Error: IP address (${_ip}) already in use."
             else
                 pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
             fi
@@ -111,7 +139,7 @@ for _jail in ${JAILS}; do
     fi
 
     # Start jail
-    jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
+    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
 
     # Add rctl limits
     if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then

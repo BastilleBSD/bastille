@@ -32,29 +32,41 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille cmd TARGET command"
+    error_notify "Usage: bastille cmd [option(s)] TARGET command"
     cat << EOF
     Options:
 
-    -f | --force -- Start the jail if it is stopped.
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
-FORCE=0
+AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
 	-h|--help|help)
 	    usage
 	    ;;
-	-f|--force)
-	    FORCE=1
+	-a|--auto)
+	    AUTO=1
 	    shift
 	    ;;
-        -*)
-            error_exit "Unknown option: \"${1}\""
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -79,11 +91,11 @@ for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
 
-    check_target_is_running "${_jail}" || if [ "${FORCE}" -eq 1 ]; then
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else   
         error_notify "Jail is not running."
-        error_continue "Use [-f|--force] to force start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
     
     COUNT=$(($COUNT+1))

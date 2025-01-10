@@ -37,25 +37,37 @@ usage() {
     cat << EOF
     Options:
 
-    -f | --force -- Stop the jail if it is running.
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
-FORCE=0
+AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
             ;;
-        -f|--force)
-            FORCE=1
+        -a|--auto)
+            AUTO=1
             shift
             ;;
-        -*)
-            error_exit "Unknown option: \"${1}\""
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -71,11 +83,11 @@ TARGET="${1}"
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
-    error_exit "Use [-f|--force] to force stop the jail."
+    error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
 convert_symlinks() {

@@ -33,22 +33,34 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille tags TARGET add tag1[,tag2,...]"
-    error_notify "       bastille tags TARGET delete tag1[,tag2,...]"
-    error_notify "       bastille tags TARGET list [tag]"
-    echo -e "Example: bastille tags JAILNAME add database,mysql"
-    echo -e "         bastille tags JAILNAME delete mysql"
-    echo -e "         bastille tags ALL list"
-    echo -e "         bastille tags ALL list mysql"
+    error_notify "Usage: bastille tags TARGET [add|delete|list] [tag1,tag2]
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
     exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_exit "Unknown Option: \"${1}\"" ;; 
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage

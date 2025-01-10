@@ -36,30 +36,24 @@ usage() {
     # Valid compress/options for ZFS systems are raw, .gz, .tgz, .txz and .xz
     # Valid compress/options for non ZFS configured systems are .tgz and .txz
     # If no compression option specified, user must redirect standard output
-    error_notify "Usage: bastille export | option(s) | TARGET | PATH"
+    error_notify "Usage: bastille export [option(s)] TARGET PATH"
     cat << EOF
     Options:
 
-         --gz       -- Export a ZFS jail using GZIP(.gz) compressed image.
-    -r | --raw      -- Export a ZFS jail to an uncompressed RAW image.
-    -s | --safe     -- Safely stop and start a ZFS jail before the exporting process.
-         --tgz      -- Export a jail using simple .tgz compressed archive instead.
-         --txz      -- Export a jail using simple .txz compressed archive instead.
-    -v | --verbose  -- Be more verbose during the ZFS send operation.
-         --xz       -- Export a ZFS jail using XZ(.xz) compressed image.
+         --gz               Export a ZFS jail using GZIP(.gz) compressed image.
+    -r | --raw              Export a ZFS jail to an uncompressed RAW image.
+    -s | --safe             Safely stop and start a ZFS jail before the exporting process.
+         --tgz              Export a jail using simple .tgz compressed archive instead.
+         --txz              Export a jail using simple .txz compressed archive instead.
+    -v | --verbose          Be more verbose during the ZFS send operation.
+         --xz               Export a ZFS jail using XZ(.xz) compressed image.
+    -x | --debug            Enable debug mode.
 
 Note: If no export option specified, the container should be redirected to standard output.
 
 EOF
     exit 1
 }
-
-# Handle special-case commands first
-case "$1" in
-    help|-h|--help)
-        usage
-        ;;
-esac
 
 if [ $# -gt 5 ] || [ $# -lt 1 ]; then
     usage
@@ -85,7 +79,7 @@ if [ -n "${bastille_export_options}" ]; then
 
     DEFAULT_EXPORT_OPTS="${bastille_export_options}"
     info "Default export option(s): '${DEFAULT_EXPORT_OPTS}'"
-
+    # Handle default options.
     for opt in ${DEFAULT_EXPORT_OPTS}; do
         case "${opt}" in
             --gz)
@@ -121,9 +115,12 @@ if [ -n "${bastille_export_options}" ]; then
         esac
     done
 else
-    # Handle and parse option args
+    # Handle options.
     while [ $# -gt 0 ]; do
         case "${1}" in
+            -h|--help|help)
+                usage
+                ;;
             --gz)
                 GZIP_EXPORT="1"
                 TARGET="${2}"
@@ -166,8 +163,12 @@ else
                 TARGET="${2}"
                 shift
                 ;;
+            -x|--debug)
+                enable_debug
+                shift
+                ;;
             -*)
-                error_notify "Unknown Option."
+                error_notify "Unknown Option: \"${1}\""
                 usage
                 ;;
             *)

@@ -32,15 +32,47 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille stop TARGET"
+    error_notify "Usage: bastille stop [option(s)] TARGET"
+    cat << EOF
+    Options:
+
+    -v | --verbose          Print every action on jail stop.
+    -x | --debug             Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -v|--verbose)
+            OPTION="-v"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    v) OPTION="-v" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -ne 1 ]; then
     usage
@@ -77,18 +109,18 @@ for _jail in ${JAILS}; do
     fi
 
     # Stop jail
-    jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
+    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
     # Remove (captured above) ipX.addr from firewall table
     if [ "${_ip4}" != "not set" ]; then
         for _ip in ${_ip4}; do
-            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+            _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi
     if [ "${_ip6}" != "not set" ]; then
         for _ip in ${_ip6}; do
-            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+            _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi
