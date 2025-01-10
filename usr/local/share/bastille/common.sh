@@ -176,7 +176,7 @@ set_target_single() {
         error_exit "[all|ALL] not supported with this command."
     elif [ "$(echo ${_TARGET} | wc -w)" -gt 1 ]; then
         error_exit "Error: Command only supports a single TARGET."
-    elif [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && [ echo "${_TARGET}" | grep -Eq '^[0-9]+$' ]; then
+    elif [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_TARGET}" | grep -Eq '^[0-9]+$'; then
         if get_jail_name "${_TARGET}" > /dev/null; then
             _TARGET="$(get_jail_name ${_TARGET})"
         else
