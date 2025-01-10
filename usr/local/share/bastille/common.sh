@@ -147,7 +147,7 @@ set_target() {
         target_all_jails
     else
         for _jail in ${_TARGET}; do
-            if echo "${_jail}" | grep -Eq '^[0-9]+$'; then
+            if [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && [ echo "${_jail}" | grep -Eq '^[0-9]+$' ]; then
                 if get_jail_name "${_jail}" > /dev/null; then
                     _jail="$(get_jail_name ${_jail})"
                 else
@@ -172,12 +172,11 @@ set_target() {
 
 set_target_single() {
     local _TARGET="${1}"
-    local _status=0
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
     elif [ "$(echo ${_TARGET} | wc -w)" -gt 1 ]; then
         error_exit "Error: Command only supports a single TARGET."
-    elif echo "${_TARGET}" | grep -Eq '^[0-9]+$'; then
+    elif [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && [ echo "${_TARGET}" | grep -Eq '^[0-9]+$' ]; then
         if get_jail_name "${_TARGET}" > /dev/null; then
             _TARGET="$(get_jail_name ${_TARGET})"
         else
@@ -188,7 +187,7 @@ set_target_single() {
             if jail_autocomplete "${_TARGET}" > /dev/null; then
                 _TARGET="$(jail_autocomplete ${_TARGET})"
             elif [ $? -eq 2 ]; then
-                error_exit "Jail not found \"${_jail}\""
+                error_exit "Jail not found \"${_TARGET}\""
             else
                 exit 1
             fi
