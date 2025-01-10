@@ -42,7 +42,7 @@ case "${1}" in
         ;;
 esac
 
-if [ "$#" -lt 3 ] || [ "$#" -gt 6 ]; then
+if [ "$#" -lt 3 ] || [ "$#" -gt 7 ]; then
     usage
 fi
 
