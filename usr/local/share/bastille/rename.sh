@@ -54,16 +54,12 @@ while [ "$#" -gt 0 ]; do
             AUTO=1
             shift
             ;;
-        -a|--auto)
-            AUTO=1
-            shift
-            ;;
         -*) 
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "Unknown Option: \"${1}\"" 
                 esac
             done
             shift
