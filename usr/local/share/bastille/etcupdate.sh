@@ -81,17 +81,17 @@ bootstrap_etc_tarball() {
 
 diff_review() {
     local _jail="${1}"
-    info "[_jail]: diff"
+    info "[${_jail}]: etcupdate --diff mode"
     etcupdate diff -D "${bastille_jailsdir}/${_jail}/root"  
 }
 
 resolve_conflicts() {
     local _jail="${1}"
     if [ "${DRY_RUN}" -eq 1 ]; then
-        info "[_jail]: resolve --dry-run"
+        info "[${_jail}]: etcupdate resolve --dry-run"
         etcupdate resolve -n -D "${bastille_jailsdir}/${_jail}/root"
     else
-        info "[_jail]: resolve"
+        info "[${_jail}]: etcupdate resolve"
         etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"
     fi   
 }
@@ -103,10 +103,10 @@ update_jail_etc() {
         error_exit "Error: Please run \"bastille etcupdate bootstrap RELEASE\" first."
     fi
     if [ "${DRY_RUN}" -eq 1 ]; then
-        info "[_jail]: update --dry-run"
+        info "[${_jail}]: etcupdate update --dry-run"
         etcupdate -n -D "${bastille_jailsdir}/${_jail}/root" -t ${bastille_cachedir}/${_release}.tbz2
     else
-        info "[_jail]: update"
+        info "[${_jail}]: etcupdate update"
         etcupdate -D "${bastille_jailsdir}/${_jail}/root" -t ${bastille_cachedir}/${_release}.tbz2
     fi
 }
