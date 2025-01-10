@@ -81,12 +81,18 @@ bootstrap_etc_tarball() {
 
 diff_review() {
     local _jail="${1}"
+    if [ "${DRY_RUN}" -eq 1 ]; then
+        warn "Warning: diff mode does not support [-d|--dryrun]"
+    fi
     info "[${_jail}]: etcupdate --diff mode"
     etcupdate diff -D "${bastille_jailsdir}/${_jail}/root"  
 }
 
 resolve_conflicts() {
     local _jail="${1}"
+    if [ "${DRY_RUN}" -eq 1 ]; then
+        warn "Warning: resolve mode does not support [-d|--dryrun]"
+    fi
     info "[${_jail}]: etcupdate resolve"
     etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"  
 }
