@@ -4,6 +4,21 @@ mount
 
 To mount storage within the container use `bastille mount`.
 
+Syntax follows standard `/etc/fstab` format:
+
+.. code-block:: shell
+
+  Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]
+
+The 'options' string can include a comma-separated list of mount options, but must start with 'ro' or 'rw'.
+
+Example: Mount a tmpfs filesystem with options.
+.. code-block:: shell
+  ishmael ~ # bastille mount azkaban tmpfs tmp tmpfs rw,nosuid,mode=01777 0 0
+  Detected advanced mount type tmpfs
+  [azkaban]:
+  Added: tmpfs /usr/local/bastille/jails/azkaban/root/tmp tmpfs rw,nosuid,mode=01777 0 0
+
 .. code-block:: shell
 
   ishmael ~ # bastille mount azkaban /storage/foo media/foo nullfs ro 0 0
@@ -17,7 +32,7 @@ Notice the JAIL_PATH format can be /media/foo or simply media/bar. The leading s
 
 It is also possible to mount individual files into a jail as seen below.
 Bastille will not mount if a file is already present at the specified mount point.
-If you do not specify a file name, bastille will mount the file underneath the specified directory as seen in the second example below.
+If the jail file name does not match the host file name, bastille will treat the jail path as a directory, and mount the file underneath as seen in the second example below.
 
 .. code-block:: shell
 
@@ -37,9 +52,3 @@ It is possible to do the same for the jail path, but again, not recommemded.
   ishmael ~ # bastille mount azkaban "/storage/my\ directory\ with\ spaces" /media/foo nullfs ro 0 0
   [azkaban]:
   Added: /storage/my\040directory\040with\040spaces /usr/local/bastille/jails/azkaban/root/media/foo nullfs ro 0 0
-
-Syntax follows standard `/etc/fstab` format:
-
-.. code-block:: shell
-
-  Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]

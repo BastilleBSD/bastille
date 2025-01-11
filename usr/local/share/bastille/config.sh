@@ -1,6 +1,8 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -136,7 +138,7 @@ for _jail in ${JAILS}; do
         awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
             BEGIN {
                 # build RE as string as we can not expand vars in RE literals
-                prop_re = "^[[:space:]]*" property "[[:space:]]*$";
+                prop_re = "^[[:space:]]*" property "[[:space:]]*;?$";
             }
             $1 ~ prop_re && !found {
                 # we already have an entry in the config for this property so
