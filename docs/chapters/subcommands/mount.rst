@@ -17,7 +17,7 @@ Example: Mount a tmpfs filesystem with options.
   ishmael ~ # bastille mount azkaban tmpfs tmp tmpfs rw,nosuid,mode=01777 0 0
   Detected advanced mount type tmpfs
   [azkaban]:
-  Added: tmpfs /usr/local/bastille/jails/kristy/root/tmp tmpfs rw,nosuid,mode=01777 0 0
+  Added: tmpfs /usr/local/bastille/jails/azkaban/root/tmp tmpfs rw,nosuid,mode=01777 0 0
 
 .. code-block:: shell
 
