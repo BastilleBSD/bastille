@@ -12,6 +12,8 @@ This sub-command launches a login shell into the container. Default is password-
 
 TARGET can also be a running jails JID value.
 
+.. code-block:: shell
+
   ishmael ~ # bastille list
    JID  IP Address      Hostname                      Path
      1  10.1.2.3        ishmael                       /usr/local/bastille/jails/ishmael/root
