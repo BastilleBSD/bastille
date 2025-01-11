@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "Unknown Option: \"${1}\""
                 esac
             done
             shift
