@@ -43,10 +43,12 @@ specify the interface they run on in rc.conf (or other config files)
 
 The `rdr` command includes 4 additional options:
 
-- **-i** | Set a non-default interface on which to create the `rdr` rule.
-- **-s** | Limit the source IP on the `rdr` rule.
-- **-d** | Limit the destination IP on the `rdr` rule.
-- **-t** | Specify network type. Can be "ipv4" or "ipv6". Default is "dual".
+.. code-block:: shell
+
+    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
 
 .. code-block:: shell
 
