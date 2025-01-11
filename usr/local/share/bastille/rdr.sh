@@ -34,7 +34,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille rdr [option(s)] TARGET [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ] )]"
+    error_notify "Usage: bastille rdr [option(s)] TARGET [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ]"
     cat << EOF
     Options:
 
@@ -49,7 +49,6 @@ EOF
 }
 
 check_jail_validity() {
-
     # Validate jail network type and set IP4/6
     if [ "$( bastille config ${TARGET} get vnet )" != 'enabled' ]; then
         _ip4_interfaces="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
