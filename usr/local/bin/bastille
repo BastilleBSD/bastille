@@ -35,7 +35,7 @@ PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 ## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        echo "[INFO] Configuration file not found. Do yu want to create it with default values? [y/N]"
+        echo "[INFO] Configuration file not found. Do you want to create it with default values? [y/N]"
         read  answer
             case "${answer}" in
                 [Nn][Oo]|[Nn]|"")
