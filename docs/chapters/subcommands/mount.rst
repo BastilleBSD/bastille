@@ -43,3 +43,5 @@ Syntax follows standard `/etc/fstab` format:
 .. code-block:: shell
 
   Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]
+
+The 'options' string can include a comma-separated list of mount options, but must start with 'ro' or 'rw'.
