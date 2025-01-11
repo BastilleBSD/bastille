@@ -32,20 +32,23 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-. /usr/local/share/bastille/common.sh
-
 ## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        warn "Configuration file not found. Do yu want to create it with default values? [y/N]"
+        echo "[INFO] Configuration file not found. Do yu want to create it with default values? [y/N]"
         read  answer
             case "${answer}" in
                 [Nn][Oo]|[Nn]|"")
-                    error_exit "No configuration file has been generated. Exiting."
+                    echo "[INFO] No configuration file has been generated. Exiting."
+                    exit
                 ;;
                 [Yy][Ee][Ss]|[Yy])
                     cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
-                    info "Configuration file has been generated. Continuing with default values"
+                    echo "[INFO] Configuration file has been generated. Continuing with default values"
+                ;;
+                *)
+                  echo "[ERROR] Invalid option. Please answer with 'y' or 'N'."
+                  exit 1
                 ;;
             esac
     fi
@@ -53,7 +56,8 @@ bastille_conf_check() {
 
 bastille_conf_check
 
-## we only load the config if conf_check passes
+## we only load this if conf_check passes
+. /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 # Set default values for config properties added during the current major version:
 : "${bastille_network_pf_ext_if:=ext_if}"
