@@ -85,12 +85,13 @@ CPSOURCE="${2}"
 CPDEST="${3}"
 
 bastille_root_check
-set_target "${TARGET}"
+set_target_single "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    if ! cp "${OPTION}" "${bastille_jail_path}${CPSOURCE}" "${CPDEST}"; then
-        error_continue "RCP failed: ${bastille_jail_path}${CPSOURCE} -> ${CPDEST}"
+    host_path="${CPDEST}"
+    jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${CPSOURCE} | sed 's#//#/#g')"
+    if ! cp "${OPTION}" "${jail_path}" "${host_path}"; then
+        error_continue "RCP failed: ${jail_path} -> ${host_path}"
     fi
 done
