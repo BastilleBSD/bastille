@@ -89,8 +89,9 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
-    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    if ! cp "${OPTION}" "${CPSOURCE}" "${bastille_jail_path}${CPDEST}"; then
-        error_continue "CP failed: ${CPSOURCE} -> ${bastille_jail_path}${CPDEST}"
+    host_path="${CPSOURCE}"
+    jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${CPDEST} | sed 's#//#/#g')"
+    if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
+        error_continue "CP failed: ${host_path} -> ${jail_path}"
     fi
 done
