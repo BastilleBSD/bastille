@@ -34,24 +34,37 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
+    error_notify "Usage: bastille cp [option(s)] TARGET SOURCE DESTINATION"
     cat << EOF
     Options:
 
-    -q | --quiet          Suppress output.
-    -x | --debug          Enable debug mode.
+    -j | --jail             Jail mode. Copy files from jail to jail(s).
+                            Syntax is [-j jail:srcpath jail:dstpath]
+    -r | --reverse          Reverse copy files from jail to host.
+    -q | --quiet            Suppress output.
+    -x | --debug            Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
+JAIL_MODE=0
 OPTION="-av"
+REVERSE_MODE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
 	-h|--help|help)
 	    usage
 	    ;;
+        -j|--jail)
+            JAIL_MODE=1
+            shift
+            ;;
+        -r|--reverse)
+            REVERSE_MODE=1
+            shift
+            ;;
         -q|--quiet)
             OPTION="-a"
             shift
@@ -63,6 +76,8 @@ while [ "$#" -gt 0 ]; do
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
+                    j) JAIL_MODE=1 ;;
+                    r) REVERSE_MODE=1 ;;
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
@@ -76,22 +91,55 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 3 ]; then
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     usage
 fi
 
+if [ "${JAIL_MODE}" -eq 1 ]; then
+    SOURCE_TARGET="$(echo ${1} | awk -F":" '{print $1}')"
+    SOURCE_PATH="$(echo ${1} | awk -F":" '{print $2}')"
+    DEST_TARGET="$(echo ${2} | awk -F":" '{print $1}')"
+    DEST_PATH="$(echo ${2} | awk -F":" '{print $2}')"
+    set_target_single "${SOURCE_TARGET}" && SOURCE_TARGET="${TARGET}"
+    set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
+    for _jail in ${DEST_TARGET}; do
+        if [ "${_jail}" = "${SOURCE_TARGET}" ]; then
+            continue
+        fi
+        info "[${_jail}]:"
+        source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
+        dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
+        if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
+            error_continue "CP failed: ${source_path} -> ${dest_path}"
+        fi
+    done
+    exit
+fi
+
 TARGET="${1}"
-CPSOURCE="${2}"
-CPDEST="${3}"
+SOURCE="${2}"
+DEST="${3}"
 
 bastille_root_check
-set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    host_path="${CPSOURCE}"
-    jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${CPDEST} | sed 's#//#/#g')"
-    if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
-        error_continue "CP failed: ${host_path} -> ${jail_path}"
-    fi
-done
+if [ "${REVERSE_MODE}" -eq 1 ]; then
+    set_target_single "${TARGET}"
+    for _jail in ${JAILS}; do
+        info "[${_jail}]:"
+        host_path="${DEST}"
+        jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${SOURCE} | sed 's#//#/#g')"
+        if ! cp "${OPTION}" "${jail_path}" "${host_path}"; then
+            error_exit "RCP failed: ${jail_path} -> ${host_path}"
+        fi
+    done
+else
+    set_target "${TARGET}"
+    for _jail in ${JAILS}; do
+        info "[${_jail}]:"
+        host_path="${SOURCE}"
+        jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST} | sed 's#//#/#g')"
+        if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
+            error_continue "CP failed: ${host_path} -> ${jail_path}"
+        fi
+    done
+fi
