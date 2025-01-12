@@ -111,7 +111,7 @@ validate_rdr_rule() {
     local jail_port="${6}"
     if grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         error_notify "Error: Ports already in use on this interface."
-        error_exit "See 'bastille list ports' or 'bastille rdr TARGET clear'."
+        error_exit "See 'bastille list ports' or 'bastille rdr TARGET reset'."
     fi
 }
 
