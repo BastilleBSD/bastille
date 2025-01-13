@@ -38,7 +38,7 @@ usage() {
     cat << EOF
     Options:
 
-    -v | --verbose          Print every action on jail stop.
+    -v | --verbose           Print every action on jail stop.
     -x | --debug             Enable debug mode.
 
 EOF
@@ -113,16 +113,24 @@ for _jail in ${JAILS}; do
     # Stop jail
     jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
-    # Remove (captured above) ipX.addr from firewall table
+    # Remove (captured above) IPs from firewall table
     if [ "${_ip4}" != "not set" ]; then
         for _ip in ${_ip4}; do
-            _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
+            if echo "${_ip}" | grep -q "|"; then
+                _ip="$(echo ${_ip} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+            else
+                _ip="$(echo ${_ip} | sed -E 's#/[0-9]+$##g')"
+            fi
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi
     if [ "${_ip6}" != "not set" ]; then
         for _ip in ${_ip6}; do
-            _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
+            if echo "${_ip}" | grep -q "|"; then
+                _ip="$(echo ${_ip} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+            else
+                _ip="$(echo ${_ip} | sed -E 's#/[0-9]+$##g')"
+            fi
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi

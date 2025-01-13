@@ -34,11 +34,11 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille start TARGET"
+    error_notify "Usage: bastille start [option(s)] TARGET"
     cat << EOF
     Options:
 
-    -v | --verbose          Print every action on jail start.
+    -v | --verbose           Print every action on jail start.
     -x | --debug             Enable debug mode.
 
 EOF
@@ -90,54 +90,52 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"        
     check_target_is_stopped "${_jail}" || error_continue "Jail is already running."
 
-    # Validate interfaces
+    # Validate interfaces and add IPs to firewall table
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
         _ip4_interfaces="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
         _ip6_interfaces="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
         # IP4
         if [ "${_ip4_interfaces}" != "not set" ]; then
             for _interface in ${_ip4_interfaces}; do
-                _interface="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
-                if ! ifconfig | grep "^${_interface}:" >/dev/null; then
-                    error_continue "Error: ${_interface} interface does not exist."
+                if echo "${_interface}" | grep -q "|"; then
+                    _if="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
+                    _ip="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+                else
+                    _if="$(bastille config ${_jail} get interface)"
+                    _ip="$(echo ${_interface} | sed -E 's#/[0-9]+$##g')"
+                fi
+                if ifconfig | grep "^${_if}:" >/dev/null; then
+                    if ifconfig | grep -qwF "${_ip}"; then
+                        error_continue "Error: IP address (${_ip}) already in use."
+                    else
+                        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    fi
+                else
+                    error_continue "Error: ${_if} interface does not exist."
                 fi
             done
         fi
         # IP6
         if [ "${_ip6_interfaces}" != "not set" ]; then
             for _interface in ${_ip6_interfaces}; do
-                _interface="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
-                if ! ifconfig | grep "^${_interface}:" >/dev/null; then
-                    error_continue "Error: ${_interface} interface does not exist."
+                if echo "${_interface}" | grep -q "|"; then
+                    _if="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
+                    _ip="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+                else
+                    _if="$(bastille config ${_jail} get interface)"
+                    _ip="$(echo ${_interface} | sed -E 's#/[0-9]+$##g')"
+                fi
+                if ifconfig | grep "^${_if}:" >/dev/null; then
+                    if ifconfig | grep -qwF "${_ip}"; then
+                        error_continue "Error: IP address (${_ip}) already in use."
+                    else
+                        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    fi
+                else
+                    error_continue "Error: ${_if} interface does not exist."
                 fi
             done
         fi
-    fi
-
-    # Validate and/or add IP to firewall table (in use or not in use)
-    _ip4="$(bastille config "${_jail}" get ip4.addr | sed 's/,/ /g')"
-    _ip6="$(bastille config "${_jail}" get ip6.addr | sed 's/,/ /g')"
-    # IP4
-    if [ "${_ip4}" != "not set" ]; then
-        for _ip in ${_ip4}; do
-            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
-            if ifconfig | grep -wF "${_ip}" >/dev/null; then
-                error_continue "Error: IP address (${_ip}) already in use."
-            else
-                pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
-            fi
-        done
-    fi
-    # IP6
-    if [ "${_ip6}" != "not set" ]; then
-        for _ip in ${_ip6}; do
-            _ip="$(echo ${_ip} 2>/dev/null | awk -F"|" '{print $2}')"
-            if ifconfig | grep -wF "${_ip}" >/dev/null; then
-                error_continue "Error: IP address (${_ip}) already in use."
-            else
-                pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
-            fi
-        done
     fi
 
     # Start jail
