@@ -56,17 +56,17 @@ check_jail_validity() {
         # Check if jail ip4.addr is valid (non-VNET only)
         if [ "${_ip4_interfaces}" != "not set" ] && [ "${_ip4_interfaces}" != "disable" ]; then
             if echo "&{_ip4_interfaces}" | grep -q "|"; then
-                JAIL_IP="$(echo ${_ip4_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}')"
+                JAIL_IP="$(echo ${_ip4_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
-                JAIL_IP="${_ip4_interfaces}"
+                JAIL_IP="$(echo ${_ip4_interfaces} | sed -E 's#/[0-9]+$##g')"
             fi
         fi
         # Check if jail ip6.addr is valid (non-VNET only)
         if [ "${_ip6_interfaces}" != "not set" ] && [ "${_ip6_interfaces}" != "disable" ]; then
             if echo "&{_ip6_interfaces}" | grep -q "|"; then
-                JAIL_IP6="$(echo ${_ip6_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}')"
+                JAIL_IP6="$(echo ${_ip6_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
-                JAIL_IP6="${_ip6_interfaces}"
+                JAIL_IP6="$(echo ${_ip6_interfaces} | sed -E 's#/[0-9]+$##g')"
             fi
         fi
     else
