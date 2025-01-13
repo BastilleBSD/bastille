@@ -163,7 +163,7 @@ while [ "$#" -gt 0 ]; do
                 RELEASE="${2}"
                 bootstrap_etc_release "${RELEASE}"
                 bootstrap_etc_tarball "${RELEASE}"
-                shift $#
+                shift "$#"
             fi
             ;;
         *)
