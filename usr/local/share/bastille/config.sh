@@ -34,48 +34,54 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille config TARGET get|set propertyName [newValue]"
+    error_exit "Usage: bastille config TARGET [get|set] PROPERTY_NAME NEW_VALUE"
 }
+
+# Handle special-case commands first.
+case "${1}" in
+help|-h|--help)
+    usage
+    ;;
+esac
+
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
+    usage
+fi
+
+bastille_root_check
+
+TARGET="${1}"
+ACTION="${2}"
+shift 2
+
+set_target "${TARGET}"
+
+case "${ACTION}" in
+    get)
+        if [ "$#" -ne 1 ]; then
+            error_notify 'Too many parameters for a "get" operation.'
+            usage
+        fi
+        ;;
+    set) 
+        ;;
+    *)
+        error_exit 'Only get and set are supported.'
+        ;;
+esac
+
+PROPERTY="${1}"
+shift
+VALUE="$@"
 
 # we need jail(8) to parse the config file so it can expand variables etc
 print_jail_conf() {
 
     # we need to pass a literal \n to jail to get each parameter on its own
     # line
-    jail -f "$1" -e '
+    jail -f "${1}" -e '
 '
 } 
-
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
-if [ $# -eq 1 ] || [ $# -gt 3 ]; then
-    usage
-fi
-
-bastille_root_check
-
-ACTION=$1
-shift
-
-case $ACTION in
-    get)
-        if [ $# -ne 1 ]; then
-            error_notify 'Too many parameters for a "get" operation.'
-            usage
-        fi
-        ;;
-    set) ;;
-    *) error_exit 'Only get and set are supported.' ;;
-esac
-
-PROPERTY=$1
-shift
-VALUE="$@"
 
 for _jail in ${JAILS}; do
     FILE="${bastille_jailsdir}/${_jail}/jail.conf"
@@ -93,6 +99,7 @@ for _jail in ${JAILS}; do
                     # check if there is a value for this property
                     if (NF == 2) {
                         # remove any quotes surrounding the string
+                        #sub(",[^|]*\\|", ",", $2);
                         sub(/^"/, "", $2);
                         sub(/"$/, "", $2);
                         print $2;

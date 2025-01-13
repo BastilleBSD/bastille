@@ -34,22 +34,20 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|(import|export|backup)]"
-}
+    error_notify "Usage: bastille list [option(s)] [-j|-a] [release [-p]|template|(jail|container)|log|limit|(import|export|backup)]"
+    cat << EOF
+    Options:
+    
+    -x | --debug          Enable debug mode.
 
-if [ "${1}" = help ] || [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
-    usage
-fi
+EOF
+    exit 1
+}
 
 bastille_root_check
 
-if [ $# -eq 0 ]; then
+if [ "$#" -eq 0 ]; then
    /usr/sbin/jls
-fi
-
-if [ "${1}" = "-j" ]; then
-    /usr/sbin/jls -N --libxo json
-    exit 0
 fi
 
 TARGET=
@@ -118,28 +116,28 @@ list_all(){
                             JAIL_RELEASE=$(jexec -l ${JAIL_NAME} freebsd-version -u 2> /dev/null)
                         fi
                         if [ "${IS_LINUX_JAIL}" -eq 1 ]; then
-                            JAIL_RELEASE=$(grep -hE "^NAME=.*$|^VERSION_ID=.*$|^VERSION_CODENAME=.*$" "${JAIL_PATH}/etc/os-release" 2> /dev/null | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | awk -F'=' '{ a[$1] = $2; o++ } o%3 == 0 { print a["VERSION_CODENAME"] " (" a["NAME"] " " a["VERSION_ID"] ")" }')
+                            JAIL_RELEASE=$(grep -hEs "^NAME=.*$|^VERSION_ID=.*$|^VERSION_CODENAME=.*$" "${JAIL_PATH}/etc/os-release" | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | awk -F'=' '{ a[$1] = $2; o++ } o%3 == 0 { print a["VERSION_CODENAME"] " (" a["NAME"] " " a["VERSION_ID"] ")" }')
                         fi
                     else
                         JAIL_STATE=$(if [ "$(sed -n "/^${JAIL_NAME} {$/,/^}$/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | awk '$0 ~ /^'${JAIL_NAME}' \{|\}/ { printf "%s",$0 }')" = "${JAIL_NAME} {}" ]; then echo "Down"; else echo "n/a"; fi)
                         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-                            JAIL_IP=$(sed -n 's/^ifconfig_vnet0="\(.*\)"$/\1/p' "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | sed "s/\// /g" | awk '{ if ($1 ~ /^[inet|inet6]/) print $2; else print $1 }')
+                            JAIL_IP=$(sed -n 's/^ifconfig_vnet0="\(.*\)"$/\1/p' "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | sed "s/\// /g" | awk -F"|" '{print $2}' | awk '{ if ($1 ~ /^[inet|inet6]/) print $2; else print $1 }')
                         else
-                            JAIL_IP=$(sed -n "s/^[ ]*ip[4,6].addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk '{ print $1 }')
+                            JAIL_IP=$(sed -n "s/^[ ]*ip[4,6].addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk -F"|" '{print $2}' | awk '{ print $1 }')
                         fi
                         JAIL_HOSTNAME=$(sed -n "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
-                        if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
+                        if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$0 ~ /(tcp|udp)/ { printf "%s/%s:%s,",$5,$6,$7 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
                             JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
                             if [ "${JAIL_PATH}" ]; then
                                 if [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
                                     if [ -f "${JAIL_PATH}/bin/freebsd-version" ]; then
-                                        JAIL_RELEASE=$(grep -hE "^USERLAND_VERSION=" "${JAIL_PATH}/bin/freebsd-version" 2> /dev/null | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
+                                        JAIL_RELEASE=$(grep -hEs "^USERLAND_VERSION=" "${JAIL_PATH}/bin/freebsd-version" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
                                     else
-                                        JAIL_RELEASE=$(grep -h "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null | grep -hE "^USERLAND_VERSION=" "$(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++')" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
+                                        JAIL_RELEASE=$(grep -h "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null | grep -hEs "^USERLAND_VERSION=" "$(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++')" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
                                     fi
                                 fi
                                 if [ "${IS_LINUX_JAIL}" -eq 1 ]; then
-                                    JAIL_RELEASE=$(grep -hE "^NAME=.*$|^VERSION_ID=.*$|^VERSION_CODENAME=.*$" "${JAIL_PATH}/etc/os-release" 2> /dev/null | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | awk -F'=' '{ a[$1] = $2; o++ } o%3 == 0 { print a["VERSION_CODENAME"] " (" a["NAME"] " " a["VERSION_ID"] ")" }')
+                                    JAIL_RELEASE=$(grep -hEs "^NAME=.*$|^VERSION_ID=.*$|^VERSION_CODENAME=.*$" "${JAIL_PATH}/etc/os-release" | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | awk -F'=' '{ a[$1] = $2; o++ } o%3 == 0 { print a["VERSION_CODENAME"] " (" a["NAME"] " " a["VERSION_ID"] ")" }')
                                 fi
                             else
                                JAIL_RELEASE=""
@@ -164,13 +162,14 @@ list_all(){
                             #                 10.10.10.11
                             #                 10.10.10.12
                             FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-                            printf " ${JAIL_NAME}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+                            printf " ${JID}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                             for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                                printf "%*s %*s${IP}\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
+                                printf "%*s %*s${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
                             done
                         else
                             printf " ${JID}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                         fi
+
                 fi
             done
         else
@@ -227,39 +226,78 @@ list_import(){
     ls "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 
-if [ $# -gt 0 ]; then
-    # Handle special-case commands first.
+list_ports() {
+    if [ -d "${bastille_jailsdir}" ]; then
+        JAIL_LIST="$(bastille list jails)"
+        for _jail in ${JAIL_LIST}; do
+            if [ -f "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
+                _ports="$(cat ${bastille_jailsdir}/${_jail}/rdr.conf)"
+                info "[$_jail]:"
+                echo "${_ports}"
+            fi
+        done
+    fi
+}
+
+# Handle options.
+while [ "$#" -gt 0 ]; do
     case "${1}" in
-    all|-a|--all)
-        list_all
-        ;;
-    release|releases)
-        list_release "${2}"
-        ;;
-    template|templates)
-        list_template
-        ;;
-    jail|jails|container|containers)
-        list_jail
-        ;;
-    log|logs)
-        list_log
-        ;;
-    limit|limits)
-        list_limit
-        ;;
-    import|imports|export|exports|backup|backups)
-        list_import
-    exit 0
-    ;;
-    *)
-        # Check if we want to query all info for a specific jail instead.
-        if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
-            TARGET="${1}"
+	-h|--help|help)
+	    usage
+	    ;;
+        -a|--all|all)
             list_all
-        else
-            usage
-        fi
-        ;;
+            exit 0
+            ;;
+	-j|--json)
+	    /usr/sbin/jls -N --libxo json
+            exit 0
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ "$#" -gt 0 ]; then
+    case "${1}" in
+        port|ports)
+            list_ports
+            ;;
+        release|releases)
+            list_release "${2}"
+            ;;
+        template|templates)
+            list_template
+            ;;
+        jail|jails|container|containers)
+            list_jail
+            ;;
+        log|logs)
+            list_log
+            ;;
+        limit|limits)
+            list_limit
+            ;;
+        import|imports|export|exports|backup|backups)
+            list_import
+            exit 0
+            ;;
+        *)
+            # Check if we want to query all info for a specific jail instead.
+            if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
+                TARGET="${1}"
+                list_all
+            else
+                usage
+            fi
+            ;;
     esac
 fi

@@ -40,12 +40,15 @@ usage() {
 }
 
 # Check for too many args
-if [ $# -gt 1 ]; then
+if [ "$#" -gt 1 ]; then
     usage
 fi
 
 # Configure bastille loopback network interface
 configure_network() {
+    if ifconfig -l | grep -qo ${bastille_network_loopback}; then
+        error_notify "Error: Network has already been configured."
+    fi
     info "Configuring ${bastille_network_loopback} loopback interface"
     sysrc cloned_interfaces+=lo1
     sysrc ifconfig_lo1_name="${bastille_network_loopback}"
@@ -56,6 +59,9 @@ configure_network() {
 
 configure_vnet() {
     info "Configuring bridge interface"
+    if ifconfig -l | grep -qo bridge1; then
+        error_notify "Error: VNET has already been configured."
+    fi
     sysrc cloned_interfaces+=bridge1
     sysrc ifconfig_bridge1_name=bastille1
 
@@ -82,8 +88,8 @@ configure_pf() {
 if [ ! -f "${bastille_pf_conf}" ]; then
     # shellcheck disable=SC3043
     local ext_if
-    ext_if=$(netstat -rn | awk '/default/ {print $4}' | head -n1)
-    info "Determined default network interface: ($ext_if)"
+    ext_if="$(netstat -rn | awk '/default/ {print $4}' | head -n1)"
+    info "Determined default network interface: \(${ext_if}\)"
     info "${bastille_pf_conf} does not exist: creating..."
 
     ## creating pf.conf
@@ -107,7 +113,7 @@ EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
-    error_exit "${bastille_pf_conf} already exists. Exiting."
+    error_notify "${bastille_pf_conf} already exists. Exiting."
 fi
 }
 
@@ -115,6 +121,8 @@ fi
 configure_zfs() {
     if [ ! "$(kldstat -m zfs)" ]; then
         info "ZFS module not loaded; skipping..."
+    elif [ -n "$(sysrc -f ${bastille_config} bastille_zfs_zpool)" ] && [ -n "$(sysrc -f ${bastille_config} bastille_zfs_enable)" ]; then
+        error_notify "Error: ZFS has already been configured."
     else
         ## attempt to determine bastille_zroot from `zpool list`
         bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
@@ -129,7 +137,7 @@ configure_zfs() {
 }
 
 # Run all base functions (w/o vnet) if no args
-if [ $# -eq 0 ]; then
+if [ "$#" -eq 0 ]; then
     sysrc bastille_enable=YES
     configure_network
     configure_pf
@@ -137,17 +145,12 @@ if [ $# -eq 0 ]; then
 fi
 
 # Handle special-case commands first.
-case "$1" in
+case "${1}" in
 help|-h|--help)
     usage
     ;;
 pf|firewall)
     configure_pf
-    ;;
-bastille0)
-    # TODO remove in future release 0.13
-    warn "'bastille setup bastille0' will be deprecated in the next 0.13 version."
-    configure_network
     ;;
 network|loopback)
     configure_network

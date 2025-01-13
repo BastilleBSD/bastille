@@ -34,31 +34,64 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [force]"
+    error_notify "Usage: bastille upgrade [option(s)] [RELEASE NEW_RELEASE install] [TARGET NEW_RELEASE install]"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -f | --force          Force upgrade a release.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
+        -f|--force)
+            OPTION="-F"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    f) OPTION="-F" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -gt 3 ] || [ $# -lt 2 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
+
+TARGET="${1}"
+NEWRELEASE="${2}"
 
 bastille_root_check
 
-TARGET="$1"
-NEWRELEASE="$2"
-OPTION="$3"
-
-# Check for unsupported actions
-if [ "${TARGET}" = "ALL" ]; then
-    error_exit "Batch upgrade is unsupported."
-fi
-
+# Check for unsupported actions    
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
     exit 1
@@ -68,24 +101,17 @@ if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
 
-# Handle options
-case "${OPTION}" in
-    -f|--force)
-        OPTION="-F"
-        ;;
-    *)
-        OPTION=
-        ;;
-esac
-
 jail_check() {
     # Check if the jail is thick and is running
-    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
-    else
-        if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-            error_exit "${TARGET} is not a thick container."
-        fi
+    set_target_single "${TARGET}"
+    check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${TARGET}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-a|--auto] to auto-start the jail."
+    fi
+    if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        error_exit "${TARGET} is not a thick container."
     fi
 }
 
@@ -110,16 +136,12 @@ release_upgrade() {
 
 jail_upgrade() {
     # Upgrade a thick container
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        jail_check
-        release_check
-        CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version)
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" --currently-running "${CURRENT_VERSION}" -r ${NEWRELEASE} upgrade
-        echo
-        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
-    else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
-    fi
+    jail_check
+    release_check
+    CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version)
+    env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" --currently-running "${CURRENT_VERSION}" -r ${NEWRELEASE} upgrade
+    echo
+    echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
 }
 
 jail_updates_install() {

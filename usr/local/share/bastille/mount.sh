@@ -34,15 +34,34 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    error_notify "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -lt 3 ] || [ "$#" -gt 7 ]; then
     usage
@@ -91,7 +110,7 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     usage
 fi
 
-# Mount permissions,options need to start with "ro" or "rw"
+# Mount permissions/options need to start with "ro" or "rw"
 if ! echo "${_perms}" | grep -Eq 'r[w|o],.*$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
@@ -122,7 +141,6 @@ for _jail in ${JAILS}; do
         grep -E "[[:blank:]]${_existing_mount}" "${bastille_jailsdir}/${_jail}/fstab"
         continue
     fi
-
 
     # Create mount point if it does not exist
     if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then

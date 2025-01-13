@@ -34,15 +34,22 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille zfs TARGET [set|get|snap] [key=value|date]'"
+    error_notify "Usage: bastille zfs TARGET [set|get|snap|destroy_snap|df|usage] [key=value|date]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
+
 
 zfs_snapshot() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     # shellcheck disable=SC2140
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
-    echo
 done
 }
 
@@ -51,7 +58,6 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
     # shellcheck disable=SC2140
     zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
-    echo
 done
 }
 
@@ -59,7 +65,6 @@ zfs_set_value() {
 for _jail in ${JAILS}; do
     info "[${_jail}]:"
     zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-    echo
 done
 }
 
@@ -81,45 +86,52 @@ done
 
 # Handle special-case commands first.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
+    help|-h|--help)
+        usage
+        ;;
 esac
 
-bastille_root_check
+if [ "$#" -lt 2 ]; then
+    usage
+fi
 
-## check ZFS enabled
+TARGET="${1}"
+ACTION="${2}"
+
+bastille_root_check
+set_target "${TARGET}"
+
+# Check if ZFS is enabled
 if ! checkyesno bastille_zfs_enable; then
     error_exit "ZFS not enabled."
 fi
 
-## check zpool defined
+# Check if zpool is defined
 if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "ZFS zpool not defined."
 fi
 
-if [ $# -lt 1 ]; then
-    usage
-fi
-
-case "$1" in
-set)
-    ATTRIBUTE=$2
-    zfs_set_value
-    ;;
-get)
-    ATTRIBUTE=$2
-    zfs_get_value
-    ;;
-snap|snapshot)
-    TAG=$2
-    zfs_snapshot
-    ;;
-destroy_snap|destroy_snapshot)
-    TAG=$2
-    zfs_destroy_snapshot
-    ;;
-df|usage)
-    zfs_disk_usage
-    ;;
+case "${ACTION}" in
+    set)
+        ATTRIBUTE="${3}"
+        zfs_set_value
+        ;;
+    get)
+        ATTRIBUTE="${3}"
+        zfs_get_value
+        ;;
+    snap|snapshot)
+        TAG="${3}"
+        zfs_snapshot
+        ;;
+    destroy_snap|destroy_snapshot)
+        TAG="${3}"
+        zfs_destroy_snapshot
+        ;;
+    df|usage)
+        zfs_disk_usage
+        ;;
+    *)
+        usage
+        ;;
 esac

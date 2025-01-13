@@ -35,35 +35,74 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille limits TARGET option value"
+    error_notify "Usage: bastille limits [option(s)] TARGET OPTION VALUE"
     echo -e "Example: bastille limits JAILNAME memoryuse 1G"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
+
+EOF
     exit 1
 }
 
-RACCT_ENABLE=$(sysctl -n kern.racct.enable)
-if [ "${RACCT_ENABLE}" != '1' ]; then
-    echo "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
-#    exit 1
+# Handle options.
+AUTO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+	-a|--auto)
+	    AUTO=1
+	    shift
+	    ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ $# -ne 3 ]; then
+    usage
 fi
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
-if [ $# -ne 2 ]; then
-    usage
+TARGET="${1}"
+OPTION="${2}"
+VALUE="${3}"
+RACCT_ENABLE="$(sysctl -n kern.racct.enable)"
+if [ "${RACCT_ENABLE}" != '1' ]; then
+    error_exit "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
 fi
 
 bastille_root_check
-
-OPTION="${1}"
-VALUE="${2}"
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+
     info "[${_jail}]:"
+
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-a|--auto] to auto-start the jail."
+    fi
 
     _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
     _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
@@ -80,5 +119,5 @@ for _jail in ${JAILS}; do
 
     echo -e "${OPTION} ${VALUE}"
     rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
-    echo -e "${COLOR_RESET}"
+
 done
