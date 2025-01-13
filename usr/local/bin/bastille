@@ -1,6 +1,8 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,14 +32,36 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-. /usr/local/share/bastille/common.sh
-
-## check for config existance
+## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        error_exit "Missing Configuration"
+        echo "[INFO] Configuration file not found. Do you want to create it with default values? [y/N]"
+        read  answer
+            case "${answer}" in
+                [Nn][Oo]|[Nn]|"")
+                    echo "[INFO] No configuration file has been generated. Exiting."
+                    exit
+                ;;
+                [Yy][Ee][Ss]|[Yy])
+                    cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+                    echo "[INFO] Configuration file has been generated. Continuing with default values"
+                ;;
+                *)
+                  echo "[ERROR] Invalid option. Please answer with 'y' or 'N'."
+                  exit 1
+                ;;
+            esac
     fi
 }
+
+bastille_conf_check
+
+## we only load this if conf_check passes
+. /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
+# Set default values for config properties added during the current major version:
+: "${bastille_network_pf_ext_if:=ext_if}"
+: "${bastille_network_pf_table:=jails}"
 
 ## bastille_prefix should be 0750
 ## this restricts file system access to privileged users
@@ -58,7 +82,7 @@ bastille_conf_check
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.12.20241124"
+BASTILLE_VERSION="0.12.20250111"
 
 usage() {
     cat << EOF
