@@ -126,6 +126,7 @@ generate_vnet_jail_netblock() {
     local jail_name="$1"
     local use_unique_bridge="$2"
     local external_interface="$3"
+    local static_mac="${4}"
     generate_static_mac "${jail_name}" "${external_interface}"
     ## determine number of containers + 1
     ## iterate num and grep all jail configs
@@ -148,6 +149,7 @@ generate_vnet_jail_netblock() {
         local uniq_epair_bridge="0"
     fi
     if [ -n "${use_unique_bridge}" ]; then
+        if [ -n "${static_mac}" ]; then
         ## generate bridge config
         cat <<-EOF
   vnet;
@@ -161,7 +163,20 @@ generate_vnet_jail_netblock() {
   exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
   exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
 EOF
+        else
+        cat <<-EOF
+  vnet;
+  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
+  exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
+  exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
+  exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
+  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
+EOF
+        fi
     else
+        if [ -n "${static_mac}" ]; then
         ## generate config
         cat <<-EOF
   vnet;
@@ -172,6 +187,15 @@ EOF
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
+        else
+        cat <<-EOF
+  vnet;
+  vnet.interface = e0b_${uniq_epair};
+  exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "jib destroy ${uniq_epair}";
+EOF
+        fi
     fi
 }
 
