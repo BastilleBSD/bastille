@@ -96,6 +96,9 @@ jail_check() {
 }
 
 jail_update() {
+    local _freebsd_update_conf="${bastille_jailsdir}/${TARGET}/root/etc/freebsd-update.conf"
+    local _jail_dir="${bastille_jailsdir}/${TARGET}/root"
+    local _workdir="${bastille_releasesdir}/${TARGET}/root/var/db/freebsd-update"
     # Update a thick container
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         jail_check    
@@ -103,7 +106,9 @@ jail_update() {
         if [ -z "${CURRENT_VERSION}" ]; then
             error_exit "Can't determine '${TARGET}' version."
         else
-            env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" \
+            env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${_jail_dir}" \
+            -d "${_workdir}" \
+            -f "${_freebsd_update_conf}" \
             fetch install --currently-running "${CURRENT_VERSION}"
         fi
     else
@@ -112,6 +117,9 @@ jail_update() {
 }
 
 release_update() {
+    local _freebsd_update_conf="${bastille_releasesdir}/${TARGET}/etc/freebsd-update.conf"
+    local _release_dir="${bastille_releasesdir}/${TARGET}"
+    local _workdir="${bastille_releasesdir}/${TARGET}/var/db/freebsd-update"
     # Update a release base(affects child containers)
     if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
         TARGET_TRIM="${TARGET}"
@@ -120,8 +128,12 @@ release_update() {
         fi
 
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
+        -d "${_workdir}" \
+        -f "${_freebsd_update_conf}" \
         fetch --currently-running "${TARGET_TRIM}"
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
+        -d "${_workdir}" \
+        -f "${_freebsd_update_conf}" \
         install --currently-running "${TARGET_TRIM}"
     else
         error_exit "${TARGET} not found. See 'bastille bootstrap'."
