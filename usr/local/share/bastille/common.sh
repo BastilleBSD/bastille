@@ -123,62 +123,73 @@ generate_static_mac() {
 }
 
 generate_vnet_jail_netblock() {
-    local jail_name="$1"
-    local use_unique_bridge="$2"
-    local external_interface="$3"
+    local jail_name="${1}"
+    local use_unique_bridge="${2}"
+    local external_interface="${3}"
     local static_mac="${4}"
-    generate_static_mac "${jail_name}" "${external_interface}"
-    ## determine number of containers + 1
+    ## determine number of interfaces + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
-    local jail_list="$(bastille list jails)"
-    if [ -n "${jail_list}" ]; then
-        local list_jails_num="$(echo "${jail_list}" | wc -l | awk '{print $1}')"
-        local num_range=$((list_jails_num + 1))
-        for _num in $(seq 0 "${num_range}"); do
-            if ! grep -q "e[0-9]b_bastille${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                if ! grep -q "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                    local uniq_epair="bastille${_num}"
+    local _epair_if_count="$(grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _bastille_if_count="$(grep -Eos 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local epair_num_range=$((_epair_if_count + 1))
+    local bastille_num_range=$((_bastille_if_count + 1))
+    if [ -n "${use_unique_bridge}" ]; then
+        if [ "${_epair_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${epair_num_range}"); do
+                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     local uniq_epair_bridge="${_num}"
                     break
                 fi
-            fi
-        done
+            done
+        else
+            local uniq_epair_bridge="0"
+        fi
     else
-        local uniq_epair="bastille0"
-        local uniq_epair_bridge="0"
+        if [ "${_bastille_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${bastille_num_range}"); do
+                if ! grep -Eosq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                    local uniq_epair="bastille${_num}"
+                    break
+                fi
+            done
+        else
+            local uniq_epair="bastille0"
+        fi
     fi
+    ## If BRIDGE is enabled, generate bridge config, else generate VNET config
     if [ -n "${use_unique_bridge}" ]; then
         if [ -n "${static_mac}" ]; then
-        ## generate bridge config
-        cat <<-EOF
+            ## Generate bridged VNET config with static MAC address
+            generate_static_mac "${jail_name}" "${external_interface}"
+            cat <<-EOF
   vnet;
-  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
+  vnet.interface = epair${uniq_epair_bridge}b;
   exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
   exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
-  exec.prestart += "ifconfig e${uniq_epair_bridge}a_${jail_name} ether ${macaddr}a";
-  exec.prestart += "ifconfig e${uniq_epair_bridge}b_${jail_name} ether ${macaddr}b";
-  exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
-  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a ether ${macaddr}a";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}b ether ${macaddr}b";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "ifconfig ${external_interface} deletem epair${uniq_epair_bridge}a";
+  exec.poststop += "ifconfig epair${uniq_epair_bridge}a destroy";
 EOF
         else
-        cat <<-EOF
+            ## Generate bridged VNET config without static MAC address
+            cat <<-EOF
   vnet;
-  vnet.interface = e${uniq_epair_bridge}b_${jail_name};
+  vnet.interface = epair${uniq_epair_bridge}b;
   exec.prestart += "ifconfig epair${uniq_epair_bridge} create";
   exec.prestart += "ifconfig ${external_interface} addm epair${uniq_epair_bridge}a";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}a up name e${uniq_epair_bridge}a_${jail_name}";
-  exec.prestart += "ifconfig epair${uniq_epair_bridge}b up name e${uniq_epair_bridge}b_${jail_name}";
-  exec.poststop += "ifconfig ${external_interface} deletem e${uniq_epair_bridge}a_${jail_name}";
-  exec.poststop += "ifconfig e${uniq_epair_bridge}a_${jail_name} destroy";
+  exec.prestart += "ifconfig epair${uniq_epair_bridge}a description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "ifconfig ${external_interface} deletem epair${uniq_epair_bridge}a";
+  exec.poststop += "ifconfig epair${uniq_epair_bridge}a destroy";
 EOF
         fi
     else
         if [ -n "${static_mac}" ]; then
-        ## generate config
-        cat <<-EOF
+            ## Generate VNET config with static MAC address
+            generate_static_mac "${jail_name}" "${external_interface}"
+            cat <<-EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
@@ -188,7 +199,8 @@ EOF
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
         else
-        cat <<-EOF
+            ## Generate VNET config without static MAC address
+            cat <<-EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
