@@ -134,7 +134,9 @@ jail_upgrade() {
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${TARGET}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
         local _newrelease="${NEWRELEASE}"
+        # Update "osrelease" entry inside jail.conf
         sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/fstab"
+        # Update "fstab" entry
         sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/jail.conf"
         info "Upgraded ${TARGET}: ${_oldrelease} -> ${_newrelease}"
         info "See 'bastille etcupdate TARGET' to update /etc/rc.conf"
@@ -145,9 +147,10 @@ jail_upgrade() {
         -b "${_jailpath}" \
         -d "${_workdir}" \
         -f "${_freebsd_update_conf}" \
-        -r "${_newrelease}" \
-        upgrade
-
+        -r "${_newrelease}" upgrade
+        
+        # Update "osrelease" entry inside jail.conf
+        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/jail.conf"
         echo
         echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
     fi
