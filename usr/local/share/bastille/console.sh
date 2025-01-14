@@ -108,7 +108,7 @@ validate_user() {
 }
 
 check_fib() {
-    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${TARGET}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
         if [ -n "${fib}" ]; then
             _setfib="setfib -F ${fib}"
         else
