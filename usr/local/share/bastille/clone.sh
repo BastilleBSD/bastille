@@ -123,11 +123,11 @@ update_jailconf_vnet() {
                     local _if_vnet="$(grep ${_if_epairb} "${bastille_jail_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     sed -i '' "s|${_if}|epair${uniq_epair_bridge}|g" "${JAIL_CONFIG}"
                     # If jail had a static MAC, generate one for clone
-                    if grep -oq ether ${JAIL_CONFIG}; then
+                    if grep ether ${JAIL_CONFIG} | grep -qoc epair${uniq_epair_bridge}; then
                         local external_interface="$(grep "epair${uniq_epair_bridge}" ${JAIL_CONFIG} | grep -o '[^ ]* addm' | awk '{print $1}')"
                         generate_static_mac "${NEWNAME}" "${external_interface}"
-                        sed -i '' "s|epair${uniq_epair_bridge}a ether.*:.*:.*:.*:.*:.*a\";|epair${uniq_epair}a ether ${macaddr}a\";|" "${JAIL_CONFIG}"
-                        sed -i '' "s|epair${uniq_epair_bridge}b ether.*:.*:.*:.*:.*:.*b\";|epair${uniq_epair}b ether ${macaddr}b\";|" "${JAIL_CONFIG}"
+                        sed -i '' "s|epair${uniq_epair_bridge}a ether.*:.*:.*:.*:.*:.*a\";|epair${uniq_epair_bridge}a ether ${macaddr}a\";|" "${JAIL_CONFIG}"
+                        sed -i '' "s|epair${uniq_epair_bridge}b ether.*:.*:.*:.*:.*:.*b\";|epair${uniq_epair_bridge}b ether ${macaddr}b\";|" "${JAIL_CONFIG}"
                     fi
                     sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${JAIL_CONFIG}"
                     # Update /etc/rc.conf
@@ -153,7 +153,7 @@ update_jailconf_vnet() {
                     local _if_vnet="$(grep ${_if} "${bastille_jail_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     sed -i '' "s|${_if}|${uniq_epair}|g" "${JAIL_CONFIG}"
                     # If jail had a static MAC, generate one for clone
-                    if grep -oq ether ${JAIL_CONFIG}; then
+                    if grep ether ${JAIL_CONFIG} | grep -qoc ${uniq_epair}; then
                         local external_interface="$(grep ${uniq_epair} ${JAIL_CONFIG} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
                         generate_static_mac "${NEWNAME}" "${external_interface}"
                         sed -i '' "s|${uniq_epair} ether.*:.*:.*:.*:.*:.*a\";|${uniq_epair} ether ${macaddr}a\";|" "${JAIL_CONFIG}"
@@ -177,7 +177,6 @@ update_jailconf_vnet() {
         fi
     done
 }
-
 
 update_fstab() {
     # Update fstab to use the new name
