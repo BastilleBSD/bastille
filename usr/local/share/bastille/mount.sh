@@ -1,6 +1,8 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,7 +44,7 @@ case "${1}" in
         ;;
 esac
 
-if [ "$#" -lt 3 ] || [ "$#" -gt 6 ]; then
+if [ "$#" -lt 3 ] || [ "$#" -gt 7 ]; then
     usage
 fi
 
@@ -89,8 +91,8 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     usage
 fi
 
-# Mount permissions need to be "ro" or "rw"
-if [ "${_perms}" != "ro" ] && [ "${_perms}" != "rw" ]; then
+# Mount permissions,options need to start with "ro" or "rw"
+if ! echo "${_perms}" | grep -Eq 'r[w|o],.*$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
