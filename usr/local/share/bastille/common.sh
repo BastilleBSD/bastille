@@ -192,13 +192,28 @@ set_target_single() {
     local _TARGET="${1}"
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
-    else
-        check_target_exists "${_TARGET}" || error_exit "Jail not found \"${_TARGET}\""
-        JAILS="${_TARGET}"
-        TARGET="${_TARGET}"
-        export JAILS
-        export TARGET
+    elif [ "$(echo ${_TARGET} | wc -w)" -gt 1 ]; then
+        error_exit "Error: Command only supports a single TARGET."
+    elif echo "${_TARGET}" | grep -Eq '^[0-9]+$'; then
+        if get_jail_name "${_TARGET}" > /dev/null; then
+            _TARGET="$(get_jail_name ${_TARGET})"
+        else
+            error_exit "Error: JID \"${_TARGET}\" not found. Is jail running?"
+        fi
+    elif
+        ! check_target_exists "${_TARGET}"; then
+            if jail_autocomplete "${_TARGET}" > /dev/null; then
+                _TARGET="$(jail_autocomplete ${_TARGET})"
+            elif [ $? -eq 2 ]; then
+                error_exit "Jail not found \"${_TARGET}\""
+            else
+                exit 1
+            fi
     fi
+    TARGET="${_TARGET}"
+    JAILS="${_TARGET}"
+    export TARGET
+    export JAILS
 }
 
 target_all_jails() {
