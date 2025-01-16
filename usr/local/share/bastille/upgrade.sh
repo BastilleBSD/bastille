@@ -144,7 +144,7 @@ jail_upgrade() {
         # Upgrade a thick jail
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
         --currently-running "${_oldrelease}" \
-        -b "${_jailpath}" \
+        -j "${_jailname}" \
         -d "${_workdir}" \
         -f "${_freebsd_update_conf}" \
         -r "${_newrelease}" upgrade
@@ -164,7 +164,7 @@ jail_updates_install() {
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
         jail_check
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
-        -b "${_jailpath}" \
+        -j "${_jailname}" \
         -d "${_workdir}" \
         -f "${_freebsd_update_conf}" \
         install
