@@ -124,8 +124,8 @@ jail_upgrade() {
     local _oldrelease="$(jexec -l ${TARGET} freebsd-version)"
     local _newrelease="${2}"
     local _jailpath="${bastille_jailsdir}/${TARGET}/root"
-    local _workdir="${bastille_jailsdir}/${TARGET}/root/var/db/freebsd-update"
-    local _freebsd_update_conf="${bastille_jailsdir}/${TARGET}/root/etc/freebsd-update.conf"
+    local _workdir="${_jailpath}/var/db/freebsd-update"
+    local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
 
     jail_check
     release_check
@@ -158,8 +158,8 @@ jail_upgrade() {
 
 jail_updates_install() {
     local _jailpath="${bastille_jailsdir}/${TARGET}/root"
-    local _workdir="${bastille_jailsdir}/${TARGET}/root/var/db/freebsd-update"
-    local _freebsd_update_conf="${bastille_jailsdir}/${TARGET}/root/etc/freebsd-update.conf"
+    local _workdir="${_jailpath}/var/db/freebsd-update"
+    local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
     # Finish installing upgrade on a thick container
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
         jail_check
