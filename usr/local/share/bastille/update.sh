@@ -123,38 +123,45 @@ jail_check() {
 }
 
 jail_update() {
-    local _freebsd_update_conf="${bastille_jailsdir}/${TARGET}/root/etc/freebsd-update.conf"
-    local _jail_dir="${bastille_jailsdir}/${TARGET}/root"
-    local _workdir="${bastille_jailsdir}/${TARGET}/root/var/db/freebsd-update"
+    local _jailname="${1}"
+    local _jailpath="${bastille_jailsdir}/${TARGET}/root"
+    local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
+    local _workdir="${_jailpath}/var/db/freebsd-update"
     # Update a thick container
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then   
         CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
         if [ -z "${CURRENT_VERSION}" ]; then
             error_exit "Can't determine '${TARGET}' version."
         else
-            env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${_jail_dir}" \
+            env PAGER="/bin/cat" freebsd-update ${OPTION} \
+            --not-running-from-cron \
+            -j "${_jailname}" \
             -d "${_workdir}" \
             -f "${_freebsd_update_conf}" \
-            fetch install --currently-running "${CURRENT_VERSION}"
+            fetch install
         fi
     fi
 }
 
 release_update() {
-    local _freebsd_update_conf="${bastille_releasesdir}/${TARGET}/etc/freebsd-update.conf"
-    local _release_dir="${bastille_releasesdir}/${TARGET}"
+    local _releasepath="${bastille_releasesdir}/${TARGET}"
+    local _freebsd_update_conf="${_releasepath}/etc/freebsd-update.conf"
     # Update a release base(affects child containers)
-    if [ -d "${_release_dir}" ]; then
+    if [ -d "${_releasepath}" ]; then
         TARGET_TRIM="${TARGET}"
         if [ -n "${ARCH_I386}" ]; then
             TARGET_TRIM=$(echo "${TARGET}" | sed 's/-i386//')
         fi
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
-        -d "${bastille_releasesdir}/${TARGET}/var/db/freebsd-update" \
+        env PAGER="/bin/cat" freebsd-update ${OPTION} \
+        --not-running-from-cron \
+        -b "${_releasepath}" \
+        -d "${_releasepath}/var/db/freebsd-update" \
         -f "${_freebsd_update_conf}" \
         fetch --currently-running "${TARGET_TRIM}"
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" \
-        -d "${bastille_releasesdir}/${TARGET}/var/db/freebsd-update" \
+        env PAGER="/bin/cat" freebsd-update ${OPTION} \
+        --not-running-from-cron \
+        -b "${_releasepath}" \
+        -d "${_releasepath}/var/db/freebsd-update" \
         -f "${_freebsd_update_conf}" \
         install --currently-running "${TARGET_TRIM}"
     else
@@ -209,5 +216,5 @@ elif echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
     release_update
 else
     jail_check
-    jail_update
+    jail_update "${TARGET}"
 fi
