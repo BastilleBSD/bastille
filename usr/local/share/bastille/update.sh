@@ -146,6 +146,7 @@ jail_update() {
 release_update() {
     local _releasepath="${bastille_releasesdir}/${TARGET}"
     local _freebsd_update_conf="${_releasepath}/etc/freebsd-update.conf"
+    local _workdir="${_releasepath}/var/db/freebsd-update"
     # Update a release base(affects child containers)
     if [ -d "${_releasepath}" ]; then
         TARGET_TRIM="${TARGET}"
@@ -155,13 +156,13 @@ release_update() {
         env PAGER="/bin/cat" freebsd-update ${OPTION} \
         --not-running-from-cron \
         -b "${_releasepath}" \
-        -d "${_releasepath}/var/db/freebsd-update" \
+        -d "${_workdir}" \
         -f "${_freebsd_update_conf}" \
         fetch --currently-running "${TARGET_TRIM}"
         env PAGER="/bin/cat" freebsd-update ${OPTION} \
         --not-running-from-cron \
         -b "${_releasepath}" \
-        -d "${_releasepath}/var/db/freebsd-update" \
+        -d "${_workdir}" \
         -f "${_freebsd_update_conf}" \
         install --currently-running "${TARGET_TRIM}"
     else
