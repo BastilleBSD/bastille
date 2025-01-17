@@ -89,8 +89,8 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     usage
 fi
 
-# Mount permissions,options need to include at least one of "ro, rw, rq, sw, xx"
-if ! echo "${_perms}" | grep -Eq '[ro|rw|rq|sw|xx]'; then
+# Mount permissions,options must start with one of "ro, rw, rq, sw, xx"
+if ! echo "${_perms}" | grep -Eq '(ro|rw|rq|sw|xx)(,.*)?$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
