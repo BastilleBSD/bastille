@@ -157,6 +157,7 @@ jail_upgrade() {
 }
 
 jail_updates_install() {
+    local _jailname="${1}"
     local _jailpath="${bastille_jailsdir}/${TARGET}/root"
     local _workdir="${_jailpath}/var/db/freebsd-update"
     local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
@@ -175,7 +176,7 @@ jail_updates_install() {
 
 # Check what we should upgrade
 if [ "${NEWRELEASE}" = "install" ]; then
-    jail_updates_install
+    jail_updates_install "${TARGET}"
 else
     jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi
