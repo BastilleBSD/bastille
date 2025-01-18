@@ -99,6 +99,7 @@ Available Commands:
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
   edit        Edit container configuration files (advanced).
+  etcupdate   Update /etc directory to specified release.
   export      Exports a specified container.
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
@@ -162,7 +163,7 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|cp|destroy|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
+bootstrap|create|cp|destroy|etcupdate|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
 clone|config|cmd|console|convert|edit|limits|pkg|rename|service|stop|sysrc|tags|template|zfs)
