@@ -2,7 +2,7 @@
 top
 ===
 
-This one runs `top` in that container.
+This command runs `top` in the targeted jail.
 
 
 .. image:: ../../images/top.png

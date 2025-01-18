@@ -1,6 +1,8 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 # Ressource limits added by Lars Engels github.com/bsdlme
 #

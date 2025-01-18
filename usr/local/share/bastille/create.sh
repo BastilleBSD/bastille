@@ -1,6 +1,8 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,12 +41,13 @@ usage() {
     cat << EOF
     Options:
 
-    -E | --empty  -- Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
-    -L | --linux  -- This option is intended for testing with Linux jails, this is considered experimental.
-    -T | --thick  -- Creates a thick container, they consume more space as they are self contained and independent.
-    -V | --vnet   -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
-    -C | --clone  -- Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
-    -B | --bridge -- Enables VNET, VNET containers are attached to a specified, already existing external bridge.
+    -M | --static-mac  -- Generate a static MAC address for jail (VNET only).
+    -E | --empty       -- Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -L | --linux       -- This option is intended for testing with Linux jails, this is considered experimental.
+    -T | --thick       -- Creates a thick container, they consume more space as they are self contained and independent.
+    -V | --vnet        -- Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -C | --clone       -- Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
+    -B | --bridge      -- Enables VNET, VNET containers are attached to a specified, already existing external bridge.
 
 EOF
     exit 1
@@ -227,7 +230,7 @@ generate_vnet_jail_conf() {
     else
         devfs_ruleset_value=13
     fi
-    NETBLOCK=$(generate_vnet_jail_netblock "$NAME" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}")
+    NETBLOCK=$(generate_vnet_jail_netblock "$NAME" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   enforce_statfs = 2;
@@ -628,10 +631,15 @@ THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
 LINUX_JAIL=""
+STATIC_MAC=""
 
 # Handle and parse options
 while [ $# -gt 0 ]; do
     case "${1}" in
+        -M|--static-mac)
+            STATIC_MAC="1"
+            shift
+            ;;
         -E|--empty)
             EMPTY_JAIL="1"
             shift
