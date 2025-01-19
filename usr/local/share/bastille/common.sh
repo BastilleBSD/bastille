@@ -228,6 +228,7 @@ generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
     local external_interface_mac="$(ifconfig ${external_interface} | grep ether | awk '{print $2}')"
+    # Use FreeBSD vendor prefix for jail MAC prefix
     local macaddr_prefix="58:9c:fc"
     local macaddr_suffix="$(echo -n "${external_interface_mac}${jail_name}" | sed 's#:##g' | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
     if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
