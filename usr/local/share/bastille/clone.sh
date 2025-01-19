@@ -222,9 +222,9 @@ update_jailconf_vnet() {
                         sed -i '' "s|${_new_host_epair} ether.*:.*:.*:.*:.*:.*a\";|${_new_host_epair} ether ${macaddr}a\";|" "${_jail_conf}"
                         sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
-                     # Replace epair name in jail.conf                  
-                     sed -i '' "s|${_if}|epair${_num}|g" "${_jail_conf}"
-                     # Replace epair description
+                    # Replace epair name in jail.conf                  
+                    sed -i '' "s|${_if}|epair${_num}|g" "${_jail_conf}"
+                    # Replace epair description
                     sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     # Update /etc/rc.conf
                     local _jail_vnet="$(grep ${_target_jail_epair} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
