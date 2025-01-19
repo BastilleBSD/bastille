@@ -38,7 +38,7 @@ usage() {
     cat << EOF
     Options:
 
-    -a | --auto          Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
+    -a | --auto           Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
     -l | --live           Clone a running jail. ZFS only. Jail must be running. Cannot be used with [-f|--force].
     -x | --debug          Enable debug mode.
 
@@ -282,11 +282,11 @@ clone_jail() {
         if checkyesno bastille_zfs_enable; then
             if [ "${LIVE}" -eq 1 ]; then
                 check_target_is_running "${TARGET}" || error_exit "[-l|--live] can only be used with a running jail."
-            else check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+            else check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
                     bastille stop "${TARGET}"
                 else
                     error_notify "Jail is running."
-                    error_exit "Use [-f|--force] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
+                    error_exit "Use [-a|--auto] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
                 fi
             fi
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -327,10 +327,7 @@ clone_jail() {
     else
         info "Cloned '${TARGET}' to '${NEWNAME}' successfully."
     fi
-    if [ "${AUTO}" -eq 1 ]; then
-        if [ "${LIVE}" -eq 0 ]; then
-            bastille start "${TARGET}"
-        fi
+    if [ "${AUTO}" -eq 1 ] || [ "${LIVE}" -eq 1 ]; then
         bastille start "${NEWNAME}"
     fi
 }
