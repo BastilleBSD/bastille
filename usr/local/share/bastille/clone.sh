@@ -205,8 +205,6 @@ update_jailconf_vnet() {
                         _target_host_epair="${_if}a"
                         _target_jail_epair="${_if}b"
                     fi
-                    # Replace epair name in jail.conf                  
-                    sed -i '' "s|${_if}|epair${_num}|g" "${_jail_conf}"
                     # Replace host epair name in jail.conf                  
                     sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
                     sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
@@ -219,11 +217,14 @@ update_jailconf_vnet() {
                     sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
                     # If jail had a static MAC, generate one for clone
                     if grep -q ether ${_jail_conf}; then
-                        local external_interface="$(grep "${_new_host_epair}" ${_jail_conf} | grep -o '[^ ]* addm' | awk '{print $1}')"
+                        local external_interface="$(grep "epair${_num}a" ${_jail_conf} | grep -o '[^ ]* addm' | awk '{print $1}')"
                         generate_static_mac "${NEWNAME}" "${external_interface}"
                         sed -i '' "s|${_new_host_epair} ether.*:.*:.*:.*:.*:.*a\";|${_new_host_epair} ether ${macaddr}a\";|" "${_jail_conf}"
                         sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
+                     # Replace epair name in jail.conf                  
+                     sed -i '' "s|${_if}|epair${_num}|g" "${_jail_conf}"
+                     # Replace epair description
                     sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     # Update /etc/rc.conf
                     local _jail_vnet="$(grep ${_target_jail_epair} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
