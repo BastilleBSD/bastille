@@ -305,11 +305,11 @@ clone_jail() {
             fi
         else
             # Perform container file copy (archive mode)
-            check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+            check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
                 bastille stop "${TARGET}"
             else
                 error_notify "Jail is running."
-                error_exit "Use [-f|--force] to force stop the jail."
+                error_exit "Use [-a|--auto] to force stop the jail."
             fi
             cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
         fi
