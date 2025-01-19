@@ -127,5 +127,5 @@ for _jail in ${JAILS}; do
 done
 
 if [ $errors -ne 0 ]; then
-    error_notify "Failed to apply on some jails, please check logs"
+    error_exit "Failed to apply on some jails, please check logs"
 fi
