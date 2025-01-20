@@ -34,31 +34,64 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille upgrade release newrelease | target newrelease | target install | [force]"
+    error_notify "Usage: bastille upgrade [option(s)] TARGET [NEWRELEASE|install]"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -f | --force          Force upgrade a release.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
+        -f|--force)
+            OPTION="-F"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    f) OPTION="-F" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -gt 3 ] || [ $# -lt 2 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
+
+TARGET="${1}"
+NEWRELEASE="${2}"
 
 bastille_root_check
 
-TARGET="$1"
-NEWRELEASE="$2"
-OPTION="$3"
-
-# Check for unsupported actions
-if [ "${TARGET}" = "ALL" ]; then
-    error_exit "Batch upgrade is unsupported."
-fi
-
+# Check for unsupported actions    
 if [ -f "/bin/midnightbsd-version" ]; then
     echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
     exit 1
@@ -68,24 +101,14 @@ if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
 
-# Handle options
-case "${OPTION}" in
-    -f|--force)
-        OPTION="-F"
-        ;;
-    *)
-        OPTION=
-        ;;
-esac
-
 jail_check() {
     # Check if the jail is thick and is running
-    if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
-    else
-        if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-            error_exit "${TARGET} is not a thick container."
-        fi
+    set_target_single "${TARGET}"
+    check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${TARGET}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 }
 
@@ -96,60 +119,64 @@ release_check() {
     fi
 }
 
-release_upgrade() {
-    # Upgrade a release
-    if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
-        release_check
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" --currently-running "${TARGET}" -r "${NEWRELEASE}" upgrade
-        echo
-        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
-    else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
-    fi
-}
-
 jail_upgrade() {
-    # Upgrade a thick container
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
-        jail_check
-        release_check
-        CURRENT_VERSION=$(jexec -l ${TARGET} freebsd-version)
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" --currently-running "${CURRENT_VERSION}" -r ${NEWRELEASE} upgrade
-        echo
-        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
+    local _jailname="${1}"
+    local _oldrelease="$(jexec -l ${TARGET} freebsd-version)"
+    local _newrelease="${2}"
+    local _jailpath="${bastille_jailsdir}/${TARGET}/root"
+    local _workdir="${_jailpath}/var/db/freebsd-update"
+    local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
+
+    jail_check
+    release_check
+
+    # Upgrade a thin jail
+    if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${TARGET}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
+        local _newrelease="${NEWRELEASE}"
+        # Update "osrelease" entry inside jail.conf
+        sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/fstab"
+        # Update "fstab" entry
+        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/jail.conf"
+        info "Upgraded ${TARGET}: ${_oldrelease} -> ${_newrelease}"
+        info "See 'bastille etcupdate TARGET' to update /etc/rc.conf"
     else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
+        # Upgrade a thick jail
+        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
+        --currently-running "${_oldrelease}" \
+        -j "${_jailname}" \
+        -d "${_workdir}" \
+        -f "${_freebsd_update_conf}" \
+        -r "${_newrelease}" upgrade
+        
+        # Update "osrelease" entry inside jail.conf
+        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/jail.conf"
+        echo
+        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates.${COLOR_RESET}"
     fi
 }
 
 jail_updates_install() {
+    local _jailname="${1}"
+    local _jailpath="${bastille_jailsdir}/${TARGET}/root"
+    local _workdir="${_jailpath}/var/db/freebsd-update"
+    local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
     # Finish installing upgrade on a thick container
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
         jail_check
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_jailsdir}/${TARGET}/root" install
+        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
+        -j "${_jailname}" \
+        -d "${_workdir}" \
+        -f "${_freebsd_update_conf}" \
+        install
     else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
-    fi
-}
-
-release_updates_install() {
-    # Finish installing upgrade on a release
-    if [ -d "${bastille_releasesdir}/${TARGET}" ]; then 
-        env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron -b "${bastille_releasesdir}/${TARGET}" install
-    else
-        error_exit "${TARGET} not found. See 'bastille bootstrap'."
+        error_exit "${TARGET} not found. See 'bastille bootstrap RELEASE'."
     fi
 }
 
 # Check what we should upgrade
-if echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
-    if [ "${NEWRELEASE}" = "install" ]; then
-        release_updates_install
-    else
-        release_upgrade
-    fi
-elif [ "${NEWRELEASE}" = "install" ]; then
-    jail_updates_install
+if [ "${NEWRELEASE}" = "install" ]; then
+    jail_updates_install "${TARGET}"
 else
-    jail_upgrade
+    jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi
