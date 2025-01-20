@@ -152,7 +152,7 @@ jail_upgrade() {
         # Update "osrelease" entry inside jail.conf
         sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/jail.conf"
         echo
-        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install' to finish installing updates.${COLOR_RESET}"
+        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates.${COLOR_RESET}"
     fi
 }
 
