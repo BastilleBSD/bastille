@@ -54,8 +54,9 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*)
-            error_exit "Unknown Option."
+        --*|-*)
+            error_notify "Unknown Option."
+            usage
             ;;
         *)
             break
