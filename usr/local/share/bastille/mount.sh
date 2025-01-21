@@ -47,9 +47,9 @@ EOF
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-	        usage
-	        ;;
+        -h|--help|help)
+            usage
+            ;;
         -x|--debug)
             enable_debug
             shift
