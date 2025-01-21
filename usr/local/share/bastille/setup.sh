@@ -375,7 +375,7 @@ configure_ethernet() {
     local _response=
 
     # Try to get a list of the available physical network/ethernet interfaces.
-    local ETHERNET_PHY_ADAPTERS=$(pciconf -lv | grep 'ethernet' -B4 | grep 'class=0x020000' | awk -F '@' '{print $1}')
+    local ETHERNET_PHY_ADAPTERS="$(pciconf -lv | grep 'ethernet' -B4 | grep 'class=0x020000' | awk -F '@' '{print $1}')"
     if [ -z "${ETHERNET_PHY_ADAPTERS}" ]; then
         error_exit "Unable to detect for any physical ethernet interfaces, exiting."
     fi
