@@ -50,3 +50,15 @@ Also, uname does not work from within a jail.  Much like MOTD, it gives you the 
 information about the host system instead of the jail.  If you need to check the version
 of freebsd running on the jail use the freebsd-version command to get accurate information.
 
+Besides providing an IP address, the following options are also valid:
+
+- SLAAC
+- DHCP
+- ip_hostname
+
+If VNET is enabled, and the ``SLAAC`` or ``DHCP`` option are specified, the interface is 
+automatically configured to make use of these.
+
+If the ``ip_hostname`` option is specified, the jail will resolve the *hostname* to 
+obtain the IP address(es). See `jail(8) <https://man.freebsd.org/cgi/man.cgi?jail>`_ 
+for additional details.
