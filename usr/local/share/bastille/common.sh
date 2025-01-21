@@ -61,6 +61,12 @@ error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
+enable_debug() {
+    # Enable debug mode.
+    warn "***DEBUG MODE***"
+    set -x
+}
+
 error_continue() {
     error_notify "$@"
     # Disabling this shellcheck as we only ever call it inside of a loop
