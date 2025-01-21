@@ -68,6 +68,8 @@ validate_name() {
         error_exit "Container names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "Container names may not contain special characters!"
+    elif echo "${NAME_VERIFY}" | grep -qE '^[0-9]+$'; then
+        error_exit "Container names may not contain only numbers."
     fi
 }
 
