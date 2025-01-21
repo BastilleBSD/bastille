@@ -34,15 +34,34 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    error_notify "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	    -h|--help|help)
+	        usage
+	        ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_exit "Unknown Option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -lt 3 ] || [ "$#" -gt 7 ]; then
     usage
