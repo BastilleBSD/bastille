@@ -51,6 +51,7 @@ usage() {
 
     -p | --firewall           -- Attempt to configure bastille PF firewall.
     -n | --network            -- Attempt to configure network loopback interface.
+    -e | --ethernet           -- Attempt to configure the network shared interface.
     -v | --vnet               -- Attempt to configure VNET bridge interface [bastille1].
     -z | --zfs                -- Activates ZFS storage features and benefits for bastille.
          --conf-network-reset -- Restore bastille default Network options on the config file.
@@ -107,6 +108,7 @@ config_network_reset() {
     read _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
+            config_backup
             local VAR_ITEMS="bastille_network_loopback=bastille0 bastille_network_pf_ext_if=ext_if
             bastille_network_pf_table=jails bastille_network_shared= bastille_network_gateway= bastille_network_gateway6="
             for _item in ${VAR_ITEMS}; do
@@ -131,6 +133,7 @@ config_storage_reset() {
     read _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
+            config_backup
             local VAR_ITEMS="bastille_zfs_enable= bastille_zfs_zpool= bastille_zfs_prefix=bastille"
             for _item in ${VAR_ITEMS}; do
                 sysrc -f "${bastille_config}" ${_item}
@@ -361,6 +364,76 @@ zfs_initial_activation() {
             input_error
             ;;
     esac
+}
+
+configure_ethernet() {
+    # This will attempt to configure the physical ethernet interface for 'bastille_network_shared',
+    # commonly used with shared IP jails and/or simple jail network configurations.
+
+    local ETHIF_COUNT="0"
+    local _ethernet_choice=
+    local _response=
+
+    # Try to get a list of the available physical network/ethernet interfaces.
+    local ETHERNET_PHY_ADAPTERS=$(pciconf -lv | grep 'ethernet' -B4 | grep 'class=0x020000' | awk -F '@' '{print $1}')
+    if [ -z "${ETHERNET_PHY_ADAPTERS}" ]; then
+        error_exit "Unable to detect for any physical ethernet interfaces, exiting."
+    fi
+
+    info "This will attempt to configure the physical ethernet interface for [bastille_network_shared]."
+    warn "Would you like to configure the physical ethernet interface now? [y/N]: "
+    read _response
+    case "${_response}" in
+        [Yy]|[Yy][Ee][Ss])
+            # shellcheck disable=SC2104
+            break
+            ;;
+        [Nn]|[Nn][Oo])
+            user_canceled
+            ;;
+        *)
+            input_error
+            ;;
+    esac
+
+    info "Listing available physical ethernet interfaces..."
+    for _ethernetif in ${ETHERNET_PHY_ADAPTERS}; do
+        echo "[${ETHIF_COUNT}] ${_ethernetif}"
+        ETHIF_NUM="${ETHIF_NUM} [${ETHIF_COUNT}]${_ethernetif}"
+        ETHIF_COUNT=$(expr ${ETHIF_COUNT} + 1)
+    done
+
+    info "Please select the wanted physical ethernet adapter [NUM] to be used as 'bastille_network_shared': "
+    read _ethernet_choice
+    if ! echo "${_ethernet_choice}" | grep -Eq "^[0-9]{1,3}$"; then
+        error_exit "Invalid input number, aborting!"
+    else
+        _ethernet_select=$(echo "${ETHIF_NUM}" | grep -wo "\[${_ethernet_choice}\][^ ]*" | sed 's/\[.*\]//g')
+        # If the user is unsure here, just abort as no input validation will be performed after.
+        if [ -z "${_ethernet_select}" ]; then
+            error_exit "No physical ethernet interface selected, aborting!"
+        else
+            info "Selected physical ethernet interface: [${_ethernet_select}]"
+            # Ask again to make sure the user is confident with the election.
+            warn "Are you sure '${_ethernet_select}' is the correct physical ethernet interface [y/N]: "
+            read _response
+            case "${_response}" in
+                [Yy]|[Yy][Ee][Ss])
+                    if ! sysrc -f "${bastille_config}" bastille_network_shared | grep -qi "${_ethernet_select}"; then
+                        config_backup
+                        sysrc -f "${bastille_config}" bastille_network_shared="${_ethernet_select}"
+                    fi
+                    exit 0
+                    ;;
+                [Nn]|[Nn][Oo])
+                    user_canceled
+                    ;;
+                *)
+                    input_error
+                    ;;
+            esac
+        fi
+    fi
 }
 
 configure_network() {
@@ -765,7 +838,7 @@ configure_zfs_manually() {
             error_exit "No ZFS pool selected, aborting!"
         else
             info "Selected ZFS pool: [${_zfspool_select}]"
-            # Ask again to make sure the user is confident in his election.
+            # Ask again to make sure the user is confident with the election.
             warn "Are you sure '${_zfspool_select}' is the correct ZFS pool [y/N]: "
             read _response
             case "${_response}" in
@@ -804,7 +877,7 @@ configure_zfs_manually() {
             _zfsprefix_select=$(echo ${ZFSDATA_NUM} | grep -wo "\[${_zfsprefix_choice}\][^ ]*" | sed 's/\[.*\]//g')
             _zfsprefix_trim=$(echo ${ZFSDATA_NUM} | grep -wo "\[${_zfsprefix_choice}\][^ ]*" | awk -F "${_zfspool_select}/" 'NR==1{print $2}')
             info "Selected ZFS prefix: [${_zfsprefix_select}]"
-            # Ask again to make sure the user is confident in his election.
+            # Ask again to make sure the user is confident with the election.
             warn "Are you sure '${_zfsprefix_select}' is the correct ZFS dataset [y/N]: "
             read _response
             case "${_response}" in
@@ -842,7 +915,7 @@ configure_zfs_manually() {
             error_exit "No ZFS mountpoint selected, aborting!"
         else
             info "Selected bastille storage mountpoint: [${_zfsmount_select}]"
-            # Ask again to make sure the user is confident in his election.
+            # Ask again to make sure the user is confident with the election.
             warn "Are you sure '${_zfsmount_select}' is the correct bastille prefix [y/N]: "
             read _response
             case "${_response}" in
@@ -888,6 +961,9 @@ config_runtime
 case "${1}" in
     --firewall|-p)
         configure_pf
+        ;;
+    --ethernet|-e)
+        configure_ethernet
         ;;
     --network|-n|bastille0)
         # TODO remove in future release 0.13
