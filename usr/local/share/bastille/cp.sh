@@ -39,7 +39,7 @@ usage() {
     Options:
 
     -j | --jail             Jail mode. Copy files from jail to jail(s).
-                            Syntax is [-j jail:srcpath jail:dstpath]
+                            Syntax: [-j jail:srcpath jail:dstpath]
     -r | --reverse          Reverse copy files from jail to host.
     -q | --quiet            Suppress output.
     -x | --debug            Enable debug mode.
@@ -93,6 +93,10 @@ done
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     usage
+fi
+
+if [ "${JAIL_MODE}" -eq 1 ] && [ "${REVERSE_MODE}" -eq 1 ]; then
+    error_exit "[-j|--jail] cannot be used with [-r|reverse]"
 fi
 
 if [ "${JAIL_MODE}" -eq 1 ]; then
