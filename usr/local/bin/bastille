@@ -95,7 +95,7 @@ Available Commands:
   config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
-  cp          cp(1) files from host to targeted container(s).
+  cp          cp(1) files from host or container to host or targeted container(s).
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
   edit        Edit container configuration files (advanced).
@@ -108,7 +108,6 @@ Available Commands:
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
-  rcp         reverse cp(1) files from a single container to the host.
   rdr         Redirect host port to container port.
   rename      Rename a container.
   restart     Restart a running container.
@@ -164,10 +163,10 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|etcupdate|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
+bootstrap|create|cp|destroy|etcupdate|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|limits|pkg|rcp|rename|service|stop|sysrc|tags|template|zfs)
+clone|config|cmd|console|convert|edit|limits|pkg|rename|service|stop|sysrc|tags|template|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
