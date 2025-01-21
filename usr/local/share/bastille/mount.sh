@@ -34,14 +34,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
-    cat << EOF
-    Options:
-
-    -x | --debug          Enable debug mode.
-
-EOF
-    exit 1
+    error_exit "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
 }
 
 # Handle options.
