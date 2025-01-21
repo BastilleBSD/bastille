@@ -213,7 +213,9 @@ target_all_jails() {
     export JAILS
 }
 
-update_fstab() {
+# Moving fstab function to common.sh
+# Not in use yet, so keeping the name different
+update_fstab_new() {
     local _oldname="${1}"
     local _newname="${2}"
     local _fstab="${bastille_jailsdir}/${_newname}/fstab"
