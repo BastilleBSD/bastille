@@ -99,4 +99,5 @@ for _jail in ${DEST_TARGET}; do
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
             error_continue "JCP failed: ${source_path} -> ${dest_path}"
         fi
+    fi
 done
