@@ -34,7 +34,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
+    error_notify "Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH"
     cat << EOF
     Options:
 
@@ -81,17 +81,17 @@ if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
 fi
 
 TARGET="${1}"
-HOST_PATH="${2}"
-JAIL_PATH="${3}"
+JAIL_PATH="${2}"
+HOST_PATH="${3}"
 
 bastille_root_check
-set_target "${TARGET}"
+set_target_single "${TARGET}"
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    host_path="${HOST_PATH}"
-    jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
-    if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
-        error_continue "CP failed: ${host_path} -> ${jail_path}"
-    fi
-done
+info "[${TARGET}]:"
+
+host_path="${HOST_PATH}"
+jail_path="$(echo ${bastille_jailsdir}/${TARGET}/root/${JAIL_PATH} | sed 's#//#/#g')"
+
+if ! cp "${OPTION}" "${jail_path}" "${host_path}"; then
+    error_exit "RCP failed: ${jail_path} -> ${host_path}"
+fi
