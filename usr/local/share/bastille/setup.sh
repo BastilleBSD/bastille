@@ -372,6 +372,7 @@ configure_ethernet() {
 
     local ETHIF_COUNT="0"
     local _ethernet_choice=
+    local _ethernet_select=
     local _response=
 
     # Try to get a list of the available physical network/ethernet interfaces.
@@ -950,7 +951,6 @@ configure_zfs_manually() {
             esac
         fi
     fi
-
 }
 
 # Runtime required variables.
