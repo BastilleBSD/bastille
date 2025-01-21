@@ -76,7 +76,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+if [ "$#" -ne 3 ]; then
     usage
 fi
 
