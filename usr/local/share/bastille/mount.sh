@@ -55,7 +55,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            error_exit "Unknown Option: \"${1}\""
+            error_exit "Unknown Option."
             ;;
         *)
             break
