@@ -181,14 +181,14 @@ update_jailconf_vnet() {
     # Determine number of interfaces and define a uniq_epair
     local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${_jail_conf} | sort -u)"
     for _if in ${_if_list}; do
-        local _epair_if_count="$(grep -Eo 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+        local _epair_if_count="$( (grep -Eo 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf; ifconfig | grep -Eo '(e[0-9]+a|epair[0-9]+a)' ) | sort -u | wc -l | awk '{print $1}')"
         local _bastille_if_count="$(grep -Eo 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
         local epair_num_range=$((_epair_if_count + 1))
         local bastille_num_range=$((_bastille_if_count + 1))
         if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
             # Update bridged VNET config
             for _num in $(seq 0 "${epair_num_range}"); do
-                if ! grep -oq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                if ! grep -Eoq "epair${_num}" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eoq "(e${_num}a|epair${_num}a)"; then
                     # Generate new epair name
                     if [ "$(echo -n "e${_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
                         local _new_host_epair="e${_num}a_${NEWNAME}"
