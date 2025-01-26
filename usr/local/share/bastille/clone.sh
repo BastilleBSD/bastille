@@ -39,7 +39,7 @@ usage() {
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
-    -l | --live           Clone a running jail. ZFS only. Jail must be running. Cannot be used with [-f|--force].
+    -l | --live           Clone a running jail. ZFS only. Jail must be running. Cannot be used with [-a|--auto].
     -x | --debug          Enable debug mode.
 
 EOF
