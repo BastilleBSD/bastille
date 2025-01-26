@@ -213,9 +213,7 @@ target_all_jails() {
     export JAILS
 }
 
-# Moving fstab function to common.sh
-# Not in use yet, so keeping the name different
-update_fstab_new() {
+update_fstab() {
     local _oldname="${1}"
     local _newname="${2}"
     local _fstab="${bastille_jailsdir}/${_newname}/fstab"
@@ -249,14 +247,14 @@ generate_vnet_jail_netblock() {
     ## determine number of interfaces + 1
     ## iterate num and grep all jail configs
     ## define uniq_epair
-    local _epair_if_count="$(grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _epair_if_count="$( (grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf; ifconfig | grep -Eo '(e[0-9]+a|epair[0-9]+a)' ) | sort -u | wc -l | awk '{print $1}')"
     local _bastille_if_count="$(grep -Eos 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
     local epair_num_range=$((_epair_if_count + 1))
     local bastille_num_range=$((_bastille_if_count + 1))
     if [ -n "${use_unique_bridge}" ]; then
         if [ "${_epair_if_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${epair_num_range}"); do
-                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eosq "(e${_num}a|epair${_num}a)"; then
                     if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                         local host_epair=e${_num}a_${jail_name}
                         local jail_epair=e${_num}b_${jail_name}
@@ -368,3 +366,4 @@ checkyesno() {
         ;;
     esac
 }
+

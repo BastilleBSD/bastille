@@ -34,15 +34,24 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    error_exit "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        --*|-*)
+            error_notify "Unknown Option."
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -lt 3 ] || [ "$#" -gt 7 ]; then
     usage
@@ -91,8 +100,8 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     usage
 fi
 
-# Mount permissions,options need to start with "ro" or "rw"
-if ! echo "${_perms}" | grep -Eq 'r[w|o](,.*)?$'; then
+# Mount permissions,options must include one of "ro, rw, rq, sw, xx"
+if ! echo "${_perms}" | grep -Eq '(ro|rw|rq|sw|xx)(,.*)?$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
@@ -117,7 +126,7 @@ for _jail in ${JAILS}; do
 
     # Check if mount point has already been added
     _existing_mount="$(echo ${_fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#g')"
-    if grep -Eq "[[:blank:]]${_existing_mount}.*[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
+    if grep -Eq "[[:blank:]]${_existing_mount}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
         grep -E "[[:blank:]]${_existing_mount}" "${bastille_jailsdir}/${_jail}/fstab"
         continue
