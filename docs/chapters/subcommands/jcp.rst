@@ -6,7 +6,7 @@ This command allows copying files from jail to jail(s).
 
 .. code-block:: shell
 
-  ishmael ~ # bastille cp bastion /tmp/resolv.conf-cf ALL /etc/resolv.conf
+  ishmael ~ # bastille jcp bastion /tmp/resolv.conf-cf ALL /etc/resolv.conf
   [unbound0]:
   /usr/local/bastille/jails/bastion/root/tmp/resolv.conf-cf -> /usr/local/bastille/jails/unbound0/root/etc/resolv.conf
   [unbound1]:
@@ -22,7 +22,7 @@ Unless you see errors reported in the output the `jcp` was successful.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille cp help
+  ishmael ~ # bastille jcp help
   Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DEST_JAIL JAIL_PATH
     Options:
 
