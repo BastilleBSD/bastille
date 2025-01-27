@@ -70,6 +70,7 @@ Available Commands:
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
   import      Import a specified container.
+  jcp         cp(1) files from a jail to jail(s).
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
@@ -97,7 +98,7 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.12-beta
+## 0.13-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
