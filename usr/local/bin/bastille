@@ -139,7 +139,7 @@ EOF
 CMD=$1
 shift
 
-target_all_jails() {
+target_all_jails_old() {
   _JAILS=$(/usr/sbin/jls name)
   JAILS=""
   for _jail in ${_JAILS}; do
@@ -150,7 +150,7 @@ target_all_jails() {
   done
 }
 
-check_target_is_running() {
+check_target_is_running_old() {
   if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
       error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
   fi
@@ -165,10 +165,11 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|clone|create|cp|destroy|etcupdate|export|htop|import|jcp|list|mount|rcp|rdr|rename|restart|setup|start|top|umount|update|upgrade|verify)
+
+bootstrap|clone|console|create|cp|destroy|etcupdate|export|htop|import|jcp|list|mount|rcp|rdr|rename|restart|setup|start|top|umount|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-config|cmd|console|convert|edit|limits|pkg|service|stop|sysrc|tags|template|zfs)
+config|cmd|convert|edit|limits|pkg|service|stop|sysrc|tags|template|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
@@ -189,15 +190,15 @@ config|cmd|console|convert|edit|limits|pkg|service|stop|sysrc|tags|template|zfs)
         fi
 
         if [ "${TARGET}" = 'ALL' ]; then
-            target_all_jails
+            target_all_jails_old
         elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-H' ] || [ "${TARGET}" = '--host' ]; then
             TARGET="${1}"
             USE_HOST_PKG=1
             if [ "${TARGET}" = 'ALL' ]; then
-              target_all_jails
+              target_all_jails_old
             else
               JAILS="${TARGET}"
-              check_target_is_running
+              check_target_is_running_old
             fi
             shift
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
@@ -213,8 +214,8 @@ config|cmd|console|convert|edit|limits|pkg|service|stop|sysrc|tags|template|zfs)
             fi
 
             case "${CMD}" in
-            cmd|console|pkg|service|stop|sysrc|template)
-                check_target_is_running
+            cmd|pkg|service|stop|sysrc|template)
+                check_target_is_running_old
                 ;;
             convert|rename)
                 # Require the target to be stopped. -- cwells
