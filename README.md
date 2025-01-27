@@ -74,6 +74,7 @@ Available Commands:
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+  rcp         cp(1) files from a jail to host.
   rdr         Redirect host port to container port.
   rename      Rename a container.
   restart     Restart a running container.
