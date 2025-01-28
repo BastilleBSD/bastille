@@ -34,15 +34,47 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille umount TARGET JAIL_PATH"
+    error_notify "Usage: bastille umount [option(s)] TARGET JAIL_PATH"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+AUTO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\""
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -ne 2 ]; then
     usage
@@ -57,6 +89,13 @@ set_target "${TARGET}"
 for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
+
+    check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${TARGET}"
+    else
+        error_notify "Jail is not running."
+        error_exit "Use [-a|--auto] to auto-start the jail."
+    fi
 
     _jailpath="$( echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"
     _mount="$( mount | grep -Eo "[[:blank:]]${_jailpath}[[:blank:]]" )"
