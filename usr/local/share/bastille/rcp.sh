@@ -34,46 +34,64 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rcp [OPTION] TARGET CONTAINER_PATH HOST_PATH"
+    error_notify "Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH"
+    cat << EOF
+    Options:
+
+    -q | --quiet          Suppress output.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-CPSOURCE="${1}"
-CPDEST="${2}"
-
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
--q|--quiet)
-    OPTION="${1}"
-    CPSOURCE="${2}"
-    CPDEST="${3}"
-    ;;
-esac
-
-if [ $# -ne 2 ]; then
-    usage
-fi
-
-if [ "${TARGET}" = "ALL" ]; then
-    usage
-fi
-
-case "${OPTION}" in
-    -q|--quiet)
-        OPTION="-a"
-        ;;
-    *)
-        OPTION="-av"
-        ;;
-esac
-
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
-    cp "${OPTION}" "${bastille_jail_path}/${CPSOURCE}" "${CPDEST}"
-    RETURN="$?"
-    echo
-    return "${RETURN}"
+# Handle options.
+OPTION="-av"
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -q|--quiet)
+            OPTION="-a"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    q) OPTION="-a" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
 done
+
+if [ "$#" -ne 3 ]; then
+    usage
+fi
+
+TARGET="${1}"
+JAIL_PATH="${2}"
+HOST_PATH="${3}"
+
+bastille_root_check
+set_target_single "${TARGET}"
+
+info "[${TARGET}]:"
+
+host_path="${HOST_PATH}"
+jail_path="$(echo ${bastille_jailsdir}/${TARGET}/root/${JAIL_PATH} | sed 's#//#/#g')"
+
+if ! cp "${OPTION}" "${jail_path}" "${host_path}"; then
+    error_exit "RCP failed: ${jail_path} -> ${host_path}"
+fi
