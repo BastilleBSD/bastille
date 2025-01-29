@@ -199,10 +199,15 @@ EOF
 }
 
 generate_jail_conf() {
+    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
+        devfs_ruleset_value=0
+    else
+        devfs_ruleset_value=4
+    fi
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
-  devfs_ruleset = 4;
   enforce_statfs = 2;
+  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
@@ -245,11 +250,16 @@ EOF
 }
 
 generate_vnet_jail_conf() {
+    if [ "$(sysctl -n security.jail.jailed)" -eq 1 ]; then
+        devfs_ruleset_value=0
+    else
+        devfs_ruleset_value=13
+    fi
     NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
-  devfs_ruleset = 13;
   enforce_statfs = 2;
+  devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
@@ -609,7 +619,7 @@ create_jail() {
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
-        jexec -l "${NAME}" /bin/bash -c "chmod 1777 /tmp"
+        jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
         jexec -l "${NAME}" /bin/bash -c "apt update"
     else
         # Thin jail.
