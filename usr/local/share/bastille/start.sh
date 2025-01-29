@@ -34,80 +34,122 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille start TARGET"
+    error_notify "Usage: bastille start [option(s)] TARGET"
+    cat << EOF
+    Options:
+
+    -v | --verbose           Print every action on jail start.
+    -x | --debug             Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+OPTION=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -v|--verbose)
+            OPTION="-v"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    v) OPTION="-v" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
+if [ "$#" -ne 1 ]; then
     usage
 fi
-
-bastille_root_check
 
 TARGET="${1}"
-shift
 
-if [ "${TARGET}" = 'ALL' ]; then
-    JAILS=$(bastille list jails)
-fi
-if [ "${TARGET}" != 'ALL' ]; then
-    JAILS=$(bastille list jails | awk "/^${TARGET}$/")
-    ## check if exist
-    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-        error_exit "[${TARGET}]: Not found."
-    fi
-fi
+bastille_root_check
+set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-    ## test if running
-    if [ "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
-        error_notify "[${_jail}]: Already started."
 
-    ## test if not running
-    elif [ ! "$(/usr/sbin/jls name | awk "/^${_jail}$/")" ]; then
-        # Verify that the configured interface exists. -- cwells
-        if [ "$(bastille config $_jail get vnet)" != 'enabled' ]; then
-            _interface=$(bastille config $_jail get interface)
-            if ! ifconfig | grep "^${_interface}:" >/dev/null; then
-                error_notify "Error: ${_interface} interface does not exist."
-                continue
-            fi
+    info "[${_jail}]:"        
+    check_target_is_stopped "${_jail}" || error_continue "Jail is already running."
+
+    # Validate interfaces and add IPs to firewall table
+    if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
+        _ip4_interfaces="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
+        _ip6_interfaces="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
+        # IP4
+        if [ "${_ip4_interfaces}" != "not set" ]; then
+            for _interface in ${_ip4_interfaces}; do
+                if echo "${_interface}" | grep -q "|"; then
+                    _if="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $1}')"
+                    _ip="$(echo ${_interface} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+                else
+                    _if="$(bastille config ${_jail} get interface)"
+                    _ip="$(echo ${_interface} | sed -E 's#/[0-9]+$##g')"
+                fi
+                if ifconfig | grep "^${_if}:" >/dev/null; then
+                    if ifconfig | grep -qwF "${_ip}"; then
+                        warn "Warning: IP address (${_ip}) already in use, continuing..."
+                        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    fi
+                else
+                    error_continue "Error: ${_if} interface does not exist."
+                fi
+            done
         fi
-
-        ## warn if matching configured (but not online) ip4.addr, ignore if there's no ip4.addr entry
-        _ip4=$(bastille config "${_jail}" get ip4.addr)
-        if [ "${_ip4}" != "not set" ]; then
-            if ifconfig | grep -wF "${_ip4}" >/dev/null; then
-                error_notify "Error: IP address (${_ip4}) already in use."
-                continue
-            fi
-            ## add ip4.addr to firewall table
-            pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
-        fi
-
-        ## start the container
-        info "[${_jail}]:"
-        jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
-
-        ## add rctl limits
-        if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-            while read _limits; do
-                rctl -a "${_limits}"
-            done < "${bastille_jailsdir}/${_jail}/rctl.conf"
-        fi
-
-        ## add rdr rules
-        if [ -s "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
-            while read _rules; do
-                bastille rdr "${_jail}" ${_rules}
-            done < "${bastille_jailsdir}/${_jail}/rdr.conf"
+        # IP6
+        if [ "${_ip6_interfaces}" != "not set" ]; then
+            for _interface in ${_ip6_interfaces}; do
+                if echo "${_interface}" | grep -q "|"; then
+                    _if="$(echo ${_interface} | awk -F"|" '{print $1}')"
+                    _ip="$(echo ${_interface} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+                else
+                    _if="$(bastille config ${_jail} get interface)"
+                    _ip="$(echo ${_interface} | sed -E 's#/[0-9]+$##g')"
+                fi
+                if ifconfig | grep "^${_if}:" >/dev/null; then
+                    if ifconfig | grep -qwF "${_ip}"; then
+                        warn "Warning: IP address (${_ip}) already in use, continuing..."
+                        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    fi
+                else
+                    error_continue "Error: ${_if} interface does not exist."
+                fi
+            done
         fi
     fi
-    echo
+
+    # Start jail
+    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
+
+    # Add rctl limits
+    if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+        while read _limits; do
+            rctl -a "${_limits}"
+        done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+    fi
+
+    # Add rdr rules
+    if [ -s "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
+        while read _rules; do
+            bastille rdr ${_jail} ${_rules}
+        done < "${bastille_jailsdir}/${_jail}/rdr.conf"
+    fi
 done
