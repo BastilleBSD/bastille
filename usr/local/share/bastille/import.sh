@@ -34,15 +34,13 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    # Build an independent usage for the import command
-    # If no file/extension specified, will import from standard input
     error_notify "Usage: bastille import [option(s)] FILE"
-
     cat << EOF
     Options:
 
-    -f | --force    -- Force an archive import regardless if the checksum file does not match or missing.
-    -v | --verbose  -- Be more verbose during the ZFS receive operation.
+    -f | --force            Force an archive import regardless if the checksum file does not match or missing.
+    -v | --verbose          Be more verbose during the ZFS receive operation.
+    -x | --debug            Enable debug mode.
 
 Tip: If no option specified, container should be imported from standard input.
 
@@ -50,49 +48,51 @@ EOF
     exit 1
 }
 
-# Handle special-case commands first
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+FORCE=0
+OPT_ZRECV="-u"
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -v|--verbose)
+            OPT_ZRECV="-u -v"
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    f) FORCE=1 ;;
+                    v) OPT_ZRECV="-u -v" ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\""
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ $# -gt 3 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-bastille_root_check
-
 TARGET="${1}"
-OPT_FORCE=
-USER_IMPORT=
-OPT_ZRECV="-u"
+USER_IMPORT=""
 
-# Handle and parse option args
-while [ $# -gt 0 ]; do
-    case "${1}" in
-        -f|--force)
-            OPT_FORCE="1"
-            TARGET="${2}"
-            shift
-            ;;
-        -v|--verbose)
-            OPT_ZRECV="-u -v"
-            TARGET="${2}"
-            shift
-            ;;
-        --*|-*)
-            error_notify "Unknown Option."
-            usage
-            ;;
-        *)
-            if [ $# -gt 1 ] || [ $# -lt 1 ]; then
-                usage
-            fi
-            shift
-            ;;
-    esac
-done
+bastille_root_check
 
 # Fallback to default if missing config parameters
 if [ -z "${bastille_decompress_xz_options}" ]; then
@@ -136,15 +136,15 @@ update_zfsmount() {
     fi
 
     # Mount new container ZFS datasets
-    if ! zfs mount | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}$"; then
+    if ! zfs mount | grep -Eqwo "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}$"; then
         zfs mount "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
     fi
-    if ! zfs mount | grep -qw "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root$"; then
+    if ! zfs mount | grep -Eqwo "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root$"; then
         zfs mount "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
     fi
 }
 
-update_jailconf() {
+update_jailconf_import() {
     # Update jail.conf paths
     JAIL_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
@@ -162,7 +162,7 @@ update_jailconf() {
     fi
 }
 
-update_fstab() {
+update_fstab_import() {
     # Update fstab .bastille mountpoint on thin containers only
     # Set some variables
     FSTAB_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/fstab"
@@ -584,8 +584,8 @@ jail_import() {
         else
             # Update the jail.conf and fstab if required
             # This is required on foreign imports only
-            update_jailconf
-            update_fstab
+            update_jailconf_import
+            update_fstab_import
             if [ -z "${USER_IMPORT}" ]; then
                 info "Container '${TARGET_TRIM}' imported successfully."
             fi
