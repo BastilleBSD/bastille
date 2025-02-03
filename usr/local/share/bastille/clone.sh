@@ -112,7 +112,6 @@ validate_ip() {
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
-        # shellcheck disable=SC2034
         IP6_MODE="new"
     else
         local IFS
@@ -172,6 +171,7 @@ update_jailconf() {
                 fi
                 sed -i '' "/ip6.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
                 sed -i '' "/ip6.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
+                sed -i '' "s/ip6 = .*/ip6 = ${IP6_MODE};/" "${JAIL_CONFIG}"
             done
         fi
     fi
