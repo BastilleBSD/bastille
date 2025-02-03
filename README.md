@@ -62,7 +62,7 @@ Available Commands:
   config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
-  cp          cp(1) files from host to targeted container(s).
+  cp          cp(1) files from host or container to host or targeted container(s).
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
   edit        Edit container configuration files (advanced).
@@ -70,12 +70,13 @@ Available Commands:
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
   import      Import a specified container.
+  jcp         cp(1) files from a jail to jail(s).
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+  rcp         cp(1) files from a jail to host.
   rdr         Redirect host port to container port.
-  rcp         reverse cp(1) files from a single container to the host.
   rename      Rename a container.
   restart     Restart a running container.
   service     Manage services within targeted container(s).
@@ -97,7 +98,7 @@ Use "bastille command -h|--help" for more information about a command.
 
 ```
 
-## 0.12-beta
+## 0.13-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 

@@ -78,7 +78,7 @@ bastille_perms_check() {
 bastille_perms_check
 
 ## version
-BASTILLE_VERSION="0.12.20250111"
+BASTILLE_VERSION="0.13.20250126"
 
 usage() {
     cat << EOF
@@ -95,19 +95,21 @@ Available Commands:
   config      Get or set a config value for the targeted container(s).
   console     Console into a running container.
   convert     Convert a Thin container into a Thick container.
-  cp          cp(1) files from host to targeted container(s).
+  cp          cp(1) files from host to jail(s).
   create      Create a new thin container or a thick container if -T|--thick option specified.
   destroy     Destroy a stopped container or a FreeBSD release.
   edit        Edit container configuration files (advanced).
+  etcupdate   Update /etc directory to specified release.
   export      Exports a specified container.
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
+  jcp         cp(1) files from a jail to jail(s).
   import      Import a specified container.
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
-  rcp         reverse cp(1) files from a single container to the host.
+  rcp         cp(1) files from a jail to host.
   rdr         Redirect host port to container port.
   rename      Rename a container.
   restart     Restart a running container.
@@ -137,7 +139,7 @@ EOF
 CMD=$1
 shift
 
-target_all_jails() {
+target_all_jails_old() {
   _JAILS=$(/usr/sbin/jls name)
   JAILS=""
   for _jail in ${_JAILS}; do
@@ -148,7 +150,7 @@ target_all_jails() {
   done
 }
 
-check_target_is_running() {
+check_target_is_running_old() {
   if [ ! "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
       error_exit "[${TARGET}]: Not started. See 'bastille start ${TARGET}'."
   fi
@@ -163,10 +165,11 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|create|destroy|export|htop|import|list|mount|rdr|restart|setup|start|top|umount|update|upgrade|verify)
+
+bootstrap|clone|console|create|cp|destroy|etcupdate|export|htop|import|jcp|list|mount|rcp|rdr|rename|restart|setup|start|top|umount|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-clone|config|cmd|console|convert|cp|edit|limits|pkg|rcp|rename|service|stop|sysrc|tags|template|zfs)
+config|cmd|convert|edit|limits|pkg|service|stop|sysrc|tags|template|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
@@ -187,15 +190,15 @@ clone|config|cmd|console|convert|cp|edit|limits|pkg|rcp|rename|service|stop|sysr
         fi
 
         if [ "${TARGET}" = 'ALL' ]; then
-            target_all_jails
+            target_all_jails_old
         elif [ "${CMD}" = "pkg" ] && [ "${TARGET}" = '-H' ] || [ "${TARGET}" = '--host' ]; then
             TARGET="${1}"
             USE_HOST_PKG=1
             if [ "${TARGET}" = 'ALL' ]; then
-              target_all_jails
+              target_all_jails_old
             else
               JAILS="${TARGET}"
-              check_target_is_running
+              check_target_is_running_old
             fi
             shift
         elif [ "${CMD}" = 'template' ] && [ "${TARGET}" = '--convert' ]; then
@@ -211,8 +214,8 @@ clone|config|cmd|console|convert|cp|edit|limits|pkg|rcp|rename|service|stop|sysr
             fi
 
             case "${CMD}" in
-            cmd|console|pkg|service|stop|sysrc|template)
-                check_target_is_running
+            cmd|pkg|service|stop|sysrc|template)
+                check_target_is_running_old
                 ;;
             convert|rename)
                 # Require the target to be stopped. -- cwells

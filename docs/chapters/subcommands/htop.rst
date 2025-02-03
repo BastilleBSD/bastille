@@ -2,8 +2,8 @@
 htop
 ====
 
-This one runs `htop` inside the container.
-note: won't work if you don't have htop installed in the container.
+This command runs `htop` in the targeted jail.
+Requires htop to be installed in the jail.
 
 
 .. image:: ../../images/htop.png

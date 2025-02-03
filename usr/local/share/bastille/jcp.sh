@@ -34,7 +34,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
+    error_notify "Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DEST_JAIL JAIL_PATH"
     cat << EOF
     Options:
 
@@ -76,22 +76,28 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 4 ]; then
     usage
 fi
 
-TARGET="${1}"
-HOST_PATH="${2}"
-JAIL_PATH="${3}"
+SOURCE_TARGET="${1}"
+SOURCE_PATH="${2}"
+DEST_TARGET="${3}"
+DEST_PATH="${4}"
 
 bastille_root_check
-set_target "${TARGET}"
+set_target_single "${SOURCE_TARGET}" && SOURCE_TARGET="${TARGET}"
+set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    host_path="${HOST_PATH}"
-    jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
-    if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
-        error_continue "CP failed: ${host_path} -> ${jail_path}"
+for _jail in ${DEST_TARGET}; do
+    if [ "${_jail}" = "${SOURCE_TARGET}" ]; then
+        continue
+    else
+	    info "[${_jail}]:"
+	    source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
+        dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
+        if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
+            error_continue "JCP failed: ${source_path} -> ${dest_path}"
+        fi
     fi
 done

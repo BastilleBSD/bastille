@@ -1,7 +1,5 @@
 #!/bin/sh
 #
-# SPDX-License-Identifier: BSD-3-Clause
-#
 # Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
@@ -34,11 +32,62 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille rename TARGET NEW_NAME"
+    error_notify "Usage: bastille rename [option(s)] TARGET NEW_NAME"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
+# Handle options.
+AUTO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\""
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ "$#" -ne 2 ]; then
+    usage
+fi
+
+TARGET="${1}"
+NEWNAME="${2}"
+
+bastille_root_check
+set_target_single "${TARGET}"
+check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+    bastille stop "${TARGET}"
+else   
+    error_notify "Jail is running."
+    error_exit "Use [-a|--auto] to auto-stop the jail."
+fi
+
 validate_name() {
-    local NAME_VERIFY=${NEWNAME}
+    local NAME_VERIFY="${NEWNAME}"
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Container names may not begin with (-|_) characters!"
@@ -47,44 +96,64 @@ validate_name() {
     fi
 }
 
-# Handle special-case commands first
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
-
-if [ $# -ne 1 ]; then
-    usage
-fi
-
-bastille_root_check
-
-NEWNAME="${1}"
-
 update_jailconf() {
     # Update jail.conf
-    JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
-    if [ -f "${JAIL_CONFIG}" ]; then
-        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
-            sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
-            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
-            sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
-            sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
-            sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${JAIL_CONFIG}"
-            # Rename vnet interface
-            sed -i '' "/vnet.interface/s|_${TARGET}\";|_${NEWNAME}\";|" "${JAIL_CONFIG}"
-            sed -i '' "/ifconfig/s|_${TARGET}|_${NEWNAME}|" "${JAIL_CONFIG}"
+    local _jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    local _rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
+    if [ -f "${_jail_conf}" ]; then
+        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${_jail_conf}"; then
+            sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${_jail_conf}"
+            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${_jail_conf}"
+            sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${_jail_conf}"
+            sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${_jail_conf}"
+            sed -i '' "s|${TARGET}.*{|${NEWNAME} {|" "${_jail_conf}"
+        fi
+        if grep -qo "vnet;" "${_jail_conf}"; then
+            update_jailconf_vnet
         fi
     fi
 }
 
-update_fstab() {
-    # Update fstab to use the new name
-    FSTAB_CONFIG="${bastille_jailsdir}/${NEWNAME}/fstab"
-    if [ -f "${FSTAB_CONFIG}" ]; then
-        sed -i '' "s|${bastille_jailsdir}/${TARGET}|${bastille_jailsdir}/${NEWNAME}|g" "${FSTAB_CONFIG}"
-    fi
+update_jailconf_vnet() {
+    local _jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    local _rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
+    # Change epair name (if needed)
+    local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${_jail_conf} | sort -u)"
+    for _if in ${_if_list}; do
+        if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
+            # Check if epair name = jail name
+            local _epair_num="$(grep -Eo -m 1 "epair[0-9]+" "${_jail_conf}" | grep -Eo "[0-9]+")" 
+            if grep -E "epair[0-9]+a" "${_jail_conf}" | grep -Eo "e[0-9]+a_${TARGET}"; then
+                local _target_host_epair="$(grep -Eo -m 1 "e[0-9]+a_${TARGET}" "${_jail_conf}")"
+                local _target_jail_epair="$(grep -Eo -m 1 "e[0-9]+b_${TARGET}" "${_jail_conf}")"
+            else
+                local _target_host_epair="$(grep -Eo -m 1 "epair[0-9]+a" "${_jail_conf}")"
+                local _target_jail_epair="$(grep -Eo -m 1 "epair[0-9]+b" "${_jail_conf}")"
+            fi
+            if [ "$(echo -n "e${_epair_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
+                # Generate new epair name
+                local _new_host_epair="e${_epair_num}a_${NEWNAME}"
+                local _new_jail_epair="e${_epair_num}b_${NEWNAME}"
+            else
+                local _new_host_epair="epair${_epair_num}a"
+                local _new_jail_epair="epair${_epair_num}b"
+            fi
+            # Replace host epair name in jail.conf                  
+            sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
+            sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
+            sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
+            sed -i '' "s|${_target_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
+            sed -i '' "s|${_target_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
+            # Replace jail epair name in jail.conf
+            sed -i '' "s|= ${_target_jail_epair};|= ${_new_jail_epair};|g" "${_jail_conf}"
+            sed -i '' "s|up name ${_target_jail_epair}|up name ${_new_jail_epair}|g" "${_jail_conf}"
+            sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
+            # Replace epair description
+            sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+            # Replace epair name in /etc/rc.conf
+            sed -i '' "/ifconfig/ s|${_target_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
+        fi
+    done
 }
 
 change_name() {
@@ -124,24 +193,27 @@ change_name() {
         fi
     fi
 
-    # Update jail configuration files accordingly
+    # Update jail conf files
     update_jailconf
-    update_fstab
+    update_fstab "${TARGET}" "${NEWNAME}"
 
     # Check exit status and notify
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
         info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
+        if [ "${AUTO}" -eq 1 ]; then
+            bastille start "${NEWNAME}"
+        fi
     fi
 }
 
-## validate jail name
+# Validate NEW_NAME
 if [ -n "${NEWNAME}" ]; then
     validate_name
 fi
 
-## check if a jail already exists with the new name
+# Check if a jail already exists with NEW_NAME
 if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
     error_exit "Jail: ${NEWNAME} already exists."
 fi
