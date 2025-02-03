@@ -108,13 +108,10 @@ if echo "${NEWNAME}" | grep -q "[.]"; then
 fi
 
 validate_ip() {
-    IPX_ADDR="ip4.addr"
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
-        IPX_ADDR="ip6.addr"
-        # shellcheck disable=SC2034
         IP6_MODE="new"
     else
         local IFS
@@ -159,17 +156,22 @@ update_jailconf() {
         # IP4
         if [ "${_ip4}" != "not set" ]; then
             for _ip in ${_ip4}; do
-                _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
-                sed -i '' "/${IPX_ADDR} = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
-                sed -i '' "/${IPX_ADDR} += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
+                if echo ${_ip} | grep -q "|"; then
+                    _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
+                fi
+                sed -i '' "/ip4.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                sed -i '' "/ip4.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
             done
         fi
         # IP6
         if [ "${_ip6}" != "not set" ]; then
             for _ip in ${_ip6}; do
-                _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
-                sed -i '' "/${IPX_ADDR} = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
-                sed -i '' "/${IPX_ADDR} += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
+                if echo ${_ip} | grep -q "|"; then
+                    _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
+                fi
+                sed -i '' "/ip6.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                sed -i '' "/ip6.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
+                sed -i '' "s/ip6 = .*/ip6 = ${IP6_MODE};/" "${JAIL_CONFIG}"
             done
         fi
     fi
