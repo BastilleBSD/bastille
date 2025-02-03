@@ -94,10 +94,10 @@ fi
 
 validate_user() {
     if jexec -l "${TARGET}" id "${USER}" >/dev/null 2>&1; then
-        USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
+        USER_SHELL="$(jexec -l "${TARGET}" getent passwd "${USER}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
-            if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l "${_jail}" $LOGIN -f "${USER}"
+            if jexec -l "${TARGET}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                jexec -l "${TARGET}" $LOGIN -f "${USER}"
             else
                 echo "Invalid shell for user ${USER}"
             fi
