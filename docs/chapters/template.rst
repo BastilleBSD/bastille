@@ -51,8 +51,8 @@ Special Hook Cases
 SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
 ie; (`\\"`)
 
-ARG requires an ampersand "\&" to be escaped (`\\&`) if it is to be interpreted
-literally, otherwise it is treated as a special character.
+ARG will always treat an ampersand "\&" literally, without the need to escape it.
+Escaping it will cause errors.
 
 Place these uppercase template hook commands into a `Bastillefile` in any order
 and automate container setup as needed.
