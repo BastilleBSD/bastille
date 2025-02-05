@@ -189,51 +189,73 @@ add_interface() {
     local _ip="${3}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-    local _epair_if_count="$(grep -Eo 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
-    local _bastille_if_count="$(grep -Eo 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
+    local _epair_if_count="$( (grep -Eos 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf; ifconfig | grep -Eo '(e[0-9]+a|epair[0-9]+a)' ) | sort -u | wc -l | awk '{print $1}')"
+    local _bastille_if_count="$(grep -Eos 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
     local _vnet_if_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet="vnet$((_vnet_if_count + 1))"
     local epair_num_range=$((_epair_if_count + 1))
     local bastille_num_range=$((_bastille_if_count + 1))
     if [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
-        for _num in $(seq 0 "${epair_num_range}"); do
-            if ! grep -Eq "epair${_num}" "${bastille_jailsdir}"/*/jail.conf; then
-                    local bridge_epair="epair${_num}"
+       if [ "${_epair_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${epair_num_range}"); do
+                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eosq "(e${_num}a|epair${_num}a)"; then
+                    if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
+                        local host_epair=e${_num}a_${_jailname}
+                        local jail_epair=e${_num}b_${_jailname}
+                    else
+                        local host_epair=epair${_num}a
+                        local jail_epair=epair${_num}b
+                    fi
                     break
+                fi
+            done
+        else
+            if [ "$(echo -n "e0a_${_jailname}" | awk '{print length}')" -lt 16 ]; then
+                local _num=0
+                local host_epair=e${_num}a_${_jailname}
+                local jail_epair=e${_num}b_${_jailname}
+            else
+                local _num=0
+                local host_epair=epair${_num}a
+                local jail_epair=epair${_num}b
             fi
-        done
+        fi
         # Remove ending brace (it is added again with the netblock)
         sed -i '' '/}/d' "${_jail_config}"
         if [ "${STATIC_MAC}" -eq 1 ]; then
             # Generate NETBLOCK with static MAC
             generate_static_mac "${_jailname}" "${_if}"
             cat << EOF >> "${_jail_config}"
-  ## ${bridge_epair} interface
-  vnet.interface += ${bridge_epair}b;
-  exec.prestart += "ifconfig ${bridge_epair} create";
-  exec.prestart += "ifconfig ${_if} addm ${bridge_epair}a";
-  exec.prestart += "ifconfig ${bridge_epair}a ether ${macaddr}a";
-  exec.prestart += "ifconfig ${bridge_epair}b ether ${macaddr}b";
-  exec.prestart += "ifconfig ${bridge_epair}a description \"vnet host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "ifconfig ${_if} deletem ${bridge_epair}a";
-  exec.poststop += "ifconfig ${bridge_epair}a destroy";
+  ## ${host_epair} interface
+  vnet.interface += ${jail_epair};
+  exec.prestart += "ifconfig epair${_num} create";
+  exec.prestart += "ifconfig ${_if} addm epair${_num}a";
+  exec.prestart += "ifconfig epair${_num}a up name ${host_epair}";
+  exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
+  exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
+  exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
+  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${_jailname}\"";
+  exec.poststop += "ifconfig ${_if} deletem ${host_epair}";
+  exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
         else
             # Generate NETBLOCK without static MAC
             cat << EOF >> "${_jail_config}"
-  ## ${bridge_epair} interface
-  vnet.interface += ${bridge_epair}b;
-  exec.prestart += "ifconfig ${bridge_epair} create";
-  exec.prestart += "ifconfig ${_if} addm ${bridge_epair}a";
-  exec.prestart += "ifconfig ${bridge_epair}a description \"vnet host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "ifconfig ${_if} deletem ${bridge_epair}a";
-  exec.poststop += "ifconfig ${bridge_epair}a destroy";
+  ## ${host_epair} interface
+  vnet.interface += ${jail_epair};
+  exec.prestart += "ifconfig epair${_num} create";
+  exec.prestart += "ifconfig ${_if} addm epair${_num}a";
+  exec.prestart += "ifconfig epair${_num}a up name ${host_epair}";
+  exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
+  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${_jailname}\"";
+  exec.poststop += "ifconfig ${_if} deletem ${host_epair}";
+  exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
         fi
         # Add config to /etc/rc.conf
-        sysrc -f "${_jail_rc_config}" ifconfig_${bridge_epair}b_name="${_if_vnet}"
+        sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_if_vnet}"
         # If 0.0.0.0 set DHCP, else set static IP address
         if [ "${_ip}" = "0.0.0.0" ]; then
             sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
@@ -308,9 +330,23 @@ remove_interface() {
     # Skip next block in case of classic jail
     if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
         local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-        local _if_jail="$(grep ${_if} ${_jail_config} | grep -Eo -m 1 'epair[0-9]+|bastille[0-9]+')"
+        if grep ${_if} ${_jail_config} | grep -Eo -m 1 'bastille[0-9]+'; then
+            local _if_bastille_num="$(grep ${_if} ${_jail_config} | grep -Eo -m 1 "bastille[0-9]+" | grep -Eo "[0-9]+")"
+            local _if_jail="e0b_bastille${_if_bastille_num}"
+            _if_type="bastille"
+        elif grep ${_if} ${_jail_config} | grep -Eo -m 1 "epair[0-9]+"; then
+            local _if_epair_num="$(grep ${_if} ${_jail_config} | grep -Eo -m 1 "epair[0-9]+" | grep -Eo "[0-9]+")"
+            if grep epair${_if_epair_num}b ${_jail_config} | grep -Eo -m 1 "e${_if_epair_num}b_${_jailname}"; then
+                local _if_jail="$(grep epair${_if_epair_num}b ${_jail_config} | grep -Eo -m 1 "e${_if_epair_num}b_${_jailname}")"
+            else
+                local _if_jail="epair${_if_epair_num}b"
+            fi
+            _if_type="epair"
+        else
+            error_exit "Could not find interface inside jail: \"${_if_jail}\""
+        fi
 
-        if grep -o "${_if_jail}" ${_jail_rc_config}; then
+        if grep -o "${_if_jail}" ${_jail_config}; then
             local _if_vnet="$(grep ${_if_jail} ${_jail_rc_config} | grep -Eo 'vnet[0-9]+')"
         else
             error_exit "Interface not found: ${_if_jail}"
@@ -330,12 +366,19 @@ remove_interface() {
         if [ -n "${_if_vnet}" ] && echo ${_if_vnet} 2>/dev/null | grep -Eo 'vnet[0-9]+'; then
             sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
         else
-            error_exit "Failed to remove interface from /etc/rc.conf"
+            error_continue "Failed to remove interface from /etc/rc.conf"
         fi
     
         # Remove VNET interface from jail.conf (VNET)
         if [ -n "${_if_jail}" ]; then
-            sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}"
+            if [ "${_if_type}" = "epair" ]; then
+                sed -i '' "/.*epair${_if_epair_num}.*/d" "${_jail_config}" 
+                sed -i '' "/.*e${_if_epair_num}a_${_jailname}.*/d" "${_jail_config}" 
+                sed -i '' "/.*e${_if_epair_num}b_${_jailname}.*/d" "${_jail_config}" 
+            elif [ "${_if_type}" = "bastille" ]; then
+                sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}"
+                sed -i '' "/.*bastille${_if_bastille_num}.*/d" "${_jail_config}"
+            fi
         else
             error_exit "Failed to remove interface from jail.conf"
         fi
@@ -369,7 +412,7 @@ case "${ACTION}" in
             validate_ip "${IP}"
         fi
         if [ "${VNET_JAIL}" -eq 1 ]; then
-            if ifconfig | grep "${INTERFACE}" | grep -q bridge; then
+            if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
@@ -413,4 +456,3 @@ case "${ACTION}" in
         error_exit "Only [add|remove] are supported."
         ;;
 esac
-
