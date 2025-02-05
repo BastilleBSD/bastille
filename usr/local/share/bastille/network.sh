@@ -52,7 +52,6 @@ AUTO=0
 BRIDGE_VNET_JAIL=0
 CLASSIC_JAIL=0
 STATIC_MAC=0
-START=0
 VNET_JAIL=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -68,7 +67,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;; 
        -a|--auto)
-            FORCE=1
+            AUTO=1
             shift
             ;;
         -m|-M|--static-mac)
