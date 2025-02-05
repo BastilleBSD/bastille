@@ -341,3 +341,5 @@ if [ -n "${IP}" ]; then
 else
     usage
 fi
+
+clone_jail
