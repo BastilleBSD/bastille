@@ -34,30 +34,70 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille console TARGET [user]"
+    error_notify "Usage: bastille console [option(s)] TARGET [user]"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+AUTO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    x) enable_debug ;;
+                    a) AUTO=1 ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -gt 1 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     usage
 fi
 
-bastille_root_check
+TARGET="${1}"
+USER="${2}"
 
-USER="${1}"
+bastille_root_check
+set_target_single "${TARGET}"
+check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+    bastille start "${TARGET}"
+else
+    error_notify "Jail is not running."
+    error_exit "Use [-a|--auto] to auto-start the jail."
+fi
 
 validate_user() {
-    if jexec -l "${_jail}" id "${USER}" >/dev/null 2>&1; then
-        USER_SHELL="$(jexec -l "${_jail}" getent passwd "${USER}" | cut -d: -f7)"
+    if jexec -l "${TARGET}" id "${USER}" >/dev/null 2>&1; then
+        USER_SHELL="$(jexec -l "${TARGET}" getent passwd "${USER}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
-            if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l "${_jail}" $LOGIN -f "${USER}"
+            if jexec -l "${TARGET}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                jexec -l "${TARGET}" $LOGIN -f "${USER}"
             else
                 echo "Invalid shell for user ${USER}"
             fi
@@ -70,7 +110,7 @@ validate_user() {
 }
 
 check_fib() {
-    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${TARGET}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
         if [ -n "${fib}" ]; then
             _setfib="setfib -F ${fib}"
         else
@@ -78,15 +118,12 @@ check_fib() {
         fi
 }
 
-for _jail in ${JAILS}; do
-    info "[${_jail}]:"
-    LOGIN="$(jexec -l "${_jail}" which login)"
-    if [ -n "${USER}" ]; then
-        validate_user
-    else
-        check_fib
-        LOGIN="$(jexec -l "${_jail}" which login)"
-        ${_setfib} jexec -l "${_jail}" $LOGIN -f root
-    fi
-    echo
-done
+info "[${TARGET}]:"
+LOGIN="$(jexec -l "${TARGET}" which login)"
+if [ -n "${USER}" ]; then
+    validate_user
+else
+    check_fib
+    LOGIN="$(jexec -l "${TARGET}" which login)"
+    ${_setfib} jexec -l "${TARGET}" $LOGIN -f root
+fi

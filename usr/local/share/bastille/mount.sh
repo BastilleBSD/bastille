@@ -34,15 +34,47 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
+# Handle options.
+AUTO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\""
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ "$#" -lt 3 ] || [ "$#" -gt 7 ]; then
     usage
@@ -91,8 +123,8 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     usage
 fi
 
-# Mount permissions,options need to start with "ro" or "rw"
-if ! echo "${_perms}" | grep -Eq 'r[w|o],.*$'; then
+# Mount permissions,options must include one of "ro, rw, rq, sw, xx"
+if ! echo "${_perms}" | grep -Eq '(ro|rw|rq|sw|xx)(,.*)?$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
@@ -111,13 +143,20 @@ for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
 
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else
+        error_notify "Jail is not running."
+        error_exit "Use [-a|--auto] to auto-start the jail."
+    fi
+
     _fullpath_fstab="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab}" 2>/dev/null | sed 's#//#/#' )"
     _fullpath="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath}" 2>/dev/null | sed 's#//#/#' )"
     _fstab_entry="${_hostpath_fstab} ${_fullpath_fstab} ${_type} ${_perms} ${_checks}"
 
     # Check if mount point has already been added
     _existing_mount="$(echo ${_fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#g')"
-    if grep -Eq "[[:blank:]]${_existing_mount}.*[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
+    if grep -Eq "[[:blank:]]${_existing_mount}[[:blank:]]" "${bastille_jailsdir}/${_jail}/fstab"; then
         warn "Mountpoint already present in ${bastille_jailsdir}/${_jail}/fstab"
         grep -E "[[:blank:]]${_existing_mount}" "${bastille_jailsdir}/${_jail}/fstab"
         continue
