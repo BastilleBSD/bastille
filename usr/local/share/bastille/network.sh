@@ -36,21 +36,21 @@ usage() {
     cat << EOF
     Options:
 
+    -a | --auto                Start/stop the jail(s) if required.
     -b | --bridge              Add a bridged VNET interface to an existing jail.
-    -c | --classic             Add an interface to a classic (non_VNET) jail.
-    -f | --force               Stop the jail if it is running.
+    -c | --classic             Add an interface to a classic (non-VNET) jail.
     -m | --static-mac          Generate a static MAC address for the interface.
-    -s | --start               Start jail on completion.
     -v | --vnet                Add a VNET interface to an existing jail.
-
+    -x | --debug               Enable debug mode.
+    
 EOF
     exit 1
 }
 
 # Handle options.
+AUTO=0
 BRIDGE_VNET_JAIL=0
 CLASSIC_JAIL=0
-FORCE=0
 STATIC_MAC=0
 START=0
 VNET_JAIL=0
@@ -67,7 +67,7 @@ while [ "$#" -gt 0 ]; do
             CLASSIC_JAIL=1
             shift
             ;; 
-       -f|--force)
+       -a|--auto)
             FORCE=1
             shift
             ;;
@@ -75,23 +75,23 @@ while [ "$#" -gt 0 ]; do
             STATIC_MAC=1
             shift
             ;;
-        -s|--start)
-            START=1
-            shift
-            ;;
         -v|-V|--vnet)
             VNET_JAIL=1
             shift
             ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;        
         -*)
             for _o in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${_o} in
+                    a) AUTO=1 ;;
                     b|B) BRIDGE_VNET_JAIL=1 ;;
                     c) CLASSIC_JAIL=1 ;;
-                    f) FORCE=1 ;;
                     m|M) STATIC_MAC=1 ;;
-                    s) START=1 ;;
                     v|V) VNET_JAIL=1 ;;
+                    x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
                 esac
             done
@@ -126,11 +126,11 @@ fi
 
 bastille_root_check
 set_target_single "${TARGET}"
-check_target_is_stopped "${TARGET}" || if [ "${FORCE}" -eq 1 ]; then
+check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
-    error_exit "Use [-f|--force] to force stop the jail."
+    error_exit "Use [-a|--auto] to force stop the jail."
 fi
 
 validate_ip() {
@@ -374,7 +374,7 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ "${START}" -eq 1 ]; then
+                if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
             fi
@@ -383,7 +383,7 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ "${START}" -eq 1 ]; then
+                if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
             fi
@@ -392,7 +392,7 @@ case "${ACTION}" in
                 error_exit "Error: ${TARGET} is a VNET jail."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ "${START}" -eq 1 ]; then
+                if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
             fi
@@ -405,7 +405,7 @@ case "${ACTION}" in
             error_exit "Interface not found in jail.conf: \"${INTERFACE}\""
         else
             remove_interface "${TARGET}" "${INTERFACE}"
-            if [ "${START}" -eq 1 ]; then
+            if [ "${AUTO}" -eq 1 ]; then
                 bastille start "${TARGET}"
             fi
         fi
