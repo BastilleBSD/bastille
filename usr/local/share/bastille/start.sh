@@ -87,8 +87,11 @@ for _jail in ${JAILS}; do
                 error_notify "Error: IP address (${_ip4}) already in use."
                 continue
             fi
-            ## add ip4.addr to firewall table
-            pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
+            ## add ip4.addr to firewall table if its using the loop back interface
+            if grep -qw "interface.*=.*${bastille_network_loopback}" "${bastille_jailsdir}/${_jail}/jail.conf"; then
+                info "Adding ${_ip4} to pf table ${bastille_network_pf_table}"
+                pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
+ 	    fi
         fi
 
         ## start the container
