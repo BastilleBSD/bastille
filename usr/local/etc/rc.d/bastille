@@ -59,9 +59,9 @@ bastille_start()
     fi
 
     for _jail in ${bastille_ordered_list}; do
+        sleep ${bastille_startup_delay}
         echo "Starting Bastille Container: ${_jail}"
         ${command} start ${_jail}
-        sleep ${bastille_startup_delay}
     done
 }
 
