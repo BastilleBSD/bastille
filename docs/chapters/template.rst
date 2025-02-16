@@ -45,8 +45,14 @@ Template Automation Hooks
 | SYSRC   | sysrc command(s)  | nginx_enable=YES                        |
 +---------+-------------------+-----------------------------------------+
 
-Note: SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
+Special Hook Cases
+------------------
+
+SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
 ie; (`\\"`)
+
+ARG will always treat an ampersand "\&" literally, without the need to escape it.
+Escaping it will cause errors.
 
 Place these uppercase template hook commands into a `Bastillefile` in any order
 and automate container setup as needed.
