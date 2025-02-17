@@ -59,19 +59,30 @@ Template Hook Descriptions
 --------------------------
 
 ARG         - set an ARG value to be used in the template
+
 CMD         - run the specified command
+
 CONFIG      - set the specified property and value
+
 CP/OVERLAY  - copy specified files from template directory to specified path inside jail
+
 INCLUDE     - specify a template to include
+
 LIMITS      - set the specified resource value for the jail
+
 MOUNT       - mount specified files/directories inside the jail
+
 PKG         - install specified packages inside jail
+
 RDR         - redirect specified ports to the jail
-RENDER      - replace ARG values inside specified files inside the jail
-              if a directory is specified, ARGS will be replaced in all files underneath
+
+RENDER      - replace ARG values inside specified files inside the jail. If a directory is specified, ARGS will be replaced in all files underneath
+
 RESTART     - restart the jail
-SERVICE     - run 'service' command inside the jail with specified arguments
-SYSRC       - run 'sysrc' inside the jail with specified arguments
+
+SERVICE     - run `service` command inside the jail with specified arguments
+
+SYSRC       - run `sysrc` inside the jail with specified arguments
 
 Special Hook Cases
 ------------------
