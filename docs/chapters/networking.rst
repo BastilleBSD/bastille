@@ -120,6 +120,10 @@ container interfaces as they are started and stopped. These interface names
 match the pattern `eXb_bastilleX`. Internally to the containers these
 interfaces are presented as `vnet0`.
 
+If you do not specify a subnet mask, you might have issues with jail to jail
+networking, especially VLAN to VLAN. We recommend always adding a subnet to
+VNET jail IPs when creating them to avoid these issues.
+
 VNET also requires a custom devfs ruleset. Create the file as needed on the
 host system:
 
