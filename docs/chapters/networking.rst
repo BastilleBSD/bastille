@@ -310,7 +310,20 @@ ssh session and continue.
 
 This step only needs to be done once in order to prepare the host.
 
-Things to Note
-==============
+local_unbound
+=============
 
-- If you are running "unbound" on your server, you will probably have issues with DNS resolution.
+If you are running "local_unbound" on your server, you will probably have issues with DNS resolution.
+
+To resolve this, add the following configuration to local_unbound:
+
+.. code-block:: shell
+
+  server:
+  interface: 0.0.0.0
+  access-control: 192.168.0.0/16 allow
+  access-control: 10.17.90.0/24 allow
+
+Also, change the nameserver to the servers IP instead of 127.0.0.1 inside /etc/rc.conf
+
+Adjust the above "access-control" strings to fit your network.
