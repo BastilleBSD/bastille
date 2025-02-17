@@ -309,3 +309,8 @@ At this point you'll likely be disconnected from the host. Reconnect the
 ssh session and continue.
 
 This step only needs to be done once in order to prepare the host.
+
+Things to Note
+==============
+
+- If you are running "unbound" on your server, you will probably have issues with DNS resolution.
