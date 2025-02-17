@@ -66,7 +66,7 @@ CONFIG      - set the specified property and value
 
 CP/OVERLAY  - copy specified files from template directory to specified path inside jail
 
-INCLUDE     - specify a template to include
+INCLUDE     - specify a template to include. Make sure the template is bootstrapped, or you are using the template url
 
 LIMITS      - set the specified resource value for the jail
 
