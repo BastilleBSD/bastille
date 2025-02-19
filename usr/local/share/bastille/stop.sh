@@ -75,8 +75,7 @@ for _jail in ${JAILS}; do
         jail -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
 
         ## remove (captured above) ip4.addr from firewall table
-        if [ "${_ip4}" != "not set" ] && [ "${bastille_network_pf_table}X" != "X" ] && \
-            [ -x /sbin/pfctl ] && pfctl -t "${bastille_network_pf_table}" -T show | grep "${_ip4}" >/dev/null; then
+        if [ "${_ip4}" != "not set" ]; then
                 pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip4}"
         fi
     fi

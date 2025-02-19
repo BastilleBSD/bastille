@@ -87,13 +87,9 @@ for _jail in ${JAILS}; do
                 error_notify "Error: IP address (${_ip4}) already in use."
                 continue
             fi
-            ## add ip4.addr to firewall table if pfctl is installed, pf table is available and
-            ## the ip4.addr is not reachable trough local interface (assumes NAT/rdr is needed)
+            ## add ip4.addr to firewall table if the ip4.addr is not reachable trough local interface (assumes NAT/rdr is needed)
             if route -n get ${_ip4} | grep "gateway" >/dev/null; then
-                if [ "${bastille_network_pf_table}X" != "X" ] && \
-                  [ -x /sbin/pfctl ] && pfctl -s Tables | grep "${bastille_network_pf_table}" >/dev/null ; then 
-                        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
-                fi
+                pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip4}"
             fi
         fi
 
