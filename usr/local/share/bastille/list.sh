@@ -208,7 +208,7 @@ list_template(){
 
 list_jail(){
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for _JAIL in ${JAIL_LIST}; do
             if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                 echo "${_JAIL}"
