@@ -2,8 +2,8 @@
 update
 ======
 
-The `update` command targets a release instead of a container. Because every container is
-based on a release, when the release is updated all the containers are automatically
+The `update` command targets a release or a thick jail. Because thin jails are
+based on a release, when the release is updated all the thin jails are automatically
 updated as well.
 
 If no updates are available, a message will be shown:
@@ -20,8 +20,7 @@ If no updates are available, a message will be shown:
   No updates needed to update system to 11.4-RELEASE-p4.
   No updates are available to install.
 
-
-The older the release, however, the more updates will be available:
+The older the release or jail, however, the more updates will be available:
 
 .. code-block:: shell
 
@@ -38,4 +37,7 @@ The older the release, however, the more updates will be available:
   The following files will be added as part of updating to 13.2-RELEASE-p4:
   ...[snip]...
 
-To be safe, you may want to restart any containers that have been updated live.
+To be safe, you may want to restart any jails that have been updated live.
+
+If the jail is a thin jail, an error will be shown. If it is a thick jail, it will be updated just like
+the release shown above.
