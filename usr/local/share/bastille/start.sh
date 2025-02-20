@@ -108,7 +108,10 @@ for _jail in ${JAILS}; do
                     if ifconfig | grep -qwF "${_ip}"; then
                         warn "Warning: IP address (${_ip}) already in use, continuing..."
                     fi
-                    pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
+                    if route -n get ${_ip} | grep "gateway" >/dev/null; then
+                        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    fi
                 else
                     error_continue "Error: ${_if} interface does not exist."
                 fi
@@ -128,7 +131,10 @@ for _jail in ${JAILS}; do
                     if ifconfig | grep -qwF "${_ip}"; then
                         warn "Warning: IP address (${_ip}) already in use, continuing..."
                     fi
-                    pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
+                    if route -n get ${_ip} | grep "gateway" >/dev/null; then
+                        pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
+                    fi
                 else
                     error_continue "Error: ${_if} interface does not exist."
                 fi
