@@ -9,6 +9,10 @@ To keep releases updated, use `bastille update RELEASE`
 
 To keep thick jails updated, use `bastille update TARGET`
 
+======================
+Minor Release Upgrades
+======================
+
 To upgrade Bastille jails for a minor release (ie; 13.1→13.2) you can do the following:
 
 Thick Jails
@@ -34,6 +38,10 @@ Thin Jails
 7. use `bastille etcupdate TARGET reslove` to resolve any conflicts
 8. start the jail(s)
 8. upgrade complete!
+
+======================
+Major Release Upgrades
+======================
 
 To upgrade Bastille jails for a major release (ie; 12.4→13.2) you can do the following:
 
