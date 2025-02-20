@@ -60,6 +60,15 @@ Template Hook Descriptions
 
 ARG         - set an ARG value to be used in the template
 
+ARGS will default to the value set inside the template, but can be changed by including `--arg ARG=VALUE` when
+running the template. Multiple ARGS can also be specified as seen below. If no ARG value is given, the template 
+will show a warning, but will still continue.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille template azkaban sample/template --arg ARG=VALUE --arg ARG1=VALUE
+
+
 CMD         - run the specified command
 
 CONFIG      - set the specified property and value
