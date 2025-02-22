@@ -35,8 +35,6 @@ if [ -f /usr/local/etc/bastille/bastille.conf ]; then
     . /usr/local/etc/bastille/bastille.conf
 fi
 
-[ -z "${CLICOLOR_FORCE}" ] || unset CLICOLOR_FORCE
-
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
