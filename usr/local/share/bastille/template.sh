@@ -240,13 +240,13 @@ for _jail in ${JAILS}; do
             error_notify "Jail IP not found: ${_jail}"
             _jail_ip4='' # In case it was -. -- cwells
             _jail_ip6='' # In case it was -. -- cwells
-        else
-            if echo "${_jail_ip4}" | grep -q "|"; then
-                _jail_ip4="$(echo ${_jail_ip4} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
-            fi
-            if echo "${_jail_ip6}" | grep -q "|"; then
-                _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
-            fi
+        fi
+    else
+        if echo "${_jail_ip4}" | grep -q "|"; then
+            _jail_ip4="$(echo ${_jail_ip4} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+        fi
+        if echo "${_jail_ip6}" | grep -q "|"; then
+            _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
         fi
     fi
     
