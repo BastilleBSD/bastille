@@ -235,19 +235,17 @@ for _jail in ${JAILS}; do
         _jail_ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
         _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
     fi
-    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; then
-        if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
-            error_notify "Jail IP not found: ${_jail}"
-            _jail_ip4='' # In case it was -. -- cwells
-            _jail_ip6='' # In case it was -. -- cwells
-        fi
-    else
-        if echo "${_jail_ip4}" | grep -q "|"; then
-            _jail_ip4="$(echo ${_jail_ip4} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
-        fi
-        if echo "${_jail_ip6}" | grep -q "|"; then
-            _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
-        fi
+    if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; } && \
+       { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; } then
+        error_notify "Jail IP not found: ${_jail}"
+        _jail_ip4='' # In case it was -. -- cwells
+        _jail_ip6='' # In case it was -. -- cwells
+    fi
+    if echo "${_jail_ip4}" | grep -q "|"; then
+        _jail_ip4="$(echo ${_jail_ip4} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    fi
+    if echo "${_jail_ip6}" | grep -q "|"; then
+        _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
     fi
     
     ## TARGET
