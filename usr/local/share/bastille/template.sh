@@ -246,7 +246,7 @@ for _jail in ${JAILS}; do
     ## remove value if ip6 was not set or disabled, otherwise get value
     if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
         _jail_ip6='' # In case it was -. -- cwells
-    if echo "${_jail_ip6}" | grep -q "|"; then
+    elif echo "${_jail_ip6}" | grep -q "|"; then
         _jail_ip6="$(echo ${_jail_ip6} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
     else
         _jail_ip6="$(echo ${_jail_ip6} | sed -E 's#/[0-9]+$##g')"
