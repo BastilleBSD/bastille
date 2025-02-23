@@ -244,10 +244,10 @@ for _jail in ${JAILS}; do
         _jail_ip6='' # In case it was -. -- cwells
     fi
     if echo "${_jail_ip}" | grep -q "|"; then
-        _jail_ip="$(echo ${_jail_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+        _jail_ip="$(echo ${_jail_ip} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
     fi
     if echo "${_jail_ip6}" | grep -q "|"; then
-        _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}')"
+        _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
     fi
     
     ## TARGET
