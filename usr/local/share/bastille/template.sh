@@ -276,7 +276,7 @@ for _jail in ${JAILS}; do
         _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g' | awk '{print $1}')"
     fi
     ## remove value if ip4 was not set or disabled, otherwise get value
-    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; then
+    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disable" ]; then
         _jail_ip4='' # In case it was -. -- cwells
     elif echo "${_jail_ip4}" | grep -q "|"; then
         _jail_ip4="$(echo ${_jail_ip4} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
@@ -284,7 +284,7 @@ for _jail in ${JAILS}; do
         _jail_ip4="$(echo ${_jail_ip4} | sed -E 's#/[0-9]+$##g')"
     fi
     ## remove value if ip6 was not set or disabled, otherwise get value
-    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
+    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; then
         _jail_ip6='' # In case it was -. -- cwells
     elif echo "${_jail_ip6}" | grep -q "|"; then
         _jail_ip6="$(echo ${_jail_ip6} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
@@ -292,8 +292,8 @@ for _jail in ${JAILS}; do
         _jail_ip6="$(echo ${_jail_ip6} | sed -E 's#/[0-9]+$##g')"
     fi
     # print error when both ip4 and ip6 are not set
-    if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; } && \
-       { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; } then
+    if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disable" ]; } && \
+       { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; } then
         error_notify "Jail IP not found: ${_jail}"
     fi
     
