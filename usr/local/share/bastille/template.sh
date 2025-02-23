@@ -229,23 +229,28 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
     info "Applying template: ${TEMPLATE}..."
 
-    ## jail-specific variables.
+    ## get jail ip4 and ip6 values
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
         _jail_ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
         _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
     fi
+    ## remove value if ip4 was not set or disabled, otherwise get value
+    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; then
+        _jail_ip4='' # In case it was -. -- cwells
+    elif echo "${_jail_ip4}" | grep -q "|"; then
+        _jail_ip4="$(echo ${_jail_ip4} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    fi
+    ## remove value if ip6 was not set or disabled, otherwise get value
+    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
+        _jail_ip6='' # In case it was -. -- cwells
+    if echo "${_jail_ip6}" | grep -q "|"; then
+        _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    fi
+    # print error when both ip4 and ip6 are not set
     if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; } && \
        { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; } then
         error_notify "Jail IP not found: ${_jail}"
-        _jail_ip4='' # In case it was -. -- cwells
-        _jail_ip6='' # In case it was -. -- cwells
-    fi
-    if echo "${_jail_ip4}" | grep -q "|"; then
-        _jail_ip4="$(echo ${_jail_ip4} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
-    fi
-    if echo "${_jail_ip6}" | grep -q "|"; then
-        _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
     fi
     
     ## TARGET
