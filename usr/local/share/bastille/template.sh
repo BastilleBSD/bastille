@@ -232,8 +232,8 @@ for _jail in ${JAILS}; do
     ## get jail ip4 and ip6 values
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
-        _jail_ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
-        _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
+        _jail_ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g' | awk '{print $1}')"
+        _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g' | awk '{print $1}')"
     fi
     ## remove value if ip4 was not set or disabled, otherwise get value
     if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; then
