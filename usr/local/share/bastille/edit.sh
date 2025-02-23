@@ -34,33 +34,52 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille edit TARGET [filename]"
+    error_notify "Usage: bastille edit [option(s)] TARGET [filename]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_notify "Unknown Option: \"${1}\""
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -gt 1 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     usage
-elif [ $# -eq 1 ]; then
-    TARGET_FILENAME="${1}"
+fi
+
+TARGET="${1}"
+if [ "$#" -eq 2 ]; then
+    TARGET_FILENAME="${2}"
+else 
+    TARGET_FILENAME="jail.conf"
 fi
 
 bastille_root_check
+set_target_single "${TARGET}"
 
 if [ -z "${EDITOR}" ]; then
-    # shellcheck disable=SC2209
-    EDITOR=vi
+    EDITOR=edit
 fi
 
-for _jail in ${JAILS}; do
-    if [ -n "${TARGET_FILENAME}" ]; then
-        "${EDITOR}" "${bastille_jailsdir}/${_jail}/${TARGET_FILENAME}"
-    else
-        "${EDITOR}" "${bastille_jailsdir}/${_jail}/jail.conf"
-    fi
-done
+"${EDITOR}" "${bastille_jailsdir}/${TARGET}/${TARGET_FILENAME}"
