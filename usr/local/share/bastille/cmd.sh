@@ -34,15 +34,47 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille cmd TARGET command"
+    error_notify "Usage: bastille cmd [option(s)] TARGET command"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+AUTO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+	-a|--auto)
+	    AUTO=1
+	    shift
+	    ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ $# -eq 0 ]; then
     usage
@@ -50,30 +82,40 @@ fi
 
 bastille_root_check
 
+TARGET="${1}"
+shift 1
 COUNT=0
 RETURN=0
 
+set_target "${TARGET}"
+
 for _jail in ${JAILS}; do
-    COUNT=$(($COUNT+1))
+
     info "[${_jail}]:"
 
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-a|--auto] to auto-start the jail."
+    fi
+    
+    COUNT=$(($COUNT+1))
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
         # Allow executing commands on Linux jails.
         jexec -l -u root "${_jail}" "$@"
     else
         jexec -l -U root "${_jail}" "$@"
     fi
-
     ERROR_CODE=$?
-    info "[${_jail}]: ${ERROR_CODE}"
-    
+    if [ "${ERROR_CODE}" -ne 0 ]; then
+        warn "[${_jail}]: ${ERROR_CODE}"
+    fi
     if [ "$COUNT" -eq 1 ]; then
         RETURN=${ERROR_CODE}
     else 
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
-    
-    echo
 done
 
 # Check when a command is executed in all running jails. (bastille cmd ALL ...)

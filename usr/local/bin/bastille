@@ -165,10 +165,10 @@ version|-v|--version)
 help|-h|--help)
     usage
     ;;
-bootstrap|clone|config|console|create|cp|destroy|edit|etcupdate|export|htop|import|jcp|list|mount|pkg|rcp|rdr|rename|restart|setup|start|stop|top|umount|update|upgrade|verify)
+bootstrap|clone|cmd|config|console|create|cp|destroy|edit|etcupdate|export|htop|import|jcp|list|mount|pkg|rcp|rdr|rename|restart|setup|start|stop|top|umount|update|upgrade|verify)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-cmd|convert|limits|service|sysrc|tags|template|zfs)
+convert|limits|service|sysrc|tags|template|zfs)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
