@@ -231,15 +231,25 @@ for _jail in ${JAILS}; do
 
     ## jail-specific variables.
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
-    if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        _jail_ip=$(/usr/sbin/jls -j "${_jail}" ip4.addr 2>/dev/null)
-        _jail_ip6=$(/usr/sbin/jls -j "${_jail}" ip6.addr 2>/dev/null)
-        if [ -z "${_jail_ip}" ] || [ "${_jail_ip}" = "-" ]; then
-            error_notify "Jail IP not found: ${_jail}"
-            _jail_ip='' # In case it was -. -- cwells
-        fi
+    if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
+        _jail_ip="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
+        _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
     fi
-
+    if [ "${_jail_ip}" = "not set" ] || [ "${_jail_ip}" = "disabled" ]; then
+        error_notify "Jail IP4 not found: ${_jail}"
+        _jail_ip='' # In case it was -. -- cwells
+    fi
+    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
+        error_notify "Jail IP6 not found: ${_jail}"
+        _jail_ip6='' # In case it was -. -- cwells
+    fi
+    if echo "${_jail_ip}" | grep -q "|"; then
+        _jail_ip="$(echo ${_jail_ip} 2>/dev/null | awk -F"|" '{print $2}')"
+    fi
+    if echo "${_jail_ip6}" | grep -q "|"; then
+        _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}')"
+    fi
+    
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
         if grep -qw "${_jail}" "${bastille_template}/TARGET"; then
