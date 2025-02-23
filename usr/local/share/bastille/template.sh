@@ -229,17 +229,34 @@ for _jail in ${JAILS}; do
     info "[${_jail}]:"
     info "Applying template: ${TEMPLATE}..."
 
-    ## jail-specific variables.
+    ## get jail ip4 and ip6 values
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
-    if [ "$(bastille config $TARGET get vnet)" != 'enabled' ]; then
-        _jail_ip=$(/usr/sbin/jls -j "${_jail}" ip4.addr 2>/dev/null)
-        _jail_ip6=$(/usr/sbin/jls -j "${_jail}" ip6.addr 2>/dev/null)
-        if [ -z "${_jail_ip}" ] || [ "${_jail_ip}" = "-" ]; then
-            error_notify "Jail IP not found: ${_jail}"
-            _jail_ip='' # In case it was -. -- cwells
-        fi
+    if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
+        _jail_ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g' | awk '{print $1}')"
+        _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g' | awk '{print $1}')"
     fi
-
+    ## remove value if ip4 was not set or disabled, otherwise get value
+    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; then
+        _jail_ip4='' # In case it was -. -- cwells
+    elif echo "${_jail_ip4}" | grep -q "|"; then
+        _jail_ip4="$(echo ${_jail_ip4} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    else
+        _jail_ip4="$(echo ${_jail_ip4} | sed -E 's#/[0-9]+$##g')"
+    fi
+    ## remove value if ip6 was not set or disabled, otherwise get value
+    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
+        _jail_ip6='' # In case it was -. -- cwells
+    elif echo "${_jail_ip6}" | grep -q "|"; then
+        _jail_ip6="$(echo ${_jail_ip6} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    else
+        _jail_ip6="$(echo ${_jail_ip6} | sed -E 's#/[0-9]+$##g')"
+    fi
+    # print error when both ip4 and ip6 are not set
+    if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; } && \
+       { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; } then
+        error_notify "Jail IP not found: ${_jail}"
+    fi
+    
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
         if grep -qw "${_jail}" "${bastille_template}/TARGET"; then
@@ -256,7 +273,7 @@ for _jail in ${JAILS}; do
 
     # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
     # Values provided by default (without being defined by the user) are listed here. -- cwells
-    ARG_REPLACEMENTS="-e 's/\${JAIL_IP}/${_jail_ip}/g' -e 's/\${JAIL_IP6}/${_jail_ip6}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
+    ARG_REPLACEMENTS="-e 's/\${jail_ip4}/${_jail_ip4}/g' -e 's/\${jail_ip6}/${_jail_ip6}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
     # This is parsed outside the HOOKS loop so an ARG file can be used with a Bastillefile. -- cwells
     if [ -s "${bastille_template}/ARG" ]; then
         while read _line; do
