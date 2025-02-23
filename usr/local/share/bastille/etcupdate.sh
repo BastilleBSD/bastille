@@ -46,7 +46,7 @@ EOF
 bootstrap_etc_release() {
     local _release="${1}"
     local _current="$(sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives | awk -F': ' '{print $2}')"
-    if ! ls -A "${bastille_releasesdir}/${_release}/usr/src" 2>/dev/null; then
+    if [ -z "$(ls -A "${bastille_releasesdir}/${_release}/usr/src")" ]; then
         sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives=src
         if ! bastille bootstrap "${_release}" > /dev/null; then
             sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
