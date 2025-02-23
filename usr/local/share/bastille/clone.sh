@@ -227,7 +227,7 @@ update_jailconf_vnet() {
                         sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
                     # Replace epair description
-                    sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+                    sed -i '' "/${_new_host_epair}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     # Update /etc/rc.conf
                     local _jail_vnet="$(grep ${_target_jail_epair} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     sed -i '' "s|${_target_jail_epair}_name|${_new_jail_epair}_name|" "${_rc_conf}"
@@ -258,7 +258,7 @@ update_jailconf_vnet() {
                         sed -i '' "s|${uniq_epair} ether.*:.*:.*:.*:.*:.*a\";|${uniq_epair} ether ${macaddr}a\";|" "${_jail_conf}"
                         sed -i '' "s|${uniq_epair} ether.*:.*:.*:.*:.*:.*b\";|${uniq_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
-                    sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+                    sed -i '' "/${uniq_epair}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     # Update /etc/rc.conf
                     sed -i '' "s|ifconfig_e0b_${_if}_name|ifconfig_e0b_${uniq_epair}_name|" "${_rc_conf}"
                     if grep "vnet0" "${_rc_conf}" | grep -q ${uniq_epair}; then
