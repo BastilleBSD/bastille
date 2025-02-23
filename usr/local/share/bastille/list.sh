@@ -34,7 +34,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|(import|export|backup)]"
+    error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|ports|(import|export|backup)]"
 }
 
 if [ "${1}" = help ] || [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
@@ -230,12 +230,28 @@ list_import(){
     ls "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 
+list_ports(){
+    if [ -d "${bastille_jailsdir}" ]; then
+        JAIL_LIST="$(bastille list jails)"
+        for _jail in ${JAIL_LIST}; do
+            if [ -f "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
+                _PORTS="$(cat ${bastille_jailsdir}/${_jail}/rdr.conf)"
+                info "[${_jail}]:"
+		echo "${_PORTS}"
+	    fi
+        done
+    fi
+}
+
 if [ $# -gt 0 ]; then
     # Handle special-case commands first.
     case "${1}" in
     all|-a|--all)
         list_all
         ;;
+    port|ports)
+        list_ports
+	;;
     release|releases)
         list_release "${2}"
         ;;
