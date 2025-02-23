@@ -168,7 +168,7 @@ help|-h|--help)
 bootstrap|clone|cmd|config|console|convert|create|cp|destroy|edit|etcupdate|export|htop|import|jcp|list|mount|pkg|rcp|rdr|rename|restart|service|setup|start|stop|sysrc|top|umount|update|upgrade|verify|zfs)
     # Nothing "extra" to do for these commands. -- cwells
     ;;
-limits|tags|template)
+template)
     # Parse the target and ensure it exists. -- cwells
     if [ $# -eq 0 ]; then # No target was given, so show the command's help. -- cwells
         PARAMS='help'
