@@ -232,22 +232,22 @@ for _jail in ${JAILS}; do
     ## jail-specific variables.
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
-        _jail_ip="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
-        _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
+        _jail_ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
+        _jail_ip46="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
     fi
-    if [ "${_jail_ip}" = "not set" ] || [ "${_jail_ip}" = "disabled" ]; then
+    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; then
         error_notify "Jail IP4 not found: ${_jail}"
-        _jail_ip='' # In case it was -. -- cwells
+        _jail_ip4='' # In case it was -. -- cwells
     fi
-    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
+    if [ "${_jail_ip46}" = "not set" ] || [ "${_jail_ip46}" = "disabled" ]; then
         error_notify "Jail IP6 not found: ${_jail}"
-        _jail_ip6='' # In case it was -. -- cwells
+        _jail_ip46='' # In case it was -. -- cwells
     fi
-    if echo "${_jail_ip}" | grep -q "|"; then
-        _jail_ip="$(echo ${_jail_ip} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    if echo "${_jail_ip4}" | grep -q "|"; then
+        _jail_ip4="$(echo ${_jail_ip4} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
     fi
-    if echo "${_jail_ip6}" | grep -q "|"; then
-        _jail_ip6="$(echo ${_jail_ip6} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    if echo "${_jail_ip46}" | grep -q "|"; then
+        _jail_ip46="$(echo ${_jail_ip46} 2>/dev/null | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
     fi
     
     ## TARGET
@@ -266,7 +266,7 @@ for _jail in ${JAILS}; do
 
     # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
     # Values provided by default (without being defined by the user) are listed here. -- cwells
-    ARG_REPLACEMENTS="-e 's/\${JAIL_IP}/${_jail_ip}/g' -e 's/\${JAIL_IP6}/${_jail_ip6}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
+    ARG_REPLACEMENTS="-e 's/\${jail_ip4}/${_jail_ip4}/g' -e 's/\${jail_ip46}/${_jail_ip46}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
     # This is parsed outside the HOOKS loop so an ARG file can be used with a Bastillefile. -- cwells
     if [ -s "${bastille_template}/ARG" ]; then
         while read _line; do
