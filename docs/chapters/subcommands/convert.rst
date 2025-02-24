@@ -2,15 +2,22 @@
 convert
 =======
 
-To convert a thin container to a thick container use `bastille convert`.
+Convert a thin jail to a thick jail.
 
 .. code-block:: shell
 
   ishmael ~ # bastille convert azkaban
   [azkaban]:
+  ...
 
-Syntax requires only the target container to convert.
+Syntax requires only the target jail to convert.
 
 .. code-block:: shell
 
-  Usage: bastille convert TARGET
+  ishmael ~ # bastille convert help
+  Usage: bastille convert [option(s)] TARGET
+
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.

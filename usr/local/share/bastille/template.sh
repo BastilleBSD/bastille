@@ -33,8 +33,16 @@
 . /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
-bastille_usage() {
-    error_exit "Usage: bastille template TARGET|--convert project/template"
+usage() {
+    error_notify "Usage: bastille template [option(s)] TARGET [--convert|project/template]"
+    cat << EOF
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
 post_command_hook() {
@@ -107,26 +115,51 @@ render() {
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    bastille_usage
-    ;;
-esac
+# Handle options.
+AUTO=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+	-a|--auto)
+	    AUTO=1
+	    shift
+	    ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) AUTO=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     bastille_usage
 fi
 
-bastille_root_check
-
-## global variables
-TEMPLATE="${1}"
+TARGET="${1}"
+TEMPLATE="${2}"
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
 if [ -z "${HOOKS}" ]; then
     HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
 fi
 
+bastille_root_check
+
+# We set the target only if it is not --convert
 # Special case conversion of hook-style template files into a Bastillefile. -- cwells
 if [ "${TARGET}" = '--convert' ]; then
     if [ -d "${TEMPLATE}" ]; then # A relative path was provided. -- cwells
@@ -174,6 +207,8 @@ if [ "${TARGET}" = '--convert' ]; then
 
     info "Template converted: ${TEMPLATE}"
     exit 0
+else
+    set_target "${TARGET}"
 fi
 
 case ${TEMPLATE} in
@@ -201,10 +236,6 @@ case ${TEMPLATE} in
         error_exit "Template name/URL not recognized."
 esac
 
-if [ -z "${JAILS}" ]; then
-    error_exit "Container ${TARGET} is not running."
-fi
-
 # Check for an --arg-file parameter. -- cwells
 for _script_arg in "$@"; do
     case ${_script_arg} in
@@ -226,7 +257,16 @@ if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
 fi
 
 for _jail in ${JAILS}; do
+
     info "[${_jail}]:"
+
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else   
+        error_notify "Jail is not running."
+        error_continue "Use [-a|--auto] to auto-start the jail."
+    fi
+    
     info "Applying template: ${TEMPLATE}..."
 
     ## get jail ip4 and ip6 values
@@ -236,7 +276,7 @@ for _jail in ${JAILS}; do
         _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g' | awk '{print $1}')"
     fi
     ## remove value if ip4 was not set or disabled, otherwise get value
-    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; then
+    if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disable" ]; then
         _jail_ip4='' # In case it was -. -- cwells
     elif echo "${_jail_ip4}" | grep -q "|"; then
         _jail_ip4="$(echo ${_jail_ip4} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
@@ -244,7 +284,7 @@ for _jail in ${JAILS}; do
         _jail_ip4="$(echo ${_jail_ip4} | sed -E 's#/[0-9]+$##g')"
     fi
     ## remove value if ip6 was not set or disabled, otherwise get value
-    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; then
+    if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; then
         _jail_ip6='' # In case it was -. -- cwells
     elif echo "${_jail_ip6}" | grep -q "|"; then
         _jail_ip6="$(echo ${_jail_ip6} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
@@ -252,8 +292,8 @@ for _jail in ${JAILS}; do
         _jail_ip6="$(echo ${_jail_ip6} | sed -E 's#/[0-9]+$##g')"
     fi
     # print error when both ip4 and ip6 are not set
-    if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disabled" ]; } && \
-       { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disabled" ]; } then
+    if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disable" ]; } && \
+       { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; } then
         error_notify "Jail IP not found: ${_jail}"
     fi
     
