@@ -6,8 +6,8 @@ Looking for ready made CI/CD validated `Bastille Templates`_?
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the containers automatically.
 
-Currently supported template hooks are: `CMD`, `CP`, `INCLUDE`, `LIMITS`, `MOUNT`,
-`PKG`, `RDR`, `SERVICE`, `SYSRC`.
+Currently supported template hooks are: `ARG`, `CMD`, `CONFIG`, `CP`, `INCLUDE`,
+`LIMITS`, `MOUNT`, `OVERLAY`, `PKG`, `RDR`, `RENDER`, `RESTART`, `SERVICE`, `SYSRC`.
 
 Templates are created in `${bastille_prefix}/templates` and can leverage any of
 the template hooks.
@@ -23,27 +23,75 @@ template hook commands.
 Template Automation Hooks
 -------------------------
 
-+---------+-------------------+-----------------------------------------+
-| HOOK    | format            | example                                 |
-+=========+===================+=========================================+
-| CMD     | /bin/sh command   | /usr/bin/chsh -s /usr/local/bin/zsh     |
-+---------+-------------------+-----------------------------------------+
-| CP      | path(s)           | etc root usr (one per line)             |
-+---------+-------------------+-----------------------------------------+
-| INCLUDE | template path/URL | http?://TEMPLATE_URL or project/path    |
-+---------+-------------------+-----------------------------------------+
-| LIMITS  | resource value    | memoryuse 1G                            |
-+---------+-------------------+-----------------------------------------+
-| MOUNT   | fstab syntax      | /host/path container/path nullfs ro 0 0 |
-+---------+-------------------+-----------------------------------------+
-| PKG     | port/pkg name(s)  | vim-console zsh git-lite tree htop      |
-+---------+-------------------+-----------------------------------------+
-| RDR     | tcp port port     | tcp 2200 22 (hostport jailport)         |
-+---------+-------------------+-----------------------------------------+
-| SERVICE | service command   | 'nginx start' OR 'postfix reload'       |
-+---------+-------------------+-----------------------------------------+
-| SYSRC   | sysrc command(s)  | nginx_enable=YES                        |
-+---------+-------------------+-----------------------------------------+
++-------------+---------------------+-----------------------------------------+
+| HOOK        | format              | example                                 |
++=============+=====================+=========================================+
+| ARG         | ARG=VALUE           | MINECRAFT_MEMX="1024M"                  |
++-------------+---------------------+-----------------------------------------+
+| CMD         | /bin/sh command     | /usr/bin/chsh -s /usr/local/bin/zsh     |
++-------------+---------------------+-----------------------------------------+
+| CONFIG      | set property value  | set allow.mlock 1                       |
++-------------+---------------------+-----------------------------------------+
+| CP/OVERLAY  | path(s)             | etc root usr (one per line)             |
++-------------+---------------------+-----------------------------------------+
+| INCLUDE     | template path/URL   | http?://TEMPLATE_URL or project/path    |
++-------------+---------------------+-----------------------------------------+
+| LIMITS      | resource value      | memoryuse 1G                            |
++-------------+---------------------+-----------------------------------------+
+| MOUNT       | fstab syntax        | /host/path container/path nullfs ro 0 0 |
++-------------+---------------------+-----------------------------------------+
+| OVERLAY     | path(s)             | etc root usr (one per line)             |
++-------------+---------------------+-----------------------------------------+
+| PKG         | port/pkg name(s)    | vim-console zsh git-lite tree htop      |
++-------------+---------------------+-----------------------------------------+
+| RDR         | tcp port port       | tcp 2200 22 (hostport jailport)         |
++-------------+---------------------+-----------------------------------------+
+| RENDER      | /path/file.txt      | /usr/local/etc/gitea/conf/app.ini       |
++-------------+---------------------+-----------------------------------------+
+| RESTART     |                     | (restart jail)                          |
++-------------+---------------------+-----------------------------------------+
+| SERVICE     | service command     | 'nginx start' OR 'postfix reload'       |
++-------------+---------------------+-----------------------------------------+
+| SYSRC       | sysrc command(s)    | nginx_enable=YES                        |
++-------------+---------------------+-----------------------------------------+
+
+Template Hook Descriptions
+--------------------------
+
+ARG         - set an ARG value to be used in the template
+
+ARGS will default to the value set inside the template, but can be changed by including `--arg ARG=VALUE` when
+running the template. Multiple ARGS can also be specified as seen below. If no ARG value is given, the template 
+will show a warning, but will still continue.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille template azkaban sample/template --arg ARG=VALUE --arg ARG1=VALUE
+
+
+CMD         - run the specified command
+
+CONFIG      - set the specified property and value
+
+CP/OVERLAY  - copy specified files from template directory to specified path inside jail
+
+INCLUDE     - specify a template to include. Make sure the template is bootstrapped, or you are using the template url
+
+LIMITS      - set the specified resource value for the jail
+
+MOUNT       - mount specified files/directories inside the jail
+
+PKG         - install specified packages inside jail
+
+RDR         - redirect specified ports to the jail
+
+RENDER      - replace ARG values inside specified files inside the jail. If a directory is specified, ARGS will be replaced in all files underneath
+
+RESTART     - restart the jail
+
+SERVICE     - run `service` command inside the jail with specified arguments
+
+SYSRC       - run `sysrc` inside the jail with specified arguments
 
 Special Hook Cases
 ------------------
@@ -53,6 +101,9 @@ ie; (`\\"`)
 
 ARG will always treat an ampersand "\&" literally, without the need to escape it.
 Escaping it will cause errors.
+
+Template Examples
+-----------------
 
 Place these uppercase template hook commands into a `Bastillefile` in any order
 and automate container setup as needed.

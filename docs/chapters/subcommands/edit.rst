@@ -2,7 +2,7 @@
 edit
 ====
 
-To edit container configuration use `bastille edit`.
+To edit a jails configuration, use `bastille edit TARGET`.
 
 .. code-block:: shell
 
@@ -13,4 +13,9 @@ be `jail.conf`. Other common filenames are `fstab` or `rctl.conf`.
 
 .. code-block:: shell
 
-  Usage: bastille edit TARGET
+  ishmael ~ # bastille edit help
+
+  Usage: bastille edit [option(s)] TARGET [filename]
+    Options:
+
+    -x | --debug          Enable debug mode.

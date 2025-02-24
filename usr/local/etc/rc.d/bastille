@@ -32,6 +32,7 @@ rcvar=${name}_enable
 : ${bastille_conf:="/usr/local/etc/bastille/bastille.conf"}
 : ${bastille_list:="ALL"}
 : ${bastille_rcorder:="NO"}
+: ${bastille_startup_delay:=0}
 
 command=/usr/local/bin/${name}
 start_cmd="bastille_start"
@@ -58,6 +59,7 @@ bastille_start()
     fi
 
     for _jail in ${bastille_ordered_list}; do
+        sleep ${bastille_startup_delay}
         echo "Starting Bastille Container: ${_jail}"
         ${command} start ${_jail}
     done

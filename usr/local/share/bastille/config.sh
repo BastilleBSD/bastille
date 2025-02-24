@@ -34,7 +34,14 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille config TARGET get|set propertyName [newValue]"
+    error_notify "Usage: bastille config TARGET [get|set] PROPERTY_NAME NEW_VALUE"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
 # we need jail(8) to parse the config file so it can expand variables etc
@@ -46,36 +53,64 @@ print_jail_conf() {
 '
 } 
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_notify "Unknown Option: \"${1}\""
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -eq 1 ] || [ $# -gt 3 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
     usage
 fi
 
 bastille_root_check
 
-ACTION=$1
-shift
+TARGET="${1}"
+ACTION="${2}"
+shift 2
 
-case $ACTION in
+set_target "${TARGET}"
+
+case "${ACTION}" in
     get)
-        if [ $# -ne 1 ]; then
+        if [ "$#" -ne 1 ]; then
             error_notify 'Too many parameters for a "get" operation.'
             usage
         fi
         ;;
-    set) ;;
-    *) error_exit 'Only get and set are supported.' ;;
+    set) 
+        ;;
+    *)
+        error_exit 'Only get and set are supported.'
+        ;;
 esac
 
-PROPERTY=$1
+PROPERTY="${1}"
 shift
 VALUE="$@"
+
+# we need jail(8) to parse the config file so it can expand variables etc
+print_jail_conf() {
+
+    # we need to pass a literal \n to jail to get each parameter on its own
+    # line
+    jail -f "${1}" -e '
+'
+} 
 
 for _jail in ${JAILS}; do
     FILE="${bastille_jailsdir}/${_jail}/jail.conf"
@@ -93,6 +128,7 @@ for _jail in ${JAILS}; do
                     # check if there is a value for this property
                     if (NF == 2) {
                         # remove any quotes surrounding the string
+                        #sub(",[^|]*\\|", ",", $2);
                         sub(/^"/, "", $2);
                         sub(/"$/, "", $2);
                         print $2;
