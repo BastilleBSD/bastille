@@ -33,8 +33,15 @@
 . /usr/local/share/bastille/common.sh
 . /usr/local/etc/bastille/bastille.conf
 
-bastille_usage() {
-    error_exit "Usage: bastille verify [release|template]"
+usage() {
+    error_notify "Usage: bastille verify [RELEASE|TEMPLATE]"
+    cat << EOF
+    Options:
+
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
 
 verify_release() {
@@ -147,36 +154,48 @@ verify_template() {
     fi
 }
 
-# Handle special-case commands first.
-case "$1" in
-help|-h|--help)
-    bastille_usage
-    ;;
-esac
+# Handle options.
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	    -h|--help|help)
+	        usage
+	        ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            error_exit "Unknown Option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ $# -gt 1 ] || [ $# -lt 1 ]; then
-    bastille_usage
+if [ "$#" -ne 1 ]; then
+    usage
 fi
 
 bastille_root_check
 
-case "$1" in
-*-RELEASE|*-release|*-RC[1-9]|*-rc[1-9])
-    RELEASE=$1
-    verify_release
-    ;;
-*-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-    RELEASE=$1
-    verify_release
-    ;;
-http?*)
-    bastille_usage
-    ;;
-*/*)
-    BASTILLE_TEMPLATE=$1
-    verify_template
-    ;;
-*)
-    bastille_usage
-    ;;
+case "${1}" in
+    *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9])
+        RELEASE="${1}"
+        verify_release
+        ;;
+    *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
+        RELEASE="${1}"
+        verify_release
+        ;;
+    http?*)
+        bastille_usage
+        ;;
+    */*)
+        BASTILLE_TEMPLATE="${1}"
+        verify_template
+        ;;
+    *)
+        usage
+        ;;
 esac
