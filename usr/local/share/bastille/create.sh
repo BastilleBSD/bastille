@@ -453,6 +453,12 @@ create_jail() {
 
                         ## sane bastille zfs options
                         ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
+			## send without -R if encryption is enabled
+                        if [ $(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}") = "off" ]; then
+			    OPT_SEND="-R"
+                        else
+			    OPT_SEND=""
+                        fi
 
                         ## take a temp snapshot of the base release
                         SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
@@ -461,7 +467,7 @@ create_jail() {
 
                         ## replicate the release base to the new thickjail and set the default mountpoint
 						# shellcheck disable=SC2140
-                        zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
+                        zfs send ${OPT_SEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
                         zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
