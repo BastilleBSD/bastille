@@ -454,7 +454,7 @@ create_jail() {
                         ## sane bastille zfs options
                         ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
 			## send without -R if encryption is enabled
-                        if [ $(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}") = "off" ]; then
+                        if [ "$(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}")" = "off" ]; then
 			    OPT_SEND="-R"
                         else
 			    OPT_SEND=""
