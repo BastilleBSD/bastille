@@ -421,7 +421,7 @@ case "${ACTION}" in
                 fi
             fi
         elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
-            if ! ifconfig | grep "${INTERFACE}" | grep -q bridge; then
+            if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
