@@ -57,31 +57,16 @@ EOF
     exit 1
 }
 
-# Handle special-case commands first
-case "$1" in
-help|-h|--help)
-    usage
-    ;;
+# Handle help option
+case "${1}" in
+    help|-h|--help)
+        usage
+        ;;
 esac
-
-# Check for unsupported actions
-if [ "${TARGET}" = "ALL" ]; then
-    error_exit "Batch export is unsupported."
-fi
 
 if [ $# -gt 5 ] || [ $# -lt 1 ]; then
     usage
 fi
-
-bastille_root_check
-
-zfs_enable_check() {
-    # Temporarily disable ZFS so we can create a standard backup archive
-    if checkyesno bastille_zfs_enable; then
-        # shellcheck disable=SC2034
-        bastille_zfs_enable="NO"
-    fi
-}
 
 TARGET="${1}"
 GZIP_EXPORT=
@@ -94,6 +79,17 @@ TXZ_EXPORT=
 TGZ_EXPORT=
 OPT_ZSEND="-R"
 COMP_OPTION="0"
+
+bastille_root_check
+set_target_single "${TARGET}"
+
+zfs_enable_check() {
+    # Temporarily disable ZFS so we can create a standard backup archive
+    if checkyesno bastille_zfs_enable; then
+        # shellcheck disable=SC2034
+        bastille_zfs_enable="NO"
+    fi
+}
 
 opt_count() {
     COMP_OPTION=$(expr ${COMP_OPTION} + 1)
@@ -143,7 +139,7 @@ if [ -n "${bastille_export_options}" ]; then
         esac
     done
 else
-    # Handle and parse option args
+    # Handle options
     while [ $# -gt 0 ]; do
         case "${1}" in
             --gz)
