@@ -38,50 +38,23 @@ usage() {
     # Valid compress/options for ZFS systems are raw, .gz, .tgz, .txz and .xz
     # Valid compress/options for non ZFS configured systems are .tgz and .txz
     # If no compression option specified, user must redirect standard output
-    error_notify "Usage: bastille export | option(s) | TARGET | PATH"
-
+    error_notify "Usage: bastille export [option(s)] TARGET PATH"
     cat << EOF
     Options:
 
-         --gz       -- Export a ZFS jail using GZIP(.gz) compressed image.
-    -r | --raw      -- Export a ZFS jail to an uncompressed RAW image.
-    -s | --safe     -- Safely stop and start a ZFS jail before the exporting process.
-         --tgz      -- Export a jail using simple .tgz compressed archive instead.
-         --txz      -- Export a jail using simple .txz compressed archive instead.
-    -v | --verbose  -- Be more verbose during the ZFS send operation.
-         --xz       -- Export a ZFS jail using XZ(.xz) compressed image.
+         --gz               Export a ZFS jail using GZIP(.gz) compressed image.
+    -r | --raw              Export a ZFS jail to an uncompressed RAW image.
+    -s | --safe             Safely stop and start a ZFS jail before the exporting process.
+         --tgz              Export a jail using simple .tgz compressed archive instead.
+         --txz              Export a jail using simple .txz compressed archive instead.
+    -v | --verbose          Be more verbose during the ZFS send operation.
+         --xz               Export a ZFS jail using XZ(.xz) compressed image.
 
 Note: If no export option specified, the container should be redirected to standard output.
 
 EOF
     exit 1
 }
-
-# Handle help option
-case "${1}" in
-    help|-h|--help)
-        usage
-        ;;
-esac
-
-if [ $# -gt 5 ] || [ $# -lt 1 ]; then
-    usage
-fi
-
-TARGET="${1}"
-GZIP_EXPORT=
-XZ_EXPORT=
-SAFE_EXPORT=
-USER_EXPORT=
-RAW_EXPORT=
-DIR_EXPORT=
-TXZ_EXPORT=
-TGZ_EXPORT=
-OPT_ZSEND="-R"
-COMP_OPTION="0"
-
-bastille_root_check
-set_target_single "${TARGET}"
 
 zfs_enable_check() {
     # Temporarily disable ZFS so we can create a standard backup archive
@@ -124,17 +97,17 @@ if [ -n "${bastille_export_options}" ]; then
                 opt_count
                 zfs_enable_check
                 shift;;
-            --safe)
+            -s|--safe)
                 SAFE_EXPORT="1"
                 shift;;
-            --raw)
+            -r|--raw)
                 RAW_EXPORT="1"
                 opt_count
                 shift ;;
-            --verbose)
+            -v|--verbose)
                 OPT_ZSEND="-Rv"
                 shift;;
-            --*|-*) error_notify "Unknown Option."
+            -*) error_notify "Unknown Option: \"${1}\""
                 usage;;
         esac
     done
@@ -142,50 +115,46 @@ else
     # Handle options
     while [ $# -gt 0 ]; do
         case "${1}" in
+            -h|--help|help)
+                usage
+                ;;
             --gz)
                 GZIP_EXPORT="1"
-                TARGET="${2}"
                 opt_count
                 shift
                 ;;
             --xz)
                 XZ_EXPORT="1"
-                TARGET="${2}"
                 opt_count
                 shift
                 ;;
             --tgz)
                 TGZ_EXPORT="1"
-                TARGET="${2}"
                 opt_count
                 zfs_enable_check
                 shift
                 ;;
             --txz)
                 TXZ_EXPORT="1"
-                TARGET="${2}"
                 opt_count
                 zfs_enable_check
                 shift
                 ;;
             -s|--safe)
                 SAFE_EXPORT="1"
-                TARGET="${2}"
                 shift
                 ;;
             -r|--raw)
                 RAW_EXPORT="1"
-                TARGET="${2}"
                 opt_count
                 shift
                 ;;
             -v|--verbose)
                 OPT_ZSEND="-Rv"
-                TARGET="${2}"
                 shift
                 ;;
-            --*|-*)
-                error_notify "Unknown Option."
+            -*)
+                error_notify "Unknown Option: \"${1}\""
                 usage
                 ;;
             *)
@@ -202,6 +171,25 @@ else
     done
 fi
 
+if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+    usage
+fi
+
+TARGET="${1}"
+GZIP_EXPORT=
+XZ_EXPORT=
+SAFE_EXPORT=
+USER_EXPORT=
+RAW_EXPORT=
+DIR_EXPORT=
+TXZ_EXPORT=
+TGZ_EXPORT=
+OPT_ZSEND="-R"
+COMP_OPTION="0"
+
+bastille_root_check
+set_target_single "${TARGET}"
+
 # Validate for combined options
 if [ "${COMP_OPTION}" -gt "1" ]; then
     error_exit "Error: Only one compression format can be used during export."
@@ -217,7 +205,7 @@ if ! checkyesno bastille_zfs_enable; then
        [ -n "${RAW_EXPORT}" ] ||
        [ -n "${SAFE_EXPORT}" ] ||
        [ "${OPT_ZSEND}" = "-Rv" ]; then
-        error_exit "Options --xz, --gz, --raw, --safe, --verbose are valid for ZFS configured systems only."
+        error_exit "Options --xz, --gz, --raw, --safe, and --verbose are valid for ZFS configured systems only."
     fi
 fi
 
