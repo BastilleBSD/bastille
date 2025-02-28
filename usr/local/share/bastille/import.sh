@@ -36,7 +36,7 @@
 usage() {
     # Build an independent usage for the import command
     # If no file/extension specified, will import from standard input
-    error_notify "Usage: bastille import [option(s)] FILE"
+    error_notify "Usage: bastille import [option(s)] FILE [RELEASE]"
 
     cat << EOF
     Options:
@@ -59,7 +59,7 @@ OPT_STATIC_MAC=""
 USER_IMPORT=
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
+	-h|--help|help)
             usage
 	        ;;
         -f|--force)
@@ -82,6 +82,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     f) OPT_FORCE=1 ;;
+		    M) OPT_STATIC_MAC=1 ;;
                     v) OPT_ZRECV="-u -v" ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
@@ -95,11 +96,12 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -gt 3 ] || [ $# -lt 1 ]; then
+if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
 TARGET="${1}"
+RELEASE="${2}"
 
 bastille_root_check
 
@@ -182,6 +184,9 @@ update_fstab_import() {
         # If both variables are set, compare and update as needed
         if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille" "${FSTAB_CONFIG}"; then
             info "Updating fstab..."
+	    if [ -n "${RELEASE}" ]; then
+                FSTAB_NEWCONF="${RELEASE}"
+	    fi
             sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
         fi
     fi
@@ -355,9 +360,13 @@ EOF
 
     if [ "${IS_THIN_JAIL:-0}" = "1" ]; then
         if [ -z "${CONFIG_RELEASE}" ]; then
-            # Fallback to host version
-            CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
-            warn "Warning: ${CONFIG_RELEASE} was set by default!"
+	    if [ -n "${RELEASE}" ]; then
+                CONFIG_RELEASE="${RELEASE}"
+            else
+                # Fallback to host version
+                CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
+                warn "Warning: ${CONFIG_RELEASE} was set by default!"
+	    fi
         fi
         mkdir "${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille"
         echo "${bastille_releasesdir}/${CONFIG_RELEASE} ${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille nullfs ro 0 0" \
