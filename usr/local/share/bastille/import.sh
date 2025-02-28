@@ -206,7 +206,7 @@ generate_config() {
             IS_VNET_JAIL=$(grep -wo '\"vnet\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/vnet://')
             VNET_DEFAULT_INTERFACE=$(grep -wo '\"vnet_default_interface\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/vnet_default_interface://')
             ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED=1
-            if [ "${VNET_DEFAULT_INTERFACE}" = "auto" ]; then
+            if [ "${VNET_DEFAULT_INTERFACE}" = "auto" ] || [ "${VNET_DEFAULT_INTERFACE}" = "none" ]; then
                 # Grab the default ipv4 route from netstat and pull out the interface
                 VNET_DEFAULT_INTERFACE=$(netstat -nr4 | grep default | cut -w -f 4)
             fi
@@ -385,6 +385,7 @@ ${TARGET_TRIM} {
   mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;
   path = ${bastille_jailsdir}/${TARGET_TRIM}/root;
   securelevel = 2;
+  osrelease = ${CONFIG_RELEASE};
 
 ${NETBLOCK}
 }
