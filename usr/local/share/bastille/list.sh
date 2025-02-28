@@ -34,25 +34,15 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|ports|(import|export|backup)]"
+    error_notify "Usage: bastille list [option(s)] [-j|-a] [release [-p]|template|(jail|container)|log|limit|(import|export|backup)]"
+    cat << EOF
+    Options:
+    
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
-
-if [ "${1}" = help ] || [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
-    usage
-fi
-
-bastille_root_check
-
-if [ $# -eq 0 ]; then
-   /usr/sbin/jls
-fi
-
-if [ "${1}" = "-j" ]; then
-    /usr/sbin/jls -N --libxo json
-    exit 0
-fi
-
-TARGET=
 
 list_all(){
         if [ -d "${bastille_jailsdir}" ]; then
@@ -93,7 +83,7 @@ list_all(){
                 JAIL_LIST="${TARGET}"
             else
                 # Query all info for all jails(default).
-                JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+                JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
             fi
             for _JAIL in ${JAIL_LIST}; do
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
@@ -243,42 +233,74 @@ list_ports(){
     fi
 }
 
-if [ $# -gt 0 ]; then
-    # Handle special-case commands first.
+bastille_root_check
+
+if [ "$#" -eq 0 ]; then
+   /usr/sbin/jls
+fi
+
+TARGET=""
+
+# Handle options.
+while [ "$#" -gt 0 ]; do
     case "${1}" in
-    all|-a|--all)
-        list_all
-        ;;
-    port|ports)
-        list_ports
-	;;
-    release|releases)
-        list_release "${2}"
-        ;;
-    template|templates)
-        list_template
-        ;;
-    jail|jails|container|containers)
-        list_jail
-        ;;
-    log|logs)
-        list_log
-        ;;
-    limit|limits)
-        list_limit
-        ;;
-    import|imports|export|exports|backup|backups)
-        list_import
-    exit 0
-    ;;
-    *)
-        # Check if we want to query all info for a specific jail instead.
-        if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
-            TARGET="${1}"
+	-h|--help|help)
+	    usage
+	    ;;
+        -a|--all|all)
             list_all
-        else
-            usage
-        fi
-        ;;
+            exit 0
+            ;;
+	-j|--json)
+	    /usr/sbin/jls -N --libxo json
+            exit 0
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*)
+            error_exit "Unknown option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ "$#" -gt 0 ]; then
+    case "${1}" in
+        port|ports)
+            list_ports
+            ;;
+        release|releases)
+            list_release "${2}"
+            ;;
+        template|templates)
+            list_template
+            ;;
+        jail|jails|container|containers)
+            list_jail
+            ;;
+        log|logs)
+            list_log
+            ;;
+        limit|limits)
+            list_limit
+            ;;
+        import|imports|export|exports|backup|backups)
+            list_import
+            exit 0
+            ;;
+        *)
+            # Check if we want to query all info for a specific jail instead.
+            if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
+                TARGET="${1}"
+		set_target "${TARGET}"
+                list_all
+            else
+                usage
+            fi
+            ;;
     esac
 fi
