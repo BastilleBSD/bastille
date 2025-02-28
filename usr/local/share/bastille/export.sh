@@ -174,9 +174,7 @@ else
                 usage
                 ;;
             *)
-                if echo "${2}" | grep -q "\/"; then
-                    DIR_EXPORT="${2}"
-                fi
+                break
                 ;;
         esac
     done
