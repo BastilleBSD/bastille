@@ -134,6 +134,11 @@ jail_upgrade() {
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${TARGET}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
         local _newrelease="${NEWRELEASE}"
+        # Exit if NEWRELEASE doesn't exist
+        if [ ! -d "${bastille_releasesdir}/${NEWRELEASE}" ]; then
+            error_notify "Release not found: ${NEWRELEASE}"
+            error_exit "See 'bastille bootstrap ${NEWRELEASE} to bootstrap the release."
+        fi
         # Update "osrelease" entry inside jail.conf
         sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/fstab"
         # Update "fstab" entry
