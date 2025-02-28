@@ -68,6 +68,18 @@ opt_count() {
     COMP_OPTION=$((COMP_OPTION + 1))
 }
 
+# Reset export options
+GZIP_EXPORT=
+XZ_EXPORT=
+SAFE_EXPORT=
+USER_EXPORT=
+RAW_EXPORT=
+DIR_EXPORT=
+TXZ_EXPORT=
+TGZ_EXPORT=
+OPT_ZSEND="-R"
+COMP_OPTION="0"
+
 if [ -n "${bastille_export_options}" ]; then
     # Overrides the case options by the user defined option(s) automatically.
     # Add bastille_export_options="--optionA --optionB" to bastille.conf, or simply `export bastille_export_options="--optionA --optionB"` environment variable.
@@ -162,10 +174,9 @@ else
                 usage
                 ;;
             *)
-                if echo "${1}" | grep -q "\/"; then
-                    DIR_EXPORT="${1}"
+                if echo "${2}" | grep -q "\/"; then
+                    DIR_EXPORT="${2}"
                 fi
-                shift
                 ;;
         esac
     done
@@ -176,16 +187,11 @@ if [ $# -gt 2 ] || [ $# -lt 1 ]; then
 fi
 
 TARGET="${1}"
-GZIP_EXPORT=
-XZ_EXPORT=
-SAFE_EXPORT=
-USER_EXPORT=
-RAW_EXPORT=
-DIR_EXPORT=
-TXZ_EXPORT=
-TGZ_EXPORT=
-OPT_ZSEND="-R"
-COMP_OPTION="0"
+
+# Check for directory export
+if echo "${2}" | grep -q "\/"; then
+    DIR_EXPORT="${2}"
+fi
 
 bastille_root_check
 set_target_single "${TARGET}"
