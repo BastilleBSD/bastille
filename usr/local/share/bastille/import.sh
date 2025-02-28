@@ -52,20 +52,20 @@ EOF
 }
 
 # Handle options.
-FORCE=0
-ZRECV="-u"
+OPT_FORCE=0
+OPT_ZRECV="-u"
 USER_IMPORT=
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-	        usage
-	        ;;
+	-h|--help|help)
+            usage
+	    ;;
         -f|--force)
-            FORCE="1"
+            OPT_FORCE="1"
             shift
             ;;
         -v|--verbose)
-            ZRECV="-u -v"
+            OPT_ZRECV="-u -v"
             shift
             ;;
         -x|--debug)
@@ -75,8 +75,8 @@ while [ "$#" -gt 0 ]; do
         -*) 
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    f) FORCE=1 ;;
-                    v) ZRECV="-u -v" ;;
+                    f) OPT_FORCE=1 ;;
+                    v) OPT_ZRECV="-u -v" ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
                 esac
