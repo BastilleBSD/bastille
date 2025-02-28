@@ -280,7 +280,7 @@ done
 
 # List json format, otherwise list all jails
 if [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 1 ]; then
-    list_all | awk 'BEGIN {print "["} NR>1 {print "{"JID": "" $1 "", "State": "" $2 "", "IP_Address": "" $3 "", "Hostname": "" $5 "", "Release": "" $6 "", "Path": "" $7 ""},"} END {print "]"}' | sed '$s/,//'
+    list_all | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"State\": \"" $2 "\", \"IP_Address\": \"" $3 "\", \"Hostname\": \"" $5 "\", \"Release\": \"" $6 "\", \"Path\": \"" $7 "\"},"} END {print "]"}' | sed '$s/,$//'
 elif [ "${OPT_ALL}" -eq 0 ] && [ "${OPT_JSON}" -eq 1 ]; then
     /usr/sbin/jls -N --libxo json
 elif [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 0 ]; then
