@@ -153,6 +153,10 @@ else
                 OPT_ZSEND="-Rv"
                 shift
                 ;;
+            -x)
+               enable_debug
+               shift
+               ;;
             -*)
                 error_notify "Unknown Option: \"${1}\""
                 usage
@@ -160,10 +164,6 @@ else
             *)
                 if echo "${1}" | grep -q "\/"; then
                     DIR_EXPORT="${1}"
-                else
-                    if [ $# -gt 2 ] || [ $# -lt 1 ]; then
-                       usage
-                    fi
                 fi
                 shift
                 ;;
