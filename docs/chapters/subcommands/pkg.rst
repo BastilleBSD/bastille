@@ -2,7 +2,7 @@
 pkg
 ===
 
-To manage binary packages within the container use `bastille pkg`.
+Manage binary packages inside jails.
 
 .. code-block:: shell
 
@@ -21,9 +21,9 @@ To manage binary packages within the container use `bastille pkg`.
   ...[snip]...
 
 
-The PKG sub-command can, of course, do more than just `install`. The
+The PKG sub-command can do more than just `install`. The
 expectation is that you can fully leverage the pkg manager. This means,
-`install`, `update`, `upgrade`, `audit`, `clean`, `autoremove`, etc., etc.
+`install`, `update`, `upgrade`, `audit`, `clean`, `autoremove`, etc...
 
 .. code-block:: shell
 
@@ -104,3 +104,13 @@ expectation is that you can fully leverage the pkg manager. This means,
   Using existing user 'www'.
   [nginx] [1/1] Extracting nginx-lite-1.24.0_12: 100%
   You may need to manually remove /usr/local/etc/nginx/nginx.conf if it is no longer needed.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille pkg help
+  Usage: bastille pkg [option(s)] TARGET COMMAND args
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -H | --host           Use the hosts 'pkg' instead of the jails.
+    -x | --debug          Enable debug mode.
