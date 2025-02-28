@@ -57,9 +57,9 @@ OPT_ZRECV="-u"
 USER_IMPORT=
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	-h|--help|help)
+	    -h|--help|help)
             usage
-	    ;;
+	        ;;
         -f|--force)
             OPT_FORCE="1"
             shift
@@ -120,7 +120,7 @@ validate_archive() {
             fi
         else
             # Check if user opt to force import
-            if [ -n "${OPT_FORCE}" ]; then
+            if [ "${OPT_FORCE}" -eq 1 ]; then
                 warn "Warning: Skipping archive validation!"
             else
                 error_exit "Checksum file not found. See 'bastille import [option(s)] FILE'."
