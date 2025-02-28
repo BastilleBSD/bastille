@@ -65,7 +65,7 @@ zfs_enable_check() {
 }
 
 opt_count() {
-    COMP_OPTION=$(expr ${COMP_OPTION} + 1)
+    COMP_OPTION=$((COMP_OPTION + 1))
 }
 
 if [ -n "${bastille_export_options}" ]; then
