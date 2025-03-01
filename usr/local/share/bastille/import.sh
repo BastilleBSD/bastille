@@ -207,7 +207,11 @@ generate_config() {
             DEVFS_RULESET=$(grep -wo '\"devfs_ruleset\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/devfs_ruleset://')
             DEVFS_RULESET=${DEVFS_RULESET:-4}
             IS_THIN_JAIL=$(grep -wo '\"basejail\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/basejail://')
-            CONFIG_RELEASE=$(grep -wo '\"release\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/release://' | sed 's/\-[pP].*//')
+	    if [ -z "${RELEASE}" ]; then
+                CONFIG_RELEASE=$(grep -wo '\"release\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/release://' | sed 's/\-[pP].*//')
+	    else
+                CONFIG_RELEASE="${RELEASE}"
+	    fi
             IS_VNET_JAIL=$(grep -wo '\"vnet\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/vnet://')
             VNET_DEFAULT_INTERFACE=$(grep -wo '\"vnet_default_interface\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/vnet_default_interface://')
             ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED=1
@@ -221,7 +225,11 @@ generate_config() {
         PROP_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/prop.ezjail-${FILE_TRIM}-*"
         if [ -n "${PROP_CONFIG}" ]; then
             IPVX_CONFIG=$(grep -wo "jail_${TARGET_TRIM}_ip=.*" ${PROP_CONFIG} | tr -d '" ' | sed "s/jail_${TARGET_TRIM}_ip=//")
-            CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
+	    if [ -z "${RELEASE}" ]; then
+                CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
+	    else 
+                CONFIG_RELEASE="${RELEASE}"
+	    fi
         fi
         # Always assume it's thin for ezjail
         IS_THIN_JAIL=1
@@ -360,13 +368,9 @@ EOF
 
     if [ "${IS_THIN_JAIL:-0}" = "1" ]; then
         if [ -z "${CONFIG_RELEASE}" ]; then
-	    if [ -n "${RELEASE}" ]; then
-                CONFIG_RELEASE="${RELEASE}"
-            else
-                # Fallback to host version
-                CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
-                warn "Warning: ${CONFIG_RELEASE} was set by default!"
-	    fi
+            # Fallback to host version
+            CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
+            warn "Warning: ${CONFIG_RELEASE} was set by default!"
         fi
         mkdir "${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille"
         echo "${bastille_releasesdir}/${CONFIG_RELEASE} ${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille nullfs ro 0 0" \
