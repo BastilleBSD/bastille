@@ -1,4 +1,3 @@
-=========
 bootstrap
 =========
 
@@ -15,12 +14,11 @@ let us know.
 In this document we will describe using the `bootstrap` sub-command with both
 releases and templates. We begin with releases.
 
-
 Releases
-========
+--------
 
 Example
--------
+^^^^^^^
 
 To `bootstrap` a FreeBSD release, run the bootstrap sub-command with the
 release version as the argument.
@@ -44,7 +42,7 @@ download the base.txz. These files are verified (sha256 via MANIFEST file)
 before they are extracted for use.
 
 EOL Releases
-------------
+^^^^^^^^^^^^
 
 It is sometimes necessary to run end-of-life releases for testing or legacy
 application support. By default Bastille will only install supported releases
@@ -59,7 +57,7 @@ By overriding the BASTILLE_URL_FREEBSD variable you can now bootstrap archived
 releases from the FTP archive.
 
 Tips
-----
+^^^^
 
 The `bootstrap` sub-command can now take (0.5.20191125+) an optional second
 argument of "update". If this argument is used, `bastille update` will be run
@@ -67,7 +65,7 @@ immediately after the bootstrap, effectively bootstrapping and applying
 security patches and errata in one motion.
 
 Notes
------
+^^^^^
 
 The bootstrap subcommand is generally only used once to prepare the system. The
 only other use case for the bootstrap command is when a new FreeBSD version is
@@ -85,7 +83,7 @@ mileage may vary; let me know what happens.
 
 
 Templates
-=========
+---------
 
 Bastille aims to integrate container automation into the platform while
 maintaining a simple, uncomplicated design. Templates are git repositories with
@@ -94,7 +92,7 @@ automation definitions for packages, services, file overlays, etc.
 To download one of these templates see the example below.
 
 Example
--------
+^^^^^^^
 
 .. code-block:: shell
 
@@ -103,13 +101,13 @@ Example
   ishmael ~ # bastille bootstrap https://gitlab.com/bastillebsd-templates/python3
 
 Tips
-----
+^^^^
 See the documentation on templates for more information on how they work and
 how you can create or customize your own. Templates are a powerful part of
 Bastille and facilitate full container automation.
 
 Notes
------
+^^^^^
 If you don't want to bother with git to use templates you can create them
 manually on the Bastille system and apply them.
 

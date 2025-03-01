@@ -1,4 +1,3 @@
-=====
 setup
 =====
 
@@ -14,3 +13,8 @@ options for a Bastille host with one command.
   ishmael ~ # bastille setup zfs       ## only configure ZFS storage
   ishmael ~ # bastille setup vnet      ## only configure VNET bridge
   ishmael ~ # bastille setup           ## configure all of the above
+
+.. code-block:: shell
+
+  ishmael ~ # bastille setup help
+  Usage: bastille setup [pf|network|zfs|vnet]

@@ -1,4 +1,3 @@
-======
 create
 ======
 
@@ -29,7 +28,6 @@ address to the new system.
 
 The above code will create a jail with a /24 mask.  At the time of this documentation you 
 can only use CIDR notation, and not use a netmask 255.255.255.0 to accomplish this.
-
 
 I recommend using private (rfc1918) ip address ranges for your container.  These
 ranges include:
