@@ -47,6 +47,7 @@ EOF
 }
 
 # Handle options.
+AUTO=0
 OPTION=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -101,7 +102,7 @@ if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
 
-jail_check() {
+thick_jail_check() {
     # Check if the jail is thick and is running
     set_target_single "${TARGET}"
     check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
@@ -112,16 +113,38 @@ jail_check() {
     fi
 }
 
+thin_jail_check() {
+    # Check if the jail is thick and is running
+    set_target_single "${TARGET}"
+    check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${TARGET}"
+    else   
+        error_notify "Jail is running."
+        error_continue "Use [-a|--auto] to auto-stop the jail."
+    fi
+}
+
 release_check() {
     # Validate the release
     if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
         error_exit "${NEWRELEASE} is not a valid release."
     fi
+    # Exit if NEWRELEASE doesn't exist
+    if [ "${THIN_JAIL}" -eq 1 ]; then
+        if [ ! -d "${bastille_releasesdir}/${NEWRELEASE}" ]; then
+            error_notify "Release not found: ${NEWRELEASE}"
+            error_exit "See 'bastille bootstrap ${NEWRELEASE} to bootstrap the release."
+        fi
+    fi
 }
 
 jail_upgrade() {
     local _jailname="${1}"
-    local _oldrelease="$(jexec -l ${TARGET} freebsd-version)"
+    if [ "${THIN_JAIL}" -eq 1 ]; then
+        local _oldrelease="$(bastille config ${_jailname} get osrelease)"
+    else
+        local _oldrelease="$(jexec -l ${TARGET} freebsd-version)"
+    fi
     local _newrelease="${2}"
     local _jailpath="${bastille_jailsdir}/${TARGET}/root"
     local _workdir="${_jailpath}/var/db/freebsd-update"
@@ -131,11 +154,6 @@ jail_upgrade() {
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${TARGET}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
         local _newrelease="${NEWRELEASE}"
-        # Exit if NEWRELEASE doesn't exist
-        if [ ! -d "${bastille_releasesdir}/${NEWRELEASE}" ]; then
-            error_notify "Release not found: ${NEWRELEASE}"
-            error_exit "See 'bastille bootstrap ${NEWRELEASE} to bootstrap the release."
-        fi
         # Update "osrelease" entry inside jail.conf
         sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/fstab"
         # Update "fstab" entry
@@ -175,12 +193,26 @@ jail_updates_install() {
     fi
 }
 
+# Check if jail is thick or thin
+THIN_JAIL=0
+if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+    THIN_JAIL=1
+fi
+
 # Check what we should upgrade
 if [ "${NEWRELEASE}" = "install" ]; then
-    jail_check
+    if [ "${THIN_JAIL}" -eq 1 ]; then
+        thin_jail_check
+    else
+        thick_jail_check
+    fi
     jail_updates_install "${TARGET}"
 else
-    jail_check
+    if [ "${THIN_JAIL}" -eq 1 ]; then
+        thin_jail_check
+    else
+        thick_jail_check
+    fi
     release_check
     jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi
