@@ -691,10 +691,12 @@ while [ $# -gt 0 ]; do
 		    usage
                 else
                     info "Using custom config: ${OPT_CONFIG}"
+		    # shellcheck disable=SC1090
 		    . /usr/local/etc/bastille/${OPT_CONFIG}
                 fi
 	    else
                 info "Using custom config: ${OPT_CONFIG}"
+		# shellcheck disable=SC1090
                 . "${OPT_CONFIG}"
 	    fi
             shift 2
