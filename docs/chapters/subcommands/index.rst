@@ -6,19 +6,25 @@ Bastille sub-commands
    :caption: Contents:
 
    bootstrap
-   cmd
    clone
+   cmd
+   config
    console
    convert
    cp
    create
    destroy
    edit
+   etcupdate
    export
    htop
    import
+   jcp
+   limits
+   list
    mount
    pkg
+   rcp
    rdr
    rename
    restart
@@ -33,3 +39,4 @@ Bastille sub-commands
    update
    upgrade
    verify
+   zfs
