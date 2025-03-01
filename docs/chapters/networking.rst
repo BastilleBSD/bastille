@@ -1,3 +1,37 @@
+Network Basics - IP Address
+===========================
+
+Bastille includes a number of networking options.
+
+.. code-block:: shell
+
+  bastille create alcatraz 13.2-RELEASE 192.168.1.50/24 vtnet0
+
+The IP address specified above can be any of the following options.
+
+1. An IP in your local subnet should be chosen if you create your jail using -V or -B (VNET jail).
+It is also preferable to add the subnet mask (/24 or whaterver your subnet is) to the IP.
+
+2. 0.0.0.0 will configure your jail to use DHCP to obtain an address from your router. This should only
+be used with -V and -B.
+
+3. Any IP address inside the RFC1918 range if you are not using a VNET jail. Bastille will automatically add 
+this IP to the firewall table to allow outbound access. It you want traffic to be forwarded into the jail, you
+can use the `bastille rdr` command.
+
+4. Any IP in your local subnet without the -V or -B options will add the IP as an alias to the selected interface, which
+will simply end up sharing the interface. If the IP is in your local subnet, you will not need the `bastille rdr`
+command. Traffic will pass in and out just as in a VNET jail.
+
+5. Setting the IP to `inherit` will make the jail inherit the entire
+host network stack.
+
+6. Setting the IP to `ip_hostname` will add all the IPs that the hostname resolves to. This is an advanced option
+and should only be used if you know what you are doing.
+
+Note that jails support specifying an IP without the subnet (/24 or whatever yours is) but we highly recommend setting it, especially
+on VNET jails. Not doing so can cause issues in some rare cases.
+
 Network Requirements
 ====================
 Here's the scenario. You've installed Bastille at home or in the cloud and want
