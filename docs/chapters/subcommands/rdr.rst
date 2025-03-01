@@ -1,4 +1,3 @@
-===
 rdr
 ===
 
@@ -12,16 +11,6 @@ on all interfaces as this will include the jail interface - you should
 specify the interface they run on in rc.conf (or other config files)
 
 .. code-block:: shell
-
-    # bastille rdr --help
-    Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
-    Options:
-
-    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
-    -x | --debug                                 Enable debug mode.
     
     # bastille rdr dev1 tcp 2001 22
     [jail1]:
@@ -78,3 +67,16 @@ The options can be used together, as seen above.
 
 If you have multiple interfaces assigned to your jail, `bastille rdr` will
 only redirect using the default one.
+
+.. code-block:: shell
+
+  # bastille rdr --help
+  Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
+ 
+    Options:
+
+    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -x | --debug                                 Enable debug mode.
