@@ -47,6 +47,7 @@ EOF
 }
 
 # Handle options.
+AUTO=0
 OPTION=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -101,7 +102,7 @@ if freebsd-version | grep -qi HBSD; then
     error_exit "Not yet supported on HardenedBSD."
 fi
 
-jail_check() {
+thick_jail_check() {
     # Check if the jail is thick and is running
     set_target_single "${TARGET}"
     check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
@@ -109,6 +110,17 @@ jail_check() {
     else   
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
+    fi
+}
+
+thin_jail_check() {
+    # Check if the jail is thick and is running
+    set_target_single "${TARGET}"
+    check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${TARGET}"
+    else   
+        error_notify "Jail is running."
+        error_continue "Use [-a|--auto] to auto-stop the jail."
     fi
 }
 
@@ -175,12 +187,26 @@ jail_updates_install() {
     fi
 }
 
+# Check if jail is thick or thin
+THIN_JAIL=0
+if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+    THIN_JAIL=1
+fi
+
 # Check what we should upgrade
 if [ "${NEWRELEASE}" = "install" ]; then
-    jail_check
+    if [ "${THIN_JAIL}" -eq 1 ]; then
+        thin_jail_check
+    else
+        thick_jail_check
+    fi
     jail_updates_install "${TARGET}"
 else
-    jail_check
+    if [ "${THIN_JAIL}" -eq 1 ]; then
+        thin_jail_check
+    else
+        thick_jail_check
+    fi
     release_check
     jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi
