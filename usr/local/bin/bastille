@@ -54,12 +54,6 @@ bastille_conf_check() {
     fi
 }
 
-bastille_conf_check
-
-## we only load this if conf_check passes
-. /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
-
 ## bastille_prefix should be 0750
 ## this restricts file system access to privileged users
 bastille_perms_check() {
@@ -72,18 +66,13 @@ bastille_perms_check() {
     fi
 }
 
-bastille_perms_check
-
-## version
-BASTILLE_VERSION="0.13.20250126"
-
 usage() {
     cat << EOF
 Bastille is an open-source system for automating deployment and management of
 containerized applications on FreeBSD.
 
 Usage:
-  bastille command TARGET [args]
+  bastille [options(s)] CMD TARGET [args]
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
@@ -126,10 +115,17 @@ Available Commands:
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
+Use "bastille -c|--config file.conf" to specify an alternative config file.
 
 EOF
     exit 1
 }
+
+bastille_conf_check
+bastille_perms_check
+
+# Version
+BASTILLE_VERSION="0.13.20250126"
 
 if [ "$#" -lt 1 ]; then
     usage
@@ -138,15 +134,55 @@ else
     shift
 fi
 
-# Handle special-case commands first.
+# Handle options
+USE_CUSTOM_CONFIG=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        version|-v|--version)
+            info "${BASTILLE_VERSION}"
+            exit 0
+            ;;
+        help|-h|--help)
+            usage
+            ;;
+        -c|--config)
+            USE_CUSTOM_CONFIG=1
+            OPT_CONFIG="${2}"
+	        if [ ! -f "${OPT_CONFIG}" ]; then
+                if [ ! -f /usr/local/etc/bastille/${OPT_CONFIG} ]; then
+                    error_notify "Not a valid config file: ${OPT_CONFIG}"
+		            usage
+                else
+                    info "Using custom config: ${OPT_CONFIG}"
+		            # shellcheck disable=SC1090
+		            . /usr/local/etc/bastille/${OPT_CONFIG}
+                fi
+	        else
+                info "Using custom config: ${OPT_CONFIG}"
+		        # shellcheck disable=SC1090
+                . "${OPT_CONFIG}"
+	        fi
+            shift 2
+            ;;
+        -*) 
+            error_notify "Unknown Option: \"${1}\""
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# We only load this if conf_check passes
+. /usr/local/share/bastille/common.sh
+# Load default config if no config was given
+if [ "${USE_CUSTOM_CONFIG}" -eq 0 ]; then
+    . /usr/local/etc/bastille/bastille.conf
+fi
+
+# Handle commands
 case "${CMD}" in
-    version|-v|--version)
-        info "${BASTILLE_VERSION}"
-        exit 0
-        ;;
-    help|-h|--help)
-        usage
-        ;;
     bootstrap| \
     clone| \
     cmd| \
