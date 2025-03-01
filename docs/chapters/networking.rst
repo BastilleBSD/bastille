@@ -1,5 +1,8 @@
-Network Basics - IP Address
-===========================
+Networking
+==========
+
+IP Address Options
+------------------
 
 Bastille includes a number of IP options.
 
@@ -32,8 +35,9 @@ and should only be used if you know what you are doing.
 Note that jails support specifying an IP without the subnet (/24 or whatever yours is) but we highly recommend setting it, especially
 on VNET jails. Not doing so can cause issues in some rare cases.
 
-Network Requirements
-====================
+Network Scenarios
+-----------------
+
 Here's the scenario. You've installed Bastille at home or in the cloud and want
 to get started putting applications in secure little containers, but how do you
 get these containers on the network?  Bastille tries to be flexible about how to 
@@ -59,7 +63,8 @@ containers, because raw socket access are a security hole. Instead, install and
 test with `wget`/`curl`/`fetch` instead.
 
 Shared Interface on Home or Small Office Network
-================================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 If you have just one computer, or a home or small office network, where you are
 separated from the rest of the internet by a router.  So you are free to use
 `private IP addresses
@@ -83,7 +88,8 @@ This method is the simplest. All you need to know is the name of your network
 interface and a free IP on your local network.
 
 Shared Interface on IPV6 network (vultr.com)
-============================================ 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Some ISP's, such as `Vultr <https://vultr.com>`_, give you a single ipv4 address,
 and a large block of ipv6 addresses. You can then assign a unique ipv6 address
 to each Bastille Container.
@@ -130,7 +136,8 @@ use `wget`/`curl`/`fetch` to test the connectivity.
 
 
 Virtual Network (VNET)
-======================
+----------------------
+
 (Added in 0.6.x) VNET is supported on FreeBSD 12+ only.
 
 Virtual Network (VNET) creates a private network interface for a container.
@@ -198,7 +205,8 @@ Below is the definition of what these three parameters are used for and mean:
 				    interface, set to 0	to disable it.
 
   
-**Regarding Routes**
+Regarding Routes
+----------------
 
 Bastille will attempt to auto-detect the default route from the host system and
 assign it to the VNET container. This auto-detection may not always be accurate
@@ -222,7 +230,8 @@ This config change will apply the defined gateway to any new containers.
 Existing containers will need to be manually updated.
 
 Virtual Network (VNET) on External Bridge
-=========================================
+-----------------------------------------
+
 To create a VNET based container and attach it to an external, already existing
 bridge, use the `-B` option, an IP/netmask and external bridge.
 
@@ -235,7 +244,8 @@ bridge and connect / disconnect containers as they are started and stopped.
 The bridge needs to be created/enabled before creating and starting the jail.
 
 Public Network
-==============
+--------------
+
 In this section we describe how to network containers in a public network
 such as a cloud hosting provider who only provides you with a single ip address. 
 (AWS, Digital Ocean, etc) (The exception is vultr.com, which does 
@@ -247,6 +257,7 @@ network.
 
 loopback (bastille0)
 --------------------
+
 What we recommend is creating a cloned loopback interface (`bastille0`) and
 assigning all the containers private (rfc1918) addresses on that interface. The
 setup I develop on and use Bastille day-to-day uses the `10.0.0.0/8` address
@@ -280,7 +291,8 @@ Second, enable the firewall:
 Create the firewall rules:
 
 /etc/pf.conf
-------------
+^^^^^^^^^^^^
+
 .. code-block:: shell
 
   ext_if="vtnet0"
@@ -345,7 +357,7 @@ ssh session and continue.
 This step only needs to be done once in order to prepare the host.
 
 local_unbound
-=============
+-------------
 
 If you are running "local_unbound" on your server, you will probably have issues with DNS resolution.
 
