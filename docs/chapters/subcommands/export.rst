@@ -15,16 +15,16 @@ can be exported only when the jail is not running.
 
 .. code-block:: shell
 
-  Usage:  bastille export | option(s) | TARGET | PATH
+  Usage:  bastille export [option(s)] TARGET PATH
 
 Available options are:
 
 .. code-block:: shell
 
-         --gz       -- Export a ZFS jail using GZIP(.gz) compressed image.
-    -r | --raw      -- Export a ZFS jail to an uncompressed RAW image.
-    -s | --safe     -- Safely stop and start a ZFS jail before the exporting process.
-         --tgz      -- Export a jail using simple .tgz compressed archive instead.
-         --txz      -- Export a jail using simple .txz compressed archive instead.
-    -v | --verbose  -- Be more verbose during the ZFS send operation.
-         --xz       -- Export a ZFS jail using XZ(.xz) compressed image.
+         --gz               Export a ZFS jail using GZIP(.gz) compressed image.
+    -r | --raw              Export a ZFS jail to an uncompressed RAW image.
+    -s | --safe             Safely stop and start a ZFS jail before the exporting process.
+         --tgz              Export a jail using simple .tgz compressed archive instead.
+         --txz              Export a jail using simple .txz compressed archive instead.
+    -v | --verbose          Be more verbose during the ZFS send operation.
+         --xz               Export a ZFS jail using XZ(.xz) compressed image.
