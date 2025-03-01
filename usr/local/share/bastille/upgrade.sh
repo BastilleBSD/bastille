@@ -127,9 +127,6 @@ jail_upgrade() {
     local _workdir="${_jailpath}/var/db/freebsd-update"
     local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
 
-    jail_check
-    release_check
-
     # Upgrade a thin jail
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${TARGET}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
@@ -168,7 +165,6 @@ jail_updates_install() {
     local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
     # Finish installing upgrade on a thick container
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
-        jail_check
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
         -j "${_jailname}" \
         -d "${_workdir}" \
@@ -181,7 +177,10 @@ jail_updates_install() {
 
 # Check what we should upgrade
 if [ "${NEWRELEASE}" = "install" ]; then
+    jail_check
     jail_updates_install "${TARGET}"
 else
+    jail_check
+    release_check
     jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi
