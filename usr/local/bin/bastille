@@ -141,20 +141,20 @@ while [ "$#" -gt 0 ]; do
         -c|--config)
             USE_CUSTOM_CONFIG=1
             OPT_CONFIG="${2}"
-	        if [ ! -f "${OPT_CONFIG}" ]; then
+	    if [ ! -f "${OPT_CONFIG}" ]; then
                 if [ ! -f /usr/local/etc/bastille/${OPT_CONFIG} ]; then
                     error_notify "Not a valid config file: ${OPT_CONFIG}"
-		            usage
+		    usage
                 else
                     info "Using custom config: ${OPT_CONFIG}"
-		            # shellcheck disable=SC1090
-		            . /usr/local/etc/bastille/${OPT_CONFIG}
+		    # shellcheck disable=SC1090
+		    . /usr/local/etc/bastille/${OPT_CONFIG}
                 fi
-	        else
+	    else
                 info "Using custom config: ${OPT_CONFIG}"
-		        # shellcheck disable=SC1090
+		# shellcheck disable=SC1090
                 . "${OPT_CONFIG}"
-	        fi
+	    fi
             shift 2
             ;;
         -*) 
