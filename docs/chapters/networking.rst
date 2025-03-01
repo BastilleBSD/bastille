@@ -12,7 +12,7 @@ The IP address specified above can be any of the following options.
 1. An IP in your local subnet should be chosen if you create your jail using -V or -B (VNET jail).
 It is also preferable to add the subnet mask (/24 or whaterver your subnet is) to the IP.
 
-2. 0.0.0.0 will configure your jail to use DHCP to obtain an address from your router. This should only
+2. DHCP, SYNCDHCP, or 0.0.0.0 will configure your jail to use DHCP to obtain an address from your router. This should only
 be used with -V and -B.
 
 3. Any IP address inside the RFC1918 range if you are not using a VNET jail. Bastille will automatically add 
