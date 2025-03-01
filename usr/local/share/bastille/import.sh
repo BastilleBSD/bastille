@@ -228,7 +228,7 @@ generate_config() {
 	    if [ -z "${RELEASE}" ]; then
                 CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
 	    else 
-                ="${RELEASE}"
+                CONFIG_RELEASE="${RELEASE}"
 	    fi
         fi
         # Always assume it's thin for ezjail
