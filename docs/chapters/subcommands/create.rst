@@ -64,6 +64,7 @@ the below help output.
     
     -B | --bridge                            Enables VNET, VNET containers are attached to a specified, already existing external bridge.
     -C | --clone                             Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
+    -c | --config                            Use a customized configuration file to override the default values.
     -D | --dual                              Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
     -E | --empty                             Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
     -L | --linux                             This option is intended for testing with Linux jails, this is considered experimental.
