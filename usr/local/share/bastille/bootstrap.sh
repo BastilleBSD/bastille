@@ -37,8 +37,9 @@ usage() {
     error_notify "Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]"
     cat << EOF
     Options:
-
-    -x | --debug          Enable debug mode.
+    
+    -c | --config          Use a customized configuration file to override the default values.
+    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
@@ -423,6 +424,24 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -c|--config)
+            OPT_CONFIG="${2}"
+	        if [ ! -f "${OPT_CONFIG}" ]; then
+                if [ ! -f /usr/local/etc/bastille/${OPT_CONFIG} ]; then
+                    error_notify "Not a valid config file: ${OPT_CONFIG}"
+		            usage
+                else
+                    info "Using custom config: ${OPT_CONFIG}"
+		        # shellcheck disable=SC1090
+		        . /usr/local/etc/bastille/${OPT_CONFIG}
+                fi
+	        else
+                info "Using custom config: ${OPT_CONFIG}"
+		        # shellcheck disable=SC1090
+                . "${OPT_CONFIG}"
+	        fi
+            shift 2
             ;;
         -x|--debug)
             enable_debug
