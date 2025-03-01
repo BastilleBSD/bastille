@@ -1,7 +1,7 @@
 Network Basics - IP Address
 ===========================
 
-Bastille includes a number of networking options.
+Bastille includes a number of IP options.
 
 .. code-block:: shell
 
