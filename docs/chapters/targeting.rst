@@ -4,15 +4,19 @@ Targeting
 Bastille uses a `command target arguments` syntax, meaning that each command
 requires a target. Targets are usually containers, but can also be releases.
 
-Targeting a container is done by providing the exact containers name.
+Targeting a container is done by providing the exact jail name, the JID of the jail, or by typing the 
+starting few characters of a jail. If more than one matching jail will be found, you will see a message
+saying so.
 
-Targeting a release is done by providing the release name. (Note: do not
+Targeting a release is done by providing the exact release name. (Note: do not
 include the `-pX` point-release version.)
 
-Bastille includes a pre-defined keyword ALL to target all running containers.
+Bastille includes a pre-defined keyword [ALL|all} to target all running containers.
+It is also possible to target multiple jails by grouping them in quotes, as seen below.
 
-In the future I would like to support more options, including globbing, lists
-and regular-expressions.
+.. code-block:: shell
+
+  ishmael ~ # bastille cmd "jail1 jail2 jail3" echo Hello!
 
 Examples: Containers
 ====================
