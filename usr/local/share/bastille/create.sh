@@ -73,7 +73,7 @@ validate_ip() {
         info "Valid: (${_ip6})."
         ipx_addr="ip6.addr"
     else
-        if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
+        if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
             info "Valid: (${_ip})."
         else
             local IFS
