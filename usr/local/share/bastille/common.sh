@@ -30,11 +30,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Source config file
-if [ -f /usr/local/etc/bastille/bastille.conf ]; then
-    . /usr/local/etc/bastille/bastille.conf
-fi
-
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
