@@ -43,7 +43,6 @@ usage() {
     
     -B | --bridge                          Enables VNET, VNET containers are attached to a specified, already existing external bridge.
     -C | --clone                           Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
-    -c | --config                          Use a customized configuration file to override the default values.
     -D | --dual                            Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
     -E | --empty                           Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
     -L | --linux                           This option is intended for testing with Linux jails, this is considered experimental.
@@ -682,24 +681,6 @@ while [ $# -gt 0 ]; do
         -C|--clone)
             CLONE_JAIL="1"
             shift
-            ;;
-        -c|--config)
-            OPT_CONFIG="${2}"
-	    if [ ! -f "${OPT_CONFIG}" ]; then
-                if [ ! -f /usr/local/etc/bastille/${OPT_CONFIG} ]; then
-                    error_notify "Not a valid config file: ${OPT_CONFIG}"
-		    usage
-                else
-                    info "Using custom config: ${OPT_CONFIG}"
-		    # shellcheck disable=SC1090
-		    . /usr/local/etc/bastille/${OPT_CONFIG}
-                fi
-	    else
-                info "Using custom config: ${OPT_CONFIG}"
-		# shellcheck disable=SC1090
-                . "${OPT_CONFIG}"
-	    fi
-            shift 2
             ;;
         -D|--dual)
             DUAL_STACK="1"
