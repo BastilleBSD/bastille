@@ -1,4 +1,3 @@
-========
 Template
 ========
 Looking for ready made CI/CD validated `Bastille Templates`_?
