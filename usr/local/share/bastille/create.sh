@@ -667,7 +667,6 @@ LINUX_JAIL=""
 STATIC_MAC=""
 DUAL_STACK=""
 VALIDATE_RELEASE="1"
-OPT_CONFIG=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
