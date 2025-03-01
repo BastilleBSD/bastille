@@ -127,13 +127,6 @@ bastille_perms_check
 # Version
 BASTILLE_VERSION="0.13.20250126"
 
-if [ "$#" -lt 1 ]; then
-    usage
-else
-    CMD="${1}"
-    shift
-fi
-
 # Handle options
 USE_CUSTOM_CONFIG=0
 while [ "$#" -gt 0 ]; do
@@ -179,6 +172,13 @@ done
 # Load default config if no config was given
 if [ "${USE_CUSTOM_CONFIG}" -eq 0 ]; then
     . /usr/local/etc/bastille/bastille.conf
+fi
+
+if [ "$#" -lt 1 ]; then
+    usage
+else
+    CMD="${1}"
+    shift
 fi
 
 # Handle commands
