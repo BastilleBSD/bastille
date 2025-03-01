@@ -8,7 +8,7 @@ Requires htop to be installed in the jail.
     :align: center
     :alt: bastille htop container
 
-..code-block:: shell
+.. code-block:: shell
 
   ishmael ~ # bastille htop help
   Usage: bastille htop [options(s)] TARGET
