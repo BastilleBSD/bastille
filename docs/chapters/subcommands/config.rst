@@ -1,6 +1,5 @@
-=======
 config
-=======
+======
 
 Get or set properties for targeted jail(s).
 
