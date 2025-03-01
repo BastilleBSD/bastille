@@ -343,7 +343,7 @@ generate_config() {
         fi
 
         # Let the user configure network manually
-        if [ -z "${NETIF_CONFIG}" ]; then
+        if [ -z "${IP4_DEFINITION}" ] && [ -z "${IP6_DEFINITION}" ]; then
 	    IP4_DEFINITION="ip4.addr = lo1|-;"
             IP6_DEFINITION=""
             IP6_MODE="disable"
