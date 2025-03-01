@@ -228,7 +228,7 @@ generate_config() {
 	    if [ -z "${RELEASE}" ]; then
                 CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
 	    else 
-                CONFIG_RELEASE="${RELEASE}"
+                ="${RELEASE}"
 	    fi
         fi
         # Always assume it's thin for ezjail
@@ -410,7 +410,11 @@ update_config() {
     # The config on select archives does not provide a clear way to determine
     # the base release, so lets try to get it from the base/COPYRIGHT file,
     # otherwise warn user and fallback to host system release
-    CONFIG_RELEASE=$(grep -wo 'releng/[0-9]\{2\}.[0-9]/COPYRIGHT' "${bastille_jailsdir}/${TARGET_TRIM}/root/COPYRIGHT" | sed 's|releng/||;s|/COPYRIGHT|-RELEASE|')
+    if [ -z "${RELEASE}" ]; then
+        CONFIG_RELEASE=$(grep -wo 'releng/[0-9]\{2\}.[0-9]/COPYRIGHT' "${bastille_jailsdir}/${TARGET_TRIM}/root/COPYRIGHT" | sed 's|releng/||;s|/COPYRIGHT|-RELEASE|')
+    else
+        CONFIG_RELEASE="${RELEASE}"
+    fi
     if [ -z "${CONFIG_RELEASE}" ]; then
         # Fallback to host version
         CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
