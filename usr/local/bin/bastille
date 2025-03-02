@@ -129,14 +129,13 @@ if [ -z "${BASTILLE_CONFIG}" ]; then
     BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
     export BASTILLE_CONFIG
 elif [ -r "${BASTILLE_CONFIG}" ]; then
-    info "Using custom config: ${BASTILLE_CONFIG}"
     export BASTILLE_CONFIG
 elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
     BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-    info "Using custom config: ${BASTILLE_CONFIG}"
     export BASTILLE_CONFIG
 else
-    error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
+    echo "Not a valid config file: ${BASTILLE_CONFIG}"
+    exit 1
 fi   
 
 # Load common.sh after setting BASTILLE_CONFIG
