@@ -31,7 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Load config. This only has to be done here
-# becasue all commands load this file
+# because all commands load this file
 # shellcheck disable=SC1090
 . ${BASTILLE_CONFIG}
 	
