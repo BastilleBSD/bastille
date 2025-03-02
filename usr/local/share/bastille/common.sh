@@ -46,6 +46,7 @@ bastille_root_check() {
 load_config() {
     _user="$(id -un)"
 	if [ "${_user}" != "root" ] && [ -r "/usr/local/etc/bastille/bastille_${_user}.conf" ]; then
+            # shellcheck disable=SC1090
 	    . /usr/local/etc/bastille/bastille_${_user}.conf
 	else
 	    . /usr/local/etc/bastille/bastille.conf
