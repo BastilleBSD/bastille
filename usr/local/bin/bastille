@@ -31,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+. /usr/local/share/bastille/common.sh
 
 ## check for config existence
 bastille_conf_check() {
@@ -54,12 +55,6 @@ bastille_conf_check() {
     fi
 }
 
-bastille_conf_check
-
-## we only load this if conf_check passes
-. /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
-
 ## bastille_prefix should be 0750
 ## this restricts file system access to privileged users
 bastille_perms_check() {
@@ -71,11 +66,6 @@ bastille_perms_check() {
         fi
     fi
 }
-
-bastille_perms_check
-
-## version
-BASTILLE_VERSION="0.13.20250126"
 
 usage() {
     cat << EOF
@@ -131,6 +121,48 @@ EOF
     exit 1
 }
 
+bastille_conf_check
+bastille_perms_check
+
+BASTILLE_VERSION="0.13.20250126"
+
+# Handle options
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        version|-v|--version)
+            info "${BASTILLE_VERSION}"
+            exit 0
+            ;;
+        -c|--config)
+            BASTILLE_CONFIG="${2}"
+            if [ -r "${BASTILLE_CONFIG}" ]; then
+                info "Using custom config: ${BASTILLE_CONFIG}"
+            elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+                BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+                info "Using custom config: ${BASTILLE_CONFIG}"
+            else
+                error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
+            fi                
+            shift 2
+            ;;
+        -*)
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    x) enable_debug ;;
+                    a) AUTO=1 ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 if [ "$#" -lt 1 ]; then
     usage
 else
@@ -140,13 +172,6 @@ fi
 
 # Handle special-case commands first.
 case "${CMD}" in
-    version|-v|--version)
-        info "${BASTILLE_VERSION}"
-        exit 0
-        ;;
-    help|-h|--help)
-        usage
-        ;;
     bootstrap| \
     clone| \
     cmd| \
