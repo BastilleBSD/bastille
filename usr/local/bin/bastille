@@ -116,6 +116,7 @@ Available Commands:
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
+Use "bastille -c|--config command" to slecify a non-defaukt config file.
 
 EOF
     exit 1
@@ -125,6 +126,8 @@ bastille_conf_check
 bastille_perms_check
 
 BASTILLE_VERSION="0.13.20250126"
+BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
+export BASTILLE_CONFIG
 
 # Handle options
 while [ "$#" -gt 0 ]; do
@@ -140,9 +143,11 @@ while [ "$#" -gt 0 ]; do
             BASTILLE_CONFIG="${2}"
             if [ -r "${BASTILLE_CONFIG}" ]; then
                 info "Using custom config: ${BASTILLE_CONFIG}"
+                export BASTILLE_CONFIG
             elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
                 BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
                 info "Using custom config: ${BASTILLE_CONFIG}"
+                export BASTILLE_CONFIG
             else
                 error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
             fi                
