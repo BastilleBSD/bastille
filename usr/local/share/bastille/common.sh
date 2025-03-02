@@ -30,6 +30,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Load config. This only has to be done here
+# becasue all commands load this file
+# shellcheck disable=SC1090
+. ${BASTILLE_CONFIG}
+	
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -42,14 +47,6 @@ bastille_root_check() {
         error_exit "root / sudo / doas required"
     fi
 }
-
-load_config() {
-    # shellcheck disable=SC1090
-    . ${BASTILLE_CONFIG}
-}
-
-# Load configuration file
-load_config
 
 enable_color() {
     . /usr/local/share/bastille/colors.pre.sh

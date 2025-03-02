@@ -32,6 +32,8 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
+BASTILLE_VERSION="0.13.20250126"
+
 ## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
@@ -72,7 +74,7 @@ Bastille is an open-source system for automating deployment and management of
 containerized applications on FreeBSD.
 
 Usage:
-  bastille command TARGET [args]
+  bastille command [option(s)] TARGET [args]
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
@@ -113,9 +115,9 @@ Available Commands:
   verify      Compare release against a "known good" index.
   zfs         Manage (get|set) ZFS attributes on targeted container(s).
 
-Use "bastille -v|--version" for version information.
-Use "bastille command -h|--help" for more information about a command.
-Use "bastille -c|--config command" to specify a non-defaukt config file.
+Use "bastille [-v|--version]" for version information.
+Use "bastille command [-h|--help]" for more information about a command.
+Use "bastille [-c|--config config.conf] command" to specify a non-default config file.
 
 EOF
     exit 1
@@ -124,7 +126,6 @@ EOF
 bastille_conf_check
 bastille_perms_check
 
-BASTILLE_VERSION="0.13.20250126"
 if [ -z "${BASTILLE_CONFIG}" ]; then
     BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
     export BASTILLE_CONFIG
