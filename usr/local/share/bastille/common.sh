@@ -30,11 +30,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Source config file
-if [ -f /usr/local/etc/bastille/bastille.conf ]; then
-    . /usr/local/etc/bastille/bastille.conf
-fi
-
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -47,6 +42,18 @@ bastille_root_check() {
         error_exit "root / sudo / doas required"
     fi
 }
+
+load_config() {
+    _user="$(id -un)"
+	if [ "${_user}" != "root" ] && [ -r "/usr/local/etc/bastille/bastille_${_user}.conf" ]; then
+	    . /usr/local/etc/bastille/bastille_${_user}.conf
+	else
+	    . /usr/local/etc/bastille/bastille.conf
+	fi
+}
+
+# Load configuration file
+load_config
 
 enable_color() {
     . /usr/local/share/bastille/colors.pre.sh

@@ -32,7 +32,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
+load_config
 
 usage() {
     error_notify "Usage: bastille limits [option(s)] TARGET OPTION VALUE"
