@@ -41,14 +41,15 @@ usage() {
     cat << EOF
     Options:
 
-    -D | --dual                Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
-    -M | --static-mac          Generate a static MAC address for jail (VNET only).
-    -E | --empty               Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
-    -L | --linux               This option is intended for testing with Linux jails, this is considered experimental.
-    -T | --thick               Creates a thick container, they consume more space as they are self contained and independent.
-    -V | --vnet                Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
-    -C | --clone               Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
-    -B | --bridge              Enables VNET, VNET containers are attached to a specified, already existing external bridge.
+    -D | --dual                 Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
+    -M | --static-mac           Generate a static MAC address for jail (VNET only).
+    -E | --empty                Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -L | --linux                This option is intended for testing with Linux jails, this is considered experimental.
+    -T | --thick                Creates a thick container, they consume more space as they are self contained and independent.
+    -V | --vnet                 Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -v | --vlan VLANID          Creates the jail with specified VLAN ID
+    -C | --clone                Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
+    -B | --bridge               Enables VNET, VNET containers are attached to a specified, already existing external bridge.
 
 EOF
     exit 1
@@ -255,7 +256,7 @@ generate_vnet_jail_conf() {
     else
         devfs_ruleset_value=13
     fi
-    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
+    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}" "${VLAN_ID}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   enforce_statfs = 2;
@@ -662,6 +663,7 @@ EMPTY_JAIL=""
 THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
+VLAN_ID=""
 LINUX_JAIL=""
 STATIC_MAC=""
 DUAL_STACK=""
@@ -694,6 +696,10 @@ while [ $# -gt 0 ]; do
         -V|--vnet)
             VNET_JAIL="1"
             shift
+            ;;
+        -v|--vlan)
+            VLAN_ID="${2}
+            shift 2
             ;;
         -B|--bridge)
             VNET_JAIL="1"
@@ -742,6 +748,8 @@ elif [ -n "${LINUX_JAIL}" ]; then
     fi
 elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
     error_exit "Error: Clonejail and Thickjail can't be used together."
+elif [ -z "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ] && [ -n "${VLAN_ID}" ]; then
+    error_exit "Error: VLANs can only be used with VNET and bridged VNET jails."
 fi
 
 NAME="$1"
