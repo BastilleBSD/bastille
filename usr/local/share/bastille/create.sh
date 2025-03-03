@@ -554,10 +554,12 @@ create_jail() {
         fi
     fi
 
-    # Exit if jail was not started, which means something is wrong.
-    if ! check_target_is_running "${NAME}"; then
-        bastille destroy "${NAME}"
-        error_exit "[${NAME}]: Failed to create jail..."
+    # Exit if jail was not started, except for empty jails
+    if [ -z "${EMPTY_JAIL}" ]; then
+        if ! check_target_is_running "${NAME}"; then
+            bastille destroy "${NAME}"
+            error_exit "[${NAME}]: Failed to create jail..."
+        fi
     fi
 
     if [ -n "${VNET_JAIL}" ]; then
