@@ -1,4 +1,3 @@
-======
 create
 ======
 
@@ -30,7 +29,6 @@ address to the new system.
 The above code will create a jail with a /24 mask.  At the time of this documentation you 
 can only use CIDR notation, and not use a netmask 255.255.255.0 to accomplish this.
 
-
 I recommend using private (rfc1918) ip address ranges for your container.  These
 ranges include:
 
@@ -49,4 +47,28 @@ silences the MOTD at login.
 Also, uname does not work from within a jail.  Much like MOTD, it gives you the version 
 information about the host system instead of the jail.  If you need to check the version
 of freebsd running on the jail use the freebsd-version command to get accurate information.
+
+
+Bastille can create many different types of jails, along with many different options. See
+the below help output.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille create help
+
+  Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [interface]"
+
+    Options:
+    
+    -B | --bridge                            Enables VNET, VNET containers are attached to a specified, already existing external bridge.
+    -C | --clone                             Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
+    -D | --dual                              Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
+    -E | --empty                             Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -L | --linux                             This option is intended for testing with Linux jails, this is considered experimental.
+    -M | --static-mac                        Generate a static MAC address for jail (VNET only).
+         --no-validate                       Do not validate the release when creating the jail.
+    -T | --thick                             Creates a thick container, they consume more space as they are self contained and independent.
+    -V | --vnet                              Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -x | --debug                             Enable debug mode.
+    -Z | --zfs-opts [zfs,options]            Comma separated list of ZFS options to create the jail with. This overrides the defaults.
 

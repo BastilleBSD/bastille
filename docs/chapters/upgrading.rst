@@ -9,14 +9,14 @@ To keep releases updated, use `bastille update RELEASE`
 
 To keep thick jails updated, use `bastille update TARGET`
 
-======================
+----------------------
 Minor Release Upgrades
-======================
+----------------------
 
 To upgrade Bastille jails for a minor release (ie; 13.1→13.2) you can do the following:
 
 Thick Jails
-===========
+-----------
 
 1. ensure the new release version is bootstrapped and updated to the latest patch release: `bastille bootstrap 13.2-RELEASE`
 2. update the release: `bastille update 13.2-RELEASE`
@@ -27,7 +27,7 @@ Thick Jails
 7. upgrade complete!
 
 Thin Jails
-==========
+----------
 
 1. ensure the new release version is bootstrapped and updated to the latest patch release: `bastille bootstrap 13.2-RELEASE`
 2. update the release: `bastille update 13.2-RELEASE`
@@ -39,14 +39,14 @@ Thin Jails
 8. start the jail(s)
 8. upgrade complete!
 
-======================
+----------------------
 Major Release Upgrades
-======================
+----------------------
 
 To upgrade Bastille jails for a major release (ie; 12.4→13.2) you can do the following:
 
 Thick Jails
-===========
+-----------
 
 1. ensure the new release version is bootstrapped and updated to the latest patch release: `bastille bootstrap 13.2-RELEASE`
 2. update the release: `bastille update 13.2-RELEASE`
@@ -58,7 +58,7 @@ Thick Jails
 8. upgrade complete!
 
 Thin Jails
-==========
+----------
 
 1. ensure the new release version is bootstrapped and updated to the latest patch release: `bastille bootstrap 13.2-RELEASE`
 2. update the release: `bastille update 13.2-RELEASE`
@@ -71,25 +71,28 @@ Thin Jails
 9. force the reinstallation or upgrade of all installed packages (ABI change): `pkg upgrade -f` within each jail (or `bastille pkg ALL upgrade -f`)
 10. upgrade complete!
 
+----------------------------------
 Revert Upgrade / Downgrade Process
 ----------------------------------
 The downgrade process (not usually needed) is similar to the upgrade process only in reverse.
 
 Thick Jails
-===========
+-----------
 
 Thick jails should not be downgraded and is not supported in general on FreeBSD.
 
 Thin Jails
-==========
+----------
 
 Not recommended, but you can run `bastille upgrade TARGET 13.1-RELEASE` to downgrade a thin jail.
 Make sure to run `bastille etcupdate TARGET update 13.1-RELEASE` to keep the contents of /etc updated with each release.
 
 The pkg reinstallation will also need to be repeated after the jail restarts on the previous release.
 
+------------
 Old Releases
-----------------------------------
+------------
+
 After upgrading all jails from one release to the next you may find that you now have bootstrapped a release that is no longer used. Once you've decided that you no longer need the option to revert the change you can destroy the old release.
 
 

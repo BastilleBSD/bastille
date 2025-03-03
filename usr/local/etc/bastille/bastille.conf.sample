@@ -66,3 +66,4 @@ bastille_template_thick="default/thick"                               ## default
 bastille_template_clone="default/clone"                               ## default: "default/clone"
 bastille_template_thin="default/thin"                                 ## default: "default/thin"
 bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"
+bastille_template_vlan="default/vlan"                                 ## default: "default/vlan"

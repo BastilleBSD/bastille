@@ -34,25 +34,15 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_exit "Usage: bastille list [-j|-a] [release [-p]|template|(jail|container)|log|limit|ports|(import|export|backup)]"
+    error_notify "Usage: bastille list [option(s)] [-j|-a] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup]"
+    cat << EOF
+    Options:
+    
+    -x | --debug          Enable debug mode.
+
+EOF
+    exit 1
 }
-
-if [ "${1}" = help ] || [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
-    usage
-fi
-
-bastille_root_check
-
-if [ $# -eq 0 ]; then
-   /usr/sbin/jls
-fi
-
-if [ "${1}" = "-j" ]; then
-    /usr/sbin/jls -N --libxo json
-    exit 0
-fi
-
-TARGET=
 
 list_all(){
         if [ -d "${bastille_jailsdir}" ]; then
@@ -93,7 +83,7 @@ list_all(){
                 JAIL_LIST="${TARGET}"
             else
                 # Query all info for all jails(default).
-                JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+                JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
             fi
             for _JAIL in ${JAIL_LIST}; do
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
@@ -243,42 +233,93 @@ list_ports(){
     fi
 }
 
-if [ $# -gt 0 ]; then
-    # Handle special-case commands first.
+bastille_root_check
+
+if [ "$#" -eq 0 ]; then
+   /usr/sbin/jls
+fi
+
+TARGET=""
+
+# Handle options.
+OPT_JSON=0
+OPT_ALL=0
+while [ "$#" -gt 0 ]; do
     case "${1}" in
-    all|-a|--all)
-        list_all
-        ;;
-    port|ports)
-        list_ports
-	;;
-    release|releases)
-        list_release "${2}"
-        ;;
-    template|templates)
-        list_template
-        ;;
-    jail|jails|container|containers)
-        list_jail
-        ;;
-    log|logs)
-        list_log
-        ;;
-    limit|limits)
-        list_limit
-        ;;
-    import|imports|export|exports|backup|backups)
-        list_import
-    exit 0
-    ;;
-    *)
-        # Check if we want to query all info for a specific jail instead.
-        if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
-            TARGET="${1}"
-            list_all
-        else
-            usage
-        fi
-        ;;
+	-h|--help|help)
+	    usage
+	    ;;
+        -a|--all|all)
+	    OPT_ALL=1
+            shift
+            ;;
+	-j|--json)
+            OPT_JSON=1
+	    shift
+            ;;
+        -x|--debug)
+            enable_debug
+	    shift
+            ;;
+        -*)
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    a) OPT_ALL=1 ;;
+                    j) OPT_JSON=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "Unknown Option: \"${1}\""
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# List json format, otherwise list all jails
+if [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 1 ]; then
+    list_all | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"State\": \"" $2 "\", \"IP_Address\": \"" $3 "\", \"Hostname\": \"" $5 "\", \"Release\": \"" $6 "\", \"Path\": \"" $7 "\"},"} END {print "]"}' | sed '$s/,$//'
+elif [ "${OPT_ALL}" -eq 0 ] && [ "${OPT_JSON}" -eq 1 ]; then
+    /usr/sbin/jls -N --libxo json
+elif [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 0 ]; then
+    list_all
+fi
+
+if [ "$#" -gt 0 ]; then
+    case "${1}" in
+        port|ports)
+            list_ports
+            ;;
+        release|releases)
+            list_release "${2}"
+            ;;
+        template|templates)
+            list_template
+            ;;
+        jail|jails|container|containers)
+            list_jail
+            ;;
+        log|logs)
+            list_log
+            ;;
+        limit|limits)
+            list_limit
+            ;;
+        import|imports|export|exports|backup|backups)
+            list_import
+            exit 0
+            ;;
+        *)
+            # Check if we want to query all info for a specific jail instead.
+            if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
+                TARGET="${1}"
+		set_target "${TARGET}"
+                list_all
+            else
+                usage
+            fi
+            ;;
     esac
 fi

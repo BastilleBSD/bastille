@@ -39,7 +39,7 @@ usage() {
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -H | --host           Use host 'pkg'.
+    -H | --host           Use the hosts 'pkg' instead of the jails.
     -x | --debug          Enable debug mode.
 
 EOF

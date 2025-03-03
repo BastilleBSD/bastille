@@ -55,7 +55,7 @@ check_jail_validity() {
         _ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
         # Check if jail ip4.addr is valid (non-VNET only)
         if [ "${_ip4_interfaces}" != "not set" ] && [ "${_ip4_interfaces}" != "disable" ]; then
-            if echo "&{_ip4_interfaces}" | grep -q "|"; then
+            if echo "${_ip4_interfaces}" | grep -q "|"; then
                 JAIL_IP="$(echo ${_ip4_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
                 JAIL_IP="$(echo ${_ip4_interfaces} | sed -E 's#/[0-9]+$##g')"
@@ -63,7 +63,7 @@ check_jail_validity() {
         fi
         # Check if jail ip6.addr is valid (non-VNET only)
         if [ "${_ip6_interfaces}" != "not set" ] && [ "${_ip6_interfaces}" != "disable" ]; then
-            if echo "&{_ip6_interfaces}" | grep -q "|"; then
+            if echo "${_ip6_interfaces}" | grep -q "|"; then
                 JAIL_IP6="$(echo ${_ip6_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
                 JAIL_IP6="$(echo ${_ip6_interfaces} | sed -E 's#/[0-9]+$##g')"
@@ -321,7 +321,7 @@ while [ "$#" -gt 0 ]; do
                 check_jail_validity
                 echo "${TARGET} redirects:"
                 pfctl -a "rdr/${TARGET}" -Fn
-		if rm -f "${bastille_jailsdir}/${_jail}/rdr.conf"; then
+		if rm -f "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
                     info "[${TARGET}]: rdr.conf removed"
 	        fi
             fi
