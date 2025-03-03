@@ -1,0 +1,6 @@
+ARG VLANID
+ARG IFCONFIG="SYNCDHCP"
+
+SYSRC ifconfig_vnet0="up"
+SYSRC vlans_vnet0="${VLANID}"
+SYSRC ifconfig_vnet0_${VLANID}="${IFCONFIG}"
