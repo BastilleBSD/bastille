@@ -36,20 +36,22 @@
 usage() {
     # Build an independent usage for the create command
     # If no option specified, will create a thin container by default
-    error_notify "Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [interface]"
-
+    error_notify "Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [INTERFACE]"
     cat << EOF
     Options:
-
-    -D | --dual                 Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
-    -M | --static-mac           Generate a static MAC address for jail (VNET only).
-    -E | --empty                Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
-    -L | --linux                This option is intended for testing with Linux jails, this is considered experimental.
-    -T | --thick                Creates a thick container, they consume more space as they are self contained and independent.
-    -V | --vnet                 Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
-    -v | --vlan VLANID          Creates the jail with specified VLAN ID
-    -C | --clone                Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
-    -B | --bridge               Enables VNET, VNET containers are attached to a specified, already existing external bridge.
+    
+    -B | --bridge                        Enables VNET, VNET containers are attached to a specified, already existing external bridge.
+    -C | --clone                         Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
+    -D | --dual                          Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
+    -E | --empty                         Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -L | --linux                         This option is intended for testing with Linux jails, this is considered experimental.
+    -M | --static-mac                    Generate a static MAC address for jail (VNET only).
+         --no-validate                   Do not validate the release when creating the jail.
+    -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
+    -V | --vnet                          Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -v | --vlan VLANID                   Creates the jail with specified VLAN ID (VNET only).
+    -x | --debug                         Enable debug mode.
+    -Z | --zfs-opts "-o option"          Custom set of ZFS options to create the jail with. This overrides the defaults.
 
 EOF
     exit 1
@@ -678,12 +680,17 @@ while [ $# -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
-        -D|--dual)
-            DUAL_STACK="1"
+        -B|--bridge)
+            VNET_JAIL="1"
+            VNET_JAIL_BRIDGE="1"
             shift
             ;;
-        -M|--static-mac)
-            STATIC_MAC="1"
+        -C|--clone)
+            CLONE_JAIL="1"
+            shift
+            ;;
+        -D|--dual)
+            DUAL_STACK="1"
             shift
             ;;
         -E|--empty)
@@ -692,6 +699,14 @@ while [ $# -gt 0 ]; do
             ;;
         -L|--linux)
             LINUX_JAIL="1"
+            shift
+            ;;
+        -M|--static-mac)
+            STATIC_MAC="1"
+            shift
+            ;;
+        --no-validate|no-validate)
+            VALIDATE_RELEASE=""
             shift
             ;;
         -T|--thick)
@@ -703,25 +718,20 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -v|--vlan)
-	    if echo "${2}" | grep -Eq '^[0-9]+$'; then
+	          if echo "${2}" | grep -Eq '^[0-9]+$'; then
                 VLAN_ID="${2}"
-	    else
+	          else
                 error_exit "Not a valid VLAN ID: ${2}"
-	    fi
+	          fi
             shift 2
             ;;
-        -B|--bridge)
-            VNET_JAIL="1"
-            VNET_JAIL_BRIDGE="1"
+        -x|--debug)
+            enable_debug
             shift
             ;;
-        -C|--clone)
-            CLONE_JAIL="1"
-            shift
-            ;;
-        --no-validate|no-validate)
-            VALIDATE_RELEASE=""
-            shift
+        -Z|--zfs-opts)
+            bastille_zfs_options="${2}"
+            shift 2
             ;;
         -*) 
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
