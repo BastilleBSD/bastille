@@ -371,7 +371,9 @@ for _jail in ${JAILS}; do
                     _cmd='mount' ;;
 		# Execute this command on the host
 		hostcmd)
-                    eval "${_args}" ;;
+                    eval "${_args}"
+		    continue
+                    ;;
                 include)
                     _cmd='template' ;;
                 overlay)
