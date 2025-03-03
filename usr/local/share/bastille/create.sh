@@ -704,7 +704,7 @@ while [ $# -gt 0 ]; do
             ;;
         -v|--vlan)
 	    if echo "${2}" | grep -Eq '^[0-9]+$'; then
-                VLAN_ID="${2}
+                VLAN_ID="${2}"
 	    else
                 error_exit "Not a valid VLAN ID: ${2}"
 	    fi
