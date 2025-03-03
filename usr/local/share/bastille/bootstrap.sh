@@ -37,8 +37,8 @@ usage() {
     error_notify "Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]"
     cat << EOF
     Options:
-
-    -x | --debug          Enable debug mode.
+    
+    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
