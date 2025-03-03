@@ -612,7 +612,7 @@ create_jail() {
 
             # Add VLAN ID if it was given
 	    if [ -n "${VLAN_ID}" ]; then
-                bastille template "${NAME}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg  IFCONFIG="${_ifconfig}"
+                bastille template "${NAME}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="${_ifconfig}"
 	    fi
         fi
     fi
