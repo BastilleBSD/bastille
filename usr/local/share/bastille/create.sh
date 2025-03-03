@@ -256,7 +256,7 @@ generate_vnet_jail_conf() {
     else
         devfs_ruleset_value=13
     fi
-    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}" "${VLAN_ID}")
+    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   enforce_statfs = 2;
@@ -609,6 +609,11 @@ create_jail() {
             # Join together IPv4 and IPv6 parts of ifconfig
             _ifconfig="${_ifconfig_inet} ${_ifconfig_inet6}"
             bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}"
+
+            # Add VLAN ID if it was given
+	    if [ -n "${VLAN_ID}" ]; then
+                bastille template "${NAME}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg  IFCONFIG="${_ifconfig}"
+	    fi
         fi
     fi
     if [ -n "${THICK_JAIL}" ]; then
@@ -698,7 +703,11 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -v|--vlan)
-            VLAN_ID="${2}
+	    if echo "${2}" | grep -Eq '^[0-9]+$'; then
+                VLAN_ID="${2}
+	    else
+                error_exit "Not a valid VLAN ID: ${2}"
+	    fi
             shift 2
             ;;
         -B|--bridge)
