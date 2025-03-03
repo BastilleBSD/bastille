@@ -41,17 +41,17 @@ usage() {
     cat << EOF
     Options:
     
-    -B | --bridge                          Enables VNET, VNET containers are attached to a specified, already existing external bridge.
-    -C | --clone                           Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
-    -D | --dual                            Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
-    -E | --empty                           Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
-    -L | --linux                           This option is intended for testing with Linux jails, this is considered experimental.
-    -M | --static-mac                      Generate a static MAC address for jail (VNET only).
-         --no-validate                     Do not validate the release when creating the jail.
-    -T | --thick                           Creates a thick container, they consume more space as they are self contained and independent.
-    -V | --vnet                            Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
-    -x | --debug                           Enable debug mode.
-    -Z | --zfs-opts [zfs,options]          Comma separated list of ZFS options to create the jail with. This overrides the defaults.
+    -B | --bridge                        Enables VNET, VNET containers are attached to a specified, already existing external bridge.
+    -C | --clone                         Creates a clone container, they are duplicates of the base release, consume low space and preserves changing data.
+    -D | --dual                          Creates the jails with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
+    -E | --empty                         Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -L | --linux                         This option is intended for testing with Linux jails, this is considered experimental.
+    -M | --static-mac                    Generate a static MAC address for jail (VNET only).
+         --no-validate                   Do not validate the release when creating the jail.
+    -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
+    -V | --vnet                          Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -x | --debug                         Enable debug mode.
+    -Z | --zfs-opts zfs,options          Comma separated list of ZFS options to create the jail with. This overrides the defaults.
 
 EOF
     exit 1
