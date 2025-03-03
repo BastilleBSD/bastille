@@ -203,6 +203,7 @@ case "${CMD}" in
     etcupdate| \
     export| \
     htop| \
+    jcp | \
     import| \
     limits| \
     list| \

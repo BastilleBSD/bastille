@@ -35,14 +35,15 @@
 usage() {
     # Build an independent usage for the import command
     # If no file/extension specified, will import from standard input
-    error_notify "Usage: bastille import [option(s)] FILE"
+    error_notify "Usage: bastille import [option(s)] FILE [RELEASE]"
 
     cat << EOF
     Options:
 
-    -f | --force            Force an archive import regardless if the checksum file does not match or missing.
-    -v | --verbose          Be more verbose during the ZFS receive operation.
-    -x | --debug            Enable debug mode.
+    -f | --force               Force an archive import regardless if the checksum file does not match or missing.
+    -M | --static-mac          Generate static MAC for jail when importing foreign jails like iocage.
+    -v | --verbose             Be more verbose during the ZFS receive operation.
+    -x | --debug               Enable debug mode.
 
 Tip: If no option specified, container should be imported from standard input.
 
@@ -53,14 +54,19 @@ EOF
 # Handle options.
 OPT_FORCE=0
 OPT_ZRECV="-u"
+OPT_STATIC_MAC=""
 USER_IMPORT=
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
+	-h|--help|help)
             usage
 	        ;;
         -f|--force)
             OPT_FORCE="1"
+            shift
+            ;;
+        -M|--static-mac)
+            OPT_STATIC_MAC="1"
             shift
             ;;
         -v|--verbose)
@@ -75,6 +81,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     f) OPT_FORCE=1 ;;
+		    M) OPT_STATIC_MAC=1 ;;
                     v) OPT_ZRECV="-u -v" ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
@@ -88,11 +95,12 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -gt 3 ] || [ $# -lt 1 ]; then
+if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
 TARGET="${1}"
+RELEASE="${2}"
 
 bastille_root_check
 
@@ -175,6 +183,9 @@ update_fstab_import() {
         # If both variables are set, compare and update as needed
         if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille" "${FSTAB_CONFIG}"; then
             info "Updating fstab..."
+	    if [ -n "${RELEASE}" ]; then
+                FSTAB_NEWCONF="${RELEASE}"
+	    fi
             sed -i '' "s|${FSTAB_CURRENT}|${FSTAB_NEWCONF}|" "${FSTAB_CONFIG}"
         fi
     fi
@@ -190,16 +201,20 @@ generate_config() {
         # Gather some bits from foreign/iocage config files
         JSON_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/config.json"
         if [ -n "${JSON_CONFIG}" ]; then
-            IPV4_CONFIG=$(grep -wo '\"ip4_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip4_addr://')
-            IPV6_CONFIG=$(grep -wo '\"ip6_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip6_addr://')
+            IP4_CONFIG=$(grep -wo '\"ip4_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip4_addr://')
+            IP6_CONFIG=$(grep -wo '\"ip6_addr\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/ip6_addr://')
             DEVFS_RULESET=$(grep -wo '\"devfs_ruleset\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/devfs_ruleset://')
             DEVFS_RULESET=${DEVFS_RULESET:-4}
             IS_THIN_JAIL=$(grep -wo '\"basejail\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/basejail://')
-            CONFIG_RELEASE=$(grep -wo '\"release\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/release://' | sed 's/\-[pP].*//')
+	    if [ -z "${RELEASE}" ]; then
+                CONFIG_RELEASE=$(grep -wo '\"release\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/release://' | sed 's/\-[pP].*//')
+	    else
+                CONFIG_RELEASE="${RELEASE}"
+	    fi
             IS_VNET_JAIL=$(grep -wo '\"vnet\": .*' "${JSON_CONFIG}" | tr -d '" ,' | sed 's/vnet://')
             VNET_DEFAULT_INTERFACE=$(grep -wo '\"vnet_default_interface\": \".*\"' "${JSON_CONFIG}" | tr -d '" ' | sed 's/vnet_default_interface://')
             ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED=1
-            if [ "${VNET_DEFAULT_INTERFACE}" = "auto" ]; then
+            if [ "${VNET_DEFAULT_INTERFACE}" = "auto" ] || [ "${VNET_DEFAULT_INTERFACE}" = "none" ]; then
                 # Grab the default ipv4 route from netstat and pull out the interface
                 VNET_DEFAULT_INTERFACE=$(netstat -nr4 | grep default | cut -w -f 4)
             fi
@@ -209,7 +224,11 @@ generate_config() {
         PROP_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/prop.ezjail-${FILE_TRIM}-*"
         if [ -n "${PROP_CONFIG}" ]; then
             IPVX_CONFIG=$(grep -wo "jail_${TARGET_TRIM}_ip=.*" ${PROP_CONFIG} | tr -d '" ' | sed "s/jail_${TARGET_TRIM}_ip=//")
-            CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
+	    if [ -z "${RELEASE}" ]; then
+                CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
+	    else 
+                CONFIG_RELEASE="${RELEASE}"
+	    fi
         fi
         # Always assume it's thin for ezjail
         IS_THIN_JAIL=1
@@ -217,58 +236,130 @@ generate_config() {
 
     # See if we need to generate a vnet network section
     if [ "${IS_VNET_JAIL:-0}" = "1" ]; then
-        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}")
+        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}" "${OPT_STATIC_MAC}")
         vnet_requirements
     else
         # If there are multiple IP/NIC let the user configure network
-        if [ -n "${IPV4_CONFIG}" ]; then
-            if ! echo "${IPV4_CONFIG}" | grep -q '.*,.*'; then
-                NETIF_CONFIG=$(echo "${IPV4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-                if [ -z "${NETIF_CONFIG}" ]; then
+        IP4_DEFINITION=""
+	IP6_DEFINITION=""
+        IP6_MODE="disable"
+ 	# IP4 set, but not IP6
+        if [ -n "${IP4_CONFIG}" ] && [ -z "${IP6_CONFIG}" ]; then
+            if ! echo "${IP4_CONFIG}" | grep -q '.*,.*'; then
+                IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP4_IF}" ]; then
                     config_netif
-                fi
-                IPX_ADDR="ip4.addr"
-                IP_CONFIG="${IPV4_CONFIG}"
-                IP6_MODE="disable"
-            fi
-        elif [ -n "${IPV6_CONFIG}" ]; then
-            if ! echo "${IPV6_CONFIG}" | grep -q '.*,.*'; then
-                NETIF_CONFIG=$(echo "${IPV6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
-                if [ -z "${NETIF_CONFIG}" ]; then
+		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                    IP6_MODE="disable"
+                else
+                    IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
+		    IP6_MODE="disable"
+		fi
+            else
+                IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP4_IF}" ]; then
                     config_netif
-                fi
-                IPX_ADDR="ip6.addr"
-                IP_CONFIG="${IPV6_CONFIG}"
-                IP6_MODE="new"
+		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                    IP6_MODE="disable"
+                else
+                    IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
+		    IP6_MODE="disable"
+		fi
             fi
+ 	# IP6 set, but not IP4
+        elif [ -z "${IP4_CONFIG}" ] && [ -z "${IP6_CONFIG}" ]; then
+            if ! echo "${IP6_CONFIG}" | grep -q '.*,.*'; then
+                IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP6_IF}" ]; then
+                    config_netif
+		    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
+                    IP6_MODE="new"
+                else
+                    IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
+		    IP6_MODE="new"
+		fi
+            else
+                IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP6_IF}" ]; then
+                    config_netif
+		    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
+                    IP6_MODE="new"
+                else
+                    IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
+		    IP6_MODE="new"
+		fi
+            fi
+        # IP4 and IP6 both set
+	elif [ -n "${IP4_CONFIG}" ] && [ -n "${IP6_CONFIG}" ]; then
+            if ! echo "${IP4_CONFIG}" | grep -q '.*,.*'; then
+                IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP4_IF}" ]; then
+                    config_netif
+		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                else
+                    IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
+		fi
+            else
+                IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP4_IF}" ]; then
+                    config_netif
+		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                else
+                    IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
+		fi
+            fi
+            if ! echo "${IP6_CONFIG}" | grep -q '.*,.*'; then
+                IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP6_IF}" ]; then
+                    config_netif
+		    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
+                    IP6_MODE="new"
+                else
+                    IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
+		    IP6_MODE="new"
+		fi
+            else
+                IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
+                if [ -z "${IP6_IF}" ]; then
+                    config_netif
+		    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
+                    IP6_MODE="new"
+		else
+		    IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
+                    IP6_MODE="new"
+		fi
+            fi
+        # ezjail import
         elif [ -n "${IPVX_CONFIG}" ]; then
             if ! echo "${IPVX_CONFIG}" | grep -q '.*,.*'; then
                 NETIF_CONFIG=$(echo "${IPVX_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${NETIF_CONFIG}" ]; then
                     config_netif
-                fi
-                IPX_ADDR="ip4.addr"
-                IP_CONFIG="${IPVX_CONFIG}"
-                IP6_MODE="disable"
+		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IPVX_CONFIG};"
+                    IP6_MODE="disable"
+                else
+                    IP4_DEFINITION="ip4.addr = ${IPVX_CONFIG};"
+		    IP6_MODE="disable"
+		fi
                 if echo "${IPVX_CONFIG}" | sed 's/.*|//' | grep -Eq '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))'; then
-                    IPX_ADDR="ip6.addr"
+		    IP4_DEFINITION=""
+                    IP6_DEFINITION="ip6.addr = ${IPVX_CONFIG};"
                     IP6_MODE="new"
                 fi
             fi
         fi
 
         # Let the user configure network manually
-        if [ -z "${NETIF_CONFIG}" ]; then
-            NETIF_CONFIG="lo1"
-            IPX_ADDR="ip4.addr"
-            IP_CONFIG="-"
+        if [ -z "${IP4_DEFINITION}" ] && [ -z "${IP6_DEFINITION}" ]; then
+	    IP4_DEFINITION="ip4.addr = lo1|-;"
+            IP6_DEFINITION=""
             IP6_MODE="disable"
             warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
         fi
 
         NETBLOCK=$(cat <<-EOF
-  interface = ${NETIF_CONFIG};
-  ${IPX_ADDR} = ${IP_CONFIG};
+  ${IP4_DEFINITION}
+  ${IP6_DEFINITION}
   ip6 = ${IP6_MODE};
 EOF
         )
@@ -306,6 +397,7 @@ ${TARGET_TRIM} {
   mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;
   path = ${bastille_jailsdir}/${TARGET_TRIM}/root;
   securelevel = 2;
+  osrelease = ${CONFIG_RELEASE};
 
 ${NETBLOCK}
 }
@@ -317,7 +409,11 @@ update_config() {
     # The config on select archives does not provide a clear way to determine
     # the base release, so lets try to get it from the base/COPYRIGHT file,
     # otherwise warn user and fallback to host system release
-    CONFIG_RELEASE=$(grep -wo 'releng/[0-9]\{2\}.[0-9]/COPYRIGHT' "${bastille_jailsdir}/${TARGET_TRIM}/root/COPYRIGHT" | sed 's|releng/||;s|/COPYRIGHT|-RELEASE|')
+    if [ -z "${RELEASE}" ]; then
+        CONFIG_RELEASE=$(grep -wo 'releng/[0-9]\{2\}.[0-9]/COPYRIGHT' "${bastille_jailsdir}/${TARGET_TRIM}/root/COPYRIGHT" | sed 's|releng/||;s|/COPYRIGHT|-RELEASE|')
+    else
+        CONFIG_RELEASE="${RELEASE}"
+    fi
     if [ -z "${CONFIG_RELEASE}" ]; then
         # Fallback to host version
         CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')

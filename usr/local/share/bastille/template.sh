@@ -153,7 +153,7 @@ TARGET="${1}"
 TEMPLATE="${2}"
 bastille_template=${bastille_templatesdir}/${TEMPLATE}
 if [ -z "${HOOKS}" ]; then
-    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
+    HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER HOSTCMD'
 fi
 
 bastille_root_check
@@ -368,6 +368,11 @@ for _jail in ${JAILS}; do
                     ;;
                 fstab|mount)
                     _cmd='mount' ;;
+		# Execute this command on the host
+		hostcmd)
+                    eval "${_args}"
+		    continue
+                    ;;
                 include)
                     _cmd='template' ;;
                 overlay)
