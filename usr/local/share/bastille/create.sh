@@ -36,8 +36,7 @@
 usage() {
     # Build an independent usage for the create command
     # If no option specified, will create a thin container by default
-    error_notify "Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [interface]"
-
+    error_notify "Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [INTERFACE]"
     cat << EOF
     Options:
     
@@ -50,8 +49,9 @@ usage() {
          --no-validate                   Do not validate the release when creating the jail.
     -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet                          Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -v | --vlan VLANID                   Creates the jail with specified VLAN ID (VNET only).
     -x | --debug                         Enable debug mode.
-    -Z | --zfs-opts zfs,options          Comma separated list of ZFS options to create the jail with. This overrides the defaults.
+    -Z | --zfs-opts "-o option"          Custom set of ZFS options to create the jail with. This overrides the defaults.
 
 EOF
     exit 1
@@ -611,6 +611,11 @@ create_jail() {
             # Join together IPv4 and IPv6 parts of ifconfig
             _ifconfig="${_ifconfig_inet} ${_ifconfig_inet6}"
             bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}"
+
+            # Add VLAN ID if it was given
+	    if [ -n "${VLAN_ID}" ]; then
+                bastille template "${NAME}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="${_ifconfig}"
+	    fi
         fi
     fi
     if [ -n "${THICK_JAIL}" ]; then
@@ -665,6 +670,7 @@ EMPTY_JAIL=""
 THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
+VLAN_ID=""
 LINUX_JAIL=""
 STATIC_MAC=""
 DUAL_STACK=""
@@ -711,6 +717,14 @@ while [ $# -gt 0 ]; do
             VNET_JAIL="1"
             shift
             ;;
+        -v|--vlan)
+	          if echo "${2}" | grep -Eq '^[0-9]+$'; then
+                VLAN_ID="${2}"
+	          else
+                error_exit "Not a valid VLAN ID: ${2}"
+	          fi
+            shift 2
+            ;;
         -x|--debug)
             enable_debug
             shift
@@ -753,6 +767,8 @@ elif [ -n "${LINUX_JAIL}" ]; then
     fi
 elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
     error_exit "Error: Clonejail and Thickjail can't be used together."
+elif [ -z "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ] && [ -n "${VLAN_ID}" ]; then
+    error_exit "Error: VLANs can only be used with VNET and bridged VNET jails."
 fi
 
 NAME="$1"
