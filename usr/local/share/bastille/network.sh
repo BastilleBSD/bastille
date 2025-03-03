@@ -36,12 +36,13 @@ usage() {
     cat << EOF
     Options:
 
-    -a | --auto                Start/stop the jail(s) if required.
-    -b | --bridge              Add a bridged VNET interface to an existing jail.
-    -c | --classic             Add an interface to a classic (non-VNET) jail.
-    -m | --static-mac          Generate a static MAC address for the interface.
-    -v | --vnet                Add a VNET interface to an existing jail.
-    -x | --debug               Enable debug mode.
+    -a | --auto                 Start/stop the jail(s) if required.
+    -B | --bridge               Add a bridged VNET interface to an existing jail.
+    -C | --classic              Add an interface to a classic (non-VNET) jail.
+    -M | --static-mac           Generate a static MAC address for the interface.
+    -V | --vnet                 Add a VNET interface to an existing jail.
+    -v | --vlan VLANID          Add interface with specified VLAN ID (VNET only).
+    -x | --debug                Enable debug mode.
     
 EOF
     exit 1
@@ -53,30 +54,39 @@ BRIDGE_VNET_JAIL=0
 CLASSIC_JAIL=0
 STATIC_MAC=0
 VNET_JAIL=0
+VLAN_ID=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
             ;;
-        -b|-B|--bridge)
-            BRIDGE_VNET_JAIL=1
-            shift
-            ;;
-        -c|--classic)
-            CLASSIC_JAIL=1
-            shift
-            ;; 
-       -a|--auto)
+        -a|--auto)
             AUTO=1
             shift
             ;;
-        -m|-M|--static-mac)
+        -B|--bridge)
+            BRIDGE_VNET_JAIL=1
+            shift
+            ;;
+        -C|--classic)
+            CLASSIC_JAIL=1
+            shift
+            ;; 
+        -M|--static-mac)
             STATIC_MAC=1
             shift
             ;;
-        -v|-V|--vnet)
+        -V|--vnet)
             VNET_JAIL=1
             shift
+            ;;
+        -v|--vlan)
+	        if echo "${2}" | grep -Eq '^[0-9]+$'; then
+                VLAN_ID="${2}"
+	        else
+                error_exit "Not a valid VLAN ID: ${2}"
+	        fi
+            shift 2
             ;;
         -x|--debug)
             enable_debug
@@ -86,10 +96,10 @@ while [ "$#" -gt 0 ]; do
             for _o in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${_o} in
                     a) AUTO=1 ;;
-                    b|B) BRIDGE_VNET_JAIL=1 ;;
-                    c) CLASSIC_JAIL=1 ;;
-                    m|M) STATIC_MAC=1 ;;
-                    v|V) VNET_JAIL=1 ;;
+                    B) BRIDGE_VNET_JAIL=1 ;;
+                    C) CLASSIC_JAIL=1 ;;
+                    M) STATIC_MAC=1 ;;
+                    V) VNET_JAIL=1 ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
                 esac
@@ -115,6 +125,9 @@ if [ "${ACTION}" = "add" ]; then
         usage
     elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${CLASSIC_JAIL}" -eq 0 ]; then 
         error_notify "Error: [-c|--classic], [-b|-B|--bridge] or [-v|-V|--vnet] must be set."
+        usage
+    elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${VLAN_ID}" -eq 1 ]; then
+        error_notify "VLANs can only be used with VNET interfaces."
         usage
     fi
 fi
@@ -263,6 +276,10 @@ EOF
             sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
         fi
 
+        if [ -n "${VLAN_ID}" ]; then
+            bastille template "${_jailname}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="inet ${_ip}"
+        fi
+
         info "[${_jailname}]:"
         echo "Added interface: \"${_if}\""
 
@@ -306,6 +323,10 @@ EOF
             sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
         else
             sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
+        fi
+
+        if [ -n "${VLAN_ID}" ]; then
+            bastille template "${_jailname}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="inet ${_ip}"
         fi
 
         info "[${_jailname}]:"
