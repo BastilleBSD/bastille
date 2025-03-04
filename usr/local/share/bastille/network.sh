@@ -432,7 +432,7 @@ case "${ACTION}" in
         else
             validate_ip "${IP}"
         fi
-        if [ "${VNET_JAIL}" -eq 1 ]; then
+        if [ "${VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; then
             if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
@@ -441,7 +441,7 @@ case "${ACTION}" in
                     bastille start "${TARGET}"
                 fi
             fi
-        elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
+        elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; then
             if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
@@ -458,6 +458,11 @@ case "${ACTION}" in
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
+            fi
+	elif { [ "${VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; } || \
+             { [ "${BRIDGE_VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; } then
+	    if grep -Eq "ifconfig_vnet[0-9]+_${VLAN_ID}" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+                error_exit "VLAN has already been added: VLAN ${VLAN_ID}"
             fi
         fi
         ;;
