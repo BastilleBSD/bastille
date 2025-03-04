@@ -432,7 +432,7 @@ case "${ACTION}" in
         else
             validate_ip "${IP}"
         fi
-        if [ "${VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; then
+        if [ "${VNET_JAIL}" -eq 1 ] && [ -z "${VLAN_ID}" ]; then
             if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
@@ -441,7 +441,7 @@ case "${ACTION}" in
                     bastille start "${TARGET}"
                 fi
             fi
-        elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; then
+        elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ] && [ -z "${VLAN_ID}" ]; then
             if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
