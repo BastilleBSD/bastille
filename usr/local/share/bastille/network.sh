@@ -421,10 +421,10 @@ add_vlan() {
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
     if [ "${VNET_JAIL}" -eq 1 ]; then
         local _jail_epair_num="$(grep ${_interface} ${_jail_config} | grep -Eo -m 1 "bastille[0-9]+" | grep -Eo "[0-9]+")"
-	local _jail_vnet="$(grep "e0b_bastille${_jail_epair_num}_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+" | grep -Eo "[0-9]+")"
+	local _jail_vnet="$(grep "e0b_bastille${_jail_epair_num}_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
         local _jail_epair_num="$(grep ${_interface} ${_jail_config} | grep -Eo -m 1 "epair[0-9]+" | grep -Eo "[0-9]+")"
-	local _jail_vnet="$(grep "e.*${_jail_epair_num}b.*_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+" | grep -Eo "[0-9]+")"
+	local _jail_vnet="$(grep "e.*${_jail_epair_num}b.*_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+")"
     fi
     if grep -Eq "ifconfig_${_jail_vnet}_${_vlan_id}" "${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"; then
         error_exit "VLAN has already been added: VLAN ${_vlan_id}"
