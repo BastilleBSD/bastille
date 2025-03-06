@@ -420,6 +420,21 @@ remove_interface() {
     echo "Removed interface: \"${_if}\""
 }
 
+add_vlan() {
+    local _jailname="${1}"
+    local _ip="${2}"
+    local _vlan_id="${3}"
+    local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
+    local _vnet_if_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
+    local _if_vnet="vnet$((_vnet_if_count + 1))"
+
+    # Run VLAN template on jail
+    bastille template "${_jailname}" ${bastille_template_vlan} --arg JAIL_VNET"${_if_vnet}" --arg VLANID="${_vlan_id}" --arg IFCONFIG="inet ${_ip}"
+
+    info "[${_jailname}]:"
+    echo "Added VLAN ${VLAN_ID} to interface: \"${_if}\""
+}
+
 case "${ACTION}" in
     add)
         validate_netconf
@@ -463,7 +478,9 @@ case "${ACTION}" in
              { [ "${BRIDGE_VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; } then
 	    if grep -Eq "ifconfig_vnet[0-9]+_${VLAN_ID}" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
                 error_exit "VLAN has already been added: VLAN ${VLAN_ID}"
-            fi
+            else
+	        add_vlan "${TARGET}" "${IP}" "${VLAN_ID}"
+	    fi
         fi
         ;;
     remove|delete)
