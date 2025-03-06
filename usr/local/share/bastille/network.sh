@@ -81,11 +81,11 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -v|--vlan)
-	        if echo "${2}" | grep -Eq '^[0-9]+$'; then
+	    if echo "${2}" | grep -Eq '^[0-9]+$'; then
                 VLAN_ID="${2}"
-	        else
+	    else
                 error_exit "Not a valid VLAN ID: ${2}"
-	        fi
+	    fi
             shift 2
             ;;
         -x|--debug)
