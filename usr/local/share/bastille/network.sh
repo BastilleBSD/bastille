@@ -277,7 +277,7 @@ EOF
         fi
 
         if [ -n "${VLAN_ID}" ]; then
-            bastille template "${_jailname}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="inet ${_ip}"
+	    add_vlan "${_jailname}" "${_if_vnet}" "${_ip}" "${VLAN_ID}"
         fi
 
         info "[${_jailname}]:"
