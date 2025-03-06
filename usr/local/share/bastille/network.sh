@@ -326,7 +326,7 @@ EOF
         fi
 
         if [ -n "${VLAN_ID}" ]; then
-            bastille template "${_jailname}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="inet ${_ip}"
+	    add_vlan "${_jailname}" "${_if_vnet}" "${_ip}" "${VLAN_ID}"
         fi
 
         info "[${_jailname}]:"
@@ -422,24 +422,25 @@ remove_interface() {
 
 add_vlan() {
     local _jailname="${1}"
-    local _ip="${2}"
-    local _vlan_id="${3}"
-    local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-    local _vnet_if_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
-    local _if_vnet="vnet$((_vnet_if_count + 1))"
-
-    # Run VLAN template on jail
-    bastille template "${_jailname}" ${bastille_template_vlan} --arg JAIL_VNET"${_if_vnet}" --arg VLANID="${_vlan_id}" --arg IFCONFIG="inet ${_ip}"
+    local _jail_vnet="${2}"
+    local _ip="${3}"
+    local _vlan_id="${4}"
+	   
+    if grep -Eq "ifconfig_${_jail_vnet}_${_vlan_id}" "${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"; then
+        error_exit "VLAN has already been added: VLAN ${_vlan_id}"
+    else
+        bastille template "${_jailname}" ${bastille_template_vlan} --arg VLANID="${_vlan_id}" --arg IFCONFIG="inet ${_ip}" --arg JAIL_VNET="${_jail_vnet}"
+    fi
 
     info "[${_jailname}]:"
-    echo "Added VLAN ${VLAN_ID} to interface: \"${_if}\""
+    echo "Added VLAN ${_vlan_id} to interface: \"${_jail_vnet}\""
 }
 
 case "${ACTION}" in
     add)
         validate_netconf
         validate_netif "${INTERFACE}"
-        if check_interface_added "${TARGET}" "${INTERFACE}"; then
+        if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             error_exit "Interface is already added: \"${INTERFACE}\""
         fi
         if [ -z "${IP}" ] || [ "${IP}" = "0.0.0.0" ]; then
@@ -447,7 +448,7 @@ case "${ACTION}" in
         else
             validate_ip "${IP}"
         fi
-        if [ "${VNET_JAIL}" -eq 1 ] && [ -z "${VLAN_ID}" ]; then
+        if [ "${VNET_JAIL}" -eq 1 ]; then
             if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
@@ -456,7 +457,7 @@ case "${ACTION}" in
                     bastille start "${TARGET}"
                 fi
             fi
-        elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ] && [ -z "${VLAN_ID}" ]; then
+        elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
             if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
@@ -474,13 +475,6 @@ case "${ACTION}" in
                     bastille start "${TARGET}"
                 fi
             fi
-	elif { [ "${VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; } || \
-             { [ "${BRIDGE_VNET_JAIL}" -eq 1 ] && [ -n "${VLAN_ID}" ]; } then
-	    if grep -Eq "ifconfig_vnet[0-9]+_${VLAN_ID}" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
-                error_exit "VLAN has already been added: VLAN ${VLAN_ID}"
-            else
-	        add_vlan "${TARGET}" "${IP}" "${VLAN_ID}"
-	    fi
         fi
         ;;
     remove|delete)
