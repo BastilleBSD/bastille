@@ -446,6 +446,7 @@ case "${ACTION}" in
             error_exit "Interface is already added: \"${INTERFACE}\""
         elif { [ "${VNET_JAIL}" -eq 1 ] || [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
 	    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+            exit 0
         fi
         if [ -z "${IP}" ] || [ "${IP}" = "0.0.0.0" ]; then
             IP="SYNCDHCP"
