@@ -1,6 +1,7 @@
+ARG JAIL_VNET="vnet0"
 ARG VLANID
 ARG IFCONFIG="SYNCDHCP"
 
-SYSRC ifconfig_vnet0="up"
-SYSRC vlans_vnet0="${VLANID}"
-SYSRC ifconfig_vnet0_${VLANID}="${IFCONFIG}"
+SYSRC ifconfig_${JAIL_VNET}="up"
+SYSRC vlans_${JAIL_VNET}="${VLANID}"
+SYSRC ifconfig_${JAIL_VNET}_${VLANID}="${IFCONFIG}"
