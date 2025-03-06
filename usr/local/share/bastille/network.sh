@@ -435,7 +435,7 @@ add_vlan() {
     fi
 
     info "[${_jailname}]:"
-    echo "Added VLAN ${_vlan_id} to interface: \"${_jail_vnet}\""
+    info "Added VLAN ${_vlan_id} to interface: \"${_jail_vnet}\""
 }
 
 case "${ACTION}" in
