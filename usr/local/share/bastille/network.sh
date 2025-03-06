@@ -121,10 +121,10 @@ if [ "${ACTION}" = "add" ]; then
     if { [ "${VNET_JAIL}" -eq 1 ] && [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } || \
        { [ "${VNET_JAIL}" -eq 1 ] && [ "${CLASSIC_JAIL}" -eq 1 ]; } || \
        { [ "${CLASSIC_JAIL}" -eq 1 ] && [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } then
-        error_notify "Error: Only one of [-b|-B|--bridge], [-c|--classic] or [-v|-V|--vnet] should be set."
+        error_notify "Error: Only one of [-B|--bridge], [-C|--classic] or [-V|--vnet] should be set."
         usage
     elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${CLASSIC_JAIL}" -eq 0 ]; then 
-        error_notify "Error: [-c|--classic], [-b|-B|--bridge] or [-v|-V|--vnet] must be set."
+        error_notify "Error: [-C|--classic], [-B|--bridge] or [-V|--vnet] must be set."
         usage
     elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${VLAN_ID}" -eq 1 ]; then
         error_notify "VLANs can only be used with VNET interfaces."
