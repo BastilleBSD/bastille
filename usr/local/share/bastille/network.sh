@@ -276,10 +276,6 @@ EOF
             sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
         fi
 
-        if [ -n "${VLAN_ID}" ]; then
-	    add_vlan "${_jailname}" "${_if_vnet}" "${_ip}" "${VLAN_ID}"
-        fi
-
         info "[${_jailname}]:"
         echo "Added interface: \"${_if}\""
 
@@ -323,10 +319,6 @@ EOF
             sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
         else
             sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
-        fi
-
-        if [ -n "${VLAN_ID}" ]; then
-	    add_vlan "${_jailname}" "${_if_vnet}" "${_ip}" "${VLAN_ID}"
         fi
 
         info "[${_jailname}]:"
@@ -422,10 +414,18 @@ remove_interface() {
 
 add_vlan() {
     local _jailname="${1}"
-    local _jail_vnet="${2}"
+    local _interface="${2}"
     local _ip="${3}"
     local _vlan_id="${4}"
-	   
+    local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
+    local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
+    if [ "${VNET_JAIL}" -eq 1 ]; then
+        local _jail_epair_num="$(grep ${_interface} ${_jail_config} | grep -Eo "bastille[0-9]+" | grep -Eo "[0-9]+")"
+	local _jail_vnet="$(grep "e0b_bastille${_jail_epair_num}_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+" | grep -Eo "[0-9]+")"
+    elif [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; then
+        local _jail_epair_num="$(grep ${_interface} ${_jail_config} | grep -Eo "epair[0-9]+" | grep -Eo "[0-9]+")"
+	local _jail_vnet="$(grep "e.*${_jail_epair_num}b.*_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+" | grep -Eo "[0-9]+")"
+    fi
     if grep -Eq "ifconfig_${_jail_vnet}_${_vlan_id}" "${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"; then
         error_exit "VLAN has already been added: VLAN ${_vlan_id}"
     else
@@ -442,6 +442,8 @@ case "${ACTION}" in
         validate_netif "${INTERFACE}"
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             error_exit "Interface is already added: \"${INTERFACE}\""
+        elif { [ "${VNET_JAIL}" -eq 1 ] || [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
+	    add_vlan "{TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
         fi
         if [ -z "${IP}" ] || [ "${IP}" = "0.0.0.0" ]; then
             IP="SYNCDHCP"
@@ -453,6 +455,9 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
+		if [ -n "${VLAN_ID}" ]; then
+		    add_vlan "{TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+                fi
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
@@ -462,6 +467,9 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
+		if [ -n "${VLAN_ID}" ]; then
+		    add_vlan "{TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+                fi
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
