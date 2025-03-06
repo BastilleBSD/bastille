@@ -443,7 +443,7 @@ case "${ACTION}" in
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             error_exit "Interface is already added: \"${INTERFACE}\""
         elif { [ "${VNET_JAIL}" -eq 1 ] || [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
-	    add_vlan "{TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+	    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
         fi
         if [ -z "${IP}" ] || [ "${IP}" = "0.0.0.0" ]; then
             IP="SYNCDHCP"
