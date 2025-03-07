@@ -147,7 +147,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ $# -lt 2 ]; then
-    bastille_usage
+    usage
 fi
 
 TARGET="${1}"
