@@ -161,7 +161,7 @@ check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
-    error_exit "Use [-a|--auto] to force stop the jail."
+    error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
 validate_ip() {
