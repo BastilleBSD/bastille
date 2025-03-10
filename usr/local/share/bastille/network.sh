@@ -40,6 +40,7 @@ usage() {
     -B | --bridge               Add a bridged VNET interface to an existing jail.
     -C | --classic              Add an interface to a classic (non-VNET) jail.
     -M | --static-mac           Generate a static MAC address for the interface.
+    -n | --no-ip                Create interface without an IP (VNET only).
     -V | --vnet                 Add a VNET interface to an existing jail.
     -v | --vlan VLANID          Add interface with specified VLAN ID (VNET only).
     -x | --debug                Enable debug mode.
@@ -55,6 +56,7 @@ CLASSIC_JAIL=0
 STATIC_MAC=0
 VNET_JAIL=0
 VLAN_ID=""
+NO_IP=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -74,6 +76,10 @@ while [ "$#" -gt 0 ]; do
             ;; 
         -M|--static-mac)
             STATIC_MAC=1
+            shift
+            ;;
+        -n|--no-ip)
+            NO_IP=1
             shift
             ;;
         -V|--vnet)
@@ -99,6 +105,7 @@ while [ "$#" -gt 0 ]; do
                     B) BRIDGE_VNET_JAIL=1 ;;
                     C) CLASSIC_JAIL=1 ;;
                     M) STATIC_MAC=1 ;;
+                    n) NO_IP=1 ;;
                     V) VNET_JAIL=1 ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
@@ -115,7 +122,11 @@ done
 TARGET="${1}"
 ACTION="${2}"
 INTERFACE="${3}"
-IP="${4}"
+if [ "${NO_IP}" -eq 0 ]; then
+    IP="${4}"
+else
+    IP=""
+fi
 
 if [ "${ACTION}" = "add" ]; then
     if { [ "${VNET_JAIL}" -eq 1 ] && [ "${BRIDGE_VNET_JAIL}" -eq 1 ]; } || \
@@ -129,6 +140,12 @@ if [ "${ACTION}" = "add" ]; then
     elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${VLAN_ID}" -eq 1 ]; then
         error_notify "VLANs can only be used with VNET interfaces."
         usage
+    elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
+        error_notify "[-n|--no-ip] can only be used with VNET jails."
+        usage
+    elif [ "${NO_IP}" -eq 1 ] && [ -z "${VLAN_ID}" ]; then
+        error_notify "[-n|--no-ip] can only be used when adding a VLAN."
+	usage
     fi
 fi
 
@@ -267,13 +284,16 @@ EOF
 }
 EOF
         fi
+	
         # Add config to /etc/rc.conf
         sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_if_vnet}"
-        # If 0.0.0.0 set DHCP, else set static IP address
-        if [ "${_ip}" = "0.0.0.0" ]; then
-            sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
-        else
-            sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
+	if [ -n "${_ip}" ]; then
+            # If 0.0.0.0 set DHCP, else set static IP address
+            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
+            else
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
+            fi
         fi
 
         info "[${_jailname}]:"
@@ -314,12 +334,14 @@ EOF
         fi
         # Add config to /etc/rc.conf
         sysrc -f "${_jail_rc_config}" ifconfig_e0b_${bastille_epair}_name="${_if_vnet}"
-        # If 0.0.0.0 set DHCP, else set static IP address
-        if [ "${_ip}" = "0.0.0.0" ]; then
-            sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
-        else
-            sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
-        fi
+	if [ -n "${_ip}" ]; then
+            # If 0.0.0.0 set DHCP, else set static IP address
+            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
+            else
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
+            fi
+	fi
 
         info "[${_jailname}]:"
         echo "Added VNET interface: \"${_if}\""
@@ -448,11 +470,13 @@ case "${ACTION}" in
 	    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             exit 0
         fi
-        if [ -z "${IP}" ] || [ "${IP}" = "0.0.0.0" ]; then
-            IP="SYNCDHCP"
-        else
-            validate_ip "${IP}"
-        fi
+        if [ -n "${IP}" ]; then
+            if [ "${IP}" = "DHCP" ] || [ "${IP}" = "0.0.0.0" ]; then
+                IP="SYNCDHCP"
+            else
+                validate_ip "${IP}"
+            fi
+	fi
         if [ "${VNET_JAIL}" -eq 1 ]; then
             if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
