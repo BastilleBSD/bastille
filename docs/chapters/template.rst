@@ -33,8 +33,6 @@ Template Automation Hooks
 +-------------+---------------------+-----------------------------------------+
 | CP/OVERLAY  | path(s)             | etc root usr (one per line)             |
 +-------------+---------------------+-----------------------------------------+
-| HOSTCMD     | command             | pkg info                                |
-+-------------+---------------------+-----------------------------------------+
 | INCLUDE     | template path/URL   | http?://TEMPLATE_URL or project/path    |
 +-------------+---------------------+-----------------------------------------+
 | LIMITS      | resource value      | memoryuse 1G                            |
@@ -75,8 +73,6 @@ CMD         - run the specified command
 CONFIG      - set the specified property and value
 
 CP/OVERLAY  - copy specified files from template directory to specified path inside jail
-
-HOSTCMD     - run the specified command on the host instead of the jail
 
 INCLUDE     - specify a template to include. Make sure the template is bootstrapped, or you are using the template url
 
