@@ -124,8 +124,10 @@ ACTION="${2}"
 INTERFACE="${3}"
 if [ "${NO_IP}" -eq 0 ]; then
     IP="${4}"
-else
+elif [ "${NO_IP}" -eq 1] && [ -z "${4}" ]; then
     IP=""
+else
+    usage
 fi
 
 if [ "${ACTION}" = "add" ]; then
