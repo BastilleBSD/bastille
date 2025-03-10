@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018-2024, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ usage() {
     -B | --bridge               Add a bridged VNET interface to an existing jail.
     -C | --classic              Add an interface to a classic (non-VNET) jail.
     -M | --static-mac           Generate a static MAC address for the interface.
-    -n | --no-ip                Create interface without an IP (VNET only).
+    -n | --no-ip                Create interface without an IP (VLAN+VNET only).
     -V | --vnet                 Add a VNET interface to an existing jail.
     -v | --vlan VLANID          Add interface with specified VLAN ID (VNET only).
     -x | --debug                Enable debug mode.
