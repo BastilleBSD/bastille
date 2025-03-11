@@ -168,6 +168,8 @@ validate_ip() {
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         IP6_ENABLE=1
+    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ]; then
+        info "Valid: (${ip})."
     else
         local IFS
         if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
@@ -291,7 +293,7 @@ EOF
             if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
                 sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
             else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
             fi
         fi
 
@@ -338,7 +340,7 @@ EOF
             if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
                 sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
             else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}=" inet ${_ip} "
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
             fi
 	fi
 
@@ -469,13 +471,10 @@ case "${ACTION}" in
 	    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             exit 0
         fi
+	## validate IP if not empty
         if [ -n "${IP}" ]; then
-            if [ "${IP}" = "DHCP" ] || [ "${IP}" = "0.0.0.0" ]; then
-                IP="SYNCDHCP"
-            else
                 validate_ip "${IP}"
-            fi
-	fi
+        fi
         if [ "${VNET_JAIL}" -eq 1 ]; then
             if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
