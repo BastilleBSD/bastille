@@ -265,7 +265,7 @@ add_interface() {
   exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${_jailname}\"";
+  exec.prestart += "ifconfig ${host_epair} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
   exec.poststop += "ifconfig ${_if} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
@@ -279,7 +279,7 @@ EOF
   exec.prestart += "ifconfig ${_if} addm epair${_num}a";
   exec.prestart += "ifconfig epair${_num}a up name ${host_epair}";
   exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
-  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${_jailname}\"";
+  exec.prestart += "ifconfig ${host_epair} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
   exec.poststop += "ifconfig ${_if} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
@@ -318,7 +318,7 @@ EOF
   exec.prestart += "jib addm ${bastille_epair} ${_if}";
   exec.prestart += "ifconfig e0a_${bastille_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig e0b_${bastille_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig e0a_${bastille_epair} description \"vnet host interface for Bastille jail ${_jailname}\"";
+  exec.prestart += "ifconfig e0a_${bastille_epair} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
   exec.poststop += "jib destroy ${bastille_epair}";
 }
 EOF
@@ -328,7 +328,7 @@ EOF
   ## ${bastille_epair} interface
   vnet.interface += e0b_${bastille_epair};
   exec.prestart += "jib addm ${bastille_epair} ${_if}";
-  exec.prestart += "ifconfig e0a_${bastille_epair} description \"vnet host interface for Bastille jail ${_jailname}\"";
+  exec.prestart += "ifconfig e0a_${bastille_epair} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
   exec.poststop += "jib destroy ${bastille_epair}";
 }
 EOF
