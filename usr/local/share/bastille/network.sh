@@ -40,7 +40,7 @@ usage() {
     -B | --bridge               Add a bridged VNET interface to an existing jail.
     -C | --classic              Add an interface to a classic (non-VNET) jail.
     -M | --static-mac           Generate a static MAC address for the interface.
-    -n | --no-ip                Create interface without an IP (VLAN+VNET only).
+    -n | --no-ip                Create interface without an IP (VNET only).
     -V | --vnet                 Add a VNET interface to an existing jail.
     -v | --vlan VLANID          Add interface with specified VLAN ID (VNET only).
     -x | --debug                Enable debug mode.
@@ -145,9 +145,6 @@ if [ "${ACTION}" = "add" ]; then
     elif [ "${VNET_JAIL}" -eq 0 ] && [ "${BRIDGE_VNET_JAIL}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
         error_notify "[-n|--no-ip] can only be used with VNET jails."
         usage
-    elif [ "${NO_IP}" -eq 1 ] && [ -z "${VLAN_ID}" ]; then
-        error_notify "[-n|--no-ip] can only be used when adding a VLAN."
-	usage
     fi
 fi
 
