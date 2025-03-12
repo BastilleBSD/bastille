@@ -73,7 +73,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 4 ]; then
     usage
 fi
 
@@ -113,6 +113,24 @@ print_jail_conf() {
 } 
 
 for _jail in ${JAILS}; do
+
+if [ "${PROPERTY}" = "priority" ]; then
+    FILE="${bastille_jailsdir}/${_jail}/boot.conf"
+    if echo "${VALUE}" | grep -Eq '^[0-9]+$'; then
+        info "[${_jail}]:"
+        sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
+    else
+        error_exit "Priority value must be a number."
+    fi
+elif [ "${PROPERTY}" = "boot" ]; then
+    FILE="${bastille_jailsdir}/${_jail}/boot.conf"
+    if [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; then
+        info "[${_jail}]:"
+        sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
+    else
+        error_exit "Boot value must be 'on' or 'off'."
+    fi
+else
     FILE="${bastille_jailsdir}/${_jail}/jail.conf"
     if [ ! -f "${FILE}" ]; then
         error_notify "jail.conf does not exist for jail: ${_jail}"
@@ -200,6 +218,7 @@ for _jail in ${JAILS}; do
         ' "${_tmpfile}" > "${FILE}"
         rm "${_tmpfile}"
     fi
+fi
 done
 
 # Only display this message once at the end (not for every jail). -- cwells
