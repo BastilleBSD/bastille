@@ -113,7 +113,7 @@ print_jail_conf() {
 } 
 
 for _jail in ${JAILS}; do
-
+    # Handle Bastille specific properties
     if [ "${PROPERTY}" = "priority" ]; then
         FILE="${bastille_jailsdir}/${_jail}/boot.conf"
         info "[${_jail}]:"    
@@ -126,6 +126,7 @@ for _jail in ${JAILS}; do
         else
             sysrc -f "${FILE}" -n "${PROPERTY}"
         fi
+        exit 0
     elif [ "${PROPERTY}" = "boot" ]; then
         FILE="${bastille_jailsdir}/${_jail}/boot.conf"
         info "[${_jail}]:"
@@ -138,6 +139,7 @@ for _jail in ${JAILS}; do
         else
             sysrc -f "${FILE}" -n "${PROPERTY}"
         fi
+        exit 0
     else
         FILE="${bastille_jailsdir}/${_jail}/jail.conf"
         if [ ! -f "${FILE}" ]; then
@@ -230,7 +232,7 @@ done
 
 # Only display this message once at the end (not for every jail). -- cwells
 if [ "${ACTION}" = 'set' ]; then
-    info "A restart is required for the changes to be applied. See 'bastille restart ${TARGET}'."
+    info "A restart is required for the changes to be applied. See 'bastille restart'."
 fi
 
 exit 0
