@@ -114,111 +114,118 @@ print_jail_conf() {
 
 for _jail in ${JAILS}; do
 
-if [ "${PROPERTY}" = "priority" ]; then
-    FILE="${bastille_jailsdir}/${_jail}/boot.conf"
-    if echo "${VALUE}" | grep -Eq '^[0-9]+$'; then
-        info "[${_jail}]:"
-        sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
-    else
-        error_exit "Priority value must be a number."
-    fi
-elif [ "${PROPERTY}" = "boot" ]; then
-    FILE="${bastille_jailsdir}/${_jail}/boot.conf"
-    if [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; then
-        info "[${_jail}]:"
-        sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
-    else
-        error_exit "Boot value must be 'on' or 'off'."
-    fi
-else
-    FILE="${bastille_jailsdir}/${_jail}/jail.conf"
-    if [ ! -f "${FILE}" ]; then
-        error_notify "jail.conf does not exist for jail: ${_jail}"
-        continue
-    fi
-
-    if [ "${ACTION}" = 'get' ]; then
-        _output=$(
-            print_jail_conf "${FILE}" | awk -F= -v property="${PROPERTY}" '
-                $1 == property {
-                    # note that we have found the property
-                    found = 1;
-                    # check if there is a value for this property
-                    if (NF == 2) {
-                        # remove any quotes surrounding the string
-                        #sub(",[^|]*\\|", ",", $2);
-                        sub(/^"/, "", $2);
-                        sub(/"$/, "", $2);
-                        print $2;
-                    } else {
-                        # no value, just the property name
-                        print "enabled";
-                    }
-                    exit 0;
-                }
-                END {
-                    # if we have not found anything we need to print a special
-                    # string
-                    if (! found) {
-                        print("not set");
-                        #  let the caller know that this is a warn condition
-                        exit(120);
-                    }
-                }'
-            )
-        # check if our output is a warning or regular
-        if [ $? -eq 120 ]; then
-            warn "${_output}"
-        else
-            echo "${_output}"
-        fi
-    else # Setting the value. -- cwells
-        if [ -n "${VALUE}" ]; then
-            VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
-            if echo "${VALUE}" | grep ' ' > /dev/null 2>&1; then # Contains a space, so wrap in quotes. -- cwells
-                VALUE="'${VALUE}'"
+    if [ "${PROPERTY}" = "priority" ]; then
+        FILE="${bastille_jailsdir}/${_jail}/boot.conf"
+        info "[${_jail}]:"    
+        if [ "${ACTION}" = "set" ]; then
+            if echo "${VALUE}" | grep -Eq '^[0-9]+$'; then
+                sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
+            else
+                error_exit "Priority value must be a number."
             fi
-            LINE="  ${PROPERTY} = ${VALUE};"
         else
-            LINE="  ${PROPERTY};"
+            sysrc -f "${FILE}" -n "${PROPERTY}"
         fi
+    elif [ "${PROPERTY}" = "boot" ]; then
+        FILE="${bastille_jailsdir}/${_jail}/boot.conf"
+        info "[${_jail}]:"
+        if [ "${ACTION}" = "set" ]; then
+            if [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; then
+                sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
+            else
+                error_exit "Boot value must be 'on' or 'off'."
+            fi
+        else
+            sysrc -f "${FILE}" -n "${PROPERTY}"
+        fi
+    else
+        FILE="${bastille_jailsdir}/${_jail}/jail.conf"
+        if [ ! -f "${FILE}" ]; then
+            error_notify "jail.conf does not exist for jail: ${_jail}"
+            continue
+        fi
+        if [ "${ACTION}" = 'get' ]; then
+            _output=$(
+                print_jail_conf "${FILE}" | awk -F= -v property="${PROPERTY}" '
+                    $1 == property {
+                        # note that we have found the property
+                        found = 1;
+                        # check if there is a value for this property
+                        if (NF == 2) {
+                            # remove any quotes surrounding the string
+                            #sub(",[^|]*\\|", ",", $2);
+                            sub(/^"/, "", $2);
+                            sub(/"$/, "", $2);
+                            print $2;
+                        } else {
+                            # no value, just the property name
+                            print "enabled";
+                        }
+                        exit 0;
+                    }
+                    END {
+                        # if we have not found anything we need to print a special
+                        # string
+                        if (! found) {
+                            print("not set");
+                            #  let the caller know that this is a warn condition
+                            exit(120);
+                        }
+                    }'
+                )
+            # check if our output is a warning or regular
+            if [ $? -eq 120 ]; then
+                warn "${_output}"
+            else
+                echo "${_output}"
+            fi
+        else # Setting the value. -- cwells
+            if [ -n "${VALUE}" ]; then
+                VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
+                if echo "${VALUE}" | grep ' ' > /dev/null 2>&1; then # Contains a space, so wrap in quotes. -- cwells
+                    VALUE="'${VALUE}'"
+                fi
+                LINE="  ${PROPERTY} = ${VALUE};"
+            else
+                LINE="  ${PROPERTY};"
+            fi
 
-        # add the value to the config file, replacing any existing value or, if
-        # there is none, at the end
-        #
-        # awk doesn't have "inplace" editing so we use a temp file
-        _tmpfile=$(mktemp) || error_exit "unable to set because mktemp failed"
-        cp "${FILE}" "${_tmpfile}" && \
-        awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
-            BEGIN {
-                # build RE as string as we can not expand vars in RE literals
-                prop_re = "^[[:space:]]*" property "[[:space:]]*;?$";
-            }
-            $1 ~ prop_re && !found {
-                # we already have an entry in the config for this property so
-                # we need to substitute our line here rather than keep the
-                # existing line
-                print(line);
-                # note we have already found the property
-                found = 1;
-                # move onto the next line
-                next;
-            }
-            $1 == "}" {
-                # reached the end of the stanza so if we have not already
-                # added our line we need to do so now
-                if (! found) {
-                    print(line);
+            # add the value to the config file, replacing any existing value or, if
+            # there is none, at the end
+            #
+            # awk doesn't have "inplace" editing so we use a temp file
+            _tmpfile=$(mktemp) || error_exit "unable to set because mktemp failed"
+            cp "${FILE}" "${_tmpfile}" && \
+            awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
+                BEGIN {
+                    # build RE as string as we can not expand vars in RE literals
+                    prop_re = "^[[:space:]]*" property "[[:space:]]*;?$";
                 }
-            }
-            {
-                # print each uninteresting line unchanged
-                print;
-            }
-        ' "${_tmpfile}" > "${FILE}"
-        rm "${_tmpfile}"
+                $1 ~ prop_re && !found {
+                    # we already have an entry in the config for this property so
+                    # we need to substitute our line here rather than keep the
+                    # existing line
+                    print(line);
+                    # note we have already found the property
+                    found = 1;
+                    # move onto the next line
+                    next;
+                }
+                $1 == "}" {
+                    # reached the end of the stanza so if we have not already
+                    # added our line we need to do so now
+                    if (! found) {
+                        print(line);
+                    }
+                }
+                {
+                    # print each uninteresting line unchanged
+                    print;
+                }
+            ' "${_tmpfile}" > "${FILE}"
+            rm "${_tmpfile}"
+        fi
     fi
-fi
 done
 
 # Only display this message once at the end (not for every jail). -- cwells
