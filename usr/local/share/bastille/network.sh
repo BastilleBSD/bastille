@@ -399,7 +399,7 @@ remove_interface() {
         fi
        
          # Remove interface from /etc/rc.conf
-        if [ -n "${_if_vnet}" ] && echo ${_if_vnet} 2>/dev/null | grep -Eo 'vnet[0-9]+'; then
+        if [ -n "${_if_vnet}" ] && echo ${_if_vnet} 2>/dev/null | grep -Eoq 'vnet[0-9]+'; then
             sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
         else
             error_continue "Failed to remove interface from /etc/rc.conf"
