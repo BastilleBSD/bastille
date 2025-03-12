@@ -47,6 +47,7 @@ usage() {
     -L | --linux                         This option is intended for testing with Linux jails, this is considered experimental.
     -M | --static-mac                    Generate a static MAC address for jail (VNET only).
          --no-validate                   Do not validate the release when creating the jail.
+    -p | --priority VALUE                Sets the priority value for jail startup and shutdown.
     -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet                          Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
     -v | --vlan VLANID                   Creates the jail with specified VLAN ID (VNET only).
@@ -654,6 +655,10 @@ create_jail() {
             bastille restart "${NAME}"
         fi
     fi
+
+    # Apply priority and boot settings
+    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" boot=on
+    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" priority="${PRIORITY}"
 }
 
 bastille_root_check
@@ -675,6 +680,7 @@ LINUX_JAIL=""
 STATIC_MAC=""
 DUAL_STACK=""
 VALIDATE_RELEASE="1"
+PRIORITY="99"
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -704,6 +710,14 @@ while [ $# -gt 0 ]; do
         -M|--static-mac)
             STATIC_MAC="1"
             shift
+            ;;
+        -p|--priority)
+	    if echo "${2}" | grep -Eoq "^[0-9]+$"; then
+                PRIORITY="${2}"
+		shift 2
+	    else 
+                error_exit "Not a valid priority value: \"${2}\""
+	    fi
             ;;
         --no-validate|no-validate)
             VALIDATE_RELEASE=""
