@@ -30,8 +30,6 @@ rcvar=${name}_enable
 
 : ${bastille_enable:="NO"}
 : ${bastille_conf:="/usr/local/etc/bastille/bastille.conf"}
-: ${bastille_list:="ALL"}
-: ${bastille_rcorder:="NO"}
 : ${bastille_startup_delay:=0}
 
 command=/usr/local/bin/${name}
@@ -39,48 +37,35 @@ start_cmd="bastille_start"
 stop_cmd="bastille_stop"
 restart_cmd="bastille_stop && bastille_start"
 
-rcordered_list() {
-    local _jailsdir
-    _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    bastille_ordered_list=$(rcorder -s nostart ${_jailsdir}/*/jail.conf | xargs dirname | xargs basename -a | tr "\n" " ")
-}
-
 bastille_start()
 {
-    local _jail
+    local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
+    local _priority_list=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -k2 -n | awk -F'/' '{print $(NF-1)}')
 
-    if checkyesno bastille_rcorder; then
-        rcordered_list
-    elif [ -z "${bastille_list}" ]; then
-        echo "bastille_list is undefined"
-        return 1
-    else
-        bastille_ordered_list=${bastille_list}
-    fi
-
-    for _jail in ${bastille_ordered_list}; do
-        sleep ${bastille_startup_delay}
-        echo "Starting Bastille Container: ${_jail}"
-        ${command} start ${_jail}
+    for _jail in ${_priority_list}; do
+        local _boot_file=${_jailsdir}/${_jail}/boot.conf
+        # Set defaults if boot file does not exist
+        if [ ! -f ${_boot_file} ]; then
+            sysrc -f ${_boot_file} boot=on
+            sysrc -f ${_boot_file} priority=99
+        fi
+        local _boot_enabled="$(sysrc -f ${_boot_file} -n boot)"
+        if [ "${_boot_enabled}" = "yes" ]; then
+            echo "Starting Bastille Container: ${_jail}"
+            ${command} start ${_jail}
+            sleep ${bastille_startup_delay}
+        else
+            continue
+        fi
     done
 }
 
 bastille_stop()
 {
-    local _jail _revlist
+    local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
+    local _priority_list_rev=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -k2 -nr | awk -F'/' '{print $(NF-1)}')
 
-    if checkyesno bastille_rcorder; then
-        rcordered_list
-    elif [ -z "${bastille_list}" ]; then
-        echo "bastille_list is undefined"
-        return 1
-    else
-        bastille_ordered_list=${bastille_list}
-    fi
-
-    ## reverse order of list for shutdown ## fixes #389
-    _revlist=$(echo "${bastille_ordered_list}" | awk '{ for (i=NF; i>1; i--) printf("%s ",$i); print $1; }')
-    for _jail in ${_revlist}; do
+    for _jail in ${_priority_list_rev}; do
         echo "Stopping Bastille Container: ${_jail}"
         ${command} stop ${_jail}
     done
