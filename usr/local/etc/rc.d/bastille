@@ -49,8 +49,8 @@ bastille_start()
             sysrc -f ${_boot_file} boot=on
             sysrc -f ${_boot_file} priority=99
         fi
-        local _boot_enabled="$(sysrc -f ${_boot_file} -n boot)"
-        if [ "${_boot_enabled}" = "yes" ]; then
+        local _boot="$(sysrc -f ${_boot_file} -n boot)"
+        if [ "${_boot}" = "on" ]; then
             echo "Starting Bastille Container: ${_jail}"
             ${command} start ${_jail}
             sleep ${bastille_startup_delay}
