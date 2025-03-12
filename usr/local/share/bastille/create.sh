@@ -429,7 +429,7 @@ create_jail() {
                 if [ -f "${bastille_releasesdir}/${RELEASE}/${files}" ] || [ -d "${bastille_releasesdir}/${RELEASE}/${files}" ]; then
                     if ! cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"; then
                         ## notify and clean stale files/directories
-                        bastille destroy "${NAME}"
+                        bastille destroy -af "${NAME}"
                         error_exit "Failed to copy release files. Please retry create!"
                     fi
                 fi
@@ -484,7 +484,7 @@ create_jail() {
 
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
-                        bastille destroy "${NAME}"
+                        bastille destroy -af "${NAME}"
                         error_exit "Failed release base replication. Please retry create!"
                     fi
                 fi
@@ -493,7 +493,7 @@ create_jail() {
                 cp -a "${bastille_releasesdir}/${RELEASE}/" "${bastille_jail_path}"
                 if [ "$?" -ne 0 ]; then
                     ## notify and clean stale files/directories
-                    bastille destroy "${NAME}"
+                    bastille destroy -af "${NAME}"
                     error_exit "Failed to copy release files. Please retry create!"
                 fi
             fi
@@ -560,7 +560,7 @@ create_jail() {
     # Exit if jail was not started, except for empty jails
     if [ -z "${EMPTY_JAIL}" ]; then
         if ! check_target_is_running "${NAME}"; then
-            bastille destroy "${NAME}"
+            bastille destroy -af "${NAME}"
             error_exit "[${NAME}]: Failed to create jail..."
         fi
     fi
