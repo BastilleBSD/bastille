@@ -40,7 +40,7 @@ restart_cmd="bastille_stop && bastille_start"
 bastille_start()
 {
     local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    local _priority_list=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -k2 -n | awk -F'/' '{print $(NF-1)}')
+    local _priority_list=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -t '"' -k2 -n | awk -F'/' '{print $(NF-1)}')
 
     for _jail in ${_priority_list}; do
         local _boot_file=${_jailsdir}/${_jail}/boot.conf
@@ -63,7 +63,7 @@ bastille_start()
 bastille_stop()
 {
     local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    local _priority_list_rev=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -k2 -nr | awk -F'/' '{print $(NF-1)}')
+    local _priority_list_rev=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -t '"' -k2 -nr | awk -F'/' '{print $(NF-1)}')
 
     for _jail in ${_priority_list_rev}; do
         echo "Stopping Bastille Container: ${_jail}"
