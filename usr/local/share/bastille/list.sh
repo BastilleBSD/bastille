@@ -34,10 +34,12 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille list [option(s)] [-j|-a] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup]"
+    error_notify "Usage: bastille list [option(s)] [-j|-a] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup] [priority]"
     cat << EOF
     Options:
     
+    -a | --all            List all jails, running and stopped, in bastille format.
+    -j | --json           List jails in json format.
     -x | --debug          Enable debug mode.
 
 EOF
@@ -77,7 +79,7 @@ list_all(){
             if [ "${MAX_LENGTH_THICK_JAIL_RELEASE}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_THICK_JAIL_RELEASE}; fi
             if [ "${MAX_LENGTH_LINUX_JAIL_RELEASE}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_LINUX_JAIL_RELEASE}; fi
             if [ "${MAX_LENGTH_JAIL_RELEASE}" -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
-            printf " JID%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
+            printf " JID%*sBoot%*sPrio%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
             if [ -n "${TARGET}" ]; then
                 # Query all info for a specific jail.
                 JAIL_LIST="${TARGET}"
@@ -89,6 +91,8 @@ list_all(){
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                     JAIL_NAME=$(grep -h -m 1 -e "^.* {$" "${bastille_jailsdir}/${_JAIL}/jail.conf" 2> /dev/null | awk '{ print $1 }')
                     JID="$(jls -j ${_JAIL} jid 2>/dev/null)"
+                    BOOT="$(sysrc -f ${bastille_jailsdir}/${_JAIL}/boot.conf -n boot)"
+                    PRIORITY="$(sysrc -f ${bastille_jailsdir}/${_JAIL}/boot.conf -n priority)"
                     IS_FREEBSD_JAIL=0
                     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/bin/freebsd-version" ] || [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille/bin/freebsd-version" ] || [ "$(grep -c "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_FREEBSD_JAIL=1; fi
                     IS_FREEBSD_JAIL=${IS_FREEBSD_JAIL:-0}
@@ -101,8 +105,8 @@ list_all(){
                             JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -n vnet0 inet 2> /dev/null | sed -n "/.inet /{s///;s/ .*//;p;}")
                             if [ ! "${JAIL_IP}" ]; then JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -n vnet0 inet6 2> /dev/null | awk '/inet6 / && (!/fe80::/ || !/%vnet0/)' | sed -n "/.inet6 /{s///;s/ .*//;p;}"); fi
                         else
-                            JAIL_IP=$(/usr/sbin/jls -j ${JAIL_NAME} ip4.addr 2> /dev/null)
-                            if [ "${JAIL_IP}" = "-" ]; then JAIL_IP=$(/usr/sbin/jls -j ${JAIL_NAME} ip6.addr 2> /dev/null); fi
+                            JAIL_IP=$(/usr/sbin/jls -j ${JAIL_NAME} ip4.addr 2> /dev/null | sed 's/,/\n/g')
+                            if [ "${JAIL_IP}" = "-" ]; then JAIL_IP=$(/usr/sbin/jls -j ${JAIL_NAME} ip6.addr 2> /dev/null | sed 's/,/\n/g'); fi
                         fi
                         JAIL_HOSTNAME=$(/usr/sbin/jls -j ${JAIL_NAME} host.hostname 2> /dev/null)
                         JAIL_PORTS=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2> /dev/null | awk '{ printf "%s/%s:%s"",",$7,$14,$18 }' | sed "s/,$//")
@@ -142,6 +146,8 @@ list_all(){
                         if [ "${#JAIL_PORTS}" -gt "${MAX_LENGTH_JAIL_PORTS}" ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
                         JAIL_NAME=${JAIL_NAME:-${DEFAULT_VALUE}}
                         JID=${JID:-${DEFAULT_VALUE}}
+                        BOOT=${BOOT:-${DEFAULT_VALUE}}
+                        PRIORITY=${PRIORITY:-${DEFAULT_VALUE}}
                         JAIL_STATE=${JAIL_STATE:-${DEFAULT_VALUE}}
                         JAIL_IP=${JAIL_IP:-${DEFAULT_VALUE}}
                         JAIL_PORTS=${JAIL_PORTS:-${DEFAULT_VALUE}}
@@ -157,12 +163,12 @@ list_all(){
                             #                 10.10.10.11
                             #                 10.10.10.12
                             FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-                            printf " ${JAIL_NAME}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+                            printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                             for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                                printf "%*s %*s${IP}\n" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
+                                printf "%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
                             done
                         else
-                            printf " ${JID}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+                            printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                         fi
                 fi
             done
@@ -228,6 +234,18 @@ list_ports(){
                 _PORTS="$(cat ${bastille_jailsdir}/${_jail}/rdr.conf)"
                 info "[${_jail}]:"
 		echo "${_PORTS}"
+	    fi
+        done
+    fi
+}
+
+list_priority() {
+    if [ -d "${bastille_jailsdir}" ]; then
+        JAIL_LIST="$(bastille list jails)"
+        for _jail in ${JAIL_LIST}; do
+            if [ -f "${bastille_jailsdir}/${_jail}/boot.conf" ]; then
+                _priority="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n priority)"
+                echo "${_jail} ${_priority}"
 	    fi
         done
     fi
@@ -310,6 +328,9 @@ if [ "$#" -gt 0 ]; then
         import|imports|export|exports|backup|backups)
             list_import
             exit 0
+            ;;
+        priorities|priority|prio)
+            list_priority
             ;;
         *)
             # Check if we want to query all info for a specific jail instead.
