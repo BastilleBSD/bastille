@@ -34,7 +34,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille list [option(s)] [-j|-a] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup] [priority]"
+    error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup] [priority]"
     cat << EOF
     Options:
     
