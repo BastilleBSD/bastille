@@ -23,6 +23,7 @@ Bastille sub-commands
    limits
    list
    mount
+   network
    pkg
    rcp
    rdr
