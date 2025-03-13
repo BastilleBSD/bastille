@@ -30,11 +30,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Source config file
-if [ -f /usr/local/etc/bastille/bastille.conf ]; then
-    . /usr/local/etc/bastille/bastille.conf
-fi
-
+# Load config. This only has to be done here
+# because all commands load this file
+# shellcheck disable=SC1090
+. ${BASTILLE_CONFIG}
+	
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=

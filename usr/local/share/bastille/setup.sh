@@ -30,10 +30,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-bastille_config="/usr/local/etc/bastille/bastille.conf"
 . /usr/local/share/bastille/common.sh
-# shellcheck source=/usr/local/etc/bastille/bastille.conf
-. ${bastille_config}
 
 usage() {
     error_exit "Usage: bastille setup [pf|network|zfs|vnet]"
