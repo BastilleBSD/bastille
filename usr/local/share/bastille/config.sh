@@ -115,7 +115,8 @@ print_jail_conf() {
 
 for _jail in ${JAILS}; do
     # Handle Bastille specific properties
-    if [ "${PROPERTY}" = "priority" ]; then
+    if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
+        PROPERTY="priority"
         BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/boot.conf"
         info "[${_jail}]:"    
