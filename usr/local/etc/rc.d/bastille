@@ -8,10 +8,10 @@
 
 # Add the following to /etc/rc.conf[.local] to enable this service
 #
-# bastille_enable (bool): Set to "NO" by default.
-#                         Set it to "YES" to enable bastille.
-# bastille_conf (bool):   Set to "/usr/local/etc/bastille/bastille.conf" by default.
-#                         Path to bastile.conf file.
+# bastille_enable (bool):        Set to "NO" by default.
+#                                Set to "YES" to enable bastille.
+# bastille_conf (bool):          Set to "/usr/local/etc/bastille/bastille.conf" by default.
+#                                Path to bastile.conf file.
 # bastille_startup_delay (bool): Set to 0 by default.
 #                                Set to a numerical value.
 #                                This is the delay between startup of each jail.
@@ -35,7 +35,7 @@ bastille_start()
 {
     local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
     # Sort jails by priority value
-    local _priority_list=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -t '"' -k2 -n | awk -F'/' '{print $(NF-1)}')
+    local _priority_list=$(${command} list priority | sort -k2 -n | awk '{print $1}')
 
     for _jail in ${_priority_list}; do
         local _boot_file=${_jailsdir}/${_jail}/boot.conf
@@ -59,7 +59,7 @@ bastille_stop()
 {
     local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
     # Sort jails by priority value, in reverse order
-    local _priority_list_rev=$(grep -Eo "^priority=\"[0-9]+\"$" ${_jailsdir}/*/boot.conf | sort -t '"' -k2 -nr | awk -F'/' '{print $(NF-1)}')
+    local _priority_list=$(${command} list priority | sort -k2 -nr | awk '{print $1}')
 
     for _jail in ${_priority_list_rev}; do
         echo "Stopping Bastille Container: ${_jail}"
