@@ -38,7 +38,7 @@ usage() {
     cat << EOF
     Options:
     
-    -a | --all            List all jails, running and stopped, in bastille format.
+    -a | --all            List all jails, running and stopped, in BastilleBSD format.
     -j | --json           List jails in json format.
     -x | --debug          Enable debug mode.
 
