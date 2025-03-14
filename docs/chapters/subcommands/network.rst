@@ -26,7 +26,7 @@ When cloning a jail that has a `-P|--passthrough` interface, you will have warni
     -C | --classic              Add an interface to a classic (non-VNET) jail.
     -M | --static-mac           Generate a static MAC address for the interface.
     -n | --no-ip                Create interface without an IP (VNET only).
-    -P | --passthrough          Pass the entire interface througg to the jail.
+    -P | --passthrough          Pass the entire interface through to the jail.
     -V | --vnet                 Add a VNET interface to an existing jail.
     -v | --vlan VLANID          Add interface with specified VLAN ID (VNET only).
     -x | --debug                Enable debug mode.
