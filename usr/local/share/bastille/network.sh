@@ -150,7 +150,7 @@ if [ "${ACTION}" = "add" ]; then
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${CLASSIC}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then 
         error_notify "Error: [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] must be set."
         usage
-    elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
+    elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
         error_notify "VLANs can only be used with VNET interfaces."
         usage
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
@@ -529,10 +529,12 @@ case "${ACTION}" in
         fi
 	## validate IP if not empty
         if [ -n "${IP}" ]; then
-                validate_ip "${IP}"
+            validate_ip "${IP}"
         fi
         if [ "${VNET}" -eq 1 ]; then
-            if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+            if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
+                error_exit "Error: ${TARGET} is not a VNET jail."
+            elif ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
@@ -544,7 +546,9 @@ case "${ACTION}" in
                 fi
             fi
         elif [ "${BRIDGE}" -eq 1 ]; then
-            if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+            if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
+                error_exit "Error: ${TARGET} is not a VNET jail."
+            elif ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
@@ -556,8 +560,12 @@ case "${ACTION}" in
                 fi
             fi
         elif [ "${PASSTHROUGH}" -eq 1 ]; then
-            add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-	    if [ -n "${VLAN_ID}" ]; then
+            if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
+                error_exit "Error: ${TARGET} is not a VNET jail."
+	    else
+                add_interface "${TARGET}" "${INTERFACE}" "${IP}"
+            fi
+            if [ -n "${VLAN_ID}" ]; then
 		add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             fi
             if [ "${AUTO}" -eq 1 ]; then
