@@ -41,7 +41,7 @@ usage() {
     -C | --classic              Add an interface to a classic (non-VNET) jail.
     -M | --static-mac           Generate a static MAC address for the interface.
     -n | --no-ip                Create interface without an IP (VNET only).
-    -P | --passthrough          Pass the entire interface through to jail.
+    -P | --passthrough          Pass the entire interface througg to the jail.
     -V | --vnet                 Add a VNET interface to an existing jail.
     -v | --vlan VLANID          Add interface with specified VLAN ID (VNET only).
     -x | --debug                Enable debug mode.
@@ -502,6 +502,8 @@ add_vlan() {
     elif [ "${BRIDGE}" -eq 1 ]; then
         local _jail_epair_num="$(grep ${_interface} ${_jail_config} | grep -Eo -m 1 "epair[0-9]+" | grep -Eo "[0-9]+")"
 	local _jail_vnet="$(grep "e.*${_jail_epair_num}b.*_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+")"
+    elif [ "${PASSTHROUGH}" -eq 1 ]; then
+        local _jail_vnet="${_interface}"
     fi
     if grep -Eq "ifconfig_${_jail_vnet}_${_vlan_id}" "${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"; then
         error_exit "VLAN has already been added: VLAN ${_vlan_id}"
