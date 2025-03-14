@@ -302,7 +302,7 @@ generate_vnet_jail_netblock() {
   exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${external_interface} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
@@ -315,7 +315,7 @@ EOF
   exec.prestart += "ifconfig ${external_interface} addm epair${_num}a";
   exec.prestart += "ifconfig epair${_num}a up name ${host_epair}";
   exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
-  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${external_interface} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
@@ -330,7 +330,7 @@ EOF
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
   exec.prestart += "ifconfig e0a_${uniq_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig e0b_${uniq_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
         else
@@ -339,7 +339,7 @@ EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
         fi
@@ -366,4 +366,3 @@ checkyesno() {
         ;;
     esac
 }
-
