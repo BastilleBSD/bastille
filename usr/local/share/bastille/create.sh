@@ -46,6 +46,7 @@ usage() {
     -E | --empty                         Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
     -L | --linux                         This option is intended for testing with Linux jails, this is considered experimental.
     -M | --static-mac                    Generate a static MAC address for jail (VNET only).
+         --no-boot                       Create jail with boot=off.
          --no-validate                   Do not validate the release when creating the jail.
     -p | --priority VALUE                Sets the priority value for jail startup and shutdown.
     -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
@@ -657,7 +658,7 @@ create_jail() {
     fi
 
     # Apply priority and boot settings
-    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" boot=on
+    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" boot=${BOOT}
     sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" priority="${PRIORITY}"
 }
 
@@ -671,6 +672,7 @@ if echo "${3}" | grep '@'; then
 fi
 
 # Handle options.
+BOOT="on"
 EMPTY_JAIL=""
 THICK_JAIL=""
 CLONE_JAIL=""
@@ -718,6 +720,10 @@ while [ $# -gt 0 ]; do
 	    else 
                 error_exit "Not a valid priority value: \"${2}\""
 	    fi
+            ;;
+        --no-boot)
+            BOOT="off"
+            shift
             ;;
         --no-validate|no-validate)
             VALIDATE_RELEASE=""

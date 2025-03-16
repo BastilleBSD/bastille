@@ -30,5 +30,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+usage() {
+    error_notify "Usage: bastille restart [option(s)] TARGET"
+    cat << EOF
+    Options:
+
+    -b | --boot             Respect jail boot setting. 
+    -v | --verbose          Print every action on jail start.
+    -x | --debug            Enable debug mode.
+
+EOF
+    exit 1
+}
+
+# Handle options.
+case "${1}" in
+    -h|--help|help)
+        usage
+        ;;
+esac
+
 bastille stop "$@"
 bastille start "$@"
