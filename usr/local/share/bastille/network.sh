@@ -523,7 +523,7 @@ case "${ACTION}" in
         validate_netif "${INTERFACE}"
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             error_exit "Interface is already added: \"${INTERFACE}\""
-        elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
+        elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
 	    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             exit 0
         fi
