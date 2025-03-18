@@ -61,7 +61,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -d|--delay)
-            if [ -z "{2}" ] && ! echo "${2}" | grep -Eq "^[0-9]+$"; then
+            if [ -z "${2}" ] && ! echo "${2}" | grep -Eq '^[0-9]+$'; then
                 error_exit "[-d|--delay] requires a value."
             else
                 DELAY_TIME="${2}"
