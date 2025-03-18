@@ -176,11 +176,11 @@ set_target() {
             JAILS="${JAILS} ${_jail}"
         done
         if [ "${_order}" = "forward" ]; then
-            TARGET="$(bastille list priority | sort -k2 -n | awk '{print $1}')
-            JAILS="$(bastille list priority | sort -k2 -n | awk '{print $1}')
+            TARGET="$(bastille list priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
+            JAILS="$(bastille list priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
         elif [ "${_order}" = "reverse" ]; then
-            TARGET="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')
-            JAILS="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')
+            TARGET="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
+            JAILS="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
         fi
         export TARGET
         export JAILS
