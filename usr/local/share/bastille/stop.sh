@@ -38,9 +38,10 @@ usage() {
     cat << EOF
     Options:
 
-    -b | --boot             Respect jail boot setting. 
-    -v | --verbose          Print every action on jail stop.
-    -x | --debug            Enable debug mode.
+    -b | --boot                 Respect jail boot setting.
+    -d | --delay VALUE          Time to wait between stopping each jail.
+    -v | --verbose              Print every action on jail stop.
+    -x | --debug                Enable debug mode.
 
 EOF
     exit 1
@@ -48,6 +49,7 @@ EOF
 
 # Handle options.
 BOOT=0
+DELAY_TIME=0
 OPTION=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -57,6 +59,14 @@ while [ "$#" -gt 0 ]; do
         -b|--boot)
             BOOT=1
             shift
+            ;;
+        -d|--delay)
+            if [ -z "{2}" ] && ! echo "${2}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[-d|--delay] requires a value."
+            else
+                DELAY_TIME="${2}"
+            fi
+            shift 2
             ;;
         -v|--verbose)
             OPTION="-v"
@@ -149,4 +159,8 @@ for _jail in ${JAILS}; do
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi
+
+    # Delay between jail action
+    sleep "${DELAY_TIME}"
+
 done

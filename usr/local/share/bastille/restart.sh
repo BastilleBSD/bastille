@@ -35,9 +35,10 @@ usage() {
     cat << EOF
     Options:
 
-    -b | --boot             Respect jail boot setting. 
-    -v | --verbose          Print every action on jail start.
-    -x | --debug            Enable debug mode.
+    -b | --boot                 Respect jail boot setting.
+    -d | --delay VALUE          Time to wait between starting/stopping each jail.
+    -v | --verbose              Print every action on jail start.
+    -x | --debug                Enable debug mode.
 
 EOF
     exit 1

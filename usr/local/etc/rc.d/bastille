@@ -33,38 +33,12 @@ restart_cmd="bastille_stop && bastille_start"
 
 bastille_start()
 {
-    local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    # Sort jails by priority value
-    local _priority_list=$(${command} list priority | sort -k2 -n | awk '{print $1}')
-
-    for _jail in ${_priority_list}; do
-        local _boot_file=${_jailsdir}/${_jail}/boot.conf
-        # Set defaults if boot file does not exist
-        if [ ! -f ${_boot_file} ]; then
-            sysrc -f ${_boot_file} boot=on
-            sysrc -f ${_boot_file} priority=99
-        fi
-        local _boot="$(sysrc -f ${_boot_file} -n boot)"
-        if [ "${_boot}" = "on" ]; then
-            echo "Starting Bastille Container: ${_jail}"
-            ${command} start ${_jail}
-            sleep ${bastille_startup_delay}
-        else
-            continue
-        fi
-    done
+    ${command} start --boot --delay ${bastille_startup_delay} ALL
 }
 
 bastille_stop()
 {
-    local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    # Sort jails by priority value, in reverse order
-    local _priority_list=$(${command} list priority | sort -k2 -nr | awk '{print $1}')
-
-    for _jail in ${_priority_list_rev}; do
-        echo "Stopping Bastille Container: ${_jail}"
-        ${command} stop ${_jail}
-    done
+   ${command} stop ALL
 }
 
 load_rc_config ${name}
