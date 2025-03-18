@@ -146,6 +146,11 @@ jail_autocomplete() {
 
 set_target() {
     local _TARGET=${1}
+    if [ "${2}" = "reverse" ]; then
+        local _order="${2}"
+    else
+        local _order="forward"
+    fi
     JAILS=""
     TARGET=""
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
@@ -170,6 +175,13 @@ set_target() {
             TARGET="${TARGET} ${_jail}"
             JAILS="${JAILS} ${_jail}"
         done
+        if [ "${_order}" = "forward" ]; then
+            TARGET="$(bastille list priority | sort -k2 -n | awk '{print $1}')
+            JAILS="$(bastille list priority | sort -k2 -n | awk '{print $1}')
+        elif [ "${_order}" = "reverse" ]; then
+            TARGET="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')
+            JAILS="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')
+        fi
         export TARGET
         export JAILS
     fi
@@ -196,7 +208,7 @@ set_target_single() {
                 exit 1
             fi
     fi
-    TARGET="${_TARGET}"
+    TARGET="${_TARGET} "
     JAILS="${_TARGET}"
     export TARGET
     export JAILS
@@ -210,6 +222,14 @@ target_all_jails() {
             JAILS="${JAILS} ${_jail}"
         fi
     done
+    if [ "${_order}" = "forward" ]; then
+        TARGET="$(bastille list priority | sort -k2 -n | awk '{print $1}')"
+        JAILS="$(bastille list priority | sort -k2 -n | awk '{print $1}')"
+    elif [ "${_order}" = "reverse" ]; then
+        TARGET="$(bastille list priority | sort -k2 -nr | awk '{print $1}')"
+        JAILS="$(bastille list priority | sort -k2 -nr | awk '{print $1}')"
+    fi
+    export TARGET
     export JAILS
 }
 
@@ -366,4 +386,3 @@ checkyesno() {
         ;;
     esac
 }
-

@@ -243,9 +243,9 @@ list_ports(){
 }
 
 list_priority() {
+    local _jail_list="${1}"
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST="$(bastille list jails)"
-        for _jail in ${JAIL_LIST}; do
+        for _jail in ${_jail_list}; do
             if [ -f "${bastille_jailsdir}/${_jail}/boot.conf" ]; then
                 _priority="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n priority)"
                 echo "${_jail} ${_priority}"
@@ -333,7 +333,13 @@ if [ "$#" -gt 0 ]; then
             exit 0
             ;;
         priorities|priority|prio)
-            list_priority
+            if [ -z "${2}" ]; then
+                _jail_list="$(list_jail)"
+                list_priority "${_jail_list}"
+            else
+                _jail_list="${2}"
+                list_priority "${_jail_list}"
+            fi
             ;;
         *)
             # Check if we want to query all info for a specific jail instead.

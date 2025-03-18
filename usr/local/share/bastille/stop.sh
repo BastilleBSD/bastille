@@ -90,7 +90,7 @@ fi
 TARGET="${1}"
 
 bastille_root_check
-set_target "${TARGET}"
+set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
 
