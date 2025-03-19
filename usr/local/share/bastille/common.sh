@@ -144,6 +144,22 @@ jail_autocomplete() {
     fi
 }
 
+list_jail_priority() {
+    local _jail_list="${1}"
+    if [ -d "${bastille_jailsdir}" ]; then
+        for _jail in ${_jail_list}; do
+            local _boot_file=${bastille_jailsdir}/${_jail}/boot.conf
+            # Set defaults if boot file does not exist
+            if [ ! -f ${_boot_file} ]; then
+                sysrc -f ${_boot_file} boot=on
+                sysrc -f ${_boot_file} priority=99
+            fi
+            _priority="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n priority)"
+            echo "${_jail} ${_priority}"
+        done
+    fi
+}
+
 set_target() {
     local _TARGET=${1}
     if [ "${2}" = "reverse" ]; then
@@ -176,11 +192,11 @@ set_target() {
             JAILS="${JAILS} ${_jail}"
         done
         if [ "${_order}" = "forward" ]; then
-            TARGET="$(bastille list priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
-            JAILS="$(bastille list priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
+            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
         elif [ "${_order}" = "reverse" ]; then
-            TARGET="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
-            JAILS="$(bastille list priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
+            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
         fi
         export TARGET
         export JAILS
@@ -223,11 +239,11 @@ target_all_jails() {
         fi
     done
     if [ "${_order}" = "forward" ]; then
-        TARGET="$(bastille list priority | sort -k2 -n | awk '{print $1}')"
-        JAILS="$(bastille list priority | sort -k2 -n | awk '{print $1}')"
+        TARGET="$(list_jail_priority | sort -k2 -n | awk '{print $1}')"
+        JAILS="$(list_jail_priority | sort -k2 -n | awk '{print $1}')"
     elif [ "${_order}" = "reverse" ]; then
-        TARGET="$(bastille list priority | sort -k2 -nr | awk '{print $1}')"
-        JAILS="$(bastille list priority | sort -k2 -nr | awk '{print $1}')"
+        TARGET="$(list_jail_priority | sort -k2 -nr | awk '{print $1}')"
+        JAILS="$(list_jail_priority | sort -k2 -nr | awk '{print $1}')"
     fi
     export TARGET
     export JAILS
