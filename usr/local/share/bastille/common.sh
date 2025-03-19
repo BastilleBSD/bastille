@@ -145,11 +145,7 @@ jail_autocomplete() {
 }
 
 list_jail_priority() {
-    if [ -z "${1}" ]; then
-        local _jail_list="$(bastille list jails)"
-    else
-        local _jail_list="${1}"
-    fi
+    local _jail_list="${1}"
     if [ -d "${bastille_jailsdir}" ]; then
         for _jail in ${_jail_list}; do
             local _boot_file=${bastille_jailsdir}/${_jail}/boot.conf
@@ -243,13 +239,10 @@ target_all_jails() {
         fi
     done
     if [ "${_order}" = "forward" ]; then
-        TARGET="$(list_jail_priority | sort -k2 -n | awk '{print $1}')"
-        JAILS="$(list_jail_priority | sort -k2 -n | awk '{print $1}')"
+        JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -n | awk '{print $1}')"
     elif [ "${_order}" = "reverse" ]; then
-        TARGET="$(list_jail_priority | sort -k2 -nr | awk '{print $1}')"
-        JAILS="$(list_jail_priority | sort -k2 -nr | awk '{print $1}')"
+        JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -nr | awk '{print $1}')"
     fi
-    export TARGET
     export JAILS
 }
 
