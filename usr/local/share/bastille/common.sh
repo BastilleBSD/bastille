@@ -145,7 +145,11 @@ jail_autocomplete() {
 }
 
 list_jail_priority() {
-    local _jail_list="${1}"
+    if [ -z "${1}" ]; then
+        local _jail_list="$(bastille list jails)"
+    else
+        local _jail_list="${1}"
+    fi
     if [ -d "${bastille_jailsdir}" ]; then
         for _jail in ${_jail_list}; do
             local _boot_file=${bastille_jailsdir}/${_jail}/boot.conf
