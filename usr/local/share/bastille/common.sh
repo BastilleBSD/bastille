@@ -151,8 +151,8 @@ list_jail_priority() {
             local _boot_file=${bastille_jailsdir}/${_jail}/boot.conf
             # Set defaults if boot file does not exist
             if [ ! -f ${_boot_file} ]; then
-                sysrc -f ${_boot_file} boot=on
-                sysrc -f ${_boot_file} priority=99
+                sysrc -f ${_boot_file} boot=on > /dev/null 2>&1
+                sysrc -f ${_boot_file} priority=99 > /dev/null 2>&1
             fi
             _priority="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n priority)"
             echo "${_jail} ${_priority}"

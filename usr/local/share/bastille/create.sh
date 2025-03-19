@@ -549,6 +549,10 @@ create_jail() {
     # Set strict permissions on the jail by default
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
+    # Apply priority and boot settings before starting jail
+    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" boot=${BOOT}
+    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" priority="${PRIORITY}"
+
     # Jail must be started before applying the default template. -- cwells
     if [ -z "${EMPTY_JAIL}" ]; then
         bastille start "${NAME}"
@@ -656,10 +660,6 @@ create_jail() {
             bastille restart "${NAME}"
         fi
     fi
-
-    # Apply priority and boot settings
-    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" boot=${BOOT}
-    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" priority="${PRIORITY}"
 }
 
 bastille_root_check
