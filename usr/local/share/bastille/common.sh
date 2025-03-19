@@ -208,7 +208,7 @@ set_target_single() {
                 exit 1
             fi
     fi
-    TARGET="${_TARGET} "
+    TARGET="${_TARGET}"
     JAILS="${_TARGET}"
     export TARGET
     export JAILS
