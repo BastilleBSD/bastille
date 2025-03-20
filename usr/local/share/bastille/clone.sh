@@ -153,13 +153,22 @@ update_jailconf() {
     else
         _ip4="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
         _ip6="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
+        _interface="$(bastille config ${TARGET} get interface)"
+        # Remove old style interface naming in place of new if|ip style
+        if [ "${_interface}" != "not set" ]; then
+            sed -i '' "/.*interface = .*/d" "${JAIL_CONFIG}"
+        fi
         # IP4
         if [ "${_ip4}" != "not set" ]; then
             for _ip in ${_ip4}; do
                 if echo ${_ip} | grep -q "|"; then
                     _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 fi
-                sed -i '' "/ip4.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                if [ "${_interface}" != "not set" ]; then
+                    sed -i '' "s/.*${_interface} = .*/  ip4.addr = ${_interface}|${IP};/" "${JAIL_CONFIG}"
+                else
+                    sed -i '' "/ip4.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                fi
                 sed -i '' "/ip4.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
             done
         fi
@@ -169,7 +178,11 @@ update_jailconf() {
                 if echo ${_ip} | grep -q "|"; then
                     _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 fi
-                sed -i '' "/ip6.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                if [ "${_interface}" != "not set" ]; then
+                    sed -i '' "s/.*${_interface} = .*/  ip6.addr = ${_interface}|${IP};/" "${JAIL_CONFIG}"
+                else
+                    sed -i '' "/ip6.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                fi
                 sed -i '' "/ip6.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
                 sed -i '' "s/ip6 = .*/ip6 = ${IP6_MODE};/" "${JAIL_CONFIG}"
             done
