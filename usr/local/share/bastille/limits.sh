@@ -109,16 +109,18 @@ for _jail in ${JAILS}; do
 	    # Remove limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 while read _limits; do
-                    rctl -r "${_limits}"
+                    rctl -r "${_limits}" 2 > /dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+		info "[${TARGET}]: RCTL limits cleared."
             fi
-            ;;
+	    ;;
         reset)
 	    # Remove limits and delete rctl.conf
 	    if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 while read _limits; do
-                    rctl -r "${_limits}"
+                    rctl -r "${_limits}" 2 > /dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+	        info "[${TARGET}]: RCTL limits cleared."
             fi
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 rm -f "${bastille_jailsdir}/${_jail}/rctl.conf"
