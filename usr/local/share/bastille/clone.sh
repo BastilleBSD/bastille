@@ -165,7 +165,7 @@ update_jailconf() {
                     _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 fi
                 if [ "${_interface}" != "not set" ]; then
-                    sed -i '' "s/.*${_interface} = .*/  ip4.addr = ${_interface}|${IP};/" "${JAIL_CONFIG}"
+                    sed -i '' "s/.*ip4.addr = .*/  ip4.addr = ${_interface}|${IP};/" "${JAIL_CONFIG}"
                 else
                     sed -i '' "/ip4.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
                 fi
