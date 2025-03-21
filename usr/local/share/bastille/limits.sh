@@ -35,8 +35,8 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille limits [option(s)] TARGET OPTION VALUE"
-    echo -e "Example: bastille limits JAILNAME memoryuse 1G"
+    error_notify "Usage: bastille limits [option(s)] TARGET [OPTION VALUE|clear|reset]"
+    echo -e "Example: bastille limits TARGET memoryuse 1G"
     cat << EOF
     Options:
 
@@ -78,7 +78,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -ne 3 ]; then
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     usage
 fi
 
@@ -103,23 +103,49 @@ for _jail in ${JAILS}; do
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+    
+    case "${OPTION}" in
+        clear)
+	    # Remove limits
+            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+                while read _limits; do
+                    rctl -r "${_limits}"
+                done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+            fi
+            ;;
+        reset)
+	    # Remove limits and delete rctl.conf
+	    if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+                while read _limits; do
+                    rctl -r "${_limits}"
+                done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+            fi
+            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+                rm -f "${bastille_jailsdir}/${_jail}/rctl.conf"
+		info "[${TARGET}]: rctl.conf removed."
+            else
+	        error_continue "[${TARGET}]: rctl.conf not found."
+	    fi
+	    ;;
+        *)
+	    # Add rctl rule to rctl.conf
+            _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
+            _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
 
-    _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
-    _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
+            # Check whether the entry already exists and, if so, update it. -- cwells
+            if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
+    	        _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
+    	        _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
+    	        _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
+	        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+            else # Just append the entry. -- cwells
+                echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+                echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+            fi
 
-    # Check whether the entry already exists and, if so, update it. -- cwells
-    if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
-    	_escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
-    	_escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
-    	_escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
-	sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-    else # Just append the entry. -- cwells
-        echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-        echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-    fi
-
-    echo -e "${OPTION} ${VALUE}"
-    rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
+            echo -e "${OPTION} ${VALUE}"
+            rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
+	    ;;
 
 done
