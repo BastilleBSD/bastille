@@ -98,8 +98,8 @@ list_all(){
                     if [ "$(/usr/sbin/jls name | awk "/^${JAIL_NAME}$/")" ]; then
                         JAIL_STATE="Up"
                         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-                            JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -n vnet0 inet 2> /dev/null | sed -n "/.inet /{s///;s/ .*//;p;}")
-                            if [ ! "${JAIL_IP}" ]; then JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -n vnet0 inet6 2> /dev/null | awk '/inet6 / && (!/fe80::/ || !/%vnet0/)' | sed -n "/.inet6 /{s///;s/ .*//;p;}"); fi
+                            JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -an | grep -v "127.0.0.1" | grep "inet " | awk '{print $2}')
+                            if [ ! "${JAIL_IP}" ]; then JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -an | grep -v "lo0" | awk '{print $2}'); fi
                         else
                             JAIL_IP=$(/usr/sbin/jls -j ${JAIL_NAME} ip4.addr 2> /dev/null)
                             if [ "${JAIL_IP}" = "-" ]; then JAIL_IP=$(/usr/sbin/jls -j ${JAIL_NAME} ip6.addr 2> /dev/null); fi
@@ -116,7 +116,7 @@ list_all(){
                     else
                         JAIL_STATE=$(if [ "$(sed -n "/^${JAIL_NAME} {$/,/^}$/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | awk '$0 ~ /^'${JAIL_NAME}' \{|\}/ { printf "%s",$0 }')" = "${JAIL_NAME} {}" ]; then echo "Down"; else echo "n/a"; fi)
                         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-                            JAIL_IP=$(sed -n 's/^ifconfig_vnet0="\(.*\)"$/\1/p' "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | sed "s/\// /g" | awk '{ if ($1 ~ /^[inet|inet6]/) print $2; else print $1 }')
+                            JAIL_IP=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o inet.* | awk '{print $2}')
                         else
                             JAIL_IP=$(sed -n "s/^[ ]*ip[4,6].addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk '{ print $1 }')
                         fi
