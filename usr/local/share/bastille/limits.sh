@@ -147,5 +147,6 @@ for _jail in ${JAILS}; do
             echo -e "${OPTION} ${VALUE}"
             rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
 	    ;;
+    esac
 
 done
