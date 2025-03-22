@@ -240,18 +240,31 @@ update_jailconf_vnet() {
                         sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
                     # Replace epair description
-                    sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+                    sed -i '' "/${_new_host_epair}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     # Update /etc/rc.conf
                     local _jail_vnet="$(grep ${_target_jail_epair} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
+                    local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
                     sed -i '' "s|${_target_jail_epair}_name|${_new_jail_epair}_name|" "${_rc_conf}"
                     if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
-                        if [ "${IP}" = "0.0.0.0" ]; then
-                            sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                        if [ -n "${_jail_vnet_vlan}" ]; then
+                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP}"
+                            fi
                         else
-                            sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                            fi
                         fi
                     else
-                        sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                        if [ -n "${_jail_vnet_vlan}" ]; then
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
+                        else
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                        fi
                     fi
                     break
                 fi
@@ -262,7 +275,8 @@ update_jailconf_vnet() {
                 if ! grep -oq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
                     # Update jail.conf epair name
                     local uniq_epair="bastille${_num}"
-                    local _if_vnet="$(grep ${_if} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
+                    local _jail_vnet="$(grep ${_if} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
+                    local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
                     sed -i '' "s|${_if}|${uniq_epair}|g" "${_jail_conf}"
                     # If jail had a static MAC, generate one for clone
                     if grep ether ${_jail_conf} | grep -qoc ${uniq_epair}; then
@@ -271,17 +285,29 @@ update_jailconf_vnet() {
                         sed -i '' "s|${uniq_epair} ether.*:.*:.*:.*:.*:.*a\";|${uniq_epair} ether ${macaddr}a\";|" "${_jail_conf}"
                         sed -i '' "s|${uniq_epair} ether.*:.*:.*:.*:.*:.*b\";|${uniq_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
-                    sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+                    sed -i '' "/${uniq_epair}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     # Update /etc/rc.conf
                     sed -i '' "s|ifconfig_e0b_${_if}_name|ifconfig_e0b_${uniq_epair}_name|" "${_rc_conf}"
                     if grep "vnet0" "${_rc_conf}" | grep -q ${uniq_epair}; then
-                        if [ "${IP}" = "0.0.0.0" ]; then
-                            sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                        if [ -n "${_jail_vnet_vlan}" ]; then
+                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP}"
+                            fi
                         else
-                            sysrc -f "${_rc_conf}" ifconfig_vnet0=" inet ${IP} "
+                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                            fi
                         fi
                     else
-                        sysrc -f "${_rc_conf}" ifconfig_${_if_vnet}="SYNCDHCP"
+                        if [ -n "${_jail_vnet_vlan}" ]; then
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
+                        else
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                        fi
                     fi
                     break
                 fi
