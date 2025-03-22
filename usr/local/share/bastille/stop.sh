@@ -105,9 +105,7 @@ for _jail in ${JAILS}; do
 
     # Remove rctl limits
     if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-        while read _limits; do
-            rctl -r "${_limits}"
-        done < "${bastille_jailsdir}/${_jail}/rctl.conf"
+        bastille limits "${_jail}" clear
     fi
 
     # Stop jail
