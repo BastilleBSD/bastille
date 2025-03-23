@@ -139,6 +139,7 @@ for _jail in ${JAILS}; do
                     sed -i '' "/.*${_jail}:${OPTION}.*/d" "${bastille_jailsdir}/${_jail}/rctl.conf"
                 fi
             fi
+            ;;
         clear)
 	        # Remove limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
