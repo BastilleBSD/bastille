@@ -16,7 +16,7 @@ To remove a limit, use `bastille limits TARGET remove OPTION`
   ishmael ~ # bastille limits help
 
   Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|remove OPTION|clear|reset|[list|show] (active)|stats]
-  Example: bastille limits TARGET memoryuse 1G"
+  Example: bastille limits TARGET add memoryuse 1G"
   
     Options:
 
