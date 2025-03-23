@@ -133,8 +133,8 @@ for _jail in ${JAILS}; do
             # Remove rule from rctl.conf
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
-                    rctl_rule="$(grep "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf")"
-                    rctl_rule_log="$(grep "jail:${_jail}:${OPTION}:log" "${bastille_jailsdir}/${_jail}/rctl.conf")"
+                    _rctl_rule="$(grep "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf")"
+                    _rctl_rule_log="$(grep "jail:${_jail}:${OPTION}:log" "${bastille_jailsdir}/${_jail}/rctl.conf")"
                     rctl -r "${_rctl_rule}" "${_rctl_rule_log}" 2>/dev/null
                     sed -i '' "/.*${_jail}:${OPTION}.*/d" "${bastille_jailsdir}/${_jail}/rctl.conf"
                 fi
