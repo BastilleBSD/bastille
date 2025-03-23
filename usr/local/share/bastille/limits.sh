@@ -35,7 +35,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille limits [option(s)] TARGET [OPTION VALUE|clear|reset]"
+    error_notify "Usage: bastille limits [option(s)] TARGET [OPTION VALUE|clear|reset|show|stats]"
     echo -e "Example: bastille limits TARGET memoryuse 1G"
     cat << EOF
     Options:
@@ -112,6 +112,18 @@ for _jail in ${JAILS}; do
                     rctl -r "${_limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
 		info "[${TARGET}]: RCTL limits cleared."
+            fi
+	    ;;
+        show)
+	    # Show limits
+            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+	        rctl jail:${_jail} 2>/dev/null
+            fi
+	    ;;
+        stats)
+	    # Show statistics
+            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+	        rctl -hu jail:${_jail} 2>/dev/null
             fi
 	    ;;
         reset)
