@@ -35,7 +35,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|clear|reset|[list|show] (active)|stats]"
+    error_notify "Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|remove OPTION|clear|reset|[list|show] (active)|stats]"
     echo -e "Example: bastille limits TARGET add memoryuse 1G"
     cat << EOF
     Options:
@@ -106,6 +106,39 @@ for _jail in ${JAILS}; do
     fi
     
     case "${ACTION}" in
+        add)
+            OPTION="${1}"
+            VALUE="${2}"
+	        # Add rctl rule to rctl.conf
+            _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
+            _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
+
+            # Check whether the entry already exists and, if so, update it. -- cwells
+            if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
+    	        _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
+    	        _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
+    	        _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
+	            sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+            else # Just append the entry. -- cwells
+                echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+                echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+            fi
+
+            echo -e "${OPTION} ${VALUE}"
+            rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
+	        ;;
+        remove)
+            OPTION="${1}"
+            # Remove rule from rctl.conf
+            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+                if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
+                    rctl_rule="$(grep "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf")"
+                    rctl_rule_log="$(grep "jail:${_jail}:${OPTION}:log" "${bastille_jailsdir}/${_jail}/rctl.conf")"
+                    rctl -r "${_rctl_rule}" "${_rctl_rule_log}" 2>/dev/null
+                    sed -i '' "/.*${_jail}:${OPTION}.*/d" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                fi
+            fi
         clear)
 	        # Remove limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
@@ -145,28 +178,6 @@ for _jail in ${JAILS}; do
             else
 	            error_continue "[${TARGET}]: rctl.conf not found."
 	        fi
-	        ;;
-        add)
-            OPTION="${1}"
-            VALUE="${2}"
-	        # Add rctl rule to rctl.conf
-            _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
-            _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
-
-            # Check whether the entry already exists and, if so, update it. -- cwells
-            if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
-    	        _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
-    	        _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
-    	        _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
-	            sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-                sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-            else # Just append the entry. -- cwells
-                echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-                echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-            fi
-
-            echo -e "${OPTION} ${VALUE}"
-            rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
 	        ;;
     esac
 
