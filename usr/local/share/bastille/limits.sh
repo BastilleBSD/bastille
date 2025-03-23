@@ -35,8 +35,8 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille limits [option(s)] TARGET [OPTION VALUE|clear|reset|[list|show] (active)|stats]"
-    echo -e "Example: bastille limits TARGET memoryuse 1G"
+    error_notify "Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|clear|reset|[list|show] (active)|stats]"
+    echo -e "Example: bastille limits TARGET add memoryuse 1G"
     cat << EOF
     Options:
 
