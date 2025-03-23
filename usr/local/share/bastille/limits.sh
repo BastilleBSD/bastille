@@ -114,10 +114,14 @@ for _jail in ${JAILS}; do
 		info "[${TARGET}]: RCTL limits cleared."
             fi
 	    ;;
-        show)
+        list|show)
 	    # Show limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-	        rctl jail:${_jail} 2>/dev/null
+	        if [ "${VALUE}" = "active" ]; then
+	            rctl jail:${_jail} 2>/dev/null
+	        else
+	            cat "${bastille_jailsdir}/${_jail}/rctl.conf"
+	        fi
             fi
 	    ;;
         stats)
