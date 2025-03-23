@@ -86,6 +86,11 @@ TARGET="${1}"
 ACTION="${2}"
 shift 2
 
+# Retain support for no action (will default to add) 
+if [ "${ACTION}" != "remove" ] && [ "${ACTION}" != "clear" ] && [ "${ACTION}" != "list" ] && [ "${ACTION}" != "show" ] && [ "${ACTION}" != "reset" ] && [ "${ACTION}" != "stats" ]; then
+    ACTION="add"
+fi
+
 RACCT_ENABLE="$(sysctl -n kern.racct.enable)"
 if [ "${RACCT_ENABLE}" != '1' ]; then
     error_exit "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
@@ -109,7 +114,7 @@ for _jail in ${JAILS}; do
         add)
             OPTION="${1}"
             VALUE="${2}"
-	        # Add rctl rule to rctl.conf
+            # Add rctl rule to rctl.conf
             _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
             _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
 
@@ -118,7 +123,7 @@ for _jail in ${JAILS}; do
     	        _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
     	        _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
     	        _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
-	            sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
                 sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
             else # Just append the entry. -- cwells
                 echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
@@ -127,7 +132,7 @@ for _jail in ${JAILS}; do
 
             echo -e "${OPTION} ${VALUE}"
             rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
-	        ;;
+            ;;
         remove)
             OPTION="${1}"
             # Remove rule from rctl.conf
@@ -141,16 +146,16 @@ for _jail in ${JAILS}; do
             fi
             ;;
         clear)
-	        # Remove limits
+            # Remove limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 while read _limits; do
                     rctl -r "${_limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
-		        info "[${_jail}]: RCTL limits cleared."
+                info "[${_jail}]: RCTL limits cleared."
             fi
 	        ;;
         list|show)
-	        # Show limits
+            # Show limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
 	        if [ "${1}" = "active" ]; then
 	            rctl jail:${_jail} 2>/dev/null
@@ -158,28 +163,27 @@ for _jail in ${JAILS}; do
 	            cat "${bastille_jailsdir}/${_jail}/rctl.conf"
 	        fi
             fi
-	        ;;
+            ;;
         stats)
-	        # Show statistics
+            # Show statistics
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
 	        rctl -hu jail:${_jail} 2>/dev/null
             fi
-	        ;;
+            ;;
         reset)
-	        # Remove limits and delete rctl.conf
-	        if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+            # Remove limits and delete rctl.conf
+	    if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 while read _limits; do
                     rctl -r "${_limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
-	            info "[${TARGET}]: RCTL limits cleared."
+	        info "[${TARGET}]: RCTL limits cleared."
             fi
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 rm -f "${bastille_jailsdir}/${_jail}/rctl.conf"
-		        info "[${TARGET}]: rctl.conf removed."
+                info "[${TARGET}]: rctl.conf removed."
             else
-	            error_continue "[${TARGET}]: rctl.conf not found."
-	        fi
-	        ;;
+                error_continue "[${TARGET}]: rctl.conf not found."
+            fi
+            ;;
     esac
-
 done
