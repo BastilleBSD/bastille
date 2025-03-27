@@ -31,7 +31,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     error_notify "Usage: bastille list [option(s)] [-j|-a] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup]"
