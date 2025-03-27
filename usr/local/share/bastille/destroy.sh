@@ -297,7 +297,7 @@ case "${TARGET}" in
         ;;
     *)
         ## just destroy a jail
-        set_target "${TARGET}"
+        set_target "${TARGET}" "reverse"
         destroy_jail "${JAILS}"
         ;;
 esac

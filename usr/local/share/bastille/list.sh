@@ -33,10 +33,12 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille list [option(s)] [-j|-a] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup]"
+    error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [template] [JAIL|CONTAINER] [log] [limit] [import] [export] [backup] [priority]"
     cat << EOF
     Options:
     
+    -a | --all            List all jails, running and stopped, in BastilleBSD format.
+    -j | --json           List jails in json format.
     -x | --debug          Enable debug mode.
 
 EOF
@@ -76,7 +78,7 @@ list_all(){
             if [ "${MAX_LENGTH_THICK_JAIL_RELEASE}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_THICK_JAIL_RELEASE}; fi
             if [ "${MAX_LENGTH_LINUX_JAIL_RELEASE}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_LINUX_JAIL_RELEASE}; fi
             if [ "${MAX_LENGTH_JAIL_RELEASE}" -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
-            printf " JID%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
+            printf " JID%*sBoot%*sPrio%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
             if [ -n "${TARGET}" ]; then
                 # Query all info for a specific jail.
                 JAIL_LIST="${TARGET}"
@@ -88,6 +90,8 @@ list_all(){
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                     JAIL_NAME=$(grep -h -m 1 -e "^.* {$" "${bastille_jailsdir}/${_JAIL}/jail.conf" 2> /dev/null | awk '{ print $1 }')
                     JID="$(jls -j ${_JAIL} jid 2>/dev/null)"
+                    BOOT="$(sysrc -f ${bastille_jailsdir}/${_JAIL}/boot.conf -n boot)"
+                    PRIORITY="$(sysrc -f ${bastille_jailsdir}/${_JAIL}/boot.conf -n priority)"
                     IS_FREEBSD_JAIL=0
                     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/bin/freebsd-version" ] || [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille/bin/freebsd-version" ] || [ "$(grep -c "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_FREEBSD_JAIL=1; fi
                     IS_FREEBSD_JAIL=${IS_FREEBSD_JAIL:-0}
@@ -141,6 +145,8 @@ list_all(){
                         if [ "${#JAIL_PORTS}" -gt "${MAX_LENGTH_JAIL_PORTS}" ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
                         JAIL_NAME=${JAIL_NAME:-${DEFAULT_VALUE}}
                         JID=${JID:-${DEFAULT_VALUE}}
+                        BOOT=${BOOT:-${DEFAULT_VALUE}}
+                        PRIORITY=${PRIORITY:-${DEFAULT_VALUE}}
                         JAIL_STATE=${JAIL_STATE:-${DEFAULT_VALUE}}
                         JAIL_IP=${JAIL_IP:-${DEFAULT_VALUE}}
                         JAIL_PORTS=${JAIL_PORTS:-${DEFAULT_VALUE}}
@@ -156,12 +162,15 @@ list_all(){
                             #                 10.10.10.11
                             #                 10.10.10.12
                             FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-                            printf " ${JID}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+			                      if echo "${FIRST_IP}" | grep -q "|"; then FIRST_IP=$(echo ${FIRST_IP} | awk -F"|" '{print $2}'); fi
+                            printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                             for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                                printf " %*s%*s${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
+                                if echo "${IP}" | grep -q "|"; then IP=$(echo ${IP} | awk -F"|" '{print $2}'); fi
+                                printf "%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
                             done
                         else
-                            printf " ${JID}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+			                      if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP=$(echo ${JAIL_IP} | awk -F"|" '{print $2}'); fi
+                            printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                         fi
                 fi
             done

@@ -144,8 +144,29 @@ jail_autocomplete() {
     fi
 }
 
+list_jail_priority() {
+    local _jail_list="${1}"
+    if [ -d "${bastille_jailsdir}" ]; then
+        for _jail in ${_jail_list}; do
+            local _boot_file=${bastille_jailsdir}/${_jail}/boot.conf
+            # Set defaults if boot file does not exist
+            if [ ! -f ${_boot_file} ]; then
+                sysrc -f ${_boot_file} boot=on > /dev/null 2>&1
+                sysrc -f ${_boot_file} priority=99 > /dev/null 2>&1
+            fi
+            _priority="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n priority)"
+            echo "${_jail} ${_priority}"
+        done
+    fi
+}
+
 set_target() {
     local _TARGET=${1}
+    if [ "${2}" = "reverse" ]; then
+        local _order="${2}"
+    else
+        local _order="forward"
+    fi
     JAILS=""
     TARGET=""
     if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
@@ -170,6 +191,13 @@ set_target() {
             TARGET="${TARGET} ${_jail}"
             JAILS="${JAILS} ${_jail}"
         done
+        if [ "${_order}" = "forward" ]; then
+            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
+        elif [ "${_order}" = "reverse" ]; then
+            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
+        fi
         export TARGET
         export JAILS
     fi
@@ -210,6 +238,11 @@ target_all_jails() {
             JAILS="${JAILS} ${_jail}"
         fi
     done
+    if [ "${_order}" = "forward" ]; then
+        JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -n | awk '{print $1}')"
+    elif [ "${_order}" = "reverse" ]; then
+        JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -nr | awk '{print $1}')"
+    fi
     export JAILS
 }
 

@@ -37,19 +37,35 @@ usage() {
     cat << EOF
     Options:
 
-    -v | --verbose           Print every action on jail stop.
-    -x | --debug             Enable debug mode.
+    -b | --boot                 Respect jail boot setting.
+    -d | --delay VALUE          Time to wait between stopping each jail.
+    -v | --verbose              Print every action on jail stop.
+    -x | --debug                Enable debug mode.
 
 EOF
     exit 1
 }
 
 # Handle options.
+BOOT=0
+DELAY_TIME=0
 OPTION=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -b|--boot)
+            BOOT=1
+            shift
+            ;;
+        -d|--delay)
+            if [ -z "${2}" ] && ! echo "${2}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[-d|--delay] requires a value."
+            else
+                DELAY_TIME="${2}"
+            fi
+            shift 2
             ;;
         -v|--verbose)
             OPTION="-v"
@@ -62,6 +78,7 @@ while [ "$#" -gt 0 ]; do
         -*) 
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
+                    b) BOOT="1" ;;
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;; 
@@ -82,9 +99,17 @@ fi
 TARGET="${1}"
 
 bastille_root_check
-set_target "${TARGET}"
+set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
+
+    # Continue if '-b|--boot' is set and 'boot=off'
+    if [ "${BOOT}" -eq 1 ]; then
+        BOOT_ENABLED="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n boot)"
+        if [ "${BOOT_ENABLED}" = "off" ]; then
+            continue
+        fi
+    fi
 
     info "[${_jail}]:"
     check_target_is_running "${_jail}" || error_continue "Jail is already stopped."
@@ -133,4 +158,8 @@ for _jail in ${JAILS}; do
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi
+
+    # Delay between jail action
+    sleep "${DELAY_TIME}"
+
 done

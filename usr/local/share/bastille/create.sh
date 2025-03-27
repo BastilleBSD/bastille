@@ -45,7 +45,9 @@ usage() {
     -E | --empty                         Creates an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
     -L | --linux                         This option is intended for testing with Linux jails, this is considered experimental.
     -M | --static-mac                    Generate a static MAC address for jail (VNET only).
+         --no-boot                       Create jail with boot=off.
          --no-validate                   Do not validate the release when creating the jail.
+    -p | --priority VALUE                Sets the priority value for jail startup and shutdown.
     -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet                          Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
     -v | --vlan VLANID                   Creates the jail with specified VLAN ID (VNET only).
@@ -546,6 +548,10 @@ create_jail() {
     # Set strict permissions on the jail by default
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
+    # Apply priority and boot settings before starting jail
+    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" boot=${BOOT}
+    sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" priority="${PRIORITY}"
+
     # Jail must be started before applying the default template. -- cwells
     if [ -z "${EMPTY_JAIL}" ]; then
         bastille start "${NAME}"
@@ -665,6 +671,7 @@ if echo "${3}" | grep '@'; then
 fi
 
 # Handle options.
+BOOT="on"
 EMPTY_JAIL=""
 THICK_JAIL=""
 CLONE_JAIL=""
@@ -674,6 +681,7 @@ LINUX_JAIL=""
 STATIC_MAC=""
 DUAL_STACK=""
 VALIDATE_RELEASE="1"
+PRIORITY="99"
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -702,6 +710,18 @@ while [ $# -gt 0 ]; do
             ;;
         -M|--static-mac)
             STATIC_MAC="1"
+            shift
+            ;;
+        -p|--priority)
+	    if echo "${2}" | grep -Eoq "^[0-9]+$"; then
+                PRIORITY="${2}"
+		shift 2
+	    else 
+                error_exit "Not a valid priority value: \"${2}\""
+	    fi
+            ;;
+        --no-boot)
+            BOOT="off"
             shift
             ;;
         --no-validate|no-validate)
