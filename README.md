@@ -30,7 +30,6 @@ make install
 **enable at boot**
 ```shell
 sysrc bastille_enable=YES
-sysrc bastille_rcorder=YES
 ```
 
 Upgrading from a previous version
@@ -74,6 +73,7 @@ Available Commands:
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
+  network     Add or remove interfaces from targeted jail(s).
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rcp         cp(1) files from a jail to host.
   rdr         Redirect host port to container port.
