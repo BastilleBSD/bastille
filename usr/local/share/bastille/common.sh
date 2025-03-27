@@ -30,11 +30,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Source config file
-if [ -f /usr/local/etc/bastille/bastille.conf ]; then
-    . /usr/local/etc/bastille/bastille.conf
-fi
-
+# Load config. This only has to be done here
+# because all commands load this file
+# shellcheck disable=SC1090
+. ${BASTILLE_CONFIG}
+	
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -335,7 +335,7 @@ generate_vnet_jail_netblock() {
   exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${external_interface} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
@@ -348,7 +348,7 @@ EOF
   exec.prestart += "ifconfig ${external_interface} addm epair${_num}a";
   exec.prestart += "ifconfig epair${_num}a up name ${host_epair}";
   exec.prestart += "ifconfig epair${_num}b up name ${jail_epair}";
-  exec.prestart += "ifconfig ${host_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${external_interface} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
@@ -363,7 +363,7 @@ EOF
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
   exec.prestart += "ifconfig e0a_${uniq_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig e0b_${uniq_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
         else
@@ -372,7 +372,7 @@ EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet host interface for Bastille jail ${jail_name}\"";
+  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
         fi

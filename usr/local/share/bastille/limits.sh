@@ -32,7 +32,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     error_notify "Usage: bastille limits [option(s)] TARGET OPTION VALUE"
@@ -111,7 +110,9 @@ for _jail in ${JAILS}; do
     if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
     	_escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
     	_escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
-        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+    	_escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
+	sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
     else # Just append the entry. -- cwells
         echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
         echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"

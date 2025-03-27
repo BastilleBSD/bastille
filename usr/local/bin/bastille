@@ -32,6 +32,8 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
+BASTILLE_VERSION="0.13.20250126"
+
 ## check for config existence
 bastille_conf_check() {
     if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
@@ -54,12 +56,6 @@ bastille_conf_check() {
     fi
 }
 
-bastille_conf_check
-
-## we only load this if conf_check passes
-. /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
-
 ## bastille_prefix should be 0750
 ## this restricts file system access to privileged users
 bastille_perms_check() {
@@ -72,18 +68,13 @@ bastille_perms_check() {
     fi
 }
 
-bastille_perms_check
-
-## version
-BASTILLE_VERSION="0.13.20250126"
-
 usage() {
     cat << EOF
 Bastille is an open-source system for automating deployment and management of
 containerized applications on FreeBSD.
 
 Usage:
-  bastille command TARGET [args]
+  bastille command [option(s)] TARGET [args]
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
@@ -105,6 +96,7 @@ Available Commands:
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
+  network     Add/remove network interfaces from targeted container.
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
   rcp         cp(1) files from a jail to host.
   rdr         Redirect host port to container port.
@@ -126,11 +118,70 @@ Available Commands:
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
+Use "bastille [-c|--config FILE] command" to specify a non-default config file.
 
 EOF
     exit 1
 }
 
+bastille_conf_check
+bastille_perms_check
+
+if [ -z "${BASTILLE_CONFIG}" ]; then
+    BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
+    export BASTILLE_CONFIG
+elif [ -r "${BASTILLE_CONFIG}" ]; then
+    export BASTILLE_CONFIG
+elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+    BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+    export BASTILLE_CONFIG
+else
+    echo "Not a valid config file: ${BASTILLE_CONFIG}"
+    exit 1
+fi   
+
+# Load common.sh after setting BASTILLE_CONFIG
+. /usr/local/share/bastille/common.sh
+
+# Handle options
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        version|-v|--version)
+            info "${BASTILLE_VERSION}"
+            exit 0
+            ;;
+        -c|--config)
+            BASTILLE_CONFIG="${2}"
+            if [ -r "${BASTILLE_CONFIG}" ]; then
+                info "Using custom config: ${BASTILLE_CONFIG}"
+                export BASTILLE_CONFIG
+            elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+                BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+                info "Using custom config: ${BASTILLE_CONFIG}"
+                export BASTILLE_CONFIG
+            else
+                error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
+            fi                
+            shift 2
+            ;;
+        -*)
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    x) enable_debug ;;
+                    a) AUTO=1 ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 if [ "$#" -lt 1 ]; then
     usage
 else
@@ -140,13 +191,6 @@ fi
 
 # Handle special-case commands first.
 case "${CMD}" in
-    version|-v|--version)
-        info "${BASTILLE_VERSION}"
-        exit 0
-        ;;
-    help|-h|--help)
-        usage
-        ;;
     bootstrap| \
     clone| \
     cmd| \
