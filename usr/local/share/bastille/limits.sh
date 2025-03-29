@@ -83,12 +83,13 @@ if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
 fi
 
 TARGET="${1}"
-ACTION="${2}"
-shift 2
-
 # Retain support for no action (will default to add) 
 if [ "${ACTION}" != "remove" ] && [ "${ACTION}" != "clear" ] && [ "${ACTION}" != "list" ] && [ "${ACTION}" != "show" ] && [ "${ACTION}" != "reset" ] && [ "${ACTION}" != "stats" ]; then
     ACTION="add"
+    shift 1
+else
+    ACTION="${2}"
+    shift 2
 fi
 
 RACCT_ENABLE="$(sysctl -n kern.racct.enable)"
