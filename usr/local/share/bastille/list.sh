@@ -101,7 +101,7 @@ list_all(){
                     if [ "$(/usr/sbin/jls name | awk "/^${JAIL_NAME}$/")" ]; then
                         JAIL_STATE="Up"
                         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-                            JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -an | grep -v "127.0.0.1" | grep "inet " | awk '{print $2}')
+                            JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -an | grep -v "127.0.0.1" | grep "inet " | awk '{print $2}' | tr '\n' ',' | sed 's/,$//')
                             if [ ! "${JAIL_IP}" ]; then JAIL_IP=$(jexec -l ${JAIL_NAME} ifconfig -an | grep -v "lo0" | awk '{print $2}'); fi
                         else
                             JAIL_IP=$(/usr/sbin/jls -j ${JAIL_NAME} ip4.addr 2> /dev/null)
