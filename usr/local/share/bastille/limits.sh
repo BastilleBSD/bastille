@@ -85,7 +85,7 @@ fi
 TARGET="${1}"
 ACTION="${2}"
 # Retain support for no action (will default to add) 
-if [ "${ACTION}" != "remove" ] && [ "${ACTION}" != "clear" ] && [ "${ACTION}" != "list" ] && [ "${ACTION}" != "show" ] && [ "${ACTION}" != "reset" ] && [ "${ACTION}" != "stats" ]; then
+if [ "${ACTION}" != "add" ] && [ "${ACTION}" != "remove" ] && [ "${ACTION}" != "clear" ] && [ "${ACTION}" != "list" ] && [ "${ACTION}" != "show" ] && [ "${ACTION}" != "reset" ] && [ "${ACTION}" != "stats" ]; then
     ACTION="add"
     shift 1
 else
