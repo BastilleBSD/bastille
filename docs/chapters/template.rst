@@ -70,31 +70,31 @@ will show a warning, but will still continue.
   ishmael ~ # bastille template azkaban sample/template --arg ARG=VALUE --arg ARG1=VALUE
 
 
-CMD         - run the specified command
+CMD           - run the specified command
 
-CONFIG      - set the specified property and value
+CONFIG        - set the specified property and value
 
-CP/OVERLAY  - copy specified files from template directory to specified path inside jail
+CP/OVERLAY    - copy specified files from template directory to specified path inside jail
 
-INCLUDE     - specify a template to include. Make sure the template is bootstrapped, or you are using the template url
+INCLUDE       - specify a template to include. Make sure the template is bootstrapped, or you are using the template url
 
-LIMITS      - set the specified resource value for the jail
+LIMITS        - set the specified resource value for the jail
 
-LIMITS      - add specified word to specified file if not present
+LINE_IN_FILE  - add specified word to specified file if not present
 
-MOUNT       - mount specified files/directories inside the jail
+MOUNT         - mount specified files/directories inside the jail
 
-PKG         - install specified packages inside jail
+PKG           - install specified packages inside jail
 
-RDR         - redirect specified ports to the jail
+RDR           - redirect specified ports to the jail
 
-RENDER      - replace ARG values inside specified files inside the jail. If a directory is specified, ARGS will be replaced in all files underneath
+RENDER        - replace ARG values inside specified files inside the jail. If a directory is specified, ARGS will be replaced in all files underneath
 
-RESTART     - restart the jail
+RESTART       - restart the jail
 
-SERVICE     - run `service` command inside the jail with specified arguments
+SERVICE       - run `service` command inside the jail with specified arguments
 
-SYSRC       - run `sysrc` inside the jail with specified arguments
+SYSRC         - run `sysrc` inside the jail with specified arguments
 
 Special Hook Cases
 ------------------
