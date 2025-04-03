@@ -115,8 +115,8 @@ render() {
 }
 
 line_in_file() {
-    _line="${1}"
-    _file_path="${2}"
+    _line="${2}"
+    _file_path="${1}/${3}"
     if [ -f "${_file_path}" ]; then
         if ! grep -qxF "${_line}" "${_file_path}"; then
             echo "${_line}" >> "${_file_path}"
@@ -393,7 +393,7 @@ for _jail in ${JAILS}; do
                     continue
                     ;;
                 lif|lineinfile|line_in_file)
-                    line_in_file "${_args}"
+                    line_in_file "${bastille_jail_path}" "${_args}"
                     continue
                     ;;
             esac
