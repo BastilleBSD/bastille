@@ -115,14 +115,15 @@ render() {
 }
 
 line_in_file() {
-    _line="${2}"
-    _file_path="${1}/${3}"
-    if [ -f "${_file_path}" ]; then
-        if ! grep -qxF "${_line}" "${_file_path}"; then
-            echo "${_line}" >> "${_file_path}"
+    _jailpath="${1}"
+    _filepath="$(echo ${2} | awk '{print $2}')"
+    _line="$(echo ${2} | awk '{print $1}')"
+    if [ -f "${_jailpath}/${_filepath}" ]; then
+        if ! grep -qxF "${_line}" "${_jailpath}/${_filepath}"; then
+            echo "${_line}" >> "${_jailpath}/${_filepath}"
 	fi
     else
-        warn "Path not found for line_in_file: ${2}"
+        warn "Path not found for line_in_file: ${_filepath}"
     fi
 }
 
