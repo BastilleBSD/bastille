@@ -121,7 +121,7 @@ for _jail in ${JAILS}; do
         bastille start "${_jail}"
     else
         error_notify "Jail is not running."
-        error_exit "Use [-a|--auto] to auto-start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
     
     LOGIN="$(jexec -l "${_jail}" which login)"
