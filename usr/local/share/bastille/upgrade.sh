@@ -125,15 +125,16 @@ thin_jail_check() {
 }
 
 release_check() {
+    local _release="${1}"
     # Validate the release
-    if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
-        error_exit "${NEWRELEASE} is not a valid release."
+    if ! echo "${_release}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
+        error_exit "${_release} is not a valid release."
     fi
     # Exit if NEWRELEASE doesn't exist
     if [ "${THIN_JAIL}" -eq 1 ]; then
-        if [ ! -d "${bastille_releasesdir}/${NEWRELEASE}" ]; then
-            error_notify "Release not found: ${NEWRELEASE}"
-            error_exit "See 'bastille bootstrap ${NEWRELEASE} to bootstrap the release."
+        if [ ! -d "${bastille_releasesdir}/${_release}" ]; then
+            error_notify "Release not found: ${_release}"
+            error_exit "See 'bastille bootstrap ${_release} to bootstrap the release."
         fi
     fi
 }
@@ -212,11 +213,11 @@ if [ "${NEWRELEASE}" = "install" ]; then
     fi
     jail_updates_install "${TARGET}"
 else
+    release_check "${NEWRELEASE}"
     if [ "${THIN_JAIL}" -eq 1 ]; then
         thin_jail_check "${TARGET}"
     else
         thick_jail_check "${TARGET}"
     fi
-    release_check
     jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi
