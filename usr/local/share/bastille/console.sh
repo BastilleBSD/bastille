@@ -113,7 +113,7 @@ check_fib() {
             _setfib=""
         fi
 }
-for _jail in JAILS; do
+for _jail in ${JAILS}; do
 
     info "[${_jail}]:"
 
