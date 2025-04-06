@@ -188,6 +188,7 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
 if [ "$#" -lt 1 ]; then
     usage
 else
@@ -195,70 +196,75 @@ else
     shift
 fi
 
-# Handle special-case commands first.
+# Handle sub-commands.
 case "${CMD}" in
+    # Commands that don't allow parallel mode
     bootstrap| \
     clone| \
-    cmd| \
-    config| \
     console| \
     convert| \
     cp| \
     create| \
-    destroy| \
     edit| \
-    etcupdate| \
     export| \
     htop| \
     jcp | \
     import| \
-    limits| \
     list| \
-    mount| \
     network| \
-    pkg| \
     rcp| \
     rdr| \
     rename| \
+    setup| \
+    top| \
+    verify| \
+    zfs)
+        if [ "${PARALLEL_MODE}" -eq 1 ]; then
+            error_exit "Command does not support parallel mode: ${CMD}"
+        fi
+        ;;
+    # Commands that allow parallel mode
+    cmd| \
+    config| \
+    destroy| \
+    etcupdate| \
+    limits| \
+    mount| \
+    pkg| \
     restart| \
     service| \
-    setup| \
     start| \
     stop| \
     sysrc| \
     tags| \
     template| \
-    top| \
     umount| \
     update| \
-    upgrade| \
-    verify| \
-    zfs)
+    upgrade)
+        # Extract JAILS from command for parallel mode
+        OPTIONS=""
+        while [ "$#" -gt 0 ] && [ "${PARALLEL_MODE}" -eq 1 ]; do
+            case "${1}" in
+                -*)
+                    OPTIONS="${OPTIONS} ${1}"
+                    shift 1
+                    ;;
+                *)
+                    if ! set_target "${1}" >/dev/null 2>&1; then
+                        OPTIONS="${OPTIONS} ${1}"
+                        shift 1
+                    else
+                        XARGS_JAILS="${JAILS}"
+                        shift 1
+                        break
+                    fi
+            esac
+        done
         ;;
     *)
         usage
         ;;
 esac
-
-# Extract JAILS from command for parallel mode
-OPTIONS=""
-while [ "$#" -gt 0 ] && [ "${PARALLEL_MODE}" -eq 1 ]; do
-    case "${1}" in
-        -*)
-            OPTIONS="${OPTIONS} ${1}"
-            shift 1
-            ;;
-        *)
-            if ! set_target "${1}" >/dev/null 2>&1; then
-                OPTIONS="${OPTIONS} ${1}"
-                shift 1
-            else
-                XARGS_JAILS="${JAILS}"
-                shift 1
-                break
-            fi
-    esac
-done
 
 # shellcheck disable=SC2154
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
