@@ -203,7 +203,6 @@ case "${CMD}" in
     clone| \
     console| \
     convert| \
-    cp| \
     create| \
     edit| \
     export| \
@@ -226,6 +225,7 @@ case "${CMD}" in
     # Commands that allow parallel mode
     cmd| \
     config| \
+    cp| \
     destroy| \
     etcupdate| \
     limits| \
