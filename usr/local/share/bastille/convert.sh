@@ -99,9 +99,9 @@ validate_release_name() {
 }
 
 convert_jail_to_release() {
+
     _jailname="${1}"
     _release="${2}"
-    bastille_jail_path="${bastille_jailsdir}/${TARGET}/root"
     
     info "Creating ${_release} from ${_jailname}..."
 
@@ -269,8 +269,8 @@ elif  [ "$#" -eq 2 ]; then
     elif grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         error_exit "${TARGET} is not a thick jail."
     fi
-    validate_release_name "${2}"
-    convert_jail_to_release "${1}" "${2}"
+    validate_release_name "${CONVERT_RELEASE}"
+    convert_jail_to_release "${TARGET}" "${CONVERT_RELEASE}"
 else
     usage
 fi
