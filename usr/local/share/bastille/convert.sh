@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille convert [option(s)] TARGET"
+    error_notify "Usage: bastille convert [option(s)] [TARGET|TARGET RELEASE]"
 
     cat << EOF
     Options:
@@ -76,11 +76,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 1 ]; then
-    usage
-fi
-
 TARGET="${1}"
+CONVERT_RELEASE="${2}"
 
 bastille_root_check
 set_target_single "${TARGET}"
@@ -90,6 +87,69 @@ else
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
+
+validate_release_name() {
+    local _name=${1}
+    local _sanity="$(echo "${_name}" | tr -c -d 'a-zA-Z0-9-_')"
+    if [ -n "$(echo "${_sanity}" | awk "/^[-_].*$/" )" ]; then
+        error_exit "Release names may not begin with (-|_) characters!"
+    elif [ "${_name}" != "${_sanity}" ]; then
+        error_exit "Release names may not contain special characters!"
+    fi
+}
+
+convert_jail_to_release() {
+    _jailname="${1}"
+    _release="${2}"
+    bastille_jail_path="${bastille_jailsdir}/${TARGET}/root"
+    
+    info "Creating ${_release} from ${_jailname}..."
+
+    if checkyesno bastille_zfs_enable; then
+        if [ -n "${bastille_zfs_zpool}" ]; then
+            ## sane bastille zfs options
+            ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
+            ## send without -R if encryption is enabled
+            if [ "$(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}")" = "off" ]; then
+	        OPT_SEND="-R"
+            else
+                OPT_SEND=""
+            fi
+            ## take a temp snapshot of the jail
+            SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
+	    # shellcheck disable=SC2140
+            zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jailname}/root"@"${SNAP_NAME}"
+            ## replicate the release base to the new thickjail and set the default mountpoint
+            # shellcheck disable=SC2140
+            zfs send ${OPT_SEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jailname}/root"@"${SNAP_NAME}" | \
+            zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
+            zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
+            zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
+            ## cleanup temp snapshots initially
+            # shellcheck disable=SC2140
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jailname}/root"@"${SNAP_NAME}"
+            # shellcheck disable=SC2140
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"@"${SNAP_NAME}"
+        fi
+        if [ "$?" -ne 0 ]; then
+            ## notify and clean stale files/directories
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
+            error_exit "Failed to create release. Please retry!"
+        else
+            info "Created ${_release} from ${_jailname}"
+        fi
+    else
+        ## copy all files for thick jails
+        cp -a "${bastille_jailsdir}/${_jailname}/root" "${bastille_releasesdir}/${_release}"
+        if [ "$?" -ne 0 ]; then
+            ## notify and clean stale files/directories
+            bastille destroy -af "${NAME}"
+            error_exit "Failed to create release. Please retry!"
+        else
+            info "Created ${_release} from ${_jailname}"
+        fi
+    fi
+}
 
 convert_symlinks() {
     # Work with the symlinks, revert on first cp error
@@ -181,22 +241,36 @@ start_convert() {
     fi
 }
 
-# Check if is a thin container
-if [ ! -d "${bastille_jailsdir}/${TARGET}/root/.bastille" ]; then
-    error_exit "${TARGET} is not a thin container."
-elif ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-    error_exit "${TARGET} is not a thin container."
+# Convert thin jail to thick jail if only one arg
+# Convert jail to release if two args
+if [ "$#" -eq 1 ]; then
+    # Check if jail is a thin jail
+    if [ ! -d "${bastille_jailsdir}/${TARGET}/root/.bastille" ]; then
+        error_exit "${TARGET} is not a thin container."
+    elif ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        error_exit "${TARGET} is not a thin container."
+    fi
+    # Make sure the user agree with the conversion
+    # Be interactive here since this cannot be easily undone
+    while :; do
+        error_notify "Warning: container conversion from thin to thick can't be undone!"
+        # shellcheck disable=SC2162
+        # shellcheck disable=SC3045
+        read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
+        case ${yn} in
+        [Yy]) start_convert;;
+        [Nn]) exit 0;;
+        esac
+    done
+elif  [ "$#" -eq 2 ]; then
+    # Check if jail is a thick jail
+    if [ -d "${bastille_jailsdir}/${TARGET}/root/.bastille" ]; then
+        error_exit "${TARGET} is not a thick jail."
+    elif grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        error_exit "${TARGET} is not a thick jail."
+    fi
+    validate_release_name "${2}"
+    convert_jail_to_release "${1}" "${2}"
+else
+    usage
 fi
-
-# Make sure the user agree with the conversion
-# Be interactive here since this cannot be easily undone
-while :; do
-    error_notify "Warning: container conversion from thin to thick can't be undone!"
-    # shellcheck disable=SC2162
-    # shellcheck disable=SC3045
-    read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
-    case ${yn} in
-    [Yy]) start_convert;;
-    [Nn]) exit 0;;
-    esac
-done
