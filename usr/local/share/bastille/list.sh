@@ -37,7 +37,6 @@ usage() {
     cat << EOF
     Options:
     
-    -a | --all            List all jails, running and stopped, in BastilleBSD format.
     -j | --json           List jails in json format.
     -x | --debug          Enable debug mode.
 
@@ -245,24 +244,15 @@ list_ports(){
 
 bastille_root_check
 
-if [ "$#" -eq 0 ]; then
-   /usr/sbin/jls
-fi
-
 TARGET=""
 
 # Handle options.
 OPT_JSON=0
-OPT_ALL=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
 	-h|--help|help)
 	    usage
 	    ;;
-        -a|--all|all)
-	    OPT_ALL=1
-            shift
-            ;;
 	-j|--json)
             OPT_JSON=1
 	    shift
@@ -274,7 +264,6 @@ while [ "$#" -gt 0 ]; do
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    a) OPT_ALL=1 ;;
                     j) OPT_JSON=1 ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\""
@@ -289,11 +278,9 @@ while [ "$#" -gt 0 ]; do
 done
 
 # List json format, otherwise list all jails
-if [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 1 ]; then
+if [ "${OPT_JSON}" -eq 1 ]; then
     list_all | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"Name\": \"" $2 "\", \"Boot\": \"" $3 "\", \"Prio\": \"" $4 "\", \"State\": \"" $5 "\", \"IP_Address\": \"" $6 "\", \"Published_Ports\": \"" $7 "\", \"Release\": \"" $8 "\","} END {print "]"}' | sed 's/,$//'
-elif [ "${OPT_ALL}" -eq 0 ] && [ "${OPT_JSON}" -eq 1 ]; then
-    /usr/sbin/jls -N --libxo json
-elif [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 0 ]; then
+elif [ "${OPT_JSON}" -eq 0 ]; then
     list_all
 fi
 
