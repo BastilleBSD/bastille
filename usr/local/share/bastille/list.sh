@@ -253,6 +253,9 @@ while [ "$#" -gt 0 ]; do
 	-h|--help|help)
 	    usage
 	    ;;
+        -a|--all|all)
+	    shift
+            ;;
 	-j|--json)
             OPT_JSON=1
 	    shift
