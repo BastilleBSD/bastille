@@ -14,6 +14,8 @@ the ``--no-boot`` flag. See ``bastille create --no-boot TARGET...``.
 
 This value can also be changed using ``bastille config TARGET boot [on|off]``.
 
+This value will be shown using ``bastille list all``.
+
 Priority
 --------
 
@@ -24,3 +26,5 @@ When jails are created with Bastille, this value defaults to ``99``, but can be 
 creation. See ``bastille create -p 90 TARGET...``.
 
 This value can also be changed using ``bastille config TARGET priority VALUE``.
+
+This value will be shown using ``bastille list all``.
