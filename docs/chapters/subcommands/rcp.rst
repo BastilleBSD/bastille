@@ -9,7 +9,7 @@ This command allows copying files from jail to host.
   [bastion]:
   /usr/local/bastille/jails/bastion/root/test/testfile.txt -> /tmp/testfile.txt
 
-Unless you see errors reported in the output the `rcp` was successful.
+Unless you see errors reported in the output the ``rcp`` was successful.
 
 .. code-block:: shell
 

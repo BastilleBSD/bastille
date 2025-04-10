@@ -1,7 +1,7 @@
 top
 ===
 
-This command runs `top` in the targeted jail.
+This command runs ``top`` in the targeted jail.
 
 
 .. image:: ../../images/top.png

@@ -1,7 +1,7 @@
 umount
 ======
 
-To unmount storage from a container use `bastille umount`.
+Unmount storage from jail(s).
 
 .. code-block:: shell
 
@@ -25,3 +25,12 @@ If the directory you are unmounting has spaces, make sure to escape them with a 
   ishmael ~ # bastille umount azkaban "/media/foo\ with\ spaces"
   [azkaban]:
   Unmounted: /usr/local/bastille/jails/jail4/root/media/foo with spaces
+
+.. code-block:: shell
+
+  ishmael ~ # bastille umount help
+  Usage: bastille umount [option(s)] TARGET JAIL_PATH
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.

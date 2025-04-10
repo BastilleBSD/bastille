@@ -11,7 +11,7 @@ than the host system likely will NOT work at all. Bastille tries to filter for
 valid release names. If you find it will not bootstrap a valid release, please
 let us know.
 
-In this document we will describe using the `bootstrap` sub-command with both
+In this document we will describe using the ``bootstrap`` sub-command with both
 releases and templates. We begin with releases.
 
 Releases
@@ -20,7 +20,7 @@ Releases
 Example
 ^^^^^^^
 
-To `bootstrap` a FreeBSD release, run the bootstrap sub-command with the
+To ``bootstrap`` a FreeBSD release, run the bootstrap sub-command with the
 release version as the argument.
 
 .. code-block:: shell
@@ -28,7 +28,7 @@ release version as the argument.
   ishmael ~ # bastille bootstrap 14.0-RELEASE [update]
   ishmael ~ # bastille bootstrap 13.2-RELEASE [update]
 
-To `bootstrap` a HardenedBSD release, run the bootstrap sub-command with the
+To ``bootstrap`` a HardenedBSD release, run the bootstrap sub-command with the
 build version as the argument.
 
 .. code-block:: shell
@@ -37,7 +37,7 @@ build version as the argument.
 
 
 This command will ensure the required directory structures are in place and
-download the requested release. For each requested release, `bootstrap` will
+download the requested release. For each requested release, ``bootstrap`` will
 download the base.txz. These files are verified (sha256 via MANIFEST file)
 before they are extracted for use.
 
@@ -59,8 +59,8 @@ releases from the FTP archive.
 Tips
 ^^^^
 
-The `bootstrap` sub-command can now take (0.5.20191125+) an optional second
-argument of "update". If this argument is used, `bastille update` will be run
+The ``bootstrap`` sub-command can now take (0.5.20191125+) an optional second
+argument of ``update``. If this argument is used, ``bastille update`` will be run
 immediately after the bootstrap, effectively bootstrapping and applying
 security patches and errata in one motion.
 
@@ -71,11 +71,11 @@ The bootstrap subcommand is generally only used once to prepare the system. The
 only other use case for the bootstrap command is when a new FreeBSD version is
 released and you want to start deploying containers on that version.
 
-To update a release as patches are made available, see the `bastille update`
+To update a release as patches are made available, see the ``bastille update``
 command.
 
-Downloaded artifacts are stored in the `bastille/cache/version` directory.
-"bootstrapped" releases are stored in `bastille/releases/version`.
+Downloaded artifacts are stored in the ``bastille/cache/version`` directory.
+"bootstrapped" releases are stored in ``bastille/releases/version``.
 
 To manually bootstrap a release (aka bring your own archive), place your
 archive in bastille/cache/name and extract to bastille/releases/name. Your
@@ -111,7 +111,7 @@ Notes
 If you don't want to bother with git to use templates you can create them
 manually on the Bastille system and apply them.
 
-Templates are stored in `bastille/templates/namespace/name`. If you'd like to
+Templates are stored in ``bastille/templates/namespace/name``. If you'd like to
 create a new template on your local system, simply create a new namespace
 within the templates directory and then one for the template. This namespacing
 allows users and groups to have templates without conflicting template names.
@@ -119,3 +119,11 @@ allows users and groups to have templates without conflicting template names.
 Once you've created the directory structure you can begin filling it with
 template hooks. Once you have a minimum number of hooks (at least one) you can
 begin applying your template.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille bootstrap help
+  Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]
+    Options:
+
+    -x | --debug           Enable debug mode.

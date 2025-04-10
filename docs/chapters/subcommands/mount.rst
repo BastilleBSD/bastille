@@ -1,15 +1,15 @@
 mount
 =====
 
-To mount storage within the container use `bastille mount`.
+To mount storage within the container use ``bastille mount``.
 
-Syntax follows standard `/etc/fstab` format:
+Syntax follows standard ``/etc/fstab`` format:
 
 .. code-block:: shell
 
   Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]
 
-The 'options' string can include a comma-separated list of mount options, but must include one of (rw,ro,rq,sw,xx) according to fstab documentation.
+The ``options`` string can include a comma-separated list of mount options, but must include one of (rw,ro,rq,sw,xx) according to fstab documentation.
 
 Example: Mount a tmpfs filesystem with options.
 .. code-block:: shell
@@ -50,4 +50,13 @@ It is possible to do the same for the jail path, but again, not recommemded.
 
   ishmael ~ # bastille mount azkaban "/storage/my\ directory\ with\ spaces" /media/foo nullfs ro 0 0
   [azkaban]:
-  Added: /storage/my\040directory\040with\040spaces /usr/local/bastille/jails/azkaban/root/media/foo nullfs ro 0 0
+  Add
+  
+  .. code-block:: shell
+
+  ishmael ~ # bastille mount help
+  Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]
+    Options:
+
+    -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -x | --debug          Enable debug mode.
