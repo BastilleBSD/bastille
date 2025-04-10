@@ -15,8 +15,7 @@ Syntax requires only the target jail to convert.
 
   ishmael ~ # bastille convert help
   Usage: bastille convert [option(s)] TARGET
-
     Options:
-
+	
     -a | --auto           Auto mode. Start/stop jail(s) if required.
     -x | --debug          Enable debug mode.

@@ -3,7 +3,7 @@ destroy
 
 Jails can be destroyed and thrown away just as easily as they were
 created.  Note: containers must be stopped before destroyed. Using
-the `-a|--auto` option will automatically stop the jail before destroying it.
+the ``-a|--auto`` option will automatically stop the jail before destroying it.
 
 .. code-block:: shell
 
@@ -24,6 +24,6 @@ will retain the releas cache directory, if you choose to keep it.
     Options:
 
     -a | --auto              Auto mode. Start/stop jail(s) if required.
-    -f | --force             Force unmount any mounted datasets when destroying a jail or release (ZFS only).
     -c | --no-cache          Do no destroy cache when destroying a release.
+    -f | --force             Force unmount any mounted datasets when destroying a jail or release (ZFS only).
     -x | --debug             Enable debug mode.

@@ -25,7 +25,7 @@ Usage
     help        Help about any command.
     htop        Interactive process viewer (requires htop).
     import      Import a specified container.
-    jcp         cp(1) files from a jail to jail(s).
+    jcp         cp(1) files from a jail to targeted jail(s).
     limits      Apply resources limits to targeted container(s). See rctl(8).
     list        List containers (running).
     mount       Mount a volume inside the targeted container(s).

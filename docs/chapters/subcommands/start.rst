@@ -1,7 +1,7 @@
 start
 =====
 
-To start a container you can use the `bastille start` command.
+Start jail(s).
 
 .. code-block:: shell
 
@@ -15,5 +15,7 @@ To start a container you can use the `bastille start` command.
   Usage: bastille start [option(s)] TARGET
     Options:
 
-    -v | --verbose           Print every action on jail start.
-    -x | --debug             Enable debug mode.
+    -b | --boot                 Respect jail boot setting.
+    -d | --delay VALUE          Time to wait between starting each jail.
+    -v | --verbose              Print every action on jail start.
+    -x | --debug                Enable debug mode.

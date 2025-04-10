@@ -47,7 +47,7 @@ usage() {
     -M | --static-mac                    Generate a static MAC address for jail (VNET only).
          --no-boot                       Create jail with boot=off.
          --no-validate                   Do not validate the release when creating the jail.
-    -p | --priority VALUE                Sets the priority value for jail startup and shutdown.
+    -p | --priority VALUE                Set priority value for jail.
     -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet                          Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
     -v | --vlan VLANID                   Creates the jail with specified VLAN ID (VNET only).

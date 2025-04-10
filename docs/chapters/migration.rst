@@ -31,11 +31,11 @@ Import the iocage backup file (use zip file name)
 
      bastille import jailname_$(date +%F).zip
 
-Bastille will attempt to configure your interface and IP from the config.json file, but if you have issues you can configure it manully.
+Bastille will attempt to configure your interface and IP from the ``config.json`` file, but if you have issues you can configure it manully.
 
 .. code-block:: shell
 
   bastille edit jailname
   ip4.addr = bastille0|192.168.0.1/24;
 
-You can use your primary network interface instead of the virtual bastille0 interface as well if you know what you’re doing.
+You can use your primary network interface instead of the virtual ``bastille0`` interface as well if you know what you’re doing.
