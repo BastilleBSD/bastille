@@ -18,13 +18,11 @@ To upgrade Bastille jails for a minor release (ie; 13.1→13.2) you can do the f
 Thick Jails
 -----------
 
-1. Ensure the new release version is bootstrapped and updated to the latest patch release: ``bastille bootstrap 13.2-RELEASE``
-2. Update the release: ``bastille update 13.2-RELEASE``
-3. Use ``bastille upgrade TARGET 13.2-RELEASE`` to upgrade the jail to 13.2-RELEASE
-4. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to apply the updates
-5. Reboot the jail ``bastille restart TARGET``
-6. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to finish applying the upgrade
-7. Upgrade complete!
+1. Use ``bastille upgrade TARGET 13.2-RELEASE`` to upgrade the jail to 13.2-RELEASE
+2. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to apply the updates
+3. Reboot the jail ``bastille restart TARGET``
+4. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to finish applying the upgrade
+5. Upgrade complete!
 
 Thin Jails
 ----------
@@ -48,14 +46,12 @@ To upgrade Bastille jails for a major release (ie; 12.4→13.2) you can do the f
 Thick Jails
 -----------
 
-1. Ensure the new release version is bootstrapped and updated to the latest patch release: ``bastille bootstrap 13.2-RELEASE``
-2. Update the release: ``bastille update 13.2-RELEASE``
-3. Use ``bastille upgrade TARGET 13.2-RELEASE`` to upgrade the jail to 13.2-RELEASE
-4. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to apply the updates
-5. Reboot the jail ``bastille restart TARGET``
-6. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to finish applying the upgrade
-7. Force the reinstallation or upgrade of all installed packages (ABI change): ``pkg upgrade -f`` within each jail (or ``bastille pkg ALL upgrade -f``)
-8. Upgrade complete!
+1. Use ``bastille upgrade TARGET 13.2-RELEASE`` to upgrade the jail to 13.2-RELEASE
+2. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to apply the updates
+3. Reboot the jail ``bastille restart TARGET``
+4. Use ``bastille upgrade TARGET 13.2-RELEASE update`` to finish applying the upgrade
+5. Force the reinstallation or upgrade of all installed packages (ABI change): ``pkg upgrade -f`` within each jail (or ``bastille pkg ALL upgrade -f``)
+6. Upgrade complete!
 
 Thin Jails
 ----------
