@@ -1,7 +1,7 @@
 config
 ======
 
-Get or set properties for targeted jail(s).
+Get,set or remove properties from targeted jail(s).
 
 Getting a property that *is* defined in jail.conf:
 
@@ -26,10 +26,19 @@ Setting a property:
 
 The restart message will appear every time a property is set.
 
+Removing a property:
+
+.. code-block:: shell
+
+  ishmael ~ # bastille config azkaban remove allow.mlock
+  A restart is required for the changes to be applied. See 'bastille restart azkaban'.
+
+The restart message will appear every time a property is removed.
+
 .. code-block:: shell
 
   ishmael ~ # bastille config help
-  Usage: bastille config TARGET [get|set] PROPERTY_NAME NEW_VALUE
+  Usage: bastille config TARGET [get|set|remove] PROPERTY_NAME [NEW_VALUE]
     Options:
 
     -x | --debug          Enable debug mode.
