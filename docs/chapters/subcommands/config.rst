@@ -38,7 +38,7 @@ The restart message will appear every time a property is removed.
 .. code-block:: shell
 
   ishmael ~ # bastille config help
-  Usage: bastille config TARGET [get|set|remove] PROPERTY_NAME [NEW_VALUE]
+  Usage: bastille config TARGET [get|set|remove] PROPERTY [VALUE]
     Options:
 
     -x | --debug          Enable debug mode.
