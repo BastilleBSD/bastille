@@ -48,16 +48,16 @@ EOF
 
 destroy_jail() {
 
-    local OPTIONS  
+    local OPTIONS
 
     for _jail in ${JAILS}; do
-	
+
         bastille_jail_base="${bastille_jailsdir}/${_jail}"            ## dir
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"  ## file
-	
+
         check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
             bastille stop "${_jail}"
-        else   
+        else
             error_notify "Jail is running."
             error_continue "Use [-a|--auto] to auto-stop the jail."
         fi
@@ -77,8 +77,12 @@ destroy_jail() {
                         if [ "${FORCE}" = "1" ]; then
                             OPTIONS="-rf"
                         fi
-                       ## remove jail zfs dataset recursively
-                        zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
+                        # Remove jail zfs dataset recursively, or abort if error thus precerving jail content.
+                        # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
+                        # unless the force option is defined by the user, otherwise will have a partially deleted jail.
+                        if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
+                            error_exit "Jail dataset(s) appears to be busy, exiting."
+                        fi
                     fi
                 fi
             fi
@@ -86,7 +90,7 @@ destroy_jail() {
             if [ -d "${bastille_jail_base}" ]; then
                 ## removing all flags
                 chflags -R noschg "${bastille_jail_base}"
-    
+
                 ## remove jail base
                 rm -rf "${bastille_jail_base}"
             fi
@@ -110,7 +114,7 @@ destroy_jail() {
                 pfctl -a "rdr/${_jail}" -Fn
             fi
         fi
-	done
+    done
 }
 
 destroy_rel() {
@@ -198,18 +202,18 @@ destroy_rel() {
 }
 
 # Handle options.
-AUTO=0
-FORCE=0
-NO_CACHE=0
+AUTO="0"
+FORCE="0"
+NO_CACHE="0"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-	        usage
-	        ;;
+        -h|--help|help)
+            usage
+            ;;
         -a|--auto)
-	        AUTO=1
-	        shift
-	        ;;
+            AUTO=1
+            shift
+            ;;
         -c|--no-cache)
             NO_CACHE=1
             shift
@@ -226,10 +230,10 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
-					c) NO_CACHE=1 ;;
+                    c) NO_CACHE=1 ;;
                     f) FORCE=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
