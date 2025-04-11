@@ -34,7 +34,7 @@
 
 
 usage() {
-    error_notify "Usage: bastille config TARGET [get|set] PROPERTY_NAME NEW_VALUE"
+    error_notify "Usage: bastille config TARGET [get|set|remove] PROPERTY_NAME NEW_VALUE"
     cat << EOF
     Options:
 
@@ -87,9 +87,9 @@ shift 2
 set_target "${TARGET}"
 
 case "${ACTION}" in
-    get)
+    get|remove)
         if [ "$#" -ne 1 ]; then
-            error_notify 'Too many parameters for a "get" operation.'
+            error_notify 'Too many parameters for [get|remove] operation.'
             usage
         fi
         ;;
@@ -183,6 +183,12 @@ for _jail in ${JAILS}; do
             else
                 echo "${_output}"
             fi
+        elif [ "${ACTION}" = "remove" ]; then
+            if [ "$(bastille config ${_jail} get ${PROPERTY})" != "not set" ]; then
+                sed -i '' "/.*${PROPERTY}.*/d" "${FILE}"
+            else
+                error_exit "Value not present in jail.conf: ${PROPERTY}"
+            fi
         else # Setting the value. -- cwells
             if [ -n "${VALUE}" ]; then
                 VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
@@ -233,7 +239,7 @@ for _jail in ${JAILS}; do
 done
 
 # Only display this message once at the end (not for every jail). -- cwells
-if [ "${ACTION}" = 'set' ] && [ -z "${BASTILLE_PROPERTY}" ]; then
+if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ -z "${BASTILLE_PROPERTY}" ]; then
     info "A restart is required for the changes to be applied. See 'bastille restart'."
 fi
 
