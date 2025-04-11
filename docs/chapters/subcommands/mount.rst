@@ -12,11 +12,15 @@ Syntax follows standard ``/etc/fstab`` format:
 The ``options`` string can include a comma-separated list of mount options, but must include one of (rw,ro,rq,sw,xx) according to fstab documentation.
 
 Example: Mount a tmpfs filesystem with options.
+
 .. code-block:: shell
+
   ishmael ~ # bastille mount azkaban tmpfs tmp tmpfs rw,nosuid,mode=01777 0 0
   Detected advanced mount type tmpfs
   [azkaban]:
   Added: tmpfs /usr/local/bastille/jails/azkaban/root/tmp tmpfs rw,nosuid,mode=01777 0 0
+
+Example: Mount a nullfs filesystem
 
 .. code-block:: shell
 
