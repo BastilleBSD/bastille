@@ -34,7 +34,7 @@
 
 
 usage() {
-    error_notify "Usage: bastille config TARGET [get|set|remove] PROPERTY_NAME NEW_VALUE"
+    error_notify "Usage: bastille config TARGET [get|set|remove] PROPERTY [VALUE]"
     cat << EOF
     Options:
 
