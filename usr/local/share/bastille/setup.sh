@@ -105,7 +105,7 @@ config_backup() {
 config_network_reset() {
     # Restore bastille default network options.
     warn "Performing Network configuration reset, requested by the user..."
-    read -p "Do you really want to reset 'bastille' network configuration? [Y|n]: " _response
+    read -rp "Do you really want to reset 'bastille' network configuration? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             config_backup
@@ -129,7 +129,7 @@ config_network_reset() {
 config_storage_reset() {
     # Restore bastille default ZFS storage options.
     warn "Performing ZFS configuration reset, requested by the user..."
-    read -p "Do you really want to reset 'bastille' ZFS configuration? [Y|n]: " _response
+    read -rp "Do you really want to reset 'bastille' ZFS configuration? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             config_backup
@@ -159,7 +159,7 @@ config_restore_global() {
     # Be aware that if the sample configuration file is missing, we can generate a new one,
     # but that's highly unlikely to happen so will keep the code smaller here.
     warn "Performing Bastille default configuration restore, requested by the user..."
-    read -p "Do you really want to restore 'bastille' default configuration file and start over? [Y|n]: " _response
+    read -rp "Do you really want to restore 'bastille' default configuration file and start over? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             config_backup
@@ -347,7 +347,7 @@ zfs_initial_activation() {
     # Just let the user interactively select the ZFS items manually from a list for the initial activation.
     # This should be performed before `bastille bootstrap` as we already know.
     info "Initial bastille ZFS activation helper invoked."
-    read -p "Would you like to configure the bastille ZFS options interactively? [Y|n]: " _response
+    read -rp "Would you like to configure the bastille ZFS options interactively? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             # Assume the user knows what hes/she doing and want to configure ZFS parameters interactively.
@@ -379,7 +379,7 @@ configure_ethernet() {
     fi
 
     warn "This will attempt to configure the physical ethernet interface for [bastille_network_shared]."
-    read -p "Would you like to configure the physical ethernet interface now? [Y|n]: " _response
+    read -rp "Would you like to configure the physical ethernet interface now? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             # shellcheck disable=SC2104
@@ -400,7 +400,7 @@ configure_ethernet() {
         ETHIF_COUNT=$(expr ${ETHIF_COUNT} + 1)
     done
 
-    read -p "Please select the wanted physical ethernet adapter [NUM] to be used as 'bastille_network_shared': " _ethernet_choice
+    read -rp "Please select the wanted physical ethernet adapter [NUM] to be used as 'bastille_network_shared': " _ethernet_choice
     if ! echo "${_ethernet_choice}" | grep -Eq "^[0-9]{1,3}$"; then
         error_exit "Invalid input number, aborting!"
     else
@@ -411,7 +411,7 @@ configure_ethernet() {
         else
             info "Selected physical ethernet interface: [${_ethernet_select}]"
             # Ask again to make sure the user is confident with the election.
-            read -p "Are you sure '${_ethernet_select}' is the correct physical ethernet interface [Y|n]: " _response
+            read -rp "Are you sure '${_ethernet_select}' is the correct physical ethernet interface [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     if ! sysrc -f "${bastille_config}" bastille_network_shared | grep -qi "${_ethernet_select}"; then
@@ -438,7 +438,7 @@ configure_network() {
     # This is an initial attempt to make this function interactive,
     # however this may be enhanced in the future by advanced contributors in this topic.
     warn "This will attempt to configure the loopback network interface [${bastille_network_loopback}]."
-    read -p "Would you like to configure the loopback network interface now? [Y|n]: " _response
+    read -rp "Would you like to configure the loopback network interface now? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             # shellcheck disable=SC2104
@@ -470,7 +470,7 @@ configure_vnet() {
     # This is an initial attempt to make this function interactive,
     # however this may be enhanced in the future by advanced contributors in this topic.
     warn "This will attempt to configure the VNET bridge interface [${bastille_ifbridge_name}]."
-    read -p "Would you like to configure the VNET bridge interface now? [Y|n]: " _response
+    read -rp "Would you like to configure the VNET bridge interface now? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             # shellcheck disable=SC2104
@@ -524,7 +524,7 @@ configure_pf() {
     # This is an initial attempt to make this function interactive,
     # however this may be enhanced in the future by advanced contributors in this topic.
     warn "This will attempt to configure the PF firewall parameters in [${bastille_pf_conf}]."
-    read -p "Would you like to configure the PF firewall parameters now? [Y|n]: " _response
+    read -rp "Would you like to configure the PF firewall parameters now? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             # shellcheck disable=SC2104
@@ -599,7 +599,7 @@ configure_zfs() {
         # host filesystem, or the default configuration file has been changed officially and set to "NO" by default.
         if echo "${bastille_zfs_enable}" | grep -qi "no"; then
             info "Looks like Bastille ZFS has been disabled in 'bastille.conf', ZFS activation helper disabled."
-            read -p "Would you like to enable the ZFS activation helper now? [Y|n]: " _response
+            read -rp "Would you like to enable the ZFS activation helper now? [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     # Assume the user wants to configure the ZFS parameters.
@@ -626,7 +626,7 @@ configure_zfs() {
                     if [ "${bastille_prefix}" = "${bastille_prefix_default}" ] && [ -z "${BASTILLE_CUSTOM_CONFIG}" ]; then
                         show_zfs_params
                         info "Looks like bastille has been installed and hasn't been bootstrapped yet."
-                        read -p "Would you like to activate ZFS now to get the features and benefits? [Y|n]: " _response
+                        read -rp "Would you like to activate ZFS now to get the features and benefits? [Y|n]: " _response
                         case "${_response}" in
                             [Yy]|[Yy][Ee][Ss])
                                 if [ -n "${BASTILLE_ZFSPOOL}" ]; then
@@ -645,7 +645,7 @@ configure_zfs() {
                                 info "Looks like you cancelled the ZFS activation."
                                 # Offer the user option to disable ZFS in the configuration file.
                                 # Maybe the user wants to use UFS or ZFS with legacy directories instead.
-                                read -p "Would you like to explicitly disable ZFS in the configuration file? [Y|n]: " _response
+                                read -rp "Would you like to explicitly disable ZFS in the configuration file? [Y|n]: " _response
                                 case "${_response}" in
                                     [Yy]|[Yy][Ee][Ss])
                                         if config_backup; then
@@ -680,7 +680,7 @@ configure_zfs() {
                     info "Attempting to configure default ZFS options for you..."
                     if zfs list | grep -qw "${bastille_prefix}"; then
                         ZFS_DATASET_DETECT="1"
-                        read -p "Would you like to auto-configure the detected ZFS parameters now? [Y|n]: " _response
+                        read -rp "Would you like to auto-configure the detected ZFS parameters now? [Y|n]: " _response
                         case "${_response}" in
                             [Yy]|[Yy][Ee][Ss])
                                 if config_backup; then
@@ -706,7 +706,7 @@ configure_zfs() {
                                     # We do not want to cause existing data lost at all due end-user errors.
                                     warn "Looks like bastille prefix is not a ZFS dataset, thus ZFS storage options are not required."
                                     warn "Please refer to 'bastille.conf' and/or verify for alreay existing 'bastille_prefix' directory."
-                                    read -p "Would you like to explicitly disable ZFS in the configuration file so we don't ask again? [Y|n]: " _response
+                                    read -rp "Would you like to explicitly disable ZFS in the configuration file so we don't ask again? [Y|n]: " _response
                                     case "${_response}" in
                                         [Yy]|[Yy][Ee][Ss])
                                             if config_backup; then
@@ -759,7 +759,7 @@ configure_zfs_manually() {
     local _zfsmount_select=
     local _response=
 
-    read -p "Would you like to configure the ZFS parameters entirely by hand? [Y|n]: " _response
+    read -rp "Would you like to configure the ZFS parameters entirely by hand? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
             # We will assume the user knows what hes/she doing and want to configure ZFS parameters entirely by hand.
@@ -778,7 +778,7 @@ configure_zfs_manually() {
 
             # Ask again to make sure the user is confident with the entered parameters.
             warn "Are you sure the above bastille ZFS configuration is correct?"
-            read -p "Once bastille is activated it can't be easily undone, do you really want to activate ZFS now? [Y|n]: " _response
+            read -rp "Once bastille is activated it can't be easily undone, do you really want to activate ZFS now? [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     BASTILLE_CONFIG_USER="1"
@@ -824,7 +824,7 @@ configure_zfs_manually() {
         else
             info "Selected ZFS pool: [${_zfspool_select}]"
             # Ask again to make sure the user is confident with the election.
-            read -p "Are you sure '${_zfspool_select}' is the correct ZFS pool [Y|n]: " _response
+            read -rp "Are you sure '${_zfspool_select}' is the correct ZFS pool [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     # shellcheck disable=SC2104
@@ -862,7 +862,7 @@ configure_zfs_manually() {
             _zfsprefix_trim=$(echo ${ZFSDATA_NUM} | grep -wo "\[${_zfsprefix_choice}\][^ ]*" | awk -F "${_zfspool_select}/" 'NR==1{print $2}')
             info "Selected ZFS prefix: [${_zfsprefix_select}]"
             # Ask again to make sure the user is confident with the election.
-            read -p "Are you sure '${_zfsprefix_select}' is the correct ZFS dataset [Y|n]: " _response
+            read -rp "Are you sure '${_zfsprefix_select}' is the correct ZFS dataset [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     # shellcheck disable=SC2104
@@ -899,7 +899,7 @@ configure_zfs_manually() {
         else
             info "Selected bastille storage mountpoint: [${_zfsmount_select}]"
             # Ask again to make sure the user is confident with the election.
-            read -p "Are you sure '${_zfsmount_select}' is the correct bastille prefix [Y|n]: " _response
+            read -rp "Are you sure '${_zfsmount_select}' is the correct bastille prefix [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     # Set the parameters and show the user a preview.
@@ -908,7 +908,7 @@ configure_zfs_manually() {
                     BASTILLE_PREFIXZFS="${_zfsprefix_trim}"
                     show_zfs_params
                     warn "Are you sure the above bastille ZFS configuration is correct?"
-                    read -p "Once bastille is activated it can't be easily undone, do you really want to activate ZFS now? [Y|n]: " _response
+                    read -rp "Once bastille is activated it can't be easily undone, do you really want to activate ZFS now? [Y|n]: " _response
                     case "${_response}" in
                         [Yy]|[Yy][Ee][Ss])
                             write_zfs_opts
