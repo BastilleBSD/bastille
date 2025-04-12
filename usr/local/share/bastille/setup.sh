@@ -55,6 +55,7 @@ usage() {
     -e | --ethernet                    Attempt to configure the network shared interface.
     -v | --vnet                        Attempt to configure VNET bridge interface [bastille1].
     -z | --zfs                         Activates ZFS storage features and benefits for bastille.
+         --zfs-custom-setup            Manually configure ZFS, this is intended for advanced users.
          --conf-network-reset          Restore bastille default Network options on the config file.
          --conf-storage-reset          Restore bastille default ZFS storage options on the config file.
          --conf-restore-clean          Restore bastille default config file from bastille.conf.sample file.
@@ -321,16 +322,8 @@ create_zfs_dataset(){
     if zfs list "${BASTILLE_ZFSPOOL}/${BASTILLE_PREFIXZFS}" >/dev/null 2>&1; then
         info "Dataset ${BASTILLE_ZFSPOOL}/${BASTILLE_PREFIXZFS} already exist, skipping."
     else
-        # Check if the zfs mountpoint exist to avoid dataset create recursion.
-        PREFIX_CHECK=$(echo "${bastille_prefix}" | sed "s|\/${BASTILLE_PREFIXZFS}||g")
-        if df | grep -qw "${PREFIX_CHECK}"; then
-            if ! zfs create -p ${bastille_zfs_options} "${BASTILLE_ZFSPOOL}/${BASTILLE_PREFIXZFS}"; then
-                error_exit "Failed to create 'bastille_prefix' dataset, exiting."
-            fi
-        else
-            if ! zfs create -p ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${BASTILLE_ZFSPOOL}/${BASTILLE_PREFIXZFS}"; then
-                error_exit "Failed to create 'bastille_prefix' dataset, exiting."
-            fi
+        if ! zfs create -p ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${BASTILLE_ZFSPOOL}/${BASTILLE_PREFIXZFS}"; then
+            error_exit "Failed to create 'bastille_prefix' dataset, exiting."
         fi
     fi
     chmod 0750 "${bastille_prefix}"
@@ -982,6 +975,9 @@ case "${1}" in
         ;;
     --zfs|-z)
         configure_zfs
+        ;;
+   --zfs-custom-setup)
+        configure_zfs_manually
         ;;
     --conf-network-reset)
         config_network_reset
