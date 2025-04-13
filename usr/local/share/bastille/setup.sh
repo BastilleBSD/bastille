@@ -617,7 +617,7 @@ configure_zfs() {
                     # Assume the user wants to configure the ZFS parameters.
                     if config_backup; then
                         write_zfs_enable
-                        warn "Please run 'bastille setup' again or consult bastille.conf for further configuration."
+                        warn "Please run 'bastille setup -z' again or consult bastille.conf for further configuration."
                         exit 0
                     else
                         error_exit "Config backup creation failed, exiting."
@@ -781,9 +781,9 @@ configure_zfs_manually() {
         [Yy]|[Yy][Ee][Ss])
             # We will assume the user knows what hes/she doing and want to configure ZFS parameters entirely by hand.
             # shellcheck disable=SC3045
-            read -p "Please enter the desired ZFS pool for bastille: " _zfspool_select
+            read -p "Please enter the desired ZFS zpool for bastille: " _zfspool_select
             # shellcheck disable=SC3045
-            read -p "Please enter the ZFS dataset for bastille: " _zfsprefix_select
+            read -p "Please enter the ZFS dataset prefix for bastille: " _zfsprefix_select
             # shellcheck disable=SC3045
             read -p "Please enter the ZFS mountpoint for bastille: " _zfsmount_select
 
@@ -822,7 +822,7 @@ configure_zfs_manually() {
 
     # Ask here several times as we want the user to be really sure of what they doing,
     # We do not want to cause existing data lost at all due end-user errors.
-    info "Listing available ZFS pools..."
+    info "Listing available ZFS zpools..."
     bastille_zpool=$(zpool list -H | awk '{print $1}')
     for _zpool in ${bastille_zpool}; do
         echo "[${ZFSPOOL_COUNT}] ${_zpool}"
@@ -831,19 +831,19 @@ configure_zfs_manually() {
     done
 
     # shellcheck disable=SC3045
-    read -p "Please select the ZFS pool [NUM] for bastille: " _zfspool_choice
+    read -p "Please select the ZFS zpool [NUM] for bastille: " _zfspool_choice
     if ! echo "${_zfspool_choice}" | grep -Eq "^[0-9]{1,3}$"; then
         error_exit "Invalid input number, aborting!"
     else
         _zfspool_select=$(echo "${ZFSPOOL_NUM}" | grep -wo "\[${_zfspool_choice}\][^ ]*" | sed 's/\[.*\]//g')
         # If the user is unsure here, just abort as no input validation will be performed after.
         if [ -z "${_zfspool_select}" ]; then
-            error_exit "No ZFS pool selected, aborting!"
+            error_exit "No ZFS zpool selected, aborting!"
         else
-            info "Selected ZFS pool: [${_zfspool_select}]"
+            info "Selected ZFS zpool: [${_zfspool_select}]"
             # Ask again to make sure the user is confident with the election.
             # shellcheck disable=SC3045
-            read -p "Are you sure '${_zfspool_select}' is the correct ZFS pool [Y|n]: " _response
+            read -p "Are you sure '${_zfspool_select}' is the correct ZFS zpool [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     # shellcheck disable=SC2104
@@ -860,7 +860,7 @@ configure_zfs_manually() {
     fi
 
     # Ask on what zfs dataset `bastille` is installed.
-    info "Listing available ZFS datasets from the selected ZFS pool..."
+    info "Listing available ZFS datasets from the selected ZFS zpool..."
     bastille_zprefix=$(zfs list -H -r "${_zfspool_select}" | awk '{print $1}')
     for _zprefix in ${bastille_zprefix}; do
         echo "[${ZFSDATA_COUNT}] ${_zprefix}"
@@ -868,7 +868,7 @@ configure_zfs_manually() {
         ZFSDATA_COUNT=$(expr ${ZFSDATA_COUNT} + 1)
     done
     # shellcheck disable=SC3045
-    read -p "Please select the ZFS dataset [NUM] for bastille: " _zfsprefix_choice
+    read -p "Please select the ZFS dataset prefix [NUM] for bastille: " _zfsprefix_choice
     if ! echo "${_zfsprefix_choice}" | grep -Eq "^[0-9]{1,3}$"; then
         error_exit "Invalid input number, aborting!"
     else
@@ -920,7 +920,7 @@ configure_zfs_manually() {
             info "Selected bastille storage mountpoint: [${_zfsmount_select}]"
             # Ask again to make sure the user is confident with the election.
             # shellcheck disable=SC3045
-            read -p "Are you sure '${_zfsmount_select}' is the correct bastille prefix [Y|n]: " _response
+            read -p "Are you sure '${_zfsmount_select}' is the correct bastille storage prefix [Y|n]: " _response
             case "${_response}" in
                 [Yy]|[Yy][Ee][Ss])
                     # Set the parameters and show the user a preview.
@@ -930,7 +930,7 @@ configure_zfs_manually() {
                     show_zfs_params
                     warn "Are you sure the above bastille ZFS configuration is correct?"
                     # shellcheck disable=SC3045
-                    read -p "Once bastille is activated it can't be easily undone, do you really want to activate ZFS now? [Y|n]: " _response
+                    read -p "Once bastille is activated it can't be easily undone once bootstrapped, do you really want to activate ZFS now? [Y|n]: " _response
                     case "${_response}" in
                         [Yy]|[Yy][Ee][Ss])
                             write_zfs_opts
@@ -960,11 +960,13 @@ config_runtime
 
 # Handle options one at a time per topic, we don't want users to select/process
 # multiple options at once just to end with a broked and/or unwanted configuration.
+# Include previous setup option names for users accustomed to it, note that they
+# may be re-assigned and/or deprecated in future.
 case "${1}" in
-    --firewall|-p|pf)
+    --firewall|-p|pf|firewall)
         configure_pf
         ;;
-    --ethernet|-e)
+    --ethernet|-e|lan)
         configure_ethernet
         ;;
     --loopback|-l|bastille0)
@@ -973,7 +975,7 @@ case "${1}" in
     --vnet|-v|bridge|bastille1)
         configure_vnet
         ;;
-    --zfs|-z)
+    --zfs|-z|storage)
         configure_zfs
         ;;
    --zfs-custom-setup)
