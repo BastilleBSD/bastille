@@ -190,7 +190,7 @@ get_zfs_params() {
     # Always try to detect and recover on-disk ZFS bastille configuration first.
     # Bastille ZFS prefix is always set to "bastille" in the config file by default,
     # so will keep things simple here, or considered custom setup if this variable is changed.
-    BARTILLE_ROOTFS=$(mount | awk '/ \/ / {print $1}')
+    BASTILLE_ROOTFS=$(mount | awk '/ \/ / {print $1}')
     BASTILLE_UFSBOOT=
     BASTILLE_ZFSPOOL=
     BASTILLE_PREFIXDEF=
@@ -198,7 +198,7 @@ get_zfs_params() {
     BASTILLE_PREFIX_MATCH=
 
     # Check if the system boots from ZFS.
-    if echo "${BARTILLE_ROOTFS}" | grep -q -m 1 -E "^/dev/"; then
+    if echo "${BASTILLE_ROOTFS}" | grep -q -m 1 -E "^/dev/"; then
         # Assume the host is running from UFS.
         info "This system doesn't boot from ZFS, looking for alternate configuration."
         BASTILLE_UFSBOOT="1"
@@ -627,7 +627,7 @@ configure_zfs() {
                     # Assume the user will manually configure the ZFS parameters, or skip ZFS configuration.
                     user_canceled
                     ;;
-            esac      
+            esac
         else
             # Attempt to detect if bastille was installed with sane defaults(ports/pkg) and hasn't been bootstrapped yet,
             # then offer the user initial ZFS activation option to gain all of the ZFS storage features and benefits.
@@ -978,7 +978,7 @@ case "${1}" in
     --zfs|-z|storage)
         configure_zfs
         ;;
-   --zfs-custom-setup)
+    --zfs-custom-setup)
         configure_zfs_manually
         ;;
     --conf-network-reset)
