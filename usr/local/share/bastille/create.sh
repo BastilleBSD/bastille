@@ -810,6 +810,17 @@ if [ -n "${NAME}" ]; then
     validate_name
 fi
 
+# Validate interface type
+if [ -n "${VNET_JAIL}" ] && [ -n "${VNET_JAIL_BRIDGE}" ]; then
+    if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+        error_exit "Interface is not a bridge: ${INTERFACE}"
+    fi
+elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
+    if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+        error_exit "Interface is a bridge: ${INTERFACE}"
+    fi
+fi
+
 if [ -n "${LINUX_JAIL}" ] && [ -n "${VALIDATE_RELEASE}" ]; then
     case "${RELEASE}" in
     bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
