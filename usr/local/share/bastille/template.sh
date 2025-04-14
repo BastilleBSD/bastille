@@ -235,6 +235,9 @@ case ${TEMPLATE} in
         error_exit "Template name/URL not recognized."
 esac
 
+## Verify the template
+bastille verify "${bastille_template}"
+
 # Check for an --arg-file parameter. -- cwells
 for _script_arg in "$@"; do
     case ${_script_arg} in
