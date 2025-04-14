@@ -224,7 +224,7 @@ case ${TEMPLATE} in
         ;;
     */*)
         if [ -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
-            bastille_template=${TEMPLATE}
+            bastille_template="${bastille_templatesdir}/${TEMPLATE}"
         elif [ -d "${TEMPLATE}" ]; then
             bastille_template="${TEMPLATE}"
         else
