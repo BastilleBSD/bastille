@@ -209,7 +209,7 @@ if [ "${TARGET}" = '--convert' ]; then
 else
     set_target "${TARGET}"
 fi
-set -x 
+
 case ${TEMPLATE} in
     http?://*/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
