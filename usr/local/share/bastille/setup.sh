@@ -35,6 +35,7 @@ bastille_config="${bastille_config_path}/bastille.conf"
 bastille_prefix_default="/usr/local/bastille"
 bastille_zfsprefix_default="bastille"
 bastille_ifbridge_name="bastille1"
+bastille_auto_config="0"
 
 . /usr/local/share/bastille/common.sh
 # shellcheck source=/usr/local/etc/bastille/bastille.conf
@@ -55,6 +56,7 @@ usage() {
     -e | --ethernet                    Attempt to configure the network shared interface.
     -v | --vnet                        Attempt to configure VNET bridge interface [bastille1].
     -z | --zfs                         Activates ZFS storage features and benefits for bastille.
+    -a | --auto                        Attempt to auto-configure network, firewall and ZFS storage.
          --zfs-custom-setup            Manually configure ZFS, this is intended for advanced users.
          --conf-network-reset          Restore bastille default Network options on the config file.
          --conf-storage-reset          Restore bastille default ZFS storage options on the config file.
@@ -76,7 +78,7 @@ config_runtime() {
 }
 
 # Check for too many args.
-if [ $# -gt 1 ]; then
+if [ "$#" -gt 1 ]; then
     usage
 fi
 
@@ -175,6 +177,28 @@ config_restore_global() {
             fi
             info "Bastille configuration file restored successfully!"
             exit 0
+            ;;
+        [Nn]|[Nn][Oo])
+            user_canceled
+            ;;
+        *)
+            input_error
+            ;;
+    esac
+}
+
+configure_auto() {
+    # This is similar to the previous setup cmd behavior, included for convenience.
+    warn "This will attempt to auto-configure network, firewall and ZFS storage on new install with sane defaults."
+    read -p "Do you really want to auto-configure 'bastille' with standard default configuration parameters? [Y|n]: " _response
+    case "${_response}" in
+        [Yy]|[Yy][Ee][Ss])
+            info "Attempting Bastille auto-configuration in progress..."
+            config_backup
+            bastille_auto_config="1"
+            configure_network
+            configure_pf
+            configure_zfs
             ;;
         [Nn]|[Nn][Oo])
             user_canceled
@@ -328,6 +352,10 @@ create_zfs_dataset(){
     fi
     chmod 0750 "${bastille_prefix}"
     info "Bastille ZFS storage features has been activated successfully!"
+    # Enable ZFS in bastille_config only if dataset created successfully during auto-config.
+    if [ "${bastille_auto_config}" -eq "1" ]; then
+        sysrc -f "${bastille_config}" bastille_zfs_enable="YES"
+    fi
     exit 0
 }
 
@@ -445,21 +473,23 @@ configure_network() {
     # Configure bastille loopback network interface.
     # This is an initial attempt to make this function interactive,
     # however this may be enhanced in the future by advanced contributors in this topic.
-    warn "This will attempt to configure the loopback network interface [${bastille_network_loopback}]."
-    # shellcheck disable=SC3045
-    read -p "Would you like to configure the loopback network interface now? [Y|n]: " _response
-    case "${_response}" in
-        [Yy]|[Yy][Ee][Ss])
-            # shellcheck disable=SC2104
-            break
-            ;;
-        [Nn]|[Nn][Oo])
-            user_canceled
-            ;;
-        *)
-            input_error
-            ;;
-    esac
+    if [ "${bastille_auto_config}" -eq "0" ]; then
+        warn "This will attempt to configure the loopback network interface [${bastille_network_loopback}]."
+        # shellcheck disable=SC3045
+        read -p "Would you like to configure the loopback network interface now? [Y|n]: " _response
+        case "${_response}" in
+            [Yy]|[Yy][Ee][Ss])
+                # shellcheck disable=SC2104
+                break
+                ;;
+            [Nn]|[Nn][Oo])
+                user_canceled
+                ;;
+            *)
+                input_error
+                ;;
+        esac
+    fi
 
     info "Configuring ${bastille_network_loopback} loopback interface..."
     if ! sysrc -qn cloned_interfaces | grep -qi "lo1"; then
@@ -533,21 +563,23 @@ configure_pf() {
     # Configure the PF firewall.
     # This is an initial attempt to make this function interactive,
     # however this may be enhanced in the future by advanced contributors in this topic.
-    warn "This will attempt to configure the PF firewall parameters in [${bastille_pf_conf}]."
-    # shellcheck disable=SC3045
-    read -p "Would you like to configure the PF firewall parameters now? [Y|n]: " _response
-    case "${_response}" in
-        [Yy]|[Yy][Ee][Ss])
-            # shellcheck disable=SC2104
-            break
-            ;;
-        [Nn]|[Nn][Oo])
-            user_canceled
-            ;;
-        *)
-            input_error
-            ;;
-    esac
+    if [ "${bastille_auto_config}" -eq "0" ]; then
+        warn "This will attempt to configure the PF firewall parameters in [${bastille_pf_conf}]."
+        # shellcheck disable=SC3045
+        read -p "Would you like to configure the PF firewall parameters now? [Y|n]: " _response
+        case "${_response}" in
+            [Yy]|[Yy][Ee][Ss])
+                # shellcheck disable=SC2104
+                break
+                ;;
+            [Nn]|[Nn][Oo])
+                user_canceled
+                ;;
+            *)
+                input_error
+                ;;
+        esac
+    fi
 
     # shellcheck disable=SC2154
     if [ ! -f "${bastille_pf_conf}" ]; then
@@ -586,7 +618,6 @@ EOF
         warn "${bastille_pf_conf} already exists, skipping."
         exit 1
     fi
-    exit 0
 }
 
 configure_zfs() {
@@ -608,7 +639,7 @@ configure_zfs() {
     else
         # If the below statement becomes true, will assume that the user do not want ZFS activation at all regardless of the
         # host filesystem, or the default configuration file has been changed officially and set to "NO" by default.
-        if echo "${bastille_zfs_enable}" | grep -qi "no"; then
+        if echo "${bastille_zfs_enable}" | grep -qi "no" && [ "${bastille_auto_config}" -eq "0" ]; then
             info "Looks like Bastille ZFS has been disabled in 'bastille.conf', ZFS activation helper disabled."
             # shellcheck disable=SC3045
             read -p "Would you like to enable the ZFS activation helper now? [Y|n]: " _response
@@ -638,51 +669,66 @@ configure_zfs() {
                     if [ "${bastille_prefix}" = "${bastille_prefix_default}" ] && [ -z "${BASTILLE_CUSTOM_CONFIG}" ]; then
                         show_zfs_params
                         info "Looks like bastille has been installed and hasn't been bootstrapped yet."
-                        # shellcheck disable=SC3045
-                        read -p "Would you like to activate ZFS now to get the features and benefits? [Y|n]: " _response
-                        case "${_response}" in
-                            [Yy]|[Yy][Ee][Ss])
-                                if [ -n "${BASTILLE_ZFSPOOL}" ]; then
-                                    info "Attempting to create a backup file of the current bastille.conf file..."
-                                    if config_backup; then
-                                        write_zfs_opts
-                                        create_zfs_dataset
-                                    else
-                                        error_exit "Config backup creation failed, exiting."
-                                    fi
-                                else
-                                    error_exit "Unable to determine the [zroot] pool name, exiting"
-                                fi
-                                ;;
-                            [Nn]|[Nn][Oo])
-                                info "Looks like you cancelled the ZFS activation."
-                                # Offer the user option to disable ZFS in the configuration file.
-                                # Maybe the user wants to use UFS or ZFS with legacy directories instead.
-                                # shellcheck disable=SC3045
-                                read -p "Would you like to explicitly disable ZFS in the configuration file? [Y|n]: " _response
-                                case "${_response}" in
-                                    [Yy]|[Yy][Ee][Ss])
+                        if [ "${bastille_auto_config}" -eq "0" ]; then
+                            # shellcheck disable=SC3045
+                            read -p "Would you like to activate ZFS now to get the features and benefits? [Y|n]: " _response
+                            case "${_response}" in
+                                [Yy]|[Yy][Ee][Ss])
+                                    if [ -n "${BASTILLE_ZFSPOOL}" ]; then
+                                        info "Attempting to create a backup file of the current bastille.conf file..."
                                         if config_backup; then
-                                            # Assume the user want to skip ZFS configuration regardless.
-                                            write_zfs_disable
-                                            exit 0
+                                            write_zfs_opts
+                                            create_zfs_dataset
                                         else
-                                             error_exit "Config backup creation failed, exiting."
+                                            error_exit "Config backup creation failed, exiting."
                                         fi
-                                        ;;
-                                    [Nn]|[Nn][Oo])
-                                        # Assume the user will manually configure the ZFS parameters by itself.
-                                        user_canceled
-                                        ;;
-                                    *)
-                                        input_error
-                                        ;;
-                                esac
-                                ;;
-                            *)
-                                input_error
-                                ;;
-                        esac
+                                    else
+                                        error_exit "Unable to determine the [zroot] pool name, exiting"
+                                    fi
+                                    ;;
+                                [Nn]|[Nn][Oo])
+                                    info "Looks like you cancelled the ZFS activation."
+                                    # Offer the user option to disable ZFS in the configuration file.
+                                    # Maybe the user wants to use UFS or ZFS with legacy directories instead.
+                                    # shellcheck disable=SC3045
+                                    read -p "Would you like to explicitly disable ZFS in the configuration file? [Y|n]: " _response
+                                    case "${_response}" in
+                                        [Yy]|[Yy][Ee][Ss])
+                                            if config_backup; then
+                                                # Assume the user want to skip ZFS configuration regardless.
+                                                write_zfs_disable
+                                                exit 0
+                                            else
+                                                 error_exit "Config backup creation failed, exiting."
+                                            fi
+                                            ;;
+                                        [Nn]|[Nn][Oo])
+                                            # Assume the user will manually configure the ZFS parameters by itself.
+                                            user_canceled
+                                            ;;
+                                        *)
+                                            input_error
+                                            ;;
+                                    esac
+                                    ;;
+                                *)
+                                    input_error
+                                    ;;
+                            esac
+                        else
+                            # Just attempt to configure the ZFS parameters automatically during auto-config.
+                            if [ -n "${BASTILLE_ZFSPOOL}" ]; then
+                                info "Attempting to create a backup file of the current bastille.conf file..."
+                                if config_backup; then
+                                    write_zfs_opts
+                                    create_zfs_dataset
+                                else
+                                    error_exit "Config backup creation failed, exiting."
+                                fi
+                            else
+                                error_exit "Unable to determine the [zroot] pool name, exiting"
+                            fi
+                        fi
                     else
                         config_validation
                     fi
@@ -977,6 +1023,9 @@ case "${1}" in
         ;;
     --zfs|-z|storage)
         configure_zfs
+        ;;
+    --auto|-a|auto)
+        configure_auto
         ;;
     --zfs-custom-setup)
         configure_zfs_manually
