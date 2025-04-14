@@ -19,7 +19,7 @@ It is also possible to target multiple jails by grouping them in quotes, as seen
   ishmael ~ # bastille cmd "jail1 jail2 jail3" echo Hello!
 
 Examples: Containers
-====================
+--------------------
 
 .. code-block:: shell
 
@@ -51,7 +51,7 @@ Examples: Containers
 
 
 Examples: Releases
-==================
+------------------
 
 .. code-block:: shell
 
