@@ -617,7 +617,6 @@ EOF
     warn "The pf ruleset file has been created, please review '${bastille_pf_conf}' and enable it using 'service pf start'."
     else
         warn "${bastille_pf_conf} already exists, skipping."
-        exit 1
     fi
 }
 
