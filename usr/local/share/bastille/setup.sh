@@ -190,6 +190,7 @@ config_restore_global() {
 configure_auto() {
     # This is similar to the previous setup cmd behavior, included for convenience.
     warn "This will attempt to auto-configure network, firewall and ZFS storage on new install with sane defaults."
+    # shellcheck disable=SC3045
     read -p "Do you really want to auto-configure 'bastille' with standard default configuration parameters? [Y|n]: " _response
     case "${_response}" in
         [Yy]|[Yy][Ee][Ss])
