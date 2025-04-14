@@ -209,7 +209,7 @@ if [ "${TARGET}" = '--convert' ]; then
 else
     set_target "${TARGET}"
 fi
-
+set -x 
 case ${TEMPLATE} in
     http?://*/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
@@ -223,12 +223,12 @@ case ${TEMPLATE} in
         bastille_template=${bastille_templatesdir}/${TEMPLATE}
         ;;
     */*)
-        if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
-            if [ ! -d ${TEMPLATE} ]; then
-                error_exit "${TEMPLATE} not found."
-            else
-                bastille_template=${TEMPLATE}
-            fi
+        if [ -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
+            bastille_template=${TEMPLATE}
+        elif [ -d "${TEMPLATE}" ]; then
+            bastille_template="${TEMPLATE}"
+        else
+            error_exit "${TEMPLATE} not found."
         fi
         ;;
     *)
