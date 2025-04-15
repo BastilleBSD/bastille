@@ -94,6 +94,6 @@ fi
 
 if [ ! -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
     error_notify "htop not found on ${TARGET}."
-elif [ -x "${bastille_jail_path}/usr/local/bin/htop" ]; then
+elif [ -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
     jexec -l ${TARGET} /usr/local/bin/htop
 fi

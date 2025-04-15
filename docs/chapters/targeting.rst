@@ -1,7 +1,7 @@
 Targeting
 =========
 
-Bastille uses a `command target arguments` syntax, meaning that each command
+Bastille uses a ``command TARGET ARGS`` syntax, meaning that each command
 requires a target. Targets are usually containers, but can also be releases.
 
 Targeting a container is done by providing the exact jail name, the JID of the jail, or by typing the 
@@ -9,9 +9,9 @@ starting few characters of a jail. If more than one matching jail will be found,
 saying so.
 
 Targeting a release is done by providing the exact release name. (Note: do not
-include the `-pX` point-release version.)
+include the ``-pX`` point-release version.)
 
-Bastille includes a pre-defined keyword [ALL|all} to target all running containers.
+Bastille includes a pre-defined keyword [ALL|all] to target all running containers.
 It is also possible to target multiple jails by grouping them in quotes, as seen below.
 
 .. code-block:: shell
@@ -19,7 +19,7 @@ It is also possible to target multiple jails by grouping them in quotes, as seen
   ishmael ~ # bastille cmd "jail1 jail2 jail3" echo Hello!
 
 Examples: Containers
-====================
+--------------------
 
 .. code-block:: shell
 
@@ -51,7 +51,7 @@ Examples: Containers
 
 
 Examples: Releases
-==================
+------------------
 
 .. code-block:: shell
 

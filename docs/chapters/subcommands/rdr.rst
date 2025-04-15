@@ -1,9 +1,9 @@
 rdr
 ===
 
-`bastille rdr` allows you to configure dynamic rdr rules for your containers
-without modifying pf.conf (assuming you are using the `bastille0` interface
-for a private network and have enabled `rdr-anchor 'rdr/*'` in /etc/pf.conf
+``bastille rdr`` allows you to configure dynamic rdr rules for your containers
+without modifying pf.conf (assuming you are using the ``bastille0`` interface
+for a private network and have enabled ``rdr-anchor 'rdr/*'`` in /etc/pf.conf
 as described in the Networking section).
 
 Note: you need to be careful if host services are configured to run
@@ -30,7 +30,7 @@ specify the interface they run on in rc.conf (or other config files)
     # bastille rdr dev1 clear
     nat cleared
 
-The `rdr` command includes 4 additional options:
+The ``rdr`` command includes 4 additional options:
 
 .. code-block:: shell
 
@@ -65,7 +65,7 @@ The `rdr` command includes 4 additional options:
 
 The options can be used together, as seen above.
 
-If you have multiple interfaces assigned to your jail, `bastille rdr` will
+If you have multiple interfaces assigned to your jail, ``bastille rdr`` will
 only redirect using the default one.
 
 .. code-block:: shell

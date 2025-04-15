@@ -118,10 +118,11 @@ list_all(){
                     else
                         JAIL_STATE=$(if [ "$(sed -n "/^${JAIL_NAME} {$/,/^}$/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | awk '$0 ~ /^'${JAIL_NAME}' \{|\}/ { printf "%s",$0 }')" = "${JAIL_NAME} {}" ]; then echo "Down"; else echo "n/a"; fi)
                         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-                            JAIL_IP=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet.*" | awk '{print $2}' | sed -E 's#/[0-9]+$##g')
+                            JAIL_IP=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
                         else
-                            JAIL_IP=$(sed -n "s/^[ ]*ip[4,6].addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk '{ print $1 }')
-                        fi
+                            JAIL_IP=$(bastille config ${JAIL_NAME} get ip4.addr | sed 's/,/\n/g')
+                            if [ "${JAIL_IP}" = "not set" ]; then JAIL_IP=$(bastille config ${JAIL_NAME} get ip6.addr | sed 's/,/\n/g'); fi
+			fi
                         JAIL_HOSTNAME=$(sed -n "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
                         if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
                             JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
@@ -163,14 +164,14 @@ list_all(){
                             #                 10.10.10.11
                             #                 10.10.10.12
                             FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-			    if echo "${FIRST_IP}" | grep -q "|"; then FIRST_IP=$(echo ${FIRST_IP} | awk -F"|" '{print $2}'); fi
+			                      if echo "${FIRST_IP}" | grep -q "|"; then FIRST_IP=$(echo ${FIRST_IP} | awk -F"|" '{print $2}' | sed 's#/.*##g'); fi
                             printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                             for IP in $(echo "${JAIL_IP}" | tail -n +2); do
                                 if echo "${IP}" | grep -q "|"; then IP=$(echo ${IP} | awk -F"|" '{print $2}'); fi
                                 printf "%*s%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
                             done
                         else
-			    if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP="$(echo ${JAIL_IP} | awk -F"|" '{print $2}')"; fi
+			                      if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP="$(echo ${JAIL_IP} | awk -F"|" '{print $2}' | sed 's#/.*##g')"; fi
                             printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                         fi
                 fi

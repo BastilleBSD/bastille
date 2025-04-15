@@ -15,8 +15,9 @@ container are limited to the container.
 
 .. code-block:: shell
 
-  "Usage: bastille console [option(s)] TARGET [user]"
-  Options:
+  ishmael ~ # bastille console help
+  Usage: bastille console [option(s)] TARGET [user]
+    Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
     -x | --debug          Enable debug mode.

@@ -17,7 +17,7 @@ This command allows copying files from jail to jail(s).
   [folsom]:
   /usr/local/bastille/jails/bastion/root/tmp/resolv.conf-cf -> /usr/local/bastille/jails/folsom/root/etc/resolv.conf
 
-Unless you see errors reported in the output the `jcp` was successful.
+Unless you see errors reported in the output the ``jcp`` was successful.
 
 .. code-block:: shell
 

@@ -20,9 +20,9 @@ Manage binary packages inside jails.
   ...[snip]...
 
 
-The PKG sub-command can do more than just `install`. The
+The PKG sub-command can do more than just ``install``. The
 expectation is that you can fully leverage the pkg manager. This means,
-`install`, `update`, `upgrade`, `audit`, `clean`, `autoremove`, etc...
+``install``, ``update``, ``upgrade``, ``audit``, ``clean``, ``autoremove``, etc...
 
 .. code-block:: shell
 
@@ -107,7 +107,7 @@ expectation is that you can fully leverage the pkg manager. This means,
 .. code-block:: shell
 
   ishmael ~ # bastille pkg help
-  Usage: bastille pkg [option(s)] TARGET COMMAND args
+  Usage: bastille pkg [option(s)] TARGET COMMAND ARGS
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.

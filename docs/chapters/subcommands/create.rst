@@ -55,9 +55,7 @@ the below help output.
 .. code-block:: shell
 
   ishmael ~ # bastille create help
-
   Usage: bastille create [option(s)] NAME RELEASE IP_ADDRESS [interface]"
-
     Options:
     
     -B | --bridge                            Enables VNET, VNET containers are attached to a specified, already existing external bridge.
@@ -67,8 +65,11 @@ the below help output.
     -L | --linux                             This option is intended for testing with Linux jails, this is considered experimental.
     -M | --static-mac                        Generate a static MAC address for jail (VNET only).
          --no-validate                       Do not validate the release when creating the jail.
+         --no-boot                           Create jail with boot=off.
+    -p | --priority VALUE                    Set priority value for jail.
     -T | --thick                             Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet                              Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
+    -v | --vlan VLANID                       Creates the jail with specified VLAN ID (VNET only).
     -x | --debug                             Enable debug mode.
     -Z | --zfs-opts [zfs,options]            Comma separated list of ZFS options to create the jail with. This overrides the defaults.
 

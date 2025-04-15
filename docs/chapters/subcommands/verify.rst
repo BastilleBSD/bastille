@@ -35,9 +35,8 @@ the release or template .
 
 .. code-block:: shell
 
-  ishmael ~ # bastille verify 11.2-RELEASE
+  ishmael ~ # bastille verify help
   Usage: bastille verify [RELEASE|TEMPLATE]
-    
     Options:
 
     -x | --debug          Enable debug mode.
