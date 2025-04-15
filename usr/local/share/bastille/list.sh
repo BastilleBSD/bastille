@@ -252,6 +252,9 @@ TARGET=""
 OPT_JSON=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+        -a|--all|all)
+            shift
+            ;;
 	-h|--help|help)
 	    usage
 	    ;;
