@@ -83,8 +83,10 @@ list_all(){
                 JAIL_LIST="${TARGET}"
             else
                 # Query all info for all jails(default).
-                JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+                set_target ALL
+                JAIL_LIST=${JAILS}
             fi
+
             for _JAIL in ${JAIL_LIST}; do
                 if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                     JAIL_NAME=$(grep -h -m 1 -e "^.* {$" "${bastille_jailsdir}/${_JAIL}/jail.conf" 2> /dev/null | awk '{ print $1 }')
