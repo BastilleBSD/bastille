@@ -92,10 +92,9 @@ validate_ip() {
                 done
                 if ifconfig | grep -qwF "${TEST_IP}"; then
                     warn "Warning: IP address already in use (${TEST_IP})."
-                else
-                    ipx_addr="ip4.addr"
-                    info "Valid: (${_ip})."
                 fi
+                ipx_addr="ip4.addr"
+                info "Valid: (${_ip})."
             else
                 error_continue "Invalid: (${_ip})."
             fi
