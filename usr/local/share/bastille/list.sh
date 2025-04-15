@@ -83,8 +83,7 @@ list_all(){
                 JAIL_LIST="${TARGET}"
             else
                 # Query all info for all jails(default).
-                set_target ALL
-                JAIL_LIST=${JAILS}
+                JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
             fi
 
             for _JAIL in ${JAIL_LIST}; do
