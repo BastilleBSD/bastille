@@ -62,7 +62,7 @@ Thin Jails
 4. Use ``bastille upgrade TARGET 13.2-RELEASE`` to automatically change the mount points to 13.2-RELEASE
 5. Use ``bastille etcupdate bootstrap 13.2-RELEASE`` to bootstrap src for 13.2-RELEASE
 6. Use ``bastille etcupdate TARGET update 13.2-RELEASE`` to update the contents of /etc for 13.2-RELEASE
-7. Use ``bastille etcupdate TARGET reslove`` to resolve any conflicts
+7. Use ``bastille etcupdate TARGET resolve`` to resolve any conflicts
 8. Start the jail(s)
 9. Force the reinstallation or upgrade of all installed packages (ABI change): ``pkg upgrade -f`` within each jail (or ``bastille pkg ALL upgrade -f``)
 10. Upgrade complete!
