@@ -172,7 +172,7 @@ list_all(){
                                 printf "%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
                             done
                         else
-			    if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP="$(echo ${JAIL_IP} | awk -F"|" '{print $2}' | s's#/.*##g')"; fi
+			    if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP="$(echo ${JAIL_IP} | awk -F"|" '{print $2}' | sed 's#/.*##g')"; fi
                             printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                         fi
                 fi
