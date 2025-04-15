@@ -255,9 +255,6 @@ while [ "$#" -gt 0 ]; do
 	-h|--help|help)
 	    usage
 	    ;;
-        -a|--all|all)
-	    shift
-            ;;
 	-j|--json)
             OPT_JSON=1
 	    shift
@@ -283,9 +280,9 @@ while [ "$#" -gt 0 ]; do
 done
 
 # List json format, otherwise list all jails
-if [ "${OPT_JSON}" -eq 1 ]; then
+if [ "${OPT_JSON}" -eq 1 ] && [ "$#" -eq 0 ]; then
     list_all | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"Name\": \"" $2 "\", \"Boot\": \"" $3 "\", \"Prio\": \"" $4 "\", \"State\": \"" $5 "\", \"IP_Address\": \"" $6 "\", \"Published_Ports\": \"" $7 "\", \"Release\": \"" $8 "\","} END {print "]"}' | sed 's/,$//'
-elif [ "${OPT_JSON}" -eq 0 ]; then
+elif [ "${OPT_JSON}" -eq 0 ] && [ "$#" -eq 0 ]; then
     list_all
 fi
 
@@ -315,10 +312,14 @@ if [ "$#" -gt 0 ]; then
             ;;
         *)
             # Check if we want to query all info for a specific jail instead.
-            if [ -f "${bastille_jailsdir}/${1}/jail.conf" ]; then
-                TARGET="${1}"
-		set_target "${TARGET}"
-                list_all
+            TARGET="${1}"
+      	    set_target "${TARGET}"
+            if [ -f "${bastille_jailsdir}/${TARGET}/jail.conf" ]; then
+                if [ "${OPT_JSON}" -eq 1 ]; then
+                    list_all | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"Name\": \"" $2 "\", \"Boot\": \"" $3 "\", \"Prio\": \"" $4 "\", \"State\": \"" $5 "\", \"IP_Address\": \"" $6 "\", \"Published_Ports\": \"" $7 "\", \"Release\": \"" $8 "\","} END {print "]"}' | sed 's/,$//'
+                elif [ "${OPT_JSON}" -eq 0 ]; then
+                    list_all
+                fi
             else
                 usage
             fi
