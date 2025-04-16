@@ -292,7 +292,7 @@ generate_vnet_jail_netblock() {
     if [ -n "${use_unique_bridge}" ]; then
         if [ "${_epair_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! grep -Eosq "epair${_num}" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
+                if ! grep -Eosq "(bastille${_num}|epair${_num})" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
                     if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                         local host_epair=e${_num}a_${jail_name}
                         local jail_epair=e${_num}b_${jail_name}
@@ -317,7 +317,7 @@ generate_vnet_jail_netblock() {
     else
         if [ "${_epair_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! grep -Eosq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
+                if ! grep -Eosq "(bastille${_num}|epair${_num})" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
                     local uniq_epair="bastille${_num}"
                     break
                 fi
