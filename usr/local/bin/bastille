@@ -128,14 +128,16 @@ bastille_conf_check
 bastille_perms_check
 
 if [ -z "${BASTILLE_CONFIG}" ]; then
-    BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
-    export BASTILLE_CONFIG
-elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-    BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-    export BASTILLE_CONFIG
-else
-    echo "Not a valid config file: ${BASTILLE_CONFIG}"
-    exit 1
+    if [ -z "${BASTILLE_CONFIG}" ]; then
+        BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
+        export BASTILLE_CONFIG
+    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+        export BASTILLE_CONFIG
+    else
+        echo "Not a valid config file: ${BASTILLE_CONFIG}"
+        exit 1
+    fi
 fi   
 
 # Load common.sh after setting BASTILLE_CONFIG
