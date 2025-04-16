@@ -197,7 +197,8 @@ update_jailconf_vnet() {
     # Determine number of interfaces and define a uniq_epair
     local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${_jail_conf} | sort -u)"
     for _if in ${_if_list}; do
-        local _epair_count="$( (grep -Eos '(e[0-9]+b|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair ) | grep -Eo "[0-9]+" | sort -u | wc -l | awk '{print $1}')"
+        # Get number of epairs on the system
+        get_epair_count
         local _epair_num_range=$((_epair_count + 1))
         if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
             # Update bridged VNET config

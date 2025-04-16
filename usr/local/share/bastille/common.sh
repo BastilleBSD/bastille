@@ -286,10 +286,8 @@ generate_vnet_jail_netblock() {
     local use_unique_bridge="${2}"
     local external_interface="${3}"
     local static_mac="${4}"
-    ## determine number of interfaces + 1
-    ## iterate num and grep all jail configs
-    ## define uniq_epair
-    local _epair_count="$( (grep -Eos '(e[0-9]+b|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair ) | grep -Eo "[0-9]+" | sort -u | wc -l | awk '{print $1}')"
+    # Get number of epairs on the system
+    get_epair_count
     local _epair_num_range=$((_epair_count + 1))
     if [ -n "${use_unique_bridge}" ]; then
         if [ "${_epair_count}" -gt 0 ]; then  

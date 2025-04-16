@@ -231,12 +231,13 @@ add_interface() {
     local _ip="${3}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-    local _epair_count="$( (grep -Eos '(e[0-9]+b|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair ) | grep -Eo "[0-9]+" | sort -u | wc -l | awk '{print $1}')"
+    # Get number of epairs on the system
+    get_epair_count
     local _vnet_if_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet="vnet$((_vnet_if_count + 1))"
-    local _epair_num_range=$((_epair_if_count + 1))
+    local _epair_num_range=$((_epair_count + 1))
     if [ "${BRIDGE}" -eq 1 ]; then
-       if [ "${_epair_if_count}" -gt 0 ]; then  
+       if [ "${_epair_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_epair_num_range}"); do
                 if ! grep -Eosq "(bastille${_num}|epair${_num})" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
                     if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
