@@ -121,9 +121,10 @@ check_target_is_stopped() {
 get_epair_count() {
     for _config in /usr/local/etc/bastille/*.conf; do
         local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
-        local _epair_list="$(printf '%s\n' "$( (grep -Eos '(e[0-9]+b|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair) | grep -Eo "[0-9]+")" "${_epair_list}" | sort -u)"
+        _epair_list="$(printf '%s\n' "$( (grep -Eos '(e[0-9]+b|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair) | grep -Eo "[0-9]+")" "${_epair_list}" | sort -u)"
     done
     _epair_count=$(printf '%s' "${_epair_list}" | wc -l | awk '{print $1}')
+    export _epair_list
     export _epair_count
 }
 
@@ -292,7 +293,7 @@ generate_vnet_jail_netblock() {
     if [ -n "${use_unique_bridge}" ]; then
         if [ "${_epair_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! grep -Eosq "(bastille${_num}|epair${_num})" ${bastille_jailsdir}/*/jail.conf && ! ifconfig -g epair | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
+                if ! echo "${_epair_list}" | grep -osq "${_num}" && ! grep -Eosq "(bastille${_num}|epair${_num})" ${bastille_jailsdir}/*/jail.conf && ! ifconfig -g epair | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
                     if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                         local host_epair=e${_num}a_${jail_name}
                         local jail_epair=e${_num}b_${jail_name}
@@ -317,7 +318,7 @@ generate_vnet_jail_netblock() {
     else
         if [ "${_epair_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! grep -Eosq "(bastille${_num}|epair${_num})" ${bastille_jailsdir}/*/jail.conf && ! ifconfig -g epair | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
+                if ! echo "${_epair_list}" | grep -osq "${_num}" && ! grep -Eosq "(bastille${_num}|epair${_num})" ${bastille_jailsdir}/*/jail.conf && ! ifconfig -g epair | grep -Eosq "(e${_num}a|epair${_num}a|bastille${_num})"; then
                     local uniq_epair="bastille${_num}"
                     break
                 fi
