@@ -121,7 +121,7 @@ check_target_is_stopped() {
 get_epair_count() {
     for _config in /usr/local/etc/bastille/*.conf; do
         local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
-        local _epair_list="$(printf '%s\n' $( (grep -Eos '(e[0-9]+b|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair) | grep -Eo "[0-9]+") ${_epair_list} | sort -u)"
+        local _epair_list="$(printf '%s\n' "$( (grep -Eos '(e[0-9]+b|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair) | grep -Eo "[0-9]+")" "${_epair_list}" | sort -u)"
     done
     _epair_count="$(echo ${_epair_list} | wc -l | awk '{print $1}')"
     export _epair_count
