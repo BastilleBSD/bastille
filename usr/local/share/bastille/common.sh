@@ -121,7 +121,7 @@ check_target_is_stopped() {
 get_epair_count() {
     for _config in /usr/local/etc/bastille/*.conf; do
         local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
-        _epair_list="$(printf '%s\n%s' "$( (grep -Eos '(epair[0-9]+|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair | grep -Eos "_bastille[0-9]+$"; ifconfig -g epair | grep -vs "bastille" | grep -Eos "e[0-9]+a_") | grep -Eos "[0-9]+")" "${_epair_list}" | sort -u)"
+        _epair_list="$(printf '%s\n%s' "$( (grep -Ehos '(epair[0-9]+|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair | grep -Eos "_bastille[0-9]+$"; ifconfig -g epair | grep -vs 'bastille' | grep -Eos 'e[0-9]+a_') | grep -Eos '[0-9]+')" "${_epair_list}")"
     done
     _epair_count=$(printf '%s' "${_epair_list}" | sort -u | wc -l | awk '{print $1}')
     export _epair_list
@@ -293,7 +293,7 @@ generate_vnet_jail_netblock() {
     if [ -n "${use_unique_bridge}" ]; then
         if [ "${_epair_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! echo "${_epair_list}" | grep -osq "${_num}"; then
+                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
                     if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                         local host_epair=e${_num}a_${jail_name}
                         local jail_epair=e${_num}b_${jail_name}
@@ -318,7 +318,7 @@ generate_vnet_jail_netblock() {
     else
         if [ "${_epair_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! echo "${_epair_list}" | grep -osq "${_num}"; then
+                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
                     local uniq_epair="bastille${_num}"
                     break
                 fi
