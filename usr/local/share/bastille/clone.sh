@@ -112,6 +112,8 @@ validate_ip() {
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         IP6_MODE="new"
+    elif { [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; } && [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
+        info "Valid: (${IP})."
     else
         local IFS
         if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
@@ -195,14 +197,13 @@ update_jailconf_vnet() {
     # Determine number of interfaces and define a uniq_epair
     local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${_jail_conf} | sort -u)"
     for _if in ${_if_list}; do
-        local _epair_if_count="$( (grep -Eo 'epair[0-9]+' ${bastille_jailsdir}/*/jail.conf; ifconfig | grep -Eo '(e[0-9]+a|epair[0-9]+a)' ) | sort -u | wc -l | awk '{print $1}')"
-        local _bastille_if_count="$(grep -Eo 'bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | sort -u | wc -l | awk '{print $1}')"
-        local epair_num_range=$((_epair_if_count + 1))
-        local bastille_num_range=$((_bastille_if_count + 1))
+        # Get number of epairs on the system
+        get_epair_count
+        local _epair_num_range=$((_epair_count + 1))
         if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
             # Update bridged VNET config
-            for _num in $(seq 0 "${epair_num_range}"); do
-                if ! grep -Eoq "epair${_num}" ${bastille_jailsdir}/*/jail.conf && ! ifconfig | grep -Eoq "(e${_num}a|epair${_num}a)"; then
+            for _num in $(seq 0 "${_epair_num_range}"); do
+                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
                     # Generate new epair name
                     if [ "$(echo -n "e${_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
                         local _new_host_epair="e${_num}a_${NEWNAME}"
@@ -270,8 +271,8 @@ update_jailconf_vnet() {
             done
         elif echo ${_if} | grep -Eoq 'bastille[0-9]+'; then
             # Update VNET config
-            for _num in $(seq 0 "${bastille_num_range}"); do
-                if ! grep -oq "bastille${_num}" ${bastille_jailsdir}/*/jail.conf; then
+            for _num in $(seq 0 "${_epair_num_range}"); do
+                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
                     # Update jail.conf epair name
                     local uniq_epair="bastille${_num}"
                     local _jail_vnet="$(grep ${_if} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
