@@ -19,6 +19,6 @@ Restart jail(s).
     Options:
 
     -b | --boot                 Respect jail boot setting.
-    -d | --delay VALUE          Time (seconds) to wait between starting jails(s).
+    -d | --delay VALUE          Time (seconds) to wait after starting/stopping jail(s).
     -v | --verbose              Print every action on jail start.
     -x | --debug                Enable debug mode.
