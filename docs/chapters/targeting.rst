@@ -1,7 +1,7 @@
 Targeting
 =========
 
-Bastille uses a ``command TARGET ARGS`` syntax, meaning that each command
+Bastille uses a ``subcommand TARGET ARGS`` syntax, meaning that each command
 requires a target. Targets are usually containers, but can also be releases.
 
 Targeting a container is done by providing the exact jail name, the JID of the jail, or by typing the 
