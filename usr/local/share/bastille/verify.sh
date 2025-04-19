@@ -139,16 +139,10 @@ verify_template() {
         fi
     done
 
-    ## remove bad templates
+    # Exit on bad templates
     if [ "${_hook_validate}" -lt 1 ]; then
-        error_notify "No valid template hooks found."
-        error_notify "Template discarded."
-        rm -rf "${bastille_template}"
-        exit 1
-    fi
-
-    ## if validated; ready to use
-    if [ "${_hook_validate}" -gt 0 ]; then
+        error_exit "No valid template hooks found."
+    elif [ "${_hook_validate}" -gt 0 ]; then
         info "Template ready to use."
     fi
 }
@@ -156,9 +150,9 @@ verify_template() {
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-	        usage
-	        ;;
+        -h|--help|help)
+            usage
+            ;;
         -x|--debug)
             enable_debug
             shift

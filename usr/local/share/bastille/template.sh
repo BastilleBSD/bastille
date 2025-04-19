@@ -223,17 +223,20 @@ case ${TEMPLATE} in
         bastille_template=${bastille_templatesdir}/${TEMPLATE}
         ;;
     */*)
-        if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
-            if [ ! -d ${TEMPLATE} ]; then
-                error_exit "${TEMPLATE} not found."
-            else
-                bastille_template=${TEMPLATE}
-            fi
+        if [ -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
+            bastille_template="${bastille_templatesdir}/${TEMPLATE}"
+        elif [ -d "${TEMPLATE}" ]; then
+            bastille_template="${TEMPLATE}"
+        else
+            error_exit "${TEMPLATE} not found."
         fi
         ;;
     *)
         error_exit "Template name/URL not recognized."
 esac
+
+# Verify template
+bastille verify "${TEMPLATE}"
 
 # Check for an --arg-file parameter. -- cwells
 for _script_arg in "$@"; do

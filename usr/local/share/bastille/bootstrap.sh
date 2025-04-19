@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]"
+    error_notify "Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE(s)] [update|arch]"
     cat << EOF
     Options:
     
@@ -193,7 +193,7 @@ bootstrap_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            error_notify "Bootstrap appears complete."
+            error_exit "Bootstrap appears complete."
         else
             info "Bootstrapping additional distfiles..."
         fi
@@ -406,15 +406,11 @@ bootstrap_template() {
         error_exit "Not yet implemented."
     else
         if [ ! -d "${_template}/.git" ]; then
-            git clone "${_url}" "${_template}" ||\
-                error_notify "Clone unsuccessful."
+            git clone "${_url}" "${_template}" || error_notify "Clone unsuccessful."
         elif [ -d "${_template}/.git" ]; then
-            git -C "${_template}" pull ||\
-                error_notify "Template update unsuccessful."
+            git -C "${_template}" pull || error_notify "Template update unsuccessful."
         fi
     fi
-
-    bastille verify "${_user}/${_repo}"
 }
 
 # Handle options.
