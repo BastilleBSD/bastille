@@ -15,7 +15,7 @@ the ``-a|--auto`` option will automatically stop the jail before destroying it.
   /usr/local/bastille/logs/folsom_console.log
 
 Release can be destroyed provided there are no child jails. The `-c|--no-cache` option
-will retain the releas cache directory, if you choose to keep it.
+will retain the release cache directory, if you choose to keep it.
 
 .. code-block:: shell
 
