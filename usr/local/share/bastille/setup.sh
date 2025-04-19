@@ -117,11 +117,11 @@ configure_zfs() {
         bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
         if [ "$(echo "${bastille_zroot}" | wc -l)" -gt 1 ]; then
           error_notify "Error: Multiple ZFS pools available:\n${bastille_zroot}"
-          error_notify "Set desired pool using \"sysrc -f ${bastille_config} bastille_zfs_zpool=ZPOOL_NAME\""
-          error_exit "Don't forget to also enable ZFS using \"sysrc -f ${bastille_config} bastille_zfs_enable=YES\""
+          error_notify "Set desired pool using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_zpool=ZPOOL_NAME\""
+          error_exit "Don't forget to also enable ZFS using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_enable=YES\""
         fi
-        sysrc -f "${bastille_config}" bastille_zfs_enable=YES
-        sysrc -f "${bastille_config}" bastille_zfs_zpool="${bastille_zroot}"
+        sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_enable=YES
+        sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${bastille_zroot}"
     fi
 }
 
