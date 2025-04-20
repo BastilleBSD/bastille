@@ -18,7 +18,8 @@ Syntax requires only the jail path to unmount.
 
   Usage: bastille umount TARGET JAIL_PATH
 
-If the directory you are unmounting has spaces, make sure to escape them with a backslash \, and enclose the mount point in quotes "".
+If the directory you are unmounting has spaces, make sure to escape them with a
+backslash \, and enclose the mount point in quotes "".
 
 .. code-block:: shell
 

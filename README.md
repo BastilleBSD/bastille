@@ -99,7 +99,7 @@ Use "bastille [-c|--config FILE] command" to specify a non-default config file.
 
 ```
 
-## 0.13-beta
+## 0.14-beta
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 

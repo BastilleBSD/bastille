@@ -7,8 +7,9 @@ Run preconfigured template files inside targeted jail(s).
 
   ishmael ~ # bastille template azkaban project/template
 
-Templates should be structured in ``project/template/Bastillefile`` format, and placed in the template
-directory, which defaults to ``/usr/local/bastille/templates``. The Bastillefile should contain the template
+Templates should be structured in ``project/template/Bastillefile`` format, and
+placed in the template directory, which defaults to
+``/usr/local/bastille/templates``. The Bastillefile should contain the template
 hooks. See the chapter called Template for a list of supported hooks.
 
 .. code-block:: shell

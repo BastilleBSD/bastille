@@ -20,9 +20,9 @@ Manage binary packages inside jails.
   ...[snip]...
 
 
-The PKG sub-command can do more than just ``install``. The
-expectation is that you can fully leverage the pkg manager. This means,
-``install``, ``update``, ``upgrade``, ``audit``, ``clean``, ``autoremove``, etc...
+The PKG sub-command can do more than just ``install``. The expectation is that
+you can fully leverage the pkg manager. This means, ``install``, ``update``,
+``upgrade``, ``audit``, ``clean``, ``autoremove``, etc...
 
 .. code-block:: shell
 

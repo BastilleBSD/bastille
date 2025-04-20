@@ -1,15 +1,14 @@
 bootstrap
 =========
 
-The bootstrap sub-command is used to download and extract releases and
-templates for use with Bastille containers. A valid release is needed before
-containers can be created. Templates are optional but are managed in the same
-manner.
+The bootstrap sub-command is used to download and extract releases and templates
+for use with Bastille containers. A valid release is needed before containers
+can be created. Templates are optional but are managed in the same manner.
 
-Note: your mileage may vary with unsupported releases and releases newer
-than the host system likely will NOT work at all. Bastille tries to filter for
-valid release names. If you find it will not bootstrap a valid release, please
-let us know.
+Note: your mileage may vary with unsupported releases and releases newer than
+the host system likely will NOT work at all. Bastille tries to filter for valid
+release names. If you find it will not bootstrap a valid release, please let us
+know.
 
 In this document we will describe using the ``bootstrap`` sub-command with both
 releases and templates. We begin with releases.
@@ -60,8 +59,8 @@ Tips
 ^^^^
 
 The ``bootstrap`` sub-command can now take (0.5.20191125+) an optional second
-argument of ``update``. If this argument is used, ``bastille update`` will be run
-immediately after the bootstrap, effectively bootstrapping and applying
+argument of ``update``. If this argument is used, ``bastille update`` will be
+run immediately after the bootstrap, effectively bootstrapping and applying
 security patches and errata in one motion.
 
 Notes

@@ -7,7 +7,8 @@ To add a limit, use ``bastille limits TARGET add OPTION VALUE``
 
 To clear the limits from the system, use ``bastille limits TARGET clear``
 
-To clear the limits, and remove the rctl.conf, use ``bastille limits TARGET reset``
+To clear the limits, and remove the rctl.conf, use ``bastille limits TARGET
+reset``
 
 To remove a limit, use ``bastille limits TARGET remove OPTION``
 
