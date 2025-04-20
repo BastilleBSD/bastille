@@ -3,9 +3,10 @@ Bastille VNET on GCP
 
 Bastille VNET runs on GCP with a few small tweaks. In summary, they are:
 
-- change MTU setting in jib script - add an IP address to the bridge interface -
-configure host pf to NAT and allow bridge traffic - set defaultrouter and
-nameserver in the host
+- change MTU setting in jib script
+- add an IP address to the bridge interface
+- configure host pf to NAT and allow bridge traffic
+- set defaultrouter and nameserver in the host
 
 ## Change MTU in the jib script
 
