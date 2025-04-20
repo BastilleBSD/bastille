@@ -20,7 +20,7 @@ Next we can create our first jail. Bastille can create a few different types of 
 
 * Thin jails are the default, and are called thin because they use symlinks to the bootstrapped release. They are lightweight and are created quickly.
 
-* Thick jails used the entire release, which is copied into the jail. The jail then acts like a full BSD install, completely independant of the release. Created with ``bastille create -T``.
+* Thick jails used the entire release, which is copied into the jail. The jail then acts like a full BSD install, completely independent of the release. Created with ``bastille create -T``.
 
 * Clone jails are essentially clones of the bootstrapped release. Changes to the release will affect the clone jail. Created with ``bastille create -C``.
 
@@ -84,4 +84,4 @@ Then we can create our linux jail using this release. This will take a while...
 
 .. code-block:: shell
 
-  ishmael ~ # bastille create -L linuxjail bionic 10.1.1.7/24 vtnet0
+  ishmael ~ # bastille create -L linux_jail bionic 10.1.1.7/24 vtnet0
