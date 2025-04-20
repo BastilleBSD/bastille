@@ -14,11 +14,10 @@ https://docs.bastillebsd.org.
    chapters/installation
    chapters/gettingstarted
    chapters/configuration
-   chapters/boot-and-priority
-   chapters/upgrading
+   chapters/targeting
+   chapters/startup-configuration
    chapters/networking
    chapters/usage
-   chapters/targeting
    chapters/upgrading
    chapters/subcommands/index
    chapters/template
