@@ -4,7 +4,7 @@ Bastille is available in the official FreeBSD ports tree at
 ``sysutils/bastille``. Binary packages are available in quarterly and latest
 repositories.
 
-Current version is ``0.13.20250126``.
+Current version is ``0.14.20250420``.
 
 To install from the FreeBSD package repository:
 
@@ -18,7 +18,7 @@ pkg
 .. code-block:: shell
 
   pkg install bastille
-  sysrc bastille_enable=YES
+  bastille setup
 
 To install from source (don't worry, no compiling):
 
@@ -28,7 +28,7 @@ ports
 .. code-block:: shell
 
   make -C /usr/ports/sysutils/bastille install clean
-  sysrc bastille_enable=YES
+  bastille setup
 
 git
 ---
@@ -38,7 +38,7 @@ git
   git clone https://github.com/BastilleBSD/bastille.git
   cd bastille
   make install
-  sysrc bastille_enable=YES
+  bastille setup
 
 This method will install the latest files from GitHub directly onto your
 system. It is verbose about the files it installs (for later removal), and also

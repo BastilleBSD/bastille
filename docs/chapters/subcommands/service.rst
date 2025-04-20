@@ -2,8 +2,8 @@ service
 =======
 
 The ``service`` sub-command allows for managing services within jails. This
-allows you to start, stop, restart, and otherwise interact with services
-running inside the jail(s).
+allows you to start, stop, restart, and otherwise interact with services running
+inside the jail(s).
 
 .. code-block:: shell
 

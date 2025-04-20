@@ -1,7 +1,8 @@
 etcupdate
 =========
 
-This command will update the contents of ``/etc`` inside a jail. It should be run after a jail upgrade
+This command will update the contents of ``/etc`` inside a jail. It should be
+run after a jail upgrade
 
 First we need to bootstrap a release for ``etcupdate`` to use.
 
@@ -21,8 +22,9 @@ Next we can use the ``update`` command to apply the update to the jail.
 
   ishmael ~ # bastille etcupdate ishmael update 14.1-RELEASE
 
-The output will show you which files were added, updated, changed, deleted, or have conflicts.
-To automatically resolve the conflicts, run the ``resolve`` command.
+The output will show you which files were added, updated, changed, deleted, or
+have conflicts. To automatically resolve the conflicts, run the ``resolve``
+command.
             
 .. code-block:: shell
 

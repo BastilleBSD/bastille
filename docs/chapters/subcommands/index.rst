@@ -6,8 +6,8 @@ Bastille sub-commands
    :caption: Contents:
 
    bootstrap
-   clone
    cmd
+   clone
    config
    console
    convert

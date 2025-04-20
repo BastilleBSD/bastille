@@ -3,12 +3,12 @@ rdr
 
 ``bastille rdr`` allows you to configure dynamic rdr rules for your containers
 without modifying pf.conf (assuming you are using the ``bastille0`` interface
-for a private network and have enabled ``rdr-anchor 'rdr/*'`` in /etc/pf.conf
-as described in the Networking section).
+for a private network and have enabled ``rdr-anchor 'rdr/*'`` in /etc/pf.conf as
+described in the Networking section).
 
-Note: you need to be careful if host services are configured to run
-on all interfaces as this will include the jail interface - you should
-specify the interface they run on in rc.conf (or other config files)
+Note: you need to be careful if host services are configured to run on all
+interfaces as this will include the jail interface - you should specify the
+interface they run on in rc.conf (or other config files)
 
 .. code-block:: shell
     
