@@ -141,11 +141,6 @@ help|-h|--help)
 pf|firewall)
     configure_pf
     ;;
-bastille0)
-    # TODO remove in future release 0.13
-    warn "'bastille setup bastille0' will be deprecated in the next 0.13 version."
-    configure_network
-    ;;
 network|loopback)
     configure_network
     ;;
