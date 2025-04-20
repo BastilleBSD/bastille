@@ -5,18 +5,19 @@ Looking for ready made CI/CD validated `Bastille Templates`_?
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the containers automatically.
 
-Currently supported template hooks are: `ARG`, `CMD`, `CONFIG`, `CP`, `INCLUDE`,
-`LIMITS`, `MOUNT`, `OVERLAY`, `PKG`, `RDR`, `RENDER`, `RESTART`, `SERVICE`, `SYSRC`.
+Currently supported template hooks are: ``ARG``, ``CMD``, ``CONFIG``, ``CP``,
+``INCLUDE``, ``LIMITS``, ``MOUNT``, ``OVERLAY``, ``PKG``, ``RDR``, ``RENDER``,
+``RESTART``, ``SERVICE``, ``SYSRC``.
 
-Templates are created in `${bastille_prefix}/templates` and can leverage any of
-the template hooks.
+Templates are created in ``${bastille_prefix}/templates`` and can leverage any
+of the template hooks.
 
 Bastille 0.7.x+
 ---------------
 Bastille 0.7.x introduces a template syntax that is more flexible and allows
 any-order scripting. Previous versions had a hard template execution order and
 instructions were spread across multiple files. The new syntax is done in a
-`Bastillefile` and the template hook (see below) files are replaced with
+``Bastillefile`` and the template hook (see below) files are replaced with
 template hook commands.
 
 Template Automation Hooks
@@ -59,9 +60,10 @@ Template Hook Descriptions
 
 ARG         - set an ARG value to be used in the template
 
-ARGS will default to the value set inside the template, but can be changed by including `--arg ARG=VALUE` when
-running the template. Multiple ARGS can also be specified as seen below. If no ARG value is given, the template 
-will show a warning, but will still continue.
+ARGS will default to the value set inside the template, but can be changed by
+including ``--arg ARG=VALUE`` when running the template. Multiple ARGS can also
+be specified as seen below. If no ARG value is given, the ``template`` command
+will exit.
 
 .. code-block:: shell
 
@@ -72,9 +74,11 @@ CMD         - run the specified command
 
 CONFIG      - set the specified property and value
 
-CP/OVERLAY  - copy specified files from template directory to specified path inside jail
+CP/OVERLAY  - copy specified files from template directory to specified path
+              inside jail
 
-INCLUDE     - specify a template to include. Make sure the template is bootstrapped, or you are using the template url
+INCLUDE     - specify a template to include. Make sure the template is
+              bootstrapped, or you are using the template url
 
 LIMITS      - set the specified resource value for the jail
 
@@ -84,7 +88,9 @@ PKG         - install specified packages inside jail
 
 RDR         - redirect specified ports to the jail
 
-RENDER      - replace ARG values inside specified files inside the jail. If a directory is specified, ARGS will be replaced in all files underneath
+RENDER      - replace ARG values inside specified files inside the jail. If a
+              directory is specified, ARGS will be replaced in all files
+              underneath
 
 RESTART     - restart the jail
 
@@ -95,40 +101,40 @@ SYSRC       - run `sysrc` inside the jail with specified arguments
 Special Hook Cases
 ------------------
 
-SYSRC requires that NO quotes be used or that quotes (`"`) be escaped
-ie; (`\\"`)
+SYSRC requires that NO quotes be used or that quotes (``"``) be escaped ie;
+(``\\"``)
 
-ARG will always treat an ampersand "\&" literally, without the need to escape it.
-Escaping it will cause errors.
+ARG will always treat an ampersand "\``&``" literally, without the need to
+escape it. Escaping it will cause errors.
 
 Template Examples
 -----------------
 
-Place these uppercase template hook commands into a `Bastillefile` in any order
-and automate container setup as needed.
+Place these uppercase template hook commands into a ``Bastillefile`` in any
+order and automate container setup as needed.
 
-In addition to supporting template hooks, Bastille supports overlaying
-files into the container. This is done by placing the files in their full path,
-using the template directory as "/".
+In addition to supporting template hooks, Bastille supports overlaying files
+into the container. This is done by placing the files in their full path, using
+the template directory as "/".
 
-An example here may help. Think of `bastille/templates/username/template`, our
+An example here may help. Think of ``bastille/templates/username/template``, our
 example template, as the root of our filesystem overlay. If you create an
-`etc/hosts` or `etc/resolv.conf` *inside* the template directory, these
+``/etc/hosts`` or ``/etc/resolv.conf`` *inside* the template directory, these
 can be overlayed into your container.
 
 Note: due to the way FreeBSD segregates user-space, the majority of your
-overlayed template files will be in `usr/local`. The few general
-exceptions are the `etc/hosts`, `etc/resolv.conf`, and
-`etc/rc.conf.local`.
+overlayed template files will be in ``/usr/local``. The few general exceptions
+are the ``/etc/hosts``, ``/etc/resolv.conf``, and ``/etc/rc.conf.local``.
 
-After populating `usr/local` with custom config files that your container will
-use, be sure to include `usr` in the template OVERLAY definition. eg;
+After populating ``/usr/local`` with custom config files that your container
+will use, be sure to include ``/usr`` in the template OVERLAY definition. eg;
 
 .. code-block:: shell
 
-  echo "CP usr /" >> /usr/local/bastille/templates/username/template/Bastillefile
+  echo "CP /usr /" >> /usr/local/bastille/templates/username/template/Bastillefile
 
-The above example "usr" will include anything under "usr" inside the template.
+The above example ``/usr`` will include anything under ``/usr`` inside the
+template.
 You do not need to list individual files. Just include the top-level directory
 name. List these top-level directories one per line.
 
@@ -137,9 +143,9 @@ Applying Templates
 
 Containers must be running to apply templates.
 
-Bastille includes a `template` command. This command requires a target and a
+Bastille includes a ``template`` command. This command requires a target and a
 template name. As covered in the previous section, template names correspond to
-directory names in the `bastille/templates` directory.
+directory names in the ``bastille/templates`` directory.
 
 .. code-block:: shell
 
@@ -200,7 +206,13 @@ directory names in the `bastille/templates` directory.
 Using Ports in Templates
 ------------------------
 
-Sometimes when you make a template you need special options for a package, or you need a newer version than what is in the pkgs.  The solution for these cases, or a case like minecraft server that has NO compiled option, is to use the ports.  A working example of this is the minecraft server template in the template repo.  The main lines needed to use this is first to mount the ports directory, then compile the port.  Below is an example of the minecraft template where this was used.
+Sometimes when you make a template you need special options for a package, or
+you need a newer version than what is in the pkgs.  The solution for these
+cases, or a case like minecraft server that has NO compiled option, is to use
+the ports.  A working example of this is the minecraft server template in the
+template repo.  The main lines needed to use this is first to mount the ports
+directory, then compile the port.  Below is an example of the minecraft template
+where this was used.
 
 .. code-block:: shell
 
@@ -224,8 +236,5 @@ Sometimes when you make a template you need special options for a package, or yo
   SERVICE minecraft restart
   RDR tcp 25565 25565
 
-The MOUNT line mounts the ports directory, then the CMD make line makes the port.  This can be modified to use any port in the port tree.
-
-
-
-
+The MOUNT line mounts the ports directory, then the CMD make line makes the
+port.  This can be modified to use any port in the port tree.

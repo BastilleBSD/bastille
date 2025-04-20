@@ -15,7 +15,7 @@ Execute commands inside targeted jail(s).
 .. code-block:: shell
 
   ishmael ~ # bastille cmd help
-  Usage: bastille cmd [option(s)] TARGET command"
+  Usage: bastille cmd [option(s)] TARGET command
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.

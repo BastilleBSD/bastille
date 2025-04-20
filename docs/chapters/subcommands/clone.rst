@@ -1,8 +1,8 @@
 clone
 =====
 
-To clone a container and make a duplicate, use the `bastille clone`
-sub-command..
+To clone a container and make a duplicate, use the ``bastille clone``
+sub-command.
 
 .. code-block:: shell
 

@@ -1,9 +1,9 @@
 setup
 =====
 
-The `setup` sub-command attempts to automatically configure a host system for
-Bastille containers. This allows you to configure networking, firewall, and storage
-options for a Bastille host with one command.
+The ``setup`` sub-command attempts to automatically configure a host system for
+Bastille containers. This allows you to configure networking, firewall, and
+storage options for a Bastille host with one command.
 
 .. code-block:: shell
 

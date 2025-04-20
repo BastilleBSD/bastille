@@ -1,7 +1,7 @@
 tags
 ====
 
-The `tags` sub-command adds, removes or lists arbitrary tags on your jail(s).
+The ``tags`` sub-command adds, removes or lists arbitrary tags on your jail(s).
 
 .. code-block:: shell
 
@@ -14,9 +14,7 @@ The `tags` sub-command adds, removes or lists arbitrary tags on your jail(s).
 .. code-block:: shell
 
   ishmael ~ # bastille tags help
-
   Usage: bastille tags TARGET [add|delete|list] [tag1,tag2]
-    
     Options:
 
     -x | --debug          Enable debug mode.

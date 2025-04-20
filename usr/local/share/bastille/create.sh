@@ -47,7 +47,7 @@ usage() {
     -M | --static-mac                    Generate a static MAC address for jail (VNET only).
          --no-boot                       Create jail with boot=off.
          --no-validate                   Do not validate the release when creating the jail.
-    -p | --priority VALUE                Sets the priority value for jail startup and shutdown.
+    -p | --priority VALUE                Set priority value for jail.
     -T | --thick                         Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet                          Enables VNET, VNET containers are attached to a virtual bridge interface for connectivity.
     -v | --vlan VLANID                   Creates the jail with specified VLAN ID (VNET only).
@@ -92,10 +92,9 @@ validate_ip() {
                 done
                 if ifconfig | grep -qwF "${TEST_IP}"; then
                     warn "Warning: IP address already in use (${TEST_IP})."
-                else
-                    ipx_addr="ip4.addr"
-                    info "Valid: (${_ip})."
                 fi
+                ipx_addr="ip4.addr"
+                info "Valid: (${_ip})."
             else
                 error_continue "Invalid: (${_ip})."
             fi
@@ -808,6 +807,17 @@ fi
 ## validate jail name
 if [ -n "${NAME}" ]; then
     validate_name
+fi
+
+# Validate interface type
+if [ -n "${VNET_JAIL}" ] && [ -n "${VNET_JAIL_BRIDGE}" ]; then
+    if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+        error_exit "Interface is not a bridge: ${INTERFACE}"
+    fi
+elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
+    if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+        error_exit "Interface is a bridge: ${INTERFACE}"
+    fi
 fi
 
 if [ -n "${LINUX_JAIL}" ] && [ -n "${VALIDATE_RELEASE}" ]; then

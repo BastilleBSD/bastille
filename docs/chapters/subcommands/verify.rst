@@ -1,12 +1,12 @@
 verify
 ======
 
-This command scans a bootstrapped release or template and validates that everything looks
-in order. This is not a 100% comprehensive check, but it compares the release or template
-against a "known good" index.
+This command scans a bootstrapped release or template and validates that
+everything looks in order. This is not a 100% comprehensive check, but it
+compares the release or template against a "known good" index.
 
-If you see errors or issues here, consider deleting and re-bootstrapping
-the release or template .
+If you see errors or issues here, consider deleting and re-bootstrapping the
+release or template .
 
 .. code-block:: shell
 
@@ -35,9 +35,8 @@ the release or template .
 
 .. code-block:: shell
 
-  ishmael ~ # bastille verify 11.2-RELEASE
+  ishmael ~ # bastille verify help
   Usage: bastille verify [RELEASE|TEMPLATE]
-    
     Options:
 
     -x | --debug          Enable debug mode.
