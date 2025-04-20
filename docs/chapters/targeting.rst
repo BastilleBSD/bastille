@@ -66,3 +66,19 @@ Examples: Releases
 +-----------+--------------+--------------+-------------------------------------------------------------+
 | verify    | 12.4-RELEASE | ---          | verify 12.4-RELEASE release                                 |
 +-----------+--------------+--------------+-------------------------------------------------------------+
+
+Priority
+--------
+
+The priority value determines in what order commands are executed if multiple jails are targetted, including the ALL target.
+
+It also controls in what order jails are started and stopped on system startup and shutdown. This requires Bastille to be enabled
+with ``sysrc bastille_enable=YES``. Jails will start in order starting at the lowest value, and will stop in order starting
+at the highest value. So, jails with a priority value of 1 will start first, and stop last.
+
+When jails are created with Bastille, this value defaults to ``99``, but can be overridden with ``-p|--priority VALUE`` on
+creation. See ``bastille create --priority 90 TARGET...``.
+
+This value can be changed using ``bastille config TARGET priority VALUE``.
+
+This value will be shown using ``bastille list all``.
