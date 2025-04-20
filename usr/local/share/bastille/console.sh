@@ -83,46 +83,54 @@ TARGET="${1}"
 USER="${2}"
 
 bastille_root_check
-set_target_single "${TARGET}"
-check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-    bastille start "${TARGET}"
-else
-    error_notify "Jail is not running."
-    error_exit "Use [-a|--auto] to auto-start the jail."
-fi
+set_target "${TARGET}"
 
 validate_user() {
-    if jexec -l "${TARGET}" id "${USER}" >/dev/null 2>&1; then
-        USER_SHELL="$(jexec -l "${TARGET}" getent passwd "${USER}" | cut -d: -f7)"
+    local _jail="${1}"
+    local _user="${2}"
+    if jexec -l "${_jail}" id "${_user}" >/dev/null 2>&1; then
+        USER_SHELL="$(jexec -l "${_jail}" getent passwd "${_user}}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
-            if jexec -l "${TARGET}" grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l "${TARGET}" $LOGIN -f "${USER}"
+            if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                jexec -l "${_jail}" $LOGIN -f "${_user}}"
             else
-                echo "Invalid shell for user ${USER}"
+                echo "Invalid shell for user ${_user}}"
             fi
         else
-            echo "User ${USER} has no shell"
+            echo "User ${_user}} has no shell"
         fi
     else
-        echo "Unknown user ${USER}"
+        echo "Unknown user ${_user}}"
     fi
 }
 
 check_fib() {
-    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${TARGET}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+    local _jail="${1}"
+    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
         if [ -n "${fib}" ]; then
             _setfib="setfib -F ${fib}"
         else
             _setfib=""
         fi
 }
+for _jail in ${JAILS}; do
 
-info "[${TARGET}]:"
-LOGIN="$(jexec -l "${TARGET}" which login)"
-if [ -n "${USER}" ]; then
-    validate_user
-else
-    check_fib
-    LOGIN="$(jexec -l "${TARGET}" which login)"
-    ${_setfib} jexec -l "${TARGET}" $LOGIN -f root
-fi
+    info "[${_jail}]:"
+
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${_jail}"
+    else
+        error_notify "Jail is not running."
+        error_continue "Use [-a|--auto] to auto-start the jail."
+    fi
+    
+    LOGIN="$(jexec -l "${_jail}" which login)"
+    if [ -n "${USER}" ]; then
+        validate_user "${_jail}" "${USER}"
+    else
+        check_fib "${_jail}"
+        LOGIN="$(jexec -l "${_jail}" which login)"
+        ${_setfib} jexec -l "${_jail}" $LOGIN -f root
+    fi
+    
+done

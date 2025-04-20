@@ -1,8 +1,9 @@
 upgrade
 =======
 
-The `upgrade` command targets a thick or thin jail. Thin jails will be updated by changing the
-release mount point that it is based on. Thick jails will be upgraded normally.
+The ``upgrade`` command targets a thick or thin jail. Thin jails will be updated
+by changing the release mount point that it is based on. Thick jails will be
+upgraded normally.
 
 .. code-block:: shell
 

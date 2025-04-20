@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION="0.13.20250126"
+BASTILLE_VERSION="0.14.20250420"
 
 ## check for config existence
 bastille_conf_check() {
@@ -91,8 +91,8 @@ Available Commands:
   export      Exports a specified container.
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
-  jcp         cp(1) files from a jail to jail(s).
   import      Import a specified container.
+  jcp         cp(1) files from a jail to jail(s).
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
   mount       Mount a volume inside the targeted container(s).
@@ -128,16 +128,16 @@ bastille_conf_check
 bastille_perms_check
 
 if [ -z "${BASTILLE_CONFIG}" ]; then
-    BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
-    export BASTILLE_CONFIG
-elif [ -r "${BASTILLE_CONFIG}" ]; then
-    export BASTILLE_CONFIG
-elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-    BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-    export BASTILLE_CONFIG
-else
-    echo "Not a valid config file: ${BASTILLE_CONFIG}"
-    exit 1
+    if [ -z "${BASTILLE_CONFIG}" ]; then
+        BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
+        export BASTILLE_CONFIG
+    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+        export BASTILLE_CONFIG
+    else
+        echo "Not a valid config file: ${BASTILLE_CONFIG}"
+        exit 1
+    fi
 fi   
 
 # Load common.sh after setting BASTILLE_CONFIG
@@ -155,10 +155,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         -c|--config)
             BASTILLE_CONFIG="${2}"
-            if [ -r "${BASTILLE_CONFIG}" ]; then
-                info "Using custom config: ${BASTILLE_CONFIG}"
-                export BASTILLE_CONFIG
-            elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+            if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
                 BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
                 info "Using custom config: ${BASTILLE_CONFIG}"
                 export BASTILLE_CONFIG
@@ -204,8 +201,8 @@ case "${CMD}" in
     etcupdate| \
     export| \
     htop| \
-    jcp | \
     import| \
+    jcp| \
     limits| \
     list| \
     mount| \

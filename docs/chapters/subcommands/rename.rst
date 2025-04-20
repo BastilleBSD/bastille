@@ -1,7 +1,7 @@
 rename
 ======
 
-Rename a container.
+Rename a jail.
 
 .. code-block:: shell
 
@@ -9,7 +9,7 @@ Rename a container.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille rename azkaban arkham
+  ishmael ~ # bastille rename help
   Usage: bastille rename [option(s)] TARGET NEW_NAME
     Options:
 

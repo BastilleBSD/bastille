@@ -90,6 +90,7 @@ TARGET="${1}"
 NEWRELEASE="${2}"
 
 bastille_root_check
+set_target_single "${TARGET}"
 
 # Check for unsupported actions    
 if [ -f "/bin/midnightbsd-version" ]; then
@@ -102,37 +103,38 @@ if freebsd-version | grep -qi HBSD; then
 fi
 
 thick_jail_check() {
+    local _jail="${1}"
     # Check if the jail is thick and is running
-    set_target_single "${TARGET}"
-    check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${TARGET}"
+    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${_jail}"
     else   
         error_notify "Jail is not running."
-        error_continue "Use [-a|--auto] to auto-start the jail."
+        error_exit "Use [-a|--auto] to auto-start the jail."
     fi
 }
 
 thin_jail_check() {
+    local _jail="${1}"
     # Check if the jail is thick and is running
-    set_target_single "${TARGET}"
-    check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${TARGET}"
+    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${_jail}"
     else   
         error_notify "Jail is running."
-        error_continue "Use [-a|--auto] to auto-stop the jail."
+        error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
 }
 
 release_check() {
+    local _release="${1}"
     # Validate the release
-    if ! echo "${NEWRELEASE}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
-        error_exit "${NEWRELEASE} is not a valid release."
+    if ! echo "${_release}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
+        error_exit "${_release} is not a valid release."
     fi
     # Exit if NEWRELEASE doesn't exist
     if [ "${THIN_JAIL}" -eq 1 ]; then
-        if [ ! -d "${bastille_releasesdir}/${NEWRELEASE}" ]; then
-            error_notify "Release not found: ${NEWRELEASE}"
-            error_exit "See 'bastille bootstrap ${NEWRELEASE} to bootstrap the release."
+        if [ ! -d "${bastille_releasesdir}/${_release}" ]; then
+            error_notify "Release not found: ${_release}"
+            error_exit "See 'bastille bootstrap ${_release} to bootstrap the release."
         fi
     fi
 }
@@ -142,22 +144,26 @@ jail_upgrade() {
     if [ "${THIN_JAIL}" -eq 1 ]; then
         local _oldrelease="$(bastille config ${_jailname} get osrelease)"
     else
-        local _oldrelease="$(jexec -l ${TARGET} freebsd-version)"
+        local _oldrelease="$(jexec -l ${_jailname} freebsd-version)"
     fi
     local _newrelease="${2}"
-    local _jailpath="${bastille_jailsdir}/${TARGET}/root"
+    local _jailpath="${bastille_jailsdir}/${_jailname}/root"
     local _workdir="${_jailpath}/var/db/freebsd-update"
     local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
 
     # Upgrade a thin jail
-    if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-        local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${TARGET}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
+    if grep -qw "${bastille_jailsdir}/${_jailname}/root/.bastille" "${bastille_jailsdir}/${_jailname}/fstab"; then
+        local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${_jailname}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
         local _newrelease="${NEWRELEASE}"
-        # Update "osrelease" entry inside jail.conf
-        sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/fstab"
-        # Update "fstab" entry
-        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/jail.conf"
-        info "Upgraded ${TARGET}: ${_oldrelease} -> ${_newrelease}"
+        # Update "osrelease" entry inside fstab
+        sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/fstab"
+        # Update "osrelease" inside jail.conf
+        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/jail.conf"
+        # Start jail if AUTO=1
+        if [ "${AUTO}" -eq 1 ]; then
+            bastille start "${_jailname}"
+        fi
+        info "Upgraded ${_jailname}: ${_oldrelease} -> ${_newrelease}"
         info "See 'bastille etcupdate TARGET' to update /etc/rc.conf"
     else
         # Upgrade a thick jail
@@ -169,19 +175,19 @@ jail_upgrade() {
         -r "${_newrelease}" upgrade
         
         # Update "osrelease" entry inside jail.conf
-        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${TARGET}/jail.conf"
+        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/jail.conf"
         echo
-        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates.${COLOR_RESET}"
+        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${_jailname} install', restart the jail, then run 'bastille upgrade ${_jailname} install' again to finish installing updates.${COLOR_RESET}"
     fi
 }
 
 jail_updates_install() {
     local _jailname="${1}"
-    local _jailpath="${bastille_jailsdir}/${TARGET}/root"
+    local _jailpath="${bastille_jailsdir}/${_jailname}/root"
     local _workdir="${_jailpath}/var/db/freebsd-update"
     local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
     # Finish installing upgrade on a thick container
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then 
+    if [ -d "${bastille_jailsdir}/${_jailname}" ]; then 
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
         -j "${_jailname}" \
         -d "${_workdir}" \
@@ -201,17 +207,17 @@ fi
 # Check what we should upgrade
 if [ "${NEWRELEASE}" = "install" ]; then
     if [ "${THIN_JAIL}" -eq 1 ]; then
-        thin_jail_check
+        thin_jail_check "${TARGET}"
     else
-        thick_jail_check
+        thick_jail_check "${TARGET}"
     fi
     jail_updates_install "${TARGET}"
 else
+    release_check "${NEWRELEASE}"
     if [ "${THIN_JAIL}" -eq 1 ]; then
-        thin_jail_check
+        thin_jail_check "${TARGET}"
     else
-        thick_jail_check
+        thick_jail_check "${TARGET}"
     fi
-    release_check
     jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi

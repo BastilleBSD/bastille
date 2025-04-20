@@ -14,6 +14,7 @@ https://docs.bastillebsd.org.
    chapters/installation
    chapters/gettingstarted
    chapters/configuration
+   chapters/boot-and-priority
    chapters/upgrading
    chapters/networking
    chapters/usage
@@ -28,4 +29,4 @@ https://docs.bastillebsd.org.
 
    copyright
 
-Note: this documentation is included with the source code in `docs`.
+Note: this documentation is included with the source code in ``docs``.

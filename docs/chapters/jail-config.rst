@@ -8,7 +8,7 @@ In this section we'll look at the default config for a new container. The
 defaults are sane for most applications, but if you want to tweak the settings
 here they are.
 
-A `jail.conf` template is used each time a new container is created. This
+A ``jail.conf`` template is used each time a new container is created. This
 template looks like this:
 
 .. code-block:: shell
@@ -27,7 +27,7 @@ template looks like this:
     path = /usr/local/bastille/jails/{name}/root;
     securelevel = 2;
 
-    ip4.addr = x.x.x.x;
+    ip4.addr = interface|x.x.x.x;
     ip6 = disable;
   }
 
@@ -122,17 +122,6 @@ host.hostname
     host.domainname, host.hostuuid and host.hostid.
 
 
-interface
----------
-.. code-block:: shell
-
-  interface
-    A network interface to add the jail's IP addresses (ip4.addr and
-    ip6.addr) to.  An alias for each address will be added to the
-    interface before the jail is created, and will be removed from
-    the interface after the jail is removed.
-
-
 mount.devfs
 -----------
 .. code-block:: shell
@@ -165,7 +154,7 @@ path
 
 securelevel
 -----------
-By default, Bastille containers run at `securelevel = 2;`. See below for the
+By default, Bastille containers run at ``securelevel = 2;``. See below for the
 implications of kernel security levels and when they might be altered.
 
 Note: Bastille does not currently have any mechanism to automagically change

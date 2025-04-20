@@ -1,9 +1,9 @@
 update
 ======
 
-The `update` command targets a release or a thick jail. Because thin jails are
-based on a release, when the release is updated all the thin jails are automatically
-updated as well.
+The ``update`` command targets a release or a thick jail. Because thin jails are
+based on a release, when the release is updated all the thin jails are
+automatically updated as well.
 
 If no updates are available, a message will be shown:
 
@@ -38,5 +38,15 @@ The older the release or jail, however, the more updates will be available:
 
 To be safe, you may want to restart any jails that have been updated live.
 
-If the jail is a thin jail, an error will be shown. If it is a thick jail, it will be updated just like
-the release shown above.
+If the jail is a thin jail, an error will be shown. If it is a thick jail, it
+will be updated just like the release shown above.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille update help
+  Usage: bastille update [option(s)] TARGET
+    Options:
+
+    -a | --auto             Auto mode. Start/stop jail(s) if required.
+    -f | --force            Force update a release.
+    -x | --debug            Enable debug mode.
