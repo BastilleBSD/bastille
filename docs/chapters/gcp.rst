@@ -3,16 +3,17 @@ Bastille VNET on GCP
 
 Bastille VNET runs on GCP with a few small tweaks. In summary, they are:
 
-- change MTU setting in jib script
-- add an IP address to the bridge interface
-- configure host pf to NAT and allow bridge traffic
-- set defaultrouter and nameserver in the host
+- change MTU setting in jib script - add an IP address to the bridge interface -
+configure host pf to NAT and allow bridge traffic - set defaultrouter and
+nameserver in the host
 
 ## Change MTU in the jib script
 
-GCP uses ``vtnet`` with MTU 1460, which [jib fails on](https://github.com/BastilleBSD/bastille/issues/538).
+GCP uses ``vtnet`` with MTU 1460, which [jib fails
+on](https://github.com/BastilleBSD/bastille/issues/538).
 
-Apply the below patch to set the correct MTU. You may need to ``cp /usr/share/examples/jails/jib /usr/local/bin/`` first.
+Apply the below patch to set the correct MTU. You may need to ``cp
+/usr/share/examples/jails/jib /usr/local/bin/`` first.
 
 ``patch /usr/local/bin/jib jib.patch``
 
@@ -39,7 +40,8 @@ Apply the below patch to set the correct MTU. You may need to ``cp /usr/share/ex
 
 ## Configure bridge interface
 
-Configure the bridge interface in /etc/rc.conf so it is available in the firewall rules.
+Configure the bridge interface in /etc/rc.conf so it is available in the
+firewall rules.
 
 .. code-block:: shell
   sysrc cloned_interfaces="bridge0"
@@ -49,7 +51,8 @@ Configure the bridge interface in /etc/rc.conf so it is available in the firewal
 
 ## Configure host pf
 
-This basic /etc/pf.conf allow incoming packets on the bridge interface, and NATs them through the external interface:
+This basic /etc/pf.conf allow incoming packets on the bridge interface, and NATs
+them through the external interface:
 
 .. code-block:: text
   ext_if="vtnet0"
@@ -68,7 +71,8 @@ This basic /etc/pf.conf allow incoming packets on the bridge interface, and NATs
   pass in inet proto icmp icmp-type { echoreq }
   pass in on $bridge_if
 
-Restart the host and make sure everything comes up correctly. You should see the following ifconfig:
+Restart the host and make sure everything comes up correctly. You should see the
+following ifconfig:
 
 .. code-block:: text
   vtnet0bridge: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1460
@@ -83,11 +87,13 @@ Restart the host and make sure everything comes up correctly. You should see the
 
 ## Configure router and resolver for new jails
 
-Set the default network gateway for new jails as described in the Networking chapter, and configure a default resolver.
+Set the default network gateway for new jails as described in the Networking
+chapter, and configure a default resolver.
 
 .. code-block:: shell
   sysrc -f /usr/local/etc/bastille/bastille.conf bastille_network_gateway="192.168.1.1"
   echo "nameserver 8.8.8.8" > /usr/local/etc/bastille/resolv.conf
   sysrc -f /usr/local/etc/bastille/bastille.conf bastille_resolv_conf="/usr/local/etc/bastille/resolv.conf"
 
-You can now create a VNET jail with ``bastille create -V myjail 13.2-RELEASE 192.168.1.50/24 vtnet0``
+You can now create a VNET jail with ``bastille create -V myjail 13.2-RELEASE
+192.168.1.50/24 vtnet0``

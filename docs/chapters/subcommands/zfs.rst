@@ -1,7 +1,8 @@
 zfs
 ===
 
-Manage ZFS properties, ceate and destroy snapshots, and check ZFS usage for targeted jail(s).
+Manage ZFS properties, ceate and destroy snapshots, and check ZFS usage for
+targeted jail(s).
 
 .. code-block:: shell
 

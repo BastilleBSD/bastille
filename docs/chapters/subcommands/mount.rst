@@ -9,7 +9,8 @@ Syntax follows standard ``/etc/fstab`` format:
 
   Usage: bastille mount TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]
 
-The ``options`` string can include a comma-separated list of mount options, but must include one of (rw,ro,rq,sw,xx) according to fstab documentation.
+The ``options`` string can include a comma-separated list of mount options, but
+must include one of (rw,ro,rq,sw,xx) according to fstab documentation.
 
 Example: Mount a tmpfs filesystem with options.
 
@@ -31,11 +32,16 @@ Example: Mount a nullfs filesystem
   [azkaban]:
   Added: /media/bar /usr/local/bastille/jails/azkaban/root/media/bar nullfs ro 0 0
 
-Notice the JAIL_PATH format can be /media/foo or simply media/bar. The leading slash / is optional. The HOST_PATH howerver, must be the full path including the leading slash /.
+Notice the JAIL_PATH format can be /media/foo or simply media/bar. The leading
+slash / is optional. The HOST_PATH howerver, must be the full path including the
+leading slash /.
 
 It is also possible to mount individual files into a jail as seen below.
-Bastille will not mount if a file is already present at the specified mount point.
-If the jail file name does not match the host file name, bastille will treat the jail path as a directory, and mount the file underneath as seen in the second example below.
+Bastille will not mount if a file is already present at the specified mount
+point.
+If the jail file name does not match the host file name, bastille will treat the
+jail path as a directory, and mount the file underneath as seen in the second
+example below.
 
 .. code-block:: shell
 
@@ -46,8 +52,10 @@ If the jail file name does not match the host file name, bastille will treat the
   [azkaban]:
   Added: /etc/rc.conf usr/local/bastille/jails/azkaban/root/media/bar/rc.conf nullfs ro 0 0
 
-It is also possible (but not recommended) to have spaces in the directories that are mounted.
-It is necessary to escape each space with a backslash \ and enclose the mount point in quotes "" as seen below.
+It is also possible (but not recommended) to have spaces in the directories that
+are mounted.
+It is necessary to escape each space with a backslash \ and enclose the mount
+point in quotes "" as seen below.
 It is possible to do the same for the jail path, but again, not recommemded.
 
 .. code-block:: shell

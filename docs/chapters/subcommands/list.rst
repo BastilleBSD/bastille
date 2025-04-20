@@ -1,7 +1,8 @@
 list
 ====
 
-List jails, ports, releases, templates, logs, limits, exports and imports managed by bastille.
+List jails, ports, releases, templates, logs, limits, exports and imports
+managed by bastille.
 
 .. code-block:: shell
 
