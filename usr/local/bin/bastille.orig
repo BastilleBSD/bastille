@@ -1,0 +1,208 @@
+#!/bin/sh
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+## check for config existence
+bastille_conf_check() {
+    if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
+        echo "[INFO] Configuration file not found. Do you want to create it with default values? [y/N]"
+        read  answer
+            case "${answer}" in
+                [Nn][Oo]|[Nn]|"")
+                    echo "[INFO] No configuration file has been generated. Exiting."
+                    exit
+                ;;
+                [Yy][Ee][Ss]|[Yy])
+                    cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+                    echo "[INFO] Configuration file has been generated. Continuing with default values"
+                ;;
+                *)
+                  echo "[ERROR] Invalid option. Please answer with 'y' or 'N'."
+                  exit 1
+                ;;
+            esac
+    fi
+}
+
+bastille_conf_check
+
+## we only load this if conf_check passes
+. /usr/local/share/bastille/common.sh
+. /usr/local/etc/bastille/bastille.conf
+
+## bastille_prefix should be 0750
+## this restricts file system access to privileged users
+bastille_perms_check() {
+    if [ -d "${bastille_prefix}" ]; then
+        BASTILLE_PREFIX_PERMS=$(stat -f "%Op" "${bastille_prefix}")
+        if [ "${BASTILLE_PREFIX_PERMS}" != 40750 ]; then
+            error_notify "Insecure permissions on ${bastille_prefix}"
+            error_exit "Try: chmod 0750 ${bastille_prefix}"
+        fi
+    fi
+}
+
+bastille_perms_check
+
+## version
+BASTILLE_VERSION=c6297d7
+
+usage() {
+    cat << EOF
+Bastille is an open-source system for automating deployment and management of
+containerized applications on FreeBSD.
+
+Usage:
+  bastille command TARGET [args]
+
+Available Commands:
+  bootstrap   Bootstrap a FreeBSD release for container base.
+  clone       Clone an existing container.
+  cmd         Execute arbitrary command on targeted container(s).
+  config      Get or set a config value for the targeted container(s).
+  console     Console into a running container.
+  convert     Convert a Thin container into a Thick container.
+  cp          cp(1) files from host to jail(s).
+  create      Create a new thin container or a thick container if -T|--thick option specified.
+  destroy     Destroy a stopped container or a FreeBSD release.
+  edit        Edit container configuration files (advanced).
+  etcupdate   Update /etc directory to specified release.
+  export      Exports a specified container.
+  help        Help about any command.
+  htop        Interactive process viewer (requires htop).
+  jcp         cp(1) files from a jail to jail(s).
+  import      Import a specified container.
+  limits      Apply resources limits to targeted container(s). See rctl(8).
+  list        List containers (running).
+  mount       Mount a volume inside the targeted container(s).
+  pkg         Manipulate binary packages within targeted container(s). See pkg(8).
+  rcp         cp(1) files from a jail to host.
+  rdr         Redirect host port to container port.
+  rename      Rename a container.
+  restart     Restart a running container.
+  service     Manage services within targeted container(s).
+  setup       Attempt to auto-configure network, firewall and storage on new installs.
+  start       Start a stopped container.
+  stop        Stop a running container.
+  sysrc       Safely edit rc files within targeted container(s).
+  tags        Add or remove tags to targeted container(s).
+  template    Apply file templates to targeted container(s).
+  top         Display and update information about the top(1) cpu processes.
+  umount      Unmount a volume from within the targeted container(s).
+  update      Update container base -pX release.
+  upgrade     Upgrade container release to X.Y-RELEASE.
+  verify      Compare release against a "known good" index.
+  zfs         Manage (get|set) ZFS attributes on targeted container(s).
+
+Use "bastille -v|--version" for version information.
+Use "bastille command -h|--help" for more information about a command.
+
+EOF
+    exit 1
+}
+
+if [ "$#" -lt 1 ]; then
+    usage
+else
+    CMD="${1}"
+    shift
+fi
+
+# Handle special-case commands first.
+case "${CMD}" in
+    version|-v|--version)
+        info "${BASTILLE_VERSION}"
+        exit 0
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    bootstrap| \
+    clone| \
+    cmd| \
+    config| \
+    console| \
+    convert| \
+    cp| \
+    create| \
+    destroy| \
+    edit| \
+    etcupdate| \
+    export| \
+    htop| \
+    jcp | \
+    import| \
+    limits| \
+    list| \
+    mount| \
+    network| \
+    pkg| \
+    rcp| \
+    rdr| \
+    rename| \
+    restart| \
+    service| \
+    setup| \
+    start| \
+    stop| \
+    sysrc| \
+    tags| \
+    template| \
+    top| \
+    umount| \
+    update| \
+    upgrade| \
+    verify| \
+    zfs)
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+# shellcheck disable=SC2154
+SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
+if [ -f "${SCRIPTPATH}" ]; then
+    : "${UMASK:=022}"
+    umask "${UMASK}"
+
+    : "${SH:=sh}"
+
+    if [ -n "${PARAMS}" ]; then
+        exec "${SH}" "${SCRIPTPATH}" "${PARAMS}"
+    else
+        exec "${SH}" "${SCRIPTPATH}" "$@"
+    fi
+else
+    error_exit "${SCRIPTPATH} not found."
+fi

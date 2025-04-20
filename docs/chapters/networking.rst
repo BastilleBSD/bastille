@@ -221,7 +221,36 @@ Below is the definition of what these three parameters are used for and mean:
        net.link.bridge.pfil_bridge  Set	to 1 to	enable filtering on the	bridge
 				    interface, set to 0	to disable it.
 
-  
+Bridged Network (VNET bridged)
+------------------------------
+
+To use a bridged VNET setup the first thing you have to do is to create a bridge interface on your system.  This is done with the ifconfig command and will create a bridged interface named bridge0:
+
+.. code-block:: shell
+   ifconfig bridge create
+
+Then you need to add your system's network interface to the bridge and bring it up (substitute your interface for em0).
+
+.. code-block:: shell
+   ifconfig bridge0 addm em0 up
+
+Optionally you can rename the interface if you wish to make it obvious that it is for bastille:
+
+.. code-block:: shell
+   ifconfig bridge0 name bastille0bridge
+
+To create a bridged container you use the ``-B`` option, an IP or DHCP, and the bridge interface.
+
+.. code-block:: shell
+   bastille create -B folsom 14.2-RELEASE DHCP bastille0bridge
+
+All the epairs and networking other than the manually created bridge will be created for you automagically. Now if you want this to persist after a reboot then you need to add some lines to your ``/etc/rc.conf`` file.  Add the following lines, again, obviously change em0 to whatever your network interface on your system is.
+
+.. code-block:: shell
+   cloned_interfaces="bridge0"
+   ifconfig_bridge0_name="bastille0bridge"
+   ifconfig_bastille0bridge="addm vtnet0 up"
+
 Regarding Routes
 ----------------
 

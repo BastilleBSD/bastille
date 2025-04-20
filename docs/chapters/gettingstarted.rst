@@ -4,7 +4,7 @@ Getting Started
 This guide is meant to get you up and running with bastille, and will show you a number
 of different options to create and manage your jails.
 
-The first step is running ``bastille setup`` to try to configure bastille initially.
+The first step is running ``bastille setup`` to try to configure bastille initially, if you didn't during setup. Setup should only be run once.
 
 .. code-block:: shell
 

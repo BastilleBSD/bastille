@@ -4,14 +4,19 @@ ZFS Support
   :width: 400
   :alt: Alternative text
 
-Bastille 0.4 added initial support for ZFS. ``bastille bootstrap`` and ``bastille create`` will generate ZFS volumes based on settings found in the ``bastille.conf``. This section outlines how to enable and configure Bastille for ZFS.
+Bastille 0.4 added initial support for ZFS. ``bastille bootstrap`` and ``bastille create`` will generate ZFS volumes based on settings found in the ``bastille.conf``. This section outlines how to enable and configure Bastille for ZFS.  As of Bastille 0.13 you no longer need to do these steps manually.  The setup program when you run:
 
-Two values are required for Bastille to use ZFS. The default values in the ``bastille.conf`` are empty. Populate these two to enable ZFS.
+.. code-block:: shell
+   bastille setup
+
+will create the zfs settings for you IF you are running zfs.  This section is left in the documents for historical purposes, and so you can understand what the setup program is doing AND so if you need to tweak your settings for some reason.
+
+Two values are required for Bastille to use ZFS. The default values in the ``bastille.conf`` are NO and empty. Populate these two to enable ZFS.
 
 .. code-block:: shell
 
   ## ZFS options
-  bastille_zfs_enable=""                                  ## default: ""
+  bastille_zfs_enable=""                                  ## default: "NO"
   bastille_zfs_zpool=""                                   ## default: ""
   bastille_zfs_prefix="bastille"                          ## default: "${bastille_zfs_zpool}/bastille"
   bastille_zfs_options="-o compress=lz4 -o atime=off"     ## default: "-o compress=lz4 -o atime=off"
