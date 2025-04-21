@@ -421,18 +421,22 @@ bootstrap_template() {
         fi
     fi
 
-    # Extract template in project/template format
-    find "${_raw_template_dir}" -type f -name Bastillefile | while read -r _file; do
-        _project="$(dirname "$(dirname ${_file})")"
-        _template="$(basename ${_project})"
-        _complete_template="$(basename ${_project})"/"$(basename "$(dirname ${_file})")"
-        cp -fR "${_project}" "${bastille_templatesdir}/${_template}"
-        bastille verify "${_complete_template}"
-    done
+    if [ ! -f ${_raw_template_dir}/Bastillefile ]; then
+        # Extract template in project/template format
+        find "${_raw_template_dir}" -type f -name Bastillefile | while read -r _file; do
+            _project="$(dirname "$(dirname ${_file})")"
+            _template="$(basename ${_project})"
+            _complete_template="$(basename ${_project})"/"$(basename "$(dirname ${_file})")"
+            cp -fR "${_project}" "${bastille_templatesdir}/${_template}"
+            bastille verify "${_complete_template}"
+        done
+    else
+        bastille verify "${_raw_template_dir}"
+    fi
 
     # Remove the cloned repo
-    if [ -n "${_raw_template_dir}" ]; then
-        rm -r "${_raw_template_dir}"
+    if [ -n "${_user}" ]; then
+        rm -r "${bastille_templatesdir}/${_user}"
     fi
 }
 
