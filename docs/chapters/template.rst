@@ -111,6 +111,23 @@ SYSRC requires that NO quotes be used or that quotes (``"``) be escaped ie;
 ARG will always treat an ampersand "\``&``" literally, without the need to
 escape it. Escaping it will cause errors.
 
+Bootstrapping Templates
+-----------------------
+
+The templates for Bastille are all in github and mirror the directory 
+structure of the ports tree.  So, nginx is in the www directory in the
+templates just like it is in the FreeBSD ports tree.  To bootstrap the
+entire set of predefined templates run the following command:
+
+.. code-block:: shell
+
+   bastille bootstrap https://github.com/bastillebsd/templates
+
+This will install into the /usr/local/bastille/templates directory all the 
+templates.  Now you can use bastille template command to apply the templates.
+
+
+ 
 Template Examples
 -----------------
 
