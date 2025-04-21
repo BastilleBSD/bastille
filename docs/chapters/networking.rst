@@ -266,24 +266,28 @@ interface on your system.  This is done with the ifconfig command and will
 create a bridged interface named bridge0:
 
 .. code-block:: shell
+
    ifconfig bridge create
 
 Then you need to add your system's network interface to the bridge and bring it
 up (substitute your interface for em0).
 
 .. code-block:: shell
+
    ifconfig bridge0 addm em0 up
 
 Optionally you can rename the interface if you wish to make it obvious that it
 is for bastille:
 
 .. code-block:: shell
+
    ifconfig bridge0 name bastille0bridge
 
 To create a bridged container you use the ``-B`` option, an IP or DHCP, and the
 bridge interface.
 
 .. code-block:: shell
+
    bastille create -B folsom 14.2-RELEASE DHCP bastille0bridge
 
 All the epairs and networking other than the manually created bridge will be
@@ -293,6 +297,7 @@ following lines, again, obviously change em0 to whatever your network interface
 on your system is.
 
 .. code-block:: shell
+
    cloned_interfaces="bridge0"
    ifconfig_bridge0_name="bastille0bridge"
    ifconfig_bastille0bridge="addm vtnet0 up"
