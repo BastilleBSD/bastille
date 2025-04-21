@@ -431,7 +431,7 @@ bootstrap_template() {
             bastille verify "${_complete_template}"
         done
     else
-        bastille verify "${_raw_template_dir}"
+        bastille verify "${_user}/${_repo}"
     fi
 
     # Remove the cloned repo
