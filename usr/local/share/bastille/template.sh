@@ -114,6 +114,19 @@ render() {
     fi
 }
 
+line_in_file() {
+    _jailpath="${1}"
+    _filepath="$(echo ${2} | awk '{print $2}')"
+    _line="$(echo ${2} | awk '{print $1}')"
+    if [ -f "${_jailpath}/${_filepath}" ]; then
+        if ! grep -qxF "${_line}" "${_jailpath}/${_filepath}"; then
+            echo "${_line}" >> "${_jailpath}/${_filepath}"
+	fi
+    else
+        warn "Path not found for line_in_file: ${_filepath}"
+    fi
+}
+
 # Handle options.
 AUTO=0
 while [ "$#" -gt 0 ]; do
@@ -378,6 +391,10 @@ for _jail in ${JAILS}; do
                     _args="install -y ${_args}" ;;
                 render) # This is a path to one or more files needing arguments replaced by values. -- cwells
                     render "${bastille_jail_path}" "${_args}"
+                    continue
+                    ;;
+                lif|lineinfile|line_in_file)
+                    line_in_file "${bastille_jail_path}" "${_args}"
                     continue
                     ;;
             esac

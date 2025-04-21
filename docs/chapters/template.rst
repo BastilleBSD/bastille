@@ -23,37 +23,39 @@ template hook commands.
 Template Automation Hooks
 -------------------------
 
-+-------------+---------------------+-----------------------------------------+
-| HOOK        | format              | example                                 |
-+=============+=====================+=========================================+
-| ARG         | ARG=VALUE           | MINECRAFT_MEMX="1024M"                  |
-+-------------+---------------------+-----------------------------------------+
-| CMD         | /bin/sh command     | /usr/bin/chsh -s /usr/local/bin/zsh     |
-+-------------+---------------------+-----------------------------------------+
-| CONFIG      | set property value  | set allow.mlock 1                       |
-+-------------+---------------------+-----------------------------------------+
-| CP/OVERLAY  | path(s)             | etc root usr (one per line)             |
-+-------------+---------------------+-----------------------------------------+
-| INCLUDE     | template path/URL   | http?://TEMPLATE_URL or project/path    |
-+-------------+---------------------+-----------------------------------------+
-| LIMITS      | resource value      | memoryuse 1G                            |
-+-------------+---------------------+-----------------------------------------+
-| MOUNT       | fstab syntax        | /host/path container/path nullfs ro 0 0 |
-+-------------+---------------------+-----------------------------------------+
-| OVERLAY     | path(s)             | etc root usr (one per line)             |
-+-------------+---------------------+-----------------------------------------+
-| PKG         | port/pkg name(s)    | vim-console zsh git-lite tree htop      |
-+-------------+---------------------+-----------------------------------------+
-| RDR         | tcp port port       | tcp 2200 22 (hostport jailport)         |
-+-------------+---------------------+-----------------------------------------+
-| RENDER      | /path/file.txt      | /usr/local/etc/gitea/conf/app.ini       |
-+-------------+---------------------+-----------------------------------------+
-| RESTART     |                     | (restart jail)                          |
-+-------------+---------------------+-----------------------------------------+
-| SERVICE     | service command     | 'nginx start' OR 'postfix reload'       |
-+-------------+---------------------+-----------------------------------------+
-| SYSRC       | sysrc command(s)    | nginx_enable=YES                        |
-+-------------+---------------------+-----------------------------------------+
++---------------+---------------------+-----------------------------------------+
+| HOOK          | format              | example                                 |
++===============+=====================+=========================================+
+| ARG           | ARG=VALUE           | MINECRAFT_MEMX="1024M"                  |
++---------------+---------------------+-----------------------------------------+
+| CMD           | /bin/sh command     | /usr/bin/chsh -s /usr/local/bin/zsh     |
++---------------+---------------------+-----------------------------------------+
+| CONFIG        | set property value  | set allow.mlock 1                       |
++---------------+---------------------+-----------------------------------------+
+| CP/OVERLAY    | path(s)             | etc root usr (one per line)             |
++---------------+---------------------+-----------------------------------------+
+| INCLUDE       | template path/URL   | http?://TEMPLATE_URL or project/path    |
++---------------+---------------------+-----------------------------------------+
+| LIMITS        | resource value      | memoryuse 1G                            |
++---------------+---------------------+-----------------------------------------+
+| LINE_IN_FILE  | line file_path      | word /usr/local/word/word.conf          |
++---------------+---------------------+-----------------------------------------+
+| MOUNT         | fstab syntax        | /host/path container/path nullfs ro 0 0 |
++---------------+---------------------+-----------------------------------------+
+| OVERLAY       | path(s)             | etc root usr (one per line)             |
++---------------+---------------------+-----------------------------------------+
+| PKG           | port/pkg name(s)    | vim-console zsh git-lite tree htop      |
++---------------+---------------------+-----------------------------------------+
+| RDR           | tcp port port       | tcp 2200 22 (hostport jailport)         |
++---------------+---------------------+-----------------------------------------+
+| RENDER        | /path/file.txt      | /usr/local/etc/gitea/conf/app.ini       |
++---------------+---------------------+-----------------------------------------+
+| RESTART       |                     | (restart jail)                          |
++---------------+---------------------+-----------------------------------------+
+| SERVICE       | service command     | 'nginx start' OR 'postfix reload'       |
++---------------+---------------------+-----------------------------------------+
+| SYSRC         | sysrc command(s)    | nginx_enable=YES                        |
++---------------+---------------------+-----------------------------------------+
 
 Template Hook Descriptions
 --------------------------
@@ -70,33 +72,35 @@ will exit.
   ishmael ~ # bastille template azkaban sample/template --arg ARG=VALUE --arg ARG1=VALUE
 
 
-CMD         - run the specified command
+CMD           - run the specified command
 
-CONFIG      - set the specified property and value
+CONFIG        - set the specified property and value
 
-CP/OVERLAY  - copy specified files from template directory to specified path
-              inside jail
+CP/OVERLAY    - copy specified files from template directory to specified path
+                inside jail
 
-INCLUDE     - specify a template to include. Make sure the template is
-              bootstrapped, or you are using the template url
+INCLUDE       - specify a template to include. Make sure the template is
+                bootstrapped, or you are using the template url
 
-LIMITS      - set the specified resource value for the jail
+LIMITS        - set the specified resource value for the jail
 
-MOUNT       - mount specified files/directories inside the jail
+LINE_IN_FILE  - add specified word to specified file if not present
 
-PKG         - install specified packages inside jail
+MOUNT         - mount specified files/directories inside the jail
 
-RDR         - redirect specified ports to the jail
+PKG           - install specified packages inside jail
 
-RENDER      - replace ARG values inside specified files inside the jail. If a
-              directory is specified, ARGS will be replaced in all files
-              underneath
+RDR           - redirect specified ports to the jail
 
-RESTART     - restart the jail
+RENDER        - replace ARG values inside specified files inside the jail. If a
+                directory is specified, ARGS will be replaced in all files
+                underneath
 
-SERVICE     - run `service` command inside the jail with specified arguments
+RESTART       - restart the jail
 
-SYSRC       - run `sysrc` inside the jail with specified arguments
+SERVICE       - run `service` command inside the jail with specified arguments
+
+SYSRC         - run `sysrc` inside the jail with specified arguments
 
 Special Hook Cases
 ------------------
