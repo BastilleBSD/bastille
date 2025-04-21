@@ -80,7 +80,7 @@ bootstrap_directories() {
         chmod 0750 "${bastille_prefix}"
     # Make sure the dataset is mounted in the proper place
     elif [ -d "${bastille_prefix}" ]; then
-        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" 2&>1; then
+        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" 2>&1; then
             zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
         elif [ "$(zfs get -H -o value mountpoint ${bastille_zfs_zpool}/${bastille_zfs_prefix})" != "${bastille_prefix}" ]; then
             zfs set mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
