@@ -29,7 +29,7 @@ Jails will still shut down on system shutdown, regardless of this setting.
 The ``-b|--boot`` can also be used with the ``stop`` command. Any jails with ``boot=off`` will
 not be touched if ``stop`` is called with ``-b|--boot``. Same goes for the ``restart`` command.
 
-This value can be changed using ``bastille config TARGET boot [on|off]``.
+This value can be changed using ``bastille config TARGET set boot [on|off]``.
 
 This value will be shown using ``bastille list all``.
 

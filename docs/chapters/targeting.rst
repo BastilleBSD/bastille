@@ -80,6 +80,6 @@ at the highest value. So, jails with a priority value of 1 will start first, and
 When jails are created with Bastille, this value defaults to ``99``, but can be overridden with ``-p|--priority VALUE`` on
 creation. See ``bastille create --priority 90 TARGET...``.
 
-This value can be changed using ``bastille config TARGET priority VALUE``.
+This value can be changed using ``bastille config TARGET set priority VALUE``.
 
 This value will be shown using ``bastille list all``.
