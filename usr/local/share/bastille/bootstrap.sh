@@ -430,13 +430,15 @@ bootstrap_template() {
             cp -fR "${_project}" "${bastille_templatesdir}/${_template}"
             bastille verify "${_complete_template}"
         done
+        
+        # Remove the cloned repo
+        if [ -n "${_user}" ]; then
+            rm -r "${bastille_templatesdir}/${_user}"
+        fi
+        
     else
+        # Verify a single template
         bastille verify "${_user}/${_repo}"
-    fi
-
-    # Remove the cloned repo
-    if [ -n "${_user}" ]; then
-        rm -r "${bastille_templatesdir}/${_user}"
     fi
 }
 
