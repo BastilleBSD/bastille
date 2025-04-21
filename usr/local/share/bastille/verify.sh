@@ -143,7 +143,7 @@ verify_template() {
     if [ "${_hook_validate}" -lt 1 ]; then
         error_notify "No valid template hooks found."
         error_notify "Template discarded."
-        rm -rf "${bastille_template}"
+        rm -rf "${_template_path}"
         exit 1
     fi
 
