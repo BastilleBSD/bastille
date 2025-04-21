@@ -421,7 +421,14 @@ bootstrap_template() {
         fi
     fi
 
-    bastille verify "${_user}/${_repo}"
+    # Extract template in project/template format
+    find "${_template}" -type f -name Bastillefile | while read -r _file; do
+        _project="$(dirname "$(dirname ${_file})")"
+        _basename="$(basename ${_project})"
+        _complete_template="$(basename ${_project})/$(basename $(dirname ${_file}))"
+        cp -fR "${_project}" "${bastille_templatesdir}/${_basename}"
+        bastille verify "${_complete_template}"
+    done
 }
 
 # Handle options.
