@@ -255,16 +255,16 @@ while [ "$#" -gt 0 ]; do
         -a|--all|all)
             shift
             ;;
-	-h|--help|help)
-	    usage
-	    ;;
-	-j|--json)
+        -h|--help|help)
+            usage
+            ;;
+        -j|--json)
             OPT_JSON=1
-	    shift
+            shift
             ;;
         -x|--debug)
             enable_debug
-	    shift
+            shift
             ;;
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
