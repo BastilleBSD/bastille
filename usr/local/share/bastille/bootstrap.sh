@@ -405,30 +405,35 @@ bootstrap_template() {
     _url=${BASTILLE_TEMPLATE_URL}
     _user=${BASTILLE_TEMPLATE_USER}
     _repo=${BASTILLE_TEMPLATE_REPO%.*} # Remove the trailing ".git"
-    _template=${bastille_templatesdir}/${_user}/${_repo}
+    _raw_template_dir=${bastille_templatesdir}/${_user}/${_repo}
 
     ## support for non-git
     if ! which -s git; then
         error_notify "Git not found."
         error_exit "Not yet implemented."
     else
-        if [ ! -d "${_template}/.git" ]; then
-            git clone "${_url}" "${_template}" ||\
+        if [ ! -d "${_raw_template_dir}/.git" ]; then
+            git clone "${_url}" "${_raw_template_dir}" ||\
                 error_notify "Clone unsuccessful."
-        elif [ -d "${_template}/.git" ]; then
-            git -C "${_template}" pull ||\
+        elif [ -d "${_raw_template_dir}/.git" ]; then
+            git -C "${_raw_template_dir}" pull ||\
                 error_notify "Template update unsuccessful."
         fi
     fi
 
     # Extract template in project/template format
-    find "${_template}" -type f -name Bastillefile | while read -r _file; do
+    find "${_raw_template_dir}" -type f -name Bastillefile | while read -r _file; do
         _project="$(dirname "$(dirname ${_file})")"
-        _basename="$(basename ${_project})"
-        _complete_template=""$(basename ${_project})"/"$(basename "$(dirname ${_file})")""
-        cp -fR "${_project}" "${bastille_templatesdir}/${_basename}"
+        _template="$(basename ${_project})"
+        _complete_template="$(basename ${_project})"/"$(basename "$(dirname ${_file})")"
+        cp -fR "${_project}" "${bastille_templatesdir}/${_template}"
         bastille verify "${_complete_template}"
     done
+
+    # Remove the cloned repo
+    if [ -n "${_raw_template_dir}" ]; then
+        rm -r "${_raw_template_dir}"
+    fi
 }
 
 # Handle options.
