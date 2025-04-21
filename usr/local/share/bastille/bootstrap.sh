@@ -433,7 +433,7 @@ bootstrap_template() {
         
         # Remove the cloned repo
         if [ -n "${_user}" ]; then
-            rm -r "${bastille_templatesdir}/${_user}"
+            rm -r "${bastille_templatesdir:?}/${_user:?}"
         fi
         
     else
