@@ -112,19 +112,29 @@ escape it. Escaping it will cause errors.
 Bootstrapping Templates
 -----------------------
 
-The templates for Bastille are all in github and mirror the directory 
-structure of the ports tree.  So, nginx is in the www directory in the
-templates just like it is in the FreeBSD ports tree.  To bootstrap the
-entire set of predefined templates run the following command:
+The official templates for Bastille are all on Gthub, and mirror the directory 
+structure of the ports tree.  So, ``nginx`` is in the ``www`` directory in the
+templates, just like it is in the FreeBSD ports tree.  To bootstrap the
+entire set of official predefined templates run the following command:
 
 .. code-block:: shell
 
    bastille bootstrap https://github.com/bastillebsd/templates
 
-This will install into the /usr/local/bastille/templates directory all the 
-templates.  Now you can use bastille template command to apply the templates.
+This will install all official templates into the templates directory at
+``/usr/local/bastille/templates``. You can then use the ``bastille template``
+command to apply any of the templates.
 
+.. code-block:: shell
 
+   bastille template TARGET www/nginx
+
+Creating Templates
+------------------
+
+Templates can be created and placed inside the templates directory in the
+``project/template`` format. Alternatively you can run the ``bastille template``
+command from a relative path, making sure it is still in the above format.
  
 Template Examples
 -----------------
