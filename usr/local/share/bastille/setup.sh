@@ -42,18 +42,49 @@ if [ $# -gt 1 ]; then
 fi
 
 # Configure bastille loopback network interface
-configure_network() {
-    if ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
+configure_loopback_interface() {
+    if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_loopback)" ] || ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
         info "Configuring bastille0 loopback interface"
         sysrc cloned_interfaces+=lo1
         sysrc ifconfig_lo1_name="bastille0"
-
         info "Bringing up new interface: [bastille0]"
         service netif cloneup
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback="bastille0"
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared=""
         info "Loopback interface successfully configured: [bastille0]"
     else
         info "Loopback interface has already been configured: [bastille0]"
     fi
+}
+
+configure_shared_interface() {
+    _interface_list="$(ifconfig -l)"
+    _interface_count=0
+    if [ -z "${_interface_list}" ]; then
+        error_exit "Unable to detect interfaces, exiting."
+    fi
+    if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)" ]; then
+        info "Attempting to configure shared interface for bastille..."
+        info "Listing available interfaces..."
+        for _if in ${_interface_list}; do
+            echo "[${_interface_count}] ${_if}"
+            _if_num="${_if_num} [${_interface_count}]${_if}"
+            _interface_count=$(expr ${_interface_count} + 1)
+        done
+        read -p "Please select the interface you would like to use: " _interface_choice
+        if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
+            error_exit "Invalid input number, aborting!"
+        else
+            _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+        fi
+        # Adjust bastille.conf to reflect above choices
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback=""
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${_interface_select}"
+        info "Shared interface successfully configured: [${_interface_select}]"
+    else
+        info "Shared interface has already been configured: ["$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)"]"
+    fi
+
 }
 
 configure_bridge() {
@@ -190,7 +221,38 @@ case "$1" in
         configure_pf
         ;;
     -n|-l|network|loopback)
-        configure_network
+        warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
+        warn "interface to be configured any any given time. If you continue, the 'shared'"
+        warn "interface will be disabled, and the 'loopback' interface will be used as default."
+        read -p "Do you really want to continue setting up the loopback interface? [y|n]:" _answer
+        case "${_answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                configure_loopback_interface
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "Loopback interface setup cancelled."
+                ;;
+            *)
+                error_exit "Invalid selection. Please answer 'y' or 'n'"
+                ;;
+        esac
+        ;;
+    -s|shared|ethernet)
+        warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
+        warn "interface to be configured any any given time. If you continue, the 'loopback'"
+        warn "interface will be disabled, and the shared interface will be used as default."
+        read -p "Do you really want to continue setting up the shared interface? [y|n]:" _answer
+        case "${_answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                configure_shared_interface
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "Shared interface setup cancelled."
+                ;;
+            *)
+                error_exit "Invalid selection. Please answer 'y' or 'n'"
+                ;;
+        esac
         ;;
     -z|zfs|storage)
         configure_zfs
