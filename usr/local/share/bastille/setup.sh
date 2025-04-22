@@ -56,12 +56,13 @@ configure_network() {
 }
 
 configure_vnet() {
-    if ! sysrc -n cloned_interfaces | grep -oq "bridge1"; then
-        info "Configuring bridge interface"
-        sysrc cloned_interfaces+=bridge1
-        sysrc ifconfig_bridge1_name=bastille1
+    _bridge_name="bastille1"
+    if ! sysrc -n cloned_interfaces | grep -oq "${_bridge_name}"; then
+        info "Configuring bastille1 bridge interface..."
+        sysrc cloned_interfaces+="bridge1"
+        sysrc ifconfig_bridge1_name="${_bridge_name}"
 
-        info "Bringing up new interface: bastille1"
+        info "Bringing up new interface: ${_bridge_name}..."
         service netif cloneup
 
         if [ ! -f /etc/devfs.rules ]; then
@@ -143,21 +144,21 @@ if [ $# -eq 0 ]; then
     configure_zfs
 fi
 
-# Handle special-case commands first.
+# Handle options.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
-pf|firewall)
-    configure_pf
-    ;;
-network|loopback)
-    configure_network
-    ;;
-zfs|storage)
-    configure_zfs
-    ;;
-bastille1|vnet|bridge)
-    configure_vnet
-    ;;
+    -h|--help|help)
+        usage
+        ;;
+    -p|pf|firewall)
+        configure_pf
+        ;;
+    -n|-l|network|loopback)
+        configure_network
+        ;;
+    -z|zfs|storage)
+        configure_zfs
+        ;;
+    -v|vnet|bridge)
+        configure_vnet
+        ;;
 esac
