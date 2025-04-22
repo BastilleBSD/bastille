@@ -119,6 +119,7 @@ Available Commands:
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
 Use "bastille [-c|--config FILE] command" to specify a non-default config file.
+Use "bastille [-p|--parallel VALUE] command" to run bastille in parallel mode.
 
 EOF
     exit 1
@@ -144,6 +145,7 @@ fi
 . /usr/local/share/bastille/common.sh
 
 # Handle options
+PARALLEL_MODE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -161,24 +163,29 @@ while [ "$#" -gt 0 ]; do
                 export BASTILLE_CONFIG
             else
                 error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
-            fi                
+            fi
+            # Load common.sh after setting BASTILLE_CONFIG
+            . /usr/local/share/bastille/common.sh 
             shift 2
             ;;
+        -p|--parallel)
+            PARALLEL_MODE=1
+            PROCESS_LIMIT="${2}"
+            if ! echo "${PROCESS_LIMIT}" | grep -Eq "^[0-9]+$"; then
+                error_exit "Not a valid process limit: ${PROCESS_LIMIT}"
+            else
+                shift 2
+            fi
+            ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
-                    x) enable_debug ;;
-                    a) AUTO=1 ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
-                esac
-            done
-            shift
+            error_exit "Unknown Option: \"${1}\""
             ;;
         *)
             break
             ;;
     esac
 done
+
 if [ "$#" -lt 1 ]; then
     usage
 else
@@ -186,45 +193,71 @@ else
     shift
 fi
 
-# Handle special-case commands first.
+# Handle sub-commands.
 case "${CMD}" in
+    # Commands that don't allow parallel mode
     bootstrap| \
     clone| \
-    cmd| \
-    config| \
     console| \
     convert| \
-    cp| \
     create| \
-    destroy| \
     edit| \
-    etcupdate| \
     export| \
     htop| \
     import| \
     jcp| \
     limits| \
     list| \
-    mount| \
     network| \
-    pkg| \
     rcp| \
     rdr| \
     rename| \
+    setup| \
+    top| \
+    verify| \
+    zfs)
+        if [ "${PARALLEL_MODE}" -eq 1 ]; then
+            error_exit "Command does not support parallel mode: ${CMD}"
+        fi
+        ;;
+    # Commands that allow parallel mode
+    cmd| \
+    config| \
+    cp| \
+    destroy| \
+    etcupdate| \
+    limits| \
+    mount| \
+    pkg| \
     restart| \
     service| \
-    setup| \
     start| \
     stop| \
     sysrc| \
     tags| \
     template| \
-    top| \
     umount| \
     update| \
-    upgrade| \
-    verify| \
-    zfs)
+    upgrade)
+        # Extract JAILS from command for parallel mode
+        OPTIONS=""
+        while [ "$#" -gt 0 ] && [ "${PARALLEL_MODE}" -eq 1 ]; do
+            case "${1}" in
+                -*)
+                    OPTIONS="${OPTIONS} ${1}"
+                    shift 1
+                    ;;
+                *)
+                    if ! set_target "${1}" >/dev/null 2>&1; then
+                        OPTIONS="${OPTIONS} ${1}"
+                        shift 1
+                    else
+                        XARGS_JAILS="${JAILS}"
+                        shift 1
+                        break
+                    fi
+            esac
+        done
         ;;
     *)
         usage
@@ -238,12 +271,13 @@ if [ -f "${SCRIPTPATH}" ]; then
     umask "${UMASK}"
 
     : "${SH:=sh}"
-
-    if [ -n "${PARAMS}" ]; then
-        exec "${SH}" "${SCRIPTPATH}" "${PARAMS}"
+    
+    if [ "${PARALLEL_MODE}" -eq 1 ]; then
+        echo "${XARGS_JAILS}" | xargs -P "${PROCESS_LIMIT}" -I {} "${SH}" "${SCRIPTPATH}" ${OPTIONS} {} "$@"
     else
         exec "${SH}" "${SCRIPTPATH}" "$@"
     fi
+
 else
     error_exit "${SCRIPTPATH} not found."
 fi
