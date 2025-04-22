@@ -102,7 +102,7 @@ configure_vnet() {
         fi
     fi
     # Create default VNET ruleset
-    if [ ! -f /etc/devfs.rules ] || grep -oq "bastille_vnet=13" /etc/devfs.rules; then
+    if [ ! -f /etc/devfs.rules ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
         info "Creating bastille_vnet devfs.rules"
         cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
