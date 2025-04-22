@@ -43,25 +43,30 @@ fi
 
 # Configure bastille loopback network interface
 configure_network() {
-    info "Configuring ${bastille_network_loopback} loopback interface"
-    sysrc cloned_interfaces+=lo1
-    sysrc ifconfig_lo1_name="${bastille_network_loopback}"
+    if ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
+        info "Configuring ${bastille_network_loopback} loopback interface"
+        sysrc cloned_interfaces+=lo1
+        sysrc ifconfig_lo1_name="${bastille_network_loopback}"
 
-    info "Bringing up new interface: ${bastille_network_loopback}"
-    service netif cloneup
+        info "Bringing up new interface: ${bastille_network_loopback}"
+        service netif cloneup
+    else
+        info "Network has already been configured!"
+    fi
 }
 
 configure_vnet() {
-    info "Configuring bridge interface"
-    sysrc cloned_interfaces+=bridge1
-    sysrc ifconfig_bridge1_name=bastille1
+    if ! sysrc -n cloned_interfaces | grep -oq "bridge1"; then
+        info "Configuring bridge interface"
+        sysrc cloned_interfaces+=bridge1
+        sysrc ifconfig_bridge1_name=bastille1
 
-    info "Bringing up new interface: bastille1"
-    service netif cloneup
+        info "Bringing up new interface: bastille1"
+        service netif cloneup
 
-    if [ ! -f /etc/devfs.rules ]; then
-        info "Creating bastille_vnet devfs.rules"
-        cat << EOF > /etc/devfs.rules
+        if [ ! -f /etc/devfs.rules ]; then
+            info "Creating bastille_vnet devfs.rules"
+            cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
 add include \$devfsrules_hide_all
 add include \$devfsrules_unhide_basic
@@ -70,6 +75,9 @@ add include \$devfsrules_jail
 add include \$devfsrules_jail_vnet
 add path 'bpf*' unhide
 EOF
+        fi
+    else
+        info "VNET has already been configured!"
     fi
 }
 
@@ -104,7 +112,7 @@ EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
-    error_exit "${bastille_pf_conf} already exists. Exiting."
+    info "PF has already been configured!"
 fi
 }
 
@@ -112,6 +120,8 @@ fi
 configure_zfs() {
     if [ ! "$(kldstat -m zfs)" ]; then
         info "ZFS module not loaded; skipping..."
+    elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
+        info "ZFS has already been configured!"
     else
         ## attempt to determine bastille_zroot from `zpool list`
         bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
