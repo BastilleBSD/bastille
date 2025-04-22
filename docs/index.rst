@@ -19,6 +19,7 @@ https://docs.bastillebsd.org.
    chapters/networking
    chapters/usage
    chapters/upgrading
+   chapters/centralized-assets
    chapters/subcommands/index
    chapters/template
    chapters/jail-config
