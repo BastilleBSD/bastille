@@ -30,11 +30,11 @@ when not specifying an interface with the ``create`` command.
 Please note. You CANNOT run both a loopback and a shared interface with Bastille. Only one
 should be configured. If you configure one, it will disable the other.
 
-The loopback option is the default, and is enough for most use cases. It is simply an ``lo`` interface
+The ``-l|loopback`` option is the default, and is enough for most use cases. It is simply an ``lo`` interface
 that jails will get linked to on creation.
 
-The ``shared`` option is for cases where you do not want a raw interface to use with bastille as
-opposed to a loopback. Jails will then be created and linked to the shared interface.
+The ``-s|shared`` option is for cases where you want a raw interface to use with bastille as
+opposed to a loopback. Jails will be linked to the shared interface on creation.
 
 The ``-p|pf|firewall`` option will configure the pf firewall by enabling the service and creating the
 default ``pf.conf`` file. Once this is done, you can use the ``rdr`` command to forward traffic into
