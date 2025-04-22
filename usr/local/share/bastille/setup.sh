@@ -198,6 +198,7 @@ case "$1" in
         configure_vnet
         ;;
     -b|bridge)
+        configure_vnet
         configure_bridge
         ;;
 esac
