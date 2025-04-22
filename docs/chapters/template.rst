@@ -76,11 +76,10 @@ CMD           - run the specified command
 
 CONFIG        - set the specified property and value
 
-CP/OVERLAY    - copy specified files from template directory to specified path
-                inside jail
+CP/OVERLAY    - copy specified files from template directory to specified path inside jail
 
 INCLUDE       - specify a template to include. Make sure the template is
-                bootstrapped, or you are using the template url
+bootstrapped, or you are using the template url
 
 LIMITS        - set the specified resource value for the jail
 
@@ -93,8 +92,7 @@ PKG           - install specified packages inside jail
 RDR           - redirect specified ports to the jail
 
 RENDER        - replace ARG values inside specified files inside the jail. If a
-                directory is specified, ARGS will be replaced in all files
-                underneath
+directory is specified, ARGS will be replaced in all files underneath
 
 RESTART       - restart the jail
 

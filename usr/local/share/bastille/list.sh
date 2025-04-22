@@ -204,7 +204,7 @@ list_release(){
 }
 
 list_template(){
-    find "${bastille_templatesdir}" -type d -maxdepth 2
+    find "${bastille_templatesdir}" -type d -maxdepth 2 | sed 's#${bastille_templatesdir}/##g'
 }
 
 list_jail(){
