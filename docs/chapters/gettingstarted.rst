@@ -4,12 +4,27 @@ Getting Started
 This guide is meant to get you up and running with bastille, and will show you
 a number of different options to create and manage your jails.
 
-The first step is running ``bastille setup`` to try to configure bastille
-initially, if you didn't during setup. Setup should only be run once.
+Setup
+-----
+
+The first command a new user should run is the ``bastille setup`` command. This
+will attempt to configure the networking, storage, and firewall on your system
+for use with Bastille.
+
+By default the setup command will configure a loopback interface, storage (ZFS if
+enabled, otherwise UFS) and the pf firewall if you run it as below without any options.
+
+Alternatively, you can run the ``setup`` command with any of the supported options to 
+configure the selected option by itself.
+
+To see a list of available options and switches, see the ``setup`` subcommand.
 
 .. code-block:: shell
 
   ishmael ~ # bastille setup
+  
+Bootstrapping a Release
+-----------------------
 
 Then we need to bootstrap a release for bastille to use. We will use
 14.2-RELEASE.
@@ -17,6 +32,9 @@ Then we need to bootstrap a release for bastille to use. We will use
 .. code-block:: shell
 
   ishmael ~ # bastille bootstrap 14.2-RELEASE
+  
+Creating a Jail
+---------------
 
 Next we can create our first jail. Bastille can create a few different types of
 jails.
@@ -41,7 +59,7 @@ Only clone, thin, and thick jails can be created with ``-V`` ``-B`` and ``-M``.
 We will focus on thin jails for the guide.
 
 Classic/Standard Jail
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -62,7 +80,7 @@ necessary to redirect the traffic. It will pass in and out normally.
 This will forward traffic from port 80 on the host to port 80 inside the jail.
 
 VNET Jail
----------
+^^^^^^^^^
 
 VNET jails can use either a host interface with ``-V`` or a manually created
 bridge interface with ``-B``. You can also optionally set a static MAC for the
@@ -82,7 +100,7 @@ The IP used for VNET jails should be an IP reachable inside your local network.
 You can also specify 0.0.0.0 or DHCP to use DHCP.
 
 Linux Jail
-----------
+^^^^^^^^^^
 
 Linux jails are still considered experimental, but they seem to work. First we
 must bootstrap a linux distro.

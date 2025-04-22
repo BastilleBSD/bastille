@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille setup [pf|loopback|shared|zfs|vnet|bridge]"
+    error_exit "Usage: bastille setup [-p|pf|firewall] [-l|loopback] [-s|shared] [-z|zfs|storage] [-v|vnet] [-b|bridge]"
 }
 
 # Check for too many args
@@ -222,7 +222,7 @@ case "$1" in
     -p|pf|firewall)
         configure_pf
         ;;
-    -n|-l|network|loopback)
+    -l|loopback)
         warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
         warn "interface to be configured ant one time. If you continue, the 'shared'"
         warn "interface will be disabled, and the 'loopback' interface will be used as default."
@@ -240,7 +240,7 @@ case "$1" in
                 ;;
         esac
         ;;
-    -s|shared|ethernet)
+    -s|shared)
         warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
         warn "interface to be configured at one time. If you continue, the 'loopback'"
         warn "interface will be disabled, and the shared interface will be used as default."
