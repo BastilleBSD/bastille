@@ -71,6 +71,10 @@ to create a custom release based on your jail.
 Once this process completes, you will be able to run the following command to create a jail
 base off your newly created release.
 
+Please note that using this approach is experimental. It will be up to the end user to keep
+track of which official FreeBSD release their custom release is based on. The ``osrelease``
+config variable will be set to your custom release name inside the ``jail.conf`` file.
+
 .. code-block:: shell
 
   ishmael ~ # bastille create -T --no-validate myjail myrelease 10.0.0.2
