@@ -441,11 +441,10 @@ create_jail() {
                         info "Creating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
-						# shellcheck disable=SC2140
+                        # shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-                        
-						# shellcheck disable=SC2140
-						zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
+                        # shellcheck disable=SC2140
+                        zfs clone -p "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" \
                         "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         # Check and apply required settings.
@@ -465,20 +464,20 @@ create_jail() {
 
                         ## take a temp snapshot of the base release
                         SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
-						# shellcheck disable=SC2140
+                        # shellcheck disable=SC2140
                         zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
 
                         ## replicate the release base to the new thickjail and set the default mountpoint
-						# shellcheck disable=SC2140
+                        # shellcheck disable=SC2140
                         zfs send ${OPT_SEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
                         zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
                         zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
 
                         ## cleanup temp snapshots initially
-						# shellcheck disable=SC2140
+                        # shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}"
-						# shellcheck disable=SC2140
+                        # shellcheck disable=SC2140
                         zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"@"${SNAP_NAME}"
                     fi
 
@@ -1001,4 +1000,3 @@ if check_target_exists "${NAME}"; then
     error_exit "Error: Existing jail found: ${NAME}"
 fi
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"
-
