@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille setup [pf|network|zfs|vnet|bridge]"
+    error_exit "Usage: bastille setup [pf|loopback|shared|zfs|vnet|bridge]"
 }
 
 # Check for too many args
@@ -71,6 +71,7 @@ configure_shared_interface() {
             _if_num="${_if_num} [${_interface_count}]${_if}"
             _interface_count=$(expr ${_interface_count} + 1)
         done
+        # shellcheck disable=SC3045
         read -p "Please select the interface you would like to use: " _interface_choice
         if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
             error_exit "Invalid input number, aborting!"
@@ -82,7 +83,7 @@ configure_shared_interface() {
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${_interface_select}"
         info "Shared interface successfully configured: [${_interface_select}]"
     else
-        info "Shared interface has already been configured: ["$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)"]"
+        info "Shared interface has already been configured: [$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)]"
     fi
 
 }
@@ -106,6 +107,7 @@ configure_bridge() {
                 _interface_count=$(expr ${_interface_count} + 1)
             fi
         done
+        # shellcheck disable=SC3045
         read -p "Please select the interface to attach the bridge to: " _interface_choice
         if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
             error_exit "Invalid input number, aborting!"
@@ -224,6 +226,7 @@ case "$1" in
         warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
         warn "interface to be configured any any given time. If you continue, the 'shared'"
         warn "interface will be disabled, and the 'loopback' interface will be used as default."
+        # shellcheck disable=SC3045
         read -p "Do you really want to continue setting up the loopback interface? [y|n]:" _answer
         case "${_answer}" in
             [Yy]|[Yy][Ee][Ss])
@@ -241,6 +244,7 @@ case "$1" in
         warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
         warn "interface to be configured any any given time. If you continue, the 'loopback'"
         warn "interface will be disabled, and the shared interface will be used as default."
+        # shellcheck disable=SC3045
         read -p "Do you really want to continue setting up the shared interface? [y|n]:" _answer
         case "${_answer}" in
             [Yy]|[Yy][Ee][Ss])
