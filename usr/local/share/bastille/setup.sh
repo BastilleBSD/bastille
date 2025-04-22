@@ -55,19 +55,56 @@ configure_network() {
     fi
 }
 
+configure_bridge() {
+    _bridge_name="bastillebridge"
+    _interface_list="$(ifconfig -l)"
+    _interface_count=0
+    if [ -z "${_interface_list}" ]; then
+        error_exit "Unable to detect interfaces, exiting."
+    fi
+    if ! ifconfig -g bridge | grep -oqw "${_bridge_name}"; then
+        info "Configuring ${_bridge_name} bridge interface..."
+        info "Listing available interfaces..."
+        for _if in ${_interface_list}; do
+            if ifconfig -g bridge | grep -oqw "${_if}" || ifconfig -g lo | grep -oqw "${_if}"; then
+                continue
+            else
+                echo "[${_interface_count}] ${_if}"
+                _if_num="${_if_num} [${_interface_count}]${_if}"
+                _interface_count=$(expr ${_interface_count} + 1)
+            fi
+        done
+        read -p "Please select the interface to attach the bridge to: " _interface_choice
+        if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
+            error_exit "Invalid input number, aborting!"
+        else
+            _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+        fi
+        # Create bridge and persist on reboot
+        ifconfig bridge0 create
+        ifconfig bridge0 name bastillebridge
+        ifconfig bastillebridge addm ${_interface_select} up
+        sysrc cloned_interfaces+="bridge0"
+        sysrc ifconfig_bridge0_name="bastillebridge"
+        sysrc ifconfig_bastillebridge="addm ${_interface_select} up"
+
+        info "Bridge created: [${_bridge_name}]"
+    else
+        info "Bridge has alread been configured: [${_bridge_name}]"
+    fi
+}
+
 configure_vnet() {
-    _bridge_name="bastille1"
-    if ! sysrc -n cloned_interfaces | grep -oq "${_bridge_name}"; then
-        info "Configuring bastille1 bridge interface..."
-        sysrc cloned_interfaces+="bridge1"
-        sysrc ifconfig_bridge1_name="${_bridge_name}"
-
-        info "Bringing up new interface: ${_bridge_name}..."
-        service netif cloneup
-
-        if [ ! -f /etc/devfs.rules ]; then
-            info "Creating bastille_vnet devfs.rules"
-            cat << EOF > /etc/devfs.rules
+    # Ensure jib script is in place for VNET jails
+    if [ ! "$(command -v jib)" ]; then
+        if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+            install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+        fi
+    fi
+    # Create default VNET ruleset
+    if [ ! -f /etc/devfs.rules ] || grep -oq "bastille_vnet=13" /etc/devfs.rules; then
+        info "Creating bastille_vnet devfs.rules"
+        cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
 add include \$devfsrules_hide_all
 add include \$devfsrules_unhide_basic
@@ -76,7 +113,6 @@ add include \$devfsrules_jail
 add include \$devfsrules_jail_vnet
 add path 'bpf*' unhide
 EOF
-        fi
     else
         info "VNET has already been configured!"
     fi
@@ -158,7 +194,10 @@ case "$1" in
     -z|zfs|storage)
         configure_zfs
         ;;
-    -v|vnet|bridge)
+    -v|vnet)
         configure_vnet
+        ;;
+    -b|bridge)
+        configure_bridge
         ;;
 esac
