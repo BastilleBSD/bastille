@@ -341,7 +341,13 @@ create_jail() {
         else
             mkdir -p "${bastille_jailsdir}/${NAME}/root"
         fi
+    # Check if the jail directory has been mounted under UFS
+    elif [ ! -d "${bastille_jailsdir}/${NAME}/root" ] && ! checkyesno bastille_zfs_enable; then
+        if mount | grep "${bastille_jailsdir}/${NAME}" | grep -oq "ufs"; then
+            mkdir -p "${bastille_jailsdir}/${NAME}/root"
+        fi
     fi
+
 
     ## PoC for Linux jails @hackacad
     if [ -n "${LINUX_JAIL}" ]; then
