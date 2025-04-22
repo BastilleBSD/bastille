@@ -22,7 +22,7 @@ Below is a list of available options that can be used with the ``setup`` command
   ishmael ~ # bastille setup           ## configure -l -p and -z
 
 The ``-l|loopback`` option will configure a loopback interface called ``bastille0`` that
-will be used when not specifying an interface with the ``create`` command.
+will be used as a default when not specifying an interface with the ``create`` command.
 
 The ``-s|shared`` option will configure the interface you choose to also be used as the default
 when not specifying an interface with the ``create`` command.
@@ -31,9 +31,12 @@ Please note. You CANNOT run both a loopback and a shared interface with Bastille
 should be configured. If you configure one, it will disable the other.
 
 The ``-l|loopback`` option is the default, and is enough for most use cases. It is simply an ``lo`` interface
-that jails will get linked to on creation.
+that jails will get linked to on creation. It is not attached to any specific interface. This is the simplest
+networking option. The ``-l|loopback`` and ``-s|shared`` options are only for cases where the ``interface``
+is not specified during the ``create`` command. If an interface is specified, these options have no effect. 
+Instead, the specified interface will be used.
 
-The ``-s|shared`` option is for cases where you want a raw interface to use with bastille as
+The ``-s|shared`` option is for cases where you want an actual interface to use with bastille as
 opposed to a loopback. Jails will be linked to the shared interface on creation.
 
 The ``-p|pf|firewall`` option will configure the pf firewall by enabling the service and creating the
