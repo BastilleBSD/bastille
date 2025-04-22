@@ -95,12 +95,6 @@ destroy_jail() {
                 rm -rf "${bastille_jail_base}"
             fi
 
-            # Remove target from bastille_list if exist
-            # Mute sysrc output here as it may be undesirable on large startup list
-            if [ -n "$(sysrc -qn bastille_list | tr -s " " "\n" | awk "/^${_jail}$/")" ]; then
-                sysrc bastille_list-="${_jail}" > /dev/null
-            fi
-
             ## archive jail log
             if [ -f "${bastille_jail_log}" ]; then
                 mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
