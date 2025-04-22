@@ -224,7 +224,7 @@ case "$1" in
         ;;
     -n|-l|network|loopback)
         warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
-        warn "interface to be configured any any given time. If you continue, the 'shared'"
+        warn "interface to be configured ant one time. If you continue, the 'shared'"
         warn "interface will be disabled, and the 'loopback' interface will be used as default."
         # shellcheck disable=SC3045
         read -p "Do you really want to continue setting up the loopback interface? [y|n]:" _answer
@@ -242,7 +242,7 @@ case "$1" in
         ;;
     -s|shared|ethernet)
         warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
-        warn "interface to be configured any any given time. If you continue, the 'loopback'"
+        warn "interface to be configured at one time. If you continue, the 'loopback'"
         warn "interface will be disabled, and the shared interface will be used as default."
         # shellcheck disable=SC3045
         read -p "Do you really want to continue setting up the shared interface? [y|n]:" _answer
