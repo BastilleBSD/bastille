@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille setup [pf|network|zfs|vnet]"
+    error_exit "Usage: bastille setup [pf|network|zfs|vnet|bridge]"
 }
 
 # Check for too many args
@@ -44,14 +44,15 @@ fi
 # Configure bastille loopback network interface
 configure_network() {
     if ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
-        info "Configuring ${bastille_network_loopback} loopback interface"
+        info "Configuring bastille0 loopback interface"
         sysrc cloned_interfaces+=lo1
-        sysrc ifconfig_lo1_name="${bastille_network_loopback}"
+        sysrc ifconfig_lo1_name="bastille0"
 
-        info "Bringing up new interface: ${bastille_network_loopback}"
+        info "Bringing up new interface: [bastille0]"
         service netif cloneup
+        info "Loopback interface successfully configured: [bastille0]"
     else
-        info "Network has already been configured!"
+        info "Loopback interface has already been configured: [bastille0]"
     fi
 }
 
@@ -88,7 +89,7 @@ configure_bridge() {
         sysrc ifconfig_bridge0_name="bastillebridge"
         sysrc ifconfig_bastillebridge="addm ${_interface_select} up"
 
-        info "Bridge created: [${_bridge_name}]"
+        info "Bridge interface successfully configured: [${_bridge_name}]"
     else
         info "Bridge has alread been configured: [${_bridge_name}]"
     fi
