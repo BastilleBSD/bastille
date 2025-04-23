@@ -55,13 +55,13 @@ Usage:
   bastille [options(s)] command [option(s)] TARGET [args]
 
 Available Commands:
-  bootstrap   Bootstrap a FreeBSD release for container base.
-  clone       Clone an existing container.
-  cmd         Execute arbitrary command on targeted container(s).
-  config      Get, set or remove a config value for the targeted container(s).
-  console     Console into a running container.
+  bootstrap   Bootstrap a release for jail base.
+  clone       Clone an existing jail.
+  cmd         Execute arbitrary command on targeted jail(s).
+  config      Get, set or remove a config value for the targeted jail(s).
+  console     Console into a running jail.
   convert     Convert thin jail to thick jail, or convert a jail to a custom release.
-  cp          cp(1) files from host or container to host or targeted container(s).
+  cp          cp(1) files from host or jail to host or targeted jail(s).
   create      Create a jail.
   destroy     Destroy a jail or release.
   edit        Edit jail configuration files (advanced).
@@ -95,7 +95,7 @@ Available Commands:
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
-Use "bastille [-c|--config FILE] command" to specify a non-default config file.
+Use "bastille [-c|--config config.conf] command" to specify a non-default config file.
 
 ```
 
@@ -112,7 +112,7 @@ automatically. This feature is new since version 0.10.20231013.
 
 ```shell
 ishmael ~ # bastille setup -h
-ishmael ~ # Usage: bastille setup [pf|network|zfs|vnet]
+Usage: bastille setup [-p|pf|firewall] [-l|loopback] [-s|shared] [-z|zfs|storage] [-v|vnet] [-b|bridge]
 ```
 
 On fresh installations it is likely safe to run `bastille setup` with no
