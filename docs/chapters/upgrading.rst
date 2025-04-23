@@ -33,19 +33,12 @@ Thick Jails
 Thin Jails
 ----------
 
-1. Ensure the new release version is bootstrapped and updated to the latest
-   patch release: ``bastille bootstrap 13.2-RELEASE``
-2. Update the release: ``bastille update 13.2-RELEASE``
+1. Ensure the new release version is bootstrapped: ``bastille bootstrap 13.2-RELEASE``
+2. Update the release (optional): ``bastille update 13.2-RELEASE``
 3. Stop the jail(s) that need to be updated.
-4. Use ``bastille upgrade TARGET 13.2-RELEASE`` to automatically change the
-   mount points to 13.2-RELEASE
-5. Use ``bastille etcupdate bootstrap 13.2-RELEASE`` to bootstrap src for
-   13.2-RELEASE
-6. Use ``bastille etcupdate TARGET update 13.2-RELEASE`` to update the contents
-   of /etc for 13.2-RELEASE
-7. Use ``bastille etcupdate TARGET resolve`` to resolve any conflicts
-8. Start the jail(s)
-9. Upgrade complete!
+4. Use ``bastille upgrade TARGET 13.2-RELEASE`` to automatically change the mount points to 13.2-RELEASE
+5. Start the jail(s)
+6. Upgrade complete!
 
 ----------------------
 Major Release Upgrades
