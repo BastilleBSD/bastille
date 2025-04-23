@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille setup [pf|network|zfs|vnet]"
+    error_exit "Usage: bastille setup [-p|pf|firewall] [-l|loopback] [-s|shared] [-z|zfs|storage] [-v|vnet] [-b|bridge]"
 }
 
 # Check for too many args
@@ -42,24 +42,103 @@ if [ $# -gt 1 ]; then
 fi
 
 # Configure bastille loopback network interface
-configure_network() {
-    info "Configuring ${bastille_network_loopback} loopback interface"
-    sysrc cloned_interfaces+=lo1
-    sysrc ifconfig_lo1_name="${bastille_network_loopback}"
+configure_loopback_interface() {
+    if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_loopback)" ] || ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
+        info "Configuring bastille0 loopback interface"
+        sysrc cloned_interfaces+=lo1
+        sysrc ifconfig_lo1_name="bastille0"
+        info "Bringing up new interface: [bastille0]"
+        service netif cloneup
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback="bastille0"
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared=""
+        info "Loopback interface successfully configured: [bastille0]"
+    else
+        info "Loopback interface has already been configured: [bastille0]"
+    fi
+}
 
-    info "Bringing up new interface: ${bastille_network_loopback}"
-    service netif cloneup
+configure_shared_interface() {
+    _interface_list="$(ifconfig -l)"
+    _interface_count=0
+    if [ -z "${_interface_list}" ]; then
+        error_exit "Unable to detect interfaces, exiting."
+    fi
+    if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)" ]; then
+        info "Attempting to configure shared interface for bastille..."
+        info "Listing available interfaces..."
+        for _if in ${_interface_list}; do
+            echo "[${_interface_count}] ${_if}"
+            _if_num="${_if_num} [${_interface_count}]${_if}"
+            _interface_count=$(expr ${_interface_count} + 1)
+        done
+        # shellcheck disable=SC3045
+        read -p "Please select the interface you would like to use: " _interface_choice
+        if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
+            error_exit "Invalid input number, aborting!"
+        else
+            _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+        fi
+        # Adjust bastille.conf to reflect above choices
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback=""
+        sysrc cloned_interfaces-="lo1"
+        ifconfig bastille0 destroy 2>/dev/null
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${_interface_select}"
+        info "Shared interface successfully configured: [${_interface_select}]"
+    else
+        info "Shared interface has already been configured: [$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)]"
+    fi
+
+}
+
+configure_bridge() {
+    _bridge_name="bastillebridge"
+    _interface_list="$(ifconfig -l)"
+    _interface_count=0
+    if [ -z "${_interface_list}" ]; then
+        error_exit "Unable to detect interfaces, exiting."
+    fi
+    if ! ifconfig -g bridge | grep -oqw "${_bridge_name}"; then
+        info "Configuring ${_bridge_name} bridge interface..."
+        info "Listing available interfaces..."
+        for _if in ${_interface_list}; do
+            if ifconfig -g bridge | grep -oqw "${_if}" || ifconfig -g lo | grep -oqw "${_if}"; then
+                continue
+            else
+                echo "[${_interface_count}] ${_if}"
+                _if_num="${_if_num} [${_interface_count}]${_if}"
+                _interface_count=$(expr ${_interface_count} + 1)
+            fi
+        done
+        # shellcheck disable=SC3045
+        read -p "Please select the interface to attach the bridge to: " _interface_choice
+        if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
+            error_exit "Invalid input number, aborting!"
+        else
+            _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+        fi
+        # Create bridge and persist on reboot
+        ifconfig bridge0 create
+        ifconfig bridge0 name bastillebridge
+        ifconfig bastillebridge addm ${_interface_select} up
+        sysrc cloned_interfaces+="bridge0"
+        sysrc ifconfig_bridge0_name="bastillebridge"
+        sysrc ifconfig_bastillebridge="addm ${_interface_select} up"
+
+        info "Bridge interface successfully configured: [${_bridge_name}]"
+    else
+        info "Bridge has alread been configured: [${_bridge_name}]"
+    fi
 }
 
 configure_vnet() {
-    info "Configuring bridge interface"
-    sysrc cloned_interfaces+=bridge1
-    sysrc ifconfig_bridge1_name=bastille1
-
-    info "Bringing up new interface: bastille1"
-    service netif cloneup
-
-    if [ ! -f /etc/devfs.rules ]; then
+    # Ensure jib script is in place for VNET jails
+    if [ ! "$(command -v jib)" ]; then
+        if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+            install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+        fi
+    fi
+    # Create default VNET ruleset
+    if [ ! -f /etc/devfs.rules ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
         info "Creating bastille_vnet devfs.rules"
         cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
@@ -70,6 +149,8 @@ add include \$devfsrules_jail
 add include \$devfsrules_jail_vnet
 add path 'bpf*' unhide
 EOF
+    else
+        info "VNET has already been configured!"
     fi
 }
 
@@ -104,7 +185,7 @@ EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
-    error_exit "${bastille_pf_conf} already exists. Exiting."
+    info "Firewall (pf) has already been configured!"
 fi
 }
 
@@ -112,6 +193,8 @@ fi
 configure_zfs() {
     if [ ! "$(kldstat -m zfs)" ]; then
         info "ZFS module not loaded; skipping..."
+    elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
+        info "ZFS has already been configured!"
     else
         ## attempt to determine bastille_zroot from `zpool list`
         bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
@@ -128,26 +211,63 @@ configure_zfs() {
 # Run all base functions (w/o vnet) if no args
 if [ $# -eq 0 ]; then
     sysrc bastille_enable=YES
-    configure_network
+    configure_loopback_interface
     configure_pf
     configure_zfs
 fi
 
-# Handle special-case commands first.
+# Handle options.
 case "$1" in
-help|-h|--help)
-    usage
-    ;;
-pf|firewall)
-    configure_pf
-    ;;
-network|loopback)
-    configure_network
-    ;;
-zfs|storage)
-    configure_zfs
-    ;;
-bastille1|vnet|bridge)
-    configure_vnet
-    ;;
+    -h|--help|help)
+        usage
+        ;;
+    -p|pf|firewall)
+        configure_pf
+        ;;
+    -l|loopback)
+        warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
+        warn "interface to be configured ant one time. If you continue, the 'shared'"
+        warn "interface will be disabled, and the 'loopback' interface will be used as default."
+        # shellcheck disable=SC3045
+        read -p "Do you really want to continue setting up the loopback interface? [y|n]:" _answer
+        case "${_answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                configure_loopback_interface
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "Loopback interface setup cancelled."
+                ;;
+            *)
+                error_exit "Invalid selection. Please answer 'y' or 'n'"
+                ;;
+        esac
+        ;;
+    -s|shared)
+        warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
+        warn "interface to be configured at one time. If you continue, the 'loopback'"
+        warn "interface will be disabled, and the shared interface will be used as default."
+        # shellcheck disable=SC3045
+        read -p "Do you really want to continue setting up the shared interface? [y|n]:" _answer
+        case "${_answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                configure_shared_interface
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "Shared interface setup cancelled."
+                ;;
+            *)
+                error_exit "Invalid selection. Please answer 'y' or 'n'"
+                ;;
+        esac
+        ;;
+    -z|zfs|storage)
+        configure_zfs
+        ;;
+    -v|vnet)
+        configure_vnet
+        ;;
+    -b|bridge)
+        configure_vnet
+        configure_bridge
+        ;;
 esac
