@@ -211,7 +211,7 @@ configure_zfs() {
 # Run all base functions (w/o vnet) if no args
 if [ $# -eq 0 ]; then
     sysrc bastille_enable=YES
-    configure_network
+    configure_loopback_interface
     configure_pf
     configure_zfs
 fi
