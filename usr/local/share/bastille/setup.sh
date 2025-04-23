@@ -185,7 +185,7 @@ EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
-    info "PF has already been configured!"
+    info "Firewall (pf) has already been configured!"
 fi
 }
 
