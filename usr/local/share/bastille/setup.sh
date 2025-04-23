@@ -80,6 +80,8 @@ configure_shared_interface() {
         fi
         # Adjust bastille.conf to reflect above choices
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback=""
+        sysrc cloned_interfaces-="lo1"
+        ifconfig bastille0 destroy 2>/dev/null
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${_interface_select}"
         info "Shared interface successfully configured: [${_interface_select}]"
     else
