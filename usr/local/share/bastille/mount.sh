@@ -115,6 +115,8 @@ if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
    { [ "${_hostpath}" = "proc" ] && [ "${_type}" = "procfs" ]; } || \
    { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } then
     warn "Detected advanced mount type ${_hostpath}"
+elif [ ! -e "${_hostpath}" ] && [ "${_type}" = "nullfs" ]; then
+    mkdir -p "${_hostpath}"
 elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     error_notify "Invalid host path or incorrect mount type in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
