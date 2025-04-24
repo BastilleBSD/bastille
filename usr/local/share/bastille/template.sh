@@ -335,6 +335,9 @@ for _jail in ${JAILS}; do
             _arg_name=$(get_arg_name "${_line}")
             _arg_value=$(get_arg_value "${_line}" "$@")
             if [ -z "${_arg_value}" ]; then
+	        # Just warn, not exit
+	        # This is becasue some ARG values do not need to be set
+	        # Example: Choosing DHCP for VNET jails does not set GATEWAY
                 warn "[WARNING]: No value provided for arg: ${_arg_name}"
             fi
             ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
@@ -420,6 +423,9 @@ for _jail in ${JAILS}; do
             # Override default command/args for some hooks. -- cwells
             case ${_hook} in
                 CONFIG)
+	            # Just warn, not exit
+	            # This is becasue some ARG values do not need to be set
+	            # Example: Choosing DHCP for VNET jails does not set GATEWAY
                     warn "CONFIG deprecated; rename to OVERLAY."
                     _args_template='${bastille_template}/${_line} /'
                     _cmd='cp' ;;
