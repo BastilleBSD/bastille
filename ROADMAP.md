@@ -1,3 +1,49 @@
+2025 Bastille Roadmap
+=====================
+
+1. Bastille CI/CD
+2. Container Monitoring
+3. Bastille API
+4. Nomad Driver for clustering
+
+Bastille CI/CD (March-May) ~ 1.0.x-beta
+---------------------------------------
+While we have many of the templates validated by automatic CI/CD, we are not
+validating updates to Bastille itself. This automated validation of Pull
+Requests should be a priority early in the year with a full test suite designed
+to validate all expected uses of Bastille sub-commands.
+
+Container Monitoring ~ 0.15.x-beta
+--------------------------------------------
+The ability to monitor processes, services, mounts, sockets, etc from the host.
+Auto-remediation would be simple enough to define. Notifications would probably
+require a plugin system for methods/endpoints.
+
+Possible monitoring modules: ps, sockstat, pf, fstab
+
+Possible notification modules: pagerduty, slack, splunk, ELK, etc.
+
+Bastille API ~ 1.0.x-beta
+-----------------------------------
+I have thoughts about a lightweight API for Bastille that would accept (json?)
+payloads of Bastille commands. The API should be lightweight just as Bastille
+is.
+
+The API is scheduled later in the roadmap because I want to have the other
+components stable before we implement an API on top of it. The addition of the
+API should match up with Bastille 1.0-stable.
+
+Bastille Nomad Driver ~ 1.0.x-beta
+--------------------------------------
+
+Nomad would require a driver (probably written in Go) to funcion with bastille.
+Nomad has a driver written for POT in Go so we could fashion our driver after 
+the one they did.  There is an open document on how to write drivers for Nomad.
+Nomad interoperability would give us clustering abilities much like a 
+kubernetes cluster.
+
+
+
 2020 Bastille Roadmap
 =====================
 
@@ -9,7 +55,7 @@
 
 Rough timeline and description below.
 
-Virtual Networking (Jan-Feb) ~ 0.6.x-beta
+Virtual Networking ~ 0.6.x-beta
 -----------------------------------------
 VNET (Virtual Networking) will allow fully virtualized network stacks. This
 would bring the total network options to three (loopback, LAN, VNET). The
