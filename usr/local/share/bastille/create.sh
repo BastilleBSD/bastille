@@ -585,7 +585,7 @@ create_jail() {
                 if [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
                 else
-                    _gateway="$(netstat -rn | awk '/default/ {print $2}')"
+                    _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
                 fi
             fi
             # Add IPv4 address (this is empty if DHCP is used)

@@ -335,7 +335,7 @@ for _jail in ${JAILS}; do
             _arg_name=$(get_arg_name "${_line}")
             _arg_value=$(get_arg_value "${_line}" "$@")
             if [ -z "${_arg_value}" ]; then
-                error_exit "[ERROR]: No value provided for arg: ${_arg_name}"
+                warn "[WARNING]: No value provided for arg: ${_arg_name}"
             fi
             ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
         done < "${bastille_template}/ARG"
@@ -360,7 +360,7 @@ for _jail in ${JAILS}; do
                     _arg_name=$(get_arg_name "${_args}")
                     _arg_value=$(get_arg_value "${_args}" "$@")
                     if [ -z "${_arg_value}" ]; then
-                        error_exit "[ERROR]: No value provided for arg: ${_arg_name}"
+                        warn "[WARNING]: No value provided for arg: ${_arg_name}"
                     fi
                     # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
                     ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
