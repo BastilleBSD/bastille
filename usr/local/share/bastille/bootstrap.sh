@@ -424,10 +424,12 @@ bootstrap_template() {
     if [ ! -f ${_raw_template_dir}/Bastillefile ]; then
         # Extract template in project/template format
         find "${_raw_template_dir}" -type f -name Bastillefile | while read -r _file; do
-            _project="$(dirname "$(dirname ${_file})")"
-            _template="$(basename ${_project})"
-            _complete_template="$(basename ${_project})"/"$(basename "$(dirname ${_file})")"
-            cp -fR "${_project}" "${bastille_templatesdir}/${_template}"
+            _template_dir="$(dirname ${_file})"
+            _project_dir="$(dirname ${_template_dir})"
+            _template_name="$(basename ${_template_dir})"
+            _project_name="$(basename ${_project_dir})"
+            _complete_template="${_project_name}/${_template_name}"
+            cp -fR "${_project_dir}" "${bastille_templatesdir}"
             bastille verify "${_complete_template}"
         done
         
