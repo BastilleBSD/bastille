@@ -118,13 +118,14 @@ install and test with ``wget/curl/fetch`` instead.
 Shared Interface on Home or Small Office Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have just one computer, or a home or small office network, where you are
-separated from the rest of the internet by a router.  So you are free to use
+This scenario works best when you have just one computer, or a home or small office network
+that is separated from the rest of the internet by a router. So you are free to use
 `private IP addresses
 <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`_.
 
-In this environment, to use Bastille, just create the container, give it a
-unique private ip address, and attach its ip address to your primary interface.
+In this environment, we can create the container, give it a
+unique private ip address within our local subnet, and attach 
+its ip address to our primary interface.
 
 .. code-block:: shell
 
@@ -139,6 +140,19 @@ reach services at that address.
 
 This method is the simplest. All you need to know is the name of your network
 interface and a free IP on your local network.
+
+We can also run ``bastille setup shared`` to configure our primary interface as a default
+interface for Bastille to use. Once we have run the command and chosen our interface, it will
+not be necessary to specify an interface in our create command.
+
+.. code-block:: shell
+
+  bastille create alcatraz 13.2-RELEASE 192.168.1.50
+
+This will automatically use the interface we selected during the setup command.
+
+Note that we cannot use the ``shared`` option together with the ``loopback`` option. Configuring
+one using the ``bastille setup`` command will disable the other.
 
 Shared Interface on IPV6 network (vultr.com)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -261,7 +275,20 @@ Below is the definition of what these three parameters are used for and mean:
 Bridged Network (VNET bridged)
 ------------------------------
 
-To use a bridged VNET setup the first thing you have to do is to create a bridge
+To create a VNET based container and attach it to an external, already existing
+bridge, use the ``-B`` option, an IP/netmask and external bridge.
+
+.. code-block:: shell
+
+  bastille create -B azkaban 13.2-RELEASE 192.168.1.50/24 bridge0
+
+Bastille will automagically create the needed interface(s), attach it to the specified
+bridge and connect / disconnect containers as they are started and stopped.
+The bridge needs to be created/enabled before creating and starting the jail.
+
+Below are the steps to creating a bridge for this purpose.
+
+The first thing you have to do is to create a bridge
 interface on your system.  This is done with the ifconfig command and will
 create a bridged interface named bridge0:
 
@@ -326,20 +353,6 @@ To define a default route / gateway for all VNET containers define the value in
 This config change will apply the defined gateway to any new containers.
 Existing containers will need to be manually updated.
 
-Virtual Network (VNET) on External Bridge
------------------------------------------
-
-To create a VNET based container and attach it to an external, already existing
-bridge, use the ``-B`` option, an IP/netmask and external bridge.
-
-.. code-block:: shell
-
-  bastille create -B azkaban 13.2-RELEASE 192.168.1.50/24 bridge0
-
-Bastille will automagically create the interface, attach it to the specified
-bridge and connect / disconnect containers as they are started and stopped.
-The bridge needs to be created/enabled before creating and starting the jail.
-
 Public Network
 --------------
 
@@ -354,7 +367,7 @@ containers and assign them all unique IP addresses, you'll need to create a new
 network.
 
 loopback (bastille0)
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 What we recommend is creating a cloned loopback interface (``bastille0``) and
 assigning all the containers private (rfc1918) addresses on that interface. The
@@ -371,6 +384,13 @@ Having said all that here are instructions I used to configure the network with
 a private loopback interface and system firewall. The system firewall NATs
 traffic out of containers and can selectively redirect traffic into containers
 based on connection ports (ie; 80, 443, etc.)
+
+To set up the loopback address automatically, we can simply run ``bastille setup``.
+This will configure the storage, pf firewall, and loopback addresses for us. To set
+these up individually, we can run ``bastille setup storage``, ``bastille setup firewall``,
+and ``bastille setup loopback`` respectively.
+
+Alternatively, you can do it all manually, as shown below.
 
 First, create the loopback interface:
 
@@ -454,6 +474,9 @@ At this point you'll likely be disconnected from the host. Reconnect the
 ssh session and continue.
 
 This step only needs to be done once in order to prepare the host.
+
+Note that we cannot use the ``loopback`` option together with the ``shared`` option. Configuring
+one using the ``bastille setup`` command will disable the other.
 
 local_unbound
 -------------
