@@ -115,8 +115,8 @@ calling out from your containers, please note that the ping command is disabled
 within the containers, because raw socket access are a security hole. Instead,
 install and test with ``wget/curl/fetch`` instead.
 
-Shared Interface on Home or Small Office Network
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Shared Interface
+----------------
 
 This scenario works best when you have just one computer, or a home or small office network
 that is separated from the rest of the internet by a router. So you are free to use
