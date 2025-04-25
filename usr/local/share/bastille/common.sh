@@ -360,10 +360,11 @@ EOF
 EOF
         fi
     else
-        if [ -n "${static_mac}" ]; then
-            ## Generate VNET config with static MAC address
-            generate_static_mac "${jail_name}" "${external_interface}"
-            cat <<-EOF
+        if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+            if [ -n "${static_mac}" ]; then
+                ## Generate VNET config with static MAC address
+                generate_static_mac "${jail_name}" "${external_interface}"
+                cat <<-EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
@@ -372,15 +373,38 @@ EOF
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
-        else
-            ## Generate VNET config without static MAC address
-            cat <<-EOF
+            else
+                ## Generate VNET config without static MAC address
+                cat <<-EOF
   vnet;
   vnet.interface = e0b_${uniq_epair};
   exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
   exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "jib destroy ${uniq_epair}";
 EOF
+            fi
+        elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+            if [ -n "${static_mac}" ]; then
+                ## Generate VNET config with static MAC address
+                generate_static_mac "${jail_name}" "${external_interface}"
+                cat <<-EOF
+  vnet;
+  vnet.interface = ng0_${uniq_epair};
+  exec.prestart += "jng bridge ${uniq_epair} ${external_interface}";
+  exec.prestart += "ifconfig ng0_${uniq_epair} ether ${macaddr}a";
+  exec.poststop += "jng shutdown ${uniq_epair}";
+EOF
+            else
+                ## Generate VNET config without static MAC address
+                cat <<-EOF
+  vnet;
+  vnet.interface = ng0_${uniq_epair};
+  exec.prestart += "jng bridge ${uniq_epair} ${external_interface}";
+  exec.poststop += "jng shutdown ${uniq_epair}";
+EOF
+            fi
+        else
+            error_exit "[ERROR]: 'bastille_network_vnet_type' is not set correctly: ${bastille_network_vnet_type}"
         fi
     fi
 }

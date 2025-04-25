@@ -528,10 +528,18 @@ create_jail() {
 
         ## VNET specific
         if [ -n "${VNET_JAIL}" ]; then
-            ## VNET requires jib script
-            if [ ! "$(command -v jib)" ]; then
-                if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
-                    install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+            ## VNET requires jib or jng script
+            if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+                if [ ! "$(command -v jib)" ]; then
+                    if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+                        install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+                    fi
+                fi
+            elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+                if [ ! "$(command -v jib)" ]; then
+                    if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
+                        install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
+                    fi
                 fi
             fi
         fi
@@ -817,6 +825,11 @@ elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
     if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
         error_exit "Interface is a bridge: ${INTERFACE}"
     fi
+fi
+
+# Do not allow netgraph with -B|--bridge yet...
+if [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; then
+    error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] option."
 fi
 
 if [ -n "${LINUX_JAIL}" ] && [ -n "${VALIDATE_RELEASE}" ]; then
