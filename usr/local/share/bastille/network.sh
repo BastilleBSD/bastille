@@ -560,7 +560,7 @@ add_vlan() {
 
 case "${ACTION}" in
     add)
-        validate_netconf || error_exit "[ERROR]: Failed to validate Bastille network configuration."
+        validate_netconf
         validate_netif "${INTERFACE}"
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             error_exit "Interface is already added: \"${INTERFACE}\""

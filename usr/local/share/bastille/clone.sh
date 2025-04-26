@@ -150,7 +150,7 @@ update_jailconf() {
     fi
 
     if grep -qw "vnet;" "${JAIL_CONFIG}"; then
-        validate_netconf || error_exit "[ERROR]: Failed to validate Bastille network configuration."
+        validate_netconf
         update_jailconf_vnet
     else
         _ip4="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
