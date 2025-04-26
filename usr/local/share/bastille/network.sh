@@ -360,7 +360,7 @@ EOF
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
             for _num in $(seq 0 "${_bastille_if_num_range}"); do
                 if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
-                        local jail_if="bastille${_num}"
+                        local _jail_if="bastille${_num}"
                         break
                 fi
             done
