@@ -135,6 +135,8 @@ get_bastille_if_count() {
         _bastille_if_count=$(printf '%s' "${_bastille_if_list}" | sort -u | wc -l | awk '{print $1}')
         export _bastille_if_list
         export _bastille_if_count
+    else
+        error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
     fi
 }
 
