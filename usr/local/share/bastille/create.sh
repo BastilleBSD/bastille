@@ -172,6 +172,9 @@ validate_netconf() {
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
         error_exit "Invalid network configuration."
     fi
+    if [ "${bastille_network_vnet_type}" != "if_bridge" ] || [ "${bastille_network_vnet_type}" != "netgraph" ]; then
+        error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
+    fi
 }
 
 validate_release() {
