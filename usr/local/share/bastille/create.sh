@@ -168,15 +168,6 @@ validate_netif() {
     fi
 }
 
-validate_netconf_create() {
-    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        error_exit "Invalid network configuration."
-    fi
-    if [ "${bastille_network_vnet_type}" != "if_bridge" ] && [ "${bastille_network_vnet_type}" != "netgraph" ]; then
-        error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
-    fi
-}
-
 validate_release() {
     ## ensure the user set the Linux(experimental) option explicitly
     if [ -n "${UBUNTU}" ]; then
@@ -458,11 +449,11 @@ create_jail() {
 
                         ## sane bastille zfs options
                         ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
-			## send without -R if encryption is enabled
+                        ## send without -R if encryption is enabled
                         if [ "$(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}")" = "off" ]; then
-			    OPT_SEND="-R"
+                            OPT_SEND="-R"
                         else
-			    OPT_SEND=""
+                            OPT_SEND=""
                         fi
 
                         ## take a temp snapshot of the base release
@@ -966,18 +957,18 @@ if [ -z "${EMPTY_JAIL}" ]; then
     ## check if interface is valid
     if [ -n "${INTERFACE}" ]; then
         validate_netif
-        validate_netconf_create
+        validate_netconf || error_exit "[ERROR]: Failed to validate Bastille network configuration."
     elif [ -n "${VNET_JAIL}" ]; then
         if [ -z "${INTERFACE}" ]; then
             if [ -z "${bastille_network_shared}" ]; then
                 # User must specify interface on vnet jails.
                 error_exit "Error: Network interface not defined."
             else
-                validate_netconf_create
+                validate_netconf || error_exit "[ERROR]: Failed to validate Bastille network configuration."
             fi
         fi
     else
-        validate_netconf_create
+        validate_netconf || error_exit "[ERROR]: Failed to validate Bastille network configuration."
     fi
 else
     info "Creating empty jail: ${NAME}."

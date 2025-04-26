@@ -136,15 +136,6 @@ validate_ip() {
     fi
 }
 
-validate_netconf_clone() {
-    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        error_exit "Invalid network configuration."
-    fi
-    if [ "${bastille_network_vnet_type}" != "if_bridge" ] && [ "${bastille_network_vnet_type}" != "netgraph" ]; then
-        error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
-    fi
-}
-
 update_jailconf() {
     # Update jail.conf
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
@@ -159,7 +150,7 @@ update_jailconf() {
     fi
 
     if grep -qw "vnet;" "${JAIL_CONFIG}"; then
-        validate_netconf_clone
+        validate_netconf || error_exit "[ERROR]: Failed to validate Bastille network configuration."
         update_jailconf_vnet
     else
         _ip4="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"

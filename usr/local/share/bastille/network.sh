@@ -208,15 +208,6 @@ validate_netif() {
     fi
 }
 
-validate_netconf_network() {
-    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        error_exit "Invalid network configuration."
-    fi
-    if [ "${bastille_network_vnet_type}" != "if_bridge" ] && [ "${bastille_network_vnet_type}" != "netgraph" ]; then
-        error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
-    fi
-}
-
 check_interface_added() {
     local _jailname="${1}"
     local _if="${2}"
@@ -569,7 +560,7 @@ add_vlan() {
 
 case "${ACTION}" in
     add)
-        validate_netconf_network
+        validate_netconf || error_exit "[ERROR]: Failed to validate Bastille network configuration."
         validate_netif "${INTERFACE}"
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             error_exit "Interface is already added: \"${INTERFACE}\""
