@@ -148,16 +148,14 @@ if [ "${ACTION}" = "add" ]; then
        { [ "${BRIDGE}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } || \
        { [ "${CLASSIC}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } then
         error_notify "Error: Only one of [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] should be set."
-        usage
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${CLASSIC}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then 
         error_notify "Error: [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] must be set."
-        usage
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
         error_notify "VLANs can only be used with VNET interfaces."
-        usage
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
         error_notify "[-n|--no-ip] can only be used with VNET jails."
-        usage
+    elif [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${BRIDGE}" -eq 1 ]; then
+        error_notify "[-B|--bridge] cannot be used with Netgraph."
     fi
 fi
 
@@ -233,15 +231,15 @@ add_interface() {
     local _ip="${3}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
-    # Get number of epairs on the system
-    get_epair_count
+    # Get number of interfaces manged by Bastille
+    get_bastille_if_count
     local _vnet_if_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet="vnet$((_vnet_if_count + 1))"
-    local _epair_num_range=$((_epair_count + 1))
+    local _bastille_if_num_range=$((_bastille_if_count + 1))
     if [ "${BRIDGE}" -eq 1 ]; then
-       if [ "${_epair_count}" -gt 0 ]; then  
-            for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
+       if [ "${_bastille_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
                     if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                         local host_epair=e${_num}a_${_jailname}
                         local jail_epair=e${_num}b_${_jailname}
@@ -313,52 +311,96 @@ EOF
         echo "Added interface: \"${_if}\""
 
     elif [ "${VNET}" -eq 1 ]; then
-        for _num in $(seq 0 "${_epair_num_range}"); do
-            if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
-                    local bastille_epair="bastille${_num}"
-                    break
-            fi
-        done
-        # Remove ending brace (it is added again with the netblock)
-        sed -i '' '/}/d' "${_jail_config}"
-        if [ "${STATIC_MAC}" -eq 1 ]; then
-            # Generate NETBLOCK with static MAC
-            generate_static_mac "${_jailname}" "${_if}"
-            cat << EOF >> "${_jail_config}"
-  ## ${bastille_epair} interface
-  vnet.interface += e0b_${bastille_epair};
-  exec.prestart += "jib addm ${bastille_epair} ${_if}";
-  exec.prestart += "ifconfig e0a_${bastille_epair} ether ${macaddr}a";
-  exec.prestart += "ifconfig e0b_${bastille_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig e0a_${bastille_epair} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "jib destroy ${bastille_epair}";
+        if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+                        local _jail_if="bastille${_num}"
+                        break
+                fi
+            done
+            # Remove ending brace (it is added again with the netblock)
+            sed -i '' '/}/d' "${_jail_config}"
+            if [ "${STATIC_MAC}" -eq 1 ]; then
+                # Generate NETBLOCK with static MAC
+                generate_static_mac "${_jailname}" "${_if}"
+                cat << EOF >> "${_jail_config}"
+  ## ${_jail_if} interface
+  vnet.interface += e0b_${_jail_if};
+  exec.prestart += "jib addm ${_jail_if} ${_if}";
+  exec.prestart += "ifconfig e0a_${_jail_if} ether ${macaddr}a";
+  exec.prestart += "ifconfig e0b_${_jail_if} ether ${macaddr}b";
+  exec.prestart += "ifconfig e0a_${_jail_if} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
+  exec.poststop += "jib destroy ${_jail_if}";
 }
 EOF
-        else
-            # Generate NETBLOCK without static MAC
-            cat << EOF >> "${_jail_config}"
-  ## ${bastille_epair} interface
-  vnet.interface += e0b_${bastille_epair};
-  exec.prestart += "jib addm ${bastille_epair} ${_if}";
-  exec.prestart += "ifconfig e0a_${bastille_epair} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "jib destroy ${bastille_epair}";
-}
-EOF
-        fi
-        # Add config to /etc/rc.conf
-        sysrc -f "${_jail_rc_config}" ifconfig_e0b_${bastille_epair}_name="${_if_vnet}"
-	if [ -n "${_ip}" ]; then
-            # If 0.0.0.0 set DHCP, else set static IP address
-            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
             else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
+                # Generate NETBLOCK without static MAC
+                cat << EOF >> "${_jail_config}"
+  ## ${_jail_if} interface
+  vnet.interface += e0b_${_jail_if};
+  exec.prestart += "jib addm ${_jail_if} ${_if}";
+  exec.prestart += "ifconfig e0a_${_jail_if} description \"${_if_vnet} host interface for Bastille jail ${_jailname}\"";
+  exec.poststop += "jib destroy ${_jail_if}";
+}
+EOF
             fi
-	fi
+            # Add config to /etc/rc.conf
+            sysrc -f "${_jail_rc_config}" ifconfig_e0b_${_jail_if}_name="${_if_vnet}"
+	    if [ -n "${_ip}" ]; then
+                # If 0.0.0.0 set DHCP, else set static IP address
+                if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
+                else
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
+                fi
+	    fi
 
-        info "[${_jailname}]:"
-        echo "Added VNET interface: \"${_if}\""
+            info "[${_jailname}]:"
+            echo "Added VNET interface: \"${_if}\""
+        elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+                        local jail_if="bastille${_num}"
+                        break
+                fi
+            done
+            # Remove ending brace (it is added again with the netblock)
+            sed -i '' '/}/d' "${_jail_config}"
+            if [ "${STATIC_MAC}" -eq 1 ]; then
+                # Generate NETBLOCK with static MAC
+                generate_static_mac "${_jailname}" "${_if}"
+                cat << EOF >> "${_jail_config}"
+  ## ${_jail_if} interface
+  vnet.interface += ng0_${_jail_if};
+  exec.prestart += "jng bridge ${_jail_if} ${_if}";
+  exec.prestart += "ifconfig ng0_${_jail_if} ether ${macaddr}a";
+  exec.poststop += "jng shutdown ${_jail_if}";
+}
+EOF
+            else
+                # Generate NETBLOCK without static MAC
+                cat << EOF >> "${_jail_config}"
+  ## ${_jail_if} interface
+  vnet.interface += e0b_${_jail_if};
+  exec.prestart += "jng bridge ${_jail_if} ${_if}";
+  exec.poststop += "jng shutdown ${_jail_if}";
+}
+EOF
+            fi
+            # Add config to /etc/rc.conf
+            sysrc -f "${_jail_rc_config}" ifconfig_jng_${_jail_if}_name="${_if_vnet}"
+	    if [ -n "${_ip}" ]; then
+                # If 0.0.0.0 set DHCP, else set static IP address
+                if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
+                else
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
+                fi
+	    fi
 
+            info "[${_jailname}]:"
+            echo "Added VNET interface: \"${_if}\""
+        fi
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
         # Remove ending brace (it is added again with the netblock)
         sed -i '' '/}/d' "${_jail_config}"
@@ -402,7 +444,11 @@ remove_interface() {
         local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
         if grep -q ${_if} ${_jail_config} | grep -Eoq -m 1 'bastille[0-9]+'; then
             local _if_bastille_num="$(grep ${_if} ${_jail_config} | grep -Eo -m 1 "bastille[0-9]+" | grep -Eo "[0-9]+")"
-            local _if_jail="e0b_bastille${_if_bastille_num}"
+            if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+                local _if_jail="e0b_bastille${_if_bastille_num}"
+            elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+                local _if_jail="ng0_bastille${_if_bastille_num}"
+            fi
             _if_type="bastille"
         elif grep -q ${_if} ${_jail_config} | grep -Eoq -m 1 "epair[0-9]+"; then
             local _if_epair_num="$(grep ${_if} ${_jail_config} | grep -Eo -m 1 "epair[0-9]+" | grep -Eo "[0-9]+")"
