@@ -536,7 +536,7 @@ create_jail() {
                     fi
                 fi
             elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-                if [ ! "$(command -v jib)" ]; then
+                if [ ! "$(command -v jng)" ]; then
                     if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
                         install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
                     fi
@@ -828,7 +828,7 @@ elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
 fi
 
 # Do not allow netgraph with -B|--bridge yet...
-if [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; then
+if [ "${bastille_network_vnet_type}" = "netgraph" ] && [ -n "${VNET_JAIL_BRIDGE}" ]; then
     error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] option."
 fi
 
@@ -1012,4 +1012,5 @@ fi
 if check_target_exists "${NAME}"; then
     error_exit "Error: Existing jail found: ${NAME}"
 fi
+
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"

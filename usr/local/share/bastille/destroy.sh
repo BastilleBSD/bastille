@@ -81,7 +81,7 @@ destroy_jail() {
                         # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
                         # unless the force option is defined by the user, otherwise will have a partially deleted jail.
                         if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
-                            error_exit "Jail dataset(s) appears to be busy, exiting."
+                            error_continue "Jail dataset(s) appears to be busy, exiting."
                         fi
                     fi
                 fi

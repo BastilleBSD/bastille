@@ -192,18 +192,28 @@ update_jailconf() {
 }
 
 update_jailconf_vnet() {
+
     local _jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local _rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
-    # Determine number of interfaces and define a uniq_epair
-    local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${_jail_conf} | sort -u)"
+
+    # Determine number of interfaces
+    if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+        local _if_list="$(grep -Eo 'epair[0-9]+|e[0-9]+b_bastille[0-9]+' ${_jail_conf} | sort -u)"
+    elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+        local _if_list="$(grep -Eo 'ng[0-9]+_bastille[0-9]+' ${_jail_conf} | sort -u)"
+    fi
+
     for _if in ${_if_list}; do
-        # Get number of epairs on the system
-        get_epair_count
-        local _epair_num_range=$((_epair_count + 1))
+
+        # Get number of interfaces manged by Bastille
+        get_bastille_if_count
+
+        local _bastille_if_num_range=$((_bastille_if_count + 1))
+
+        # Update bridged VNET config
         if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
-            # Update bridged VNET config
-            for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
                     # Generate new epair name
                     if [ "$(echo -n "e${_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
                         local _new_host_epair="e${_num}a_${NEWNAME}"
@@ -269,26 +279,70 @@ update_jailconf_vnet() {
                     break
                 fi
             done
-        elif echo ${_if} | grep -Eoq 'bastille[0-9]+'; then
+        # Update VNET (non-bridged) config
+        elif echo ${_if} | grep -Eoq 'e[0-9]+b_bastille[0-9]+'; then
             # Update VNET config
-            for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
+            _if="$(echo ${_if} | grep -Eo 'bastille[0-9]+')"
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
                     # Update jail.conf epair name
-                    local uniq_epair="bastille${_num}"
+                    local _jail_if="bastille${_num}"
                     local _jail_vnet="$(grep ${_if} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
-                    sed -i '' "s|${_if}|${uniq_epair}|g" "${_jail_conf}"
+                    sed -i '' "s|${_if}|${_jail_if}|g" "${_jail_conf}"
                     # If jail had a static MAC, generate one for clone
-                    if grep ether ${_jail_conf} | grep -qoc ${uniq_epair}; then
-                        local external_interface="$(grep ${uniq_epair} ${_jail_conf} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
+                    if grep ether ${_jail_conf} | grep -qoc ${_jail_if}; then
+                        local external_interface="$(grep ${_jail_if} ${_jail_conf} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
                         generate_static_mac "${NEWNAME}" "${external_interface}"
-                        sed -i '' "s|${uniq_epair} ether.*:.*:.*:.*:.*:.*a\";|${uniq_epair} ether ${macaddr}a\";|" "${_jail_conf}"
-                        sed -i '' "s|${uniq_epair} ether.*:.*:.*:.*:.*:.*b\";|${uniq_epair} ether ${macaddr}b\";|" "${_jail_conf}"
+                        sed -i '' "s|${_jail_if} ether.*:.*:.*:.*:.*:.*a\";|${_jail_if} ether ${macaddr}a\";|" "${_jail_conf}"
+                        sed -i '' "s|${_jail_if} ether.*:.*:.*:.*:.*:.*b\";|${_jail_if} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
-                    sed -i '' "/${uniq_epair}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+                    sed -i '' "/${_jail_if}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     # Update /etc/rc.conf
-                    sed -i '' "s|ifconfig_e0b_${_if}_name|ifconfig_e0b_${uniq_epair}_name|" "${_rc_conf}"
-                    if grep "vnet0" "${_rc_conf}" | grep -q ${uniq_epair}; then
+                    sed -i '' "s|ifconfig_e0b_${_if}_name|ifconfig_e0b_${_jail_if}_name|" "${_rc_conf}"
+                    if grep "vnet0" "${_rc_conf}" | grep -q ${_jail_if}; then
+                        if [ -n "${_jail_vnet_vlan}" ]; then
+                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP}"
+                            fi
+                        else
+                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                            fi
+                        fi
+                    else
+                        if [ -n "${_jail_vnet_vlan}" ]; then
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
+                        else
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                        fi
+                    fi
+                    break
+                fi
+            done       
+       # Update netgraph VNET (non-bridged) config
+       elif echo ${_if} | grep -Eoq 'ng[0-9]+_bastille[0-9]+'; then
+            _if="$(echo ${_if} | grep -Eo 'bastille[0-9]+')"
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+                    # Update jail.conf epair name
+                    local _jail_if="bastille${_num}"
+                    local _jail_vnet="$(grep ${_if} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
+                    local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
+                    sed -i '' "s|${_if}|${_jail_if}|g" "${_jail_conf}"
+                    # If jail had a static MAC, generate one for clone
+                    if grep ether ${_jail_conf} | grep -qoc ${_jail_if}; then
+                        local external_interface="$(grep ${_jail_if} ${_jail_conf} | grep -o 'jng bridge.*' | awk '{print $4}' | sed 's/["|;]//g')"
+                        generate_static_mac "${NEWNAME}" "${external_interface}"
+                        sed -i '' "s|${_jail_if} ether.*:.*:.*:.*:.*:.*a\";|${_jail_if} ether ${macaddr}a\";|" "${_jail_conf}"
+                    fi
+                    # Update /etc/rc.conf
+                    sed -i '' "s|ifconfig_ng0_${_if}_name|ifconfig_ng0_${_jail_if}_name|" "${_rc_conf}"
+                    if grep "vnet0" "${_rc_conf}" | grep -q ${_jail_if}; then
                         if [ -n "${_jail_vnet_vlan}" ]; then
                             if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
                                 sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
