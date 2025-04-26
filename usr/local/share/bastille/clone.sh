@@ -159,7 +159,7 @@ update_jailconf() {
     fi
 
     if grep -qw "vnet;" "${JAIL_CONFIG}"; then
-        validate_netconf
+        validate_netconf_clone
         update_jailconf_vnet
     else
         _ip4="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
