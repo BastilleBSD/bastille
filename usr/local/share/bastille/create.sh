@@ -168,7 +168,7 @@ validate_netif() {
     fi
 }
 
-validate_netconf() {
+validate_netconf_create() {
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
         error_exit "Invalid network configuration."
     fi
@@ -966,18 +966,18 @@ if [ -z "${EMPTY_JAIL}" ]; then
     ## check if interface is valid
     if [ -n "${INTERFACE}" ]; then
         validate_netif
-        validate_netconf
+        validate_netconf_create
     elif [ -n "${VNET_JAIL}" ]; then
         if [ -z "${INTERFACE}" ]; then
             if [ -z "${bastille_network_shared}" ]; then
                 # User must specify interface on vnet jails.
                 error_exit "Error: Network interface not defined."
             else
-                validate_netconf
+                validate_netconf_create
             fi
         fi
     else
-        validate_netconf
+        validate_netconf_create
     fi
 else
     info "Creating empty jail: ${NAME}."
