@@ -541,6 +541,8 @@ create_jail() {
                         install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
                     fi
                 fi
+            else 
+                error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
             fi
         fi
     elif [ -n "${LINUX_JAIL}" ]; then
