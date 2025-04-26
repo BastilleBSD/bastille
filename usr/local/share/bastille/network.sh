@@ -208,9 +208,12 @@ validate_netif() {
     fi
 }
 
-validate_netconf() {
+validate_netconf_network() {
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
         error_exit "Invalid network configuration."
+    fi
+    if [ "${bastille_network_vnet_type}" != "if_bridge" ] && [ "${bastille_network_vnet_type}" != "netgraph" ]; then
+        error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
     fi
 }
 
@@ -566,15 +569,15 @@ add_vlan() {
 
 case "${ACTION}" in
     add)
-        validate_netconf
+        validate_netconf_network
         validate_netif "${INTERFACE}"
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             error_exit "Interface is already added: \"${INTERFACE}\""
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
-	    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+            add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             exit 0
         fi
-	## validate IP if not empty
+        ## validate IP if not empty
         if [ -n "${IP}" ]; then
             validate_ip "${IP}"
         fi
@@ -585,8 +588,8 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-		if [ -n "${VLAN_ID}" ]; then
-		    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+                if [ -n "${VLAN_ID}" ]; then
+                    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
                 fi
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
@@ -599,8 +602,8 @@ case "${ACTION}" in
                 error_exit "\"${INTERFACE}\" is not a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-		if [ -n "${VLAN_ID}" ]; then
-		    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+		        if [ -n "${VLAN_ID}" ]; then
+		            add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
                 fi
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
@@ -613,7 +616,7 @@ case "${ACTION}" in
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
             fi
             if [ -n "${VLAN_ID}" ]; then
-		add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+                add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             fi
             if [ "${AUTO}" -eq 1 ]; then
                 bastille start "${TARGET}"
