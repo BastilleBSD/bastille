@@ -415,8 +415,6 @@ EOF
   exec.poststop += "jng shutdown ${_jail_if}";
 EOF
             fi
-        else
-            error_exit "[ERROR]: 'bastille_network_vnet_type' is not set correctly: ${bastille_network_vnet_type}"
         fi
     fi
 }
