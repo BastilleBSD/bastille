@@ -87,6 +87,10 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$#" -ne 1 ]; then
+    usage
+fi
+
 TARGET="${1}"
 
 bastille_root_check
