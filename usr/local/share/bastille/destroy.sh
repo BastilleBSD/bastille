@@ -52,8 +52,8 @@ destroy_jail() {
 
     for _jail in ${JAILS}; do
 
-        bastille_jail_base="${bastille_jailsdir}/${_jail}"            ## dir
-        bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"  ## file
+        bastille_jail_base="${bastille_jailsdir}/${_jail}"
+        bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 
         check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
             bastille stop "${_jail}"
@@ -63,7 +63,7 @@ destroy_jail() {
         fi
 
         if [ -d "${bastille_jail_base}" ]; then
-            ## make sure no filesystem is currently mounted in the jail directory
+            # Make sure no filesystem is currently mounted
             mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
             if [ -n "${mount_points}" ]; then
                 error_notify "Failed to destroy jail: ${_jail}"
@@ -81,28 +81,28 @@ destroy_jail() {
                         # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
                         # unless the force option is defined by the user, otherwise will have a partially deleted jail.
                         if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
-                            error_exit "Jail dataset(s) appears to be busy, exiting."
+                            error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
                         fi
                     fi
                 fi
             fi
 
             if [ -d "${bastille_jail_base}" ]; then
-                ## removing all flags
+                # Remove flags
                 chflags -R noschg "${bastille_jail_base}"
 
-                ## remove jail base
+                # Remove jail base
                 rm -rf "${bastille_jail_base}"
             fi
 
-            ## archive jail log
+            # Archive jail log
             if [ -f "${bastille_jail_log}" ]; then
                 mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
                 info "Note: jail console logs archived."
                 info "${bastille_jail_log}-$(date +%F)"
             fi
 
-            ## clear any active rdr rules
+            # Clear any active rdr rules
             if [ ! -z "$(pfctl -a "rdr/${_jail}" -Psn 2>/dev/null)" ]; then
                 info "Clearing RDR rules:"
                 pfctl -a "rdr/${_jail}" -Fn
