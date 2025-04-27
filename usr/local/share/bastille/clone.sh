@@ -363,13 +363,18 @@ clone_jail() {
     update_jailconf
     update_fstab "${TARGET}" "${NEWNAME}"
 
-    # Display the exist status
+    # Display exit status
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to clone '${TARGET}'."
     else
         info "Cloned '${TARGET}' to '${NEWNAME}' successfully."
     fi
-    if [ "${AUTO}" -eq 1 ] || [ "${LIVE}" -eq 1 ]; then
+
+    # Start jails if AUTO=1 or LIVE=1
+    if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${TARGET}"
+        bastille start "${NEWNAME}"
+    elif [ "${LIVE}" -eq 1 ]; then
         bastille start "${NEWNAME}"
     fi
 }
