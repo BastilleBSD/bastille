@@ -30,6 +30,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+. /usr/local/share/bastille/common.sh
+
 usage() {
     error_notify "Usage: bastille restart [option(s)] TARGET"
     cat << EOF
@@ -45,11 +47,57 @@ EOF
 }
 
 # Handle options.
-case "${1}" in
-    -h|--help|help)
-        usage
-        ;;
-esac
+# We pass these to start and stop.
+_options=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -b|--boot)
+            _options="${_options} -b"
+            shift
+            ;;
+        -d|--delay)
+            _options="${_options} -d ${2}"
+            shift 2
+            ;;
+        -v|--verbose)
+            _options="${_options} -v"
+            shift
+            ;;
+        -x|--debug)
+            _options="${_options} -x"
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    b) _options="${_options} -b" ;;
+                    v) _options="${_options} -v" ;;
+                    x) _options="${_options} -x" ;;
+                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-bastille stop "$@"
-bastille start "$@"
+TARGET="${1}"
+
+bastille_root_check
+set_target "${TARGET}"
+
+for _jail in ${JAILS}; do
+
+    # Only restart running jails
+    if check_target_is_running "${_jail}"; then
+        bastille stop ${_options} ${_jail}
+        bastille start ${_options} ${_jail}
+    fi
+    
+done
