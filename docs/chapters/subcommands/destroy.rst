@@ -1,21 +1,19 @@
 destroy
 =======
 
-Jails can be destroyed and thrown away just as easily as they were created.
-Note: containers must be stopped before destroyed. Using the ``-a|--auto``
-option will automatically stop the jail before destroying it.
+Destroy jails or releases.
 
 .. code-block:: shell
 
   ishmael ~ # bastille destroy -a folsom
   [folsom]:
   folsom: removed
-  Deleting Container: folsom.
-  Note: containers console logs not destroyed.
-  /usr/local/bastille/logs/folsom_console.log
+  Deleting Jail: folsom.
+  Note: jail console logs archived.
+  /var/log/bastille/folsom_console.log-YYYY-MM-DD
 
-Release can be destroyed provided there are no child jails. The `-c|--no-cache`
-option will retain the release cache directory, if you choose to keep it.
+Release can be destroyed provided there are no child jails. The ``-c|--no-cache``
+option will retain the release cache (*.txz file), if you choose to keep it.
 
 .. code-block:: shell
 
