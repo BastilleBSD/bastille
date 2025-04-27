@@ -6,7 +6,7 @@
 3. Bastille API
 4. Nomad Driver for clustering
 
-Bastille CI/CD (March-May) ~ 1.0.x-beta
+Bastille CI/CD ~ 1.0.x-beta
 ---------------------------------------
 While we have many of the templates validated by automatic CI/CD, we are not
 validating updates to Bastille itself. This automated validation of Pull
