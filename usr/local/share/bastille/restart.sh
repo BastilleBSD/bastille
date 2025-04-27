@@ -30,6 +30,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+. /usr/local/share/bastille/common.sh
+
 usage() {
     error_notify "Usage: bastille restart [option(s)] TARGET"
     cat << EOF
@@ -45,11 +47,74 @@ EOF
 }
 
 # Handle options.
-case "${1}" in
-    -h|--help|help)
-        usage
-        ;;
-esac
+# We pass these to start and stop.
+_start_options=""
+_stop_options=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -b|--boot)
+            _start_options="${_start_options} -b"
+            shift
+            ;;
+        -d|--delay)
+            _start_options="${_start_options} -d ${2}"
+            shift 2
+            ;;
+        -v|--verbose)
+            _start_options="${_start_options} -v"
+            _stop_options="${_stop_options} -v"
+            shift
+            ;;
+        -x|--debug)
+            _start_options="${_start_options} -x"
+            _stop_options="${_stop_options} -x"
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    b)
+                        _start_options="${_start_options} -b"
+                        ;;
+                    v)
+                        _start_options="${_start_options} -v"
+                        _stop_options="${_stop_options} -v"
+                        ;;
+                    x) 
+                        _start_options="${_start_options} -x"
+                        _stop_options="${_stop_options} -x"
+                        ;;
+                    *)
+                        error_exit "Unknown Option: \"${1}\""
+                        ;; 
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-bastille stop "$@"
-bastille start "$@"
+if [ "$#" -ne 1 ]; then
+    usage
+fi
+
+TARGET="${1}"
+
+bastille_root_check
+set_target "${TARGET}"
+
+for _jail in ${JAILS}; do
+
+    # Only restart running jails
+    if check_target_is_running "${_jail}"; then
+        bastille stop ${_stop_options} ${_jail}
+        bastille start ${_start_options} ${_jail}
+    fi
+    
+done
