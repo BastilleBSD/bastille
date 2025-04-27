@@ -3,12 +3,14 @@ restart
 
 Restart jail(s).
 
+Bastille will only restart targeted jail(s) if they are running. Jails that
+are stopped will not be started.
+
 .. code-block:: shell
 
   ishmael ~ # bastille restart folsom
   [folsom]:
   folsom: removed
-
   [folsom]:
   folsom: created
 
@@ -20,5 +22,5 @@ Restart jail(s).
 
     -b | --boot                 Respect jail boot setting.
     -d | --delay VALUE          Time (seconds) to wait after starting each jail.
-    -v | --verbose              Print every action on jail start.
+    -v | --verbose              Print every action on jail restart.
     -x | --debug                Enable debug mode.
