@@ -98,7 +98,8 @@ get_max_lengths() {
         if [ "${MAX_LENGTH_JAIL_RELEASE}" -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
 
         # Set max length for tags
-        MAX_LENGTH_JAIL_TAGS=$(find ${bastille_jailsdir}/*/tags -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 sh -c 'grep -h . "$1" | paste -sd "," -' sh | awk '{print length}' | sort -nr | head -n 1)
+        # Not needed now as its the last thing we print
+        #MAX_LENGTH_JAIL_TAGS=$(find ${bastille_jailsdir}/*/tags -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 sh -c 'grep -h . "$1" | paste -sd "," -' sh | awk '{print length}' | sort -nr | head -n 1)
         #MAX_LENGTH_JAIL_TAGS=${MAX_LENGTH_JAIL_TAG:-10}
 
     else
