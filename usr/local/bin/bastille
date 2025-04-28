@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION="0.14.20250420"
+BASTILLE_VERSION=8e10f14
 
 ## check for config existence
 bastille_conf_check() {
@@ -95,6 +95,7 @@ Available Commands:
   jcp         cp(1) files from a jail to jail(s).
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
+  monitor     Print a list of the parameters for all jails
   mount       Mount a volume inside the targeted container(s).
   network     Add/remove network interfaces from targeted container.
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
@@ -208,6 +209,7 @@ case "${CMD}" in
     jcp| \
     limits| \
     list| \
+    monitor| \
     network| \
     rcp| \
     rdr| \
