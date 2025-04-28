@@ -99,7 +99,7 @@ get_max_lengths() {
 
         # Set max length for tags
         MAX_LENGTH_JAIL_TAGS=$(find ${bastille_jailsdir}/*/tags -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 sh -c 'grep -h . "$1" | paste -sd "," -' sh | awk '{print length}' | sort -nr | head -n 1)
-        MAX_LENGTH_JAIL_TAGS=${MAX_LENGTH_JAIL_TAG:-10}
+        #MAX_LENGTH_JAIL_TAGS=${MAX_LENGTH_JAIL_TAG:-10}
 
     else
         error_exit "[ERROR]: No jails found."
@@ -186,8 +186,8 @@ get_jail_info() {
             JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
             JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
         else
-            JAIL_IP4=$(bastille config ${JAIL_NAME} get ip4.addr | sed 's/,/\n/g' | awk -F| '{print $2}')
-            JAIL_IP6=$(bastille config ${JAIL_NAME} get ip6.addr | sed 's/,/\n/g' | awk -F| '{print $2}')
+            JAIL_IP4=$(bastille config ${JAIL_NAME} get ip4.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
+            JAIL_IP6=$(bastille config ${JAIL_NAME} get ip6.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
         fi
         JAIL_IP="$(echo ${JAIL_IP4} ${JAIL_IP6})"
 
