@@ -152,13 +152,13 @@ get_jail_info() {
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
             # Get IP for VNET jails
             JAIL_IP4="$(jexec -l ${JAIL_NAME} ifconfig -an | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}')"
-            JAIL_IP6="$(jexec -l ${JAIL_NAME} ifconfig -an | grep "inet6" | grep -Ev 'lo|::1' | awk '{print $2}' | sed 's/%.*//g')"
+            JAIL_IP6="$(jexec -l ${JAIL_NAME} ifconfig -an | grep "inet6" | grep -Ev 'lo[0-9]+| ::1 | fe80::' | awk '{print $2}' | sed 's/%.*//g')"
         else
             # Get IP for standard jails
             JAIL_IP4=$(jls -j ${JAIL_NAME} ip4.addr | sed 's/,/\n/g')
             JAIL_IP6=$(jls -j ${JAIL_NAME} ip6.addr | sed 's/,/\n/g')
         fi
-        JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed 's/-//g')"
+        JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
         # Print IPs with commans when JSON is selected
         if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="$(echo ${JAIL_IP} | sed 's/ /,/g')"; fi
@@ -187,13 +187,13 @@ get_jail_info() {
 
         # Get info if jail is DOWN
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet .*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
-            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
+            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
+            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $3}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
         else
             JAIL_IP4=$(bastille config ${JAIL_NAME} get ip4.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
             JAIL_IP6=$(bastille config ${JAIL_NAME} get ip6.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
         fi
-        JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed 's/-//g')"
+        JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
         # Print IPs with commans when JSON is selected
         if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="$(echo ${JAIL_IP} | sed 's/ /,/g')"; fi
