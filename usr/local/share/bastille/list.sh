@@ -327,6 +327,32 @@ list_all(){
     done
 }
 
+list_paths() {
+
+    get_max_lengths
+
+    # Check if we want only a single jail, or all jails
+    if [ -n "${TARGET}" ]; then
+        JAIL_LIST="${TARGET}"
+    else
+        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+    fi
+
+    # Print header
+    printf " JID%*sName%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
+
+    for _jail in ${JAIL_LIST}; do
+
+        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
+
+            get_jail_info "${_jail}"
+
+            printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        fi
+    done
+}
+
 list_ports() {
 
     get_max_lengths
@@ -446,15 +472,25 @@ if [ "$#" -eq 0 ]; then
     else
         list_bastille
     fi
+elif [ "$#" -eq 2 ]; then
+    set_target "${1}" || exit 1
+    shift 1
 fi
 
-if [ "$#" -gt 0 ]; then
+if [ "$#" -eq 1 ]; then
     case "${1}" in
         -a|--all|all)
             if [ "${OPT_JSON}" -eq 1 ]; then
                 list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}'
             else
                 list_all
+            fi
+            ;;
+        path|paths)
+            if [ "${OPT_JSON}" -eq 1 ]; then
+                list_paths | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+            else
+                list_paths
             fi
             ;;
         rdr|port|ports)
@@ -488,10 +524,12 @@ if [ "$#" -gt 0 ]; then
             TARGET="${1}"
       	    set_target "${TARGET}"
             if [ -f "${bastille_jailsdir}/${TARGET}/jail.conf" ]; then
-                if [ "${OPT_JSON}" -eq 1 ]; then
-                    list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
-                else
-                    list_bastille
+                if [ "$#" -eq 0 ]; then
+                    if [ "${OPT_JSON}" -eq 1 ]; then
+                        list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+                    else
+                        list_bastille
+                    fi
                 fi
             else
                 usage
