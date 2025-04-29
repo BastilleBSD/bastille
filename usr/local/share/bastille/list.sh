@@ -187,7 +187,7 @@ get_jail_info() {
 
         # Get info if jail is DOWN
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
+            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet .*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
             JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g')
         else
             JAIL_IP4=$(bastille config ${JAIL_NAME} get ip4.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
