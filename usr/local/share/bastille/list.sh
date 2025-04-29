@@ -38,7 +38,7 @@ usage() {
     cat << EOF
     Options:
     
-    -j | --json           List jails or sub-arg in json format.
+    -j | --json           List jails or sub-arg(s) in json format.
     -x | --debug          Enable debug mode.
 
 EOF
