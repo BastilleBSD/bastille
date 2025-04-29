@@ -37,7 +37,7 @@ usage() {
     cat << EOF
     Options:
     
-    -j | --json           List jails in json format.
+    -j | --json           List jails or sub-arg in json format.
     -x | --debug          Enable debug mode.
 
 EOF
@@ -98,7 +98,7 @@ get_max_lengths() {
         if [ "${MAX_LENGTH_JAIL_RELEASE}" -lt 7 ]; then MAX_LENGTH_JAIL_RELEASE=7; fi
 
         # Set max length for tags
-        # Not needed now as its the last thing we print
+        # Don't need these now as they are the last thing printed
         #MAX_LENGTH_JAIL_TAGS=$(find ${bastille_jailsdir}/*/tags -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 sh -c 'grep -h . "$1" | paste -sd "," -' sh | awk '{print length}' | sort -nr | head -n 1)
         #MAX_LENGTH_JAIL_TAGS=${MAX_LENGTH_JAIL_TAG:-10}
 
@@ -158,7 +158,7 @@ get_jail_info() {
             JAIL_IP4=$(jls -j ${JAIL_NAME} ip4.addr | sed 's/,/\n/g')
             JAIL_IP6=$(jls -j ${JAIL_NAME} ip6.addr | sed 's/,/\n/g')
         fi
-        JAIL_IP="$(echo ${JAIL_IP4} ${JAIL_IP6} | sed 's/-//g')"
+        JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed 's/-//g' | sort -u)"
 
         # Get jail path
         JAIL_PATH=$(/usr/sbin/jls -j ${JAIL_NAME} path 2> /dev/null)
@@ -190,7 +190,7 @@ get_jail_info() {
             JAIL_IP4=$(bastille config ${JAIL_NAME} get ip4.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
             JAIL_IP6=$(bastille config ${JAIL_NAME} get ip6.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
         fi
-        JAIL_IP="$(echo ${JAIL_IP4} ${JAIL_IP6})"
+        JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed 's/-//g')"
 
         # Get jail ports (inactive)
         if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
@@ -232,7 +232,7 @@ get_jail_info() {
     PRIORITY=${PRIORITY:-${DEFAULT_VALUE}}
 }
 
-list_all_short(){
+list_bastille(){
 
     get_max_lengths
 
@@ -250,14 +250,10 @@ list_all_short(){
 
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
 
-
             get_jail_info "${_jail}"
 
             # Print IPs with commans when JSON is selected
             if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="$(echo ${JAIL_IP} | sed 's/ .*|/,/g')"; fi
-
-            # Remove interface value from JAIL_IP
-            if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP=$(echo ${JAIL_IP} | sed 's/ /\n/g' | awk -F"|" '{print $2}' | sed 's#/.*##g' | sed 's/\n/ /g'); fi
 
             # Get JAIL_IP count
             JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
@@ -271,9 +267,9 @@ list_all_short(){
                 #                 10.10.10.11
                 #                 10.10.10.12
                 FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-                printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+                printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((4 - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                 for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                    printf "%*s%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
+                    printf "%*s%*s%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" "" "$((4 + ${SPACER}))" ""
                 done
             else
                 printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((4 - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
@@ -282,7 +278,7 @@ list_all_short(){
     done
 }
 
-list_all_long(){
+list_all(){
 
     get_max_lengths
 
@@ -316,7 +312,6 @@ list_all_long(){
                 #                 10.10.10.11
                 #                 10.10.10.12
                 FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-                if echo "${FIRST_IP}" | grep -q "|"; then FIRST_IP=$(echo ${FIRST_IP} | awk -F"|" '{print $2}' | sed 's#/.*##g'); fi
                 printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
                 for IP in $(echo "${JAIL_IP}" | tail -n +2); do
                     printf "%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
@@ -410,15 +405,10 @@ TARGET=""
 
 # Handle options.
 OPT_JSON=0
-OPT_ALL=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	-h|--help|help)
-	    usage
-	    ;;
-        -a|--all|all)
-	    OPT_ALL=1
-            shift
+        -h|--help|help)
+            usage
             ;;
 	-j|--json)
             OPT_JSON=1
@@ -431,7 +421,7 @@ while [ "$#" -gt 0 ]; do
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    a) OPT_ALL=1 ;;
+                    a) ;;
                     j) OPT_JSON=1 ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\""
@@ -445,23 +435,31 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Perform basic list if no args
 if [ "$#" -eq 0 ]; then
     # List json format, otherwise list all jails
-    if [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 1 ]; then
-        list_all_long | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"Boot\": \"" $2 "\", \"Prio\": \"" $3 "\", \"State\": \"" $4 "\", \"IP_Address\": \"" $5 "\", \"Published_Ports\": \"" $6 "\", \"Hostname\": \"" $7 "\", \"Release\": \"" $8 "\", \"Path\": \"" $9 "\"},"} END {print "]"}' | sed 's/,$//'
-    elif [ "${OPT_ALL}" -eq 0 ] && [ "${OPT_JSON}" -eq 1 ]; then
-        list_all_short | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"Name\": \"" $2 "\", \"Boot\": \"" $3 "\", \"Prio\": \"" $4 "\", \"State\": \"" $5 "\", \"IP_Address\": \"" $6 "\", \"Published_Ports\": \"" $7 "\", \"Release\": \"" $8 "\","} END {print "]"}' | sed 's/,$//'
-    elif [ "${OPT_ALL}" -eq 1 ] && [ "${OPT_JSON}" -eq 0 ]; then
-        list_all_long
-    elif [ "${OPT_ALL}" -eq 0 ] && [ "${OPT_JSON}" -eq 0 ]; then
-        list_all_short
+    if [ "${OPT_JSON}" -eq 1 ]; then
+        list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+    else
+        list_bastille
     fi
 fi
 
 if [ "$#" -gt 0 ]; then
     case "${1}" in
+        -a|--all|all)
+            if [ "${OPT_JSON}" -eq 1 ]; then
+                list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}'
+            else
+                list_all
+            fi
+            ;;
         rdr|port|ports)
-            list_ports
+            if [ "${OPT_JSON}" -eq 1 ]; then
+                list_ports | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Published_Ports\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+            else
+                list_ports
+            fi
             ;;
         release|releases)
             list_release "${2}"
@@ -487,14 +485,10 @@ if [ "$#" -gt 0 ]; then
             TARGET="${1}"
       	    set_target "${TARGET}"
             if [ -f "${bastille_jailsdir}/${TARGET}/jail.conf" ]; then
-                if [ "${OPT_JSON}" -eq 1 ] && [ "${OPT_ALL}" -eq 0 ]; then
-                    list_all_short | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"Name\": \"" $2 "\", \"Boot\": \"" $3 "\", \"Prio\": \"" $4 "\", \"State\": \"" $5 "\", \"IP_Address\": \"" $6 "\", \"Published_Ports\": \"" $7 "\", \"Release\": \"" $8 "\","} END {print "]"}' | sed 's/,$//'
-                elif [ "${OPT_JSON}" -eq 0 ] && [ "${OPT_ALL}" -eq 0 ]; then
-                    list_all_short
-                elif [ "${OPT_JSON}" -eq 1 ] && [ "${OPT_ALL}" -eq 1 ]; then
-                    list_all_long | awk 'BEGIN {print "["} NR > 1 {print "  {\"JID\": \"" $1 "\", \"Boot\": \"" $2 "\", \"Prio\": \"" $3 "\", \"State\": \"" $4 "\", \"IP_Address\": \"" $5 "\", \"Published_Ports\": \"" $6 "\", \"Hostname\": \"" $7 "\", \"Release\": \"" $8 "\", \"Path\": \"" $9 "\"},"} END {print "]"}' | sed 's/,$//'
-                elif [ "${OPT_JSON}" -eq 0 ] && [ "${OPT_ALL}" -eq 1 ]; then
-                    list_all_long
+                if [ "${OPT_JSON}" -eq 1 ]; then
+                    list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+                else
+                    list_bastille
                 fi
             else
                 usage
