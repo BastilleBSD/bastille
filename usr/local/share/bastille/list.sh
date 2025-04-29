@@ -379,6 +379,32 @@ list_ports() {
     done
 }
 
+list_state() {
+
+    get_max_lengths
+
+    # Check if we want only a single jail, or all jails
+    if [ -n "${TARGET}" ]; then
+        JAIL_LIST="${TARGET}"
+    else
+        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+    fi
+
+    # Print header
+    printf " JID%*sName%*sState\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
+
+    for _jail in ${JAIL_LIST}; do
+
+        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
+
+            get_jail_info "${_jail}"
+
+            printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_STATE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        fi
+    done
+}
+
 # TODO: Check the correct usage or arguments here. See SC2120.
 # shellcheck disable=SC2120
 list_release(){
@@ -439,13 +465,13 @@ while [ "$#" -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
-	-j|--json)
+        -j|--json)
             OPT_JSON=1
-	    shift
+            shift
             ;;
         -x|--debug)
             enable_debug
-	    shift
+	        shift
             ;;
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
@@ -498,6 +524,13 @@ if [ "$#" -eq 1 ]; then
                 list_ports | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Published_Ports\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
             else
                 list_ports
+            fi
+            ;;
+        state|status)
+            if [ "${OPT_JSON}" -eq 1 ]; then
+                list_state | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"State\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+            else
+                list_state
             fi
             ;;
         release|releases)
