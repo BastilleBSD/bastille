@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [jail(s)] [limit(s)] [log(s)]"
+    error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [ip(s)] [jail(s)] [limit(s)] [log(s)]"
     error_notify "                                                [path(s)] [port(s)] [prio|priority] [state(s)] [template(s)]"
     cat << EOF
     Options:
@@ -165,7 +165,8 @@ get_jail_info() {
         JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
         # Print IPs with commans when JSON is selected
-        if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="$(echo ${JAIL_IP} | sed 's/ /,/g')"; fi
+        JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
+        if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="${JAIL_IP_FULL}"; fi
 
         # Get jail path
         JAIL_PATH=$(/usr/sbin/jls -j ${JAIL_NAME} path 2> /dev/null)
@@ -199,8 +200,8 @@ get_jail_info() {
         fi
         JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
-        # Print IPs with commans when JSON is selected
-        if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="$(echo ${JAIL_IP} | sed 's/ /,/g')"; fi
+        JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
+        if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="${JAIL_IP_FULL}"; fi
 
         # Get jail ports (inactive)
         if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
@@ -261,9 +262,6 @@ list_bastille(){
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
 
             get_jail_info "${_jail}"
-
-            # Print IPs with commans when JSON is selected
-            if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="$(echo ${JAIL_IP} | sed 's/ .*|/,/g')"; fi
 
             # Get JAIL_IP count
             JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
@@ -330,6 +328,33 @@ list_all(){
         fi
     done
 }
+
+list_ips() {
+
+    get_max_lengths
+
+    # Check if we want only a single jail, or all jails
+    if [ -n "${TARGET}" ]; then
+        JAIL_LIST="${TARGET}"
+    else
+        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+    fi
+
+    # Print header
+    printf " JID%*sName%*sIP Address\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
+
+    for _jail in ${JAIL_LIST}; do
+
+        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
+
+            get_jail_info "${_jail}"
+
+            printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_IP_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        fi
+    done
+}
+
 
 list_paths() {
 
@@ -514,6 +539,13 @@ if [ "$#" -eq 1 ]; then
                 list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}'
             else
                 list_all
+            fi
+            ;;
+        ip|ips)
+            if [ "${OPT_JSON}" -eq 1 ]; then
+                list_ips | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"IP Address\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+            else
+                list_ips
             fi
             ;;
         path|paths)
