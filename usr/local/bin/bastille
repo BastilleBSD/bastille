@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=8e10f14
+BASTILLE_VERSION=7e900b0
 
 ## check for config existence
 bastille_conf_check() {
