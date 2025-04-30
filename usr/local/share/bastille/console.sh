@@ -115,15 +115,15 @@ check_fib() {
 }
 for _jail in ${JAILS}; do
 
-    echo ""
-    info "[${_jail}]:"
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else
+        info "[${_jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+
+    info "[${_jail}]:"
     
     LOGIN="$(jexec -l "${_jail}" which login)"
     if [ -n "${USER}" ]; then
@@ -134,7 +134,7 @@ for _jail in ${JAILS}; do
         ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
 	
-    # Print blank line on last jail
-    [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
+    # Print blank line
+    echo ""
     
 done

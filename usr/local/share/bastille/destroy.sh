@@ -52,14 +52,13 @@ destroy_jail() {
 
     for _jail in ${JAILS}; do
 	
-        echo ""
-
         bastille_jail_base="${bastille_jailsdir}/${_jail}"
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 
         check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
             bastille stop "${_jail}"
         else
+		    info "[${_jail}]:"
             error_notify "Jail is running."
             error_continue "Use [-a|--auto] to auto-stop the jail."
         fi
@@ -111,8 +110,8 @@ destroy_jail() {
             fi
         fi
 		
-        # Print blank line on last jail
-        [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
+        # Print blank line
+        echo ""
 	
     done
 }

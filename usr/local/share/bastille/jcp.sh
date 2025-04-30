@@ -94,7 +94,6 @@ for _jail in ${DEST_TARGET}; do
         continue
     else
 
-        echo ""
 	    info "[${_jail}]:"
 		
 	    source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
@@ -104,8 +103,8 @@ for _jail in ${DEST_TARGET}; do
             error_continue "JCP failed: ${source_path} -> ${dest_path}"
         fi
 		
-		# Print blank line on last jail
-        [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
+		# Print blank line
+        echo ""
 		
     fi
 done

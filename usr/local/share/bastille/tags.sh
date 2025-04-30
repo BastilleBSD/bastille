@@ -76,8 +76,6 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    echo ""
-
     bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"
     case ${ACTION} in
         add)
@@ -119,8 +117,8 @@ for _jail in ${JAILS}; do
         ;;
     esac
 	
-    # Print blank line on last jail
-    [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
+    # Print blank line
+    echo ""
 	
 done
 
