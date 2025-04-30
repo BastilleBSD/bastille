@@ -126,4 +126,8 @@ for _jail in ${JAILS}; do
     
     echo "Unmounted: ${_jailpath}"
 	
+    # Print blank line on last jail
+    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
 done

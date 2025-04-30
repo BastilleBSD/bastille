@@ -103,5 +103,10 @@ for _jail in ${DEST_TARGET}; do
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
             error_continue "JCP failed: ${source_path} -> ${dest_path}"
         fi
+		
+		# Print blank line on last jail
+        _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
+        [ "${_jail}" = "${_last_jail}" ] && echo ""
+		
     fi
 done

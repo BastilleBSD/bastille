@@ -98,4 +98,8 @@ for _jail in ${JAILS}; do
         error_continue "CP failed: ${host_path} -> ${jail_path}"
     fi
 	
+    # Print blank line on last jail
+    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
 done

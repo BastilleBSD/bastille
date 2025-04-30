@@ -110,6 +110,11 @@ destroy_jail() {
                 pfctl -a "rdr/${_jail}" -Fn
             fi
         fi
+		
+        # Print blank line on last jail
+        _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
+        [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
     done
 }
 

@@ -99,4 +99,8 @@ for _jail in ${JAILS}; do
 	
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
 	
+    # Print blank line on last jail
+    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
 done

@@ -187,5 +187,9 @@ for _jail in ${JAILS}; do
 
     # Delay between jail action
     sleep "${DELAY_TIME}"
+	
+    # Print blank line on last jail
+    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
 
 done

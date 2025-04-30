@@ -188,4 +188,9 @@ for _jail in ${JAILS}; do
             fi
             ;;
     esac
+	
+	# Print blank line on last jail
+    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
 done
