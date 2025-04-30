@@ -111,7 +111,9 @@ for _jail in ${JAILS}; do
         fi
     fi
 
-    echo ""
+    # Print blank line in front of first jail
+    [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
+	
     info "[${_jail}]:"
 	
     check_target_is_stopped "${_jail}" || error_continue "Jail is already running."
@@ -188,7 +190,7 @@ for _jail in ${JAILS}; do
     # Delay between jail action
     sleep "${DELAY_TIME}"
 	
-    # Print blank line on last jail
-    [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
+    # Print blank line
+    echo ""
 
 done

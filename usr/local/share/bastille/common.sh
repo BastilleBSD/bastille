@@ -67,9 +67,7 @@ fi
 # Notify message on error, and continue to next jail
 error_continue() {
     error_notify "$@"
-	# Print blank line on last jail
-    # We can use _TARGET from check_target_is_(running|stopped) for this
-    [ "${_TARGET}" = "${_LAST_JAIL}" ] && echo ""
+	echo ""
     # shellcheck disable=SC2104
     continue
 }
@@ -211,10 +209,10 @@ set_target() {
             TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
             JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
         fi
-        _LAST_JAIL="$(echo ${JAILS} | awk '{print $NF}')"
+        _FIRST_JAIL="$(echo ${JAILS} | awk '{print $1}')"
         export TARGET
         export JAILS
-        export _LAST_JAIL
+        export _FIRST_JAIL
     fi
 }
 
@@ -241,10 +239,10 @@ set_target_single() {
     fi
     TARGET="${_TARGET}"
     JAILS="${_TARGET}"
-	_LAST_JAIL="$(echo ${JAILS} | awk '{print $NF}')"
+    _FIRST_JAIL="$(echo ${JAILS} | awk '{print $1}')"
     export TARGET
     export JAILS
-	export _LAST_JAIL
+	export _FIRST_JAIL
 }
 
 target_all_jails() {
@@ -260,9 +258,9 @@ target_all_jails() {
     elif [ "${_order}" = "reverse" ]; then
         JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -nr | awk '{print $1}')"
     fi
-    _LAST_JAIL="$(echo ${JAILS} | awk '{print $NF}')"   
+    _FIRST_JAIL="$(echo ${JAILS} | awk '{print $1}')"
     export JAILS
-    export _LAST_JAIL
+    export _FIRST_JAIL
 }
 
 update_fstab() {

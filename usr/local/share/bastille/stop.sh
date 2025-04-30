@@ -86,7 +86,9 @@ set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
 
-    echo ""
+    # Print blank line in front of first jail
+    [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
+
     info "[${_jail}]:"
 	
     check_target_is_running "${_jail}" || error_continue "Jail is already stopped."
@@ -134,7 +136,7 @@ for _jail in ${JAILS}; do
         done
     fi
 	
-    # Print blank line on last jail
-    [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
+    # Print blank line
+    echo ""
 
 done
