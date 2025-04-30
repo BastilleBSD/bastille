@@ -68,6 +68,7 @@ fi
 error_continue() {
     error_notify "$@"
 	# Print blank line on last jail
+    # We can use _TARGET from check_target_is_(running|stopped) for this
     [ "${_TARGET}" = "${_LAST_JAIL}" ] && echo ""
     # shellcheck disable=SC2104
     continue
