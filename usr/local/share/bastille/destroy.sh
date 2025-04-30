@@ -52,9 +52,6 @@ destroy_jail() {
 
     for _jail in ${JAILS}; do
 	
-        # Print blank line in front of first jail
-        [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
-
         bastille_jail_base="${bastille_jailsdir}/${_jail}"
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 

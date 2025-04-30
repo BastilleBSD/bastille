@@ -76,9 +76,6 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    # Print blank line in front of first jail
-    [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
-
     bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"
     case ${ACTION} in
         add)

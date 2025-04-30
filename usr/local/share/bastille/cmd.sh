@@ -98,9 +98,6 @@ for _jail in ${JAILS}; do
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    # Print blank line in front of first jail
-    [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
-
 	info "[${_jail}]:"
     
     COUNT=$(($COUNT+1))

@@ -88,9 +88,6 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    # Print blank line in front of first jail
-    [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
-
     info "[${_jail}]:"
 	
     host_path="${HOST_PATH}"

@@ -95,9 +95,6 @@ for _jail in ${JAILS}; do
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
 	
-    # Print blank line in front of first jail
-    [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
-	
     info "[${_jail}]:"
 
     _jailpath="$( echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"

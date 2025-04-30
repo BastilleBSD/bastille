@@ -94,9 +94,6 @@ for _jail in ${DEST_TARGET}; do
         continue
     else
 
-        # Print blank line in front of first jail
-        [ "${_jail}" = "${_FIRST_JAIL}" ] && echo ""
-
 	    info "[${_jail}]:"
 		
 	    source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
