@@ -41,6 +41,31 @@ if [ $# -gt 1 ]; then
     usage
 fi
 
+# Configure netgraph
+configure_netgraph() {
+    if [ ! "$(kldstat -m netgraph)" ]; then
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
+        info "Configuring netgraph modules..."
+        kldload netgraph
+        kldload ng_netflow
+        kldload ng_ksocket
+        kldload ng_ether
+        kldload ng_bridge
+        kldload ng_eiface
+        kldload ng_socket
+        sysrc -f /boot/loader.conf netgraph_load="YES"
+        sysrc -f /boot/loader.conf ng_netflow_load="YES"
+        sysrc -f /boot/loader.conf ng_ksocket_load="YES"
+        sysrc -f /boot/loader.conf ng_ether_load="YES"
+        sysrc -f /boot/loader.conf ng_bridge_load="YES"
+        sysrc -f /boot/loader.conf ng_eiface_load="YES"
+        sysrc -f /boot/loader.conf ng_socket_load="YES"
+        info "Netgraph has been successfully configured!"
+    else
+        info "Netgraph has already been configured!"
+    fi
+}
+
 # Configure bastille loopback network interface
 configure_loopback_interface() {
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_loopback)" ] || ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
@@ -224,6 +249,26 @@ case "$1" in
     -p|pf|firewall)
         configure_pf
         ;;
+    -n|netgraph)
+        warn "[WARNING] Bastille only allows using either 'if_bridge' or 'netgraph'"
+        warn "as VNET network options. You CANNOT use both on the same system. If you have"
+        warn "already started using bastille with 'if_bridge' do not continue."
+        # shellcheck disable=SC3045
+        read -p "Do you really want to continue setting up netgraph for Bastille? [y|n]:" _answer
+        case "${_answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                configure_vnet
+                configure_netgraph
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "Netgraph setup cancelled."
+                ;;
+            *)
+                error_exit "Invalid selection. Please answer 'y' or 'n'"
+                ;;
+        esac
+        ;;
+
     -l|loopback)
         warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
         warn "interface to be configured ant one time. If you continue, the 'shared'"

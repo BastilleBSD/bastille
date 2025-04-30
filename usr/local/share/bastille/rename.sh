@@ -114,10 +114,18 @@ update_jailconf() {
 }
 
 update_jailconf_vnet() {
+
     local _jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local _rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
-    # Change epair name (if needed)
-    local _if_list="$(grep -Eo 'epair[0-9]+|bastille[0-9]+' ${_jail_conf} | sort -u)"
+
+    # Change bastille interface name (only needed for bridged epairs)
+    # We still gather interface names for JIB and JNG managed interfaces (for future use)
+    if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+        local _if_list="$(grep -Eo 'epair[0-9]+|e[0-9]+_bastille[0-9]+' ${_jail_conf} | sort -u)"
+    elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+        local _if_list="$(grep -Eo 'ng[0-9]+_bastille[0-9]+' ${_jail_conf} | sort -u)"
+    fi
+
     for _if in ${_if_list}; do
         if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
             # Check if epair name = jail name

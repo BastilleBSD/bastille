@@ -168,12 +168,6 @@ validate_netif() {
     fi
 }
 
-validate_netconf() {
-    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        error_exit "Invalid network configuration."
-    fi
-}
-
 validate_release() {
     ## ensure the user set the Linux(experimental) option explicitly
     if [ -n "${UBUNTU}" ]; then
@@ -455,11 +449,11 @@ create_jail() {
 
                         ## sane bastille zfs options
                         ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
-			## send without -R if encryption is enabled
+                        ## send without -R if encryption is enabled
                         if [ "$(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}")" = "off" ]; then
-			    OPT_SEND="-R"
+                            OPT_SEND="-R"
                         else
-			    OPT_SEND=""
+                            OPT_SEND=""
                         fi
 
                         ## take a temp snapshot of the base release
@@ -528,11 +522,19 @@ create_jail() {
 
         ## VNET specific
         if [ -n "${VNET_JAIL}" ]; then
-            ## VNET requires jib script
-            if [ ! "$(command -v jib)" ]; then
-                if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
-                    install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+            ## VNET requires jib or jng script
+            if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+                if [ ! "$(command -v jib)" ]; then
+                    if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+                        install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+                    fi
                 fi
+            elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+                if [ ! "$(command -v jng)" ]; then
+                    if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
+                        install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
+                    fi
+                fi 
             fi
         fi
     elif [ -n "${LINUX_JAIL}" ]; then
@@ -819,6 +821,11 @@ elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
     fi
 fi
 
+# Do not allow netgraph with -B|--bridge yet...
+if [ "${bastille_network_vnet_type}" = "netgraph" ] && [ -n "${VNET_JAIL_BRIDGE}" ]; then
+    error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] option."
+fi
+
 if [ -n "${LINUX_JAIL}" ] && [ -n "${VALIDATE_RELEASE}" ]; then
     case "${RELEASE}" in
     bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
@@ -999,4 +1006,5 @@ fi
 if check_target_exists "${NAME}"; then
     error_exit "Error: Existing jail found: ${NAME}"
 fi
+
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"

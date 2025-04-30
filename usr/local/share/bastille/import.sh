@@ -236,8 +236,8 @@ generate_config() {
 
     # See if we need to generate a vnet network section
     if [ "${IS_VNET_JAIL:-0}" = "1" ]; then
-        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}" "${OPT_STATIC_MAC}")
         vnet_requirements
+        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}" "${OPT_STATIC_MAC}")
     else
         # If there are multiple IP/NIC let the user configure network
         IP4_DEFINITION=""
@@ -443,11 +443,21 @@ workout_components() {
 
 vnet_requirements() {
     # VNET jib script requirement
-    if [ ! "$(command -v jib)" ]; then
-        if [ -f "/usr/share/examples/jails/jib" ] && [ ! -f "/usr/local/bin/jib" ]; then
-            install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
-        else
-            warn "Warning: Unable to locate/install jib script required by VNET jails."
+    if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+        if [ ! "$(command -v jib)" ]; then
+            if [ -f "/usr/share/examples/jails/jib" ] && [ ! -f "/usr/local/bin/jib" ]; then
+                install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+            else
+                warn "Warning: Unable to locate/install jib script required by VNET jails."
+            fi
+        fi
+    elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+        if [ ! "$(command -v jng)" ]; then
+            if [ -f "/usr/share/examples/jails/jng" ] && [ ! -f "/usr/local/bin/jng" ]; then
+                install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
+            else
+                warn "Warning: Unable to locate/install jng script required by VNET jails."
+            fi
         fi
     fi
 }

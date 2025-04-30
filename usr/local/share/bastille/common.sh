@@ -130,14 +130,24 @@ check_target_is_stopped() {
     fi
 }
 
-get_epair_count() {
-    for _config in /usr/local/etc/bastille/*.conf; do
-        local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
-        _epair_list="$(printf '%s\n%s' "$( (grep -Ehos '(epair[0-9]+|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair | grep -Eos "_bastille[0-9]+$"; ifconfig -g epair | grep -vs 'bastille' | grep -Eos 'e[0-9]+a_') | grep -Eos '[0-9]+')" "${_epair_list}")"
-    done
-    _epair_count=$(printf '%s' "${_epair_list}" | sort -u | wc -l | awk '{print $1}')
-    export _epair_list
-    export _epair_count
+get_bastille_if_count() {
+    if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+        for _config in /usr/local/etc/bastille/*.conf; do
+            local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
+            _bastille_if_list="$(printf '%s\n%s' "$( (grep -Ehos '(epair[0-9]+|bastille[0-9]+)' ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair | grep -Eos "_bastille[0-9]+$"; ifconfig -g epair | grep -vs 'bastille' | grep -Eos 'e[0-9]+a_') | grep -Eos '[0-9]+')" "${_bastille_if_list}")"
+        done
+        _bastille_if_count=$(printf '%s' "${_bastille_if_list}" | sort -u | wc -l | awk '{print $1}')
+        export _bastille_if_list
+        export _bastille_if_count
+    elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+        for _config in /usr/local/etc/bastille/*.conf; do
+            local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
+            _bastille_if_list="$(printf '%s\n%s' "$( (grep -Ehos 'ng[0-9]+_bastille[0-9]+' ${bastille_jailsdir}/*/jail.conf | grep -Eos 'bastille[0-9]+'; ngctl list -n | grep "eiface" | grep -Eos 'ng[0-9]+_bastille[0-9]+' | grep -Eos 'bastille[0-9]+') | grep -Eos '[0-9]+')" "${_bastille_if_list}")"
+        done
+        _bastille_if_count=$(printf '%s' "${_bastille_if_list}" | sort -u | wc -l | awk '{print $1}')
+        export _bastille_if_list
+        export _bastille_if_count
+    fi
 }
 
 get_jail_name() {
@@ -300,12 +310,12 @@ generate_vnet_jail_netblock() {
     local external_interface="${3}"
     local static_mac="${4}"
     # Get number of epairs on the system
-    get_epair_count
-    local _epair_num_range=$((_epair_count + 1))
+    get_bastille_if_count
+    local _bastille_if_num_range=$((_bastille_if_count + 1))
     if [ -n "${use_unique_bridge}" ]; then
-        if [ "${_epair_count}" -gt 0 ]; then  
-            for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
+        if [ "${_bastille_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
                     if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                         local host_epair=e${_num}a_${jail_name}
                         local jail_epair=e${_num}b_${jail_name}
@@ -328,15 +338,15 @@ generate_vnet_jail_netblock() {
             fi
         fi
     else
-        if [ "${_epair_count}" -gt 0 ]; then  
-            for _num in $(seq 0 "${_epair_num_range}"); do
-                if ! echo "${_epair_list}" | grep -oqswx "${_num}"; then
-                    local uniq_epair="bastille${_num}"
+        if [ "${_bastille_if_count}" -gt 0 ]; then  
+            for _num in $(seq 0 "${_bastille_if_num_range}"); do
+                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+                    local _jail_if="bastille${_num}"
                     break
                 fi
             done
         else
-            local uniq_epair="bastille0"
+            local _jail_if="bastille0"
         fi
     fi
     ## If BRIDGE is enabled, generate bridge config, else generate VNET config
@@ -372,28 +382,59 @@ EOF
 EOF
         fi
     else
-        if [ -n "${static_mac}" ]; then
-            ## Generate VNET config with static MAC address
-            generate_static_mac "${jail_name}" "${external_interface}"
-            cat <<-EOF
+        if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+            if [ -n "${static_mac}" ]; then
+                ## Generate VNET config with static MAC address
+                generate_static_mac "${jail_name}" "${external_interface}"
+                cat <<-EOF
   vnet;
-  vnet.interface = e0b_${uniq_epair};
-  exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
-  exec.prestart += "ifconfig e0a_${uniq_epair} ether ${macaddr}a";
-  exec.prestart += "ifconfig e0b_${uniq_epair} ether ${macaddr}b";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
-  exec.poststop += "jib destroy ${uniq_epair}";
+  vnet.interface = e0b_${_jail_if};
+  exec.prestart += "jib addm ${_jail_if} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${_jail_if} ether ${macaddr}a";
+  exec.prestart += "ifconfig e0b_${_jail_if} ether ${macaddr}b";
+  exec.prestart += "ifconfig e0a_${_jail_if} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "jib destroy ${_jail_if}";
 EOF
-        else
-            ## Generate VNET config without static MAC address
-            cat <<-EOF
+            else
+                ## Generate VNET config without static MAC address
+                cat <<-EOF
   vnet;
-  vnet.interface = e0b_${uniq_epair};
-  exec.prestart += "jib addm ${uniq_epair} ${external_interface}";
-  exec.prestart += "ifconfig e0a_${uniq_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
-  exec.poststop += "jib destroy ${uniq_epair}";
+  vnet.interface = e0b_${_jail_if};
+  exec.prestart += "jib addm ${_jail_if} ${external_interface}";
+  exec.prestart += "ifconfig e0a_${_jail_if} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
+  exec.poststop += "jib destroy ${_jail_if}";
 EOF
+            fi
+        elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+            if [ -n "${static_mac}" ]; then
+                ## Generate VNET config with static MAC address
+                generate_static_mac "${jail_name}" "${external_interface}"
+                cat <<-EOF
+  vnet;
+  vnet.interface = ng0_${_jail_if};
+  exec.prestart += "jng bridge ${_jail_if} ${external_interface}";
+  exec.prestart += "ifconfig ng0_${_jail_if} ether ${macaddr}a";
+  exec.poststop += "jng shutdown ${_jail_if}";
+EOF
+            else
+                ## Generate VNET config without static MAC address
+                cat <<-EOF
+  vnet;
+  vnet.interface = ng0_${_jail_if};
+  exec.prestart += "jng bridge ${_jail_if} ${external_interface}";
+  exec.poststop += "jng shutdown ${_jail_if}";
+EOF
+            fi
         fi
+    fi
+}
+
+validate_netconf() {
+    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+        error_exit "[ERROR]: 'bastille_network_loopback' and 'bastille_network_shared' cannot both be set."
+    fi
+    if [ "${bastille_network_vnet_type}" != "if_bridge" ] && [ "${bastille_network_vnet_type}" != "netgraph" ]; then
+        error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
     fi
 }
 
