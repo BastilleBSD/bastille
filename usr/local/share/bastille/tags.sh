@@ -75,6 +75,9 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+
+    echo ""
+
     bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"
     case ${ACTION} in
         add)

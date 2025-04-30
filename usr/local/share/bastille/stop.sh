@@ -86,7 +86,9 @@ set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
 
+    echo ""
     info "[${_jail}]:"
+	
     check_target_is_running "${_jail}" || error_continue "Jail is already stopped."
 
     # Remove RDR rules

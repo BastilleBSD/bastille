@@ -96,6 +96,7 @@ errors=0
 
 for _jail in ${JAILS}; do
 
+    echo ""
     info "[${_jail}]:"
 
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then

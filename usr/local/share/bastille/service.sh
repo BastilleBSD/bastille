@@ -86,12 +86,17 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+
+    echo ""
     info "[${_jail}]:"
+	
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else   
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+	
     jexec -l "${_jail}" /usr/sbin/service "$@"
+	
 done

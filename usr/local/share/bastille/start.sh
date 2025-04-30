@@ -111,7 +111,9 @@ for _jail in ${JAILS}; do
         fi
     fi
 
-    info "[${_jail}]:"        
+    echo ""
+    info "[${_jail}]:"
+	
     check_target_is_stopped "${_jail}" || error_continue "Jail is already running."
 
     # Validate interfaces and add IPs to firewall table
