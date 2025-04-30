@@ -401,7 +401,7 @@ create_jail() {
 
         if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
-            info "Creating a thinjail..."
+            info "\nCreating a thinjail..."
             for _link in ${LINK_LIST}; do
                 ln -sf /.bastille/${_link} ${_link}
             done
@@ -432,7 +432,7 @@ create_jail() {
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${CLONE_JAIL}" ]; then
-                        info "Creating a clonejail...\n"
+                        info "\nCreating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
                         # shellcheck disable=SC2140
@@ -444,7 +444,7 @@ create_jail() {
                         # Check and apply required settings.
                         post_create_jail
                     elif [ -n "${THICK_JAIL}" ]; then
-                        info "Creating a thickjail. This may take a while...\n"
+                        info "\nCreating a thickjail. This may take a while...\n"
                         ## perform release base replication
 
                         ## sane bastille zfs options
@@ -971,7 +971,7 @@ if [ -z "${EMPTY_JAIL}" ]; then
         validate_netconf
     fi
 else
-    info "Creating empty jail: ${NAME}."
+    info "\nCreating empty jail: ${NAME}."
 fi
 
 # May not exist on deployments created before Bastille 0.7.20200714, so creating it. -- cwells
@@ -1008,3 +1008,5 @@ if check_target_exists "${NAME}"; then
 fi
 
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"
+
+echo

@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille destroy [option(s)] [JAIL|RELEASE]"
     cat << EOF
+	
     Options:
 
     -a | --auto              Auto mode. Start/stop jail(s) if required.
@@ -51,16 +52,18 @@ destroy_jail() {
     local OPTIONS
 
     for _jail in ${JAILS}; do
+
+        info "[${_jail}]:"
 	
         bastille_jail_base="${bastille_jailsdir}/${_jail}"
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 
         check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+            echo "Auto-stopping ${_jail}..."
             bastille stop "${_jail}"
         else
-		    info "[${_jail}]:"
             error_notify "Jail is running."
-            error_continue_next_jail "Use [-a|--auto] to auto-stop the jail."
+            error_continue "Use [-a|--auto] to auto-stop the jail."
         fi
 
         if [ -d "${bastille_jail_base}" ]; then
@@ -109,9 +112,6 @@ destroy_jail() {
                 pfctl -a "rdr/${_jail}" -Fn
             fi
         fi
-		
-        # Print blank line
-        echo ""
 	
     done
 }
@@ -304,3 +304,5 @@ case "${TARGET}" in
         destroy_jail "${JAILS}"
         ;;
 esac
+
+echo

@@ -37,6 +37,7 @@ usage() {
     error_notify "Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|remove OPTION|clear|reset|[list|show] (active)|stats]"
     echo -e "Example: bastille limits TARGET add memoryuse 1G"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -53,10 +54,10 @@ while [ "$#" -gt 0 ]; do
 	-h|--help|help)
 	    usage
 	    ;;
-	-a|--auto)
-	    AUTO=1
-	    shift
-	    ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
         -x|--debug)
             enable_debug
             shift

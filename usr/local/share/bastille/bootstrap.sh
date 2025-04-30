@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]"
     cat << EOF
+	
     Options:
     
     -x | --debug           Enable debug mode.
@@ -288,7 +289,7 @@ bootstrap_release() {
 
     info "Bootstrap successful."
     info "See 'bastille --help' for available commands."
-    echo
+	
 }
 
 debootstrap_release() {
@@ -384,7 +385,6 @@ debootstrap_release() {
 
     info "Bootstrap successful."
     info "See 'bastille --help' for available commands."
-    echo
 }
 
 bootstrap_template() {
@@ -658,3 +658,5 @@ case "${OPTION}" in
         bastille update "${RELEASE}"
         ;;
 esac
+
+echo

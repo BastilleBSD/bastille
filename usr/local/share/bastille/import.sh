@@ -36,8 +36,8 @@ usage() {
     # Build an independent usage for the import command
     # If no file/extension specified, will import from standard input
     error_notify "Usage: bastille import [option(s)] FILE [RELEASE]"
-
     cat << EOF
+	
     Options:
 
     -f | --force               Force an archive import regardless if the checksum file does not match or missing.
@@ -748,3 +748,5 @@ fi
 if [ -n "${TARGET}" ]; then
     jail_import
 fi
+
+echo

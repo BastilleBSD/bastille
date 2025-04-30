@@ -34,8 +34,8 @@
 
 usage() {
     error_notify "Usage: bastille convert [option(s)] [TARGET|TARGET RELEASE]"
-
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -81,7 +81,11 @@ CONVERT_RELEASE="${2}"
 
 bastille_root_check
 set_target_single "${TARGET}"
+
+info "\n[${TARGET}]:"
+
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+    echo "Auto-stopping ${TARGET}..."
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
@@ -103,7 +107,7 @@ convert_jail_to_release() {
     _jailname="${1}"
     _release="${2}"
     
-    info "Creating ${_release} from ${_jailname}..."
+    echo "Creating ${_release} from ${_jailname}..."
 
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ]; then
@@ -162,7 +166,7 @@ convert_symlinks() {
         done
 
         # Copy new files to destination jail
-        info "Copying required base files to container..."
+        echo "Copying required base files to container..."
         for _link in ${SYMLINKS}; do
             if [ ! -d "${_link}" ]; then
                 if [ -d "${bastille_releasesdir}/${RELEASE}/${_link}" ]; then
@@ -274,3 +278,5 @@ elif  [ "$#" -eq 2 ]; then
 else
     usage
 fi
+
+echo

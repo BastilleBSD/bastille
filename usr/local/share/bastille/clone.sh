@@ -33,8 +33,9 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille clone [option(s)] TARGET NEW_NAME IP_ADDRESS"
+    error_notify "Usage: bastille clone [option(s)] TARGET NEWNAME IPADDRESS"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
@@ -373,19 +374,22 @@ update_jailconf_vnet() {
 
 clone_jail() {
 
-    info "Attempting to clone ${TARGET} to ${NEWNAME}..."
+    info "\n[${TARGET}]:"
+    echo "Attempting clone to ${NEWNAME}..."
 
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ "${LIVE}" -eq 1 ]; then
                 check_target_is_running "${TARGET}" || error_exit "[-l|--live] can only be used with a running jail."
             else check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+                    echo "Auto-stopping ${TARGET}..."
                     bastille stop "${TARGET}"
                 else
                     error_notify "Jail is running."
                     error_exit "Use [-a|--auto] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
                 fi
             fi
+
             if [ -n "${bastille_zfs_zpool}" ]; then
                 # Replicate the existing container
                 DATE=$(date +%F-%H%M%S)
@@ -401,14 +405,18 @@ clone_jail() {
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
             fi
         else
-            # Perform container file copy (archive mode)
+		 
             check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+                echo "Auto-stopping ${TARGET}..."
                 bastille stop "${TARGET}"
             else
                 error_notify "Jail is running."
                 error_exit "Use [-a|--auto] to force stop the jail."
             fi
+
+            # Perform container file copy (archive mode)
             cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+
         fi
     else
         error_exit "${NEWNAME} already exists."
@@ -442,3 +450,5 @@ else
 fi
 
 clone_jail
+
+echo

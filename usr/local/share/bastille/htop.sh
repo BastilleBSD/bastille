@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille htop [option(s)] TARGET"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -84,15 +85,15 @@ TARGET="${1}"
 bastille_root_check
 set_target_single "${TARGET}"
 
+info "[${TARGET}]:"
+
 check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+    echo "Auto-starting ${TARGET}..."
     bastille start "${TARGET}"
-else
-    info "[${TARGET}]:"  
+else  
     error_notify "Jail is not running."
     error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
 fi
-
-info "[${TARGET}]:"
 
 if [ ! -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
     error_notify "htop not found on ${TARGET}."

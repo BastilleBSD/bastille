@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille console [option(s)] TARGET [user]"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -115,15 +116,15 @@ check_fib() {
 }
 for _jail in ${JAILS}; do
 
+    info "\n[${_jail}]:"
+
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
-        info "[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
-
-    info "[${_jail}]:"
     
     LOGIN="$(jexec -l "${_jail}" which login)"
     if [ -n "${USER}" ]; then
@@ -133,8 +134,7 @@ for _jail in ${JAILS}; do
         LOGIN="$(jexec -l "${_jail}" which login)"
         ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
-	
-    # Print blank line
-    echo ""
     
 done
+
+echo

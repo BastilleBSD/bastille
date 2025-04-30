@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille edit [option(s)] TARGET [filename]"
     cat << EOF
+	
     Options:
 
     -x | --debug          Enable debug mode.

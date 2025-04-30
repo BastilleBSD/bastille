@@ -32,6 +32,7 @@
 usage() {
     error_notify "Usage: bastille etcupdate [option(s)] [bootstrap|TARGET] [diff|resolve|update RELEASE]"
     cat << EOF
+	
     Options:
 
     -d | --dry-run          Show output, but do not apply.
@@ -59,40 +60,40 @@ bootstrap_etc_release() {
 bootstrap_etc_tarball() {
     local _release="${1}"
     if [ ! -f ${bastille_cachedir}/${_release}.tbz2 ]; then
-        echo "Building tarball, please wait..."
+        echo "\nBuilding tarball, please wait..."
         if ! etcupdate build -d /tmp/etcupdate -s ${bastille_releasesdir}/${_release}/usr/src ${bastille_cachedir}/${_release}.tbz2; then
             error_exit "Failed to build etcupdate tarball \"${_release}.tbz2\""
         else
-            info "Etcupdate bootstrap complete: ${_release}"
+            info "\nEtcupdate bootstrap complete: ${_release}"
         fi
     elif [ -f ${bastille_cachedir}/${_release}.tbz2 ] && [ "${FORCE}" -eq 1 ]; then
         rm -f "${bastille_cachedir}/${_release}.tbz2"
         echo "Building tarball, please wait..."
         if ! etcupdate build -d /tmp/etcupdate -s ${bastille_releasesdir}/${_release}/usr/src ${bastille_cachedir}/${_release}.tbz2; then
-            error_exit "Failed to build etcupdate tarball: ${_release}.tbz2"
+            error_exit "[ERROR]: Failed to build etcupdate tarball: ${_release}.tbz2"
         else
-            info "Etcupdate bootstrap complete: ${_release}"
+            info "\nEtcupdate bootstrap complete: ${_release}"
         fi
     else
-        info "Etcupdate release has already been prepared for application: ${_release}"
+        info "\nEtcupdate release has already been prepared for application: ${_release}"
     fi
 }
 
 diff_review() {
     local _jail="${1}"
     if [ "${DRY_RUN}" -eq 1 ]; then
-        warn "Warning: diff mode does not support [-d|--dryrun]"
+        error_exit "[ERROR]: diff mode does not support [-d|--dryrun]"
     fi
-    info "[${_jail}]: etcupdate --diff mode"
+    info "\n[${_jail}]: etcupdate --diff mode"
     etcupdate diff -D "${bastille_jailsdir}/${_jail}/root"  
 }
 
 resolve_conflicts() {
     local _jail="${1}"
     if [ "${DRY_RUN}" -eq 1 ]; then
-        warn "Warning: resolve mode does not support [-d|--dryrun]"
+        error_exit "[ERROR]: resolve mode does not support [-d|--dryrun]"
     fi
-    info "[${_jail}]: etcupdate resolve"
+    info "\n[${_jail}]: etcupdate resolve"
     etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"  
 }
 
@@ -103,10 +104,10 @@ update_jail_etc() {
         error_exit "Error: Please run \"bastille etcupdate bootstrap RELEASE\" first."
     fi
     if [ "${DRY_RUN}" -eq 1 ]; then
-        info "[${_jail}]: etcupdate update --dry-run"
+        info "\n[${_jail}]: etcupdate update --dry-run"
         etcupdate -n -D "${bastille_jailsdir}/${_jail}/root" -t ${bastille_cachedir}/${_release}.tbz2
     else
-        info "[${_jail}]: etcupdate update"
+        info "\n[${_jail}]: etcupdate update"
         etcupdate -D "${bastille_jailsdir}/${_jail}/root" -t ${bastille_cachedir}/${_release}.tbz2
     fi
 }
@@ -194,3 +195,5 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+echo
