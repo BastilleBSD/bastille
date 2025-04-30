@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille restart [option(s)] TARGET"
     cat << EOF
+	
     Options:
 
     -b | --boot                 Respect jail boot setting.

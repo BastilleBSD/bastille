@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille start [option(s)] TARGET"
     cat << EOF
+
     Options:
 
     -b | --boot                 Respect jail boot setting. 
@@ -110,13 +111,12 @@ for _jail in ${JAILS}; do
             continue
         fi
     fi
+
+    info "\n[${_jail}]:"
 	
     if check_target_is_running "${_jail}"; then
-        info "[${_jail}]:"
-        error_continue_next_jail "Jail is already running."
+        error_continue "Jail is already running."
     fi
-	
-    info "[${_jail}]:"
 	
     # Validate interfaces and add IPs to firewall table
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
@@ -141,7 +141,7 @@ for _jail in ${JAILS}; do
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
                     fi
                 else
-                    error_continue_next_jail "Error: ${_if} interface does not exist."
+                    error_continue "Error: ${_if} interface does not exist."
                 fi
             done
         fi
@@ -164,7 +164,7 @@ for _jail in ${JAILS}; do
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
                     fi
                 else
-                    error_continue_next_jail "Error: ${_if} interface does not exist."
+                    error_continue "Error: ${_if} interface does not exist."
                 fi
             done
         fi
@@ -189,8 +189,7 @@ for _jail in ${JAILS}; do
 
     # Delay between jail action
     sleep "${DELAY_TIME}"
-	
-    # Print blank line
-    echo
 
 done
+
+echo

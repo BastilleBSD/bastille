@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille zfs TARGET [set|get|snap|destroy_snap|df|usage] [key=value|date]"
     cat << EOF
+	
     Options:
 
     -x | --debug          Enable debug mode.
@@ -46,40 +47,31 @@ EOF
 zfs_snapshot() {
 for _jail in ${JAILS}; do
 
-    info "[${_jail}]:"
+    info "\n[${_jail}]:"
 	
     # shellcheck disable=SC2140
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 
-    # Print blank line
-    echo
-	
 done
 }
 
 zfs_destroy_snapshot() {
 for _jail in ${JAILS}; do
 
-    info "[${_jail}]:"
+    info "\n[${_jail}]:"
 	
     # shellcheck disable=SC2140
     zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 
-    # Print blank line
-    echo
-	
 done
 }
 
 zfs_set_value() {
 for _jail in ${JAILS}; do
 
-    info "[${_jail}]:"
+    info "\n[${_jail}]:"
 	
     zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-
-    # Print blank line
-    echo
 	
 done
 }
@@ -87,11 +79,8 @@ done
 zfs_get_value() {
 for _jail in ${JAILS}; do
 
-    info "[${_jail}]:"
+    info "\n[${_jail}]:"
     zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-
-    # Print blank line
-    echo
 	
 done
 }
@@ -99,12 +88,9 @@ done
 zfs_disk_usage() {
 for _jail in ${JAILS}; do
 
-    info "[${_jail}]:"
+    info "\n[${_jail}]:"
 	
     zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-
-    # Print blank line
-    echo
 		
 done
 }
@@ -174,3 +160,5 @@ case "${ACTION}" in
         usage
         ;;
 esac
+
+echo

@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille verify [RELEASE|TEMPLATE]"
     cat << EOF
+	
     Options:
 
     -x | --debug          Enable debug mode.
@@ -198,3 +199,5 @@ case "${1}" in
         usage
         ;;
 esac
+
+echo

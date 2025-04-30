@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -142,15 +143,15 @@ fi
 
 for _jail in ${JAILS}; do
 
+    info "\n[${_jail}]:"
+
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
-        info "[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
-	
-    info "[${_jail}]:"
 	
     _fullpath_fstab="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab}" 2>/dev/null | sed 's#//#/#' )"
     _fullpath="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath}" 2>/dev/null | sed 's#//#/#' )"
@@ -167,13 +168,13 @@ for _jail in ${JAILS}; do
 
     # Create mount point if it does not exist
     if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
-        mkdir -p "${_fullpath}" || error_continue_next_jail "Failed to create mount point."
+        mkdir -p "${_fullpath}" || error_continue "Failed to create mount point."
     elif [ -f "${_hostpath}" ] ; then
         _filename="$( basename ${_hostpath} )"
         if  echo "${_fullpath}" 2>/dev/null | grep -qow "${_filename}"; then
-            mkdir -p "$( dirname "${_fullpath}" )" || error_continue_next_jail "Failed to create mount point."
+            mkdir -p "$( dirname "${_fullpath}" )" || error_continue "Failed to create mount point."
             if [ ! -f "${_fullpath}" ]; then
-                touch "${_fullpath}" || error_continue_next_jail "Failed to create mount point."
+                touch "${_fullpath}" || error_continue "Failed to create mount point."
             else
                 error_notify "Failed. File exists at mount point."
                 warn "${_fullpath}"
@@ -183,9 +184,9 @@ for _jail in ${JAILS}; do
             _fullpath_fstab="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath_fstab}/${_filename}" 2>/dev/null | sed 's#//#/#' )"
             _fullpath="$( echo "${bastille_jailsdir}/${_jail}/root/${_jailpath}/${_filename}" 2>/dev/null | sed 's#//#/#' )"
             _fstab_entry="${_hostpath_fstab} ${_fullpath_fstab} ${_type} ${_perms} ${_checks}"
-            mkdir -p "$( dirname "${_fullpath}" )" || error_continue_next_jail "Failed to create mount point."
+            mkdir -p "$( dirname "${_fullpath}" )" || error_continue "Failed to create mount point."
             if [ ! -f "${_fullpath}" ]; then
-                touch "${_fullpath}" || error_continue_next_jail "Failed to create mount point."
+                touch "${_fullpath}" || error_continue "Failed to create mount point."
             else
                 error_notify "Failed. File exists at mount point."
                 warn "${_fullpath}"
@@ -195,11 +196,10 @@ for _jail in ${JAILS}; do
     fi   
     
     # Add entry to fstab and mount
-    echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab" || error_continue_next_jail "Failed to create fstab entry: ${_fstab_entry}"
-    mount -F "${bastille_jailsdir}/${_jail}/fstab" -a || error_continue_next_jail "Failed to mount volume: ${_fullpath}"
+    echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab" || error_continue "Failed to create fstab entry: ${_fstab_entry}"
+    mount -F "${bastille_jailsdir}/${_jail}/fstab" -a || error_continue "Failed to mount volume: ${_fullpath}"
     echo "Added: ${_fstab_entry}"
 	
-	# Print blank line
-    echo
-	
 done
+
+echo

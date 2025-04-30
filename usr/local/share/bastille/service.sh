@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille service [options(s)] TARGET SERVICE_NAME ACTION"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -86,20 +87,19 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+
+    info "\n[${_jail}]:"
 	
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else  
-        info "[${_jail}]:"
         error_notify "Jail is not running."
         error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
     fi
 	
-    info "[${_jail}]:"
-	
     jexec -l "${_jail}" /usr/sbin/service "$@"
 	
-    # Print blank line
-    echo
-	
 done
+
+echo

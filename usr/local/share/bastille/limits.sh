@@ -103,15 +103,16 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
+    info "\n[${_jail}]:"
+
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
         info "[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
-
-    info "[${_jail}]:"
     
     case "${ACTION}" in
         add)
@@ -154,43 +155,42 @@ for _jail in ${JAILS}; do
                 while read _limits; do
                     rctl -r "${_limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
-                info "[${_jail}]: RCTL limits cleared."
+                echo "RCTL limits cleared."
             fi
 	        ;;
         list|show)
             # Show limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-	        if [ "${1}" = "active" ]; then
-	            rctl jail:${_jail} 2>/dev/null
-	        else
-	            cat "${bastille_jailsdir}/${_jail}/rctl.conf"
-	        fi
+	            if [ "${1}" = "active" ]; then
+	                rctl jail:${_jail} 2>/dev/null
+	            else
+	                cat "${bastille_jailsdir}/${_jail}/rctl.conf"
+	            fi
             fi
             ;;
         stats)
             # Show statistics
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-	        rctl -hu jail:${_jail} 2>/dev/null
+	            rctl -hu jail:${_jail} 2>/dev/null
             fi
             ;;
         reset)
             # Remove limits and delete rctl.conf
-	    if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 while read _limits; do
                     rctl -r "${_limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
-	        info "[${TARGET}]: RCTL limits cleared."
+	            echo "RCTL limits cleared."
             fi
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 rm -f "${bastille_jailsdir}/${_jail}/rctl.conf"
-                info "[${TARGET}]: rctl.conf removed."
+                echo "rctl.conf removed."
             else
-                error_continue_next_jail "[${TARGET}]: rctl.conf not found."
+                error_continue "rctl.conf not found."
             fi
             ;;
     esac
 	
-	# Print blank line
-    echo
-	
 done
+
+echo

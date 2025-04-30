@@ -110,14 +110,13 @@ jail_check() {
     # Check if the jail is thick and is running
     set_target_single "${TARGET}"
     check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${TARGET}..."
         bastille start "${TARGET}"
     else
-        info "[${TARGET}]:"
         error_notify "Jail is not running."
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-        info "[${TARGET}]:"
         error_notify "${TARGET} is not a thick container."
         error_exit "See 'bastille update RELEASE' to update thin jails."
     fi
@@ -217,6 +216,9 @@ elif echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
     arch_check
     release_update
 else
+    info "\n[${TARGET}]:"
     jail_check
     jail_update "${TARGET}"
 fi
+
+echo
