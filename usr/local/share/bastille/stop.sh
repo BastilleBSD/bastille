@@ -83,6 +83,7 @@ TARGET="${1}"
 
 bastille_root_check
 set_target "${TARGET}" "reverse"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 for _jail in ${JAILS}; do
 
@@ -133,5 +134,8 @@ for _jail in ${JAILS}; do
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi
+	
+    # Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
 
 done

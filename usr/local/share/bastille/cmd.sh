@@ -87,6 +87,7 @@ COUNT=0
 RETURN=0
 
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 for _jail in ${JAILS}; do
 
@@ -116,6 +117,10 @@ for _jail in ${JAILS}; do
     else 
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
+	
+    # Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+
 done
 
 # Check when a command is executed in all running jails. (bastille cmd ALL ...)

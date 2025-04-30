@@ -90,6 +90,7 @@ fi
 
 bastille_root_check
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 # Assign variables
 _hostpath_fstab=$(echo "${_fstab}" | awk '{print $1}')
@@ -198,4 +199,8 @@ for _jail in ${JAILS}; do
     echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab" || error_continue "Failed to create fstab entry: ${_fstab_entry}"
     mount -F "${bastille_jailsdir}/${_jail}/fstab" -a || error_continue "Failed to mount volume: ${_fullpath}"
     echo "Added: ${_fstab_entry}"
+	
+	# Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
 done

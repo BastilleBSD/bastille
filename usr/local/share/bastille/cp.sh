@@ -85,6 +85,7 @@ JAIL_PATH="${3}"
 
 bastille_root_check
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 for _jail in ${JAILS}; do
 
@@ -97,5 +98,8 @@ for _jail in ${JAILS}; do
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
         error_continue "CP failed: ${host_path} -> ${jail_path}"
     fi
+	
+    # Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
 	
 done

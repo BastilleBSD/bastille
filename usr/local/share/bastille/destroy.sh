@@ -110,6 +110,10 @@ destroy_jail() {
                 pfctl -a "rdr/${_jail}" -Fn
             fi
         fi
+		
+        # Print blank line on last jail
+        [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
     done
 }
 
@@ -298,6 +302,7 @@ case "${TARGET}" in
     *)
         ## just destroy a jail
         set_target "${TARGET}" "reverse"
+		_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
         destroy_jail "${JAILS}"
         ;;
 esac

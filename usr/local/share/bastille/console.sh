@@ -84,6 +84,7 @@ USER="${2}"
 
 bastille_root_check
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 validate_user() {
     local _jail="${1}"
@@ -133,5 +134,8 @@ for _jail in ${JAILS}; do
         LOGIN="$(jexec -l "${_jail}" which login)"
         ${_setfib} jexec -l "${_jail}" $LOGIN -f root
     fi
+	
+    # Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
     
 done

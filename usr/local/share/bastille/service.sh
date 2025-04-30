@@ -84,6 +84,7 @@ shift
 
 bastille_root_check
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 for _jail in ${JAILS}; do
 
@@ -98,5 +99,8 @@ for _jail in ${JAILS}; do
     fi
 	
     jexec -l "${_jail}" /usr/sbin/service "$@"
+	
+    # Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
 	
 done

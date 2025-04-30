@@ -91,6 +91,7 @@ shift
         
 bastille_root_check
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 errors=0
 
@@ -124,6 +125,10 @@ for _jail in ${JAILS}; do
             errors=1
         fi
     fi
+	
+	# Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+	
 done
 
 if [ $errors -ne 0 ]; then

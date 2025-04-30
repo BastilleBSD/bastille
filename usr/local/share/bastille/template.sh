@@ -221,6 +221,7 @@ if [ "${TARGET}" = '--convert' ]; then
     exit 0
 else
     set_target "${TARGET}"
+	_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 fi
 
 case ${TEMPLATE} in
@@ -469,6 +470,10 @@ for _jail in ${JAILS}; do
             echo
         fi
     done
+	
+    # Print blank line on last jail
+    [ "${_jail}" = "${_last_jail}" ] && echo ""
+    
+	info "Template applied: ${TEMPLATE}"
 
-    info "Template applied: ${TEMPLATE}"
 done

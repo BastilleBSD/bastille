@@ -87,6 +87,7 @@ DEST_PATH="${4}"
 bastille_root_check
 set_target_single "${SOURCE_TARGET}" && SOURCE_TARGET="${TARGET}"
 set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 for _jail in ${DEST_TARGET}; do
 
@@ -103,5 +104,9 @@ for _jail in ${DEST_TARGET}; do
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
             error_continue "JCP failed: ${source_path} -> ${dest_path}"
         fi
+		
+		# Print blank line on last jail
+        [ "${_jail}" = "${_last_jail}" ] && echo ""
+		
     fi
 done
