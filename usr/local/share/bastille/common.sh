@@ -64,10 +64,19 @@ if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
-# Notify message on error, and continue to next jail
+# Notify message on error
+# Do not echo blank line
 error_continue() {
     error_notify "$@"
-    echo ""
+    # shellcheck disable=SC2104
+    continue
+}
+
+# Notify message on error, and continue to next jail
+# Echo blank line
+error_continue_next_jail() {
+    error_notify "$@"
+    echo
     # shellcheck disable=SC2104
     continue
 }
@@ -78,8 +87,10 @@ error_notify() {
 }
 
 # Notify message on error and exit
+# Echo blank line
 error_exit() {
     error_notify "$@"
+    echo
     exit 1
 }
 
@@ -188,13 +199,13 @@ set_target() {
                 if get_jail_name "${_jail}" > /dev/null; then
                     _jail="$(get_jail_name ${_jail})"
                 else
-                    error_continue "Error: JID \"${_jail}\" not found. Is jail running?"
+                    error_continue_next_jail "Error: JID \"${_jail}\" not found. Is jail running?"
                 fi
             elif ! check_target_exists "${_jail}"; then
                 if jail_autocomplete "${_jail}" > /dev/null; then
                     _jail="$(jail_autocomplete ${_jail})"
                 elif [ $? -eq 2 ]; then
-                    error_continue "Jail not found \"${_jail}\""
+                    error_continue_next_jail "Jail not found \"${_jail}\""
                 else
                     exit 1
                 fi

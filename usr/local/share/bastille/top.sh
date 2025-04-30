@@ -90,7 +90,7 @@ check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille start "${TARGET}"
 else   
     error_notify "Jail is not running."
-    error_continue "Use [-a|--auto] to auto-start the jail."
+    error_exit "Use [-a|--auto] to auto-start the jail."
 fi
 
 jexec -l "${TARGET}" /usr/bin/top

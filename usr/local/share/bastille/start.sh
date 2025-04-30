@@ -111,10 +111,13 @@ for _jail in ${JAILS}; do
         fi
     fi
 	
+    if check_target_is_running "${_jail}"; then
+        info "[${_jail}]:"
+        error_continue_next_jail "Jail is already running."
+    fi
+	
     info "[${_jail}]:"
 	
-    check_target_is_stopped "${_jail}" || error_continue "Jail is already running."
-
     # Validate interfaces and add IPs to firewall table
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
         _ip4_interfaces="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
@@ -138,7 +141,7 @@ for _jail in ${JAILS}; do
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
                     fi
                 else
-                    error_continue "Error: ${_if} interface does not exist."
+                    error_continue_next_jail "Error: ${_if} interface does not exist."
                 fi
             done
         fi
@@ -161,7 +164,7 @@ for _jail in ${JAILS}; do
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
                     fi
                 else
-                    error_continue "Error: ${_if} interface does not exist."
+                    error_continue_next_jail "Error: ${_if} interface does not exist."
                 fi
             done
         fi
@@ -188,6 +191,6 @@ for _jail in ${JAILS}; do
     sleep "${DELAY_TIME}"
 	
     # Print blank line
-    echo ""
+    echo
 
 done

@@ -448,13 +448,13 @@ remove_interface() {
             if [ -n "${_if_vnet}" ] && echo ${_if_vnet} 2>/dev/null | grep -Eoq 'vnet[0-9]+'; then
                 sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
             else
-                error_continue "Failed to remove interface from /etc/rc.conf"
+                error_exit "Failed to remove interface from /etc/rc.conf"
             fi
         elif [ "${_if_type}" = "passthrough" ]; then
             if [ -n "${_if_vnet}" ]; then
                 sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
             else
-                error_continue "Failed to remove interface from /etc/rc.conf"
+                error_exit "Failed to remove interface from /etc/rc.conf"
             fi
         fi
 
