@@ -67,6 +67,8 @@ fi
 # Notify message on error, and continue to next jail
 error_continue() {
     error_notify "$@"
+	# Print blank line on last jail
+    [ "${_TARGET}" = "${_LAST_JAIL}" ] && echo ""
     # shellcheck disable=SC2104
     continue
 }
@@ -101,7 +103,7 @@ check_target_exists() {
 }
 
 check_target_is_running() {
-    local _TARGET="${1}"
+    _TARGET="${1}"
     if ! jls name | grep -Eq "^${_TARGET}$"; then
         return 1
     else
@@ -110,7 +112,7 @@ check_target_is_running() {
 }
 
 check_target_is_stopped() {
-    local _TARGET="${1}"
+    _TARGET="${1}"
     if jls name | grep -Eq "^${_TARGET}$"; then
         return 1
     else
