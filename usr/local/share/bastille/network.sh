@@ -567,7 +567,7 @@ case "${ACTION}" in
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
             fi
             if [ -n "${VLAN_ID}" ]; then
-		add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+                add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             fi
             if [ "${AUTO}" -eq 1 ]; then
                 bastille start "${TARGET}"

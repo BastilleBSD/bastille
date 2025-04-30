@@ -51,6 +51,8 @@ destroy_jail() {
     local OPTIONS
 
     for _jail in ${JAILS}; do
+	
+        echo ""
 
         bastille_jail_base="${bastille_jailsdir}/${_jail}"
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"

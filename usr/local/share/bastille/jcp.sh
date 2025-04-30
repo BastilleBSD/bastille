@@ -89,12 +89,17 @@ set_target_single "${SOURCE_TARGET}" && SOURCE_TARGET="${TARGET}"
 set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
 
 for _jail in ${DEST_TARGET}; do
+
     if [ "${_jail}" = "${SOURCE_TARGET}" ]; then
         continue
     else
+
+        echo ""
 	    info "[${_jail}]:"
+		
 	    source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
         dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
+		
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
             error_continue "JCP failed: ${source_path} -> ${dest_path}"
         fi

@@ -87,10 +87,15 @@ bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
+
+    echo ""
     info "[${_jail}]:"
+	
     host_path="${HOST_PATH}"
     jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
+	
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
         error_continue "CP failed: ${host_path} -> ${jail_path}"
     fi
+	
 done
