@@ -94,7 +94,7 @@ for _jail in ${JAILS}; do
     jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
 	
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
-        error_continue "CP failed: ${host_path} -> ${jail_path}"
+        error_continue_next_jail "CP failed: ${host_path} -> ${jail_path}"
     fi
 	
     # Print blank line

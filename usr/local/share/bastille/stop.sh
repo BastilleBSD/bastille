@@ -86,10 +86,13 @@ set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
 
+    if check_target_is_stopped "${_jail}"; then
+        info "[${_jail}]:"
+        error_continue_next_jail "Jail is already stopped."
+    fi
+	
     info "[${_jail}]:"
 	
-    check_target_is_running "${_jail}" || error_continue "Jail is already stopped."
-
     # Remove RDR rules
     if [ "$(bastille config ${_jail} get vnet)" != "enabled" ] && [ -f "${bastille_pf_conf}" ]; then
         _ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
@@ -134,6 +137,6 @@ for _jail in ${JAILS}; do
     fi
 	
     # Print blank line
-    echo ""
+    echo
 
 done

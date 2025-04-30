@@ -100,11 +100,11 @@ for _jail in ${DEST_TARGET}; do
         dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
 		
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
-            error_continue "JCP failed: ${source_path} -> ${dest_path}"
+            error_continue_next_jail "JCP failed: ${source_path} -> ${dest_path}"
         fi
 		
 		# Print blank line
-        echo ""
+        echo
 		
     fi
 done

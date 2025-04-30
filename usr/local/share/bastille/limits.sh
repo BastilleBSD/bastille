@@ -107,7 +107,7 @@ for _jail in ${JAILS}; do
     else
         info "[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue "Use [-a|--auto] to auto-start the jail."
+        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
     fi
 
     info "[${_jail}]:"
@@ -184,12 +184,12 @@ for _jail in ${JAILS}; do
                 rm -f "${bastille_jailsdir}/${_jail}/rctl.conf"
                 info "[${TARGET}]: rctl.conf removed."
             else
-                error_continue "[${TARGET}]: rctl.conf not found."
+                error_continue_next_jail "[${TARGET}]: rctl.conf not found."
             fi
             ;;
     esac
 	
-	# Print blank line on last jail
-    [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
+	# Print blank line
+    echo
 	
 done

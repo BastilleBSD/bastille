@@ -92,7 +92,7 @@ for _jail in ${JAILS}; do
     else
         info "[${_jail}]:"
         error_notify "Jail is not running."
-        error_exit "Use [-a|--auto] to auto-start the jail."
+        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
     fi
 	
     info "[${_jail}]:"
@@ -104,29 +104,29 @@ for _jail in ${JAILS}; do
 
     # Exit if mount point non-existent
     if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
-        error_continue "The specified mount point does not exist."
+        error_continue_next_jail "The specified mount point does not exist."
     fi
 
     # Unmount
     if [ -n "${_mount}" ]; then
-        umount "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
+        umount "${_jailpath}" || error_continue_next_jail "Failed to unmount volume: ${MOUNT_PATH}"
     fi
 
     # Remove entry from fstab
     if [ -n "${_fstab_entry}" ]; then
         if ! sed -E -i '' "\, +${_jailpath_fstab} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
-            error_continue "Failed to delete fstab entry: ${MOUNT_PATH}"
+            error_continue_next_jail "Failed to delete fstab entry: ${MOUNT_PATH}"
         fi
     fi
 
     # Delete if mount point was a file
     if [ -f "${_jailpath}" ]; then
-        rm -f "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
+        rm -f "${_jailpath}" || error_continue_next_jail "Failed to unmount volume: ${MOUNT_PATH}"
     fi
     
     echo "Unmounted: ${_jailpath}"
 	
     # Print blank line
-    echo ""
+    echo
 	
 done

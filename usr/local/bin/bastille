@@ -70,11 +70,12 @@ bastille_perms_check() {
 
 usage() {
     cat << EOF
+	
 Bastille is an open-source system for automating deployment and management of
 containerized applications on FreeBSD.
 
 Usage:
-  bastille command [option(s)] TARGET [args]
+  bastille command [option(s)] TARGET [option(s)] ARGS
 
 Available Commands:
   bootstrap   Bootstrap a FreeBSD release for container base.
@@ -266,7 +267,12 @@ esac
 
 # shellcheck disable=SC2154
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
+
+# Start with blank line
+echo
+
 if [ -f "${SCRIPTPATH}" ]; then
+
     : "${UMASK:=022}"
     umask "${UMASK}"
 
@@ -279,5 +285,7 @@ if [ -f "${SCRIPTPATH}" ]; then
     fi
 
 else
+
     error_exit "${SCRIPTPATH} not found."
+	
 fi

@@ -92,7 +92,7 @@ for _jail in ${JAILS}; do
     else  
         info "[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue "Use [-a|--auto] to auto-start the jail."
+        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
     fi
 	
     info "[${_jail}]:"
@@ -100,6 +100,6 @@ for _jail in ${JAILS}; do
     jexec -l "${_jail}" /usr/sbin/service "$@"
 	
     # Print blank line
-    echo ""
+    echo
 	
 done
