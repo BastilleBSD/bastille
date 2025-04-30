@@ -100,6 +100,7 @@ TARGET="${1}"
 
 bastille_root_check
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 for _jail in ${JAILS}; do
 
@@ -189,7 +190,6 @@ for _jail in ${JAILS}; do
     sleep "${DELAY_TIME}"
 	
     # Print blank line on last jail
-    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
     [ "${_jail}" = "${_last_jail}" ] && echo ""
 
 done

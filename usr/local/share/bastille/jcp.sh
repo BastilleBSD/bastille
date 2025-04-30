@@ -87,6 +87,7 @@ DEST_PATH="${4}"
 bastille_root_check
 set_target_single "${SOURCE_TARGET}" && SOURCE_TARGET="${TARGET}"
 set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 for _jail in ${DEST_TARGET}; do
 
@@ -105,7 +106,6 @@ for _jail in ${DEST_TARGET}; do
         fi
 		
 		# Print blank line on last jail
-        _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
         [ "${_jail}" = "${_last_jail}" ] && echo ""
 		
     fi

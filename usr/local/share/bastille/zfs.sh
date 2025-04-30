@@ -53,7 +53,6 @@ for _jail in ${JAILS}; do
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 
     # Print blank line on last jail
-    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
     [ "${_jail}" = "${_last_jail}" ] && echo ""
 	
 done
@@ -69,7 +68,6 @@ for _jail in ${JAILS}; do
     zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 
     # Print blank line on last jail
-    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
     [ "${_jail}" = "${_last_jail}" ] && echo ""
 	
 done
@@ -84,7 +82,6 @@ for _jail in ${JAILS}; do
     zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 
     # Print blank line on last jail
-    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
     [ "${_jail}" = "${_last_jail}" ] && echo ""
 	
 done
@@ -98,7 +95,6 @@ for _jail in ${JAILS}; do
     zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 
     # Print blank line on last jail
-    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
     [ "${_jail}" = "${_last_jail}" ] && echo ""
 	
 done
@@ -113,7 +109,6 @@ for _jail in ${JAILS}; do
     zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 
     # Print blank line on last jail
-    _last_jail="$(echo ${JAILS} | awk '{print $NF}')"
     [ "${_jail}" = "${_last_jail}" ] && echo ""
 		
 done
@@ -149,6 +144,7 @@ ACTION="${2}"
 
 bastille_root_check
 set_target "${TARGET}"
+_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 # Check if ZFS is enabled
 if ! checkyesno bastille_zfs_enable; then
