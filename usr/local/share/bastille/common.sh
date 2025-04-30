@@ -67,7 +67,6 @@ fi
 # Notify message on error, and continue to next jail
 error_continue() {
     error_notify "$@"
-    echo ""
     # shellcheck disable=SC2104
     continue
 }
