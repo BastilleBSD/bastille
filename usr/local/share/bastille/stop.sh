@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille stop [option(s)] TARGET"
     cat << EOF
+
     Options:
 
     -v | --verbose              Print every action on jail stop.
@@ -86,12 +87,11 @@ set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
 
+    info "\n[${_jail}]:"
+
     if check_target_is_stopped "${_jail}"; then
-        info "[${_jail}]:"
-        error_continue_next_jail "Jail is already stopped."
+        error_continue "Jail is already stopped."
     fi
-	
-    info "[${_jail}]:"
 	
     # Remove RDR rules
     if [ "$(bastille config ${_jail} get vnet)" != "enabled" ] && [ -f "${bastille_pf_conf}" ]; then
@@ -135,8 +135,7 @@ for _jail in ${JAILS}; do
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
         done
     fi
-	
-    # Print blank line
-    echo
 
 done
+
+echo

@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille pkg [option(s)] TARGET COMMAND args"
     cat << EOF
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -96,15 +97,15 @@ errors=0
 
 for _jail in ${JAILS}; do
 
+    info "\n[${_jail}]:"
+
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else  
-        info "[${_jail}]:"
         error_notify "Jail is not running."
         error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
     fi
-	
-    info "[${_jail}]:"
 
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
     if [ -f "/usr/sbin/mport" ]; then
@@ -125,11 +126,10 @@ for _jail in ${JAILS}; do
         fi
     fi
 	
-	# Print blank line
-    echo
-	
 done
 
 if [ $errors -ne 0 ]; then
     error_exit "Failed to apply on some jails, please check logs"
 fi
+
+echo

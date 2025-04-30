@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille rdr [option(s)] TARGET [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ]"
     cat << EOF
+	
     Options:
 
     -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
@@ -159,7 +160,6 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "Failed to create IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            info "[${TARGET}]:"
             echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_name}" 
         fi
     fi
@@ -171,7 +171,6 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "Failed to create IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            info "[${TARGET}]:"
             echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_name}"
         fi
     fi
@@ -196,7 +195,6 @@ load_rdr_log_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            info "[${TARGET}]:"
             echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_name}"
         fi
     fi
@@ -208,7 +206,6 @@ load_rdr_log_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            info "[${TARGET}]:"
             echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_name}"
         fi
     fi
@@ -286,6 +283,8 @@ shift
 bastille_root_check
 set_target_single "${TARGET}"
 
+info "\n[${TARGET}]:"
+
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         list)
@@ -320,9 +319,9 @@ while [ "$#" -gt 0 ]; do
                 check_jail_validity
                 echo "${TARGET} redirects:"
                 pfctl -a "rdr/${TARGET}" -Fn
-		if rm -f "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
-                    info "[${TARGET}]: rdr.conf removed"
-	        fi
+		        if rm -f "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
+                    echo "rdr.conf removed"
+	            fi
             fi
             shift
             ;;	    
@@ -403,3 +402,5 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+echo

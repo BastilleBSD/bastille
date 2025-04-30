@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
     cat << EOF
+	
     Options:
 
     -q | --quiet          Suppress output.
@@ -88,16 +89,15 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    info "[${_jail}]:"
+    info "\n[${_jail}]:"
 	
     host_path="${HOST_PATH}"
     jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
 	
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
-        error_continue_next_jail "CP failed: ${host_path} -> ${jail_path}"
+        error_continue "CP failed: ${host_path} -> ${jail_path}"
     fi
 	
-    # Print blank line
-    echo ""
-	
 done
+
+echo

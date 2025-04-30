@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille top [options(s)] TARGET"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -84,9 +85,10 @@ TARGET="${1}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-info "[${TARGET}]:"
+info "\n[${TARGET}]:"
 
 check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+    echo "Auto-starting ${TARGET}..."
     bastille start "${TARGET}"
 else   
     error_notify "Jail is not running."
@@ -94,3 +96,5 @@ else
 fi
 
 jexec -l "${TARGET}" /usr/bin/top
+
+echo

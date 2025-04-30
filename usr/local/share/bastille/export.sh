@@ -39,6 +39,7 @@ usage() {
     # If no compression option specified, user must redirect standard output
     error_notify "Usage: bastille export [option(s)] TARGET PATH"
     cat << EOF
+	
     Options:
 
          --gz               Export a ZFS jail using GZIP(.gz) compressed image.
@@ -240,7 +241,7 @@ fi
 create_zfs_snap() {
     # Take a recursive temporary snapshot
     if [ -z "${USER_EXPORT}" ]; then
-        info "Creating temporary ZFS snapshot for export..."
+        echo "Creating temporary ZFS snapshot for export..."
     fi
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"
 }
@@ -296,6 +297,9 @@ export_check() {
 }
 
 jail_export() {
+
+    info "\n[${_jail}]:"
+
     # Attempt to export the container
     DATE=$(date +%F-%H%M%S)
     if checkyesno bastille_zfs_enable; then
@@ -387,3 +391,5 @@ if [ -n "${TARGET}" ]; then
     fi
     jail_export
 fi
+
+echo

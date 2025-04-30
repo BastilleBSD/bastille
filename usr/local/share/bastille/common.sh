@@ -72,22 +72,13 @@ error_continue() {
     continue
 }
 
-# Notify message on error, and continue to next jail
-# Echo blank line
-error_continue_next_jail() {
-    error_notify "$@"
-    echo
-    # shellcheck disable=SC2104
-    continue
-}
-
 # Notify message on error, but do not exit
 error_notify() {
     echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
 # Notify message on error and exit
-# Echo blank line
+# Echo blank line when exiting
 error_exit() {
     error_notify "$@"
     echo
@@ -209,14 +200,15 @@ set_target() {
                 if get_jail_name "${_jail}" > /dev/null; then
                     _jail="$(get_jail_name ${_jail})"
                 else
-                    error_continue_next_jail "Error: JID \"${_jail}\" not found. Is jail running?"
+                    error_continue "Error: JID \"${_jail}\" not found. Is jail running?"
                 fi
             elif ! check_target_exists "${_jail}"; then
                 if jail_autocomplete "${_jail}" > /dev/null; then
                     _jail="$(jail_autocomplete ${_jail})"
                 elif [ $? -eq 2 ]; then
-                    error_continue_next_jail "Jail not found \"${_jail}\""
+                    error_continue "Jail not found \"${_jail}\""
                 else
+                    echo
                     exit 1
                 fi
             fi
@@ -253,6 +245,7 @@ set_target_single() {
             elif [ $? -eq 2 ]; then
                 error_exit "Jail not found \"${_TARGET}\""
             else
+                echo
                 exit 1
             fi
     fi

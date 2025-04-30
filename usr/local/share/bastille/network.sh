@@ -36,6 +36,7 @@
 usage() {
     error_notify "Usage: bastille network [option(s)] TARGET [remove|add] INTERFACE [IP_ADDRESS]"
     cat << EOF
+	
     Options:
 
     -a | --auto                 Start/stop the jail(s) if required.
@@ -135,7 +136,6 @@ if [ "${ACTION}" = "add" ] && [ "${NO_IP}" -eq 0 ] && [ -n "${4}" ]; then
     IP="${4}"
 elif [ "${NO_IP}" -eq 1 ] && [ -n "${4}" ]; then
     error_notify "IP should not be present when using -n|--no-ip."
-    usage
 else
     IP=""
 fi
@@ -165,7 +165,9 @@ fi
 
 bastille_root_check
 set_target_single "${TARGET}"
+
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+    echo "Auto-stopping ${TARGET}..."
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
@@ -301,7 +303,6 @@ EOF
             fi
         fi
 
-        info "[${_jailname}]:"
         echo "Added interface: \"${_if}\""
 
     elif [ "${VNET}" -eq 1 ]; then
@@ -349,7 +350,6 @@ EOF
                 fi
 	    fi
 
-            info "[${_jailname}]:"
             echo "Added VNET interface: \"${_if}\""
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
             for _num in $(seq 0 "${_bastille_if_num_range}"); do
@@ -391,8 +391,6 @@ EOF
                     sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
                 fi
 	    fi
-
-            info "[${_jailname}]:"
             echo "Added VNET interface: \"${_if}\""
         fi
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
@@ -414,7 +412,6 @@ EOF
             fi
 	fi
 
-        info "[${_jailname}]:"
         echo "Added Passthrough interface: \"${_if}\""
  
     elif [ "${CLASSIC}" -eq 1 ]; then
@@ -425,7 +422,6 @@ EOF
         fi
     fi
 
-    info "[${_jailname}]:"
     echo "Added interface: \"${_if}\""
 }
 
@@ -525,8 +521,7 @@ remove_interface() {
             error_exit "Failed to remove interface from jail.conf"
         fi
     fi
-   
-    info "[${_jailname}]:"
+
     echo "Removed interface: \"${_if}\""
 }
 
@@ -554,9 +549,10 @@ add_vlan() {
         bastille restart "${_jailname}"
     fi
 
-    info "[${_jailname}]:"
-    info "Added VLAN ${_vlan_id} to interface: \"${_jail_vnet}\""
+    echo "Added VLAN ${_vlan_id} to interface: \"${_jail_vnet}\""
 }
+
+info "\n[${TARGET}]:"
 
 case "${ACTION}" in
     add)
@@ -566,6 +562,7 @@ case "${ACTION}" in
             error_exit "Interface is already added: \"${INTERFACE}\""
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
             add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+            echo
             exit 0
         fi
         ## validate IP if not empty

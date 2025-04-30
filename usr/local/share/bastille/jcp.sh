@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DEST_JAIL JAIL_PATH"
     cat << EOF
+	
     Options:
 
     -q | --quiet          Suppress output.
@@ -94,17 +95,16 @@ for _jail in ${DEST_TARGET}; do
         continue
     else
 
-	    info "[${_jail}]:"
+	    info "\n[${_jail}]:"
 		
 	    source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
         dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
 		
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
-            error_continue_next_jail "JCP failed: ${source_path} -> ${dest_path}"
+            error_continue "JCP failed: ${source_path} -> ${dest_path}"
         fi
-		
-		# Print blank line
-        echo
 		
     fi
 done
+
+echo

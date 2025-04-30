@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille upgrade [option(s)] TARGET [NEWRELEASE|install]"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -106,9 +107,9 @@ thick_jail_check() {
     local _jail="${1}"
     # Check if the jail is thick and is running
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
-        info "[${TARGET}]:"
         error_notify "Jail is not running."
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
@@ -118,9 +119,9 @@ thin_jail_check() {
     local _jail="${1}"
     # Check if the jail is thick and is running
     check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-stopping ${_jail}..."
         bastille stop "${_jail}"
     else
-        info "[${TARGET}]:"
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
@@ -206,6 +207,8 @@ if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir
     THIN_JAIL=1
 fi
 
+info "\n[${TARGET}]:"
+
 # Check what we should upgrade
 if [ "${NEWRELEASE}" = "install" ]; then
     if [ "${THIN_JAIL}" -eq 1 ]; then
@@ -223,3 +226,5 @@ else
     fi
     jail_upgrade "${TARGET}" "${NEWRELEASE}"
 fi
+
+echo

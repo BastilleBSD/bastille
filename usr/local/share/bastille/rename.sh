@@ -78,7 +78,9 @@ NEWNAME="${2}"
 
 bastille_root_check
 set_target_single "${TARGET}"
+
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+    echo "Auto-stopping ${TARGET}..."
     bastille stop "${TARGET}"
 else   
     error_notify "Jail is running."
@@ -226,3 +228,5 @@ if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
 fi
 
 change_name
+
+echo

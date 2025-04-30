@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH"
     cat << EOF
+
     Options:
 
     -q | --quiet          Suppress output.
@@ -86,7 +87,7 @@ HOST_PATH="${3}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-info "[${TARGET}]:"
+info "\n[${TARGET}]:"
 
 host_path="${HOST_PATH}"
 jail_path="$(echo ${bastille_jailsdir}/${TARGET}/root/${JAIL_PATH} | sed 's#//#/#g')"

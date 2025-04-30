@@ -33,8 +33,9 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille cmd [option(s)] TARGET command"
+    error_notify "Usage: bastille cmd [option(s)] TARGET COMMAND"
     cat << EOF
+	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -90,15 +91,15 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
+    info "\n[${_jail}]:"
+
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
-        info "[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
-
-	info "[${_jail}]:"
     
     COUNT=$(($COUNT+1))
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
@@ -116,15 +117,13 @@ for _jail in ${JAILS}; do
     else 
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
-	
-    # Print blank line
-    echo ""
 
 done
 
 # Check when a command is executed in all running jails. (bastille cmd ALL ...)
 if [ "${COUNT}" -gt 1 ] && [ "${RETURN}" -gt 0 ]; then
     RETURN=1
+    return "${RETURN}"
 fi
 
-return "${RETURN}"
+echo

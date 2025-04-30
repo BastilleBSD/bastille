@@ -36,6 +36,7 @@
 usage() {
     error_notify "Usage: bastille tags TARGET [add|delete|list] [tag1,tag2]"
     cat << EOF
+
     Options:
 
     -x | --debug          Enable debug mode.
@@ -116,9 +117,6 @@ for _jail in ${JAILS}; do
         usage
         ;;
     esac
-	
-    # Print blank line
-    echo
 	
 done
 
