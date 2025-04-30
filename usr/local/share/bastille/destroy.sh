@@ -112,7 +112,7 @@ destroy_jail() {
         fi
 		
         # Print blank line on last jail
-        [ "${_jail}" = "${_last_jail}" ] && echo ""
+        [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
 	
     done
 }
@@ -302,7 +302,6 @@ case "${TARGET}" in
     *)
         ## just destroy a jail
         set_target "${TARGET}" "reverse"
-		_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
         destroy_jail "${JAILS}"
         ;;
 esac

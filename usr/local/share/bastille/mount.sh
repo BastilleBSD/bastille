@@ -90,7 +90,6 @@ fi
 
 bastille_root_check
 set_target "${TARGET}"
-_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 # Assign variables
 _hostpath_fstab=$(echo "${_fstab}" | awk '{print $1}')
@@ -201,6 +200,6 @@ for _jail in ${JAILS}; do
     echo "Added: ${_fstab_entry}"
 	
 	# Print blank line on last jail
-    [ "${_jail}" = "${_last_jail}" ] && echo ""
+    [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
 	
 done

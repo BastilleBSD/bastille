@@ -208,8 +208,10 @@ set_target() {
             TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
             JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
         fi
+        _LAST_JAIL="$(echo ${JAILS} | awk '{print $NF}')"
         export TARGET
         export JAILS
+        export _LAST_JAIL
     fi
 }
 
@@ -236,8 +238,10 @@ set_target_single() {
     fi
     TARGET="${_TARGET}"
     JAILS="${_TARGET}"
+	_LAST_JAIL="$(echo ${JAILS} | awk '{print $NF}')"
     export TARGET
     export JAILS
+	export _LAST_JAIL
 }
 
 target_all_jails() {
@@ -253,7 +257,9 @@ target_all_jails() {
     elif [ "${_order}" = "reverse" ]; then
         JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -nr | awk '{print $1}')"
     fi
+    _LAST_JAIL="$(echo ${JAILS} | awk '{print $NF}')"   
     export JAILS
+    export _LAST_JAIL
 }
 
 update_fstab() {

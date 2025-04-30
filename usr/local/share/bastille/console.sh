@@ -84,7 +84,6 @@ USER="${2}"
 
 bastille_root_check
 set_target "${TARGET}"
-_last_jail="$(echo ${JAILS} | awk '{print $NF}')"
 
 validate_user() {
     local _jail="${1}"
@@ -136,6 +135,6 @@ for _jail in ${JAILS}; do
     fi
 	
     # Print blank line on last jail
-    [ "${_jail}" = "${_last_jail}" ] && echo ""
+    [ "${_jail}" = "${_LAST_JAIL}" ] && echo ""
     
 done
