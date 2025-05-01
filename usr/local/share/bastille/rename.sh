@@ -79,28 +79,33 @@ NEWNAME="${2}"
 bastille_root_check
 set_target_single "${TARGET}"
 
+# Validate jail state
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-    echo "Auto-stopping ${TARGET}..."
     bastille stop "${TARGET}"
-else   
+else
+    info "\n[${TARGET}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
 validate_name() {
+
     local NAME_VERIFY="${NEWNAME}"
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
+
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
-        error_exit "Container names may not begin with (-|_) characters!"
+        error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
-        error_exit "Container names may not contain special characters!"
+        error_exit "[ERROR]: Jail names may not contain special characters!"
     fi
 }
 
 update_jailconf() {
+
     # Update jail.conf
     local _jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local _rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
+
     if [ -f "${_jail_conf}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${_jail_conf}"; then
             sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${_jail_conf}"
@@ -130,6 +135,7 @@ update_jailconf_vnet() {
 
     for _if in ${_if_list}; do
         if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
+
             # Check if epair name = jail name
             local _epair_num="$(grep -Eo -m 1 "epair[0-9]+" "${_jail_conf}" | grep -Eo "[0-9]+")" 
             if grep -E "epair[0-9]+a" "${_jail_conf}" | grep -Eo "e[0-9]+a_${TARGET}"; then
@@ -139,6 +145,7 @@ update_jailconf_vnet() {
                 local _target_host_epair="$(grep -Eo -m 1 "epair[0-9]+a" "${_jail_conf}")"
                 local _target_jail_epair="$(grep -Eo -m 1 "epair[0-9]+b" "${_jail_conf}")"
             fi
+
             if [ "$(echo -n "e${_epair_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
                 # Generate new epair name
                 local _new_host_epair="e${_epair_num}a_${NEWNAME}"
@@ -147,18 +154,22 @@ update_jailconf_vnet() {
                 local _new_host_epair="epair${_epair_num}a"
                 local _new_jail_epair="epair${_epair_num}b"
             fi
+
             # Replace host epair name in jail.conf                  
             sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
             sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
+
             # Replace jail epair name in jail.conf
             sed -i '' "s|= ${_target_jail_epair};|= ${_new_jail_epair};|g" "${_jail_conf}"
             sed -i '' "s|up name ${_target_jail_epair}|up name ${_new_jail_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
+
             # Replace epair description
             sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+
             # Replace epair name in /etc/rc.conf
             sed -i '' "/ifconfig/ s|${_target_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
         fi
@@ -166,8 +177,8 @@ update_jailconf_vnet() {
 }
 
 change_name() {
+
     # Attempt container name change
-    info "Attempting to rename '${TARGET}' to ${NEWNAME}..."
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
             # Check and rename container ZFS dataset accordingly
@@ -191,10 +202,10 @@ change_name() {
             ZFS_DATASET_TARGET=$(echo "${ZFS_DATASET_ORIGIN}" | sed "s|\/${TARGET}||")
             if [ -n "${ZFS_DATASET_ORIGIN}" ] && [ -n "${ZFS_DATASET_TARGET}" ]; then
                 if ! zfs rename -f "${ZFS_DATASET_ORIGIN}" "${ZFS_DATASET_TARGET}/${NEWNAME}"; then
-                    error_exit "Can't rename '${TARGET}' dataset."
+                    error_exit "[ERROR]: Can't rename '${TARGET}' dataset."
                 fi
             else
-                error_exit "Can't determine the ZFS origin path of '${TARGET}'."
+                error_exit "[ERROR]: Can't determine the ZFS origin path of '${TARGET}'."
             fi
         else
             # Just rename the jail directory
@@ -208,9 +219,9 @@ change_name() {
 
     # Check exit status and notify
     if [ "$?" -ne 0 ]; then
-        error_exit "An error has occurred while attempting to rename '${TARGET}'."
+        error_exit "[ERROR]: An error has occurred while attempting to rename '${TARGET}'."
     else
-        info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
+        echo "Renamed '${TARGET}' to '${NEWNAME}' successfully."
         if [ "${AUTO}" -eq 1 ]; then
             bastille start "${NEWNAME}"
         fi
@@ -224,9 +235,11 @@ fi
 
 # Check if a jail already exists with NEW_NAME
 if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
-    error_exit "Jail: ${NEWNAME} already exists."
+    error_exit "[ERROR]: Jail: ${NEWNAME} already exists."
 fi
+
+info "\nAttempting to rename '${TARGET}' to ${NEWNAME}..."
 
 change_name
 
-echo
+info "\nRenamed '${TARGET}' to '${NEWNAME}' successfully.\n"

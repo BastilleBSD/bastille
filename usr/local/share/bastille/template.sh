@@ -35,6 +35,7 @@
 usage() {
     error_notify "Usage: bastille template [option(s)] TARGET [--convert|project/template]"
     cat << EOF
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -45,6 +46,7 @@ EOF
 }
 
 post_command_hook() {
+
     _jail=$1
     _cmd=$2
     _args=$3
@@ -110,7 +112,7 @@ render() {
         echo "Rendering File: ${_file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${_file_path}'"
     else
-        warn "Path not found for render: ${2}"
+        warn "[WARNING]: Path not found for render: ${2}"
     fi
 }
 
@@ -123,7 +125,7 @@ line_in_file() {
             echo "${_line}" >> "${_jailpath}/${_filepath}"
 	fi
     else
-        warn "Path not found for line_in_file: ${_filepath}"
+        warn "[WARNING]: Path not found for line_in_file: ${_filepath}"
     fi
 }
 
@@ -131,13 +133,13 @@ line_in_file() {
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	-h|--help|help)
-	    usage
-	    ;;
-	-a|--auto)
-	    AUTO=1
-	    shift
-	    ;;
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
         -x|--debug)
             enable_debug
             shift
@@ -147,7 +149,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -158,7 +160,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -lt 2 ]; then
+if [ "$#" -lt 2 ]; then
     usage
 fi
 
@@ -175,11 +177,11 @@ bastille_root_check
 # Special case conversion of hook-style template files into a Bastillefile. -- cwells
 if [ "${TARGET}" = '--convert' ]; then
     if [ -d "${TEMPLATE}" ]; then # A relative path was provided. -- cwells
-        cd "${TEMPLATE}" || error_exit "Failed to change to directory: ${TEMPLATE}"
+        cd "${TEMPLATE}" || error_exit "[ERROR]: Failed to change to directory: ${TEMPLATE}"
     elif [ -d "${bastille_template}" ]; then
-        cd "${bastille_template}" || error_exit "Failed to change to directory: ${TEMPLATE}"
+        cd "${bastille_template}" || error_exit "[ERROR]: Failed to change to directory: ${TEMPLATE}"
     else
-        error_exit "Template not found: ${TEMPLATE}"
+        error_exit "[ERROR]: Template not found: ${TEMPLATE}"
     fi
 
     echo "Converting template: ${TEMPLATE}"
@@ -217,7 +219,7 @@ if [ "${TARGET}" = '--convert' ]; then
         fi
     done
 
-    info "Template converted: ${TEMPLATE}"
+    info "\nTemplate converted: ${TEMPLATE}"
     exit 0
 else
     set_target "${TARGET}"
@@ -229,7 +231,7 @@ case ${TEMPLATE} in
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
             info "Bootstrapping ${TEMPLATE}..."
             if ! bastille bootstrap "${TEMPLATE}"; then
-                error_exit "Failed to bootstrap template: ${TEMPLATE}"
+                error_exit "[ERROR]: Failed to bootstrap template: ${TEMPLATE}"
             fi
         fi
         TEMPLATE="${TEMPLATE_DIR}"
@@ -238,14 +240,14 @@ case ${TEMPLATE} in
     */*)
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE}" ]; then
             if [ ! -d ${TEMPLATE} ]; then
-                error_exit "${TEMPLATE} not found."
+                error_exit "[ERROR]: ${TEMPLATE} not found."
             else
                 bastille_template=${TEMPLATE}
             fi
         fi
         ;;
     *)
-        error_exit "Template name/URL not recognized."
+        error_exit "[ERROR]: Template name/URL not recognized."
 esac
 
 # Check for an --arg-file parameter. -- cwells
@@ -265,22 +267,22 @@ for _script_arg in "$@"; do
 done
 
 if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
-    error_exit "File not found: ${ARG_FILE}"
+    error_exit "[ERROR]: File not found: ${ARG_FILE}"
 fi
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
-    else  
+    else
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+
+    info "\n[${_jail}]:"
     
-    info "Applying template: ${TEMPLATE}..."
+    echo "Applying template: ${TEMPLATE}..."
 
     ## get jail ip4 and ip6 values
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
@@ -406,7 +408,7 @@ for _jail in ${JAILS}; do
             if ! eval "bastille ${_cmd} ${_jail} ${_args}"; then
                 set +f
                 unset IFS
-                error_exit "Failed to execute command: ${_cmd}"
+                error_exit "[ERROR]: Failed to execute command: ${_cmd}"
             fi
 
             post_command_hook "${_jail}" "${_cmd}" "${_args}"
@@ -450,9 +452,9 @@ for _jail in ${JAILS}; do
 
             info "[${_jail}]:${_hook} -- START"
             if [ "${_hook}" = 'CMD' ] || [ "${_hook}" = 'PRE' ]; then
-                bastille cmd "${_jail}" /bin/sh < "${bastille_template}/${_hook}" || error_exit "Failed to execute command."
+                bastille cmd "${_jail}" /bin/sh < "${bastille_template}/${_hook}" || error_exit "[ERROR]: Failed to execute command."
             elif [ "${_hook}" = 'PKG' ]; then
-                bastille pkg "${_jail}" install -y "$(cat "${bastille_template}/PKG")" || error_exit "Failed to install packages."
+                bastille pkg "${_jail}" install -y "$(cat "${bastille_template}/PKG")" || error_exit "[ERROR]: Failed to install packages."
                 bastille pkg "${_jail}" audit -F
             else
                 while read _line; do
@@ -462,7 +464,7 @@ for _jail in ${JAILS}; do
                     # Replace "arg" variables in this line with the provided values. -- cwells
                     _line=$(echo "${_line}" | eval "sed ${ARG_REPLACEMENTS}")
                     eval "_args=\"${_args_template}\""
-                    bastille "${_cmd}" "${_jail}" "${_args}" || error_exit "Failed to execute command."
+                    bastille "${_cmd}" "${_jail}" "${_args}" || error_exit "[ERROR]: Failed to execute command."
                 done < "${bastille_template}/${_hook}"
             fi
             info "[${_jail}]:${_hook} -- END"
@@ -470,8 +472,6 @@ for _jail in ${JAILS}; do
         fi
     done
     
-	info "Template applied: ${TEMPLATE}"
+    info "\nTemplate applied: ${TEMPLATE}"
 
 done
-
-echo

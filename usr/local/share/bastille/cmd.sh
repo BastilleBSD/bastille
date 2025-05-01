@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -76,7 +76,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -eq 0 ]; then
+if [ "$#" -eq 0 ]; then
     usage
 fi
 
@@ -91,27 +91,32 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
+    # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
-    
+
+    info "\n[${_jail}]:"
+
     COUNT=$(($COUNT+1))
+
+    # Allow executing commands on linux jails
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
-        # Allow executing commands on Linux jails.
         jexec -l -u root "${_jail}" "$@"
     else
         jexec -l -U root "${_jail}" "$@"
     fi
+	
     ERROR_CODE=$?
+	
     if [ "${ERROR_CODE}" -ne 0 ]; then
         warn "[${_jail}]: ${ERROR_CODE}"
     fi
+	
     if [ "$COUNT" -eq 1 ]; then
         RETURN=${ERROR_CODE}
     else 
@@ -125,5 +130,3 @@ if [ "${COUNT}" -gt 1 ] && [ "${RETURN}" -gt 0 ]; then
     RETURN=1
     return "${RETURN}"
 fi
-
-echo

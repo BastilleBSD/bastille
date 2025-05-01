@@ -53,27 +53,32 @@ destroy_jail() {
 
     for _jail in ${JAILS}; do
 
-        info "[${_jail}]:"
-	
         bastille_jail_base="${bastille_jailsdir}/${_jail}"
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 
+        # Validate jail state before continuing
         check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-            echo "Auto-stopping ${_jail}..."
             bastille stop "${_jail}"
         else
+            info "\n[${_jail}]:"
             error_notify "Jail is running."
             error_continue "Use [-a|--auto] to auto-stop the jail."
         fi
 
+        info "\n[${_jail}]:"
+
         if [ -d "${bastille_jail_base}" ]; then
+
             # Make sure no filesystem is currently mounted
             mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
+
             if [ -n "${mount_points}" ]; then
-                error_notify "Failed to destroy jail: ${_jail}"
-                error_continue_next_jail "Jail has mounted filesystems:\n$mount_points"
+                error_notify "[ERROR]: Failed to destroy jail: ${_jail}"
+                error_continue "Jail has mounted filesystems:\n$mount_points"
             fi
-            info "Deleting Jail: ${_jail}."
+
+            echo "Destroying jail..."
+
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${_jail}" ]; then
@@ -85,7 +90,7 @@ destroy_jail() {
                         # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
                         # unless the force option is defined by the user, otherwise will have a partially deleted jail.
                         if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
-                            error_continue_next_jail "[ERROR]: Jail dataset(s) appears to be busy, exiting."
+                            error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
                         fi
                     fi
                 fi
@@ -102,13 +107,13 @@ destroy_jail() {
             # Archive jail log
             if [ -f "${bastille_jail_log}" ]; then
                 mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
-                info "Note: jail console logs archived."
-                info "${bastille_jail_log}-$(date +%F)"
+                echo "Note: jail console logs archived."
+                echo "${bastille_jail_log}-$(date +%F)"
             fi
 
             # Clear any active rdr rules
             if [ ! -z "$(pfctl -a "rdr/${_jail}" -Psn 2>/dev/null)" ]; then
-                info "Clearing RDR rules:"
+                echo "Clearing RDR rules..."
                 pfctl -a "rdr/${_jail}" -Fn
             fi
         fi
@@ -129,13 +134,18 @@ destroy_rel() {
 
     bastille_rel_base="${bastille_releasesdir}/${TARGET}"  ## dir
 
+    info "\nAttempting to destroy release: ${TARGET}"
+
     ## check if this release have containers child
     BASE_HASCHILD="0"
     if [ -d "${bastille_jailsdir}" ]; then
+
         JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+
         for _jail in ${JAIL_LIST}; do
+
             if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
-                error_notify "Notice: (${_jail}) depends on ${TARGET} base."
+                error_notify "[ERROR]: (${_jail}) depends on ${TARGET} base."
                 BASE_HASCHILD="1"
             elif checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
@@ -147,7 +157,7 @@ destroy_rel() {
                                 CLONE_JAIL=$(zfs list -H -o clones "${_snap_clone}" | tr ',' '\n')
                                 CLONE_CHECK="${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}/root"
                                 if echo "${CLONE_JAIL}" | grep -qw "${CLONE_CHECK}"; then
-                                    error_notify "Notice: (${_jail}) depends on ${TARGET} base."
+                                    error_notify "[ERROR]: (${_jail}) depends on ${TARGET} base."
                                     BASE_HASCHILD="1"
                                 fi
                             fi
@@ -159,10 +169,10 @@ destroy_rel() {
     fi
 
     if [ ! -d "${bastille_rel_base}" ]; then
-        error_exit "Release base not found."
+        error_exit "[ERROR]: Release base not found."
     else
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
-            info "Deleting base: ${TARGET}"
+            echo "Deleting release base..."
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${TARGET}" ]; then
@@ -195,7 +205,7 @@ destroy_rel() {
                 fi
             fi
         else
-            error_notify "Cannot destroy base with child containers."
+            error_notify "[ERROR]: Cannot destroy base with child containers."
         fi
     fi
 }
@@ -232,7 +242,7 @@ while [ "$#" -gt 0 ]; do
                     c) NO_CACHE=1 ;;
                     f) FORCE=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;;
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift

@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            error_notify "Unknown Option: \"${1}\""
+            error_notify "[ERROR]: Unknown Option: \"${1}\""
             usage
             ;;
         *)
@@ -115,12 +115,13 @@ print_jail_conf() {
 } 
 
 for _jail in ${JAILS}; do
+
     # Handle Bastille specific properties
+    # Currently only 'priority' and 'boot'
     if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
         PROPERTY="priority"
         BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/boot.conf"
-        info "[${_jail}]:"    
         if [ "${ACTION}" = "set" ]; then
             if echo "${VALUE}" | grep -Eq '^[0-9]+$'; then
                 sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
@@ -133,7 +134,6 @@ for _jail in ${JAILS}; do
     elif [ "${PROPERTY}" = "boot" ]; then
         BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/boot.conf"
-        info "[${_jail}]:"
         if [ "${ACTION}" = "set" ]; then
             if [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; then
                 sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"

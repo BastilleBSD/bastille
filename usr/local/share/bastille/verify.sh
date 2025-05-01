@@ -45,22 +45,24 @@ EOF
 }
 
 verify_release() {
+
     if [ -f "/bin/midnightbsd-version" ]; then
-        echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
-        exit 1
+        error_exit "[ERROR]: Not yet supported on MidnightBSD."
     fi
+    
     if freebsd-version | grep -qi HBSD; then
-        error_exit "Not yet supported on HardenedBSD."
+        error_exit "[ERROR]: Not yet supported on HardenedBSD."
     fi
 
     if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
         freebsd-update -b "${bastille_releasesdir}/${RELEASE}" --currently-running "${RELEASE}" IDS
     else
-        error_exit "${RELEASE} not found. See 'bastille bootstrap'."
+        error_exit "[ERROR]: ${RELEASE} not found. See 'bastille bootstrap'."
     fi
 }
 
 handle_template_include() {
+
     case ${TEMPLATE_INCLUDE} in
         http?://*/*/*)
             bastille bootstrap "${TEMPLATE_INCLUDE}"
@@ -71,12 +73,13 @@ handle_template_include() {
             bastille verify "${BASTILLE_TEMPLATE_USER}/${BASTILLE_TEMPLATE_REPO}"
         ;;
         *)
-            error_exit "Template INCLUDE content not recognized."
+            error_exit "[ERROR]: Template INCLUDE content not recognized."
     ;;
     esac
 }
 
 verify_template() {
+
     _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
     _hook_validate=0
 
@@ -84,22 +87,20 @@ verify_template() {
         _path=${_template_path}/${_hook}
         if [ -s "${_path}" ]; then
             _hook_validate=$((_hook_validate+1))
-            info "Detected ${_hook} hook."
+            info "\nDetected ${_hook} hook."
 
             ## line count must match newline count
             # shellcheck disable=SC2046
             # shellcheck disable=SC3003
             if [ $(wc -l "${_path}" | awk '{print $1}') -ne "$(tr -d -c '\n' < "${_path}" | wc -c)" ]; then
                 info "[${_hook}]:"
-                error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."
+                error_notify "[ERROR]: ${BASTILLE_TEMPLATE}:${_hook} [failed]."
                 error_notify "Line numbers don't match line breaks."
-                echo
                 error_exit "Template validation failed."
             ## if INCLUDE; recursive verify
             elif [ "${_hook}" = 'INCLUDE' ]; then
                 info "[${_hook}]:"
                 cat "${_path}"
-                echo
                 while read _include; do
                     info "[${_hook}]:[${_include}]:"
                     TEMPLATE_INCLUDE="${_include}"
@@ -110,7 +111,6 @@ verify_template() {
             elif [ "${_hook}" = 'OVERLAY' ]; then
                 info "[${_hook}]:"
                 cat "${_path}"
-                echo
                 while read _dir; do
                     info "[${_hook}]:[${_dir}]:"
                         if [ -x "/usr/local/bin/tree" ]; then
@@ -118,7 +118,6 @@ verify_template() {
                         else
                            find "${_template_path}/${_dir}" -print | sed -e 's;[^/]*/;|___;g;s;___|; |;g'
                         fi
-                    echo
                 done < "${_path}"
             elif [ "${_hook}" = 'Bastillefile' ]; then
                 info "[${_hook}]:"
@@ -131,41 +130,38 @@ verify_template() {
                         handle_template_include
                     fi
                 done < "${_path}"
-                echo
             else
                 info "[${_hook}]:"
                 cat "${_path}"
-                echo
             fi
         fi
     done
 
-    ## remove bad templates
+    # Remove bad templates
     if [ "${_hook_validate}" -lt 1 ]; then
-        error_notify "No valid template hooks found."
-        error_notify "Template discarded."
         rm -rf "${_template_path}"
-        exit 1
+        error_notify "[ERROR]: No valid template hooks found."
+        error_exit "Template discarded."
     fi
 
     ## if validated; ready to use
     if [ "${_hook_validate}" -gt 0 ]; then
-        info "Template ready to use."
+        info "\nTemplate ready to use."
     fi
 }
 
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-	        usage
-	        ;;
+        -h|--help|help)
+            usage
+            ;;
         -x|--debug)
             enable_debug
             shift
             ;;
         -*) 
-            error_exit "Unknown Option: \"${1}\""
+            error_exit "[ERROR]: Unknown Option: \"${1}\""
             ;;
         *)
             break

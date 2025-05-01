@@ -72,7 +72,7 @@ while [ "$#" -gt 0 ]; do
                     a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -97,17 +97,19 @@ errors=0
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
+    # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
-    else  
+    else
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
+    info "\n[${_jail}]:"
+
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
+
     if [ -f "/usr/sbin/mport" ]; then
         if ! jexec -l -U root "${_jail}" /usr/sbin/mport "$@"; then
             errors=1
@@ -129,7 +131,7 @@ for _jail in ${JAILS}; do
 done
 
 if [ $errors -ne 0 ]; then
-    error_exit "Failed to apply on some jails, please check logs"
+    error_exit "[ERROR]: Failed to apply on some jails, please check logs"
+else
+    echo
 fi
-
-echo

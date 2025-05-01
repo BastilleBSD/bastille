@@ -76,7 +76,7 @@ while [ "$#" -gt 0 ]; do
                     a) AUTO=1 ;;
                     l) LIVE=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\""
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done
             shift
@@ -104,18 +104,26 @@ set_target_single "${TARGET}"
 
 ## don't allow for dots(.) in container names
 if echo "${NEWNAME}" | grep -q "[.]"; then
-    error_exit "Container names may not contain a dot(.)!"
+    error_exit "[ERROR]: Jail names may not contain a dot(.)!"
 fi
 
 validate_ip() {
+
+    local IP="${1}"
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
+
     if [ -n "${ip6}" ]; then
-        info "Valid: (${ip6})."
+
+        info "\nValid: (${ip6})."
         IP6_MODE="new"
+
     elif { [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; } && [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-        info "Valid: (${IP})."
+
+        info "\nValid: (${IP})."
+
     else
+
         local IFS
         if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
             TEST_IP=$(echo "${IP}" | cut -d / -f1)
@@ -126,11 +134,13 @@ validate_ip() {
                     error_exit "Invalid: (${TEST_IP})"
                 fi
             done
+
             if ifconfig | grep -qwF "${TEST_IP}"; then
-                warn "Warning: IP address already in use (${TEST_IP})."
+                warn "\nWarning: IP address already in use (${TEST_IP})."
             else
-                info "Valid: (${IP})."
+                info "\nValid: (${IP})."
             fi
+
         else
             error_exit "Invalid: (${IP})."
         fi
@@ -138,8 +148,10 @@ validate_ip() {
 }
 
 update_jailconf() {
+
     # Update jail.conf
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
             sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
@@ -161,6 +173,7 @@ update_jailconf() {
         if [ "${_interface}" != "not set" ]; then
             sed -i '' "/.*interface = .*/d" "${JAIL_CONFIG}"
         fi
+
         # IP4
         if [ "${_ip4}" != "not set" ]; then
             for _ip in ${_ip4}; do
@@ -175,6 +188,7 @@ update_jailconf() {
                 sed -i '' "/ip4.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
             done
         fi
+
         # IP6
         if [ "${_ip6}" != "not set" ]; then
             for _ip in ${_ip6}; do
@@ -216,6 +230,7 @@ update_jailconf_vnet() {
         if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
             for _num in $(seq 0 "${_bastille_if_num_range}"); do
                 if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+
                     # Generate new epair name
                     if [ "$(echo -n "e${_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
                         local _new_host_epair="e${_num}a_${NEWNAME}"
@@ -224,6 +239,7 @@ update_jailconf_vnet() {
                         local _new_host_epair="epair${_num}a"
                         local _new_jail_epair="epair${_num}b"
                     fi
+
                     # Get epair name from TARGET
                     if grep -Eoq "e[0-9]+a_${TARGET}" "${_jail_conf}"; then
                         _target_host_epair="$(grep -Eo -m 1 "e[0-9]+a_${TARGET}" "${_jail_conf}")"
@@ -232,18 +248,22 @@ update_jailconf_vnet() {
                         _target_host_epair="${_if}a"
                         _target_jail_epair="${_if}b"
                     fi
+
                     # Replace host epair name in jail.conf                  
                     sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
                     sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
                     sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
                     sed -i '' "s|${_target_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
                     sed -i '' "s|${_target_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
+
                     # Replace jail epair name in jail.conf
                     sed -i '' "s|= ${_target_jail_epair};|= ${_new_jail_epair};|g" "${_jail_conf}"
                     sed -i '' "s|up name ${_target_jail_epair}|up name ${_new_jail_epair}|g" "${_jail_conf}"
                     sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
+
                     # Replace epair name in jail.conf                  
                     sed -i '' "s|${_if}|epair${_num}|g" "${_jail_conf}"
+
                     # If jail had a static MAC, generate one for clone
                     if grep -q ether ${_jail_conf}; then
                         local external_interface="$(grep "epair${_num}a" ${_jail_conf} | grep -o '[^ ]* addm' | awk '{print $1}')"
@@ -251,8 +271,10 @@ update_jailconf_vnet() {
                         sed -i '' "s|${_new_host_epair} ether.*:.*:.*:.*:.*:.*a\";|${_new_host_epair} ether ${macaddr}a\";|" "${_jail_conf}"
                         sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
+
                     # Replace epair description
                     sed -i '' "/${_new_host_epair}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+
                     # Update /etc/rc.conf
                     local _jail_vnet="$(grep ${_target_jail_epair} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
@@ -281,17 +303,21 @@ update_jailconf_vnet() {
                     break
                 fi
             done
+
         # Update VNET (non-bridged) config
         elif echo ${_if} | grep -Eoq 'e[0-9]+b_bastille[0-9]+'; then
+
             # Update VNET config
             _if="$(echo ${_if} | grep -Eo 'bastille[0-9]+')"
             for _num in $(seq 0 "${_bastille_if_num_range}"); do
                 if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+
                     # Update jail.conf epair name
                     local _jail_if="bastille${_num}"
                     local _jail_vnet="$(grep ${_if} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
                     sed -i '' "s|${_if}|${_jail_if}|g" "${_jail_conf}"
+
                     # If jail had a static MAC, generate one for clone
                     if grep ether ${_jail_conf} | grep -qoc ${_jail_if}; then
                         local external_interface="$(grep ${_jail_if} ${_jail_conf} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
@@ -300,6 +326,7 @@ update_jailconf_vnet() {
                         sed -i '' "s|${_jail_if} ether.*:.*:.*:.*:.*:.*b\";|${_jail_if} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
                     sed -i '' "/${_jail_if}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+
                     # Update /etc/rc.conf
                     sed -i '' "s|ifconfig_e0b_${_if}_name|ifconfig_e0b_${_jail_if}_name|" "${_rc_conf}"
                     if grep "vnet0" "${_rc_conf}" | grep -q ${_jail_if}; then
@@ -325,23 +352,27 @@ update_jailconf_vnet() {
                     fi
                     break
                 fi
-            done       
+            done
+  
        # Update netgraph VNET (non-bridged) config
        elif echo ${_if} | grep -Eoq 'ng[0-9]+_bastille[0-9]+'; then
             _if="$(echo ${_if} | grep -Eo 'bastille[0-9]+')"
             for _num in $(seq 0 "${_bastille_if_num_range}"); do
                 if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+
                     # Update jail.conf epair name
                     local _jail_if="bastille${_num}"
                     local _jail_vnet="$(grep ${_if} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
                     sed -i '' "s|${_if}|${_jail_if}|g" "${_jail_conf}"
+
                     # If jail had a static MAC, generate one for clone
                     if grep ether ${_jail_conf} | grep -qoc ${_jail_if}; then
                         local external_interface="$(grep ${_jail_if} ${_jail_conf} | grep -o 'jng bridge.*' | awk '{print $4}' | sed 's/["|;]//g')"
                         generate_static_mac "${NEWNAME}" "${external_interface}"
                         sed -i '' "s|${_jail_if} ether.*:.*:.*:.*:.*:.*a\";|${_jail_if} ether ${macaddr}a\";|" "${_jail_conf}"
                     fi
+
                     # Update /etc/rc.conf
                     sed -i '' "s|ifconfig_ng0_${_if}_name|ifconfig_ng0_${_jail_if}_name|" "${_rc_conf}"
                     if grep "vnet0" "${_rc_conf}" | grep -q ${_jail_if}; then
@@ -374,20 +405,29 @@ update_jailconf_vnet() {
 
 clone_jail() {
 
-    info "\n[${TARGET}]:"
-    echo "Attempting clone to ${NEWNAME}..."
-
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
+
         if checkyesno bastille_zfs_enable; then
+
+            # Validate jail state
             if [ "${LIVE}" -eq 1 ]; then
-                check_target_is_running "${TARGET}" || error_exit "[-l|--live] can only be used with a running jail."
-            else check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-                    echo "Auto-stopping ${TARGET}..."
+                if ! check_target_is_running "${TARGET}"; then
+                    error_exit "[ERROR]: [-l|--live] can only be used with a running jail."
+                fi
+            elif ! check_target_is_stopped "${TARGET}"; then
+                if [ "${AUTO}" -eq 1 ]; then
                     bastille stop "${TARGET}"
                 else
+                    info "\n[${TARGET}]:"
                     error_notify "Jail is running."
                     error_exit "Use [-a|--auto] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
                 fi
+            fi
+
+            if [ -n "${IP}" ]; then
+                validate_ip "${IP}"
+            else
+                usage
             fi
 
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -404,12 +444,13 @@ clone_jail() {
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
             fi
+
         else
 		 
             check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-                echo "Auto-stopping ${TARGET}..."
                 bastille stop "${TARGET}"
             else
+                info "\n[${TARGET}]:"
                 error_notify "Jail is running."
                 error_exit "Use [-a|--auto] to force stop the jail."
             fi
@@ -419,7 +460,7 @@ clone_jail() {
 
         fi
     else
-        error_exit "${NEWNAME} already exists."
+        error_exit "[ERROR]: ${NEWNAME} already exists."
     fi
 
     # Generate jail configuration files
@@ -428,9 +469,9 @@ clone_jail() {
 
     # Display exit status
     if [ "$?" -ne 0 ]; then
-        error_exit "An error has occurred while attempting to clone '${TARGET}'."
+        error_exit "[ERROR]: An error has occurred while attempting to clone '${TARGET}'."
     else
-        info "Cloned '${TARGET}' to '${NEWNAME}' successfully."
+        info "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
     fi
 
     # Start jails if AUTO=1 or LIVE=1
@@ -442,12 +483,7 @@ clone_jail() {
     fi
 }
 
-# Check if IP address is valid.
-if [ -n "${IP}" ]; then
-    validate_ip
-else
-    usage
-fi
+info "\nAttempting to clone '${TARGET}' to '${NEWNAME}'..."
 
 clone_jail
 

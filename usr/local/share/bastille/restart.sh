@@ -89,7 +89,7 @@ while [ "$#" -gt 0 ]; do
                         _stop_options="${_stop_options} -x"
                         ;;
                     *)
-                        error_exit "Unknown Option: \"${1}\""
+                        error_exit "[ERROR]: Unknown Option: \"${1}\""
                         ;; 
                 esac
             done

@@ -512,7 +512,7 @@ while [ "$#" -gt 0 ]; do
                     a) ;;
                     j) OPT_JSON=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\""
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done
             shift

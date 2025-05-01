@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -95,13 +95,13 @@ for _jail in ${DEST_TARGET}; do
         continue
     else
 
-	    info "\n[${_jail}]:"
-		
-	    source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
+	info "\n[${_jail}]:"
+
+        source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
         dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
 		
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
-            error_continue "JCP failed: ${source_path} -> ${dest_path}"
+            error_continue "[ERROR]: JCP failed: ${source_path} -> ${dest_path}"
         fi
 		
     fi

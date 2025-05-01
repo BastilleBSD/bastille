@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\""
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done
             shift
@@ -85,16 +85,14 @@ TARGET="${1}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-info "\n[${TARGET}]:"
-
 check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-    echo "Auto-starting ${TARGET}..."
     bastille start "${TARGET}"
-else   
+else
+    info "\n[${TARGET}]:"
     error_notify "Jail is not running."
     error_exit "Use [-a|--auto] to auto-start the jail."
 fi
 
-jexec -l "${TARGET}" /usr/bin/top
+info "\n[${TARGET}]:"
 
-echo
+jexec -l "${TARGET}" /usr/bin/top

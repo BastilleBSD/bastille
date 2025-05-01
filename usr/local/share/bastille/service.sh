@@ -49,7 +49,7 @@ EOF
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	-h|--help|help)
+        -h|--help|help)
             usage
             ;;
         -a|--auto)
@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -88,18 +88,17 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-	
+    # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
-    else  
+    else
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
-        error_continue_next_jail "Use [-a|--auto] to auto-start the jail."
+        error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+
+    info "\n[${_jail}]:"
 	
     jexec -l "${_jail}" /usr/sbin/service "$@"
 	
 done
-
-echo
