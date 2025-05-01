@@ -194,6 +194,8 @@ fi
 bastille_root_check
 set_target_single "${TARGET}"
 
+info "\n[${_jail}]:"
+
 # Validate for combined options
 if [ "${COMP_OPTION}" -gt "1" ]; then
     error_exit "Error: Only one compression format can be used during export."
@@ -277,7 +279,7 @@ export_check() {
             EXPORT_INFO="to a compressed ${FILE_EXT} ${EXPORT_TYPE}"
         fi
 
-        info "${EXPORT_AS} '${TARGET}' ${EXPORT_INFO}..."
+        echo "${EXPORT_AS} '${TARGET}' ${EXPORT_INFO}..."
     fi
 
     # Safely stop and snapshot the jail
@@ -291,14 +293,12 @@ export_check() {
 
     if checkyesno bastille_zfs_enable; then
         if [ -z "${USER_EXPORT}" ]; then
-            info "Sending ZFS data stream..."
+            echo "Sending ZFS data stream..."
         fi
     fi
 }
 
 jail_export() {
-
-    info "\n[${_jail}]:"
 
     # Attempt to export the container
     DATE=$(date +%F-%H%M%S)
@@ -345,13 +345,13 @@ jail_export() {
             FILE_EXT=".tgz"
 
             # Create standard tgz backup archive
-            info "Exporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
+            echo "Exporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
             cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
         elif [ -n "${TXZ_EXPORT}" ]; then
             FILE_EXT=".txz"
 
             # Create standard txz backup archive
-            info "Exporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
+            echo "Exporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
             cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
         else
             error_exit "Error: export option required"
@@ -366,7 +366,7 @@ jail_export() {
             # Generate container checksum file
             cd "${bastille_backupsdir}" || error_exit "Failed to change directory."
             sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
-            info "Exported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
+            echo "Exported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
         fi
         exit 0
     fi
@@ -378,6 +378,7 @@ if [ ! -d "${bastille_backupsdir}" ]; then
 fi
 
 if [ -n "${TARGET}" ]; then
+
     if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
         error_exit "[${TARGET}]: Not found."
     fi
@@ -391,5 +392,3 @@ if [ -n "${TARGET}" ]; then
     fi
     jail_export
 fi
-
-echo

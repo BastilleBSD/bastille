@@ -88,15 +88,15 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
-    else  
+    else
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+
+    info "\n[${_jail}]:"
 	
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
 

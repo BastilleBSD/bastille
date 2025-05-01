@@ -131,13 +131,13 @@ line_in_file() {
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	-h|--help|help)
-	    usage
-	    ;;
-	-a|--auto)
-	    AUTO=1
-	    shift
-	    ;;
+        -h|--help|help)
+            usage
+            ;;
+        -a|--auto)
+            AUTO=1
+            shift
+            ;;
         -x|--debug)
             enable_debug
             shift
@@ -158,7 +158,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -lt 2 ]; then
+if [ "$#" -lt 2 ]; then
     usage
 fi
 
@@ -270,17 +270,17 @@ fi
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
-    else  
+    else
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+
+    info "\n[${_jail}]:"
     
-    info "Applying template: ${TEMPLATE}..."
+    echo "Applying template: ${TEMPLATE}..."
 
     ## get jail ip4 and ip6 values
     bastille_jail_path=$(/usr/sbin/jls -j "${_jail}" path)
@@ -470,8 +470,6 @@ for _jail in ${JAILS}; do
         fi
     done
     
-	info "Template applied: ${TEMPLATE}"
+	echo "Template applied: ${TEMPLATE}"
 
 done
-
-echo

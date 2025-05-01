@@ -106,5 +106,3 @@ for _jail in ${DEST_TARGET}; do
 		
     fi
 done
-
-echo

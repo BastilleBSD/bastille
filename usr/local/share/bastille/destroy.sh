@@ -53,27 +53,32 @@ destroy_jail() {
 
     for _jail in ${JAILS}; do
 
-        info "[${_jail}]:"
-	
         bastille_jail_base="${bastille_jailsdir}/${_jail}"
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 
+        # Validate jail state before continuing
         check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-            echo "Auto-stopping ${_jail}..."
             bastille stop "${_jail}"
         else
+            info "\n[${_jail}]:"
             error_notify "Jail is running."
             error_continue "Use [-a|--auto] to auto-stop the jail."
         fi
 
+        info "\n[${_jail}]:"
+
         if [ -d "${bastille_jail_base}" ]; then
+
             # Make sure no filesystem is currently mounted
             mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
+
             if [ -n "${mount_points}" ]; then
                 error_notify "Failed to destroy jail: ${_jail}"
-                error_continue_next_jail "Jail has mounted filesystems:\n$mount_points"
+                error_continue "Jail has mounted filesystems:\n$mount_points"
             fi
-            info "Deleting Jail: ${_jail}."
+
+            echo "Destroying jail..."
+
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${_jail}" ]; then
@@ -85,7 +90,7 @@ destroy_jail() {
                         # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
                         # unless the force option is defined by the user, otherwise will have a partially deleted jail.
                         if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
-                            error_continue_next_jail "[ERROR]: Jail dataset(s) appears to be busy, exiting."
+                            error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
                         fi
                     fi
                 fi
@@ -102,13 +107,13 @@ destroy_jail() {
             # Archive jail log
             if [ -f "${bastille_jail_log}" ]; then
                 mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
-                info "Note: jail console logs archived."
-                info "${bastille_jail_log}-$(date +%F)"
+                echo "Note: jail console logs archived."
+                echo "${bastille_jail_log}-$(date +%F)"
             fi
 
             # Clear any active rdr rules
             if [ ! -z "$(pfctl -a "rdr/${_jail}" -Psn 2>/dev/null)" ]; then
-                info "Clearing RDR rules:"
+                echo "Clearing RDR rules..."
                 pfctl -a "rdr/${_jail}" -Fn
             fi
         fi
@@ -128,6 +133,8 @@ destroy_rel() {
     fi
 
     bastille_rel_base="${bastille_releasesdir}/${TARGET}"  ## dir
+
+    info "\nAttempting to destroy release: ${TARGET}"
 
     ## check if this release have containers child
     BASE_HASCHILD="0"
@@ -162,7 +169,7 @@ destroy_rel() {
         error_exit "Release base not found."
     else
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
-            info "Deleting base: ${TARGET}"
+            echo "Deleting base..."
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${TARGET}" ]; then
@@ -304,5 +311,3 @@ case "${TARGET}" in
         destroy_jail "${JAILS}"
         ;;
 esac
-
-echo

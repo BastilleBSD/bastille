@@ -88,17 +88,15 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
+        info "\n[${TARGET}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 	
-    info "[${_jail}]:"
+    info "\n[${_jail}]:"
 
     _jailpath="$( echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"
     _mount="$( mount | grep -Eo "[[:blank:]]${_jailpath}[[:blank:]]" )"
@@ -130,5 +128,3 @@ for _jail in ${JAILS}; do
     echo "Unmounted: ${_jailpath}"
 	
 done
-
-echo

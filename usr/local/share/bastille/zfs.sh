@@ -160,5 +160,3 @@ case "${ACTION}" in
         usage
         ;;
 esac
-
-echo

@@ -137,5 +137,3 @@ for _jail in ${JAILS}; do
     fi
 
 done
-
-echo

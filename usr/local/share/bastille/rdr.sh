@@ -49,10 +49,13 @@ EOF
 }
 
 check_jail_validity() {
+
     # Validate jail network type and set IP4/6
     if [ "$( bastille config ${TARGET} get vnet )" != 'enabled' ]; then
+
         _ip4_interfaces="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
         _ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
+
         # Check if jail ip4.addr is valid (non-VNET only)
         if [ "${_ip4_interfaces}" != "not set" ] && [ "${_ip4_interfaces}" != "disable" ]; then
             if echo "${_ip4_interfaces}" | grep -q "|"; then
@@ -61,6 +64,7 @@ check_jail_validity() {
                 JAIL_IP="$(echo ${_ip4_interfaces} | sed -E 's#/[0-9]+$##g')"
             fi
         fi
+
         # Check if jail ip6.addr is valid (non-VNET only)
         if [ "${_ip6_interfaces}" != "not set" ] && [ "${_ip6_interfaces}" != "disable" ]; then
             if echo "${_ip6_interfaces}" | grep -q "|"; then
@@ -80,8 +84,10 @@ check_jail_validity() {
 }
 
 check_rdr_ip_validity() {
+
     local ip="${1}"
     local ip6="$( echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
+
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
     else
@@ -103,12 +109,14 @@ check_rdr_ip_validity() {
 }
 
 validate_rdr_rule() {
+
     local if="${1}"
     local src="${2}"
     local dst="${3}"
     local proto="${4}"
     local host_port="${5}"
     local jail_port="${6}"
+
     if grep -qs "$if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         error_notify "Error: Ports already in use on this interface."
         error_exit "See 'bastille list ports' or 'bastille rdr TARGET reset'."
@@ -116,6 +124,7 @@ validate_rdr_rule() {
 }
 
 persist_rdr_rule() {
+
     local inet="${1}"
     local if="${2}"
     local src="${3}"
@@ -123,12 +132,14 @@ persist_rdr_rule() {
     local proto="${5}"
     local host_port="${6}"
     local jail_port="${7}"
+
     if ! grep -qs "$inet $if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         echo "$inet $if $src $dst $proto $host_port $jail_port" >> "${bastille_jailsdir}/${TARGET}/rdr.conf"
     fi
 }
 
 persist_rdr_log_rule() {
+
     local inet="${1}"
     local if="${2}"
     local src="${3}"
@@ -138,12 +149,14 @@ persist_rdr_log_rule() {
     local jail_port="${7}"
     shift 7;
     log=$@;
+
     if ! grep -qs "$inet $if $src $dst $proto $host_port $jail_port $log" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         echo "$inet $if $src $dst $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${TARGET}/rdr.conf"
     fi
 }
 
 load_rdr_rule() {
+
     local inet="${1}"
     local if_name="${2}"
     local if=ext_if=\"${2}\"
@@ -152,6 +165,7 @@ load_rdr_rule() {
     local proto="${5}"
     local host_port="${6}"
     local jail_port="${7}"
+
     # Create IPv4 rdr rule
     # shellcheck disable=SC2193
     if { [ "${inet}" = "ipv4" ] || [ "${inet}" = "dual" ]; } then
@@ -177,6 +191,7 @@ load_rdr_rule() {
 }
 
 load_rdr_log_rule() {
+
     local inet="${1}"
     local if_name="${2}"
     local if=ext_if=\"${2}\"
@@ -187,6 +202,7 @@ load_rdr_log_rule() {
     local jail_port="${7}"
     shift 7;
     log=$@
+
     # Create IPv4 rule with log
     # shellcheck disable=SC2193
     if { [ "${inet}" = "ipv4" ] || [ "${inet}" = "dual" ]; } then
@@ -198,6 +214,7 @@ load_rdr_log_rule() {
             echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_name}"
         fi
     fi
+
     # Create IPv6 rdr rule with log (if ip6.addr is enabled)
     # shellcheck disable=SC2193
     if [ -n "${JAIL_IP6}" ] && { [ "${inet}" = "ipv6" ] || [ "${inet}" = "dual" ]; } then 
@@ -402,5 +419,3 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
-
-echo

@@ -191,5 +191,3 @@ for _jail in ${JAILS}; do
     sleep "${DELAY_TIME}"
 
 done
-
-echo

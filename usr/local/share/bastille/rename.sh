@@ -80,16 +80,18 @@ bastille_root_check
 set_target_single "${TARGET}"
 
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-    echo "Auto-stopping ${TARGET}..."
     bastille stop "${TARGET}"
-else   
+else
+    info "\n[${TARGET}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
 validate_name() {
+
     local NAME_VERIFY="${NEWNAME}"
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
+
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Container names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
@@ -98,9 +100,11 @@ validate_name() {
 }
 
 update_jailconf() {
+
     # Update jail.conf
     local _jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local _rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
+
     if [ -f "${_jail_conf}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${_jail_conf}"; then
             sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${_jail_conf}"
@@ -166,8 +170,8 @@ update_jailconf_vnet() {
 }
 
 change_name() {
+
     # Attempt container name change
-    info "Attempting to rename '${TARGET}' to ${NEWNAME}..."
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ] && [ -n "${bastille_zfs_prefix}" ]; then
             # Check and rename container ZFS dataset accordingly
@@ -210,7 +214,7 @@ change_name() {
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to rename '${TARGET}'."
     else
-        info "Renamed '${TARGET}' to '${NEWNAME}' successfully."
+        echo "Renamed '${TARGET}' to '${NEWNAME}' successfully."
         if [ "${AUTO}" -eq 1 ]; then
             bastille start "${NEWNAME}"
         fi
@@ -227,6 +231,6 @@ if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
     error_exit "Jail: ${NEWNAME} already exists."
 fi
 
-change_name
+info "\nAttempting to rename '${TARGET}' to ${NEWNAME}..."
 
-echo
+change_name

@@ -167,9 +167,9 @@ bastille_root_check
 set_target_single "${TARGET}"
 
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-    echo "Auto-stopping ${TARGET}..."
     bastille stop "${TARGET}"
-else   
+else
+    info "\n[${_jail}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi

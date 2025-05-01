@@ -117,13 +117,13 @@ validate_archive() {
     # Skip validation for unsupported archive
     if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
         if [ -f "${bastille_backupsdir}/${FILE_TRIM}.sha256" ]; then
-            info "Validating file: ${TARGET}..."
+            echo "Validating file: ${TARGET}..."
             SHA256_DIST=$(cat "${bastille_backupsdir}/${FILE_TRIM}.sha256")
             SHA256_FILE=$(sha256 -q "${bastille_backupsdir}/${TARGET}")
             if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
                 error_exit "Failed validation for ${TARGET}."
             else
-                info "File validation successful!"
+                echo "File validation successful!"
             fi
         else
             # Check if user opt to force import
@@ -141,7 +141,7 @@ update_zfsmount() {
     OLD_ZFS_MOUNTPOINT=$(zfs get -H mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" | awk '{print $3}')
     NEW_ZFS_MOUNTPOINT="${bastille_jailsdir}/${TARGET_TRIM}/root"
     if [ "${NEW_ZFS_MOUNTPOINT}" != "${OLD_ZFS_MOUNTPOINT}" ]; then
-        info "Updating ZFS mountpoint..."
+        echo "Updating ZFS mountpoint..."
         zfs set mountpoint="${bastille_jailsdir}/${TARGET_TRIM}/root" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root"
     fi
 
@@ -159,7 +159,7 @@ update_jailconf() {
     JAIL_CONFIG="${bastille_jailsdir}/${TARGET_TRIM}/jail.conf"
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${TARGET_TRIM}/root;" "${JAIL_CONFIG}"; then
-            info "Updating jail.conf..."
+            echo "Updating jail.conf..."
             sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${TARGET_TRIM}_console.log;|" "${JAIL_CONFIG}"
             sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${TARGET_TRIM}/root;|" "${JAIL_CONFIG}"
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${TARGET_TRIM}/fstab;|" "${JAIL_CONFIG}"
@@ -182,7 +182,7 @@ update_fstab_import() {
     if [ -n "${FSTAB_CURRENT}" ] && [ -n "${FSTAB_NEWCONF}" ]; then
         # If both variables are set, compare and update as needed
         if ! grep -qw "${bastille_releasesdir}/${FSTAB_RELEASE}.*${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille" "${FSTAB_CONFIG}"; then
-            info "Updating fstab..."
+            echo "Updating fstab..."
 	    if [ -n "${RELEASE}" ]; then
                 FSTAB_NEWCONF="${RELEASE}"
 	    fi
@@ -194,7 +194,7 @@ update_fstab_import() {
 generate_config() {
     # Attempt to read previous config file and set required variables accordingly
     # If we can't get a valid interface, fallback to lo1 and warn user
-    info "Generating jail.conf..."
+    echo "Generating jail.conf..."
     DEVFS_RULESET=4
 
     if [ "${FILE_EXT}" = ".zip" ]; then
@@ -241,43 +241,43 @@ generate_config() {
     else
         # If there are multiple IP/NIC let the user configure network
         IP4_DEFINITION=""
-	IP6_DEFINITION=""
+        IP6_DEFINITION=""
         IP6_MODE="disable"
- 	# IP4 set, but not IP6
+        # IP4 set, but not IP6
         if [ -n "${IP4_CONFIG}" ] && [ -z "${IP6_CONFIG}" ]; then
             if ! echo "${IP4_CONFIG}" | grep -q '.*,.*'; then
                 IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP4_IF}" ]; then
                     config_netif
-		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
                     IP6_MODE="disable"
                 else
                     IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
-		    IP6_MODE="disable"
-		fi
+                    IP6_MODE="disable"
+                fi
             else
                 IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP4_IF}" ]; then
                     config_netif
-		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
                     IP6_MODE="disable"
                 else
                     IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
-		    IP6_MODE="disable"
-		fi
+                    IP6_MODE="disable"
+                fi
             fi
- 	# IP6 set, but not IP4
+        # IP6 set, but not IP4
         elif [ -z "${IP4_CONFIG}" ] && [ -z "${IP6_CONFIG}" ]; then
             if ! echo "${IP6_CONFIG}" | grep -q '.*,.*'; then
                 IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP6_IF}" ]; then
                     config_netif
-		    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
+                    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
                     IP6_MODE="new"
                 else
                     IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
-		    IP6_MODE="new"
-		fi
+                    IP6_MODE="new"
+                fi
             else
                 IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP6_IF}" ]; then
@@ -286,48 +286,48 @@ generate_config() {
                     IP6_MODE="new"
                 else
                     IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
-		    IP6_MODE="new"
-		fi
+                    IP6_MODE="new"
+                fi
             fi
         # IP4 and IP6 both set
-	elif [ -n "${IP4_CONFIG}" ] && [ -n "${IP6_CONFIG}" ]; then
+        elif [ -n "${IP4_CONFIG}" ] && [ -n "${IP6_CONFIG}" ]; then
             if ! echo "${IP4_CONFIG}" | grep -q '.*,.*'; then
                 IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP4_IF}" ]; then
                     config_netif
-		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
                 else
                     IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
-		fi
+                fi
             else
                 IP4_IF=$(echo "${IP4_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP4_IF}" ]; then
                     config_netif
-		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
+                    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IP4_CONFIG};"
                 else
                     IP4_DEFINITION="ip4.addr = ${IP4_CONFIG};"
-		fi
+                fi
             fi
             if ! echo "${IP6_CONFIG}" | grep -q '.*,.*'; then
                 IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP6_IF}" ]; then
                     config_netif
-		    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
+                    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
                     IP6_MODE="new"
                 else
                     IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
-		    IP6_MODE="new"
-		fi
+                    IP6_MODE="new"
+                fi
             else
                 IP6_IF=$(echo "${IP6_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${IP6_IF}" ]; then
                     config_netif
-		    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
+                    IP6_DEFINITION="ip6.addr = ${NETIF_CONFIG}|${IP6_CONFIG};"
                     IP6_MODE="new"
-		else
-		    IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
+                else
+                    IP6_DEFINITION="ip6.addr = ${IP6_CONFIG};"
                     IP6_MODE="new"
-		fi
+                fi
             fi
         # ezjail import
         elif [ -n "${IPVX_CONFIG}" ]; then
@@ -335,14 +335,14 @@ generate_config() {
                 NETIF_CONFIG=$(echo "${IPVX_CONFIG}" | grep '.*|' | sed 's/|.*//g')
                 if [ -z "${NETIF_CONFIG}" ]; then
                     config_netif
-		    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IPVX_CONFIG};"
+                    IP4_DEFINITION="ip4.addr = ${NETIF_CONFIG}|${IPVX_CONFIG};"
                     IP6_MODE="disable"
                 else
                     IP4_DEFINITION="ip4.addr = ${IPVX_CONFIG};"
-		    IP6_MODE="disable"
-		fi
+                    IP6_MODE="disable"
+                fi
                 if echo "${IPVX_CONFIG}" | sed 's/.*|//' | grep -Eq '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))'; then
-		    IP4_DEFINITION=""
+                    IP4_DEFINITION=""
                     IP6_DEFINITION="ip6.addr = ${IPVX_CONFIG};"
                     IP6_MODE="new"
                 fi
@@ -405,6 +405,7 @@ EOF
 }
 
 update_config() {
+
     # Update an existing jail configuration
     # The config on select archives does not provide a clear way to determine
     # the base release, so lets try to get it from the base/COPYRIGHT file,
@@ -414,11 +415,13 @@ update_config() {
     else
         CONFIG_RELEASE="${RELEASE}"
     fi
+
     if [ -z "${CONFIG_RELEASE}" ]; then
         # Fallback to host version
         CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
         warn "Warning: ${CONFIG_RELEASE} was set by default!"
     fi
+
     mkdir "${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille"
     echo "${bastille_releasesdir}/${CONFIG_RELEASE} ${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille nullfs ro 0 0" \
     >> "${bastille_jailsdir}/${TARGET_TRIM}/fstab"
@@ -483,7 +486,7 @@ update_symlinks() {
     fi
 
     # Update old symlinks
-    info "Updating symlinks..."
+    echo "Updating symlinks..."
     for _link in ${SYMLINKS}; do
         if [ -L "${_link}" ]; then
             ln -sf /.bastille/${_link} ${_link}
@@ -500,8 +503,8 @@ update_symlinks() {
 
 create_zfs_datasets() {
     # Prepare the ZFS environment and restore from file
-    info "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
-    info "Preparing ZFS environment..."
+    echo "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
+    echo "Preparing ZFS environment..."
 
     # Create required ZFS datasets, mountpoint inherited from system
     zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
@@ -525,8 +528,8 @@ jail_import() {
                 if [ "${FILE_EXT}" = ".xz" ]; then
                     validate_archive
                     # Import from compressed xz on ZFS systems
-                    info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
-                    info "Receiving ZFS data stream..."
+                    echo "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
+                    echo "Receiving ZFS data stream..."
                     xz ${bastille_decompress_xz_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
 
@@ -535,8 +538,8 @@ jail_import() {
                 elif [ "${FILE_EXT}" = ".gz" ]; then
                     validate_archive
                     # Import from compressed xz on ZFS systems
-                    info "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
-                    info "Receiving ZFS data stream..."
+                    echo "Importing '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
+                    echo "Receiving ZFS data stream..."
                     gzip ${bastille_decompress_gz_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
 
@@ -549,7 +552,7 @@ jail_import() {
                     create_zfs_datasets
 
                     # Extract required files to the new datasets
-                    info "Extracting files from '${TARGET}' archive..."
+                    echo "Extracting files from '${TARGET}' archive..."
                     tar --exclude='root' -Jxf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
                     tar -Jxf "${bastille_backupsdir}/${TARGET}" --strip-components 2 -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${TARGET_TRIM}/root"
                     if [ "$?" -ne 0 ]; then
@@ -561,7 +564,7 @@ jail_import() {
                     create_zfs_datasets
 
                     # Extract required files to the new datasets
-                    info "Extracting files from '${TARGET}' archive..."
+                    echo "Extracting files from '${TARGET}' archive..."
                     tar --exclude='root' -xf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components 2 -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${TARGET_TRIM}/root"
                     if [ "$?" -ne 0 ]; then
@@ -570,7 +573,7 @@ jail_import() {
                 elif [ "${FILE_EXT}" = ".zip" ]; then
                     validate_archive
                     # Attempt to import a foreign/iocage container
-                    info "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
+                    echo "Importing '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
                     # Sane bastille ZFS options
                     ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
 
@@ -580,7 +583,7 @@ jail_import() {
                         error_exit "Failed to extract files from '${TARGET}' archive."
                         rm -f "${FILE_TRIM}" "${FILE_TRIM}_root"
                     fi
-                    info "Receiving ZFS data stream..."
+                    echo "Receiving ZFS data stream..."
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
                     zfs set ${ZFS_OPTIONS} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
@@ -604,7 +607,7 @@ jail_import() {
                     create_zfs_datasets
 
                     # Extract required files to the new datasets
-                    info "Extracting files from '${TARGET}' archive..."
+                    echo "Extracting files from '${TARGET}' archive..."
                     tar --exclude='ezjail/' -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}/${TARGET_TRIM}"
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}/root"
                     if [ "$?" -ne 0 ]; then
@@ -619,7 +622,7 @@ jail_import() {
                     workout_components
 
                     # Extract required files to the new datasets
-                    info "Extracting files from '${TARGET}' archive..."
+                    echo "Extracting files from '${TARGET}' archive..."
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components "${CONF_TRIM}" -C "${bastille_jailsdir}/${TARGET_TRIM}" "${JAIL_CONF}"
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components "${DIRS_PLUS}" -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${JAIL_PATH}"
                     if [ -f "${bastille_jailsdir}/${TARGET_TRIM}/${TARGET_TRIM}" ]; then
@@ -636,8 +639,8 @@ jail_import() {
                         validate_archive
                         # Based on the file name, looks like we are importing a raw bastille image
                         # Import from uncompressed image file
-                        info "Importing '${TARGET_TRIM}' from uncompressed image archive."
-                        info "Receiving ZFS data stream..."
+                        echo "Importing '${TARGET_TRIM}' from uncompressed image archive."
+                        echo "Receiving ZFS data stream..."
                         zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${bastille_backupsdir}/${TARGET}"
 
                         # Update ZFS mountpoint property if required
@@ -659,21 +662,21 @@ jail_import() {
         else
             # Import from standard supported archives on UFS systems
             if [ "${FILE_EXT}" = ".txz" ]; then
-                info "Extracting files from '${TARGET}' archive..."
+                echo "Extracting files from '${TARGET}' archive..."
                 tar -Jxf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
             elif [ "${FILE_EXT}" = ".tgz" ]; then
-                info "Extracting files from '${TARGET}' archive..."
+                echo "Extracting files from '${TARGET}' archive..."
                 tar -xf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
             elif [ "${FILE_EXT}" = ".tar.gz" ]; then
                 # Attempt to import/configure foreign/ezjail container
-                info "Extracting files from '${TARGET}' archive..."
+                echo "Extracting files from '${TARGET}' archive..."
                 mkdir "${bastille_jailsdir}/${TARGET_TRIM}"
                 tar -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}/${TARGET_TRIM}"
                 mv "${bastille_jailsdir}/${TARGET_TRIM}/ezjail" "${bastille_jailsdir}/${TARGET_TRIM}/root"
                 generate_config
             elif [ "${FILE_EXT}" = ".tar" ]; then
                 # Attempt to import/configure foreign/qjail container
-                info "Extracting files from '${TARGET}' archive..."
+                echo "Extracting files from '${TARGET}' archive..."
                 mkdir -p "${bastille_jailsdir}/${TARGET_TRIM}/root"
                 workout_components
                 tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components "${CONF_TRIM}" -C "${bastille_jailsdir}/${TARGET_TRIM}" "${JAIL_CONF}"
@@ -695,7 +698,7 @@ jail_import() {
             update_jailconf
             update_fstab_import
             if [ -z "${USER_IMPORT}" ]; then
-                info "Container '${TARGET_TRIM}' imported successfully."
+                echo "Container '${TARGET_TRIM}' imported successfully."
             fi
             exit 0
         fi
@@ -746,7 +749,6 @@ elif [ -n "${TARGET_TRIM}" ]; then
 fi
 
 if [ -n "${TARGET}" ]; then
+    info "\nAttempting to import jail: ${TARGET}..."
     jail_import
 fi
-
-echo

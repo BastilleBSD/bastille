@@ -51,9 +51,9 @@ EOF
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	-h|--help|help)
-	    usage
-	    ;;
+        -h|--help|help)
+            usage
+            ;;
         -a|--auto)
             AUTO=1
             shift
@@ -103,16 +103,15 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
-        info "[${_jail}]:"
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+
+    info "\n[${_jail}]:"
     
     case "${ACTION}" in
         add)
@@ -190,7 +189,4 @@ for _jail in ${JAILS}; do
             fi
             ;;
     esac
-	
 done
-
-echo

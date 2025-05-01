@@ -82,24 +82,28 @@ CONVERT_RELEASE="${2}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-info "\n[${TARGET}]:"
-
+# Validate jail state before continuing
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-    echo "Auto-stopping ${TARGET}..."
     bastille stop "${TARGET}"
-else   
+else
+    info "\n[${TARGET}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
+info "\n[${TARGET}]:"
+
 validate_release_name() {
+
     local _name=${1}
     local _sanity="$(echo "${_name}" | tr -c -d 'a-zA-Z0-9-_')"
+	
     if [ -n "$(echo "${_sanity}" | awk "/^[-_].*$/" )" ]; then
         error_exit "Release names may not begin with (-|_) characters!"
     elif [ "${_name}" != "${_sanity}" ]; then
         error_exit "Release names may not contain special characters!"
     fi
+
 }
 
 convert_jail_to_release() {
@@ -150,12 +154,13 @@ convert_jail_to_release() {
             bastille destroy -af "${NAME}"
             error_exit "Failed to create release. Please retry!"
         else
-            info "Created ${_release} from ${_jailname}"
+            info "Created ${_release} from ${_jailname}\n"
         fi
     fi
 }
 
 convert_symlinks() {
+
     # Work with the symlinks, revert on first cp error
     if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
         # Retrieve old symlinks temporarily
@@ -235,7 +240,7 @@ start_convert() {
             fi
             mv "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/root/.bastille.old"
 
-            info "Conversion of '${TARGET}' completed successfully!"
+            info "Conversion of '${TARGET}' completed successfully!\n"
             exit 0
         else
             error_exit "Can't determine release version. See 'bastille bootstrap'."
@@ -248,12 +253,14 @@ start_convert() {
 # Convert thin jail to thick jail if only one arg
 # Convert jail to release if two args
 if [ "$#" -eq 1 ]; then
+
     # Check if jail is a thin jail
     if [ ! -d "${bastille_jailsdir}/${TARGET}/root/.bastille" ]; then
         error_exit "${TARGET} is not a thin container."
     elif ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         error_exit "${TARGET} is not a thin container."
     fi
+
     # Make sure the user agree with the conversion
     # Be interactive here since this cannot be easily undone
     while :; do
@@ -278,5 +285,3 @@ elif  [ "$#" -eq 2 ]; then
 else
     usage
 fi
-
-echo

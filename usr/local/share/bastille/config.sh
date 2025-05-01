@@ -120,7 +120,6 @@ for _jail in ${JAILS}; do
         PROPERTY="priority"
         BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/boot.conf"
-        info "[${_jail}]:"    
         if [ "${ACTION}" = "set" ]; then
             if echo "${VALUE}" | grep -Eq '^[0-9]+$'; then
                 sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
@@ -133,7 +132,6 @@ for _jail in ${JAILS}; do
     elif [ "${PROPERTY}" = "boot" ]; then
         BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/boot.conf"
-        info "[${_jail}]:"
         if [ "${ACTION}" = "set" ]; then
             if [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; then
                 sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"

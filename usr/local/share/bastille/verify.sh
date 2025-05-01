@@ -45,6 +45,7 @@ EOF
 }
 
 verify_release() {
+
     if [ -f "/bin/midnightbsd-version" ]; then
         echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
         exit 1
@@ -61,6 +62,7 @@ verify_release() {
 }
 
 handle_template_include() {
+
     case ${TEMPLATE_INCLUDE} in
         http?://*/*/*)
             bastille bootstrap "${TEMPLATE_INCLUDE}"
@@ -77,6 +79,7 @@ handle_template_include() {
 }
 
 verify_template() {
+
     _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
     _hook_validate=0
 
@@ -199,5 +202,3 @@ case "${1}" in
         usage
         ;;
 esac
-
-echo

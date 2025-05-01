@@ -87,8 +87,10 @@ bastille_root_check
 set_target "${TARGET}"
 
 validate_user() {
+
     local _jail="${1}"
     local _user="${2}"
+	
     if jexec -l "${_jail}" id "${_user}" >/dev/null 2>&1; then
         USER_SHELL="$(jexec -l "${_jail}" getent passwd "${_user}}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
@@ -106,7 +108,9 @@ validate_user() {
 }
 
 check_fib() {
+
     local _jail="${1}"
+	
     fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
         if [ -n "${fib}" ]; then
             _setfib="setfib -F ${fib}"
@@ -114,19 +118,21 @@ check_fib() {
             _setfib=""
         fi
 }
+
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        echo "Auto-starting ${_jail}..."
         bastille start "${_jail}"
     else
+        info "\n[${_jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
+
+    info "\n[${_jail}]:"
     
     LOGIN="$(jexec -l "${_jail}" which login)"
+
     if [ -n "${USER}" ]; then
         validate_user "${_jail}" "${USER}"
     else
@@ -136,5 +142,3 @@ for _jail in ${JAILS}; do
     fi
     
 done
-
-echo
