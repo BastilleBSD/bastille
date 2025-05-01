@@ -71,6 +71,7 @@ get_max_lengths() {
         # Set max length for VNET jail IPs
         # shellcheck disable=SC2046
         MAX_LENGTH_JAIL_VNET_IP6="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -Eho '\b(([0-9a-fA-F]{1,4}:){1,7}|:):([0-9a-fA-F]{1,4}:?){0,6}[0-9a-fA-F]{1,4}\b' $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | awk '{print length}' | sort -nr | head -n 1)"
+        MAX_LENGTH_JAIL_VNET_IP6=${MAX_LENGTH_JAIL_VNET_IP6:-10}
         # shellcheck disable=SC2046
         MAX_LENGTH_JAIL_VNET_IP="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet.*=" $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | sed -n "s/^ifconfig_vnet.*=\"\(.*\)\"$/\1/p"| sed "s/\// /g" | awk '{ if ($1 == "inet ") print length($2); else if ($1 == "inet6") print length($3); else print 15 }' | sort -nr | head -n 1)"
         MAX_LENGTH_JAIL_VNET_IP=${MAX_LENGTH_JAIL_VNET_IP:-10}
@@ -92,9 +93,9 @@ get_max_lengths() {
 
         # Set max length for freebsd jail release
         # shellcheck disable=SC2046
-        MAX_LENGTH_JAIL_RELEASE="$(find ${bastille_jailsdir}/*/fstab -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h "/releases/.*/root/.bastille.*nullfs" | grep -hE "^USERLAND_VERSION=" $(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++') | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)"
+        MAX_LENGTH_JAIL_RELEASE="$(find ${bastille_jailsdir}/*/fstab -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -hs "/releases/.*/root/.bastille.*nullfs" | grep -hEs "^USERLAND_VERSION=" $(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++') | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)"
         MAX_LENGTH_JAIL_RELEASE=${MAX_LENGTH_JAIL_RELEASE:-7}
-        MAX_LENGTH_THICK_JAIL_RELEASE=$(find ${bastille_jailsdir}/*/root/bin/freebsd-version -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -hE "^USERLAND_VERSION=" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
+        MAX_LENGTH_THICK_JAIL_RELEASE=$(find ${bastille_jailsdir}/*/root/bin/freebsd-version -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -hEs "^USERLAND_VERSION=" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p" | awk '{ print length($0) }' | sort -nr | head -n 1)
         MAX_LENGTH_THICK_JAIL_RELEASE=${MAX_LENGTH_THICK_JAIL_RELEASE:-7}
 
         # Set max length for linux jail release
