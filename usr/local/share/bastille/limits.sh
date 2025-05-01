@@ -67,7 +67,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -95,7 +95,7 @@ fi
 
 RACCT_ENABLE="$(sysctl -n kern.racct.enable)"
 if [ "${RACCT_ENABLE}" != '1' ]; then
-    error_exit "Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
+    error_exit "[ERROR]: Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
 fi
 
 bastille_root_check
@@ -185,7 +185,7 @@ for _jail in ${JAILS}; do
                 rm -f "${bastille_jailsdir}/${_jail}/rctl.conf"
                 echo "rctl.conf removed."
             else
-                error_continue "rctl.conf not found."
+                error_continue "[ERROR]: rctl.conf not found."
             fi
             ;;
     esac

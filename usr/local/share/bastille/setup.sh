@@ -250,7 +250,7 @@ case "$1" in
         configure_pf
         ;;
     -n|netgraph)
-        warn "[WARNING] Bastille only allows using either 'if_bridge' or 'netgraph'"
+        warn "[WARNING]: Bastille only allows using either 'if_bridge' or 'netgraph'"
         warn "as VNET network options. You CANNOT use both on the same system. If you have"
         warn "already started using bastille with 'if_bridge' do not continue."
         # shellcheck disable=SC3045
@@ -270,7 +270,7 @@ case "$1" in
         ;;
 
     -l|loopback)
-        warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
+        warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
         warn "interface to be configured ant one time. If you continue, the 'shared'"
         warn "interface will be disabled, and the 'loopback' interface will be used as default."
         # shellcheck disable=SC3045
@@ -288,7 +288,7 @@ case "$1" in
         esac
         ;;
     -s|shared)
-        warn "[WARNING] Bastille only allows using either the 'loopback' or 'shared'"
+        warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
         warn "interface to be configured at one time. If you continue, the 'loopback'"
         warn "interface will be disabled, and the shared interface will be used as default."
         # shellcheck disable=SC3045
@@ -314,5 +314,8 @@ case "$1" in
     -b|bridge)
         configure_vnet
         configure_bridge
+        ;;
+    *)
+        error_exit "[ERROR]: Unknown option: \"${1}\""
         ;;
 esac

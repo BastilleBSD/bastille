@@ -65,11 +65,11 @@ validate_name() {
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
 
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
-        error_exit "Container names may not begin with (-|_) characters!"
+        error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
-        error_exit "Container names may not contain special characters!"
+        error_exit "[ERROR]: Jail names may not contain special characters!"
     elif echo "${NAME_VERIFY}" | grep -qE '^[0-9]+$'; then
-        error_exit "Container names may not contain only digits."
+        error_exit "[ERROR]: Jail names may not contain only digits."
     fi
 }
 
@@ -79,11 +79,16 @@ validate_ip() {
     _ip6=$(echo "${_ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
 
     if [ -n "${_ip6}" ]; then
+
         info "\nValid: (${_ip6})."
+
         ipx_addr="ip6.addr"
+
     else
         if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
+
             info "\nValid: (${_ip})."
+
         else
             local IFS
             if echo "${_ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
@@ -177,7 +182,7 @@ validate_netif() {
     if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         info "\nValid: (${INTERFACE})."
     else
-        error_exit "Invalid: (${INTERFACE})."
+        error_exit "[ERROR]: Invalid: (${INTERFACE})."
     fi
 }
 
@@ -446,7 +451,7 @@ create_jail() {
                     if ! cp -a "${bastille_releasesdir}/${RELEASE}/${files}" "${bastille_jail_path}/${files}"; then
                         ## notify and clean stale files/directories
                         bastille destroy -af "${NAME}"
-                        error_exit "Failed to copy release files. Please retry create!"
+                        error_exit "[ERROR]: Failed to copy release files. Please retry create!"
                     fi
                 fi
             done
@@ -466,9 +471,10 @@ create_jail() {
                         # Check and apply required settings.
                         post_create_jail
                     elif [ -n "${THICK_JAIL}" ]; then
-                        info "\nCreating a thickjail. This may take a while...\n"
-                        ## perform release base replication
 
+                        info "\nCreating a thickjail. This may take a while..."
+
+                        ## perform release base replication
                         ## sane bastille zfs options
                         ZFS_OPTIONS=$(echo ${bastille_zfs_options} | sed 's/-o//g')
                         ## send without -R if encryption is enabled
@@ -500,7 +506,7 @@ create_jail() {
                     if [ "$?" -ne 0 ]; then
                         ## notify and clean stale files/directories
                         bastille destroy -af "${NAME}"
-                        error_exit "Failed release base replication. Please retry create!"
+                        error_exit "[ERROR]: Failed release base replication. Please retry create!"
                     fi
                 fi
             else
@@ -588,7 +594,7 @@ create_jail() {
     if [ -z "${EMPTY_JAIL}" ]; then
         if ! check_target_is_running "${NAME}"; then
             bastille destroy -af "${NAME}"
-            error_exit "[${NAME}]: Failed to create jail..."
+            error_exit "[ERROR]: Failed to create jail: ${NAME}"
         fi
     fi
 
@@ -601,6 +607,7 @@ create_jail() {
             _gateway6=''
             _ifconfig_inet=''
             _ifconfig_inet6=''
+
             if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP)'; then
                 # Enable DHCP if requested
                 _ifconfig_inet=SYNCDHCP
@@ -659,7 +666,7 @@ create_jail() {
         fi
     ## Using templating function to fetch necessary packges @hackacad
     elif [ -n "${LINUX_JAIL}" ]; then
-        info "Fetching packages..."
+        info "\nFetching packages..."
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
@@ -786,7 +793,7 @@ while [ $# -gt 0 ]; do
                     T) THICK_JAIL=1 ;;
                     V) VNET_JAIL=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -804,7 +811,7 @@ if [ -n "${EMPTY_JAIL}" ]; then
     fi
 elif [ -n "${LINUX_JAIL}" ]; then
     if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${CLONE_JAIL}" ]; then
-        error_exit "Error: Linux jail option can't be used with other options."
+        error_exit "[ERROR]: Linux jail option can't be used with other options."
     fi
 elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
     error_exit "[ERROR]: Clonejail and Thickjail can't be used together."

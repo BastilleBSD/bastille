@@ -118,7 +118,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            error_notify "Unknown Option: \"${1}\""
+            error_notify "[ERROR]: Unknown Option: \"${1}\""
             usage
             ;;
         *)
@@ -139,12 +139,12 @@ set_target "${TARGET}"
 
 # Check if ZFS is enabled
 if ! checkyesno bastille_zfs_enable; then
-    error_exit "ZFS not enabled."
+    error_exit "[ERROR]: ZFS not enabled."
 fi
 
 # Check if zpool is defined
 if [ -z "${bastille_zfs_zpool}" ]; then
-    error_exit "ZFS zpool not defined."
+    error_exit "[ERROR]: ZFS zpool not defined."
 fi
 
 case "${ACTION}" in

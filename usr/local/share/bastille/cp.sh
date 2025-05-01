@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -95,7 +95,9 @@ for _jail in ${JAILS}; do
     jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
 	
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
-        error_continue "CP failed: ${host_path} -> ${jail_path}"
+        error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"
     fi
 	
 done
+
+echo

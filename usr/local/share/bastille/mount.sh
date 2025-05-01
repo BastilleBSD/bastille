@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\""
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done
             shift
@@ -106,7 +106,6 @@ if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "
     error_notify "FSTAB format not recognized."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    usage
 fi
 
 # Exit if host path doesn't exist, type is not "nullfs", or mount is an advanced mount type "tmpfs,linprocfs,linsysfs,fdescfs,procfs"
@@ -122,7 +121,6 @@ elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
     error_notify "Invalid host path or incorrect mount type in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    usage
 fi
 
 # Mount permissions,options must include one of "ro, rw, rq, sw, xx"
@@ -130,7 +128,6 @@ if ! echo "${_perms}" | grep -Eq '(ro|rw|rq|sw|xx)(,.*)?$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    usage
 fi
 
 # Dump and pass need to be "0 0 - 1 1"
@@ -138,7 +135,6 @@ if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "
     error_notify "Detected invalid fstab options in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
-    usage
 fi
 
 for _jail in ${JAILS}; do

@@ -75,7 +75,7 @@ while [ "$#" -gt 0 ]; do
                     a) AUTO=1 ;;
                     f) OPTION="-F" ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -91,12 +91,11 @@ TARGET="${1}"
 bastille_root_check
 
 if [ -f "/bin/midnightbsd-version" ]; then
-    echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
-    exit 1
+    error_exit "[ERROR]: Not yet supported on MidnightBSD."
 fi
 
 if freebsd-version | grep -qi HBSD; then
-    error_exit "Not yet supported on HardenedBSD."
+    error_exit "[ERROR]: Not yet supported on HardenedBSD."
 fi
 
 # Check for alternate/unsupported archs
@@ -122,7 +121,7 @@ jail_check() {
     info "\n[${TARGET}]:"
 
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-        error_notify "${TARGET} is not a thick container."
+        error_notify "[ERROR]: ${TARGET} is not a thick container."
         error_exit "See 'bastille update RELEASE' to update thin jails."
     fi
 }
@@ -138,7 +137,7 @@ jail_update() {
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then   
         CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
         if [ -z "${CURRENT_VERSION}" ]; then
-            error_exit "Can't determine '${TARGET}' version."
+            error_exit "[ERROR]: Can't determine '${TARGET}' version."
         else
             env PAGER="/bin/cat" freebsd-update ${OPTION} \
             --not-running-from-cron \
@@ -175,7 +174,7 @@ release_update() {
         -f "${_freebsd_update_conf}" \
         install --currently-running "${TARGET_TRIM}"
     else
-        error_exit "${TARGET} not found. See 'bastille bootstrap RELEASE'."
+        error_exit "[ERROR]: ${TARGET} not found. See 'bastille bootstrap RELEASE'."
     fi
 }
 
@@ -185,13 +184,13 @@ template_update() {
     _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
 
     if [ -d $_template_path ]; then
-        info "[${BASTILLE_TEMPLATE}]:"
-        git -C $_template_path pull ||\
-            error_notify "${BASTILLE_TEMPLATE} update unsuccessful."    
-
+        info "\n[${BASTILLE_TEMPLATE}]:"
+        if ! git -C $_template_path pull; then
+            error_exit "[ERROR]: ${BASTILLE_TEMPLATE} update unsuccessful."    
+        fi
         bastille verify "${BASTILLE_TEMPLATE}"
     else 
-        error_exit "${BASTILLE_TEMPLATE} not found. See 'bastille bootstrap'."
+        error_exit "[ERROR]: ${BASTILLE_TEMPLATE} not found. See 'bastille bootstrap'."
     fi
 }
 
@@ -200,7 +199,7 @@ templates_update() {
     # Update all templates
     _updated_templates=0
     if [ -d  ${bastille_templatesdir} ]; then
-	    # shellcheck disable=SC2045
+        # shellcheck disable=SC2045
         for _template_path in $(ls -d ${bastille_templatesdir}/*/*); do
             if [ -d $_template_path/.git ]; then
                 BASTILLE_TEMPLATE=$(echo "$_template_path" | awk -F / '{ print $(NF-1) "/" $NF }')
@@ -212,9 +211,9 @@ templates_update() {
     fi
 
     if [ "$_updated_templates" -ne "0" ]; then
-        info "$_updated_templates templates updated."
+        info "\n$_updated_templates templates updated."
     else 
-        error_exit "no templates found. See 'bastille bootstrap'."
+        error_exit "[ERROR]: No templates found. See 'bastille bootstrap'."
     fi
 }
 

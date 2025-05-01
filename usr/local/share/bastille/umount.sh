@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\""
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done
             shift
@@ -88,6 +88,7 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
+    # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else
@@ -105,18 +106,18 @@ for _jail in ${JAILS}; do
 
     # Exit if mount point non-existent
     if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
-        error_continue "The specified mount point does not exist."
+        error_continue "[ERROR]: The specified mount point does not exist."
     fi
 
     # Unmount
     if [ -n "${_mount}" ]; then
-        umount "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
+        umount "${_jailpath}" || error_continue "[ERROR]: Failed to unmount volume: ${MOUNT_PATH}"
     fi
 
     # Remove entry from fstab
     if [ -n "${_fstab_entry}" ]; then
         if ! sed -E -i '' "\, +${_jailpath_fstab} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
-            error_continue "Failed to delete fstab entry: ${MOUNT_PATH}"
+            error_continue "[ERROR]: Failed to delete fstab entry: ${MOUNT_PATH}"
         fi
     fi
 

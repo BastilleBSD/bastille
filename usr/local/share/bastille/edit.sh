@@ -55,7 +55,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            error_notify "Unknown Option: \"${1}\""
+            error_notify "[ERROR]: Unknown Option: \"${1}\""
             usage
             ;;
         *)

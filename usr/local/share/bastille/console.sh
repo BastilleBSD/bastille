@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     x) enable_debug ;;
                     a) AUTO=1 ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -112,15 +112,17 @@ check_fib() {
     local _jail="${1}"
 	
     fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
-        if [ -n "${fib}" ]; then
-            _setfib="setfib -F ${fib}"
-        else
-            _setfib=""
-        fi
+
+    if [ -n "${fib}" ]; then
+        _setfib="setfib -F ${fib}"
+    else
+        _setfib=""
+    fi
 }
 
 for _jail in ${JAILS}; do
 
+    # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else

@@ -82,7 +82,7 @@ while [ "$#" -gt 0 ]; do
                     b) BOOT=1 ;;
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -134,14 +134,14 @@ for _jail in ${JAILS}; do
                 fi
                 if ifconfig | grep "^${_if}:" >/dev/null; then
                     if ifconfig | grep -qwF "${_ip}"; then
-                        warn "Warning: IP address (${_ip}) already in use, continuing..."
+                        warn "[WARNING]: IP address (${_ip}) already in use, continuing..."
                     fi
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
                     if route -n get ${_ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
                     fi
                 else
-                    error_continue "Error: ${_if} interface does not exist."
+                    error_continue "[ERROR]: ${_if} interface does not exist."
                 fi
             done
         fi
@@ -157,14 +157,14 @@ for _jail in ${JAILS}; do
                 fi
                 if ifconfig | grep "^${_if}:" >/dev/null; then
                     if ifconfig | grep -qwF "${_ip}"; then
-                        warn "Warning: IP address (${_ip}) already in use, continuing..."
+                        warn "[WARNING]: IP address (${_ip}) already in use, continuing..."
                     fi
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
                     if route -n get ${_ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
                     fi
                 else
-                    error_continue "Error: ${_if} interface does not exist."
+                    error_continue "[ERROR]: ${_if} interface does not exist."
                 fi
             done
         fi

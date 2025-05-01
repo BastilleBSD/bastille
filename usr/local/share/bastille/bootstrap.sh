@@ -226,7 +226,7 @@ bootstrap_release() {
                 touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
                 touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
             else
-                error_exit "Failed to extract ${_archive}.txz."
+                error_exit "[ERROR]: Failed to extract ${_archive}.txz."
             fi
         else
             ## get the manifest for dist files checksum validation
@@ -289,7 +289,7 @@ bootstrap_release() {
                         touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
                         touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
                     else
-                        error_exit "Failed to extract ${_archive}.txz."
+                        error_exit "[ERROR]: Failed to extract ${_archive}.txz."
                     fi
                 fi
         fi
@@ -319,22 +319,22 @@ debootstrap_release() {
             read  answer
             case "${answer}" in
                 [Nn][Oo]|[Nn]|"")
-                    error_exit "Exiting."
+                    error_exit "Cancelled, Exiting."
                     ;;
                 [Yy][Ee][Ss]|[Yy])
                     # Skip already loaded known modules.
                     if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
-                        info "Loading kernel module: ${_req_kmod}"
+                        info "\nLoading kernel module: ${_req_kmod}"
                         kldload -v ${_req_kmod}
                     fi
-                    info "Persisting module: ${_req_kmod}"
+                    info "\nPersisting module: ${_req_kmod}"
                     sysrc -f /boot/loader.conf ${_req_kmod}_load=YES
                 ;;
             esac
         else
             # If already set in /boot/loader.conf, check and try to load the module.
             if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
-                info "Loading kernel module: ${_req_kmod}"
+                info "\nLoading kernel module: ${_req_kmod}"
                 kldload -v ${_req_kmod}
             fi
         fi
@@ -343,10 +343,11 @@ debootstrap_release() {
         # Mandatory Linux modules/rc.
         for _lin_kmod in ${linuxarc_mods}; do
             if ! kldstat -n ${_lin_kmod} >/dev/null 2>&1; then
-                info "Loading kernel module: ${_lin_kmod}"
+                info "\nLoading kernel module: ${_lin_kmod}"
                 kldload -v ${_lin_kmod}
             fi
         done
+
         if [ ! "$(sysrc -qn linux_enable)" = "YES" ] && \
             [ ! "$(sysrc -f /etc/rc.conf.local -qn linux_enable)" = "YES" ]; then
             sysrc linux_enable=YES
@@ -357,7 +358,7 @@ debootstrap_release() {
         read  answer
         case $answer in
             [Nn][Oo]|[Nn]|"")
-                error_exit "Exiting. You need to install debootstap before boostrapping a Linux jail."
+                error_exit "[ERROR]: debootstrap is required for boostrapping a Linux jail."
                 ;;
             [Yy][Ee][Ss]|[Yy])
                 pkg install -y debootstrap
@@ -368,6 +369,7 @@ debootstrap_release() {
     # Fetch the Linux flavor
     info "\nFetching ${PLATFORM_OS} distfiles..."
     if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
+
         ## perform cleanup only for stale/empty directories on failure
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -376,6 +378,7 @@ debootstrap_release() {
                 fi
             fi
         fi
+
         if [ -d "${bastille_releasesdir}/${DIR_BOOTSTRAP}" ]; then
             if [ ! "$(ls -A "${bastille_releasesdir}/${DIR_BOOTSTRAP}")" ]; then
                 rm -rf "${bastille_releasesdir:?}/${DIR_BOOTSTRAP}"
@@ -463,7 +466,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*) 
-            error_exit "Unknown Option: \"${1}\""
+            error_exit "[ERROR]: Unknown Option: \"${1}\""
             ;;
         *)
             break
@@ -491,7 +494,7 @@ if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; the
     esac
 fi
 
-# Validate ZFS parameters.
+# Validate ZFS parameters
 if checkyesno bastille_zfs_enable; then
     ## check for the ZFS pool and bastille prefix
     if [ -z "${bastille_zfs_zpool}" ]; then
@@ -525,7 +528,7 @@ if [ -n "${OPTION}" ] && [ "${OPTION}" != "${HW_MACHINE}" ] && [ "${OPTION}" != 
         HW_MACHINE="i386"
         HW_MACHINE_ARCH="i386"
     else
-        error_exit "Unsupported architecture."
+        error_exit "[ERROR]: Unsupported architecture."
     fi
 fi
 

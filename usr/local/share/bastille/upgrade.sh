@@ -72,7 +72,7 @@ while [ "$#" -gt 0 ]; do
                     a) AUTO=1 ;;
                     f) OPTION="-F" ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -95,19 +95,18 @@ set_target_single "${TARGET}"
 
 # Check for unsupported actions    
 if [ -f "/bin/midnightbsd-version" ]; then
-    echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
-    exit 1
+    error_exit "[ERROR]: Not yet supported on MidnightBSD."
 fi
 
 if freebsd-version | grep -qi HBSD; then
-    error_exit "Not yet supported on HardenedBSD."
+    error_exit "[ERROR]: Not yet supported on HardenedBSD."
 fi
 
 thick_jail_check() {
 
     local _jail="${1}"
 
-    # Check if the jail is thick and is running
+    # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else
@@ -121,7 +120,7 @@ thin_jail_check() {
 
     local _jail="${1}"
 
-    # Check if the jail is thick and is running
+    # Validate jail state
     check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${_jail}"
     else
@@ -137,13 +136,13 @@ release_check() {
 
     # Validate the release
     if ! echo "${_release}" | grep -q "[0-9]\{2\}.[0-9]-[RELEASE,BETA,RC]"; then
-        error_exit "${_release} is not a valid release."
+        error_exit "[ERROR]: ${_release} is not a valid release."
     fi
 
     # Exit if NEWRELEASE doesn't exist
     if [ "${THIN_JAIL}" -eq 1 ]; then
         if [ ! -d "${bastille_releasesdir}/${_release}" ]; then
-            error_notify "Release not found: ${_release}"
+            error_notify "[ERROR]: Release not found: ${_release}"
             error_exit "See 'bastille bootstrap ${_release} to bootstrap the release."
         fi
     fi
@@ -152,6 +151,7 @@ release_check() {
 jail_upgrade() {
 
     local _jailname="${1}"
+
     if [ "${THIN_JAIL}" -eq 1 ]; then
         local _oldrelease="$(bastille config ${_jailname} get osrelease)"
     else
@@ -174,7 +174,7 @@ jail_upgrade() {
         if [ "${AUTO}" -eq 1 ]; then
             bastille start "${_jailname}"
         fi
-        echo "Upgraded ${_jailname}: ${_oldrelease} -> ${_newrelease}"
+        info "\nUpgraded ${_jailname}: ${_oldrelease} -> ${_newrelease}"
         echo "See 'bastille etcupdate TARGET' to update /etc/rc.conf"
     else
         # Upgrade a thick jail
@@ -187,8 +187,7 @@ jail_upgrade() {
         
         # Update "osrelease" entry inside jail.conf
         sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/jail.conf"
-        echo
-        echo -e "${COLOR_YELLOW}Please run 'bastille upgrade ${_jailname} install', restart the jail, then run 'bastille upgrade ${_jailname} install' again to finish installing updates.${COLOR_RESET}"
+        warn "Please run 'bastille upgrade ${_jailname} install', restart the jail, then run 'bastille upgrade ${_jailname} install' again to finish installing updates."
     fi
 }
 
@@ -207,7 +206,7 @@ jail_updates_install() {
         -f "${_freebsd_update_conf}" \
         install
     else
-        error_exit "${_jailname} not found. See 'bastille bootstrap RELEASE'."
+        error_exit "[ERROR]: ${_jailname} not found. See 'bastille bootstrap RELEASE'."
     fi
 }
 

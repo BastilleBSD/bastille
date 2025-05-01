@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -93,5 +93,7 @@ host_path="${HOST_PATH}"
 jail_path="$(echo ${bastille_jailsdir}/${TARGET}/root/${JAIL_PATH} | sed 's#//#/#g')"
 
 if ! cp "${OPTION}" "${jail_path}" "${host_path}"; then
-    error_exit "RCP failed: ${jail_path} -> ${host_path}"
+    error_exit "[ERROR]: RCP failed: ${jail_path} -> ${host_path}"
+else
+    echo
 fi

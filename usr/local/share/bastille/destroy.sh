@@ -73,7 +73,7 @@ destroy_jail() {
             mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
 
             if [ -n "${mount_points}" ]; then
-                error_notify "Failed to destroy jail: ${_jail}"
+                error_notify "[ERROR]: Failed to destroy jail: ${_jail}"
                 error_continue "Jail has mounted filesystems:\n$mount_points"
             fi
 
@@ -139,10 +139,13 @@ destroy_rel() {
     ## check if this release have containers child
     BASE_HASCHILD="0"
     if [ -d "${bastille_jailsdir}" ]; then
+
         JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+
         for _jail in ${JAIL_LIST}; do
+
             if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
-                error_notify "Notice: (${_jail}) depends on ${TARGET} base."
+                error_notify "[ERROR]: (${_jail}) depends on ${TARGET} base."
                 BASE_HASCHILD="1"
             elif checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
@@ -154,7 +157,7 @@ destroy_rel() {
                                 CLONE_JAIL=$(zfs list -H -o clones "${_snap_clone}" | tr ',' '\n')
                                 CLONE_CHECK="${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}/root"
                                 if echo "${CLONE_JAIL}" | grep -qw "${CLONE_CHECK}"; then
-                                    error_notify "Notice: (${_jail}) depends on ${TARGET} base."
+                                    error_notify "[ERROR]: (${_jail}) depends on ${TARGET} base."
                                     BASE_HASCHILD="1"
                                 fi
                             fi
@@ -166,10 +169,10 @@ destroy_rel() {
     fi
 
     if [ ! -d "${bastille_rel_base}" ]; then
-        error_exit "Release base not found."
+        error_exit "[ERROR]: Release base not found."
     else
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
-            echo "Deleting base..."
+            echo "Deleting release base..."
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${TARGET}" ]; then
@@ -202,7 +205,7 @@ destroy_rel() {
                 fi
             fi
         else
-            error_notify "Cannot destroy base with child containers."
+            error_notify "[ERROR]: Cannot destroy base with child containers."
         fi
     fi
 }
@@ -239,7 +242,7 @@ while [ "$#" -gt 0 ]; do
                     c) NO_CACHE=1 ;;
                     f) FORCE=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;;
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -311,3 +314,5 @@ case "${TARGET}" in
         destroy_jail "${JAILS}"
         ;;
 esac
+
+echo

@@ -52,7 +52,7 @@ bootstrap_etc_release() {
         sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives=src
         if ! bastille bootstrap "${_release}" > /dev/null; then
             sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
-            error_exit "Failed to bootstrap etcupdate: ${_release}"
+            error_exit "[ERROR]: Failed to bootstrap etcupdate: ${_release}"
         else
             sysrc -f /usr/local/etc/bastille/bastille.conf bastille_bootstrap_archives="${_current}"
         fi
@@ -64,22 +64,22 @@ bootstrap_etc_tarball() {
     local _release="${1}"
 
     if [ ! -f ${bastille_cachedir}/${_release}.tbz2 ]; then
-        echo "Building tarball, please wait..."
+        info "\nBuilding tarball, please wait..."
         if ! etcupdate build -d /tmp/etcupdate -s ${bastille_releasesdir}/${_release}/usr/src ${bastille_cachedir}/${_release}.tbz2; then
-            error_exit "Failed to build etcupdate tarball \"${_release}.tbz2\""
+            error_exit "[ERROR]: Failed to build etcupdate tarball \"${_release}.tbz2\""
         else
-            info "Etcupdate bootstrap complete: ${_release}"
+            info "\nEtcupdate bootstrap complete: ${_release}"
         fi
     elif [ -f ${bastille_cachedir}/${_release}.tbz2 ] && [ "${FORCE}" -eq 1 ]; then
         rm -f "${bastille_cachedir}/${_release}.tbz2"
-        echo "Building tarball, please wait..."
+        info "\nBuilding tarball, please wait..."
         if ! etcupdate build -d /tmp/etcupdate -s ${bastille_releasesdir}/${_release}/usr/src ${bastille_cachedir}/${_release}.tbz2; then
             error_exit "[ERROR]: Failed to build etcupdate tarball: ${_release}.tbz2"
         else
-            info "Etcupdate bootstrap complete: ${_release}"
+            info "\nEtcupdate bootstrap complete: ${_release}"
         fi
     else
-        info "Etcupdate release has already been prepared for application: ${_release}"
+        info "\nEtcupdate release has already been prepared for application: ${_release}"
     fi
 }
 
@@ -113,7 +113,7 @@ update_jail_etc() {
     local _release="${2}"
 
     if [ ! -f ${bastille_cachedir}/${_release}.tbz2 ]; then
-        error_exit "Error: Please run \"bastille etcupdate bootstrap RELEASE\" first."
+        error_exit "[ERROR]: Please run 'bastille etcupdate bootstrap RELEASE' first."
     fi
     if [ "${DRY_RUN}" -eq 1 ]; then
         echo "Running: etcupdate update --dry-run"
@@ -173,7 +173,7 @@ while [ "$#" -gt 0 ]; do
                 usage
             else
                 RELEASE="${2}"
-                info "Attempting to bootstrap etcupdate release: ${RELEASE}..."
+                info "\nAttempting to bootstrap etcupdate release: ${RELEASE}..."
                 bootstrap_etc_release "${RELEASE}"
                 bootstrap_etc_tarball "${RELEASE}"
                 shift "$#"
@@ -206,7 +206,7 @@ while [ "$#" -gt 0 ]; do
                     fi
                     ;;
                 *)
-                    error_exit "Unknown action: \"${ACTION}\""
+                    error_exit "[ERROR]: Unknown action: \"${ACTION}\""
                     ;;
             esac
             ;;

@@ -118,7 +118,7 @@ while [ "$#" -gt 0 ]; do
                     P) PASSTHROUGH=1 ;;
                     V) VNET=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
             done
             shift
@@ -135,7 +135,7 @@ INTERFACE="${3}"
 if [ "${ACTION}" = "add" ] && [ "${NO_IP}" -eq 0 ] && [ -n "${4}" ]; then
     IP="${4}"
 elif [ "${NO_IP}" -eq 1 ] && [ -n "${4}" ]; then
-    error_notify "IP should not be present when using -n|--no-ip."
+    error_exit "[ERROR]: IP should not be present when using -n|--no-ip."
 else
     IP=""
 fi
@@ -147,15 +147,15 @@ if [ "${ACTION}" = "add" ]; then
        { [ "${BRIDGE}" -eq 1 ] && [ "${CLASSIC}" -eq 1 ]; } || \
        { [ "${BRIDGE}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } || \
        { [ "${CLASSIC}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } then
-        error_notify "Error: Only one of [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] should be set."
+        error_exit "[ERROR]: Only one of [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] should be set."
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${CLASSIC}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then 
-        error_notify "Error: [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] must be set."
+        error_exit "[ERROR]: [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] must be set."
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
-        error_notify "VLANs can only be used with VNET interfaces."
+        error_exit "[ERROR]: VLANs can only be used with VNET interfaces."
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
-        error_notify "[-n|--no-ip] can only be used with VNET jails."
+        error_exit "[ERROR]: [-n|--no-ip] can only be used with VNET jails."
     elif [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${BRIDGE}" -eq 1 ]; then
-        error_notify "[-B|--bridge] cannot be used with Netgraph."
+        error_exit "[ERROR]: [-B|--bridge] cannot be used with Netgraph."
     fi
 fi
 
@@ -166,6 +166,7 @@ fi
 bastille_root_check
 set_target_single "${TARGET}"
 
+# Validate jail state
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else
@@ -175,14 +176,16 @@ else
 fi
 
 validate_ip() {
+
     IP6_ENABLE=0
     local ip="${1}"
     local ip6="$( echo "${ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
+
     if [ -n "${ip6}" ]; then
-        info "Valid: (${ip6})."
+        info "\nValid: (${ip6})."
         IP6_ENABLE=1
     elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ]; then
-        info "Valid: (${ip})."
+        info "\nValid: (${ip})."
     else
         local IFS
         if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
@@ -194,7 +197,7 @@ validate_ip() {
                     error_exit "Invalid: (${TEST_IP})"
                 fi
             done
-            info "Valid: (${ip})."
+            info "\nValid: (${ip})."
         else
             error_exit "Invalid: (${ip})."
         fi
@@ -202,18 +205,22 @@ validate_ip() {
 }
 
 validate_netif() {
+
     local _interface="${1}"
+
     if ifconfig -l | grep -qwo ${_interface}; then
-        info "Valid: (${_interface})."
+        info "\nValid: (${_interface})."
     else
         error_exit "Invalid: (${_interface})."
     fi
 }
 
 check_interface_added() {
+
     local _jailname="${1}"
     local _if="${2}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf" 
+
     if grep -qo "${_if}" "${_jail_config}"; then
         return 0
     else 
@@ -222,6 +229,7 @@ check_interface_added() {
 }
 
 add_interface() {
+
     local _jailname="${1}"
     local _if="${2}"
     local _ip="${3}"
@@ -232,6 +240,7 @@ add_interface() {
     local _vnet_if_count="$(grep -Eo 'vnet[1-9]+' ${_jail_rc_config} | sort -u | wc -l | awk '{print $1}')"
     local _if_vnet="vnet$((_vnet_if_count + 1))"
     local _bastille_if_num_range=$((_bastille_if_count + 1))
+
     if [ "${BRIDGE}" -eq 1 ]; then
        if [ "${_bastille_if_count}" -gt 0 ]; then  
             for _num in $(seq 0 "${_bastille_if_num_range}"); do
@@ -426,9 +435,11 @@ EOF
 }
 
 remove_interface() {
+
     local _jailname="${1}"
     local _if="${2}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
+
     # Skip next block in case of classic jail
     if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
         local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
@@ -452,31 +463,31 @@ remove_interface() {
             local _if_jail="${_if}"
             _if_type="passthrough"
         else
-            error_exit "Could not find interface inside jail: \"${_if_jail}\""
+            error_exit "[ERROR]: Could not find interface inside jail: \"${_if_jail}\""
         fi
         
         if [ "${_if_type}" = "bastille" ] || [ "${_if_type}" = "epair" ]; then
             if grep -oq "${_if_jail}" ${_jail_config}; then
                 local _if_vnet="$(grep ${_if_jail} ${_jail_rc_config} | grep -Eo 'vnet[0-9]+')"
             else
-                error_exit "Interface not found: ${_if_jail}"
+                error_exit "[ERROR]: Interface not found: ${_if_jail}"
             fi
         elif [ "${_if_type}" = "passthrough" ]; then
             if grep -oq "${_if_jail}" ${_jail_config}; then
                 local _if_vnet="${_if_jail}"
             else
-                error_exit "Interface not found: ${_if_jail}"
+                error_exit "[ERROR]: Interface not found: ${_if_jail}"
             fi
         fi
     
         # Do not allow removing default vnet0 interface
         if [ "${_if_vnet}" = "vnet0" ]; then
-            error_exit "Default interface cannot be removed."
+            error_exit "[ERROR]: Default interface cannot be removed."
         fi
 
         # Avoid removing entire file contents if variables aren't set for some reason
         if [ -z "${_if_jail}" ]; then
-            error_exit "Error: Could not find specifed interface."
+            error_exit "[ERROR]: Could not find specifed interface."
         fi
        
         # Remove interface from /etc/rc.conf
@@ -484,13 +495,13 @@ remove_interface() {
             if [ -n "${_if_vnet}" ] && echo ${_if_vnet} 2>/dev/null | grep -Eoq 'vnet[0-9]+'; then
                 sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
             else
-                error_exit "Failed to remove interface from /etc/rc.conf"
+                error_exit "[ERROR]: Failed to remove interface from /etc/rc.conf"
             fi
         elif [ "${_if_type}" = "passthrough" ]; then
             if [ -n "${_if_vnet}" ]; then
                 sed -i '' "/.*${_if_vnet}.*/d" "${_jail_rc_config}"
             else
-                error_exit "Failed to remove interface from /etc/rc.conf"
+                error_exit "[ERROR]: Failed to remove interface from /etc/rc.conf"
             fi
         fi
 
@@ -507,18 +518,18 @@ remove_interface() {
                 sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}"
             fi
         else
-            error_exit "Failed to remove interface from jail.conf"
+            error_exit "[ERROR]: Failed to remove interface from jail.conf"
         fi
     else
         # Remove interface from jail.conf (non-VNET)
         if [ -n "${_if}" ]; then
             if grep ${_if} ${_jail_config} 2>/dev/null | grep -qo " = "; then
-                error_exit "Default interface cannot be removed."
+                error_exit "[ERROR]: Default interface cannot be removed."
             else
                 sed -i '' "/.*${_if}.*/d" "${_jail_config}"
             fi
         else
-            error_exit "Failed to remove interface from jail.conf"
+            error_exit "[ERROR]: Failed to remove interface from jail.conf"
         fi
     fi
 
@@ -526,12 +537,14 @@ remove_interface() {
 }
 
 add_vlan() {
+
     local _jailname="${1}"
     local _interface="${2}"
     local _ip="${3}"
     local _vlan_id="${4}"
     local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
     local _jail_rc_config="${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"
+
     if [ "${VNET}" -eq 1 ]; then
         local _jail_epair_num="$(grep ${_interface} ${_jail_config} | grep -Eo -m 1 "bastille[0-9]+" | grep -Eo "[0-9]+")"
 	local _jail_vnet="$(grep "e0b_bastille${_jail_epair_num}_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+")"
@@ -542,7 +555,7 @@ add_vlan() {
         local _jail_vnet="${_interface}"
     fi
     if grep -Eq "ifconfig_${_jail_vnet}_${_vlan_id}" "${bastille_jailsdir}/${_jailname}/root/etc/rc.conf"; then
-        error_exit "VLAN has already been added: VLAN ${_vlan_id}"
+        error_exit "[ERROR]: VLAN has already been added: VLAN ${_vlan_id}"
     else
         bastille start "${_jailname}"
         bastille template "${_jailname}" ${bastille_template_vlan} --arg VLANID="${_vlan_id}" --arg IFCONFIG="inet ${_ip}" --arg JAIL_VNET="${_jail_vnet}"
@@ -571,9 +584,9 @@ case "${ACTION}" in
         fi
         if [ "${VNET}" -eq 1 ]; then
             if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
-                error_exit "Error: ${TARGET} is not a VNET jail."
+                error_exit "[ERROR]: ${TARGET} is not a VNET jail."
             elif ifconfig -g bridge | grep -owq "${INTERFACE}"; then
-                error_exit "\"${INTERFACE}\" is a bridge interface."
+                error_exit "[ERROR]: '${INTERFACE}' is a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
                 if [ -n "${VLAN_ID}" ]; then
@@ -585,13 +598,13 @@ case "${ACTION}" in
             fi
         elif [ "${BRIDGE}" -eq 1 ]; then
             if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
-                error_exit "Error: ${TARGET} is not a VNET jail."
+                error_exit "[ERROR]: ${TARGET} is not a VNET jail."
             elif ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
-                error_exit "\"${INTERFACE}\" is not a bridge interface."
+                error_exit "[ERROR]: '${INTERFACE}' is not a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-		        if [ -n "${VLAN_ID}" ]; then
-		            add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+                if [ -n "${VLAN_ID}" ]; then
+                    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
                 fi
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
@@ -599,7 +612,7 @@ case "${ACTION}" in
             fi
         elif [ "${PASSTHROUGH}" -eq 1 ]; then
             if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
-                error_exit "Error: ${TARGET} is not a VNET jail."
+                error_exit "[ERROR]: ${TARGET} is not a VNET jail."
 	    else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
             fi
@@ -611,7 +624,7 @@ case "${ACTION}" in
             fi
         elif [ "${CLASSIC}" -eq 1 ]; then
             if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
-                error_exit "Error: ${TARGET} is a VNET jail."
+                error_exit "[ERROR]: ${TARGET} is a VNET jail."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
                 if [ "${AUTO}" -eq 1 ]; then
@@ -624,7 +637,7 @@ case "${ACTION}" in
         check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\"" 
         validate_netif "${INTERFACE}"
         if ! grep -q "${INTERFACE}" ${bastille_jailsdir}/${TARGET}/jail.conf; then
-            error_exit "Interface not found in jail.conf: \"${INTERFACE}\""
+            error_exit "[ERROR]: Interface not found in jail.conf: \"${INTERFACE}\""
         else
             remove_interface "${TARGET}" "${INTERFACE}"
             if [ "${AUTO}" -eq 1 ]; then
@@ -633,6 +646,6 @@ case "${ACTION}" in
         fi
         ;;
     *)
-        error_exit "Only [add|remove] are supported."
+        error_exit "[ERROR]: Only [add|remove] are supported."
         ;;
 esac

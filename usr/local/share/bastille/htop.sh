@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\""
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done
             shift
@@ -96,7 +96,7 @@ fi
 info "\n[${TARGET}]:"
 
 if [ ! -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
-    error_notify "htop not found on ${TARGET}."
+    error_exit "[ERROR]: htop not found on ${TARGET}."
 elif [ -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
     jexec -l ${TARGET} /usr/local/bin/htop
 fi
