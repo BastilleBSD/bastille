@@ -108,13 +108,16 @@ if echo "${NEWNAME}" | grep -q "[.]"; then
 fi
 
 validate_ip() {
+
+    local IP="${1}"
     IP6_MODE="disable"
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
+
     if [ -n "${ip6}" ]; then
         info "Valid: (${ip6})."
         IP6_MODE="new"
     elif { [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; } && [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-        info "Valid: (${IP})."
+        info "\nValid: (${IP})."
     else
         local IFS
         if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
@@ -129,7 +132,7 @@ validate_ip() {
             if ifconfig | grep -qwF "${TEST_IP}"; then
                 warn "Warning: IP address already in use (${TEST_IP})."
             else
-                info "Valid: (${IP})."
+                info "\nValid: (${IP})."
             fi
         else
             error_exit "Invalid: (${IP})."
@@ -138,8 +141,10 @@ validate_ip() {
 }
 
 update_jailconf() {
+
     # Update jail.conf
     JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+
     if [ -f "${JAIL_CONFIG}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
             sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
@@ -161,6 +166,7 @@ update_jailconf() {
         if [ "${_interface}" != "not set" ]; then
             sed -i '' "/.*interface = .*/d" "${JAIL_CONFIG}"
         fi
+
         # IP4
         if [ "${_ip4}" != "not set" ]; then
             for _ip in ${_ip4}; do
@@ -175,6 +181,7 @@ update_jailconf() {
                 sed -i '' "/ip4.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
             done
         fi
+
         # IP6
         if [ "${_ip6}" != "not set" ]; then
             for _ip in ${_ip6}; do
@@ -374,20 +381,26 @@ update_jailconf_vnet() {
 
 clone_jail() {
 
-    info "\n[${TARGET}]:"
-    echo "Attempting clone to ${NEWNAME}..."
-
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ "${LIVE}" -eq 1 ]; then
-                check_target_is_running "${TARGET}" || error_exit "[-l|--live] can only be used with a running jail."
-            else check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-                    echo "Auto-stopping ${TARGET}..."
+                if ! check_target_is_running "${TARGET}"; then
+                    error_exit "[-l|--live] can only be used with a running jail."
+                fi
+            elif ! check_target_is_stopped "${TARGET}"; then
+                if [ "${AUTO}" -eq 1 ]; then
                     bastille stop "${TARGET}"
                 else
+                    info "\n[${TARGET}]:"
                     error_notify "Jail is running."
                     error_exit "Use [-a|--auto] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
                 fi
+            fi
+
+            if [ -n "${IP}" ]; then
+                validate_ip "${IP}"
+            else
+                usage
             fi
 
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -404,12 +417,13 @@ clone_jail() {
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
             fi
+
         else
 		 
             check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-                echo "Auto-stopping ${TARGET}..."
                 bastille stop "${TARGET}"
             else
+                info "\n[${TARGET}]:"
                 error_notify "Jail is running."
                 error_exit "Use [-a|--auto] to force stop the jail."
             fi
@@ -430,7 +444,7 @@ clone_jail() {
     if [ "$?" -ne 0 ]; then
         error_exit "An error has occurred while attempting to clone '${TARGET}'."
     else
-        info "Cloned '${TARGET}' to '${NEWNAME}' successfully."
+        info "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
     fi
 
     # Start jails if AUTO=1 or LIVE=1
@@ -442,12 +456,7 @@ clone_jail() {
     fi
 }
 
-# Check if IP address is valid.
-if [ -n "${IP}" ]; then
-    validate_ip
-else
-    usage
-fi
+info "\nAttempting to clone '${TARGET}' to '${NEWNAME}'..."
 
 clone_jail
 

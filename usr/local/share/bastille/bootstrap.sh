@@ -46,14 +46,14 @@ EOF
 
 validate_release_url() {
 
-    info "\nAttempting to bootstrap release: ${RELEASE}..."
+    info "\nBootstrapping release: ${RELEASE}..."
 
     ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
 
         RELEASE="${NAME_VERIFY}"
 
-        echo "Fetching ${PLATFORM_OS} distfiles..."
+        info "\nFetching ${PLATFORM_OS} distfiles..."
 
         if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
             error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
@@ -212,7 +212,7 @@ bootstrap_release() {
         if [ -z "${bastille_bootstrap_archives}" ]; then
             error_exit "Bootstrap appears complete."
         else
-            echo "Bootstrapping additional distfiles..."
+            info "\nFetching additional distfiles..."
         fi
     fi
 
@@ -220,7 +220,7 @@ bootstrap_release() {
         ## check if the dist files already exists then extract
         FETCH_VALIDATION="0"
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            echo "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
+            info "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz..."
             if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                 ## silence motd at container login
                 touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
@@ -256,14 +256,14 @@ bootstrap_release() {
                             rm -rf "${bastille_releasesdir:?}/${RELEASE}"
                         fi
                     fi
-                    error_exit "Bootstrap failed."
+                    error_exit "[ERROR]: Bootstrap failed."
                 fi
 
                 ## fetch for missing dist files
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
                     if ! fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## alert only if unable to fetch additional dist files
-                        error_exit "Failed to fetch ${_archive}.txz."
+                        error_exit "[ERROR]: Failed to fetch ${_archive}.txz"
                     fi
                 fi
 
@@ -273,9 +273,9 @@ bootstrap_release() {
                     SHA256_FILE=$(sha256 -q "${bastille_cachedir}/${RELEASE}/${_archive}.txz")
                     if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
                         rm "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-                        error_exit "Failed validation for ${_archive}.txz. Please retry bootstrap!"
+                        error_exit "[ERROR]: Failed validation for ${_archive}.txz. Please retry bootstrap!"
                     else
-                        echo "Validated checksum for ${RELEASE}: ${_archive}.txz"
+                        info "\nValidated checksum for ${RELEASE}: ${_archive}.txz"
                         echo "MANIFEST: ${SHA256_DIST}"
                         echo "DOWNLOAD: ${SHA256_FILE}"
                     fi
@@ -283,7 +283,7 @@ bootstrap_release() {
 
                 ## extract the fetched dist files
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    echo "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
+                    info "\nExtracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz..."
                     if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## silence motd at container login
                         touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
@@ -295,7 +295,7 @@ bootstrap_release() {
         fi
     done
 
-    echo "Bootstrap successful."
+    info "\nBootstrap successful."
     echo "See 'bastille --help' for available commands."
 	
 }
@@ -366,7 +366,7 @@ debootstrap_release() {
     fi
 
     # Fetch the Linux flavor
-    info "Bootstrapping ${PLATFORM_OS} distfiles..."
+    info "\nFetching ${PLATFORM_OS} distfiles..."
     if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
         ## perform cleanup only for stale/empty directories on failure
         if checkyesno bastille_zfs_enable; then
@@ -381,7 +381,7 @@ debootstrap_release() {
                 rm -rf "${bastille_releasesdir:?}/${DIR_BOOTSTRAP}"
             fi
         fi
-        error_exit "Bootstrap failed."
+        error_exit "[ERROR]: Bootstrap failed."
     fi
 
     case "${LINUX_FLAVOR}" in
@@ -391,8 +391,8 @@ debootstrap_release() {
         ;;
     esac
 
-    echo "Bootstrap successful."
-    echo "See 'bastille --help' for available commands."
+    info "\nBootstrap successful."
+    info "\nSee 'bastille --help' for available commands."
 }
 
 bootstrap_template() {
@@ -485,7 +485,7 @@ if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; the
     read answer
     case $answer in
         no|No|n|N|"")
-            error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_enable."
+            error_exit "[ERROR]: Missing ZFS parameters. See bastille_zfs_enable."
             ;;
         yes|Yes|y|Y) ;;
     esac
@@ -495,17 +495,17 @@ fi
 if checkyesno bastille_zfs_enable; then
     ## check for the ZFS pool and bastille prefix
     if [ -z "${bastille_zfs_zpool}" ]; then
-        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_zpool."
+        error_exit "[ERROR]: Missing ZFS parameters. See bastille_zfs_zpool."
     elif [ -z "${bastille_zfs_prefix}" ]; then
-        error_exit "ERROR: Missing ZFS parameters. See bastille_zfs_prefix."
+        error_exit "[ERROR]: Missing ZFS parameters. See bastille_zfs_prefix."
     elif ! zfs list "${bastille_zfs_zpool}" > /dev/null 2>&1; then
-        error_exit "ERROR: ${bastille_zfs_zpool} is not a ZFS pool."
+        error_exit "[ERROR]: ${bastille_zfs_zpool} is not a ZFS pool."
     fi
 
     ## check for the ZFS dataset prefix if already exist
     if [ -d "/${bastille_zfs_zpool}/${bastille_zfs_prefix}" ]; then
         if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" > /dev/null 2>&1; then
-            error_exit "ERROR: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset."
+            error_exit "[ERROR]: ${bastille_zfs_zpool}/${bastille_zfs_prefix} is not a ZFS dataset."
         fi
     fi
 fi
@@ -666,3 +666,5 @@ case "${OPTION}" in
         bastille update "${RELEASE}"
         ;;
 esac
+
+echo
