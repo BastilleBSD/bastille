@@ -45,54 +45,65 @@ EOF
 }
 
 zfs_snapshot() {
-for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
+    for _jail in ${JAILS}; do
+
+        info "\n[${_jail}]:"
 	
-    # shellcheck disable=SC2140
-    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+        # shellcheck disable=SC2140
+        zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 
-done
+    done
+    
 }
 
 zfs_destroy_snapshot() {
-for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
+    for _jail in ${JAILS}; do
+
+        info "\n[${_jail}]:"
 	
-    # shellcheck disable=SC2140
-    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+        # shellcheck disable=SC2140
+        zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 
-done
+    done
+
 }
 
 zfs_set_value() {
-for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
+    for _jail in ${JAILS}; do
+
+        info "\n[${_jail}]:"
 	
-    zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
+        zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 	
-done
+    done
+
 }
 
 zfs_get_value() {
-for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
-    zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
+    for _jail in ${JAILS}; do
+
+        info "\n[${_jail}]:"
+
+        zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 	
-done
+    done
+    
 }
 
 zfs_disk_usage() {
-for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
+    for _jail in ${JAILS}; do
+
+        info "\n[${_jail}]:"
 	
-    zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
+        zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 		
-done
+    done
+    
 }
 
 

@@ -114,7 +114,7 @@ validate_ip() {
     ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
 
     if [ -n "${ip6}" ]; then
-        info "Valid: (${ip6})."
+        info "\nValid: (${ip6})."
         IP6_MODE="new"
     elif { [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; } && [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
         info "\nValid: (${IP})."
@@ -130,7 +130,7 @@ validate_ip() {
                 fi
             done
             if ifconfig | grep -qwF "${TEST_IP}"; then
-                warn "Warning: IP address already in use (${TEST_IP})."
+                warn "\nWarning: IP address already in use (${TEST_IP})."
             else
                 info "\nValid: (${IP})."
             fi
@@ -382,7 +382,10 @@ update_jailconf_vnet() {
 clone_jail() {
 
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
+
         if checkyesno bastille_zfs_enable; then
+
+            # Validate jail state
             if [ "${LIVE}" -eq 1 ]; then
                 if ! check_target_is_running "${TARGET}"; then
                     error_exit "[-l|--live] can only be used with a running jail."

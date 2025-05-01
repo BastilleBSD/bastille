@@ -47,9 +47,9 @@ EOF
 verify_release() {
 
     if [ -f "/bin/midnightbsd-version" ]; then
-        echo -e "${COLOR_RED}Not yet supported on MidnightBSD.${COLOR_RESET}"
-        exit 1
+        error_exit "Not yet supported on MidnightBSD."
     fi
+    
     if freebsd-version | grep -qi HBSD; then
         error_exit "Not yet supported on HardenedBSD."
     fi
@@ -96,13 +96,11 @@ verify_template() {
                 info "[${_hook}]:"
                 error_notify "${BASTILLE_TEMPLATE}:${_hook} [failed]."
                 error_notify "Line numbers don't match line breaks."
-                echo
                 error_exit "Template validation failed."
             ## if INCLUDE; recursive verify
             elif [ "${_hook}" = 'INCLUDE' ]; then
                 info "[${_hook}]:"
                 cat "${_path}"
-                echo
                 while read _include; do
                     info "[${_hook}]:[${_include}]:"
                     TEMPLATE_INCLUDE="${_include}"
@@ -113,7 +111,6 @@ verify_template() {
             elif [ "${_hook}" = 'OVERLAY' ]; then
                 info "[${_hook}]:"
                 cat "${_path}"
-                echo
                 while read _dir; do
                     info "[${_hook}]:[${_dir}]:"
                         if [ -x "/usr/local/bin/tree" ]; then
@@ -121,7 +118,6 @@ verify_template() {
                         else
                            find "${_template_path}/${_dir}" -print | sed -e 's;[^/]*/;|___;g;s;___|; |;g'
                         fi
-                    echo
                 done < "${_path}"
             elif [ "${_hook}" = 'Bastillefile' ]; then
                 info "[${_hook}]:"
@@ -134,21 +130,18 @@ verify_template() {
                         handle_template_include
                     fi
                 done < "${_path}"
-                echo
             else
                 info "[${_hook}]:"
                 cat "${_path}"
-                echo
             fi
         fi
     done
 
-    ## remove bad templates
+    # Remove bad templates
     if [ "${_hook_validate}" -lt 1 ]; then
-        error_notify "No valid template hooks found."
-        error_notify "Template discarded."
         rm -rf "${_template_path}"
-        exit 1
+        error_notify "No valid template hooks found."
+        error_exit "Template discarded."
     fi
 
     ## if validated; ready to use
@@ -160,9 +153,9 @@ verify_template() {
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-	        usage
-	        ;;
+        -h|--help|help)
+            usage
+            ;;
         -x|--debug)
             enable_debug
             shift

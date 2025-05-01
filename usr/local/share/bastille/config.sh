@@ -115,7 +115,9 @@ print_jail_conf() {
 } 
 
 for _jail in ${JAILS}; do
+
     # Handle Bastille specific properties
+    # Currently only 'priority' and 'boot'
     if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
         PROPERTY="priority"
         BASTILLE_PROPERTY=1
