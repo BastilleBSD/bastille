@@ -300,8 +300,6 @@ shift
 bastille_root_check
 set_target_single "${TARGET}"
 
-info "\n[${TARGET}]:"
-
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         list)
@@ -322,7 +320,6 @@ while [ "$#" -gt 0 ]; do
                 usage
             else
                 check_jail_validity
-                echo "${TARGET} redirects:"
                 pfctl -a "rdr/${TARGET}" -Fn
             fi
             shift
@@ -334,7 +331,6 @@ while [ "$#" -gt 0 ]; do
                 usage
             else
                 check_jail_validity
-                echo "${TARGET} redirects:"
                 pfctl -a "rdr/${TARGET}" -Fn
 		        if rm -f "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
                     echo "rdr.conf removed"

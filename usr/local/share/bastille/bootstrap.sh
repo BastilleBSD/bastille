@@ -45,13 +45,19 @@ EOF
 }
 
 validate_release_url() {
+
+    info "\nAttempting to bootstrap release: ${RELEASE}..."
+
     ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
+
         RELEASE="${NAME_VERIFY}"
+
+        echo "Fetching ${PLATFORM_OS} distfiles..."
+
         if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
             error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
         fi
-        info "Bootstrapping ${PLATFORM_OS} distfiles..."
 
         # Alternate RELEASE/ARCH fetch support
         if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
@@ -61,13 +67,15 @@ validate_release_url() {
 
         bootstrap_directories
         bootstrap_release
+
     else
         usage
     fi
 }
 
 bootstrap_directories() {
-    ## ensure required directories are in place
+
+    # Ensure required directories are in place
 
     ## ${bastille_prefix}
     if [ ! -d "${bastille_prefix}" ]; then
@@ -81,7 +89,7 @@ bootstrap_directories() {
         chmod 0750 "${bastille_prefix}"
     # Make sure the dataset is mounted in the proper place
     elif [ -d "${bastille_prefix}" ]; then
-        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" 2>/dev/null; then
+        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" >/dev/null; then
             zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
         elif [ "$(zfs get -H -o value mountpoint ${bastille_zfs_zpool}/${bastille_zfs_prefix})" != "${bastille_prefix}" ]; then
             zfs set mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
@@ -188,6 +196,7 @@ bootstrap_directories() {
 }
 
 bootstrap_release() {
+
     ## if release exists quit, else bootstrap additional distfiles
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
         ## check distfiles list and skip existing cached files
@@ -201,9 +210,9 @@ bootstrap_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            error_notify "Bootstrap appears complete."
+            error_exit "Bootstrap appears complete."
         else
-            info "Bootstrapping additional distfiles..."
+            echo "Bootstrapping additional distfiles..."
         fi
     fi
 
@@ -211,7 +220,7 @@ bootstrap_release() {
         ## check if the dist files already exists then extract
         FETCH_VALIDATION="0"
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            info "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
+            echo "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
             if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                 ## silence motd at container login
                 touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
@@ -254,7 +263,7 @@ bootstrap_release() {
                 if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
                     if ! fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## alert only if unable to fetch additional dist files
-                        error_notify "Failed to fetch ${_archive}.txz."
+                        error_exit "Failed to fetch ${_archive}.txz."
                     fi
                 fi
 
@@ -266,15 +275,15 @@ bootstrap_release() {
                         rm "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
                         error_exit "Failed validation for ${_archive}.txz. Please retry bootstrap!"
                     else
-                        info "Validated checksum for ${RELEASE}: ${_archive}.txz"
-                        info "MANIFEST: ${SHA256_DIST}"
-                        info "DOWNLOAD: ${SHA256_FILE}"
+                        echo "Validated checksum for ${RELEASE}: ${_archive}.txz"
+                        echo "MANIFEST: ${SHA256_DIST}"
+                        echo "DOWNLOAD: ${SHA256_FILE}"
                     fi
                 fi
 
                 ## extract the fetched dist files
                 if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    info "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
+                    echo "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz."
                     if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                         ## silence motd at container login
                         touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
@@ -285,10 +294,9 @@ bootstrap_release() {
                 fi
         fi
     done
-    echo
 
-    info "Bootstrap successful."
-    info "See 'bastille --help' for available commands."
+    echo "Bootstrap successful."
+    echo "See 'bastille --help' for available commands."
 	
 }
 
@@ -383,8 +391,8 @@ debootstrap_release() {
         ;;
     esac
 
-    info "Bootstrap successful."
-    info "See 'bastille --help' for available commands."
+    echo "Bootstrap successful."
+    echo "See 'bastille --help' for available commands."
 }
 
 bootstrap_template() {
@@ -658,5 +666,3 @@ case "${OPTION}" in
         bastille update "${RELEASE}"
         ;;
 esac
-
-echo
