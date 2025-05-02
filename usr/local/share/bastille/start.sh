@@ -113,7 +113,7 @@ for _jail in ${JAILS}; do
     fi
 
     # Validate that all 'depends' jails are running
-    _depend_jails="$(sysrc -f ${bastille_jailsdir}/${_jail}/settings.conf -n depends)"
+    _depend_jails="$(sysrc -f ${bastille_jailsdir}/${_jail}/settings.conf -n depend)"
     for _depend_jail in ${_depend_jails}; do
         if check_target_is_running; then
             continue
