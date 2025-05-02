@@ -576,8 +576,9 @@ create_jail() {
     # Set strict permissions on the jail by default
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
-    # Apply priority and boot settings before starting jail
+    # Apply boot, depends and priority settings before starting jail
     sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" boot=${BOOT} >/dev/null
+    sysrc -f "${bastille_jailsdir}/${NAME}/settings.conf" depend="" >/dev/null
     sysrc -f "${bastille_jailsdir}/${NAME}/boot.conf" priority="${PRIORITY}" >/dev/null
 
     # Jail must be started before applying the default template. -- cwells

@@ -112,11 +112,22 @@ for _jail in ${JAILS}; do
         fi
     fi
 
-    info "\n[${_jail}]:"
+    # Validate that all 'depends' jails are running
+    _depend_jails="$(sysrc -f ${bastille_jailsdir}/${_jail}/settings.conf -n depend)"
+    for _depend_jail in ${_depend_jails}; do
+        if check_target_is_running; then
+            continue
+        else
+            bastille start ${_depend_jail}
+        fi
+    done
 	
     if check_target_is_running "${_jail}"; then
+        info "\n[${_jail}]:"
         error_continue "Jail is already running."
     fi
+
+    info "\n[${_jail}]:"
 	
     # Validate interfaces and add IPs to firewall table
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
