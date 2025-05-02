@@ -182,6 +182,16 @@ list_jail_priority() {
                 sysrc -f ${_settings_file} depend="" >/dev/null 2>&1
                 sysrc -f ${_settings_file} priority=99 >/dev/null 2>&1
             fi
+            # Add defaults if they dont exist
+            if ! grep -oq "boot=" ${_settings_file}; then
+                sysrc -f ${_settings_file} boot=on >/dev/null 2>&1
+            fi
+            if ! grep -oq "depend=" ${_settings_file}; then
+                sysrc -f ${_settings_file} depend="" >/dev/null 2>&1
+            fi
+            if ! grep -oq "priority=" ${_settings_file}; then
+                sysrc -f ${_settings_file} priority=99 >/dev/null 2>&1
+            fi
             _priority="$(sysrc -f ${_settings_file} -n priority)"
             echo "${_jail} ${_priority}"
         done
