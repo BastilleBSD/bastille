@@ -37,21 +37,20 @@ Depend
 ------
 
 Bastille supports configuring jails to depend on each other when started and stopped. If jail1 "depends" on jail2, then
-jail2 will be started if it is not running when `bastille start jail1` is called. Any jail that jail1 "depends" on will
-first be verified running before jail1 is started.
+jail2 will be started if it is not running when ``bastille start jail1`` is called. Any jail that jail1 "depends" on will
+first be verified running (started if stopped) before jail1 is started.
 
 For example, I have 3 jails called nginx, mariadb and nextcloud. I want to ensure that nginx and mariadb are running before
 nextcloud is started.
 
-First we add both jails to nextcloud's depend property with `bastille config nextcloud set depend "mariadb nginx"`.
-Then when we start nextcloud with `bastille start nextcloud` it will verify that nginx and mariadb are running before
+First we must add both jails to nextcloud's depend property with ``bastille config nextcloud set depend "mariadb nginx"``.
+Then, when we start nextcloud with ``bastille start nextcloud`` it will verify that nginx and mariadb are running (start if stoppef) before
 starting nextcloud.
 
-When stopping a jail, any jail that "depends" on it will first be stopped. For example, if we run `bastille stop nginx`, then
+When stopping a jail, any jail that "depends" on it will first be stopped. For example, if we run ``bastille stop nginx``, then
 nextcloud will first be stopped because it "depends" on nginx.
 
-If we do a `bastille restart nginx`, then nextcloud will be stopped, because it "depends" on nginx, but nextcloud will not
-be started again.
+Note that if we do a ``bastille restart nginx``, however, nextcloud will be stopped, because it "depends" on nginx, but will not be started again, because the jail we just restarted, nginx, does not depend on nextcloud.
 
 Startup Delay
 -------------
