@@ -87,12 +87,25 @@ set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
+    # Validate that all jails that 'depend' on this one are stopped
+    for _depend_jail in $(ls --color=never ${bastille_jailsdir} | sed -e 's/\n//g'); do
+    if ! grep -hoqsw "depends=" ${bastille_jailsdir}/${_depend_jail}/settings.conf; then
+        sysrc -q -f ${bastille_jailsdir}/${_depend_jail}/settings.conf depends="" >/dev/null
+    fi
+        if [ "${_jail}" = "${_depend_jail}" ]; then
+            continue
+        elif grep -hoqsw "${_jail}" "${bastille_jailsdir}/${_depend_jail}/settings.conf"; then
+            bastille stop ${_depend_jail}
+        fi
+    done
 
     if check_target_is_stopped "${_jail}"; then
+        info "\n[${_jail}]:"
         error_continue "Jail is already stopped."
     fi
 	
+    info "\n[${_jail}]:"
+
     # Remove RDR rules
     if [ "$(bastille config ${_jail} get vnet)" != "enabled" ] && [ -f "${bastille_pf_conf}" ]; then
         _ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
