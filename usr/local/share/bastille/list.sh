@@ -598,12 +598,10 @@ if [ "$#" -eq 1 ]; then
             TARGET="${1}"
       	    set_target "${TARGET}"
             if [ -f "${bastille_jailsdir}/${TARGET}/jail.conf" ]; then
-                if [ "$#" -eq 0 ]; then
-                    if [ "${OPT_JSON}" -eq 1 ]; then
-                        list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
-                    else
-                        list_bastille
-                    fi
+                if [ "${OPT_JSON}" -eq 1 ]; then
+                    list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+                else
+                    list_bastille
                 fi
             else
                 usage
