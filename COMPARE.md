@@ -1,10 +1,11 @@
-| | BastilleBSD | Appjail | pot | ezjail | iocage | |
-| --- | --- | --- | --- | --- | --- |
+
+| Feature | BastilleBSD | Appjail | pot | ezjail | iocage |
+| ---     | ---         | ---     | --- | ---    | ---    |
 | OCI Compliant | No | Yes | No | No | No |
 | Writen In | Bourne Shell | Bourne Shell, C | Bourne Shell | Bourne Shell | Bourne Shell, Rust |
 | Dependencies | None | C | None | None | Rust|
 | Jail Types | vnet, bridged vnet, thin, thick, empty, clone, Linux | clone, copy, tiny thin, thick, empty, linux+debootstrap | thick | basejail | clone, basejail, template, empty, thick |
-| Jail dependency | No | Yes | Yes | No | Yes |
+| Jail dependency | Yes | Yes | Yes | No | Yes |
 | Import/Export | Yes | Yes | Yes | Yes | Yes |
 | Support Boot Order Priorities| Yes | Yes | No | Yes using `rcorder` | Yes |
 | Linux containers | Yes  | Yes | No | No | Yes |
@@ -26,4 +27,4 @@
 | Copy Files Between Jails | Yes | No | No | No | No |
 | Top Support | Yes | No | No | No | No|
 | HTop Support | Yes | No | No | No | No |
-| X11 support | Yes  | No | No | No | No |
+| X11 support | No  | Yes | No | No | No |
