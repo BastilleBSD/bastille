@@ -211,6 +211,9 @@ get_jail_info() {
         # Set jail path
         JAIL_PATH="${bastille_jailsdir}/${JAIL_NAME}"
 
+         # Get jail hostname
+        JAIL_HOSTNAME="$(bastille config ${JAIL_NAME} get host.hostname)"
+
         # Get jail ports (inactive)
         if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
 
