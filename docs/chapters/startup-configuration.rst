@@ -1,5 +1,5 @@
-Startup Configuration
-=====================
+Jail Startup Configuration
+==========================
 
 Bastille can start jails on system startup, and stop them on system shutdown. To enable this functionality, we
 must first enable Bastille as a service using ``sysrc bastille_enable=YES``. Once you reboot your host, all jails
@@ -32,6 +32,26 @@ not be touched if ``stop`` is called with ``-b|--boot``. Same goes for the ``res
 This value can be changed using ``bastille config TARGET set boot [on|off]``.
 
 This value will be shown using ``bastille list all``.
+
+Depend
+------
+
+Bastille supports configuring jails to depend on each other when started and stopped. If jail1 "depends" on jail2, then
+jail2 will be started if it is not running when `bastille start jail1` is called. Any jail that jail1 "depends" on will
+first be verified running before jail1 is started.
+
+For example, I have 3 jails called nginx, mariadb and nextcloud. I want to ensure that nginx and mariadb are running before
+nextcloud is started.
+
+First we add both jails to nextcloud's depend property with `bastille config nextcloud set depend "mariadb nginx"`.
+Then when we start nextcloud with `bastille start nextcloud` it will verify that nginx and mariadb are running before
+starting nextcloud.
+
+When stopping a jail, any jail that "depends" on it will first be stopped. For example, if we run `bastille stop nginx`, then
+nextcloud will first be stopped because it "depends" on nginx.
+
+If we do a `bastille restart nginx`, then nextcloud will be stopped, because it "depends" on nginx, but nextcloud will not
+be started again.
 
 Startup Delay
 -------------
