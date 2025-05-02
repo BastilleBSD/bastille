@@ -171,13 +171,18 @@ list_jail_priority() {
     local _jail_list="${1}"
     if [ -d "${bastille_jailsdir}" ]; then
         for _jail in ${_jail_list}; do
-            local _boot_file=${bastille_jailsdir}/${_jail}/boot.conf
-            # Set defaults if boot file does not exist
-            if [ ! -f ${_boot_file} ]; then
-                sysrc -f ${_boot_file} boot=on > /dev/null 2>&1
-                sysrc -f ${_boot_file} priority=99 > /dev/null 2>&1
+            # Remove boot.conf in favor of settings.conf
+            if [ -f ${bastille_jailsdir}/${_jail}/boot.conf ]; then
+                rm -f ${bastille_jailsdir}/${_jail}/boot.conf >/dev/null 2>&1
             fi
-            _priority="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n priority)"
+            local _settings_file=${bastille_jailsdir}/${_jail}/settings.conf
+            # Set defaults if settings file does not exist
+            if [ ! -f ${_settings_file} ]; then
+                sysrc -f ${_settings_file} boot=on >/dev/null 2>&1
+                sysrc -f ${_settings_file} depend="" >/dev/null 2>&1
+                sysrc -f ${_settings_file} priority=99 >/dev/null 2>&1
+            fi
+            _priority="$(sysrc -f ${_settings_file} -n priority)"
             echo "${_jail} ${_priority}"
         done
     fi
