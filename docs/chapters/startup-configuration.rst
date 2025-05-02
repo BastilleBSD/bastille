@@ -44,7 +44,7 @@ For example, I have 3 jails called nginx, mariadb and nextcloud. I want to ensur
 nextcloud is started.
 
 First we must add both jails to nextcloud's depend property with ``bastille config nextcloud set depend "mariadb nginx"``.
-Then, when we start nextcloud with ``bastille start nextcloud`` it will verify that nginx and mariadb are running (start if stoppef) before
+Then, when we start nextcloud with ``bastille start nextcloud`` it will verify that nginx and mariadb are running (start if stopped) before
 starting nextcloud.
 
 When stopping a jail, any jail that "depends" on it will first be stopped. For example, if we run ``bastille stop nginx``, then
