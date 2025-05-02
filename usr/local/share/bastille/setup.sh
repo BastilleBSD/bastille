@@ -239,6 +239,8 @@ if [ $# -eq 0 ]; then
     configure_loopback_interface
     configure_pf
     configure_zfs
+    info "\nBastille has successfully been configured.\n"
+    exit 0
 fi
 
 # Handle options.
