@@ -208,16 +208,19 @@ get_jail_info() {
         JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
         if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="${JAIL_IP_FULL}"; fi
 
+        # Set jail path
+        JAIL_PATH="${bastille_jailsdir}/${JAIL_NAME}"
+
         # Get jail ports (inactive)
         if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
 
         # Get jail release (FreeBSD or Linux)
-        if [ "${JAIL_PATH}" ]; then
+        if [ -n "${JAIL_PATH}" ]; then
             if [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
-                if [ -f "${JAIL_PATH}/bin/freebsd-version" ]; then
-                    JAIL_RELEASE=$(grep -hE "^USERLAND_VERSION=" "${JAIL_PATH}/bin/freebsd-version" 2> /dev/null | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
+                if [ -f "${JAIL_PATH}/root/bin/freebsd-version" ]; then
+                    JAIL_RELEASE=$(grep -Ehs "^USERLAND_VERSION=" "${JAIL_PATH}/root/bin/freebsd-version" 2> /dev/null | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
                 else
-                    JAIL_RELEASE=$(grep -h "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null | grep -hE "^USERLAND_VERSION=" "$(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++')" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
+                    JAIL_RELEASE=$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null | grep -Ehs "^USERLAND_VERSION=" "$(sed -n "s/^\(.*\) \/.*$/\1\/bin\/freebsd-version/p" | awk '!_[$0]++')" | sed "s/[\"\'\^]//g;s/ .*$//g" | sed -n "s/^USERLAND_VERSION=\(.*\)$/\1/p")
                 fi
             fi
             if [ "${IS_LINUX_JAIL}" -eq 1 ]; then
