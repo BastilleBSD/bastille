@@ -157,14 +157,14 @@ for _jail in ${JAILS}; do
     # Depend property
     elif [ "${PROPERTY}" = "depend" ] || [ "${PROPERTY}" = "depends" ]; then
 
-        PROPERTY="depends"
+        PROPERTY="depend"
         BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/settings.conf"
 
         if [ "${ACTION}" = "set" ]; then
 
             if [ -z "${VALUE}" ]; then
-                error_exit "[ERROR]: Adding a jail to the 'depends' property requires a TARGET."
+                error_exit "[ERROR]: Adding a jail to the 'depend' property requires a TARGET."
             else
                 set_target "${VALUE}"
             fi
@@ -176,7 +176,7 @@ for _jail in ${JAILS}; do
         elif [ "${ACTION}" = "remove" ]; then
 
             if [ -z "${VALUE}" ]; then
-                error_exit "[ERROR]: Removing a jail from the 'depends' property requires a TARGET."
+                error_exit "[ERROR]: Removing a jail from the 'depend' property requires a TARGET."
             else
                 set_target "${VALUE}"
             fi
