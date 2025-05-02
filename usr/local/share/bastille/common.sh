@@ -171,13 +171,28 @@ list_jail_priority() {
     local _jail_list="${1}"
     if [ -d "${bastille_jailsdir}" ]; then
         for _jail in ${_jail_list}; do
-            local _boot_file=${bastille_jailsdir}/${_jail}/boot.conf
-            # Set defaults if boot file does not exist
-            if [ ! -f ${_boot_file} ]; then
-                sysrc -f ${_boot_file} boot=on > /dev/null 2>&1
-                sysrc -f ${_boot_file} priority=99 > /dev/null 2>&1
+            # Remove boot.conf in favor of settings.conf
+            if [ -f ${bastille_jailsdir}/${_jail}/boot.conf ]; then
+                rm -f ${bastille_jailsdir}/${_jail}/boot.conf >/dev/null 2>&1
             fi
-            _priority="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n priority)"
+            local _settings_file=${bastille_jailsdir}/${_jail}/settings.conf
+            # Set defaults if settings file does not exist
+            if [ ! -f ${_settings_file} ]; then
+                sysrc -f ${_settings_file} boot=on >/dev/null 2>&1
+                sysrc -f ${_settings_file} depend="" >/dev/null 2>&1
+                sysrc -f ${_settings_file} priority=99 >/dev/null 2>&1
+            fi
+            # Add defaults if they dont exist
+            if ! grep -oq "boot=" ${_settings_file}; then
+                sysrc -f ${_settings_file} boot=on >/dev/null 2>&1
+            fi
+            if ! grep -oq "depend=" ${_settings_file}; then
+                sysrc -f ${_settings_file} depend="" >/dev/null 2>&1
+            fi
+            if ! grep -oq "priority=" ${_settings_file}; then
+                sysrc -f ${_settings_file} priority=99 >/dev/null 2>&1
+            fi
+            _priority="$(sysrc -f ${_settings_file} -n priority)"
             echo "${_jail} ${_priority}"
         done
     fi
@@ -423,6 +438,16 @@ EOF
 }
 
 validate_netconf() {
+
+    # Add default 'bastille_network_vnet_type' on old config file
+    # This is so we don't have to indtroduce a 'breaking change' statement
+    if ! grep -oq "bastille_network_vnet_type=" "${BASTILLE_CONFIG}"; then
+        sed -i '' "s|## Networking|&\nbastille_network_vnet_type=\"if_bridge\"                                ## default: \"if_bridge\"|" ${BASTILLE_CONFIG}
+        # shellcheck disable=SC1090
+        . ${BASTILLE_CONFIG}
+    fi
+
+    # Validate that 'bastille_network_vnet_type' has been set
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
         error_exit "[ERROR]: 'bastille_network_loopback' and 'bastille_network_shared' cannot both be set."
     fi

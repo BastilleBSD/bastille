@@ -141,8 +141,8 @@ get_jail_info() {
     JAIL_TAGS="$(bastille tags ${JAIL_NAME} list | sed 's/.*: //g' | sed 's/ /,/g')"
 
     # Get boot and priority value using 'bastille config'
-    BOOT="$(sysrc -f ${bastille_jailsdir}/${JAIL_NAME}/boot.conf -n boot)"
-    PRIORITY="$(sysrc -f ${bastille_jailsdir}/${JAIL_NAME}/boot.conf -n priority)"
+    BOOT="$(sysrc -f ${bastille_jailsdir}/${JAIL_NAME}/settings.conf -n boot)"
+    PRIORITY="$(sysrc -f ${bastille_jailsdir}/${JAIL_NAME}/settings.conf -n priority)"
 
     # Check if jail is FreeBSD or Linux
     IS_FREEBSD_JAIL=0

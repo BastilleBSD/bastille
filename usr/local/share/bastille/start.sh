@@ -106,7 +106,7 @@ for _jail in ${JAILS}; do
 
     # Continue if '-b|--boot' is set and 'boot=off'
     if [ "${BOOT}" -eq 1 ]; then
-        BOOT_ENABLED="$(sysrc -f ${bastille_jailsdir}/${_jail}/boot.conf -n boot)"
+        BOOT_ENABLED="$(sysrc -f ${bastille_jailsdir}/${_jail}/settings.conf -n boot)"
         if [ "${BOOT_ENABLED}" = "off" ]; then
             continue
         fi
