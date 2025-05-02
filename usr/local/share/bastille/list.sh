@@ -209,10 +209,10 @@ get_jail_info() {
         if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="${JAIL_IP_FULL}"; fi
 
         # Set jail path
-        JAIL_PATH="${bastille_jailsdir}/${JAIL_NAME}"
+        JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
 
-         # Get jail hostname
-        JAIL_HOSTNAME="$(bastille config ${JAIL_NAME} get host.hostname)"
+        # Get jail hostname
+        JAIL_HOSTNAME=$(sed -n "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
 
         # Get jail ports (inactive)
         if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
