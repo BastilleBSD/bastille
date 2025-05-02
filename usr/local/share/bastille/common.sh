@@ -438,6 +438,16 @@ EOF
 }
 
 validate_netconf() {
+
+    # Add default 'bastille_network_vnet_type' on old config file
+    # This is so we don't have to indtroduce a 'breaking change' statement
+    if ! grep -oq "bastille_network_vnet_type=" "${BASTILLE_CONFIG}"; then
+        sed -i '' "s|## Networking|&\nbastille_network_vnet_type=\"if_bridge\"                                ## default: \"if_bridge\"|" ${BASTILLE_CONFIG}
+        # shellcheck disable=SC1090
+        . ${BASTILLE_CONFIG}
+    fi
+
+    # Validate that 'bastille_network_vnet_type' has been set
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
         error_exit "[ERROR]: 'bastille_network_loopback' and 'bastille_network_shared' cannot both be set."
     fi
