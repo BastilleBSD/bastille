@@ -19,7 +19,7 @@ Bastille Compared to Other Jail Managers
 | Import/Export | Yes | Yes | Yes | Yes | Yes |
 | Support Boot Order Priorities| Yes | Yes | No | Yes using `rcorder` | Yes |
 | Linux containers | Yes  | Yes | No | No | Yes |
-| Automation | Templates | Makejail, Initscripts, Images | Flavors, Images | Flavours | Plugins |
+| Automation | Templates | Makejail, Initscripts, Images | Flavours, Images | Flavours | Plugins |
 | Package Management | Yes | No | No | No | No |
 | ZFS Support | Yes | Yes | Yes | No | No |
 | Volume management | No | Yes | Basic | No | Basic |
