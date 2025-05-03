@@ -36,6 +36,7 @@
 usage() {
     error_notify "Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|remove OPTION|clear|reset|[list|show] (active)|stats]"
     echo -e "Example: bastille limits TARGET add memoryuse 1G"
+    echo -e "Example: bastille limits TARGET add cpu 0,1,2"
     cat << EOF
 	
     Options:
