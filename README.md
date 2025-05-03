@@ -14,7 +14,7 @@ Bastille Compared to Other Jail Managers
 | OCI Compliant | No | Yes | No | No | No |
 | Writen In | Bourne Shell | Bourne Shell, C | Bourne Shell | Bourne Shell | Bourne Shell, Rust |
 | Dependencies | None | C | None | None | Rust|
-| Jail Types | vnet, bridged vnet, thin, thick, empty, clone, Linux | clone, copy, tiny thin, thick, empty, linux+debootstrap | thick | basejail | clone, basejail, template, empty, thick |
+| Jail Types | vnet, bridged vnet, thin, thick, empty, clone, Linux | clone, copy, tiny, thin, thick, empty, linux+debootstrap | thick | basejail | clone, basejail, template, empty, thick |
 | Jail dependency | Yes | Yes | Yes | No | Yes |
 | Import/Export | Yes | Yes | Yes | Yes | Yes |
 | Support Boot Order Priorities| Yes | Yes | No | Yes using `rcorder` | Yes |
