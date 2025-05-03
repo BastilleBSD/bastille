@@ -12,8 +12,8 @@ Bastille Compared to Other Jail Managers
 | Feature | BastilleBSD | Appjail | pot | ezjail | iocage |
 | ---     | ---         | ---     | --- | ---    | ---    |
 | OCI Compliant | No | Yes | No | No | No |
-| Writen In | Bourne Shell | Bourne Shell, C | Bourne Shell | Bourne Shell | Bourne Shell, Python |
-| Dependencies | None | C | None | None | Python |
+| Writen In | Bourne Shell | Bourne Shell, C | Bourne Shell, Rust | Bourne Shell | Bourne Shell, Python |
+| Dependencies | None | C | None | Rust | Python |
 | Jail Types | vnet, bridged vnet, thin, thick, empty, clone, Linux | clone, copy, tiny, thin, thick, empty, linux+debootstrap | thick | basejail | clone, basejail, template, empty, thick |
 | Jail dependency | Yes | Yes | Yes | No | Yes |
 | Import/Export | Yes | Yes | Yes | Yes | Yes |
@@ -27,12 +27,12 @@ Bastille Compared to Other Jail Managers
 | VNET Support | Yes | Yes | Yes | No | Yes |
 | IPv6 Support| Yes | Yes | Yes | Yes | Yes |
 | Dual Network Stack | Yes | Yes | Yes | No | No |
-| Netgraph | Yes  | Yes | No | No | No | Netgraph |
+| Netgraph | Yes  | Yes | No | No | No |
 | Dynamic Firewall | Yes | Yes | Yes  | No | No |
 | Dynamic DEVFS Ruleset Management | No | Yes | No | No | No |
 | Resource Control | Yes | Yes | CPU and Memory | No | Legacy Only |
 | CPU Sets | Yes | Yes | Yes | Yes | Yes |
-| Parallel startup | Yes | Yes (Healthcheckers, jails & NAT) | No | No | No |
+| Parallel Startup | Yes | Yes (Healthcheckers, jails & NAT) | No | No | No |
 | Log Management | No | Yes | No | No | No |
 | Copy Files Between Jails | Yes | No | No | No | No |
 | Automated Jail Migration Betwen Servers | No | No | No | No | No |
