@@ -29,7 +29,6 @@ Bastille Compared to Other Jail Managers
 | Dual Network Stack | Yes | Yes | Yes | No | No |
 | Netgraph | Yes  | Yes | No | No | No | Netgraph |
 | Dynamic Firewall | Yes | Yes | Yes  | No | No|
-| Network Management | VLANS, Bridges | Virtual Networks, Bridges | Subnet, requires `sysutils/potnet` | No | No |
 | Dynamic DEVFS Ruleset Management | No | Yes | No | No | No |
 | Resource Control | Yes | Yes | CPU and Memory | No | Legacy Only |
 | CPU Sets | No | Yes | Yes | Yes | Yes |
