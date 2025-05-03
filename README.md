@@ -25,7 +25,7 @@ Bastille Compared to Other Jail Managers
 | Volume management | No | Yes | Basic | No | Basic |
 | VNET Support | Yes | Yes | Yes | No | Yes |
 | IPv6 Support| Yes | Yes | Yes | Yes | Yes |
-| Dual Network Stack | Yes | ?? | Yes | No | No |
+| Dual Network Stack | Yes | Yes | Yes | No | No |
 | Netgraph | Yes  | Yes | No | No | No | Netgraph |
 | Dynamic Firewall | Yes | Yes | Yes  | No | No|
 | Network Management | VLANS, Bridges | Virtual Networks, Bridges | Subnet, requires `sysutils/potnet` | No | No |
