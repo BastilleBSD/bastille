@@ -23,7 +23,7 @@ Bastille Compared to Other Jail Managers
 | Cloning    | Yes       | No   | No | No | No |
 | Package Management | Yes | No | No | No | No |
 | ZFS Support | Yes | Yes | Yes | No | Yes |
-| Volume management | No | Yes | Basic | No | Basic |
+| Volume management | Yes (mount and umount) | Yes | Basic | No | Basic |
 | VNET Support | Yes | Yes | Yes | No | Yes |
 | IPv6 Support| Yes | Yes | Yes | Yes | Yes |
 | Dual Network Stack | Yes | Yes | Yes | No | No |
@@ -32,13 +32,11 @@ Bastille Compared to Other Jail Managers
 | Dynamic DEVFS Ruleset Management | No | Yes | No | No | No |
 | Resource Control | Yes | Yes | CPU and Memory | No | Legacy Only |
 | CPU Sets | Yes | Yes | Yes | Yes | Yes |
-| Parallel Startup | Yes | Yes (Healthcheckers, jails & NAT) | No | No | No |
+| Parallel Startup | No | Yes (Healthcheckers, jails & NAT) | No | No | No |
 | Log Management | No | Yes | No | No | No |
 | Copy Files Between Jails | Yes | No | No | No | No |
-| Automated Jail Migration Betwen Servers | No | No | No | No | No |
-| Top Support | Yes | No | No | No | No|
-| HTop Support | Yes | No | No | No | No |
-| X11 support | No  | Yes | No | No | No |
+| Automated Jail Migration Between Servers | No | No | No | No | No |
+| Top/Htop Support | Yes | No | No | No | No|
 
 Installation
 ============
