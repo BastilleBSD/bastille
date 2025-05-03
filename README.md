@@ -20,6 +20,7 @@ Bastille Compared to Other Jail Managers
 | Support Boot Order Priorities| Yes | Yes | No | Yes using `rcorder` | Yes |
 | Linux containers | Yes  | Yes | No | No | Yes |
 | Automation | Templates | Makejail, Initscripts, Images | Flavours, Images | Flavours | Plugins |
+| Cloning    | Yes       | No   | No | No | No |
 | Package Management | Yes | No | No | No | No |
 | ZFS Support | Yes | Yes | Yes | No | No |
 | Volume management | No | Yes | Basic | No | Basic |
