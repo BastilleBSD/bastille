@@ -191,6 +191,13 @@ for _jail in ${JAILS}; do
         done < "${bastille_jailsdir}/${_jail}/rctl.conf"
     fi
 
+    # Add cpuset limits
+    if [ -s "${bastille_jailsdir}/${_jail}/cpuset.conf" ]; then
+        while read _limits; do
+            cpuset -l "${_limits}" -j "${_jail}"
+        done < "${bastille_jailsdir}/${_jail}/cpuset.conf"
+    fi
+
     # Add rdr rules
     if [ -s "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
         while read _rules; do
