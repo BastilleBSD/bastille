@@ -36,6 +36,7 @@ Bastille Compared to Other Jail Managers
 | Parallel startup | Yes | Yes (Healthcheckers, jails & NAT) | No | No | No |
 | Log Management | No | Yes | No | No | No |
 | Copy Files Between Jails | Yes | No | No | No | No |
+| Automated Jail Migration Betwen Servers | No | No | No | No | No |
 | Top Support | Yes | No | No | No | No|
 | HTop Support | Yes | No | No | No | No |
 | X11 support | No  | Yes | No | No | No |
