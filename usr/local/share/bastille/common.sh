@@ -102,7 +102,7 @@ bastille_running_jobs() {
   if [ "${_running_jobs}" -ge "${_process_limit}" ]; then
 
     # Wait for at least one process to finish
-    wait -n 2>/dev/null || wait
+    wait 2>/dev/null || wait
 
     _running_jobs=$((_running_jobs - 1))
 
