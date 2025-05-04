@@ -8,13 +8,16 @@
 
 # Add the following to /etc/rc.conf[.local] to enable this service
 #
-# bastille_enable (bool):        Set to "NO" by default.
-#                                Set to "YES" to enable bastille.
-# bastille_conf (bool):          Set to "/usr/local/etc/bastille/bastille.conf" by default.
-#                                Path to bastile.conf file.
-# bastille_startup_delay (bool): Set to 0 by default.
-#                                Set to a numerical value.
-#                                This is the delay between startup of each jail.
+# bastille_enable (bool):          Set to "NO" by default.
+#                                  Set to "YES" to enable bastille.
+# bastille_conf (bool):            Set to "/usr/local/etc/bastille/bastille.conf" by default.
+#                                  Path to bastile.conf file.
+# bastille_startup_delay (bool):   Set to "0" by default.
+#                                  Set to a numerical value.
+#                                  This is the delay between startup of each jail.
+# bastille_parallel_limit (bool):  Set to "1" by default.
+#                                  Set to a numerical value.
+#                                  Number of processes to run in parallel when starting/stopping/restarting jails.
 #
 
 . /etc/rc.subr
@@ -25,20 +28,26 @@ rcvar=${name}_enable
 : ${bastille_enable:="NO"}
 : ${bastille_conf:="/usr/local/etc/bastille/bastille.conf"}
 : ${bastille_startup_delay:=0}
+: ${bastille_parallel_limit:=1}
 
 command=/usr/local/bin/${name}
 start_cmd="bastille_start"
 stop_cmd="bastille_stop"
-restart_cmd="bastille_stop && bastille_start"
+restart_cmd="bastille_restart"
 
 bastille_start()
 {
-    ${command} start --boot --delay ${bastille_startup_delay} ALL
+    ${command} -p ${bastille_parallel_limit} start --boot --delay ${bastille_startup_delay} ALL
 }
 
 bastille_stop()
 {
-   ${command} stop ALL
+   ${command} -p ${bastille_parallel_limit} stop ALL
+}
+
+bastille_restart()
+{
+    ${command} -p ${bastille_parallel_limit} restart --boot --delay ${bastille_startup_delay} ALL
 }
 
 load_rc_config ${name}
