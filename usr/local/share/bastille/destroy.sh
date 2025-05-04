@@ -53,6 +53,8 @@ destroy_jail() {
 
     for _jail in ${JAILS}; do
 
+        (
+
         bastille_jail_base="${bastille_jailsdir}/${_jail}"
         bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 
@@ -117,8 +119,14 @@ destroy_jail() {
                 pfctl -a "rdr/${_jail}" -Fn
             fi
         fi
+
+    )
 	
-    done
+    bastille_running_jobs "${bastille_process_limit}"
+	
+done
+wait
+
 }
 
 destroy_rel() {

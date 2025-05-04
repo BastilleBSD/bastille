@@ -89,6 +89,8 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
+    (
+
     info "\n[${_jail}]:"
 	
     host_path="${HOST_PATH}"
@@ -97,5 +99,10 @@ for _jail in ${JAILS}; do
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
         error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"
     fi
+
+    )
+	
+    bastille_running_jobs "${bastille_process_limit}"
 	
 done
+wait

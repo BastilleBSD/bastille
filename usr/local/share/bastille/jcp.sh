@@ -91,6 +91,8 @@ set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
 
 for _jail in ${DEST_TARGET}; do
 
+    (
+
     if [ "${_jail}" = "${SOURCE_TARGET}" ]; then
         continue
     else
@@ -105,6 +107,10 @@ for _jail in ${DEST_TARGET}; do
         fi
 		
     fi
-done
 
-echo
+    )
+	
+    bastille_running_jobs "${bastille_process_limit}"
+	
+done
+wait

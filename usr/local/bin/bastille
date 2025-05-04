@@ -146,7 +146,8 @@ fi
 . /usr/local/share/bastille/common.sh
 
 # Handle options
-PARALLEL_MODE=0
+bastille_parallel_mode=0
+bastille_process_limit=1
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -170,10 +171,10 @@ while [ "$#" -gt 0 ]; do
             shift 2
             ;;
         -p|--parallel)
-            PARALLEL_MODE=1
-            PROCESS_LIMIT="${2}"
-            if ! echo "${PROCESS_LIMIT}" | grep -Eq "^[0-9]+$"; then
-                error_exit "Not a valid process limit: ${PROCESS_LIMIT}"
+            bastille_parallel_mode=1
+            bastille_process_limit="${2}"
+            if ! echo "${bastille_process_limit}" | grep -Eq "^[0-9]+$"; then
+                error_exit "Not a valid process limit: ${bastille_process_limit}"
             else
                 shift 2
             fi
@@ -186,6 +187,10 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+# Export parallel and limit
+export bastille_parallel_mode
+export bastille_process_limit
 
 if [ "$#" -lt 1 ]; then
     usage
@@ -203,10 +208,10 @@ case "${CMD}" in
     convert| \
     create| \
     edit| \
+    etcupdate| \
     export| \
     htop| \
     import| \
-    jcp| \
     limits| \
     list| \
     network| \
@@ -215,9 +220,10 @@ case "${CMD}" in
     rename| \
     setup| \
     top| \
-    verify| \
-    zfs)
-        if [ "${PARALLEL_MODE}" -eq 1 ]; then
+    update| \
+    upgrade| \
+    verify)
+        if [ "${bastille_parallel_mode}" -eq 1 ]; then
             error_exit "Command does not support parallel mode: ${CMD}"
         fi
         ;;
@@ -226,7 +232,7 @@ case "${CMD}" in
     config| \
     cp| \
     destroy| \
-    etcupdate| \
+    jcp| \
     limits| \
     mount| \
     pkg| \
@@ -238,45 +244,7 @@ case "${CMD}" in
     tags| \
     template| \
     umount| \
-    update| \
-    upgrade)
-        # Extract JAILS from command for parallel mode
-        OPTIONS=""
-        while [ "$#" -gt 0 ] && [ "${PARALLEL_MODE}" -eq 1 ]; do
-            case "${1}" in
-                -d|--delay)
-                    OPTIONS="${OPTIONS} ${1} ${2}"
-                    shift 2
-                    ;;
-                -*)
-                    OPTIONS="${OPTIONS} ${1}"
-                    shift 1
-                    ;;
-                *)
-                    case "${CMD}" in
-                        stop|destroy)
-                            if ! set_target "${1}" "reverse" >/dev/null 2>&1; then
-                                OPTIONS="${OPTIONS} ${1}"
-                                shift 1
-                            else
-                                XARGS_JAILS="${JAILS}"
-                                shift 1
-                                break
-                            fi
-                            ;;
-                        *)
-                            if ! set_target "${1}" >/dev/null 2>&1; then
-                                OPTIONS="${OPTIONS} ${1}"
-                                shift 1
-                            else
-                                XARGS_JAILS="${JAILS}"
-                                shift 1
-                                break
-                            fi
-                            ;;
-                    esac
-            esac
-        done
+    zfs)
         ;;
     *)
         usage
@@ -292,12 +260,8 @@ if [ -f "${SCRIPTPATH}" ]; then
     umask "${UMASK}"
 
     : "${SH:=sh}"
-    
-    if [ "${PARALLEL_MODE}" -eq 1 ]; then
-        echo "${XARGS_JAILS}" | xargs -P "${PROCESS_LIMIT}" -I {} "${SH}" "${SCRIPTPATH}" ${OPTIONS} {} "$@"
-    else
-        exec "${SH}" "${SCRIPTPATH}" "$@"
-    fi
+
+    exec "${SH}" "${SCRIPTPATH}" "$@"
 
 else
     error_exit "${SCRIPTPATH} not found."	

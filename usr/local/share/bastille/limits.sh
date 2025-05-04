@@ -131,6 +131,8 @@ add_cpuset() {
 
 for _jail in ${JAILS}; do
 
+    (
+
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else
@@ -284,4 +286,10 @@ for _jail in ${JAILS}; do
             ;;
 
     esac
+
+    )
+	
+    bastille_running_jobs "${bastille_process_limit}"
+	
 done
+wait

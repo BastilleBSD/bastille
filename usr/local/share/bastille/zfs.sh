@@ -45,65 +45,25 @@ EOF
 }
 
 zfs_snapshot() {
-
-    for _jail in ${JAILS}; do
-
-        info "\n[${_jail}]:"
-	
-        # shellcheck disable=SC2140
-        zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
-
-    done
-    
+    # shellcheck disable=SC2140
+    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 }
 
 zfs_destroy_snapshot() {
-
-    for _jail in ${JAILS}; do
-
-        info "\n[${_jail}]:"
-	
-        # shellcheck disable=SC2140
-        zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
-
-    done
-
+    # shellcheck disable=SC2140
+    zfs destroy -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
 }
 
 zfs_set_value() {
-
-    for _jail in ${JAILS}; do
-
-        info "\n[${_jail}]:"
-	
-        zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-	
-    done
-
+    zfs "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 }
 
 zfs_get_value() {
-
-    for _jail in ${JAILS}; do
-
-        info "\n[${_jail}]:"
-
-        zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-	
-    done
-    
+    zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 }
 
 zfs_disk_usage() {
-
-    for _jail in ${JAILS}; do
-
-        info "\n[${_jail}]:"
-	
-        zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
-		
-    done
-    
+    zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
 }
 
 
@@ -147,27 +107,40 @@ if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "[ERROR]: ZFS zpool not defined."
 fi
 
-case "${ACTION}" in
-    set)
-        ATTRIBUTE="${3}"
-        zfs_set_value
-        ;;
-    get)
-        ATTRIBUTE="${3}"
-        zfs_get_value
-        ;;
-    snap|snapshot)
-        TAG="${3}"
-        zfs_snapshot
-        ;;
-    destroy_snap|destroy_snapshot)
-        TAG="${3}"
-        zfs_destroy_snapshot
-        ;;
-    df|usage)
-        zfs_disk_usage
-        ;;
-    *)
-        usage
-        ;;
-esac
+for _jail in ${JAILS}; do
+
+    (
+
+    info "\n[${_jail}]:"
+
+    case "${ACTION}" in
+        set)
+            ATTRIBUTE="${3}"
+            zfs_set_value
+            ;;
+        get)
+            ATTRIBUTE="${3}"
+            zfs_get_value
+            ;;
+        snap|snapshot)
+            TAG="${3}"
+            zfs_snapshot
+            ;;
+        destroy_snap|destroy_snapshot)
+            TAG="${3}"
+            zfs_destroy_snapshot
+            ;;
+        df|usage)
+            zfs_disk_usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
+
+    )
+
+    bastille_running_jobs "${bastille_process_limit}"
+	
+done
+wait

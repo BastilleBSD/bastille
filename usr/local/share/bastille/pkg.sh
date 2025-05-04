@@ -97,6 +97,8 @@ errors=0
 
 for _jail in ${JAILS}; do
 
+    (
+
     # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
@@ -128,7 +130,12 @@ for _jail in ${JAILS}; do
         fi
     fi
 	
+    )
+	
+    bastille_running_jobs "${bastille_process_limit}"
+	
 done
+wait
 
 if [ $errors -ne 0 ]; then
     error_exit "[ERROR]: Failed to apply on some jails, please check logs"

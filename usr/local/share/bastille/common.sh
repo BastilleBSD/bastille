@@ -93,6 +93,23 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+# Parallel mode, don't exceed process limit
+bastille_running_jobs() {
+
+  _process_limit="${1}"
+  _running_jobs=$((_running_jobs + 1))
+
+  if [ "${_running_jobs}" -ge "${_process_limit}" ]; then
+
+    # Wait for at least one process to finish
+    wait -n 2>/dev/null || wait
+
+    _running_jobs=$((_running_jobs - 1))
+
+  fi
+
+}
+
 check_target_exists() {
     local _TARGET="${1}"
     local _jaillist="$(bastille list jails)"

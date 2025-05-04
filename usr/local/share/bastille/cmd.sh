@@ -91,6 +91,8 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
+    (
+
     # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
@@ -123,7 +125,12 @@ for _jail in ${JAILS}; do
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
 
+    )
+
+    bastille_running_jobs "${bastille_process_limit}"
+	
 done
+wait
 
 # Check when a command is executed in all running jails. (bastille cmd ALL ...)
 if [ "${COUNT}" -gt 1 ] && [ "${RETURN}" -gt 0 ]; then
