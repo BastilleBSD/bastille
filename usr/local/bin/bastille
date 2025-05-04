@@ -244,6 +244,10 @@ case "${CMD}" in
         OPTIONS=""
         while [ "$#" -gt 0 ] && [ "${PARALLEL_MODE}" -eq 1 ]; do
             case "${1}" in
+                -d|--delay)
+                    OPTIONS="${OPTIONS} ${1} ${2}"
+                    shift 2
+                    ;;
                 -*)
                     OPTIONS="${OPTIONS} ${1}"
                     shift 1
