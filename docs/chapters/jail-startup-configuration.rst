@@ -56,10 +56,12 @@ Parallel Startup
 ----------------
 
 Bastille supports starting, stopping and restarting jails in parallel mode using the ``rc`` service script. To enable this functionality, set
-``bastille_parallel_limit`` to a numeric value. For example, if you run ``sysrc bastille_parallel_limit=4``, then Bastille will start 4
+``bastille_parallel_limit`` to a numeric value.
+
+For example, if you run ``sysrc bastille_parallel_limit=4``, then Bastille will start 4
 jails at a time on system startup, as well as stop or restart 4 jails at a time when ``service bastille...`` is called.
 
-This value is set to 1 by default, to only start/stop/restart jail one at a time.
+This value is set to 1 by default, to only start/stop/restart jails one at a time.
 
 Startup Delay
 -------------
