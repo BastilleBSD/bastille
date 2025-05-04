@@ -32,7 +32,7 @@ Bastille Compared to Other Jail Managers
 | Dynamic DEVFS Ruleset Management | No | Yes | No | No | No |
 | Resource Control | Yes | Yes | CPU and Memory | No | Legacy Only |
 | CPU Sets | Yes | Yes | Yes | Yes | Yes |
-| Parallel Startup | No | Yes (Healthcheckers, jails & NAT) | No | No | No |
+| Parallel Startup | Yes | Yes (Healthcheckers, jails & NAT) | No | No | No |
 | Multi-Target Commands | Yes | No | No | No | No |
 | Log Management | No | Yes | No | No | No |
 | Copy Files Between Jails | Yes | No | No | No | No |
