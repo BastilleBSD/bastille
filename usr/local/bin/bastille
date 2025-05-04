@@ -147,7 +147,7 @@ fi
 
 # Handle options
 bastille_parallel_mode=0
-bastille_process_limit=1
+bastille_process_limit="${bastille_process_limit:-1}"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -189,7 +189,6 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Export parallel and limit
-export bastille_parallel_mode
 export bastille_process_limit
 
 if [ "$#" -lt 1 ]; then
