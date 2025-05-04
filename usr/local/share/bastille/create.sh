@@ -341,10 +341,10 @@ create_jail() {
         else
             mkdir -p "${bastille_jailsdir}/${NAME}/root"
         fi
-    # Check if the jail directory has been mounted under UFS
+    # Check if the jail directory has been mounted under UFS (not supported)
     elif [ ! -d "${bastille_jailsdir}/${NAME}/root" ] && ! checkyesno bastille_zfs_enable; then
         if mount | grep "${bastille_jailsdir}/${NAME}" | grep -oq "ufs"; then
-            mkdir -p "${bastille_jailsdir}/${NAME}/root"
+            error_exit "[ERROR]: Using UFS mounts for the jail directory is not supported."
         fi
     fi
 
