@@ -36,6 +36,7 @@
 usage() {
     error_notify "Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|remove OPTION|clear|reset|[list|show] (active)|stats]"
     echo -e "Example: bastille limits TARGET add memoryuse 1G"
+    echo -e "Example: bastille limits TARGET add cpu 0,1,2"
     cat << EOF
 	
     Options:
@@ -92,7 +93,6 @@ else
     ACTION="${2}"
     shift 2
 fi
-
 RACCT_ENABLE="$(sysctl -n kern.racct.enable)"
 if [ "${RACCT_ENABLE}" != '1' ]; then
     error_exit "[ERROR]: Racct not enabled. Append 'kern.racct.enable=1' to /boot/loader.conf and reboot"
@@ -100,6 +100,34 @@ fi
 
 bastille_root_check
 set_target "${TARGET}"
+
+validate_cpus() {
+
+    local _cpus="${1}"
+
+    for _cpu in $(echo ${_cpus} | sed 's/,/ /g'); do
+        if ! cpuset -l ${_cpu} 2>/dev/null; then
+            error_notify "[ERROR]: CPU is not available: ${_cpu}"
+            return 1
+        fi
+    done
+
+}
+
+add_cpuset() {
+
+    local _jail="${1}"
+    local _cpus="${2}"
+    local _cpuset_rule="$(echo ${_cpus} | sed 's/ /,/g')"
+
+    # Persist cpuset value
+    echo "${_cpuset_rule}" > "${bastille_jailsdir}/${_jail}/cpuset.conf"
+    echo -e "Limits: ${OPTION} ${VALUE}"
+
+    # Restart jail to apply cpuset
+    bastille restart ${_jail}
+
+}
 
 for _jail in ${JAILS}; do
 
@@ -114,79 +142,146 @@ for _jail in ${JAILS}; do
     info "\n[${_jail}]:"
     
     case "${ACTION}" in
+
         add)
+
             OPTION="${1}"
             VALUE="${2}"
-            # Add rctl rule to rctl.conf
-            _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
-            _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
 
-            # Check whether the entry already exists and, if so, update it. -- cwells
-            if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
-    	        _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
-    	        _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
-    	        _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
-                sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-                sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-            else # Just append the entry. -- cwells
-                echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-                echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-            fi
+            # Limit cpus for jail
+            if [ "${OPTION}" = "cpu" ] || [ "${OPTION}" = "cpus" ] || [ "${OPTION}" = "cpuset" ]; then
+                validate_cpus "${VALUE}" || continue
+                add_cpuset "${_jail}" "${VALUE}"
+            else
+                # Add rctl rule to rctl.conf
+                _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
+                _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
 
-            echo -e "${OPTION} ${VALUE}"
-            rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
-            ;;
-        remove)
-            OPTION="${1}"
-            # Remove rule from rctl.conf
-            if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+                # Check whether the entry already exists and, if so, update it. -- cwells
                 if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
-                    _rctl_rule="$(grep "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf")"
-                    _rctl_rule_log="$(grep "jail:${_jail}:${OPTION}:log" "${bastille_jailsdir}/${_jail}/rctl.conf")"
-                    rctl -r "${_rctl_rule}" "${_rctl_rule_log}" 2>/dev/null
-                    sed -i '' "/.*${_jail}:${OPTION}.*/d" "${bastille_jailsdir}/${_jail}/rctl.conf"
+    	            _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
+    	            _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
+    	            _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
+                    sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                else # Just append the entry. -- cwells
+                    echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+                fi
+
+                echo -e "${OPTION} ${VALUE}"
+                rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
+            fi
+            ;;
+
+        remove)
+
+            OPTION="${1}"
+
+            if [ "${OPTION}" = "cpu" ] || [ "${OPTION}" = "cpus" ] || [ "${OPTION}" = "cpuset" ]; then
+
+                # Remove cpuset.conf
+                if [ -s "${bastille_jailsdir}/${_jail}/cpuset.conf" ]; then
+                    rm -f "${bastille_jailsdir}/${_jail}/cpuset.conf"
+                    echo "cpuset.conf removed."
+                else
+                    error_continue "[ERROR]: cpuset.conf not found."
+                fi
+
+                # Restart jail to clear cpuset
+                bastille restart ${_jail}
+
+            else
+                if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
+
+                    # Remove rule from rctl.conf
+                    if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
+                        _rctl_rule="$(grep "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf")"
+                        _rctl_rule_log="$(grep "jail:${_jail}:${OPTION}:log" "${bastille_jailsdir}/${_jail}/rctl.conf")"
+                        rctl -r "${_rctl_rule}" "${_rctl_rule_log}" 2>/dev/null
+                        sed -i '' "/.*${_jail}:${OPTION}.*/d" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    fi
                 fi
             fi
             ;;
+
         clear)
-            # Remove limits
+
+            # Remove rctl limits (rctl only)
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 while read _limits; do
                     rctl -r "${_limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
                 echo "RCTL limits cleared."
             fi
-	        ;;
+	    ;;
+
         list|show)
-            # Show limits
+
+            # Show rctl limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-	            if [ "${1}" = "active" ]; then
-	                rctl jail:${_jail} 2>/dev/null
-	            else
-	                cat "${bastille_jailsdir}/${_jail}/rctl.conf"
-	            fi
+
+                echo "-------------"
+                echo "[RCTL Limits]"
+
+	        if [ "${1}" = "active" ]; then
+	            rctl jail:${_jail} 2>/dev/null
+	        else
+	            cat "${bastille_jailsdir}/${_jail}/rctl.conf"
+	        fi
+            fi
+
+            # Show cpuset limits
+            if [ -s "${bastille_jailsdir}/${_jail}/cpuset.conf" ]; then
+
+                echo "-------------"
+                echo "[CPU Limits]"
+
+	        if [ "${1}" = "active" ]; then
+	            cpuset -g -j ${_jail} | head -1 2>/dev/null
+	        else
+	            cat "${bastille_jailsdir}/${_jail}/cpuset.conf"
+	        fi
             fi
             ;;
+
         stats)
-            # Show statistics
+
+            # Show statistics (rctl only)
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
 	            rctl -hu jail:${_jail} 2>/dev/null
             fi
             ;;
+
         reset)
-            # Remove limits and delete rctl.conf
+
+            # Remove active limits
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 while read _limits; do
                     rctl -r "${_limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${_jail}/rctl.conf"
 	            echo "RCTL limits cleared."
             fi
+
+            # Remove rctl.conf
             if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
                 rm -f "${bastille_jailsdir}/${_jail}/rctl.conf"
                 echo "rctl.conf removed."
             else
                 error_continue "[ERROR]: rctl.conf not found."
             fi
+
+            # Remove cpuset.conf
+            if [ -s "${bastille_jailsdir}/${_jail}/cpuset.conf" ]; then
+                rm -f "${bastille_jailsdir}/${_jail}/cpuset.conf"
+                echo "cpuset.conf removed."
+            else
+                error_continue "[ERROR]: cpuset.conf not found."
+            fi
+
+            # Restart jail to clear cpuset
+            bastille restart ${_jail}
             ;;
+
     esac
 done
