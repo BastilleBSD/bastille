@@ -41,19 +41,19 @@ The ``rdr`` command includes 4 additional options:
 
 .. code-block:: shell
 
-    # bastille rdr dev1 -i vtnet0 udp 8000 80
+    # bastille rdr -i vtnet0 dev1 udp 8000 80
     [jail1]:
     IPv4 tcp/8000:80 on vtnet0
     
-    # bastille rdr dev1 -s 192.168.0.1 tcp 8080 81
+    # bastille rdr -s 192.168.0.1 dev1 tcp 8080 81
     [jail1]:
     IPv4 tcp/8080:81 on em0
 
-    # bastille rdr dev1 -d 192.168.0.84 tcp 8082 82
+    # bastille rdr -d 192.168.0.84 dev1 tcp 8082 82
     [jail1]:
     IPv4 tcp/8082:82 on em0
 
-    # bastille rdr dev1 -i vtnet0 -d 192.168.0.45 tcp 9000 9000
+    # bastille rdr -i vtnet0 -d 192.168.0.45 dev1 tcp 9000 9000
     [jail1]:
     IPv4 tcp/9000:9000 on vtnet0
 
