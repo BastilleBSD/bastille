@@ -42,7 +42,7 @@ bastille_start()
 
 bastille_stop()
 {
-   ${command} -p ${bastille_parallel_limit} stop ALL
+    ${command} -p ${bastille_parallel_limit} stop ALL
 }
 
 bastille_restart()
