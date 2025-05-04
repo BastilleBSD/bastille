@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION="0.14.20250420"
+BASTILLE_VERSION=aec0630
 
 ## check for config existence
 bastille_conf_check() {
@@ -253,14 +253,28 @@ case "${CMD}" in
                     shift 1
                     ;;
                 *)
-                    if ! set_target "${1}" >/dev/null 2>&1; then
-                        OPTIONS="${OPTIONS} ${1}"
-                        shift 1
-                    else
-                        XARGS_JAILS="${JAILS}"
-                        shift 1
-                        break
-                    fi
+                    case "${CMD}" in
+                        stop|destroy)
+                            if ! set_target "${1}" "reverse" >/dev/null 2>&1; then
+                                OPTIONS="${OPTIONS} ${1}"
+                                shift 1
+                            else
+                                XARGS_JAILS="${JAILS}"
+                                shift 1
+                                break
+                            fi
+                            ;;
+                        *)
+                            if ! set_target "${1}" >/dev/null 2>&1; then
+                                OPTIONS="${OPTIONS} ${1}"
+                                shift 1
+                            else
+                                XARGS_JAILS="${JAILS}"
+                                shift 1
+                                break
+                            fi
+                            ;;
+                    esac
             esac
         done
         ;;
@@ -286,7 +300,5 @@ if [ -f "${SCRIPTPATH}" ]; then
     fi
 
 else
-
-    error_exit "${SCRIPTPATH} not found."
-	
+    error_exit "${SCRIPTPATH} not found."	
 fi
