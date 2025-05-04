@@ -287,7 +287,7 @@ for _jail in ${JAILS}; do
 
     esac
 
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	

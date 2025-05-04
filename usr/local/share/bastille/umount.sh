@@ -130,7 +130,7 @@ for _jail in ${JAILS}; do
     
     echo "Unmounted: ${_jailpath}"
 	
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	

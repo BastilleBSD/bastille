@@ -476,7 +476,7 @@ for _jail in ${JAILS}; do
     
     info "\nTemplate applied: ${TEMPLATE}"
 
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	

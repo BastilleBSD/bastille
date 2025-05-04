@@ -100,7 +100,7 @@ for _jail in ${JAILS}; do
         error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"
     fi
 
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	

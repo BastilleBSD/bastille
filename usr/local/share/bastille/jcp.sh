@@ -108,7 +108,7 @@ for _jail in ${DEST_TARGET}; do
 		
     fi
 
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	

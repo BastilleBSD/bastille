@@ -293,7 +293,7 @@ for _jail in ${JAILS}; do
         fi
     fi
 
-    )
+    ) &
 
     bastille_running_jobs "${bastille_process_limit}"
 	

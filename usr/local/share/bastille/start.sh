@@ -210,7 +210,7 @@ for _jail in ${JAILS}; do
     # Delay between jail action
     sleep "${DELAY_TIME}"
 
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	

@@ -125,7 +125,7 @@ for _jail in ${JAILS}; do
         RETURN=$(($RETURN+$ERROR_CODE))
     fi
 
-    )
+    ) &
 
     bastille_running_jobs "${bastille_process_limit}"
 	

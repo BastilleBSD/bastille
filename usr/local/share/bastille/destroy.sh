@@ -120,7 +120,7 @@ destroy_jail() {
             fi
         fi
 
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	

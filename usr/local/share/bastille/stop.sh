@@ -151,7 +151,7 @@ for _jail in ${JAILS}; do
         done
     fi
 
-    )
+    ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	
