@@ -15,7 +15,7 @@ https://docs.bastillebsd.org.
    chapters/gettingstarted
    chapters/configuration
    chapters/targeting
-   chapters/startup-configuration
+   chapters/jail-startup-configuration
    chapters/networking
    chapters/usage
    chapters/upgrading
