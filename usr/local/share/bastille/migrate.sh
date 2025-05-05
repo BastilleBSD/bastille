@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille migrate [option(s)] TARGET HOST [USER]"
+    error_notify "Usage: bastille migrate [option(s)] TARGET USER HOST"
     cat << EOF
 	
     Options:
@@ -88,16 +88,16 @@ if [ "$#" -ne 3 ]; then
 fi
 
 TARGET="${1}"
-HOST="${2}"
-USER="${3}"
+USER="${2}"
+HOST="${3}"
 
 bastille_root_check
 set_target "${TARGET}"
 
 validate_host_status() {
 
-    local _host="${1}"
-    local _user="${2}"
+    local _user="${1}"
+    local _host="${2}"
     
     info "\nChecking remote host status..."
 
@@ -158,8 +158,8 @@ migrate_create_export() {
 migrate_jail() {
 
     local _jail="${1}"
-    local _host="${2}"
-    local _user="${3}"
+    local _user="${2}"
+    local _host="${3}"
 
     local _remote_bastille_zfs_enable="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
     local _remote_bastille_jailsdir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
@@ -229,16 +229,22 @@ migrate_jail() {
         error_exit "[ERROR]: Failed to import jail on remote system."
     fi
 
-    # Destroy old jail if FORCE=1
+    # Destroy old jail if OPT_DESTROY=1
     if [ "${OPT_DESTROY}" -eq 1 ]; then
         bastille destroy -af "${_jail}"
     fi
 
+    # Remove archives
     migrate_cleanup "${_jail}"
+
+    # Start new jail if AUTO=1
+    if [ "${AUTO}" -eq 1 ]; then
+        ssh ${_user}@${_host} sudo bastille start "${_jail}"
+    fi
 }
 
 # Validate host uptime
-validate_host_status "${HOST}" "${USER}"
+validate_host_status "${USER}" "${HOST}"
 
 for _jail in ${JAILS}; do
 
@@ -257,7 +263,7 @@ for _jail in ${JAILS}; do
 
     migrate_create_export "${_jail}"
     
-    migrate_jail "${_jail}" "${HOST}" "${USER}"
+    migrate_jail "${_jail}" "${USER}" "${HOST}"
 
     info "\nSuccessfully migrated '${_jail}' to '${HOST}'.\n"
 
