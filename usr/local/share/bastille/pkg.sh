@@ -40,6 +40,7 @@ usage() {
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
     -H | --host           Use the hosts 'pkg' instead of the jails.
+    -y | --yes            Assume always yes for pkg command. Do not prompt.
     -x | --debug          Enable debug mode.
 
 EOF
@@ -95,9 +96,6 @@ fi
 
 TARGET="${1}"
 shift
-
-OPTION=""
-BLA="$@"
         
 bastille_root_check
 set_target "${TARGET}"
@@ -127,18 +125,18 @@ pkg_run_command() {
         fi
     elif [ "${USE_HOST_PKG}" -eq 1 ]; then
         if [ "${AUTO_YES}" -eq 1 ]; then
-            _jail_cmd="env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j "${_jail}" "$@""
+            _jail_cmd="env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${_jail} $@"
         else
-            _jail_cmd="/usr/sbin/pkg -j "${_jail}" "$@""
+            _jail_cmd="/usr/sbin/pkg -j ${_jail} $@"
         fi
         if ! ${_jail_cmd}; then
             errors=1
         fi
     else
         if [ "${AUTO_YES}" -eq 1 ]; then
-            _jail_cmd="jexec -l -U root "${_jail}" env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@""
+            _jail_cmd="jexec -l -U root ${_jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg $@"
         else
-            _jail_cmd="jexec -l -U root "${_jail}" /usr/sbin/pkg "$@""
+            _jail_cmd="jexec -l -U root ${_jail} /usr/sbin/pkg $@"
         fi
         if ! ${_jail_cmd}; then
             errors=1
