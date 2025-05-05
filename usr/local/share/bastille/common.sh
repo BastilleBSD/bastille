@@ -247,6 +247,10 @@ set_target() {
             TARGET="${TARGET} ${_jail}"
             JAILS="${JAILS} ${_jail}"
         done
+        # Exit if no jails
+        if [ -z "${TARGET}" ] && [ -z "${JAILS}" ]; then
+            exit 1
+        fi
         if [ "${_order}" = "forward" ]; then
             TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
             JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
@@ -281,6 +285,10 @@ set_target_single() {
                 exit 1
             fi
     fi
+    # Exit if no jails
+    if [ -z "${TARGET}" ] && [ -z "${JAILS}" ]; then
+        exit 1
+    fi
     TARGET="${_TARGET}"
     JAILS="${_TARGET}"
     export TARGET
@@ -295,6 +303,10 @@ target_all_jails() {
             JAILS="${JAILS} ${_jail}"
         fi
     done
+    # Exit if no jails
+    if [ -z "${JAILS}" ]; then
+        exit 1
+    fi
     if [ "${_order}" = "forward" ]; then
         JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -n | awk '{print $1}')"
     elif [ "${_order}" = "reverse" ]; then
