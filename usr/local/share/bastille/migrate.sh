@@ -165,7 +165,7 @@ migrate_jail() {
             error_exit "Enable ZFS remotely to continue."
         else
 
-            info "\nAttempting to send jail to remote system..."
+            info "\nAttempting to migrate jail to remote system..."
 
             local _file="$(grep -Eo "^${_jail}_.*\.xz" "${bastille_migratedir}")"
             local _file_sha256="$(grep -Eo "^${_jail}_.*\.sha256" "${bastille_migratedir}")"
@@ -189,7 +189,7 @@ migrate_jail() {
             error_exit "Enable ZFS locally to continue."
         else
 
-            info "\nAttempting to send jail to remote system..."
+            info "\nAttempting to migrate jail to remote system..."
 
             local _file="$(grep -Eo "^${_jail}_.*\.txz" "${bastille_migratedir}")"
             local _file_sha256="$(grep -Eo "^${_jail}_.*\.sha256" "${bastille_migratedir}")"
@@ -246,9 +246,9 @@ for _jail in ${JAILS}; do
 
     info "\nAttempting to migrate '${_jail}' to '${HOST}'..."
 
-    migrate_jail "${TARGET}" "${HOST}" "${USER}"
+    migrate_jail "${_jail}" "${HOST}" "${USER}"
 
-    info "\nSuccessfully migrated '${_jail}' to '${_host}'.\n"
+    info "\nSuccessfully migrated '${_jail}' to '${HOST}'.\n"
 
     ) &
 
