@@ -246,6 +246,8 @@ for _jail in ${JAILS}; do
 
     info "\nAttempting to migrate '${_jail}' to '${HOST}'..."
 
+    migrate_create_export "${_jail}"
+    
     migrate_jail "${_jail}" "${HOST}" "${USER}"
 
     info "\nSuccessfully migrated '${_jail}' to '${HOST}'.\n"
