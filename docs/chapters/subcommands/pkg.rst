@@ -112,4 +112,5 @@ you can fully leverage the pkg manager. This means, ``install``, ``update``,
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
     -H | --host           Use the hosts 'pkg' instead of the jails.
+    -y | --yes            Assume always yes for pkg. Do not prompt.
     -x | --debug          Enable debug mode.
