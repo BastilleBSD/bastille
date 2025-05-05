@@ -48,6 +48,7 @@ EOF
 
 # Handle options.
 AUTO=0
+AUTO_YES=0
 USE_HOST_PKG=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -62,6 +63,10 @@ while [ "$#" -gt 0 ]; do
             USE_HOST_PKG=1
             shift
             ;;
+        -y|--yes)
+            AUTO_YES=1
+            shift
+            ;;
         -x|--debug)
             enable_debug
             shift
@@ -71,6 +76,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
+                    y) AUTO_YES=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
@@ -89,15 +95,14 @@ fi
 
 TARGET="${1}"
 shift
+
+OPTION=""
+BLA="$@"
         
 bastille_root_check
 set_target "${TARGET}"
 
-errors=0
-
-for _jail in ${JAILS}; do
-
-    (
+pkg_run_command() {
 
     # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
@@ -120,18 +125,49 @@ for _jail in ${JAILS}; do
         if ! jexec -l "${_jail}" /usr/bin/apt "$@"; then
             errors=1
         fi
-    elif [ "${USE_HOST_PKG}" = 1 ]; then
-        if ! /usr/sbin/pkg -j "${_jail}" "$@"; then
+    elif [ "${USE_HOST_PKG}" -eq 1 ]; then
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            _jail_cmd="env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j "${_jail}" "$@""
+        else
+            _jail_cmd="/usr/sbin/pkg -j "${_jail}" "$@""
+        fi
+        if ! ${_jail_cmd}; then
             errors=1
         fi
     else
-        if ! jexec -l -U root "${_jail}" /usr/sbin/pkg "$@"; then
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            _jail_cmd="jexec -l -U root "${_jail}" env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@""
+        else
+            _jail_cmd="jexec -l -U root "${_jail}" /usr/sbin/pkg "$@""
+        fi
+        if ! ${_jail_cmd}; then
             errors=1
         fi
     fi
-	
-    ) &
-	
+}
+
+errors=0
+
+for _jail in ${JAILS}; do
+
+    if [ "${AUTO_YES}" -eq 1 ]; then
+
+        (
+
+        pkg_run_command "$@"
+
+        ) &
+
+    else
+
+        (
+
+        pkg_run_command "$@"
+
+        )
+
+    fi
+
     bastille_running_jobs "${bastille_process_limit}"
 	
 done
