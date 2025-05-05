@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille migrate [option(s)] TARGET HOST USER"
+    error_notify "Usage: bastille migrate [option(s)] TARGET HOST [USER]"
     cat << EOF
 	
     Options:
@@ -109,16 +109,19 @@ validate_host_status() {
     local _user="${2}"
     
     info "\nChecking remote host status..."
-	
+
+    # Host uptime
     if ! ping -c 1 ${_host} >/dev/null 2>/dev/null; then
         error_exit "[ERROR]: Host appears to be down"
-    elif ! ssh ${_user}@${_host} exit >/dev/null 2>/dev/null; then
-        error_notify "[ERROR]: Could not establish ssh connection to host."
-        error_exit "Please make sure user '${_user}' has password-less access."
-    else
-        echo "Host check successful."
     fi
 
+    # Host SSH check
+    if ! ssh ${_user}@${_host} exit >/dev/null 2>/dev/null; then
+        error_notify "[ERROR]: Could not establish ssh connection to host."
+        error_exit "Please make sure user '${_user}' has password-less access."
+    fi
+
+    echo "Host check successful."
 }
 
 migrate_create_export() {
@@ -126,6 +129,19 @@ migrate_create_export() {
     local _jail="${1}"
 
     info "\nPreparing jail for migration..."
+
+    # Ensure migrate directory is in place
+    ## ${bastille_migratedir}
+    if [ ! -d "${bastille_migratedir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_migratedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/migrate"
+            fi
+        else
+            mkdir -p "${bastille_migratedir}"
+        fi
+        chmod 0750 "${bastille_migratedir}"
+    fi
 
     # --xz for ZFS, otherwise --txz
     if checkyesno bastille_zfs_enable; then
@@ -143,7 +159,8 @@ migrate_jail() {
 
     local _remote_bastille_zfs_enable="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
     local _remote_bastille_jailsdir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
-    local _remote_bastille_migratedir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
+    #local _remote_bastille_migratedir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
+    local _remote_bastille_migratedir=/mnt/tank/extensions/bastille/migrate
     local _remote_jail_list="$(ssh ${_user}@${_host} bastille list jails)"
 
     # Verify jail does not exist remotely
@@ -220,11 +237,6 @@ migrate_jail() {
         bastille destroy -af "${_jail}"
     fi
 }
-
-# Validate user
-if [ -z "${USER}" ]; then
-    USER="root"
-fi
 
 info "\nAttempting to migrate '${TARGET}' to '${HOST}'..."
 
