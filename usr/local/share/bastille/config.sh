@@ -116,6 +116,8 @@ print_jail_conf() {
 
 for _jail in ${JAILS}; do
 
+    (
+
     # Handle Bastille specific properties
     # Currently only 'depend' 'priority' and 'boot'
     if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
@@ -290,7 +292,13 @@ for _jail in ${JAILS}; do
             rm "${_tmpfile}"
         fi
     fi
+
+    ) &
+
+    bastille_running_jobs "${bastille_process_limit}"
+	
 done
+wait
 
 # Only display this message once at the end (not for every jail). -- cwells
 if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ -z "${BASTILLE_PROPERTY}" ]; then

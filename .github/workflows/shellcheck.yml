@@ -29,7 +29,8 @@ jobs:
           # Excluding SC2124: Assigning an array to a string! Check instead if
           #                   this is a false positive or if there is a better
           #                   way to do it.
-          SHELLCHECK_OPTS: -e SC3043 -e SC2154 -e SC3037 -e SC2155 -e SC2124
+          # Excluding SC2106: This only exits the subshell caused by the (...) group.
+          SHELLCHECK_OPTS: -e SC3043 -e SC2154 -e SC3037 -e SC2155 -e SC2124 -e SC2106
         with:
           severity: warning
           scandir: "./usr/local/share/bastille"
