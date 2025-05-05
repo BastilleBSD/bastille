@@ -150,8 +150,7 @@ migrate_jail() {
 
     local _remote_bastille_zfs_enable="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
     local _remote_bastille_jailsdir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
-    #local _remote_bastille_migratedir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
-    local _remote_bastille_migratedir=/mnt/tank/extensions/bastille/migrate
+    local _remote_bastille_migratedir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
     local _remote_jail_list="$(ssh ${_user}@${_host} bastille list jails)"
 
     # Verify jail does not exist remotely
@@ -168,8 +167,8 @@ migrate_jail() {
 
             info "\nAttempting to send jail to remote system..."
 
-            local _file="$(ls -a ${bastille_migratedir} | grep -Eo "^${_jail}_.*\.xz")"
-            local _file_sha256="$(ls -a ${bastille_migratedir} | grep -Eo "^${_jail}_.*\.sha256")"
+            local _file="$(grep -Eo "^${_jail}_.*\.xz" "${bastille_migratedir}")"
+            local _file_sha256="$(grep -Eo "^${_jail}_.*\.sha256" "${bastille_migratedir}")"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
@@ -192,8 +191,8 @@ migrate_jail() {
 
             info "\nAttempting to send jail to remote system..."
 
-            local _file="$(ls -a ${bastille_migratedir} | grep -Eo "^${_jail}_.*\.txz")"
-            local _file_sha256="$(ls -a ${bastille_migratedir} | grep -Eo "^${_jail}_.*\.sha256")"
+            local _file="$(grep -Eo "^${_jail}_.*\.txz" "${bastille_migratedir}")"
+            local _file_sha256="$(grep -Eo "^${_jail}_.*\.sha256" "${bastille_migratedir}")"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
