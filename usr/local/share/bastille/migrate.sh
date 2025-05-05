@@ -92,16 +92,7 @@ HOST="${2}"
 USER="${3}"
 
 bastille_root_check
-set_target_single "${TARGET}"
-
-# Validate jail state
-check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-    bastille stop "${TARGET}"
-else
-    info "\n[${TARGET}]:"
-    error_notify "Jail is running."
-    error_exit "Use [-a|--auto] to auto-stop the jail."
-fi
+set_target "${TARGET}"
 
 validate_host_status() {
 
@@ -238,10 +229,29 @@ migrate_jail() {
     fi
 }
 
-info "\nAttempting to migrate '${TARGET}' to '${HOST}'..."
-
+# Validate host uptime
 validate_host_status "${HOST}" "${USER}"
 
-migrate_jail "${TARGET}" "${HOST}" "${USER}"
+for _jail in ${JAILS}; do
 
-info "\nSuccessfully migrated '${_jail}' to '${_host}'.\n"
+    (
+
+    # Validate jail state
+    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${_jail}"
+    else
+        info "\n[${_jail}]:"
+        error_notify "Jail is running."
+        error_continue "Use [-a|--auto] to auto-stop the jail."
+    fi
+
+    info "\nAttempting to migrate '${_jail}' to '${HOST}'..."
+
+    migrate_jail "${TARGET}" "${HOST}" "${USER}"
+
+    info "\nSuccessfully migrated '${_jail}' to '${_host}'.\n"
+
+    ) &
+
+done
+wait
