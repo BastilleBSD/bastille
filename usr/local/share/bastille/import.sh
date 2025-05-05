@@ -746,7 +746,9 @@ else
 fi
 
 # Check if a running jail matches name or already exist
-check_target_exists || error_exit "[ERROR]: Jail: ${TARGET_TRIM} already exists."
+if check_target_exists "${TARGET}"; then
+    error_exit "[ERROR]: Jail: ${TARGET} already exists."
+fi
 
 if [ -n "${TARGET}" ]; then
     info "\nAttempting to import jail: ${TARGET}..."
