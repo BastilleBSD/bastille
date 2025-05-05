@@ -115,6 +115,15 @@ validate_host_status() {
     echo "Host check successful."
 }
 
+migrate_cleanup() {
+
+    local _jail"${1}"
+
+    # Remove archive files from local and remote system
+    ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*."
+    rm -f "${bastille_migratedir}/${_jail}_*."
+}
+
 migrate_create_export() {
 
     local _jail="${1}"
@@ -155,77 +164,73 @@ migrate_jail() {
 
     # Verify jail does not exist remotely
     if echo ${_remote_jail_list} | grep -Eoq "^${TARGET}$"; then
+        migrate_cleanup "${_jail}"
         error_exit "[ERROR]: Jail already exists on remote system: ${TARGET}"
     fi
 
     # Verify ZFS on both systems
     if checkyesno bastille_zfs_enable; then
         if ! checkyesno _remote_bastille_zfs_enable; then
+            migrate_cleanup "${_jail}"
             error_notify "[ERROR]: ZFS is enabled locally, but not remotely."
             error_exit "Enable ZFS remotely to continue."
         else
 
             info "\nAttempting to migrate jail to remote system..."
 
-            local _file="$(ls "${bastille_migratedir}" | grep -Eo "^${_jail}_.*\.xz")"
-            local _file_sha256="$(ls "${bastille_migratedir}" | grep -Eo "^${_jail}_.*\.sha256")"
+            local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.xz$" | head -n1)"
+            local _file_sha256="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.sha256$" | head -n1)"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                rm -f "${bastille_migratedir}/${_file_sha256}"
+                migrate_cleanup "${_jail}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
 
             # Send jail export
             if ! scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                rm -f "${bastille_migratedir}/${_file_sha256}"
-                rm -f "${bastille_migratedir}/${_file}"
+                migrate_cleanup "${_jail}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
         fi
     else
         if checkyesno _remote_bastille_zfs_enable; then
+            migrate_cleanup "${_jail}"
             error_notify "[ERROR]: ZFS is enabled remotely, but not locally."
             error_exit "Enable ZFS locally to continue."
         else
 
             info "\nAttempting to migrate jail to remote system..."
 
-            local _file="$(ls "${bastille_migratedir}" | grep -Eo "^${_jail}_.*\.txz")"
-            local _file_sha256="$(ls "${bastille_migratedir}" | grep -Eo "^${_jail}_.*\.sha256")"
+            local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.txz$" | head -n1)"
+            local _file_sha256="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.sha256$" | head -n1)"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                rm -f "${bastille_migratedir}/${_file_sha256}"
-                error_exit "[ERROR]: Failed to send jail to remote system."
+                migrate_cleanup "${_jail}"
+                error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
 
             # Send jail export
             if ! scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                rm -f "${bastille_migratedir}/${_file_sha256}"
-                rm -f "${bastille_migratedir}/${_file}"
-                error_exit "[ERROR]: Failed to send jail to remote system."
+                migrate_cleanup "${_jail}"
+                error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
         fi
     fi
 
     # Import the jail remotely
     if ! ssh ${_user}@${_host} sudo bastille import ${_remote_bastille_migratedir}/${_file}; then
-        ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_file_sha256}"
-        ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_file}"
+        migrate_cleanup "${_jail}"
         error_exit "[ERROR]: Failed to import jail on remote system."
     fi
-
-    # Remove archive files from local and remote system
-    ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_file_sha256}"
-    ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_file}"
-    rm -f "${bastille_migratedir}/${_file_sha256}"
-    rm -f "${bastille_migratedir}/${_file}"
 
     # Destroy old jail if FORCE=1
     if [ "${OPT_DESTROY}" -eq 1 ]; then
         bastille destroy -af "${_jail}"
     fi
+
+    migrate_cleanup "${_jail}"
 }
 
 # Validate host uptime
