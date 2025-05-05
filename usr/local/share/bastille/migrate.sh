@@ -132,6 +132,10 @@ migrate_create_export() {
 
     # Ensure migrate directory is in place
     ## ${bastille_migratedir}
+    if [ -z "${bastille_migratedir}" ]; then
+        error_notify "[ERROR]: No migrate directory found."
+        error_exit "Did you diff the config file?"
+    fi
     if [ ! -d "${bastille_migratedir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
