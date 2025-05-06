@@ -122,8 +122,8 @@ migrate_cleanup() {
     local _host="${3}"
 
     # Remove archive files from local and remote system
-    ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
-    rm -f "${bastille_migratedir}/${_jail}_*.*"
+    ssh ${_user}@${_host} sudo rm -f ${_remote_bastille_migratedir}/${_jail}_*.*
+    rm -f ${bastille_migratedir}/${_jail}_*.*
 }
 
 migrate_create_export() {
