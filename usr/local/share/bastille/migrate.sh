@@ -122,7 +122,7 @@ migrate_cleanup() {
     local _host="${3}"
 
     # Remove archive files from local and remote system
-    ssh ${_user}@${_host} sudo rm -f ${_remote_bastille_migratedir}/${_jail}_*.*
+    ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
     rm -f ${bastille_migratedir}/${_jail}_*.*
 }
 
@@ -174,7 +174,7 @@ migrate_jail() {
             info "\nAttempting to migrate jail to remote system..."
 
             local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.xz$" | head -n1)"
-            local _file_sha256="$(echo ${_file} | sed 's/\.*/.sha256/')"
+            local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
@@ -198,7 +198,7 @@ migrate_jail() {
             info "\nAttempting to migrate jail to remote system..."
 
             local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.txz$" | head -n1)"
-            local _file_sha256="$(echo ${_file} | sed 's/\.*/.sha256/')"
+            local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
