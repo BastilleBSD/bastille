@@ -715,9 +715,8 @@ jail_import() {
 
 # Check for user specified file location
 if echo "${TARGET}" | grep -q '\/'; then
-    GETDIR="${TARGET}"
-    TARGET=$(echo ${TARGET} | awk -F '\/' '{print $NF}')
-    bastille_backupsdir=$(echo ${GETDIR} | sed "s/${TARGET}//")
+    TARGET="$(basename ${TARGET})"
+    bastille_backupsdir="$(dirname ${TARGET})"
 fi
 
 # Check if backups directory/dataset exist
@@ -746,11 +745,11 @@ else
 fi
 
 # Check if a running jail matches name or already exist
-if check_target_exists "${TARGET}"; then
-    error_exit "[ERROR]: Jail: ${TARGET} already exists."
+if check_target_exists "${TARGET_TRIM}"; then
+    error_exit "[ERROR]: Jail: ${TARGET_TRIM} already exists."
 fi
 
 if [ -n "${TARGET}" ]; then
-    info "\nAttempting to import jail: ${TARGET}..."
+    info "\nAttempting to import jail: ${TARGET_TRIM}..."
     jail_import
 fi
