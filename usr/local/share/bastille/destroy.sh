@@ -39,8 +39,9 @@ usage() {
     Options:
 
     -a | --auto              Auto mode. Start/stop jail(s) if required.
-    -f | --force             Force unmount any mounted datasets when destroying a jail or release (ZFS only).
     -c | --no-cache          Do no destroy cache when destroying a release.
+    -f | --force             Force unmount any mounted datasets when destroying a jail or release (ZFS only).
+    -y | --yes               Do no prompt. Just destroy.
     -x | --debug             Enable debug mode.
 
 EOF
@@ -49,84 +50,90 @@ EOF
 
 destroy_jail() {
 
-    local OPTIONS
+    local _jail="${1}"
+    local OPTIONS=""
 
-    for _jail in ${JAILS}; do
+    bastille_jail_base="${bastille_jailsdir}/${_jail}"
+    bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
 
-        (
+    # Validate jail state before continuing
+    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${_jail}"
+    else
+        info "\n[${_jail}]:"
+        error_notify "Jail is running."
+        error_continue "Use [-a|--auto] to auto-stop the jail."
+    fi
 
-        bastille_jail_base="${bastille_jailsdir}/${_jail}"
-        bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
+    info "\n[${_jail}]:"
 
-        # Validate jail state before continuing
-        check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-            bastille stop "${_jail}"
-        else
-            info "\n[${_jail}]:"
-            error_notify "Jail is running."
-            error_continue "Use [-a|--auto] to auto-stop the jail."
+    # Ask if user is sure they want to destroy the jail
+    # but only if AUTO_YES=0
+    if [ "${AUTO_YES}" -ne 1 ]; then
+        warn "Attempting to destroy jail: ${_jail}"
+        read -p "Are you sure you want to continue? [y|n]:" _answer
+        case "${_answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "[ERROR]: Cancelled by user."
+                ;;
+            *)
+                error_exit "[ERROR]: Invalid input. Please answer 'y' or 'n'."
+                ;;
+        esac
+    fi
+
+    if [ -d "${bastille_jail_base}" ]; then
+
+        # Make sure no filesystem is currently mounted
+        mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
+
+        if [ -n "${mount_points}" ]; then
+            error_notify "[ERROR]: Failed to destroy jail: ${_jail}"
+            error_continue "Jail has mounted filesystems:\n$mount_points"
         fi
 
-        info "\n[${_jail}]:"
+        echo "Destroying jail..."
 
-        if [ -d "${bastille_jail_base}" ]; then
-
-            # Make sure no filesystem is currently mounted
-            mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
-
-            if [ -n "${mount_points}" ]; then
-                error_notify "[ERROR]: Failed to destroy jail: ${_jail}"
-                error_continue "Jail has mounted filesystems:\n$mount_points"
-            fi
-
-            echo "Destroying jail..."
-
-            if checkyesno bastille_zfs_enable; then
-                if [ -n "${bastille_zfs_zpool}" ]; then
-                    if [ -n "${_jail}" ]; then
-                        OPTIONS="-r"
-                        if [ "${FORCE}" = "1" ]; then
-                            OPTIONS="-rf"
-                        fi
-                        # Remove jail zfs dataset recursively, or abort if error thus precerving jail content.
-                        # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
-                        # unless the force option is defined by the user, otherwise will have a partially deleted jail.
-                        if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
-                            error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
-                        fi
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                if [ -n "${_jail}" ]; then
+                    OPTIONS="-r"
+                    if [ "${FORCE}" = "1" ]; then
+                        OPTIONS="-rf"
+                    fi
+                    # Remove jail zfs dataset recursively, or abort if error thus precerving jail content.
+                    # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
+                    # unless the force option is defined by the user, otherwise will have a partially deleted jail.
+                    if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
+                        error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
                     fi
                 fi
             fi
-
-            if [ -d "${bastille_jail_base}" ]; then
-                # Remove flags
-                chflags -R noschg "${bastille_jail_base}"
-
-                # Remove jail base
-                rm -rf "${bastille_jail_base}"
-            fi
-
-            # Archive jail log
-            if [ -f "${bastille_jail_log}" ]; then
-                mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
-                echo "Note: jail console logs archived."
-                echo "${bastille_jail_log}-$(date +%F)"
-            fi
-
-            # Clear any active rdr rules
-            if [ ! -z "$(pfctl -a "rdr/${_jail}" -Psn 2>/dev/null)" ]; then
-                echo "Clearing RDR rules..."
-                pfctl -a "rdr/${_jail}" -Fn
-            fi
         fi
 
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
-done
-wait
+        if [ -d "${bastille_jail_base}" ]; then
+            # Remove flags
+            chflags -R noschg "${bastille_jail_base}"
 
+            # Remove jail base
+            rm -rf "${bastille_jail_base}"
+        fi
+
+        # Archive jail log
+        if [ -f "${bastille_jail_log}" ]; then
+            mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
+            echo "Note: jail console logs archived."
+            echo "${bastille_jail_log}-$(date +%F)"
+        fi
+
+        # Clear any active rdr rules
+        if [ ! -z "$(pfctl -a "rdr/${_jail}" -Psn 2>/dev/null)" ]; then
+            echo "Clearing RDR rules..."
+            pfctl -a "rdr/${_jail}" -Fn
+        fi
+    fi
 }
 
 destroy_rel() {
@@ -219,9 +226,10 @@ destroy_rel() {
 }
 
 # Handle options.
-AUTO="0"
-FORCE="0"
-NO_CACHE="0"
+AUTO=0
+AUTO_YES=0
+FORCE=0
+NO_CACHE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -239,6 +247,10 @@ while [ "$#" -gt 0 ]; do
             FORCE=1
             shift
             ;;
+        -y|--yes)
+            AUTO_YES=1
+            shift
+            ;;
         -x|--debug)
             enable_debug
             shift
@@ -249,6 +261,7 @@ while [ "$#" -gt 0 ]; do
                     a) AUTO=1 ;;
                     c) NO_CACHE=1 ;;
                     f) FORCE=1 ;;
+                    y) AUTO_YES=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
@@ -317,10 +330,20 @@ case "${TARGET}" in
         destroy_rel
         ;;
     *)
-        ## just destroy a jail
+        # Destroy targeted jail(s)
         set_target "${TARGET}" "reverse"
-        destroy_jail "${JAILS}"
+        for _jail in ${JAILS}; do
+            if [ "${AUTO_YES}" -eq 1 ]; then
+                (
+                    destroy_jail "${_jail}"
+                ) &
+            else
+                (
+                    destroy_jail "${_jail}"
+                )
+            fi
+            bastille_running_jobs "${bastille_process_limit}"
+        done
+        wait
         ;;
 esac
-
-echo
