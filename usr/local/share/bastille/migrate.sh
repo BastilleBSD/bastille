@@ -159,14 +159,14 @@ migrate_jail() {
 
     # Verify jail does not exist remotely
     if echo ${_remote_jail_list} | grep -Eoq "^${TARGET}$"; then
-        migrate_cleanup "${_jail}"
+        migrate_cleanup "${_jail}" "${_user}" "${_host}"
         error_exit "[ERROR]: Jail already exists on remote system: ${TARGET}"
     fi
 
     # Verify ZFS on both systems
     if checkyesno bastille_zfs_enable; then
         if ! checkyesno _remote_bastille_zfs_enable; then
-            migrate_cleanup "${_jail}"
+            migrate_cleanup "${_jail}" "${_user}" "${_host}"
             error_notify "[ERROR]: ZFS is enabled locally, but not remotely."
             error_exit "Enable ZFS remotely to continue."
         else
@@ -178,19 +178,19 @@ migrate_jail() {
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                migrate_cleanup "${_jail}"
+                migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
 
             # Send jail export
             if ! scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                migrate_cleanup "${_jail}"
+                migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
         fi
     else
         if checkyesno _remote_bastille_zfs_enable; then
-            migrate_cleanup "${_jail}"
+            migrate_cleanup "${_jail}" "${_user}" "${_host}"
             error_notify "[ERROR]: ZFS is enabled remotely, but not locally."
             error_exit "Enable ZFS locally to continue."
         else
@@ -202,13 +202,13 @@ migrate_jail() {
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                migrate_cleanup "${_jail}"
+                migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
 
             # Send jail export
             if ! scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
-                migrate_cleanup "${_jail}"
+                migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
         fi
@@ -216,7 +216,7 @@ migrate_jail() {
 
     # Import the jail remotely
     if ! ssh ${_user}@${_host} sudo bastille import ${_remote_bastille_migratedir}/${_file}; then
-        migrate_cleanup "${_jail}"
+        migrate_cleanup "${_jail}" "${_user}" "${_host}"
         error_exit "[ERROR]: Failed to import jail on remote system."
     fi
 
@@ -226,7 +226,7 @@ migrate_jail() {
     fi
 
     # Remove archives
-    migrate_cleanup "${_jail}"
+    migrate_cleanup "${_jail}" "${_user}" "${_host}"
 
     # Start new jail if AUTO=1
     if [ "${AUTO}" -eq 1 ]; then
