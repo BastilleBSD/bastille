@@ -158,9 +158,9 @@ migrate_jail() {
     local _remote_jail_list="$(ssh ${_user}@${_host} bastille list jails)"
 
     # Verify jail does not exist remotely
-    if echo ${_remote_jail_list} | grep -Eoq "^${TARGET}$"; then
+    if echo ${_remote_jail_list} | grep -Eoq "^${_jail}$"; then
         migrate_cleanup "${_jail}" "${_user}" "${_host}"
-        error_exit "[ERROR]: Jail already exists on remote system: ${TARGET}"
+        error_exit "[ERROR]: Jail already exists on remote system: ${_jail}"
     fi
 
     # Verify ZFS on both systems
@@ -174,7 +174,7 @@ migrate_jail() {
             info "\nAttempting to migrate jail to remote system..."
 
             local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.xz$" | head -n1)"
-            local _file_sha256="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.sha256$" | head -n1)"
+            local _file_sha256="$(echo ${_file} | sed 's/\.*/.sha256/')"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
@@ -198,7 +198,7 @@ migrate_jail() {
             info "\nAttempting to migrate jail to remote system..."
 
             local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.txz$" | head -n1)"
-            local _file_sha256="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.sha256$" | head -n1)"
+            local _file_sha256="$(echo ${_file} | sed 's/\.*/.sha256/')"
 
             # Send sha256
             if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
