@@ -130,15 +130,9 @@ migrate_create_export() {
 
     info "\nPreparing jail for migration..."
 
-    # Ensure migrate directory is in place
-    ## ${bastille_migratedir}
-    if [ -z "${bastille_migratedir}" ]; then
-        if ! grep -oq "bastille_migratedir=" "${BASTILLE_CONFIG}"; then
-            sed -i '' 's|bastille_backupsdir=.*|&\nbastille_migratedir=\"${bastille_prefix}/migrate\"                      ## default: \"${bastille_prefix}/migrate\"|' ${BASTILLE_CONFIG}
-            # shellcheck disable=SC1090
-            . ${BASTILLE_CONFIG}
-        fi
-    fi
+    # Ensure new migrate directory is created
+    bastille setup -f
+
     if [ ! -d "${bastille_migratedir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then

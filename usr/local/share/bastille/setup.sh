@@ -33,13 +33,127 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille setup [-p|pf|firewall] [-l|loopback] [-s|shared] [-z|zfs|storage] [-v|vnet] [-b|bridge]"
+    error_exit "Usage: bastille setup [-b|bridge] [-f|--filesystem] [-l|loopback] [-p|pf|firewall] [-s|shared] [-v|vnet] [-z|zfs|storage]"
 }
 
 # Check for too many args
-if [ $# -gt 1 ]; then
+if [ "$#" -gt 1 ]; then
     usage
 fi
+
+configure_filesystem() {
+
+    # This is so we dont have to introduce breaking
+    # changes on new variables added to bastille.conf
+
+    # Ensure migrate directory is in place
+    ## ${bastille_migratedir}
+    if [ -z "${bastille_migratedir}" ]; then
+        if ! grep -oq "bastille_migratedir=" "${BASTILLE_CONFIG}"; then
+            sed -i '' 's|bastille_backupsdir=.*|&\nbastille_migratedir=\"${bastille_prefix}/migrate\"                      ## default: \"${bastille_prefix}/migrate\"|' ${BASTILLE_CONFIG}
+            # shellcheck disable=SC1090
+            . ${BASTILLE_CONFIG}
+        fi
+    fi
+
+    ## ${bastille_prefix}
+    if [ ! -d "${bastille_prefix}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
+            fi
+        else
+            mkdir -p "${bastille_prefix}"
+        fi
+        chmod 0750 "${bastille_prefix}"
+    # Make sure the dataset is mounted in the proper place
+    elif [ -d "${bastille_prefix}" ]; then
+        if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" >/dev/null; then
+            zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
+        elif [ "$(zfs get -H -o value mountpoint ${bastille_zfs_zpool}/${bastille_zfs_prefix})" != "${bastille_prefix}" ]; then
+            zfs set mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
+        fi
+    fi
+
+    ## ${bastille_backupsdir}
+    if [ ! -d "${bastille_backupsdir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_backupsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/backups"
+            fi
+        else
+            mkdir -p "${bastille_backupsdir}"
+        fi
+        chmod 0750 "${bastille_backupsdir}"
+    fi
+
+    ## ${bastille_cachedir}
+    if [ ! -d "${bastille_cachedir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache"
+            fi
+        else
+            mkdir -p "${bastille_cachedir}"
+        fi
+    fi
+
+    ## ${bastille_jailsdir}
+    if [ ! -d "${bastille_jailsdir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_jailsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails"
+            fi
+        else
+            mkdir -p "${bastille_jailsdir}"
+        fi
+    fi
+
+    ## ${bastille_logsdir}
+    if [ ! -d "${bastille_logsdir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_logsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/logs"
+            fi
+        else
+            mkdir -p "${bastille_logsdir}"
+        fi
+    fi
+
+    ## ${bastille_templatesdir}
+    if [ ! -d "${bastille_templatesdir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_templatesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates"
+            fi
+        else
+            mkdir -p "${bastille_templatesdir}"
+        fi
+    fi
+
+    ## ${bastille_releasesdir}
+    if [ ! -d "${bastille_releasesdir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases"
+            fi
+        else
+            mkdir -p "${bastille_releasesdir}"
+        fi
+    fi
+
+    ## ${bastille_migratedir}
+    if [ ! -d "${bastille_migratedir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_migratedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/migrate"
+            fi
+        else
+            mkdir -p "${bastille_migratedir}"
+        fi
+        chmod 0750 "${bastille_migratedir}"
+    fi
+}
 
 # Configure netgraph
 configure_netgraph() {
@@ -236,6 +350,7 @@ configure_zfs() {
 # Run all base functions (w/o vnet) if no args
 if [ $# -eq 0 ]; then
     sysrc bastille_enable=YES
+    configure_filesystem
     configure_loopback_interface
     configure_pf
     configure_zfs
@@ -247,6 +362,9 @@ fi
 case "$1" in
     -h|--help|help)
         usage
+        ;;
+    -f|--filesystem)
+        configure_filesystem
         ;;
     -p|pf|firewall)
         configure_pf
