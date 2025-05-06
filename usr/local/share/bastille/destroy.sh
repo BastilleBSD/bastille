@@ -71,6 +71,7 @@ destroy_jail() {
     # but only if AUTO_YES=0
     if [ "${AUTO_YES}" -ne 1 ]; then
         warn "Attempting to destroy jail: ${_jail}"
+        # shellcheck disable=SC3045
         read -p "Are you sure you want to continue? [y|n]:" _answer
         case "${_answer}" in
             [Yy]|[Yy][Ee][Ss])
