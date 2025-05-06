@@ -117,7 +117,9 @@ validate_host_status() {
 
 migrate_cleanup() {
 
-    local _jail"${1}"
+    local _jail="${1}"
+    local _user="${2}"
+    local _host="${3}"
 
     # Remove archive files from local and remote system
     ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
