@@ -173,7 +173,7 @@ for _jail in ${JAILS}; do
                         warn "[WARNING]: IP address (${_ip}) already in use, continuing..."
                     fi
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
-                    if route -n get ${_ip} | grep "gateway" >/dev/null; then
+                    if route -6 -n get ${_ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${_ip}"
                     fi
                 else
