@@ -715,8 +715,9 @@ jail_import() {
 
 # Check for user specified file location
 if echo "${TARGET}" | grep -q '\/'; then
+    GETDIR="${TARGET}"
     TARGET="$(basename ${TARGET})"
-    bastille_backupsdir="$(dirname ${TARGET})"
+    bastille_backupsdir="$(dirname ${GETDIR})"
 fi
 
 # Check if backups directory/dataset exist
@@ -739,7 +740,7 @@ else
         error_exit "[ERROR]: Archive '${TARGET}' not found."
     else
         # Assume user will import from standard input
-        TARGET_TRIM=${TARGET}
+        TARGET_TRIM="${TARGET}"
         USER_IMPORT="1"
     fi
 fi
