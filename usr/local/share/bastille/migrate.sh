@@ -127,6 +127,8 @@ migrate_cleanup() {
 migrate_create_export() {
 
     local _jail="${1}"
+    local _user="${2}"
+    local _host="${3}"
 
     info "\nPreparing jail for migration..."
 
@@ -248,7 +250,7 @@ for _jail in ${JAILS}; do
 
     info "\nAttempting to migrate '${_jail}' to '${HOST}'..."
 
-    migrate_create_export "${_jail}"
+    migrate_create_export "${_jail}" "${USER}" "${HOST}"
     
     migrate_jail "${_jail}" "${USER}" "${HOST}"
 
