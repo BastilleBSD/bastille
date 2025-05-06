@@ -158,18 +158,18 @@ migrate_jail() {
     local _remote_jail_list="$(ssh ${_user}@${_host} bastille list jails)"
 
     # Verify jail does not exist remotely
-    if echo ${_remote_jail_list} | grep -Eoq "^${_jail}$"; then
-        migrate_cleanup "${_jail}" "${_user}" "${_host}"
+    if echo "${_remote_jail_list}" | grep -Eoqw "${_jail}"; then
         error_exit "[ERROR]: Jail already exists on remote system: ${_jail}"
     fi
 
     # Verify ZFS on both systems
     if checkyesno bastille_zfs_enable; then
         if ! checkyesno _remote_bastille_zfs_enable; then
-            migrate_cleanup "${_jail}" "${_user}" "${_host}"
             error_notify "[ERROR]: ZFS is enabled locally, but not remotely."
             error_exit "Enable ZFS remotely to continue."
         else
+
+            migrate_create_export "${_jail}" "${_user}" "${_host}"
 
             info "\nAttempting to migrate jail to remote system..."
 
@@ -190,12 +190,13 @@ migrate_jail() {
         fi
     else
         if checkyesno _remote_bastille_zfs_enable; then
-            migrate_cleanup "${_jail}" "${_user}" "${_host}"
             error_notify "[ERROR]: ZFS is enabled remotely, but not locally."
             error_exit "Enable ZFS locally to continue."
         else
 
             info "\nAttempting to migrate jail to remote system..."
+
+            migrate_create_export "${_jail}" "${_user}" "${_host}"
 
             local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.txz$" | head -n1)"
             local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
@@ -251,8 +252,6 @@ for _jail in ${JAILS}; do
     fi
 
     info "\nAttempting to migrate '${_jail}' to '${HOST}'..."
-
-    migrate_create_export "${_jail}" "${USER}" "${HOST}"
     
     migrate_jail "${_jail}" "${USER}" "${HOST}"
 
