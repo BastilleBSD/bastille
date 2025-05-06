@@ -132,17 +132,7 @@ migrate_create_export() {
 
     # Ensure new migrate directory is created
     bastille setup -f
-
-    if [ ! -d "${bastille_migratedir}" ]; then
-        if checkyesno bastille_zfs_enable; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_migratedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/migrate"
-            fi
-        else
-            mkdir -p "${bastille_migratedir}"
-        fi
-        chmod 0750 "${bastille_migratedir}"
-    fi
+    ssh ${_user}@${_host} bastille setup -f
 
     # --xz for ZFS, otherwise --txz
     if checkyesno bastille_zfs_enable; then
