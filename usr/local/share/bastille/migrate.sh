@@ -132,7 +132,7 @@ migrate_create_export() {
 
     # Ensure new migrate directory is created
     bastille setup -f
-    ssh ${_user}@${_host} bastille setup -f
+    ssh ${_user}@${_host} sudo bastille setup -f
 
     # --xz for ZFS, otherwise --txz
     if checkyesno bastille_zfs_enable; then
