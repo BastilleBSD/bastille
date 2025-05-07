@@ -114,7 +114,13 @@ validate_host_status() {
     fi
 
     # Host SSH check
-    if ! $_sshpass_cmd ssh ${_user}@${_host} exit >/dev/null 2>/dev/null; then
+    if [ "${OPT_PASSWORD}" -eq 1 ]; then
+        if ! $_sshpass_cmd ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password ${_user}@${_host} exit >/dev/null 2>/dev/null; then
+            error_notify "[ERROR]: Could not establish ssh connection to host."
+            error_notify "Please make sure the remote host supports password based authentication"
+            error_exit "and you are using the correct password for user: '${_user}'"
+        fi
+    elif ! $_sshpass_cmd ssh ${_user}@${_host} exit >/dev/null 2>/dev/null; then
         error_notify "[ERROR]: Could not establish ssh connection to host."
         error_notify "Please make sure user '${_user}' has password-less access"
         error_exit "or use '-p|--password' for password based authentication."
