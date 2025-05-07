@@ -38,9 +38,10 @@ usage() {
 	
     Options:
 
-    -a | --auto             Auto mode. Start/stop jail(s) if required.
-    -d | --destroy          Destroy local jail after migration.
-    -x | --debug            Enable debug mode.
+    -a | --auto              Auto mode. Start/stop jail(s) if required.
+    -d | --destroy           Destroy local jail after migration.
+    -p | --password          Use password based authentication.
+    -x | --debug             Enable debug mode.
 
 EOF
     exit 1
@@ -49,6 +50,7 @@ EOF
 # Handle options.
 AUTO=0
 OPT_DESTROY=0
+OPT_PASSWORD=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -62,6 +64,10 @@ while [ "$#" -gt 0 ]; do
             OPT_DESTROY=1
             shift
             ;;
+        -p|--password)
+            OPT_PASSWORD=1
+            shift
+            ;;
         -x|--debug)
             enable_debug
             shift
@@ -71,6 +77,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     d) OPT_DESTROY=1 ;;
+                    p) OPT_PASSWORD=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
@@ -107,9 +114,10 @@ validate_host_status() {
     fi
 
     # Host SSH check
-    if ! ssh ${_user}@${_host} exit >/dev/null 2>/dev/null; then
+    if ! $_sshpass_cmd ssh ${_user}@${_host} exit >/dev/null 2>/dev/null; then
         error_notify "[ERROR]: Could not establish ssh connection to host."
-        error_exit "Please make sure user '${_user}' has password-less access."
+        error_notify "Please make sure user '${_user}' has password-less access"
+        error_exit "or use '-p|--password' for password based authentication."
     fi
 
     echo "Host check successful."
@@ -122,7 +130,7 @@ migrate_cleanup() {
     local _host="${3}"
 
     # Remove archive files from local and remote system
-    ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
+    $_sshpass_cmd ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
     rm -f ${bastille_migratedir}/${_jail}_*.*
 }
 
@@ -136,7 +144,7 @@ migrate_create_export() {
 
     # Ensure new migrate directory is created
     bastille setup -f
-    ssh ${_user}@${_host} sudo bastille setup -f
+    $_sshpass_cmd ssh ${_user}@${_host} sudo bastille setup -f
 
     # --xz for ZFS, otherwise --txz
     if checkyesno bastille_zfs_enable; then
@@ -152,10 +160,10 @@ migrate_jail() {
     local _user="${2}"
     local _host="${3}"
 
-    local _remote_bastille_zfs_enable="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
-    local _remote_bastille_jailsdir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
-    local _remote_bastille_migratedir="$(ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
-    local _remote_jail_list="$(ssh ${_user}@${_host} bastille list jails)"
+    local _remote_bastille_zfs_enable="$($_sshpass_cmd ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
+    local _remote_bastille_jailsdir="$($_sshpass_cmd ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
+    local _remote_bastille_migratedir="$($_sshpass_cmd ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
+    local _remote_jail_list="$($_sshpass_cmd ssh ${_user}@${_host} bastille list jails)"
 
     # Verify jail does not exist remotely
     if echo "${_remote_jail_list}" | grep -Eoqw "${_jail}"; then
@@ -177,13 +185,13 @@ migrate_jail() {
             local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
-            if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
 
             # Send jail export
-            if ! scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
@@ -202,13 +210,13 @@ migrate_jail() {
             local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
-            if ! scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
 
             # Send jail export
-            if ! scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
@@ -216,7 +224,7 @@ migrate_jail() {
     fi
 
     # Import the jail remotely
-    if ! ssh ${_user}@${_host} sudo bastille import ${_remote_bastille_migratedir}/${_file}; then
+    if ! $_sshpass_cmd ssh ${_user}@${_host} sudo bastille import ${_remote_bastille_migratedir}/${_file}; then
         migrate_cleanup "${_jail}" "${_user}" "${_host}"
         error_exit "[ERROR]: Failed to import jail on remote system."
     fi
@@ -231,9 +239,27 @@ migrate_jail() {
 
     # Start new jail if AUTO=1
     if [ "${AUTO}" -eq 1 ]; then
-        ssh ${_user}@${_host} sudo bastille start "${_jail}"
+        $_sshpass_cmd ssh ${_user}@${_host} sudo bastille start "${_jail}"
     fi
 }
+
+# Determine if user wants to authenticate via password
+if [ "${OPT_PASSWORD}" -eq 1 ]; then
+    if ! which sshpass >/dev/null 2>/dev/null; then
+        error_exit "[ERROR]: Please install 'sshpass' to use password based authentication."
+    else
+        warn "[WARNING]: Password based authentication can be insecure."
+        printf "Please enter your password: "
+        # We disable terminal output for the password
+        stty -echo
+        read _password
+        stty echo
+        printf "\n"
+        _sshpass_cmd="sshpass -p ${_password}"
+    fi
+else
+    _sshpass_cmd=
+fi
 
 # Validate host uptime
 validate_host_status "${USER}" "${HOST}"
