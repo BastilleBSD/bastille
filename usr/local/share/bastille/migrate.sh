@@ -115,12 +115,12 @@ validate_host_status() {
 
     # Host SSH check
     if [ "${OPT_PASSWORD}" -eq 1 ]; then
-        if ! $_sshpass_cmd ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password ${_user}@${_host} exit >/dev/null 2>/dev/null; then
+        if ! ${_sshpass_cmd} ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password ${_user}@${_host} exit >/dev/null 2>/dev/null; then
             error_notify "[ERROR]: Could not establish ssh connection to host."
             error_notify "Please make sure the remote host supports password based authentication"
             error_exit "and you are using the correct password for user: '${_user}'"
         fi
-    elif ! $_sshpass_cmd ssh ${_user}@${_host} exit >/dev/null 2>/dev/null; then
+    elif ! ${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} exit >/dev/null 2>/dev/null; then
         error_notify "[ERROR]: Could not establish ssh connection to host."
         error_notify "Please make sure user '${_user}' has password-less access"
         error_exit "or use '-p|--password' for password based authentication."
@@ -136,7 +136,7 @@ migrate_cleanup() {
     local _host="${3}"
 
     # Remove archive files from local and remote system
-    $_sshpass_cmd ssh ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
+    ${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} sudo rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
     rm -f ${bastille_migratedir}/${_jail}_*.*
 }
 
@@ -150,7 +150,7 @@ migrate_create_export() {
 
     # Ensure new migrate directory is created
     bastille setup -f
-    $_sshpass_cmd ssh ${_user}@${_host} sudo bastille setup -f
+    ${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} sudo bastille setup -f
 
     # --xz for ZFS, otherwise --txz
     if checkyesno bastille_zfs_enable; then
@@ -166,10 +166,10 @@ migrate_jail() {
     local _user="${2}"
     local _host="${3}"
 
-    local _remote_bastille_zfs_enable="$($_sshpass_cmd ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
-    local _remote_bastille_jailsdir="$($_sshpass_cmd ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
-    local _remote_bastille_migratedir="$($_sshpass_cmd ssh ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
-    local _remote_jail_list="$($_sshpass_cmd ssh ${_user}@${_host} bastille list jails)"
+    local _remote_bastille_zfs_enable="$(${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
+    local _remote_bastille_jailsdir="$(${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
+    local _remote_bastille_migratedir="$(${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
+    local _remote_jail_list="$(${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} bastille list jails)"
 
     # Verify jail does not exist remotely
     if echo "${_remote_jail_list}" | grep -Eoqw "${_jail}"; then
@@ -191,13 +191,13 @@ migrate_jail() {
             local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
-            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp ${_opt_ssh_key} ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
 
             # Send jail export
-            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp ${_opt_ssh_key} ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
@@ -216,13 +216,13 @@ migrate_jail() {
             local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
-            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp ${_opt_ssh_key} ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
 
             # Send jail export
-            if ! $_sshpass_cmd scp ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp ${_opt_ssh_key} ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
@@ -230,7 +230,7 @@ migrate_jail() {
     fi
 
     # Import the jail remotely
-    if ! $_sshpass_cmd ssh ${_user}@${_host} sudo bastille import ${_remote_bastille_migratedir}/${_file}; then
+    if ! ${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} sudo bastille import ${_remote_bastille_migratedir}/${_file}; then
         migrate_cleanup "${_jail}" "${_user}" "${_host}"
         error_exit "[ERROR]: Failed to import jail on remote system."
     fi
@@ -245,7 +245,7 @@ migrate_jail() {
 
     # Start new jail if AUTO=1
     if [ "${AUTO}" -eq 1 ]; then
-        $_sshpass_cmd ssh ${_user}@${_host} sudo bastille start "${_jail}"
+        ${_sshpass_cmd} ssh ${_opt_ssh_key} ${_user}@${_host} sudo bastille start "${_jail}"
     fi
 }
 
@@ -265,6 +265,17 @@ if [ "${OPT_PASSWORD}" -eq 1 ]; then
     fi
 else
     _sshpass_cmd=
+fi
+
+# Get user we want to migrate as
+# We need this to pass the ssh keys properly
+if [ "${OPT_PASSWORD}" -eq 1 ]; then
+    _opt_ssh_key=
+else
+    _migrate_user="$(sudo -u ${USER} whoami)"
+    _migrate_user_home="$(getent passwd migrate | cut -d: -f6)"
+    _migrate_user_ssh_key="${_migrate_user_home}/.ssh/id_rsa"
+    _opt_ssh_key="-i ${_migrate_user_ssh_key}"
 fi
 
 # Validate host uptime
