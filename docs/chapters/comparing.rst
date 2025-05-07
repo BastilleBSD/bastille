@@ -8,35 +8,109 @@ jail manger do not regulary visit each others projects to update these tables.
 Below is a table of what we feel is most important for a jail manager, as well
 as a list of popular managers and their status on each option.
 
-| Feature | BastilleBSD | Appjail | pot | ezjail | iocage |
-| ---     | ---         | ---     | --- | ---    | ---    |
-| OCI Compliant | No | Yes | No | No | No |
-| Writen In | Bourne Shell | Bourne Shell, C | Bourne Shell, Rust | Bourne Shell | Bourne Shell, Python |
-| Dependencies | None | C | None | Rust | Python |
-| Jail Types | vnet, bridged vnet, thin, thick, empty, clone, Linux | clone, copy, tiny, thin, thick, empty, linux+debootstrap | thick | basejail | clone, basejail, template, empty, thick |
-| Jail dependency | Yes | Yes | Yes | No | Yes |
-| Import/Export | Yes | Yes | Yes | Yes | Yes |
-| Boot Order Priorities | Yes | Yes | No | Yes using `rcorder` | Yes |
-| Linux Jails | Yes  | Yes | No | No | Yes |
-| Automation | Templates | Makejail, Initscripts, Images | Flavours, Images | Flavours | Plugins |
-| Cloning    | Yes | No   | No | No | No |
-| Package Management | Yes | No | No | No | No |
-| ZFS Support | Yes | Yes | Yes | No | Yes |
-| Volume management | Basic | Yes | Basic | No | Basic |
-| VNET Support | Yes | Yes | Yes | No | Yes |
-| IPv6 Support| Yes | Yes | Yes | Yes | Yes |
-| Dual Network Stack | Yes | Yes | Yes | No | No |
-| Netgraph | Yes | Yes | No | No | No |
-| Dynamic Firewall | Yes | Yes | Yes | No | No |
-| Dynamic DEVFS Ruleset Management | No | Yes | No | No | No |
-| Resource Control | Yes | Yes | CPU and Memory | No | Legacy Only |
-| CPU Sets | Yes | Yes | Yes | Yes | Yes |
-| Parallel Startup | Yes | Yes (Healthcheckers, jails & NAT) | No | No | No |
-| Multi-Target Commands | Yes | No | No | No | No |
-| Log Management | No | Yes | No | No | No |
-| Copy Files Between Jails | Yes | No | No | No | No |
-| Automated Jail Migration Between Servers | Yes | No | No | No | No |
-| Top/Htop Support | Yes | No | No | No | No|
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Feature      | BastilleBSD | Appjail      | pot       | ezjail    | iocage    |
++==============+=============+==============+===========+===========+===========+
+| OCI          | No          | Yes          | No        | No        | No        |
+| Compliant    |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Writen In    | Bourne      | Bourne       | Bourne    | Bourne    | Bourne    |
+|              | Shell       | Shell, C     | Shell,    | Shell     | Shell,    |
+|              |             |              | Rust      |           | Python    |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Dep          | None        | C            | Rust      | None      | Python    |
+| endencies    |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Jail         | vnet,       | clone,       | thick     | basejail  | clone,    |
+| Types        | bridged     | copy,        |           |           | basejail, |
+|              | vnet,       | tiny,        |           |           | template, |
+|              | thin,       | thin,        |           |           | empty,    |
+|              | thick,      | thick,       |           |           | thick     |
+|              | empty,      | empty,       |           |           |           |
+|              | clone,      | linux+de     |           |           |           |
+|              | Linux       | bootstrap    |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Jail         | Yes         | Yes          | Yes       | No        | Yes       |
+| Dependency   |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Impo         | Yes         | Yes          | Yes       | Yes       | Yes       |
+| rt/Export    |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Boot         | Yes         | Yes          | No        | Yes using | Yes       |
+| Order        |             |              |           | 'rcorder' |           |
+| Priorities   |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Linux        | Yes         | Yes          | No        | No        | Yes       |
+| c            |             |              |           |           |           |
+| ontainers    |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Automation   | Templates   | Makejail,    | Flavours, | Flavours  | Plugins   |
+|              |             | Initscripts, | Images    |           |           |
+|              |             | Images       |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Cloning      | Yes         | No           | No        | No        | No        |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Package      | Yes         | No           | No        | No        | No        |
+| Management   |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| ZFS          | Yes         | Yes          | Yes       | No        | Yes       |
+| Support      |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Volume       | Basic       | Yes          | Basic     | No        | Basic     |
+| Management   |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| VNET         | Yes         | Yes          | Yes       | No        | Yes       |
+| Support      |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| IPv6         | Yes         | Yes          | Yes       | Yes       | Yes       |
+| Support      |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Dual         | Yes         | Yes          | Yes       | No        | No        |
+| Network      |             |              |           |           |           |
+| Stack        |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Netgraph     | Yes         | Yes          | No        | No        | No        |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Dynamic      | Yes         | Yes          | Yes       | No        | No        |
+| Firewall     |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Dynamic      | No          | Yes          | No        | No        | No        |
+| DEVFS        |             |              |           |           |           |
+| Ruleset      |             |              |           |           |           |
+| Management   |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Resource     | Yes         | Yes          | CPU and   | No        | Legacy    |
+| Control      |             |              | Memory    |           | Only      |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| CPU Sets     | Yes         | Yes          | Yes       | Yes       | Yes       |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Parallel     | Yes         | Yes          | No        | No        | No        |
+| Startup      |             | (Health      |           |           |           |
+|              |             | checkers,    |           |           |           |
+|              |             | jails &      |           |           |           |
+|              |             | NAT)         |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Multi-target | Yes         | No           | No        | No        | No        |
+| Commands     |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Log          | Basic       | Yes          | No        | No        | No        |
+| Management   | (console    |              |           |           |           |
+|              | logs)       |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Copy         | Yes         | No           | No        | No        | No        |
+| Files        |             |              |           |           |           |
+| Between      |             |              |           |           |           |
+| Jails        |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Automated    | Yes         | No           | No        | No        | No        |
+| Jail         |             |              |           |           |           |
+| Migration    |             |              |           |           |           |
+| Between      |             |              |           |           |           |
+| Servers      |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| Top/Htop     | Yes         | No           | No        | No        | No        |
+| Support      |             |              |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
 
 We do our best to stay true and honest as to what other jail managers do and don't do.
 If you see an error, you can open a PR on the BastillBSD github repo.
