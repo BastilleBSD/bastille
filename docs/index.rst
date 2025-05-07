@@ -18,6 +18,7 @@ https://docs.bastillebsd.org.
    chapters/startup-configuration
    chapters/networking
    chapters/usage
+   chapters/comparing
    chapters/upgrading
    chapters/centralized-assets
    chapters/subcommands/index
