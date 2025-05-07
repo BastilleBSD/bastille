@@ -36,7 +36,7 @@ Bastille Compared to Other Jail Managers
 | Multi-Target Commands | Yes | No | No | No | No |
 | Log Management | No | Yes | No | No | No |
 | Copy Files Between Jails | Yes | No | No | No | No |
-| Automated Jail Migration Between Servers | No | No | No | No | No |
+| Automated Jail Migration Between Servers | Yes | No | No | No | No |
 | Top/Htop Support | Yes | No | No | No | No|
 
 Installation
