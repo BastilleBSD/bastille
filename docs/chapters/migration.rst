@@ -14,12 +14,18 @@ There are a couple of things that need to be in place before running the ``migra
 First, you must have bastille configured both locally and remotely to use the same filesystem
 configuration. ZFS on both, or UFS on both.
 
-Second, we need a user on the remote system that has key-based authentication set up. Bastille
-does not support password-based authentication. This also implies that SSH is working on the
-remote system. This user also needs ``sudo`` permissions on the remote system.
+Second, you must create a user on the remote system that will be used to migrate the jail. The user
+must be able to log in via SSH using either key-based authentication, or password based authentication.
+The user also needs ``sudo`` permissions on the remote system. This user should then be given as the
+``USER`` arg in the ``migrate`` command.
 
-Third, if updating from a previous version, please make sure to ``diff`` your ``bastille.conf``
-file, as the ``migrate`` sub-command adds a new variable called ``bastille_migratedir``.
+If you are using key-based auth, the keys should be stored in the default location at ``$HOME/.ssh/id_rsa``,
+where ``$HOME`` is the users home directory. This is the default location for ssh keys, and where Bastille
+will try to load them from.
+
+If you want to use password based authentication, simply run ``bastille migrate -p TARGET USER HOST``. This
+will prompt you to enter the password for the remote system, which Bastille will then use during the migration
+process.
 
 Migration
 ^^^^^^^^^
