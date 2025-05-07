@@ -13,6 +13,7 @@ This sub-command supports multiple targets.
 
     Options:
 
-    -a | --auto             Auto mode. Start/stop jail(s) if required.
-    -d | --destroy          Destroy local jail after migration.
-    -x | --debug            Enable debug mode.
+    -a | --auto              Auto mode. Start/stop jail(s) if required.
+    -d | --destroy           Destroy local jail after migration.
+    -p | --password          Use password based authentication.
+    -x | --debug             Enable debug mode.
