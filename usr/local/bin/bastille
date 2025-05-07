@@ -96,6 +96,7 @@ Available Commands:
   jcp         cp(1) files from a jail to jail(s).
   limits      Apply resources limits to targeted container(s). See rctl(8).
   list        List containers (running).
+  migrate     Migrate targetted jail(s) to a remote system.
   mount       Mount a volume inside the targeted container(s).
   network     Add/remove network interfaces from targeted container.
   pkg         Manipulate binary packages within targeted container(s). See pkg(8).
@@ -213,6 +214,7 @@ case "${CMD}" in
     import| \
     limits| \
     list| \
+    migrate| \
     network| \
     rcp| \
     rdr| \

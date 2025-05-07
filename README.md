@@ -59,28 +59,29 @@ Available Commands:
   clone       Clone an existing jail.
   cmd         Execute arbitrary command on targeted jail(s).
   config      Get, set or remove a config value for the targeted jail(s).
-  console     Console into a running jail.
+  console     Console into a jail.
   convert     Convert thin jail to thick jail, or convert a jail to a custom release.
-  cp          cp(1) files from host or jail to host or targeted jail(s).
+  cp          cp(1) files from host to targeted jail(s).
   create      Create a jail.
   destroy     Destroy a jail or release.
   edit        Edit jail configuration files (advanced).
-  export      Exports a jail.
+  export      Export a jail.
   help        Help about any command.
   htop        Interactive process viewer (requires htop).
   import      Import a jail.
   jcp         cp(1) files from a jail to jail(s).
-  limits      Apply resources limits to targeted jail(s). See rctl(8).
-  list        List jails, releases, templates etc...
+  limits      Apply resources limits to targeted jail(s). See rctl(8) and cpuset(1).
+  list        List jails, releases, templates and more...
+  migrate     Migrate targeted jail(s) to a remote system.
   mount       Mount a volume inside targeted jail(s).
   network     Add or remove interfaces from targeted jail(s).
   pkg         Manipulate binary packages within targeted jail(s). See pkg(8).
   rcp         cp(1) files from a jail to host.
-  rdr         Redirect host port to container port.
+  rdr         Redirect host port to jail port.
   rename      Rename a jail.
   restart     Restart a running jail.
   service     Manage services within targeted jail(s).
-  setup       Attempt to auto-configure network, firewall and storage on new installs.
+  setup       Attempt to auto-configure network, firewall and storage and more...
   start       Start a stopped jail.
   stop        Stop a running jail.
   sysrc       Safely edit rc files within targeted jail(s).
@@ -95,8 +96,8 @@ Available Commands:
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
-Use "bastille [-c|--config config.conf] command" to specify a non-default config file.
-Use "bastille [-p|--parallel VALUE] command" to run bastille in parallel mode.
+Use "bastille -c|--config config.conf command" to specify a non-default config file.
+Use "bastille -p|--parallel VALUE command" to run bastille in parallel mode.
 
 ```
 

@@ -13,12 +13,13 @@ Below is a list of available options that can be used with the ``setup`` command
 .. code-block:: shell
 
   ishmael ~ # bastille setup -h        ## display setup help
-  ishmael ~ # bastille setup -l        ## configure loopback interface
-  ishmael ~ # bastille setup -s        ## configure shared interface
-  ishmael ~ # bastille setup -p        ## configure default pf firewall
-  ishmael ~ # bastille setup -z        ## configure ZFS storage
-  ishmael ~ # bastille setup -v        ## configure VNET
   ishmael ~ # bastille setup -b        ## configure bridge interface
+  ishmael ~ # bastille setup -f        ## configure filesystem/structure
+  ishmael ~ # bastille setup -l        ## configure loopback interface
+  ishmael ~ # bastille setup -p        ## configure default pf firewall
+  ishmael ~ # bastille setup -s        ## configure shared interface
+  ishmael ~ # bastille setup -v        ## configure VNET
+  ishmael ~ # bastille setup -z        ## configure ZFS storage
   ishmael ~ # bastille setup           ## configure -l -p and -z
 
 The ``-l|loopback`` option will configure a loopback interface called ``bastille0`` that
@@ -36,6 +37,9 @@ networking option. The ``-l|loopback`` and ``-s|shared`` options are only for ca
 is not specified during the ``create`` command. If an interface is specified, these options have no effect. 
 Instead, the specified interface will be used.
 
+The ``-f|--filesystem`` option is to ensure the proper datasets/directories are in place
+for using Bastille. This should only have to be run once on a new system.
+
 The ``-s|shared`` option is for cases where you want an actual interface to use with bastille as
 opposed to a loopback. Jails will be linked to the shared interface on creation.
 
@@ -51,10 +55,10 @@ The ``-v|vnet`` option will configure your system for use with VNET ``-V`` jails
 The ``-b|bridge`` options will attempt to configure a bridge interface for use with bridged VNET
 ``-B`` jails.
 
-Running ``bastille setup`` without any options will attempt to auto-configure the ``-l``, ``-p`` and
+Running ``bastille setup`` without any options will attempt to auto-configure the ``-f``, ``-l``, ``-p`` and
 ``-z`` options.
 
 .. code-block:: shell
 
   ishmael ~ # bastille setup help
-  Usage: bastille setup [-p|pf|firewall] [-l|loopback] [-s|shared] [-z|zfs|storage] [-v|vnet] [-b|bridge]
+  Usage: bastille setup [-b|bridge] [-f|--filesystem] [-l|loopback] [-p|pf|firewall] [-s|shared] [-v|vnet] [-z|zfs|storage]
