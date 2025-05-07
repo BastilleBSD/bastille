@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=aec0630
+BASTILLE_VERSION=0.14.20250420
 
 ## check for config existence
 bastille_conf_check() {
@@ -120,8 +120,8 @@ Available Commands:
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
-Use "bastille [-c|--config FILE] command" to specify a non-default config file.
-Use "bastille [-p|--parallel VALUE] command" to run bastille in parallel mode.
+Use "bastille -c|--config FILE command" to specify a non-default config file.
+Use "bastille -p|--parallel VALUE command" to run bastille in parallel mode.
 
 EOF
     exit 1
@@ -214,7 +214,6 @@ case "${CMD}" in
     import| \
     limits| \
     list| \
-    migrate| \
     network| \
     rcp| \
     rdr| \
@@ -235,6 +234,7 @@ case "${CMD}" in
     destroy| \
     jcp| \
     limits| \
+    migrate| \
     mount| \
     pkg| \
     restart| \
