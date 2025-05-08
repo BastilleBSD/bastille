@@ -65,7 +65,7 @@ get_max_lengths() {
         MAX_LENGTH_JID=${MAX_LENGTH_JID:-3}
 
         # Set max length for jail IPs
-        MAX_LENGTH_JAIL_IP=$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 sed -n "s/^[ ]*ip[4,6].addr[ ]*=[ ]*\(.*\);$/\1/p" | sed -e 's/\// /g' -e 's/.*|//g' | awk '{ print length($1) }' | sort -nr | head -n 1)
+        MAX_LENGTH_JAIL_IP=$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 sed -n "s/^[ ].*ip[4,6].addr[ ].*=[ ]\(.*\);$/\1/p" | sed -e 's/\// /g' -e 's/.*|//g' | awk '{ print length($1) }' | sort -nr | head -n 1)
         MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_IP:-10}
 
         # Set max length for VNET jail IPs
@@ -203,11 +203,9 @@ get_jail_info() {
             JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
             JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $3}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
         else
-            JAIL_IP4=$(sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk '{ print $1 }')
-            JAIL_IP6=$(sed -n "s/^[ ]*ip6.addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk '{ print $1 }')
+            JAIL_IP4=$(sed -n "s/^[ ].*ip4.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
+            JAIL_IP6=$(sed -n "s/^[ ].*ip6.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
         fi
-        if echo "${JAIL_IP4}" | grep -q "|"; then JAIL_IP4="$(echo ${JAIL_IP4} | awk -F"|" '{print $2}')"; fi
-        if echo "${JAIL_IP6}" | grep -q "|"; then JAIL_IP6="$(echo ${JAIL_IP6} | awk -F"|" '{print $2}')"; fi
         JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
         JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
