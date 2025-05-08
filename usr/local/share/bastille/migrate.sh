@@ -293,10 +293,14 @@ fi
 if [ "${OPT_PASSWORD}" -eq 1 ]; then
     _opt_ssh_key=
 else
-    _migrate_user="$(${OPT_SU} -u ${USER} whoami)"
-    _migrate_user_home="$(getent passwd ${_migrate_user} | cut -d: -f6)"
+    _migrate_user_home="$(getent passwd ${USER} | cut -d: -f6)"
     _migrate_user_ssh_key="${_migrate_user_home}/.ssh/id_rsa"
     _opt_ssh_key="-i ${_migrate_user_ssh_key}"
+
+    # Exit if no keys found
+    if [ -z "${_migrate_user_home}" ] || [ -z "${_migrate_user_ssh_key}" ]; then
+        error_exit "[ERROR]: Could not find keys for user: ${USER}"
+    fi
 fi
 
 # Validate host uptime
