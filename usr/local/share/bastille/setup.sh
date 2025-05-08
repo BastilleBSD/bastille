@@ -151,7 +151,7 @@ configure_filesystem() {
         else
             mkdir -p "${bastille_migratedir}"
         fi
-        chmod 0750 "${bastille_migratedir}"
+        chmod 777 "${bastille_migratedir}"
     fi
 }
 
