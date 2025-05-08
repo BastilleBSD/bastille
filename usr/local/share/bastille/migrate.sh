@@ -127,7 +127,7 @@ validate_host_status() {
     info "\nChecking remote host status..."
 
     # Host uptime
-    if ! nc -z ${_host} ${_port} >/dev/null 2>/dev/null; then
+    if ! nc -w 1 -z ${_host} ${_port} >/dev/null 2>/dev/null; then
         error_exit "[ERROR]: Host appears to be down"
     fi
 
