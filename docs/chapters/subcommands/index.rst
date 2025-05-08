@@ -6,8 +6,8 @@ Bastille sub-commands
    :caption: Contents:
 
    bootstrap
-   cmd
    clone
+   cmd
    config
    console
    convert
@@ -22,6 +22,7 @@ Bastille sub-commands
    jcp
    limits
    list
+   migrate
    mount
    network
    pkg
