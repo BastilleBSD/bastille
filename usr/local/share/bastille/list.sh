@@ -138,7 +138,10 @@ get_jail_info() {
     fi
 
     # Get jail tags
-    JAIL_TAGS="$(bastille tags ${JAIL_NAME} list | sed 's/.*: //g' | sed 's/ /,/g')"
+    JAIL_TAGS=""
+    if [ -f "${bastille_jailsdir}/${JAIL_NAME}/tags" ]; then
+        JAIL_TAGS="$(paste -sd, ${bastille_jailsdir}/${JAIL_NAME}/tags)"
+    fi
 
     # Get boot and priority value using 'bastille config'
     BOOT="$(sysrc -f ${bastille_jailsdir}/${JAIL_NAME}/settings.conf -n boot)"
@@ -200,9 +203,11 @@ get_jail_info() {
             JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
             JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $3}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
         else
-            JAIL_IP4=$(bastille config ${JAIL_NAME} get ip4.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
-            JAIL_IP6=$(bastille config ${JAIL_NAME} get ip6.addr | sed 's/,/\n/g' | awk -F"|" '{print $2}')
+            JAIL_IP4=$(sed -n "s/^[ ]*ip4.addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk '{ print $1 }')
+            JAIL_IP6=$(sed -n "s/^[ ]*ip6.addr[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed "s/\// /g" | awk '{ print $1 }')
         fi
+        if echo "${JAIL_IP4}" | grep -q "|"; then JAIL_IP4="$(echo ${JAIL_IP4} | awk -F"|" '{print $2}')"; fi
+        if echo "${JAIL_IP6}" | grep -q "|"; then JAIL_IP6="$(echo ${JAIL_IP6} | awk -F"|" '{print $2}')"; fi
         JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
         JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
