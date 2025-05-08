@@ -259,6 +259,9 @@ get_jail_info() {
 
 list_bastille(){
 
+     _jail_count=0
+     _tmp_list=
+    
     get_max_lengths
 
     # Check if we want only a single jail, or all jails
@@ -273,34 +276,56 @@ list_bastille(){
 
     for _jail in ${JAIL_LIST}; do
 
+        # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-
-            get_jail_info "${_jail}"
-
-            # Get JAIL_IP count
-            JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
-
-            # Print JAIL_IP in columns if -gt 1
-            if [ ${JAIL_IP_COUNT} -gt 1 ]; then
-                # vnet0 has more than one IPs assigned.
-                # Put each IP in its own line below the jails first address. For instance:
-                #  JID     State  IP Address       Published Ports  Hostname  Release          Path
-                #  foo     Up     10.10.10.10      -                foo       14.0-RELEASE-p5  /usr/local/bastille/jails/foo/root
-                #                 10.10.10.11
-                #                 10.10.10.12
-                FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-                printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
-                for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                    printf "%*s%*s%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} + ${SPACER}))" ""
-                done
-            else
-                printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
-            fi
+            _jail_count=$((${_jail_count} + 1))
+            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+        else
+            continue
         fi
+
+        (
+        
+        get_jail_info "${_jail}"
+
+        # Get JAIL_IP count
+        JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
+
+        # Print JAIL_IP in columns if -gt 1 
+        if [ ${JAIL_IP_COUNT} -gt 1 ]; then
+            # vnet0 has more than one IPs assigned.
+            # Put each IP in its own line below the jails first address. For instance:
+            #  JID     State  IP Address       Published Ports  Hostname  Release          Path
+            #  foo     Up     10.10.10.10      -                foo       14.0-RELEASE-p5  /usr/local/bastille/jails/foo/root
+            #                 10.10.10.11
+            #                 10.10.10.12
+            FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
+            printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+            for IP in $(echo "${JAIL_IP}" | tail -n +2); do
+                printf "%*s%*s%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} + ${SPACER}))" ""
+            done
+        else
+            printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+        fi
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
+    done
+    wait
+
+    # Print jails in order
+    for _file in $(echo ${_tmp_list} | sort -n); do
+        cat ${_file}
+        rm -f ${_file}
     done
 }
 
 list_all(){
+
+     _jail_count=0
+     _tmp_list=
 
     get_max_lengths
 
@@ -316,34 +341,56 @@ list_all(){
 
     for _jail in ${JAIL_LIST}; do
 
+        # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-
-            get_jail_info "${_jail}"
-
-            # Get jail IP count
-            JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
-
-            if [ ${JAIL_IP_COUNT} -gt 1 ]; then
-                # vnet0 has more than one IPs assigned.
-                # Put each IP in its own line below the jails first address. For instance:
-                #  JID     State  IP Address       Published Ports  Hostname  Release          Path
-                #  foo     Up     10.10.10.10      -                foo       14.0-RELEASE-p5  /usr/local/bastille/jails/foo/root
-                #                 10.10.10.11
-                #                 10.10.10.12
-                FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-                printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
-                for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                    printf "%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
-                done
-            else
-                if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP="$(echo ${JAIL_IP} | awk -F"|" '{print $2}' | sed 's#/.*##g')"; fi
-                printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
-            fi
+            _jail_count=$((${_jail_count} + 1))
+            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+        else
+            continue
         fi
+
+        (
+
+        get_jail_info "${_jail}"
+
+        # Get jail IP count
+        JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
+
+        if [ ${JAIL_IP_COUNT} -gt 1 ]; then
+            # vnet0 has more than one IPs assigned.
+            # Put each IP in its own line below the jails first address. For instance:
+            #  JID     State  IP Address       Published Ports  Hostname  Release          Path
+            #  foo     Up     10.10.10.10      -                foo       14.0-RELEASE-p5  /usr/local/bastille/jails/foo/root
+            #                 10.10.10.11
+            #                 10.10.10.12
+            FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
+            printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${FIRST_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#FIRST_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+            for IP in $(echo "${JAIL_IP}" | tail -n +2); do
+                printf "%*s%*s%*s%*s ${IP}\n" "$((${MAX_LENGTH_JID} + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((4 + ${SPACER}))" "" "$((5 + ${SPACER}))" ""
+            done
+        else
+            if echo "${JAIL_IP}" | grep -q "|"; then JAIL_IP="$(echo ${JAIL_IP} | awk -F"|" '{print $2}' | sed 's#/.*##g')"; fi
+            printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+        fi
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
+    done
+    wait
+
+    # Print jails in order
+    for _file in $(echo ${_tmp_list} | sort -n); do
+        cat ${_file}
+        rm -f ${_file}
     done
 }
 
 list_ips() {
+
+     _jail_count=0
+     _tmp_list=
 
     get_max_lengths
 
@@ -359,18 +406,40 @@ list_ips() {
 
     for _jail in ${JAIL_LIST}; do
 
+        # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-
-            get_jail_info "${_jail}"
-
-            printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_IP_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
-
+            _jail_count=$((${_jail_count} + 1))
+            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+        else
+            continue
         fi
+
+        (
+
+        get_jail_info "${_jail}"
+
+        printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_IP_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
     done
+    wait
+
+    # Print jails in order
+    for _file in $(echo ${_tmp_list} | sort -n); do
+        cat ${_file}
+        rm -f ${_file}
+    done
+
 }
 
 
 list_paths() {
+
+     _jail_count=0
+     _tmp_list=
 
     get_max_lengths
 
@@ -386,17 +455,39 @@ list_paths() {
 
     for _jail in ${JAIL_LIST}; do
 
+        # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-
-            get_jail_info "${_jail}"
-
-            printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
-
+            _jail_count=$((${_jail_count} + 1))
+            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+        else
+            continue
         fi
+
+        (
+
+        get_jail_info "${_jail}"
+
+        printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
     done
+    wait
+
+    # Print jails in order
+    for _file in $(echo ${_tmp_list} | sort -n); do
+        cat ${_file}
+        rm -f ${_file}
+    done
+
 }
 
 list_ports() {
+
+     _jail_count=0
+     _tmp_list=
 
     get_max_lengths
 
@@ -412,17 +503,39 @@ list_ports() {
 
     for _jail in ${JAIL_LIST}; do
 
+        # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-
-            get_jail_info "${_jail}"
-
-            printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PORTS_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
-
+            _jail_count=$((${_jail_count} + 1))
+            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+        else
+            continue
         fi
+
+        (
+
+        get_jail_info "${_jail}"
+
+        printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PORTS_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
     done
+    wait
+
+    # Print jails in order
+    for _file in $(echo ${_tmp_list} | sort -n); do
+        cat ${_file}
+        rm -f ${_file}
+    done
+
 }
 
 list_state() {
+
+     _jail_count=0
+     _tmp_list=
 
     get_max_lengths
 
@@ -438,14 +551,33 @@ list_state() {
 
     for _jail in ${JAIL_LIST}; do
 
+        # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-
-            get_jail_info "${_jail}"
-
-            printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_STATE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
-
+            _jail_count=$((${_jail_count} + 1))
+            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+        else
+            continue
         fi
+
+        (
+
+        get_jail_info "${_jail}"
+
+        printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_STATE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
     done
+    wait
+
+    # Print jails in order
+    for _file in $(echo ${_tmp_list} | sort -n); do
+        cat ${_file}
+        rm -f ${_file}
+    done
+
 }
 
 # TODO: Check the correct usage or arguments here. See SC2120.
