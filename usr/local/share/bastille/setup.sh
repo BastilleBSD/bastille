@@ -87,6 +87,23 @@ configure_filesystem() {
         chmod 0750 "${bastille_backupsdir}"
     fi
 
+    ## ${bastille_migratedir}
+    if [ ! -d "${bastille_migratedir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_migratedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/migrate"
+            fi
+        else
+            mkdir -p "${bastille_migratedir}"
+        fi
+        chmod 777 "${bastille_migratedir}"
+    fi
+
+    # Migrate needs 777
+    if [ "$(stat -f %Lp ${bastille_migratedir})" -ne "777" ]; then
+        chmod 777 "${bastille_migratedir}"
+    fi
+
     ## ${bastille_cachedir}
     if [ ! -d "${bastille_cachedir}" ]; then
         if checkyesno bastille_zfs_enable; then
@@ -140,18 +157,6 @@ configure_filesystem() {
         else
             mkdir -p "${bastille_releasesdir}"
         fi
-    fi
-
-    ## ${bastille_migratedir}
-    if [ ! -d "${bastille_migratedir}" ]; then
-        if checkyesno bastille_zfs_enable; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_migratedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/migrate"
-            fi
-        else
-            mkdir -p "${bastille_migratedir}"
-        fi
-        chmod 777 "${bastille_migratedir}"
     fi
 }
 
