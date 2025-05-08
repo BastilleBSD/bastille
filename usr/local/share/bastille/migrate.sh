@@ -133,7 +133,7 @@ validate_host_status() {
 
     # Host SSH check
     if [ "${OPT_PASSWORD}" -eq 1 ]; then
-        if ! ${_sshpass_cmd} ssh -p ${_port} ${_user}@${_host}exit >/dev/null 2>/dev/null; then
+        if ! ${_sshpass_cmd} ssh -p ${_port} ${_user}@${_host} exit >/dev/null 2>/dev/null; then
             error_notify "[ERROR]: Could not establish ssh connection to host."
             error_notify "Please make sure the remote host supports password based authentication"
             error_exit "and you are using the correct password for user: '${_user}'"
@@ -190,7 +190,7 @@ migrate_jail() {
     local _remote_bastille_zfs_enable="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
     local _remote_bastille_jailsdir="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
     local _remote_bastille_migratedir="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
-    local _remote_jail_list="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} bastille list jails)"
+    local _remote_jail_list="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} bastille list jails)"
 
     # Verify jail does not exist remotely
     if echo "${_remote_jail_list}" | grep -Eoqw "${_jail}"; then
