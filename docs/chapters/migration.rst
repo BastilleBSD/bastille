@@ -19,6 +19,9 @@ must be able to log in via SSH using either key-based authentication, or passwor
 The user also needs ``sudo`` permissions on the remote system. This user should then be given as the
 ``USER`` arg in the ``migrate`` command.
 
+If you don't want to use ``sudo``, we support using ``doas`` as the super-user command. Simply set ``--doas`` as
+one of the options when running the ``migrate`` command.
+
 If you are using key-based auth, the keys should be stored in the default location at ``$HOME/.ssh/id_rsa``,
 where ``$HOME`` is the users home directory. This is the default location for ssh keys, and where Bastille
 will try to load them from.
