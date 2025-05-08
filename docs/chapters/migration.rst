@@ -26,7 +26,7 @@ If you are using key-based auth, the keys should be stored in the default locati
 where ``$HOME`` is the users home directory. This is the default location for ssh keys, and where Bastille
 will try to load them from.
 
-If you want to use password based authentication, simply run ``bastille migrate -p TARGET USER HOST``. This
+If you want to use password based authentication, simply run ``bastille migrate -p TARGET USER@HOST``. This
 will prompt you to enter the password for the remote system, which Bastille will then use during the migration
 process.
 
@@ -34,7 +34,7 @@ Migration
 ^^^^^^^^^
 
 To migrate a jail (or multiple jails) we can simply run
-``bastille migrate TARGET USER HOST``. This will export the jail(s), send them to the
+``bastille migrate TARGET USER@HOST``. This will export the jail(s), send them to the
 remote system, and import them.
 
 The ``migrate`` sub-command includes the ``-a|--auto`` option, which will auto-stop the old jail,
