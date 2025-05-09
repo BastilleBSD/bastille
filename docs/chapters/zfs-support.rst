@@ -58,3 +58,27 @@ dataset for bastille.
 Bastille will mount the datasets it creates at ``bastille_prefix`` which
 defaults to ``/usr/local/bastille``
 If this is not desirable, you can change it at the top of the config file.
+
+Jailing a Dataset
+-----------------
+
+It is possible to "jail" a dataset. This means mounting a datset into a jail, and being
+able to fully manage it from within the jail.
+
+To add a dataset to a jail, we can run ``bastille zfs TARGET jail pool/dataset /path/inside/jail``. 
+This will mount ``pool/dataset`` into the jail at ``/path/inside/jail`` when the jail is started, and
+unmount and unjail it when the jail is stopped.
+
+You can manually change the path where the dataset will be mounted by ``bastille edit TARGET zfs.conf`` and
+adjusting the path after you have added it, bearing in mind the warning below.
+
+WARNING: Adding or removing datasets to this file can result in permission errors with your jail. It is
+important that the jail is first stopped before attempting to manually configure this file. The format inside
+the file is simple.
+
+.. code-block:: shell
+
+  pool/dataset /path/in/jail
+  pool/other/dataset /other/path/in/jail
+
+To remove a dataset from being jailed, we can run ``bastille zfs TARGET unjail pool/dataset``.
