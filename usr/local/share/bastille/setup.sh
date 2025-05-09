@@ -46,16 +46,6 @@ configure_filesystem() {
     # This is so we dont have to introduce breaking
     # changes on new variables added to bastille.conf
 
-    # Ensure migrate directory is in place
-    ## ${bastille_migratedir}
-    if [ -z "${bastille_migratedir}" ]; then
-        if ! grep -oq "bastille_migratedir=" "${BASTILLE_CONFIG}"; then
-            sed -i '' 's|bastille_backupsdir=.*|&\nbastille_migratedir=\"${bastille_prefix}/migrate\"                      ## default: \"${bastille_prefix}/migrate\"|' ${BASTILLE_CONFIG}
-            # shellcheck disable=SC1090
-            . ${BASTILLE_CONFIG}
-        fi
-    fi
-
     ## ${bastille_prefix}
     if [ ! -d "${bastille_prefix}" ]; then
         if checkyesno bastille_zfs_enable; then
@@ -140,18 +130,6 @@ configure_filesystem() {
         else
             mkdir -p "${bastille_releasesdir}"
         fi
-    fi
-
-    ## ${bastille_migratedir}
-    if [ ! -d "${bastille_migratedir}" ]; then
-        if checkyesno bastille_zfs_enable; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_migratedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/migrate"
-            fi
-        else
-            mkdir -p "${bastille_migratedir}"
-        fi
-        chmod 0750 "${bastille_migratedir}"
     fi
 }
 
