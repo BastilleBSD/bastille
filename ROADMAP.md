@@ -33,7 +33,7 @@ The API is scheduled later in the roadmap because I want to have the other
 components stable before we implement an API on top of it. The addition of the
 API should match up with Bastille 1.0-stable.
 
-Bastille Nomad Driver ~ 1.0.x-beta
+Bastille Nomad Driver ~ 2.0.x-beta
 --------------------------------------
 
 Nomad would require a driver (probably written in Go) to funcion with bastille.
