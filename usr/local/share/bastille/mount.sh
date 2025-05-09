@@ -115,7 +115,7 @@ if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
    { [ "${_hostpath}" = "proc" ] && [ "${_type}" = "procfs" ]; } || \
    { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } || \
    { [ "${_type}" = "zfs" ] && zfs list ${_hostpath} >/dev/null 2>/dev/null; } then
-    warn "Detected advanced mount type: \"${_type}\""
+    warn "\n[WARNING]: Detected advanced mount type: \"${_type}\""
 elif [ ! -e "${_hostpath}" ] && [ "${_type}" = "nullfs" ]; then
     mkdir -p "${_hostpath}"
 elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
@@ -138,6 +138,7 @@ if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "
     error_notify "Detected invalid fstab options in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
+    exit 1
 fi
 
 for _jail in ${JAILS}; do
@@ -168,7 +169,7 @@ for _jail in ${JAILS}; do
 
 
     # Create mount point if it does not exist
-    if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
+    if { [ -d "${_hostpath}" ] || [ "${_type}" = "zfs" ]; } && [ ! -d "${_fullpath}" ]; then
         mkdir -p "${_fullpath}" || error_continue "Failed to create mount point."
     elif [ -f "${_hostpath}" ] ; then
         _filename="$( basename ${_hostpath} )"
