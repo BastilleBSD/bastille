@@ -13,7 +13,7 @@ validating updates to Bastille itself. This automated validation of Pull
 Requests should be a priority early in the year with a full test suite designed
 to validate all expected uses of Bastille sub-commands.
 
-Container Monitoring ~ 1.0.x-beta
+Container Monitoring ~ 2.0.x-beta
 --------------------------------------------
 The ability to monitor processes, services, mounts, sockets, etc from the host.
 Auto-remediation would be simple enough to define. Notifications would probably
