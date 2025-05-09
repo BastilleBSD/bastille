@@ -49,17 +49,8 @@ EOF
 
 zfs_jail_dataset() {
 
-    # Validate jail state
-    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${_jail}"
-    else 
-        info "\n[${_jail}]:"
-        error_notify "Jail is running."
-        error_exit "Use [-a|--auto] to auto-stop the jail."
-    fi
-
     info "\n[${_jail}]:"
-
+    
     # Exit if MOUNT or DATASET is empty
     if [ -z "${MOUNT}" ] || [ -z "${DATASET}" ]; then
         usage
@@ -72,12 +63,19 @@ zfs_jail_dataset() {
     if grep -hoqsw "${DATASET}" ${bastille_jailsdir}/*/zfs.conf; then
         error_exit "[ERROR]: Dataset already assigned."
     fi
+    # Validate jail state
+    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${_jail}"
+    else 
+        error_notify "Jail is running."
+        error_exit "Use [-a|--auto] to auto-stop the jail."
+    fi
 
     # Add necessary config variables to jail
-    bastille config ${_jail} set enforce_statfs 1
-    bastille config ${_jail} set allow.mount
-    bastille config ${_jail} set allow.mount.devfs
-    bastille config ${_jail} set allow.mount.zfs
+    bastille config ${_jail} set enforce_statfs 1 >/dev/null
+    bastille config ${_jail} set allow.mount >/dev/null
+    bastille config ${_jail} set allow.mount.devfs >/dev/null
+    bastille config ${_jail} set allow.mount.zfs >/dev/null
 
     # Add dataset to zfs.conf
     echo "${DATASET} ${MOUNT}" >> "${bastille_jailsdir}/${_jail}/zfs.conf"
@@ -89,15 +87,6 @@ zfs_jail_dataset() {
 
 zfs_unjail_dataset() {
 
-    # Validate jail state
-    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${_jail}"
-    else 
-        info "\n[${_jail}]:"
-        error_notify "Jail is running."
-        error_exit "Use [-a|--auto] to auto-stop the jail."
-    fi
-
     info "\n[${_jail}]:"
 
     # Exit if DATASET is empty
@@ -106,6 +95,14 @@ zfs_unjail_dataset() {
     # Warn if datset does not exist
     elif ! zfs list "${DATASET}" >/dev/null 2>/dev/null; then
         warn "[WARNING]: Dataset does not exist: ${DATASET}"
+    fi
+
+    # Validate jail state
+    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${_jail}"
+    else 
+        error_notify "Jail is running."
+        error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
 
     # Remove dataset from zfs.conf
