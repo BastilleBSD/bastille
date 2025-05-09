@@ -126,7 +126,7 @@ for _jail in ${JAILS}; do
         bastille limits "${_jail}" clear
     fi
 
-    # Unmount and jailed ZFS datasets
+    # Unmount any jailed ZFS datasets
     if [ -s "${bastille_jailsdir}/${_jail}/zfs.conf" ]; then
         while read _dataset _mount; do
             jexec -l -U root "${_jail}" zfs umount "${_dataset}"
