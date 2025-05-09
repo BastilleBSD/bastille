@@ -44,6 +44,7 @@ usage() {
     Options:
 
     -a | --auto              Auto mode. Start/stop jail(s) if required.
+    -b | --backup            Retain archives on remote system.
     -d | --destroy           Destroy local jail after migration.
        | --doas              Use 'doas' instead of 'sudo'.
     -p | --password          Use password based authentication.
@@ -55,6 +56,7 @@ EOF
 
 # Handle options.
 AUTO=0
+OPT_BACKUP=0
 OPT_DESTROY=0
 OPT_PASSWORD=0
 OPT_SU="sudo"
@@ -65,6 +67,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         -a|--auto)
             AUTO=1
+            shift
+            ;;
+        -b|--backup)
+            OPT_BACKUP=1
             shift
             ;;
         -d|--destroy)
@@ -87,6 +93,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
+                    b) OPT_BACKUP=1 ;;
                     d) OPT_DESTROY=1 ;;
                     p) OPT_PASSWORD=1 ;;
                     x) enable_debug ;;
@@ -154,9 +161,17 @@ migrate_cleanup() {
     local _host="${3}"
     local _port="${4}"
 
+    # Backup archives on remote system
+    if [ "${OPT_BACKUP}" -eq 1 ]; then
+
+        _remote_bastille_backupsdir="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_backupsdir)"
+
+        ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} cp "${_remote_bastille_migratedir}/*" "${_remote_bastille_backupsdir}"
+    fi
+
     # Remove archive files from local and remote system
-    ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} rm -f "${_remote_bastille_migratedir}/${_jail}_*.*"
-    rm -f ${bastille_migratedir}/${_jail}_*.*
+    ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} rm -fr "${_remote_bastille_migratedir}"
+    rm -fr ${_local_bastille_migratedir}
 }
 
 migrate_create_export() {
@@ -168,15 +183,15 @@ migrate_create_export() {
 
     info "\nPreparing jail for migration..."
 
-    # Ensure new migrate directory is created
-    bastille setup -f
-    ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} bastille setup -f
+    # Ensure /tmp/bastille-migrate has 777 perms
+    chmod 777 ${_local_bastille_migratedir}
+    ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} chmod 777 ${_remote_bastille_migratedir}
 
     # --xz for ZFS, otherwise --txz
     if checkyesno bastille_zfs_enable; then
-        bastille export --xz ${_jail} ${bastille_migratedir}
+        bastille export --xz ${_jail} ${_local_bastille_migratedir}
     else
-        bastille export --txz ${_jail} ${_bastille_migratedir}
+        bastille export --txz ${_jail} ${_local_bastille_migratedir}
     fi
 }
 
@@ -187,10 +202,16 @@ migrate_jail() {
     local _host="${3}"
     local _port="${4}"
 
-    local _remote_bastille_zfs_enable="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
-    local _remote_bastille_jailsdir="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
-    local _remote_bastille_migratedir="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_migratedir)"
-    local _remote_jail_list="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} bastille list jails)"
+    _local_bastille_migratedir="$(mktemp -d /tmp/bastille-migrate-${_jail})"
+    _remote_bastille_zfs_enable="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
+    _remote_bastille_jailsdir="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_jailsdir)"
+    _remote_bastille_migratedir="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} mktemp -d /tmp/bastille-migrate-${_jail})"
+    _remote_jail_list="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} bastille list jails)"
+
+    if [ -z "${_local_bastille_migratedir}" ] || [ -z "${_remote_bastille_migratedir}" ]; then
+        error_notify "[ERROR]: Could not create /tmp/bastille-migrate."
+        error_continue "Ensure it doesn't exist locally or remotely."
+    fi
 
     # Verify jail does not exist remotely
     if echo "${_remote_jail_list}" | grep -Eoqw "${_jail}"; then
@@ -208,17 +229,17 @@ migrate_jail() {
 
             info "\nAttempting to migrate jail to remote system..."
 
-            local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.xz$" | head -n1)"
-            local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
+            _file="$(find "${_local_bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.xz$" | head -n1)"
+            _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
-            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${_local_bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}" "${_port}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
 
             # Send jail export
-            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${_local_bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}" "${_port}"
                 error_exit "[ERROR]: Failed to send jail to remote system."
             fi
@@ -233,17 +254,17 @@ migrate_jail() {
 
             migrate_create_export "${_jail}" "${_user}" "${_host}" "${_port}"
 
-            local _file="$(find "${bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.txz$" | head -n1)"
-            local _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
+            _file="$(find "${_local_bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${_jail}_.*\.txz$" | head -n1)"
+            _file_sha256="$(echo ${_file} | sed 's/\..*/.sha256/')"
 
             # Send sha256
-            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${_local_bastille_migratedir}/${_file_sha256} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}" "${_port}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
 
             # Send jail export
-            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
+            if ! ${_sshpass_cmd} scp -P ${_port} ${_opt_ssh_key} ${_local_bastille_migratedir}/${_file} ${_user}@${_host}:${_remote_bastille_migratedir}; then
                 migrate_cleanup "${_jail}" "${_user}" "${_host}" "${_port}"
                 error_exit "[ERROR]: Failed to migrate jail to remote system."
             fi
