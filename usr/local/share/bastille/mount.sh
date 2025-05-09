@@ -113,14 +113,16 @@ if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
    { [ "${_hostpath}" = "linprocfs" ] && [ "${_type}" = "linprocfs" ]; } || \
    { [ "${_hostpath}" = "linsysfs" ] && [ "${_type}" = "linsysfs" ]; } || \
    { [ "${_hostpath}" = "proc" ] && [ "${_type}" = "procfs" ]; } || \
-   { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } then
-    warn "Detected advanced mount type ${_hostpath}"
+   { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } || \
+   { [ "${_type}" = "zfs" ] && zfs list ${_hostpath} >/dev/null 2>/dev/null; } then
+    warn "Detected advanced mount type: \"${_type}\""
 elif [ ! -e "${_hostpath}" ] && [ "${_type}" = "nullfs" ]; then
     mkdir -p "${_hostpath}"
 elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
-    error_notify "Invalid host path or incorrect mount type in FSTAB."
+    error_notify "[ERROR]: Invalid host path or incorrect mount type in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
+    exit 1
 fi
 
 # Mount permissions,options must include one of "ro, rw, rq, sw, xx"
@@ -128,6 +130,7 @@ if ! echo "${_perms}" | grep -Eq '(ro|rw|rq|sw|xx)(,.*)?$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
+    exit 1
 fi
 
 # Dump and pass need to be "0 0 - 1 1"
