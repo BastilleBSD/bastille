@@ -48,6 +48,9 @@ properly.
 
 You can optionally set ``-d|--destroy`` to have Bastille destroy the old jail on completion.
 
+You can also set ``-b|--backup`` to retain the archives remotely. They will be copied into
+``${bastille_backupsdir}``.
+
 iocage
 ------
 
