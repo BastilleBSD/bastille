@@ -23,6 +23,7 @@ port by supplying it as in ``user@host:port``.
 
     -a | --auto              Auto mode. Start/stop jail(s) if required.
     -d | --destroy           Destroy local jail after migration.
+    -b | --backup            Retain archives on remote system.
        | --doas              Use 'doas' instead of 'sudo'.
     -p | --password          Use password based authentication.
     -x | --debug             Enable debug mode.
