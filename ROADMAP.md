@@ -36,7 +36,7 @@ API should match up with Bastille 1.0-stable.
 Bastille Nomad Driver ~ 2.0.x-beta
 --------------------------------------
 
-Nomad would require a driver (probably written in Go) to funcion with bastille.
+Nomad would require a driver (probably written in Go) to function with bastille.
 Nomad has a driver written for POT in Go so we could fashion our driver after 
 the one they did.  There is an open document on how to write drivers for Nomad.
 Nomad interoperability would give us clustering abilities much like a 
