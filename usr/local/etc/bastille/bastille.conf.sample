@@ -9,7 +9,6 @@ bastille_cachedir="${bastille_prefix}/cache"                          ## default
 bastille_jailsdir="${bastille_prefix}/jails"                          ## default: "${bastille_prefix}/jails"
 bastille_releasesdir="${bastille_prefix}/releases"                    ## default: "${bastille_prefix}/releases"
 bastille_templatesdir="${bastille_prefix}/templates"                  ## default: "${bastille_prefix}/templates"
-bastille_migratedir="${bastille_prefix}/migrate"                      ## default: "${bastille_prefix}/migrate"
 bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
 
 ## pf configuration path
