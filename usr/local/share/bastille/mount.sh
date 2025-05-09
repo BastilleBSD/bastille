@@ -108,19 +108,22 @@ if [ -z "${_hostpath}" ] || [ -z "${_jailpath}" ] || [ -z "${_type}" ] || [ -z "
     warn "Read: ${_fstab}"
 fi
 
-# Exit if host path doesn't exist, type is not "nullfs", or mount is an advanced mount type "tmpfs,linprocfs,linsysfs,fdescfs,procfs"
+# Warn on advanced mount option  "tmpfs,linprocfs,linsysfs,fdescfs,procfs,zfs"
+# Create host path if non-existent
 if { [ "${_hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
    { [ "${_hostpath}" = "linprocfs" ] && [ "${_type}" = "linprocfs" ]; } || \
    { [ "${_hostpath}" = "linsysfs" ] && [ "${_type}" = "linsysfs" ]; } || \
    { [ "${_hostpath}" = "proc" ] && [ "${_type}" = "procfs" ]; } || \
-   { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } then
-    warn "Detected advanced mount type ${_hostpath}"
+   { [ "${_hostpath}" = "fdesc" ] && [ "${_type}" = "fdescfs" ]; } || \
+   { [ "${_type}" = "zfs" ] && zfs list ${_hostpath} >/dev/null 2>/dev/null; } then
+    warn "\n[WARNING]: Detected advanced mount type: \"${_type}\""
 elif [ ! -e "${_hostpath}" ] && [ "${_type}" = "nullfs" ]; then
     mkdir -p "${_hostpath}"
 elif [ ! -e "${_hostpath}" ] || [ "${_type}" != "nullfs" ]; then
-    error_notify "Invalid host path or incorrect mount type in FSTAB."
+    error_notify "[ERROR]: Invalid host path or incorrect mount type in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
+    exit 1
 fi
 
 # Mount permissions,options must include one of "ro, rw, rq, sw, xx"
@@ -128,6 +131,7 @@ if ! echo "${_perms}" | grep -Eq '(ro|rw|rq|sw|xx)(,.*)?$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
+    exit 1
 fi
 
 # Dump and pass need to be "0 0 - 1 1"
@@ -135,6 +139,7 @@ if [ "${_checks}" != "0 0" ] && [ "${_checks}" != "1 0" ] && [ "${_checks}" != "
     error_notify "Detected invalid fstab options in FSTAB."
     warn "Format: /host/path /jail/path nullfs ro 0 0"
     warn "Read: ${_fstab}"
+    exit 1
 fi
 
 for _jail in ${JAILS}; do
@@ -165,7 +170,7 @@ for _jail in ${JAILS}; do
 
 
     # Create mount point if it does not exist
-    if [ -d "${_hostpath}" ] && [ ! -d "${_fullpath}" ]; then
+    if { [ -d "${_hostpath}" ] || [ "${_type}" = "zfs" ]; } && [ ! -d "${_fullpath}" ]; then
         mkdir -p "${_fullpath}" || error_continue "Failed to create mount point."
     elif [ -f "${_hostpath}" ] ; then
         _filename="$( basename ${_hostpath} )"
