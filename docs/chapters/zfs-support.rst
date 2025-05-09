@@ -72,7 +72,7 @@ unmount and unjail it when the jail is stopped.
 You can manually change the path where the dataset will be mounted by ``bastille edit TARGET zfs.conf`` and
 adjusting the path after you have added it, bearing in mind the warning below.
 
-WARNING: Adding or removing datasets to this file can result in permission errors with your jail. It is
+WARNING: Adding or removing datasets to the ``zfs.conf`` file can result in permission errors with your jail. It is
 important that the jail is first stopped before attempting to manually configure this file. The format inside
 the file is simple.
 
