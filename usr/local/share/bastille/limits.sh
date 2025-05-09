@@ -121,7 +121,7 @@ add_cpuset() {
     local _cpuset_rule="$(echo ${_cpus} | sed 's/ /,/g')"
 
     # Persist cpuset value
-    echo "${_cpuset_rule}" > "${bastille_jailsdir}/${_jail}/cpuset.conf"
+    echo "${_cpuset_rule}" >> "${bastille_jailsdir}/${_jail}/cpuset.conf"
     echo -e "Limits: ${OPTION} ${VALUE}"
 
     # Restart jail to apply cpuset
