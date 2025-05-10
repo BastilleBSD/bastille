@@ -170,8 +170,8 @@ migrate_cleanup() {
     fi
 
     # Remove archive files from local and remote system
-    ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} rm -fr "${_remote_bastille_migratedir}"
-    rm -fr ${_local_bastille_migratedir}
+    ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} rm -fr "${_remote_bastille_migratedir}" 2>/dev/null
+    rm -fr ${_local_bastille_migratedir} 2>/dev/null
 }
 
 migrate_create_export() {
@@ -209,12 +209,14 @@ migrate_jail() {
     _remote_jail_list="$(${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} bastille list jails)"
 
     if [ -z "${_local_bastille_migratedir}" ] || [ -z "${_remote_bastille_migratedir}" ]; then
+        migrate_cleanup "${_jail}" "${_user}" "${_host}" "${_port}"
         error_notify "[ERROR]: Could not create /tmp/bastille-migrate."
         error_continue "Ensure it doesn't exist locally or remotely."
     fi
 
     # Verify jail does not exist remotely
     if echo "${_remote_jail_list}" | grep -Eoqw "${_jail}"; then
+        migrate_cleanup "${_jail}" "${_user}" "${_host}" "${_port}"
         error_exit "[ERROR]: Jail already exists on remote system: ${_jail}"
     fi
 
