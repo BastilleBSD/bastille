@@ -23,6 +23,10 @@ Possible monitoring modules: ps, sockstat, pf, fstab
 
 Possible notification modules: pagerduty, slack, splunk, ELK, etc.
 
+Upon a discussion with Christer Edwards we are pushing this off until after the
+API and version 1.0 is released.  The monitoring system will need to rely on
+and use the API for some of the process.
+
 Bastille API ~ 1.0.x-beta
 -----------------------------------
 I have thoughts about a lightweight API for Bastille that would accept (json?)
