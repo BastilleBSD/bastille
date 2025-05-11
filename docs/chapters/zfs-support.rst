@@ -58,3 +58,58 @@ dataset for bastille.
 Bastille will mount the datasets it creates at ``bastille_prefix`` which
 defaults to ``/usr/local/bastille``
 If this is not desirable, you can change it at the top of the config file.
+
+Jailing a Dataset
+-----------------
+
+It is possible to "jail" a dataset. This means mounting a datset into a jail, and being
+able to fully manage it from within the jail.
+
+To add a dataset to a jail, we can run ``bastille zfs TARGET jail pool/dataset /path/inside/jail``. 
+This will mount ``pool/dataset`` into the jail at ``/path/inside/jail`` when the jail is started, and
+unmount and unjail it when the jail is stopped.
+
+You can manually change the path where the dataset will be mounted by ``bastille edit TARGET zfs.conf`` and
+adjusting the path after you have added it, bearing in mind the warning below.
+
+WARNING: Adding or removing datasets to the ``zfs.conf`` file can result in permission errors with your jail. It is
+important that the jail is first stopped before attempting to manually configure this file. The format inside
+the file is simple.
+
+.. code-block:: shell
+
+  pool/dataset /path/in/jail
+  pool/other/dataset /other/path/in/jail
+
+To remove a dataset from being jailed, we can run ``bastille zfs TARGET unjail pool/dataset``.
+
+Template Approach
+^^^^^^^^^^^^^^^^^
+
+While it is possible to "jail" a dataset using a template, it is a bit more "hacky" than the above apporach.
+Below is a template that you can use that will add the necessary bits to the ``jail.conf`` file to "jail" a 
+dataset.
+
+.. code-block:: shell
+
+  ARG JAIL_NAME
+  ARG DATASET
+  ARG MOUNT
+
+  CONFIG set allow.mount
+  CONFIG set allow.mount.devfs
+  CONFIG set allow.mount.zfs
+  CONFIG set enforce_statfs 1
+
+  CONFIG set "exec.created += '/sbin/zfs jail ${JAIL_NAME} ${DATASET}'"
+  CONFIG set "exec.start += '/sbin/zfs set mountpoint=${MOUNT} ${DATASET}'"
+
+  RESTART
+
+  CONFIG set "exec.prestop += 'jexec -l -U root ${JAIL_NAME} /sbin/zfs umount ${DATASET}'"
+  CONFIG set "exec.prestop += '/sbin/zfs unjail ${JAIL_NAME} ${DATASET}'"
+
+  RESTART
+
+This template can be applied using ``bastille template TARGET project/template --arg DATASET=zpool/dataset --arg MOUNT=/path/inside/jail``.
+We do not need the ``JAIL_NAME`` arg, as it will be auto-filled from the supplied ``TARGET`` name.
