@@ -183,9 +183,9 @@ update_jailconf() {
                 if [ "${_interface}" != "not set" ]; then
                     sed -i '' "s#.*ip4.addr = .*#  ip4.addr = ${_interface}|${IP};#" "${JAIL_CONFIG}"
                 else
-                    sed -i '' "/ip4.addr = .*/ s#${_ip}#${IP}#" "${JAIL_CONFIG}"
+                    sed -i '' "\#ip4.addr = .*# s#${_ip}#${IP}#" "${JAIL_CONFIG}"
                 fi
-                sed -i '' "/ip4.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
+                sed -i '' "\#ip4.addr += .*# s#${_ip}#127.0.0.1#" "${JAIL_CONFIG}"
             done
         fi
 
@@ -196,12 +196,12 @@ update_jailconf() {
                     _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 fi
                 if [ "${_interface}" != "not set" ]; then
-                    sed -i '' "s/.*${_interface} = .*/  ip6.addr = ${_interface}|${IP};/" "${JAIL_CONFIG}"
+                    sed -i '' "s#.*${_interface} = .*#  ip6.addr = ${_interface}|${IP};/" "${JAIL_CONFIG}"
                 else
-                    sed -i '' "/ip6.addr = .*/ s/${_ip}/${IP}/" "${JAIL_CONFIG}"
+                    sed -i '' "\#ip6.addr = .*# s#${_ip}#${IP}#" "${JAIL_CONFIG}"
                 fi
-                sed -i '' "/ip6.addr += .*/ s/${_ip}/127.0.0.1/" "${JAIL_CONFIG}"
-                sed -i '' "s/ip6 = .*/ip6 = ${IP6_MODE};/" "${JAIL_CONFIG}"
+                sed -i '' "\#ip6.addr += .*# s#${_ip}#127.0.0.1#" "${JAIL_CONFIG}"
+                sed -i '' "s#ip6 = .*#ip6 = ${IP6_MODE};#" "${JAIL_CONFIG}"
             done
         fi
     fi
