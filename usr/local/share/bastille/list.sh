@@ -259,7 +259,6 @@ get_jail_info() {
 
 list_bastille(){
 
-     _jail_count=0
      _tmp_list=
     
     get_max_lengths
@@ -278,8 +277,7 @@ list_bastille(){
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _jail_count=$((${_jail_count} + 1))
-            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
         else
             continue
         fi
@@ -316,7 +314,7 @@ list_bastille(){
     wait
 
     # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort -n); do
+    for _file in $(echo ${_tmp_list} | sort); do
         cat ${_file}
         rm -f ${_file}
     done
@@ -324,7 +322,6 @@ list_bastille(){
 
 list_all(){
 
-     _jail_count=0
      _tmp_list=
 
     get_max_lengths
@@ -343,8 +340,7 @@ list_all(){
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _jail_count=$((${_jail_count} + 1))
-            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
         else
             continue
         fi
@@ -381,7 +377,7 @@ list_all(){
     wait
 
     # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort -n); do
+    for _file in $(echo ${_tmp_list} | sort); do
         cat ${_file}
         rm -f ${_file}
     done
@@ -389,7 +385,6 @@ list_all(){
 
 list_ips() {
 
-     _jail_count=0
      _tmp_list=
 
     get_max_lengths
@@ -408,8 +403,7 @@ list_ips() {
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _jail_count=$((${_jail_count} + 1))
-            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
         else
             continue
         fi
@@ -428,7 +422,7 @@ list_ips() {
     wait
 
     # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort -n); do
+    for _file in $(echo ${_tmp_list} | sort); do
         cat ${_file}
         rm -f ${_file}
     done
@@ -438,7 +432,6 @@ list_ips() {
 
 list_paths() {
 
-     _jail_count=0
      _tmp_list=
 
     get_max_lengths
@@ -457,8 +450,7 @@ list_paths() {
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _jail_count=$((${_jail_count} + 1))
-            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
         else
             continue
         fi
@@ -477,7 +469,7 @@ list_paths() {
     wait
 
     # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort -n); do
+    for _file in $(echo ${_tmp_list} | sort); do
         cat ${_file}
         rm -f ${_file}
     done
@@ -486,7 +478,6 @@ list_paths() {
 
 list_ports() {
 
-     _jail_count=0
      _tmp_list=
 
     get_max_lengths
@@ -505,8 +496,7 @@ list_ports() {
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _jail_count=$((${_jail_count} + 1))
-            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
         else
             continue
         fi
@@ -525,7 +515,7 @@ list_ports() {
     wait
 
     # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort -n); do
+    for _file in $(echo ${_tmp_list} | sort); do
         cat ${_file}
         rm -f ${_file}
     done
@@ -534,7 +524,6 @@ list_ports() {
 
 list_state() {
 
-     _jail_count=0
      _tmp_list=
 
     get_max_lengths
@@ -553,8 +542,7 @@ list_state() {
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _jail_count=$((${_jail_count} + 1))
-            _tmp_jail=$(mktemp /tmp/bastille_list_${_jail_count})
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
         else
             continue
         fi
@@ -573,7 +561,7 @@ list_state() {
     wait
 
     # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort -n); do
+    for _file in $(echo ${_tmp_list} | sort); do
         cat ${_file}
         rm -f ${_file}
     done
@@ -666,7 +654,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Clear tmp directory
-rm -rf /tmp/bastille_list_*
+rm -rf /tmp/bastille-list-*
 
 # Perform basic list if no args
 if [ "$#" -eq 0 ]; then
