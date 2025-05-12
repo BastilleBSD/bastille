@@ -6,7 +6,8 @@ managed by bastille.
 
 Using `bastille list` without args will print with all the info we feel is most important.
 
-Most options can be printed in JSON format by including the `-j|--json` flag.
+Most options can be printed in JSON format by including the ``-j|--json`` flag. Use ``-p|--pretty``
+to print in columns instead of rows.
 
 .. code-block:: shell
 
@@ -15,5 +16,6 @@ Most options can be printed in JSON format by including the `-j|--json` flag.
                                                   [path(s)] [port(s)] [prio|priority] [state(s)] [template(s)]
     Options:
     
-    -j | --json           List jails or sub-arg(s) in json format.
-    -x | --debug          Enable debug mode.
+    -j | --json            List jails or sub-arg(s) in json format.
+    -p | --pretty          List JSON in columns.
+    -x | --debug           Enable debug mode.
