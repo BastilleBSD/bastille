@@ -676,9 +676,9 @@ if [ "$#" -eq 0 ]; then
     # List json format, otherwise list all jails
     if [ "${OPT_JSON}" -eq 1 ]; then
         if [ "${OPT_PRETTY}" -eq 1 ]; then
-            list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}' | pretty_json
+            list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP Address\":\"%s\",\"Published Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}' | pretty_json
         else
-            list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+            list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP Address\":\"%s\",\"Published Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
         fi
     else
         list_bastille
@@ -693,9 +693,9 @@ if [ "$#" -eq 1 ]; then
         -a|--all|all)
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
-                    list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}' | pretty_json
+                    list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP Address\":\"%s\",\"Published Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}' | pretty_json
                 else
-                    list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}'
+                    list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP Address\":\"%s\",\"Published Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}'
                 fi
             else
                 list_all
@@ -770,7 +770,7 @@ if [ "$#" -eq 1 ]; then
       	    set_target "${TARGET}"
             if [ -f "${bastille_jailsdir}/${TARGET}/jail.conf" ]; then
                 if [ "${OPT_JSON}" -eq 1 ]; then
-                    list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+                    list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP Address\":\"%s\",\"Published Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
                 else
                     list_bastille
                 fi
