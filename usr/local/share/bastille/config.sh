@@ -117,7 +117,18 @@ print_jail_conf() {
 for _jail in ${JAILS}; do
 
     (
-
+    
+    # Backwards compatibility for specifying only an IP with ip[4|6].addr
+    if [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip4.addr" ]; then
+        if ! echo "${VALUE}" | grep -q "|"; then
+            VALUE="$(bastille config ${_jail} get ip4.addr | awk -F"|" '{print $1}')|${VALUE}"
+        fi
+    elif [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip6.addr" ]; then
+        if ! echo "${VALUE}" | grep -q "|"; then
+            VALUE="$(bastille config ${_jail} get ip6.addr | awk -F"|" '{print $1}')|${VALUE}"
+        fi
+    fi
+    
     # Handle Bastille specific properties
     # Currently only 'depend' 'priority' and 'boot'
     if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
