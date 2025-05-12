@@ -38,11 +38,20 @@ usage() {
     cat << EOF
     Options:
     
-    -j | --json           List jails or sub-arg(s) in json format.
-    -x | --debug          Enable debug mode.
+    -j | --json            List jails or sub-arg(s) in json format.
+    -p | --pretty          Print JSON in columns.
+    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
+}
+
+pretty_json() {
+  sed -e 's/^  {/  {\n    /g' \
+      -e 's/,"/,\n    "/g' \
+      -e 's/}$/\n  }/g' \
+      -e 's/},/\n  },/g' \
+      -e 's/^\[\(.*\)\]$/[\n\1\n]/'
 }
 
 get_max_lengths() {
@@ -623,6 +632,7 @@ TARGET=""
 
 # Handle options.
 OPT_JSON=0
+OPT_PRETTY=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -630,6 +640,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         -j|--json)
             OPT_JSON=1
+            shift
+            ;;
+        -p|--pretty)
+            OPT_PRETTY=1
             shift
             ;;
         -x|--debug)
@@ -641,6 +655,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     a) ;;
                     j) OPT_JSON=1 ;;
+                    p) OPT_PRETTY=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
@@ -660,7 +675,11 @@ rm -rf /tmp/bastille-list-*
 if [ "$#" -eq 0 ]; then
     # List json format, otherwise list all jails
     if [ "${OPT_JSON}" -eq 1 ]; then
-        list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+        if [ "${OPT_PRETTY}" -eq 1 ]; then
+            list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}' | pretty_json
+        else
+            list_bastille | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"Type\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Release\":\"%s\",\"Tags\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10} END{print "\n]"}'
+        fi
     else
         list_bastille
     fi
@@ -673,35 +692,55 @@ if [ "$#" -eq 1 ]; then
     case "${1}" in
         -a|--all|all)
             if [ "${OPT_JSON}" -eq 1 ]; then
-                list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}'
+                if [ "${OPT_PRETTY}" -eq 1 ]; then
+                    list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}' | pretty_json
+                else
+                    list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP_Address\":\"%s\",\"Published_Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}'
+                fi
             else
                 list_all
             fi
             ;;
         ip|ips)
             if [ "${OPT_JSON}" -eq 1 ]; then
-                list_ips | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"IP Address\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                if [ "${OPT_PRETTY}" -eq 1 ]; then
+                    list_ips | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"IP Address\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
+                else
+                    list_ips | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"IP Address\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                fi
             else
                 list_ips
             fi
             ;;
         path|paths)
             if [ "${OPT_JSON}" -eq 1 ]; then
-                list_paths | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                if [ "${OPT_PRETTY}" -eq 1 ]; then
+                    list_paths | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
+                else
+                    list_paths | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                fi
             else
                 list_paths
             fi
             ;;
         rdr|port|ports)
             if [ "${OPT_JSON}" -eq 1 ]; then
-                list_ports | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Published_Ports\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                if [ "${OPT_PRETTY}" -eq 1 ]; then
+                    list_ports | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Published Ports\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
+                else
+                    list_ports | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Published Ports\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                fi
             else
                 list_ports
             fi
             ;;
         state|status)
             if [ "${OPT_JSON}" -eq 1 ]; then
-                list_state | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"State\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                if [ "${OPT_PRETTY}" -eq 1 ]; then
+                    list_state | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"State\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
+                else
+                    list_state | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"State\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                fi
             else
                 list_state
             fi
