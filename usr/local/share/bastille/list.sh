@@ -665,6 +665,9 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Clear tmp directory
+rm -rf /tmp/bastille_list_*
+
 # Perform basic list if no args
 if [ "$#" -eq 0 ]; then
     # List json format, otherwise list all jails
