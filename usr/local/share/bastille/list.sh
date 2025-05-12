@@ -250,7 +250,7 @@ get_jail_info() {
 
     # Continue if STATE doesnt match chosen options
     if [ "${OPT_STATE}" != "all" ] && [ "${JAIL_STATE}" != "${OPT_STATE}" ]; then
-        # shellcheck disable=SC2046
+        # shellcheck disable=SC2104
         continue
     fi 
 
