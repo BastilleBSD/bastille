@@ -37,9 +37,11 @@ usage() {
     error_notify "                                                [path(s)] [port(s)] [prio|priority] [state(s)] [template(s)]"
     cat << EOF
     Options:
-    
+
+    -d | --down            List stopped jails only.
     -j | --json            List jails or sub-arg(s) in json format.
     -p | --pretty          Print JSON in columns.
+    -u | --up              List running jails only.
     -x | --debug           Enable debug mode.
 
 EOF
@@ -245,6 +247,12 @@ get_jail_info() {
             JAIL_RELEASE=""
         fi
     fi
+
+    # Continue if STATE doesnt match chosen options
+    if [ "${OPT_STATE}" != "all" ] && [ "${JAIL_STATE}" != "${OPT_STATE}" ]; then
+        # shellcheck disable=SC2104
+        continue
+    fi 
 
     # Add ... if JAIL_PORTS is too long
     JAIL_PORTS_FULL="${JAIL_PORTS}"
@@ -633,10 +641,15 @@ TARGET=""
 # Handle options.
 OPT_JSON=0
 OPT_PRETTY=0
+OPT_STATE="all"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -d|--down)
+            OPT_STATE="Down"
+            shift
             ;;
         -j|--json)
             OPT_JSON=1
@@ -646,16 +659,22 @@ while [ "$#" -gt 0 ]; do
             OPT_PRETTY=1
             shift
             ;;
+        -u|--up)
+            OPT_STATE="Up"
+            shift
+            ;;
         -x|--debug)
             enable_debug
-	        shift
+	   shift
             ;;
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    a) ;;
+                    a) error_exit "[ERROR]: \"-a\" is deprecated. Use \"all\" instead." ;;
+                    d) OPT_STATE="Down" ;;
                     j) OPT_JSON=1 ;;
                     p) OPT_PRETTY=1 ;;
+                    u) OPT_STATE="Up" ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
