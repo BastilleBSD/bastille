@@ -47,6 +47,7 @@ usage() {
     -b | --backup            Retain archives on remote system.
     -d | --destroy           Destroy local jail after migration.
        | --doas              Use 'doas' instead of 'sudo'.
+    -l | --live              Migrate a running jail (ZFS only).
     -p | --password          Use password based authentication.
     -x | --debug             Enable debug mode.
 
@@ -56,6 +57,7 @@ EOF
 
 # Handle options.
 AUTO=0
+LIVE=0
 OPT_BACKUP=0
 OPT_DESTROY=0
 OPT_PASSWORD=0
@@ -81,6 +83,10 @@ while [ "$#" -gt 0 ]; do
             OPT_SU="doas"
             shift
             ;;
+        -l|--live)
+            LIVE=1
+            shift
+            ;;
         -p|--password)
             OPT_PASSWORD=1
             shift
@@ -95,6 +101,7 @@ while [ "$#" -gt 0 ]; do
                     a) AUTO=1 ;;
                     b) OPT_BACKUP=1 ;;
                     d) OPT_DESTROY=1 ;;
+                    l) LIVE=1 ;;
                     p) OPT_PASSWORD=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
@@ -107,6 +114,13 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+# Validate options
+if [ "${LIVE}" -eq 1 ]; then
+    if ! checkyesno bastille_zfs_enable; then
+        error_exit "[ERROR]: [-l|--live] can only be used with ZFS systems."
+    fi
+fi
 
 if [ "$#" -ne 2 ]; then
     usage
@@ -334,12 +348,18 @@ for _jail in ${JAILS}; do
     (
 
     # Validate jail state
-    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${_jail}"
-    else
-        info "\n[${_jail}]:"
-        error_notify "Jail is running."
-        error_continue "Use [-a|--auto] to auto-stop the jail."
+    if [ "${LIVE}" -eq 1 ]; then
+        if ! check_target_is_running "${_jail}"; then
+            error_exit "[ERROR]: [-l|--live] can only be used with a running jail."
+        fi
+    elif ! check_target_is_stopped "${_jail}"; then
+        if [ "${AUTO}" -eq 1 ]; then
+            bastille stop "${_jail}"
+        else
+            info "\n[${_jail}]:"
+            error_notify "[ERROR]: Jail is running."
+            error_exit "Use [-a|--auto] to auto-stop the jail, or [-l|--live] (ZFS only) to migrate a running jail."
+        fi
     fi
 
     info "\nAttempting to migrate '${_jail}' to '${HOST}'..."
