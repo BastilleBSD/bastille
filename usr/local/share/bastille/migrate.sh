@@ -115,6 +115,13 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Validate options
+if [ "${LIVE}" -eq 1 ]; then
+    if ! checkyesno bastille_zfs_enable; then
+        error_exit "[ERROR]: [-l|--live] can only be used with ZFS systems."
+    fi
+fi
+
 if [ "$#" -ne 2 ]; then
     usage
 fi
