@@ -16,6 +16,8 @@ to print in columns instead of rows.
                                                   [path(s)] [port(s)] [prio|priority] [state(s)] [template(s)]
     Options:
     
+    -d | --down            List stopped jails only.
     -j | --json            List jails or sub-arg(s) in json format.
-    -p | --pretty          List JSON in columns.
+    -p | --pretty          Print JSON in columns.
+    -u | --up              List running jails only.
     -x | --debug           Enable debug mode.
