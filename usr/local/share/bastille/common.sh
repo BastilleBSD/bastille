@@ -286,7 +286,7 @@ set_target_single() {
             fi
     fi
     # Exit if no jails
-    if [ -z "${TARGET}" ] && [ -z "${JAILS}" ]; then
+    if [ -z "${_TARGET}" ] && [ -z "${_JAILS}" ]; then
         exit 1
     fi
     TARGET="${_TARGET}"
