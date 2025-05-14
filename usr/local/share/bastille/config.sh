@@ -34,7 +34,7 @@
 
 
 usage() {
-    error_notify "Usage: bastille config TARGET [get|set|remove] PROPERTY VALUE"
+    error_notify "Usage: bastille config [option(s)] TARGET [get|(set|add)|remove] PROPERTY VALUE"
     cat << EOF
 	
     Options:
@@ -94,12 +94,16 @@ case "${ACTION}" in
             usage
         fi
         ;;
-    set|remove) 
+    add|set|remove) 
         ;;
     *)
-        error_exit "[ERROR]: Only set, remove and get are supported."
+        error_exit "[ERROR]: Only (add|set), get and remove are supported."
         ;;
 esac
+
+if [ "${ACTION}" = "add" ]; then
+    ACTION="set"
+fi
 
 PROPERTY="${1}"
 shift
