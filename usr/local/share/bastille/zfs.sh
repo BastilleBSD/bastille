@@ -33,9 +33,9 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille zfs TARGET [destroy_snap|df|get|set|(snap|snapshot)|usage] [key=value|date]"
-    error_notify "                           [jail pool/dataset /jail/path]"
-    error_notify "                           [unjail pool/dataset]"
+    error_notify "Usage: bastille zfs [option(s)] TARGET [destroy_snap|(df|usage)|get|set|(snap|snapshot)] [key=value|date]"
+    error_notify "                                       [jail pool/dataset /jail/path]"
+    error_notify "                                       [unjail pool/dataset]"
 
     cat << EOF
 	
