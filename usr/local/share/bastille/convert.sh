@@ -76,6 +76,10 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+    usage
+fi
+
 TARGET="${1}"
 CONVERT_RELEASE="${2}"
 
