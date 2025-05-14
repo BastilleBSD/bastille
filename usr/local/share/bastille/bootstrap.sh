@@ -209,7 +209,8 @@ bootstrap_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            error_exit "Bootstrap appears complete."
+            info "\nBootstrap appears complete!\n"
+            exit 0
         else
             info "\nFetching additional distfiles..."
         fi
