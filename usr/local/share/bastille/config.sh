@@ -105,15 +105,15 @@ if [ "${ACTION}" = "add" ]; then
     ACTION="set"
 fi
 
+PROPERTY="${1}"
+shift
+VALUE="$@"
+
 case "${PROPERTY}" in
     boot|depend|depends|prio|priority)
         BASTILLE_PROPERTY=1
         ;;
 esac
-
-PROPERTY="${1}"
-shift
-VALUE="$@"
 
 # we need jail(8) to parse the config file so it can expand variables etc
 print_jail_conf() {
