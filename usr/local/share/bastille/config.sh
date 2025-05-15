@@ -105,6 +105,12 @@ if [ "${ACTION}" = "add" ]; then
     ACTION="set"
 fi
 
+case "${PROPERTY}" in
+    boot|depend|depends|prio|priority)
+        BASTILLE_PROPERTY=1
+        ;;
+esac
+
 PROPERTY="${1}"
 shift
 VALUE="$@"
@@ -138,7 +144,6 @@ for _jail in ${JAILS}; do
     if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
 
         PROPERTY="priority"
-        BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/settings.conf"
 
         if [ "${ACTION}" = "set" ]; then
@@ -156,7 +161,6 @@ for _jail in ${JAILS}; do
     # Boot property
     elif [ "${PROPERTY}" = "boot" ]; then
 
-        BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/settings.conf"
 
         if [ "${ACTION}" = "set" ]; then
@@ -175,7 +179,6 @@ for _jail in ${JAILS}; do
     elif [ "${PROPERTY}" = "depend" ] || [ "${PROPERTY}" = "depends" ]; then
 
         PROPERTY="depend"
-        BASTILLE_PROPERTY=1
         FILE="${bastille_jailsdir}/${_jail}/settings.conf"
 
         if [ "${ACTION}" = "set" ]; then
