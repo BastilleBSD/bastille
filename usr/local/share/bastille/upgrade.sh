@@ -164,12 +164,14 @@ jail_upgrade() {
 
     # Upgrade a thin jail
     if grep -qw "${bastille_jailsdir}/${_jailname}/root/.bastille" "${bastille_jailsdir}/${_jailname}/fstab"; then
-        local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${_jailname}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
+        if [ "${_oldrelease}" = "not set" ]; then
+            _oldrelease="$(grep "${bastille_releasesdir}.*\.bastille.*nullfs.*" "${bastille_jailsdir}/${_jailname}/fstab" | awk -F"/releases/" '{print $2}' | awk '{print $1}')"
+        fi
         local _newrelease="${NEWRELEASE}"
         # Update "osrelease" entry inside fstab
         sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/fstab"
-        # Update "osrelease" inside jail.conf
-        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/jail.conf"
+        # Update "osrelease" inside jail.conf using 'bastille config'
+        bastille config ${_jailname} set osrelease ${_newrelease}
         # Start jail if AUTO=1
         if [ "${AUTO}" -eq 1 ]; then
             bastille start "${_jailname}"
@@ -185,8 +187,8 @@ jail_upgrade() {
         -f "${_freebsd_update_conf}" \
         -r "${_newrelease}" upgrade
         
-        # Update "osrelease" entry inside jail.conf
-        sed -i '' "/osrelease/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/jail.conf"
+        # Update "osrelease" inside jail.conf using 'bastille config'
+        bastille config ${_jailname} set osrelease ${_newrelease}
         warn "Please run 'bastille upgrade ${_jailname} install', restart the jail, then run 'bastille upgrade ${_jailname} install' again to finish installing updates."
     fi
 }
