@@ -164,7 +164,9 @@ jail_upgrade() {
 
     # Upgrade a thin jail
     if grep -qw "${bastille_jailsdir}/${_jailname}/root/.bastille" "${bastille_jailsdir}/${_jailname}/fstab"; then
-        local _oldrelease="$(grep osrelease ${bastille_jailsdir}/${_jailname}/jail.conf | awk -F"= " '{print $2}' | sed 's/;//g')"
+        if [ -z "${_oldrelease}" ]; then
+            _oldrelease="$(grep "${bastille_releasesdir}.*\.bastille.*nullfs.*" "${bastille_jailsdir}/${_jailname}/fstab" | awk -F"/releases/" '{print $2}' | awk '{print $1}')"
+        fi
         local _newrelease="${NEWRELEASE}"
         # Update "osrelease" entry inside fstab
         sed -i '' "/.bastille/ s|${_oldrelease}|${_newrelease}|g" "${bastille_jailsdir}/${_jailname}/fstab"
