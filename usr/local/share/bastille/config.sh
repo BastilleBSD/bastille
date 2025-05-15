@@ -82,7 +82,7 @@ bastille_root_check
 
 TARGET="${1}"
 ACTION="${2}"
-BASTILLE_PROPERTY=""
+BASTILLE_PROPERTY=0
 shift 2
 
 set_target "${TARGET}"
@@ -316,7 +316,7 @@ done
 wait
 
 # Only display this message once at the end (not for every jail). -- cwells
-if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ -z "${BASTILLE_PROPERTY}" ]; then
+if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ "${BASTILLE_PROPERTY}" -eq 0 ]; then
     info "A restart is required for the changes to be applied. See 'bastille restart'."
 fi
 
