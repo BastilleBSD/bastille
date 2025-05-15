@@ -220,7 +220,7 @@ bootstrap_release() {
         ## check if the dist files already exists then extract
         FETCH_VALIDATION="0"
         if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            info "Extracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz..."
+            info "\nExtracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz..."
             if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
                 ## silence motd at container login
                 touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
