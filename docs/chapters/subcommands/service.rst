@@ -17,7 +17,7 @@ inside the jail(s).
 .. code-block:: shell
 
   ishmael ~ # bastille service help
-  Usage: bastille service [options(s)] TARGET SERVICE_NAME ACTION
+  Usage: bastille service [option(s)] TARGET SERVICE_NAME ACTION
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
