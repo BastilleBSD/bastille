@@ -306,22 +306,27 @@ else
 fi
 }
 
-# Configure ZFS
-configure_zfs() {
-    if [ ! "$(kldstat -m zfs)" ]; then
-        info "ZFS module not loaded; skipping..."
-    elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
-        info "ZFS has already been configured!"
-    else
-        ## attempt to determine bastille_zroot from `zpool list`
-        bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
-        if [ "$(echo "${bastille_zroot}" | wc -l)" -gt 1 ]; then
-          error_notify "Error: Multiple ZFS pools available:\n${bastille_zroot}"
-          error_notify "Set desired pool using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_zpool=ZPOOL_NAME\""
-          error_exit "Don't forget to also enable ZFS using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_enable=YES\""
+# Configure storage
+configure_storage() {
+    if mount | grep "zfs"; then
+        if [ ! "$(kldstat -m zfs)" ]; then
+            info "ZFS module not loaded; skipping..."
+        elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
+            info "ZFS has already been configured!"
+        else
+            ## attempt to determine bastille_zroot from `zpool list`
+            bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
+            if [ "$(echo "${bastille_zroot}" | wc -l)" -gt 1 ]; then
+              error_notify "Error: Multiple ZFS pools available:\n${bastille_zroot}"
+              error_notify "Set desired pool using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_zpool=ZPOOL_NAME\""
+              error_exit "Don't forget to also enable ZFS using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_enable=YES\""
+            fi
+            sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_enable=YES
+            sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${bastille_zroot}"
+            info "\nUsing ZFS filesystem."
         fi
-        sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_enable=YES
-        sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${bastille_zroot}"
+    elif mount | grep "ufs"; then
+        info "\nUsing UFS filesystem."
     fi
 }
 
@@ -331,7 +336,7 @@ if [ $# -eq 0 ]; then
     configure_filesystem
     configure_loopback_interface
     configure_pf
-    configure_zfs
+    configure_storage
     info "\nBastille has successfully been configured.\n"
     exit 0
 fi
@@ -404,7 +409,7 @@ case "$1" in
         esac
         ;;
     -z|zfs|storage)
-        configure_zfs
+        configure_storage
         ;;
     -v|vnet)
         configure_vnet
