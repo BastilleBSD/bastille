@@ -42,14 +42,10 @@ Any command that supports multiple targets, also supports parallel mode. This me
 Bastille will run the command on multiple jails at a single time, depending on the value
 given.
 
-
-To use parallel mode, run ``bastille -p 4 pkg ALL update``, for exapmle, to start
-updating pacakges in all jails, 4 processes at a time.
+To use parallel mode, run ``bastille -p 4 pkg ALL update``, for example, to start
+updating packages in all jails, 4 processes at a time.
 
 Note that the ``-p`` option should follow the main ``bastille`` command, and not the sub-command.
-
-To run an unlimited number of processes, simply set this value to 0 when running
-a command.
 
 Examples: Containers
 --------------------
