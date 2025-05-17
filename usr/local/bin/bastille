@@ -47,8 +47,8 @@ bastille_conf_check() {
         if echo "${_args}" | grep -Eosqw "setup"; then
             cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
         else
-            echo "[ERROR]: No config file found."
-            echo "Please run 'bastille setup' to configure Bastille."
+            echo -e "\n[ERROR]: No config file found!"
+            echo -e "Please run 'bastille setup' to configure Bastille.\n"
             exit 1
         fi
     fi
