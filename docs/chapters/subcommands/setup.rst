@@ -12,53 +12,68 @@ Below is a list of available options that can be used with the ``setup`` command
 
 .. code-block:: shell
 
-  ishmael ~ # bastille setup -h        ## display setup help
-  ishmael ~ # bastille setup -b        ## configure bridge interface
-  ishmael ~ # bastille setup -f        ## configure filesystem/structure
-  ishmael ~ # bastille setup -l        ## configure loopback interface
-  ishmael ~ # bastille setup -p        ## configure default pf firewall
-  ishmael ~ # bastille setup -s        ## configure shared interface
-  ishmael ~ # bastille setup -v        ## configure VNET
-  ishmael ~ # bastille setup -z        ## configure ZFS storage
-  ishmael ~ # bastille setup           ## configure -l -p and -z
+  ishmael ~ # bastille setup -h
+  Usage: bastille setup [option(s)] [bridge]
+                                    [filesystem]
+                                    [loopback]
+                                    [pf|firewall]
+                                    [shared]
+                                    [vnet]
+                                    [storage]
+	
+    Options:
 
-The ``-l|loopback`` option will configure a loopback interface called ``bastille0`` that
+    -y | --yes             Assume always yes on prompts.
+    -x | --debug           Enable debug mode.
+
+The ``loopback`` option will configure a loopback interface called ``bastille0`` that
 will be used as a default when not specifying an interface with the ``create`` command.
 
-The ``-s|shared`` option will configure the interface you choose to also be used as the default
+The ``shared`` option will configure the interface you choose to also be used as the default
 when not specifying an interface with the ``create`` command.
 
 Please note. You CANNOT run both a loopback and a shared interface with Bastille. Only one
 should be configured. If you configure one, it will disable the other.
 
-The ``-l|loopback`` option is the default, and is enough for most use cases. It is simply an ``lo`` interface
+The ``loopback`` option is the default, and is enough for most use cases. It is simply an ``lo`` interface
 that jails will get linked to on creation. It is not attached to any specific interface. This is the simplest
-networking option. The ``-l|loopback`` and ``-s|shared`` options are only for cases where the ``interface``
+networking option. The ``loopback`` and ``shared`` options are only for cases where the ``interface``
 is not specified during the ``create`` command. If an interface is specified, these options have no effect. 
 Instead, the specified interface will be used.
 
-The ``-f|--filesystem`` option is to ensure the proper datasets/directories are in place
+The ``filesystem`` option is to ensure the proper datasets/directories are in place
 for using Bastille. This should only have to be run once on a new system.
 
-The ``-s|shared`` option is for cases where you want an actual interface to use with bastille as
+The ``shared`` option is for cases where you want an actual interface to use with bastille as
 opposed to a loopback. Jails will be linked to the shared interface on creation.
 
-The ``-p|pf|firewall`` option will configure the pf firewall by enabling the service and creating the
+The ``pf|firewall`` option will configure the pf firewall by enabling the service and creating the
 default ``pf.conf`` file. Once this is done, you can use the ``rdr`` command to forward traffic into
 a jail.
 
-The ``-z|zfs|storage`` option will attempt to configure a pool and dataset for Bastille, but only
-if ZFS in enabled on your system.
+The ``storage`` option will attempt to configure a pool and dataset for Bastille, but only
+if ZFS in enabled on your system. Otherwise it will use UFS.
 
-The ``-v|vnet`` option will configure your system for use with VNET ``-V`` jails.
+The ``vnet`` option will configure your system for use with VNET ``-V`` jails.
 
-The ``-b|bridge`` options will attempt to configure a bridge interface for use with bridged VNET
+The ``bridge`` options will attempt to configure a bridge interface for use with bridged VNET
 ``-B`` jails.
 
-Running ``bastille setup`` without any options will attempt to auto-configure the ``-f``, ``-l``, ``-p`` and
-``-z`` options.
+Running ``bastille setup`` without any options will attempt to auto-configure the ``filesystem``, ``loopback``, ``firewall`` and
+``storage`` options.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille setup help
-  Usage: bastille setup [-b|bridge] [-f|--filesystem] [-l|loopback] [-p|pf|firewall] [-s|shared] [-v|vnet] [-z|zfs|storage]
+  ishmael ~ # bastille setup -h
+  Usage: bastille setup [option(s)] [bridge]
+                                    [filesystem]
+                                    [loopback]
+                                    [pf|firewall]
+                                    [shared]
+                                    [vnet]
+                                    [storage]
+	
+    Options:
+
+    -y | --yes             Assume always yes on prompts.
+    -x | --debug           Enable debug mode.
