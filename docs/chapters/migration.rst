@@ -46,6 +46,13 @@ It is possible, with the right configuration, for jails to start and work normal
 systems, it will be necessary to edit the ``jail.conf`` file of the migrated jail to get it working
 properly.
 
+Using ``-l|--live`` mode (ZFS only) will leave the local jail running, and the remote jail stopped.
+
+Using ``-a|--auto`` mode will stop the local jail, and start the remote jail.
+
+Using the ``-l|--live`` and ``-a|--auto`` options together will migrate the jail while it is running,
+then stop the local jail, and start the remote jail.
+
 You can optionally set ``-d|--destroy`` to have Bastille destroy the old jail on completion.
 
 You can also set ``-b|--backup`` to retain the archives remotely. They will be copied into
