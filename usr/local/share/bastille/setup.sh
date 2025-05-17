@@ -33,13 +33,13 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille setup [option(s)] [-b|bridge]"
-    error_notify "                                  [-f|filesystem]"
-    error_notify "                                  [-l|loopback]"
-    error_notify "                                  [-p|pf|firewall]"
-    error_notify "                                  [-s|shared]"
-    error_notify "                                  [-v|vnet]"
-    error_notify "                                  [-z|zfs|storage]"
+    error_notify "Usage: bastille setup [option(s)] [bridge]"
+    error_notify "                                  [filesystem]"
+    error_notify "                                  [loopback]"
+    error_notify "                                  [pf|firewall]"
+    error_notify "                                  [shared]"
+    error_notify "                                  [vnet]"
+    error_notify "                                  [storage]"
     cat << EOF
 	
     Options:
@@ -388,14 +388,14 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Handle options.
-case "$1" in
-    -f|filesystem)
+case "${1}" in
+    filesystem)
         configure_filesystem
         ;;
-    -p|pf|firewall)
+    pf|firewall)
         configure_pf
         ;;
-    -n|netgraph)
+    netgraph)
         if [ "${AUTO_YES}" -eq 1 ]; then
             configure_vnet
             configure_netgraph
@@ -419,7 +419,7 @@ case "$1" in
             esac
         fi
         ;;
-    -l|loopback)
+    loopback)
         if [ "${AUTO_YES}" -eq 1 ]; then
             configure_loopback_interface
         else
@@ -441,7 +441,7 @@ case "$1" in
             esac
         fi
         ;;
-    -s|shared)
+    shared)
         if [ "${AUTO_YES}" -eq 1 ]; then
             configure_shared_interface
         else
@@ -463,13 +463,13 @@ case "$1" in
             esac
         fi
         ;;
-    -z|zfs|storage)
+    storage)
         configure_storage
         ;;
-    -v|vnet)
+    vnet)
         configure_vnet
         ;;
-    -b|bridge)
+    bridge)
         if [ "${AUTO_YES}" -eq 1 ]; then
             error_exit "[ERROR]: [-b|bridge] does not support [-y|--yes]."
         else
