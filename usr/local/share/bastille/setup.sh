@@ -390,9 +390,9 @@ configure_storage() {
 if [ $# -eq 0 ]; then
     sysrc bastille_enable=YES
     configure_filesystem
+    configure_storage
     configure_loopback_interface
     configure_pf
-    configure_storage
     info "\nBastille has successfully been configured.\n"
     exit 0
 fi
