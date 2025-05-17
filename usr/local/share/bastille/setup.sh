@@ -391,7 +391,7 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-case "${1}" in
+case "${OPT_CONFIG}" in
     filesystem)
         configure_filesystem
         ;;
