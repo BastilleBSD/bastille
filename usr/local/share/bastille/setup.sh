@@ -51,10 +51,45 @@ EOF
     exit 1
 }
 
+# Handle options.
+AUTO_YES=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -y|--yes)
+            AUTO_YES=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    y) AUTO_YES=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
 # Check for too many args
 if [ "$#" -gt 1 ]; then
     usage
 fi
+
+OPT_CONFIG="${1}"
+
+bastille_root_check
 
 configure_filesystem() {
 
@@ -356,38 +391,6 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-# Handle options.
-AUTO_YES=0
-while [ "$#" -gt 0 ]; do
-    case "${1}" in
-        -h|--help|help)
-            usage
-            ;;
-        -y|--yes)
-            AUTO_YES=1
-            shift
-            ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
-        -*) 
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
-                    y) AUTO_YES=1 ;;
-                    x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
-                esac
-            done
-            shift
-            ;;
-        *)
-            break
-            ;;
-    esac
-done
-
-# Handle options.
 case "${1}" in
     filesystem)
         configure_filesystem
