@@ -520,7 +520,7 @@ create_jail() {
                 cp -a "${bastille_releasesdir}/${RELEASE}/" "${bastille_jail_path}"
                 if [ "$?" -ne 0 ]; then
                     ## notify and clean stale files/directories
-                    bastille destroy -af "${NAME}"
+                    bastille destroy -afy "${NAME}"
                     error_exit "[ERROR]: Failed to copy release files. Please retry create!"
                 fi
             fi
@@ -600,7 +600,7 @@ create_jail() {
     # Exit if jail was not started, except for empty jails
     if [ -z "${EMPTY_JAIL}" ]; then
         if ! check_target_is_running "${NAME}"; then
-            bastille destroy -af "${NAME}"
+            bastille destroy -afy "${NAME}"
             error_exit "[ERROR]: Failed to create jail: ${NAME}"
         fi
     fi
