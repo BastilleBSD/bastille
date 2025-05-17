@@ -358,7 +358,7 @@ fi
 
 # Configure storage
 configure_storage() {
-    if mount | grep "zfs"; then
+    if mount | grep "zfs" >/dev/null 2>/dev/null; then
         if [ ! "$(kldstat -m zfs)" ]; then
             info "ZFS module not loaded; skipping..."
         elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
@@ -375,7 +375,7 @@ configure_storage() {
             sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${bastille_zroot}"
             info "\nUsing ZFS filesystem."
         fi
-    elif mount | grep "ufs"; then
+    elif mount | grep "ufs" >/dev/null 2>/dev/null; then
         info "\nUsing UFS filesystem."
     fi
 }
