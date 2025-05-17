@@ -295,7 +295,7 @@ migrate_jail() {
 
     # Destroy old jail if OPT_DESTROY=1
     if [ "${OPT_DESTROY}" -eq 1 ]; then
-        bastille destroy -af "${_jail}"
+        bastille destroy -afy "${_jail}"
     fi
 
     # Remove archives
