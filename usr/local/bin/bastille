@@ -34,25 +34,23 @@ PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 BASTILLE_VERSION=0.14.20250420
 
-## check for config existence
+# Validate config file
+# Copy default when 'setup' is called
+# so we can skip to the setup command
 bastille_conf_check() {
-    if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-        echo "[INFO] Configuration file not found. Do you want to create it with default values? [y/N]"
-        read  answer
-            case "${answer}" in
-                [Nn][Oo]|[Nn]|"")
-                    echo "[INFO] No configuration file has been generated. Exiting."
-                    exit
-                ;;
-                [Yy][Ee][Ss]|[Yy])
-                    cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
-                    echo "[INFO] Configuration file has been generated. Continuing with default values"
-                ;;
-                *)
-                  echo "[ERROR] Invalid option. Please answer with 'y' or 'N'."
-                  exit 1
-                ;;
-            esac
+
+    local _config="${1}"
+    shift 1
+    local _args="$@"
+
+    if [ ! -r "${_config}" ]; then
+        if echo "${_args}" | grep -Eosqw "setup"; then
+            cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+        else
+            echo -e "\n[ERROR]: No config file found!"
+            echo -e "Please run 'bastille setup' to configure Bastille.\n"
+            exit 1
+        fi
     fi
 }
 
@@ -127,9 +125,6 @@ EOF
     exit 1
 }
 
-bastille_conf_check
-bastille_perms_check
-
 if [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -z "${BASTILLE_CONFIG}" ]; then
         BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
@@ -141,7 +136,11 @@ if [ -z "${BASTILLE_CONFIG}" ]; then
         echo "Not a valid config file: ${BASTILLE_CONFIG}"
         exit 1
     fi
-fi   
+fi
+
+# Pass BASTILLE_CONFIG and ARGS to config function
+bastille_conf_check "${BASTILLE_CONFIG}" "$@"
+bastille_perms_check
 
 # Load common.sh after setting BASTILLE_CONFIG
 . /usr/local/share/bastille/common.sh

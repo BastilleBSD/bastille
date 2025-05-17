@@ -33,13 +33,63 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_exit "Usage: bastille setup [-b|bridge] [-f|--filesystem] [-l|loopback] [-p|pf|firewall] [-s|shared] [-v|vnet] [-z|zfs|storage]"
+    error_notify "Usage: bastille setup [option(s)] [bridge]"
+    error_notify "                                  [filesystem]"
+    error_notify "                                  [loopback]"
+    error_notify "                                  [pf|firewall]"
+    error_notify "                                  [shared]"
+    error_notify "                                  [vnet]"
+    error_notify "                                  [storage]"
+    cat << EOF
+	
+    Options:
+
+    -y | --yes             Assume always yes on prompts.
+    -x | --debug           Enable debug mode.
+
+EOF
+    exit 1
 }
+
+# Handle options.
+AUTO_YES=0
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -y|--yes)
+            AUTO_YES=1
+            shift
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
+        -*) 
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    y) AUTO_YES=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
+                esac
+            done
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 # Check for too many args
 if [ "$#" -gt 1 ]; then
     usage
 fi
+
+OPT_CONFIG="${1}"
+
+bastille_root_check
 
 configure_filesystem() {
 
@@ -57,7 +107,7 @@ configure_filesystem() {
         fi
         chmod 0750 "${bastille_prefix}"
     # Make sure the dataset is mounted in the proper place
-    elif [ -d "${bastille_prefix}" ]; then
+    elif [ -d "${bastille_prefix}" ] && checkyesno bastille_zfs_enable; then
         if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" >/dev/null; then
             zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
         elif [ "$(zfs get -H -o value mountpoint ${bastille_zfs_zpool}/${bastille_zfs_prefix})" != "${bastille_prefix}" ]; then
@@ -136,8 +186,14 @@ configure_filesystem() {
 # Configure netgraph
 configure_netgraph() {
     if [ ! "$(kldstat -m netgraph)" ]; then
+        # Ensure jib script is in place for VNET jails
+        if [ ! "$(command -v jng)" ]; then
+            if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
+                install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
+            fi
+        fi
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
-        info "Configuring netgraph modules..."
+        info "\nConfiguring netgraph modules..."
         kldload netgraph
         kldload ng_netflow
         kldload ng_ksocket
@@ -152,25 +208,25 @@ configure_netgraph() {
         sysrc -f /boot/loader.conf ng_bridge_load="YES"
         sysrc -f /boot/loader.conf ng_eiface_load="YES"
         sysrc -f /boot/loader.conf ng_socket_load="YES"
-        info "Netgraph has been successfully configured!"
+        info "\nNetgraph has been successfully configured!"
     else
-        info "Netgraph has already been configured!"
+        info "\nNetgraph has already been configured!"
     fi
 }
 
 # Configure bastille loopback network interface
 configure_loopback_interface() {
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_loopback)" ] || ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
-        info "Configuring bastille0 loopback interface"
+        info "\nConfiguring bastille0 loopback interface"
         sysrc cloned_interfaces+=lo1
         sysrc ifconfig_lo1_name="bastille0"
-        info "Bringing up new interface: [bastille0]"
+        info "\nBringing up new interface: [bastille0]"
         service netif cloneup
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback="bastille0"
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared=""
-        info "Loopback interface successfully configured: [bastille0]"
+        info "\nLoopback interface successfully configured: [bastille0]"
     else
-        info "Loopback interface has already been configured: [bastille0]"
+        info "\nLoopback interface has already been configured: [bastille0]"
     fi
 }
 
@@ -181,8 +237,8 @@ configure_shared_interface() {
         error_exit "Unable to detect interfaces, exiting."
     fi
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)" ]; then
-        info "Attempting to configure shared interface for bastille..."
-        info "Listing available interfaces..."
+        info "\nAttempting to configure shared interface for bastille..."
+        info "\nListing available interfaces..."
         for _if in ${_interface_list}; do
             echo "[${_interface_count}] ${_if}"
             _if_num="${_if_num} [${_interface_count}]${_if}"
@@ -200,9 +256,9 @@ configure_shared_interface() {
         sysrc cloned_interfaces-="lo1"
         ifconfig bastille0 destroy 2>/dev/null
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${_interface_select}"
-        info "Shared interface successfully configured: [${_interface_select}]"
+        info "\nShared interface successfully configured: [${_interface_select}]"
     else
-        info "Shared interface has already been configured: [$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)]"
+        info "\nShared interface has already been configured: [$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)]"
     fi
 
 }
@@ -215,8 +271,8 @@ configure_bridge() {
         error_exit "Unable to detect interfaces, exiting."
     fi
     if ! ifconfig -g bridge | grep -oqw "${_bridge_name}"; then
-        info "Configuring ${_bridge_name} bridge interface..."
-        info "Listing available interfaces..."
+        info "\nConfiguring ${_bridge_name} bridge interface..."
+        info "\nListing available interfaces..."
         for _if in ${_interface_list}; do
             if ifconfig -g bridge | grep -oqw "${_if}" || ifconfig -g lo | grep -oqw "${_if}"; then
                 continue
@@ -241,9 +297,9 @@ configure_bridge() {
         sysrc ifconfig_bridge0_name="bastillebridge"
         sysrc ifconfig_bastillebridge="addm ${_interface_select} up"
 
-        info "Bridge interface successfully configured: [${_bridge_name}]"
+        info "\nBridge interface successfully configured: [${_bridge_name}]"
     else
-        info "Bridge has alread been configured: [${_bridge_name}]"
+        info "\nBridge has alread been configured: [${_bridge_name}]"
     fi
 }
 
@@ -256,7 +312,7 @@ configure_vnet() {
     fi
     # Create default VNET ruleset
     if [ ! -f /etc/devfs.rules ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
-        info "Creating bastille_vnet devfs.rules"
+        info "\nCreating bastille_vnet devfs.rules"
         cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
 add include \$devfsrules_hide_all
@@ -267,7 +323,7 @@ add include \$devfsrules_jail_vnet
 add path 'bpf*' unhide
 EOF
     else
-        info "VNET has already been configured!"
+        info "\nVNET has already been configured!"
     fi
 }
 
@@ -278,8 +334,8 @@ if [ ! -f "${bastille_pf_conf}" ]; then
     # shellcheck disable=SC3043
     local ext_if
     ext_if=$(netstat -rn | awk '/default/ {print $4}' | head -n1)
-    info "Determined default network interface: ($ext_if)"
-    info "${bastille_pf_conf} does not exist: creating..."
+    info "\nDetermined default network interface: ($ext_if)"
+    echo "${bastille_pf_conf} does not exist: creating..."
 
     ## creating pf.conf
     cat << EOF > "${bastille_pf_conf}"
@@ -302,17 +358,17 @@ EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
-    info "Firewall (pf) has already been configured!"
+    info "\nFirewall (pf) has already been configured!"
 fi
 }
 
 # Configure storage
 configure_storage() {
-    if mount | grep "zfs"; then
+    if mount | grep "zfs" >/dev/null 2>/dev/null; then
         if [ ! "$(kldstat -m zfs)" ]; then
-            info "ZFS module not loaded; skipping..."
+            info "\nZFS module not loaded; skipping..."
         elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
-            info "ZFS has already been configured!"
+            info "\nZFS has already been configured!"
         else
             ## attempt to determine bastille_zroot from `zpool list`
             bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
@@ -325,7 +381,7 @@ configure_storage() {
             sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${bastille_zroot}"
             info "\nUsing ZFS filesystem."
         fi
-    elif mount | grep "ufs"; then
+    elif mount | grep "ufs" >/dev/null 2>/dev/null; then
         info "\nUsing UFS filesystem."
     fi
 }
@@ -341,82 +397,94 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-# Handle options.
-case "$1" in
-    -h|--help|help)
-        usage
-        ;;
-    -f|--filesystem)
+case "${OPT_CONFIG}" in
+    filesystem)
         configure_filesystem
         ;;
-    -p|pf|firewall)
+    pf|firewall)
         configure_pf
         ;;
-    -n|netgraph)
-        warn "[WARNING]: Bastille only allows using either 'if_bridge' or 'netgraph'"
-        warn "as VNET network options. You CANNOT use both on the same system. If you have"
-        warn "already started using bastille with 'if_bridge' do not continue."
-        # shellcheck disable=SC3045
-        read -p "Do you really want to continue setting up netgraph for Bastille? [y|n]:" _answer
-        case "${_answer}" in
-            [Yy]|[Yy][Ee][Ss])
-                configure_vnet
-                configure_netgraph
-                ;;
-            [Nn]|[Nn][Oo])
-                error_exit "Netgraph setup cancelled."
-                ;;
-            *)
-                error_exit "Invalid selection. Please answer 'y' or 'n'"
-                ;;
-        esac
+    netgraph)
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            configure_vnet
+            configure_netgraph
+        else
+            warn "[WARNING]: Bastille only allows using either 'if_bridge' or 'netgraph'"
+            warn "as VNET network options. You CANNOT use both on the same system. If you have"
+            warn "already started using bastille with 'if_bridge' do not continue."
+            # shellcheck disable=SC3045
+            read -p "Do you really want to continue setting up netgraph for Bastille? [y|n]:" _answer
+            case "${_answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    configure_vnet
+                    configure_netgraph
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "Netgraph setup cancelled."
+                    ;;
+                *)
+                    error_exit "Invalid selection. Please answer 'y' or 'n'"
+                    ;;
+            esac
+        fi
         ;;
-
-    -l|loopback)
-        warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-        warn "interface to be configured ant one time. If you continue, the 'shared'"
-        warn "interface will be disabled, and the 'loopback' interface will be used as default."
-        # shellcheck disable=SC3045
-        read -p "Do you really want to continue setting up the loopback interface? [y|n]:" _answer
-        case "${_answer}" in
-            [Yy]|[Yy][Ee][Ss])
-                configure_loopback_interface
-                ;;
-            [Nn]|[Nn][Oo])
-                error_exit "Loopback interface setup cancelled."
-                ;;
-            *)
-                error_exit "Invalid selection. Please answer 'y' or 'n'"
-                ;;
-        esac
+    loopback)
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            configure_loopback_interface
+        else
+            warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
+            warn "interface to be configured ant one time. If you continue, the 'shared'"
+            warn "interface will be disabled, and the 'loopback' interface will be used as default."
+            # shellcheck disable=SC3045
+            read -p "Do you really want to continue setting up the loopback interface? [y|n]:" _answer
+            case "${_answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    configure_loopback_interface
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "Loopback interface setup cancelled."
+                    ;;
+                *)
+                    error_exit "Invalid selection. Please answer 'y' or 'n'"
+                    ;;
+            esac
+        fi
         ;;
-    -s|shared)
-        warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-        warn "interface to be configured at one time. If you continue, the 'loopback'"
-        warn "interface will be disabled, and the shared interface will be used as default."
-        # shellcheck disable=SC3045
-        read -p "Do you really want to continue setting up the shared interface? [y|n]:" _answer
-        case "${_answer}" in
-            [Yy]|[Yy][Ee][Ss])
-                configure_shared_interface
-                ;;
-            [Nn]|[Nn][Oo])
-                error_exit "Shared interface setup cancelled."
-                ;;
-            *)
-                error_exit "Invalid selection. Please answer 'y' or 'n'"
-                ;;
-        esac
+    shared)
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            error_exit "[ERROR]: 'shared' does not support [-y|--yes]."
+        else
+            warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
+            warn "interface to be configured at one time. If you continue, the 'loopback'"
+            warn "interface will be disabled, and the shared interface will be used as default."
+            # shellcheck disable=SC3045
+            read -p "Do you really want to continue setting up the shared interface? [y|n]:" _answer
+            case "${_answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    configure_shared_interface
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "Shared interface setup cancelled."
+                    ;;
+                *)
+                    error_exit "Invalid selection. Please answer 'y' or 'n'"
+                    ;;
+            esac
+        fi
         ;;
-    -z|zfs|storage)
+    storage)
         configure_storage
         ;;
-    -v|vnet)
+    vnet)
         configure_vnet
         ;;
-    -b|bridge)
-        configure_vnet
-        configure_bridge
+    bridge)
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            error_exit "[ERROR]: 'bridge' does not support [-y|--yes]."
+        else
+            configure_vnet
+            configure_bridge
+        fi
         ;;
     *)
         error_exit "[ERROR]: Unknown option: \"${1}\""
