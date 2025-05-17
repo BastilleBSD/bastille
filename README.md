@@ -14,7 +14,7 @@ Bastille Compared to Other Jail Managers
 | OCI Compliant | No | Yes | No | No | No |
 | Writen In | Bourne Shell | Bourne Shell, C | Bourne Shell, Rust | Bourne Shell | Bourne Shell, Python |
 | Dependencies | None | C | Rust | None | Python |
-| Jail Types | vnet, bridged vnet, thin, thick, empty, clone, Linux | clone, copy, tiny, thin, thick, empty, linux+debootstrap | thick | basejail | clone, basejail, template, empty, thick |
+| Jail Types | clone, copy, thin, thick, empty, linux | clone, copy, tiny, thin, thick, empty, linux+debootstrap | thick | basejail | clone, basejail, template, empty, thick |
 | Jail dependency | Yes | Yes | Yes | No | Yes |
 | Import/Export | Yes | Yes | Yes | Yes | Yes |
 | Boot Order Priorities| Yes | Yes | No | Yes using `rcorder` | Yes |
@@ -91,10 +91,10 @@ Usage:
 Available Commands:
   bootstrap   Bootstrap a release for jail base.
   clone       Clone an existing jail.
-  cmd         Execute arbitrary command on targeted jail(s).
+  cmd         Execute arbitrary command(s) in targeted jail(s).
   config      Get, set or remove a config value for the targeted jail(s).
   console     Console into a jail.
-  convert     Convert thin jail to thick jail, or convert a jail to a custom release.
+  convert     Convert thin jail to thick jai. Convert jail to custom release base.
   cp          cp(1) files from host to targeted jail(s).
   create      Create a jail.
   destroy     Destroy a jail or release.
@@ -115,7 +115,7 @@ Available Commands:
   rename      Rename a jail.
   restart     Restart a running jail.
   service     Manage services within targeted jail(s).
-  setup       Attempt to auto-configure network, firewall and storage and more...
+  setup       Attempt to auto-configure network, firewall, storage and more...
   start       Start a stopped jail.
   stop        Stop a running jail.
   sysrc       Safely edit rc files within targeted jail(s).
