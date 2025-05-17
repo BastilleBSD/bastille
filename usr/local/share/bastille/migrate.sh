@@ -301,8 +301,11 @@ migrate_jail() {
     # Remove archives
     migrate_cleanup "${_jail}" "${_user}" "${_host}" "${_port}"
 
-    # Start new jail if AUTO=1
-    if [ "${AUTO}" -eq 1 ]; then
+    # Reconcile LIVE and AUTO, ensure only one side is running
+    if [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 0 ]; then
+        ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} bastille start "${_jail}"
+    elif [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
+        bastille stop "${_jail}"
         ${_sshpass_cmd} ssh -p ${_port} ${_opt_ssh_key} ${_user}@${_host} ${OPT_SU} bastille start "${_jail}"
     fi
 }
