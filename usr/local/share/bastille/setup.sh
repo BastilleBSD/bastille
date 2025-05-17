@@ -446,7 +446,7 @@ case "${1}" in
         ;;
     shared)
         if [ "${AUTO_YES}" -eq 1 ]; then
-            configure_shared_interface
+            error_exit "[ERROR]: 'shared' does not support [-y|--yes]."
         else
             warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
             warn "interface to be configured at one time. If you continue, the 'loopback'"
@@ -474,7 +474,7 @@ case "${1}" in
         ;;
     bridge)
         if [ "${AUTO_YES}" -eq 1 ]; then
-            error_exit "[ERROR]: [-b|bridge] does not support [-y|--yes]."
+            error_exit "[ERROR]: 'bridge' does not support [-y|--yes]."
         else
             configure_vnet
             configure_bridge
