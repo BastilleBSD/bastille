@@ -34,7 +34,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille tags TARGET [add|delete|list] [tag1,tag2]"
+    error_notify "Usage: bastille tags [option(s)] TARGET [add|delete|list] [tag1,tag2]"
     cat << EOF
 
     Options:
@@ -48,9 +48,9 @@ EOF
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	    -h|--help|help)
-	        usage
-	        ;;
+        -h|--help|help)
+            usage
+            ;;
         -x|--debug)
             enable_debug
             shift
