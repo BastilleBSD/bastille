@@ -81,7 +81,7 @@ bootstrap_directories() {
     if [ ! -d "${bastille_prefix}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
             fi
         else
             mkdir -p "${bastille_prefix}"
@@ -90,9 +90,9 @@ bootstrap_directories() {
     # Make sure the dataset is mounted in the proper place
     elif [ -d "${bastille_prefix}" ] && checkyesno bastille_zfs_enable; then
         if ! zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}" >/dev/null; then
-            zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
+            zfs create ${bastille_zfs_options} -o mountpoint="${bastille_prefix_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
         elif [ "$(zfs get -H -o value mountpoint ${bastille_zfs_zpool}/${bastille_zfs_prefix})" != "${bastille_prefix}" ]; then
-            zfs set mountpoint="${bastille_prefix}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
+            zfs set mountpoint="${bastille_prefix_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}"
         fi
     fi
 
@@ -100,7 +100,7 @@ bootstrap_directories() {
     if [ ! -d "${bastille_backupsdir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_backupsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/backups"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_backupsdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/backups"
             fi
         else
             mkdir -p "${bastille_backupsdir}"
@@ -112,10 +112,10 @@ bootstrap_directories() {
     if [ ! -d "${bastille_cachedir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache"
                 # Don't create unused/stale cache/RELEASE directory on Linux jails creation.
                 if [ -z "${NOCACHEDIR}" ]; then
-                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir_mountpoint}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
                 fi
             fi
         else
@@ -131,7 +131,7 @@ bootstrap_directories() {
         if [ -z "${NOCACHEDIR}" ]; then
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
-                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
+                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_cachedir_mountpoint}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
                 fi
             else
                 mkdir -p "${bastille_cachedir}/${RELEASE}"
@@ -143,7 +143,7 @@ bootstrap_directories() {
     if [ ! -d "${bastille_jailsdir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_jailsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_jailsdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails"
             fi
         else
             mkdir -p "${bastille_jailsdir}"
@@ -154,7 +154,7 @@ bootstrap_directories() {
     if [ ! -d "${bastille_logsdir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_logsdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/logs"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_logsdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/logs"
             fi
         else
             mkdir -p "${bastille_logsdir}"
@@ -165,7 +165,7 @@ bootstrap_directories() {
     if [ ! -d "${bastille_templatesdir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_templatesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_templatesdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates"
             fi
         else
             mkdir -p "${bastille_templatesdir}"
@@ -176,8 +176,8 @@ bootstrap_directories() {
     if [ ! -d "${bastille_releasesdir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases"
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir_mountpoint}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
             fi
         else
             mkdir -p "${bastille_releasesdir}/${RELEASE}"
@@ -186,7 +186,7 @@ bootstrap_directories() {
     elif [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_releasesdir_mountpoint}/${RELEASE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
             fi
        else
            mkdir -p "${bastille_releasesdir}/${RELEASE}"

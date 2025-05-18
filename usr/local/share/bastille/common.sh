@@ -295,6 +295,34 @@ set_target_single() {
     export JAILS
 }
 
+set_zfs_mountpoints() {
+
+    # We have to do this if ALTROOT is enabled/present
+    local _altroot="$(zpool get -Ho value altroot ${bastille_zfs_zpool})"
+
+    if [ "${_altroot}" != "-" ]; then
+
+        # Set mountpoints to *dir*
+        bastille_prefix_mountpoint="${bastille_prefix}"
+        bastille_backupsdir_mountpoint="${bastille_backupsdir}"
+        bastille_cachedir_mountpoint="${bastille_cachedir}"
+        bastille_jailsdir_mountpoint="${bastille_jailsdir}"
+        bastille_releasesdir_mountpoint="${bastille_releasesdir}"
+        bastille_templatesdir_mountpoint="${bastille_templatesdir}"
+        bastille_logsdir_mountpoint="${bastille_logsdir}"  
+
+        # Set *dir* to include ALTROOT
+        bastille_prefix="${_altroot}${bastille_prefix}"
+        bastille_backupsdir="${_altroot}${bastille_backupsdir}"
+        bastille_cachedir="${_altroot}${bastille_cachedir}"
+        bastille_jailsdir="${_altroot}${bastille_jailsdir}"
+        bastille_releasesdir="${_altroot}${bastille_releasesdir}"
+        bastille_templatesdir="${_altroot}${bastille_templatesdir}"
+        bastille_logsdir="${_altroot}${bastille_logsdir}" 
+
+    fi
+}
+
 target_all_jails() {
     local _JAILS="$(bastille list jails)"
     JAILS=""

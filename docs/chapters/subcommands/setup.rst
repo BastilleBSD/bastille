@@ -14,7 +14,6 @@ Below is a list of available options that can be used with the ``setup`` command
 
   ishmael ~ # bastille setup -h
   Usage: bastille setup [option(s)] [bridge]
-                                    [filesystem]
                                     [loopback]
                                     [pf|firewall]
                                     [shared]
@@ -40,9 +39,6 @@ that jails will get linked to on creation. It is not attached to any specific in
 networking option. The ``loopback`` and ``shared`` options are only for cases where the ``interface``
 is not specified during the ``create`` command. If an interface is specified, these options have no effect. 
 Instead, the specified interface will be used.
-
-The ``filesystem`` option is to ensure the proper datasets/directories are in place
-for using Bastille. This should only have to be run once on a new system.
 
 The ``shared`` option is for cases where you want an actual interface to use with bastille as
 opposed to a loopback. Jails will be linked to the shared interface on creation.
