@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille verify [RELEASE|TEMPLATE]"
+    error_notify "Usage: bastille verify [option(s)] RELEASE|TEMPLATE"
     cat << EOF
 	
     Options:
