@@ -404,7 +404,7 @@ bootstrap_template() {
     if [ ! -d "${bastille_templatesdir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_templatesdir}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates"
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_templatesdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/templates"
             fi
         else
             mkdir -p "${bastille_templatesdir}"
