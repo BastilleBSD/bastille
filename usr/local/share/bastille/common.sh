@@ -296,40 +296,42 @@ set_target_single() {
 }
 
 # This function is run immediately
-set_zfs_mountpoints() {
+set_bastille_mountpoints() {
 
-    # We have to do this if ALTROOT is enabled/present
-    local _altroot="$(zpool get -Ho value altroot ${bastille_zfs_zpool})"
+    if checkyesno bastille_zfs_enable; then
 
-    # Set mountpoints to *bastille*dir*
-    # shellcheck disable=SC2034
-    bastille_prefix_mountpoint="${bastille_prefix}"
-    # shellcheck disable=SC2034
-    bastille_backupsdir_mountpoint="${bastille_backupsdir}"
-    # shellcheck disable=SC2034
-    bastille_cachedir_mountpoint="${bastille_cachedir}"
-    # shellcheck disable=SC2034
-    bastille_jailsdir_mountpoint="${bastille_jailsdir}"
-    # shellcheck disable=SC2034
-    bastille_releasesdir_mountpoint="${bastille_releasesdir}"
-    # shellcheck disable=SC2034
-    bastille_templatesdir_mountpoint="${bastille_templatesdir}"
-    # shellcheck disable=SC2034
-    bastille_logsdir_mountpoint="${bastille_logsdir}"
+        # We have to do this if ALTROOT is enabled/present
+        local _altroot="$(zpool get -Ho value altroot ${bastille_zfs_zpool})"
 
-    # Add _altroot to *dir* if set
-    if [ "${_altroot}" != "-" ]; then  
-        # Set *dir* to include ALTROOT
-        bastille_prefix="${_altroot}${bastille_prefix}"
-        bastille_backupsdir="${_altroot}${bastille_backupsdir}"
-        bastille_cachedir="${_altroot}${bastille_cachedir}"
-        bastille_jailsdir="${_altroot}${bastille_jailsdir}"
-        bastille_releasesdir="${_altroot}${bastille_releasesdir}"
-        bastille_templatesdir="${_altroot}${bastille_templatesdir}"
-        bastille_logsdir="${_altroot}${bastille_logsdir}" 
+        # Set mountpoints to *bastille*dir*
+        # shellcheck disable=SC2034
+        bastille_prefix_mountpoint="${bastille_prefix}"
+        # shellcheck disable=SC2034
+        bastille_backupsdir_mountpoint="${bastille_backupsdir}"
+        # shellcheck disable=SC2034
+        bastille_cachedir_mountpoint="${bastille_cachedir}"
+        # shellcheck disable=SC2034
+        bastille_jailsdir_mountpoint="${bastille_jailsdir}"
+        # shellcheck disable=SC2034
+        bastille_releasesdir_mountpoint="${bastille_releasesdir}"
+        # shellcheck disable=SC2034
+        bastille_templatesdir_mountpoint="${bastille_templatesdir}"
+        # shellcheck disable=SC2034
+        bastille_logsdir_mountpoint="${bastille_logsdir}"
+
+        # Add _altroot to *dir* if set
+        if [ "${_altroot}" != "-" ]; then  
+            # Set *dir* to include ALTROOT
+            bastille_prefix="${_altroot}${bastille_prefix}"
+            bastille_backupsdir="${_altroot}${bastille_backupsdir}"
+            bastille_cachedir="${_altroot}${bastille_cachedir}"
+            bastille_jailsdir="${_altroot}${bastille_jailsdir}"
+            bastille_releasesdir="${_altroot}${bastille_releasesdir}"
+            bastille_templatesdir="${_altroot}${bastille_templatesdir}"
+            bastille_logsdir="${_altroot}${bastille_logsdir}" 
+        fi
     fi
 }
-set_zfs_mountpoints
 
 target_all_jails() {
     local _JAILS="$(bastille list jails)"
@@ -541,3 +543,5 @@ checkyesno() {
         ;;
     esac
 }
+
+set_bastille_mountpoints
