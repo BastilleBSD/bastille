@@ -1,5 +1,6 @@
 ZFS Support
-====================
+===========
+
 .. image:: /images/bastillebsd-twitter-poll.png
   :width: 400
   :alt: Alternative text
@@ -58,6 +59,19 @@ dataset for bastille.
 Bastille will mount the datasets it creates at ``bastille_prefix`` which
 defaults to ``/usr/local/bastille``
 If this is not desirable, you can change it at the top of the config file.
+
+Altroot
+-------
+
+If a ZFS pool has been imported using ``-R`` (altroot), your system will automatically add whatever the ``altroot`` is to
+any ``zfs mount`` commands. Bastille supports using an ``altroot``, and there should be no issues using this feature.
+
+One thing to note though, is that you MUST NOT include your ``altroot`` path in the ``bastille_prefix``. For example, if
+you imported your pool with ``zpool import -R /mnt poolname``, and you wish for your jails to live at ``/mnt/poolname/bastille``
+then ``bastille_prefix`` should be set to ``/poolname/bastille`` without the ``/mnt`` part.
+
+If you do accidentally add the ``/mnt`` part, your datasets will be mounted at ``/mnt/mnt/poolname/bastille`` and Bastille will
+throw all kinds of errors due to not finding the proper paths.
 
 Jailing a Dataset
 -----------------
