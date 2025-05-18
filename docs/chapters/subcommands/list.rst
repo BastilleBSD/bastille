@@ -14,10 +14,10 @@ to print in columns instead of rows.
   ishmael ~ # bastille list help
   Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [ip(s)] [jail(s)] [limit(s)] [log(s)]
                                                   [path(s)] [port(s)] [prio|priority] [state(s)] [template(s)]
-    Options:
+      Options:
     
-    -d | --down            List stopped jails only.
-    -j | --json            List jails or sub-arg(s) in json format.
-    -p | --pretty          Print JSON in columns.
-    -u | --up              List running jails only.
-    -x | --debug           Enable debug mode.
+      -d | --down            List stopped jails only.
+      -j | --json            List jails or sub-arg(s) in json format.
+      -p | --pretty          Print JSON in columns.
+      -u | --up              List running jails only.
+      -x | --debug           Enable debug mode.

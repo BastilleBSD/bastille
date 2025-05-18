@@ -31,7 +31,8 @@ backslash \, and enclose the mount point in quotes "".
 
   ishmael ~ # bastille umount help
   Usage: bastille umount [option(s)] TARGET JAIL_PATH
-    Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode.

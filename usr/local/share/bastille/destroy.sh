@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille destroy [option(s)] [JAIL|RELEASE]"
+    error_notify "Usage: bastille destroy [option(s)] JAIL|RELEASE"
     cat << EOF
 	
     Options:

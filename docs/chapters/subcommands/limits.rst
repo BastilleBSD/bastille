@@ -42,11 +42,12 @@ This file can be edited manually using ``bastille edit TARGET cpuset.conf``.
 .. code-block:: shell
 
   ishmael ~ # bastille limits help
-  Usage: bastille limits [option(s)] TARGET [add OPTION VALUE|remove OPTION|clear|reset|[list|show] (active)|stats]
-  Example: bastille limits TARGET add memoryuse 1G
-  Example: bastille limits TARGET add cpu 0,1,2
+  Usage: bastille limits [option(s)] TARGET [add|remove|clear|reset|(list|show [active])|stats] OPTION [VALUE]
+  
+      Example: bastille limits TARGET add memoryuse 1G
+      Example: bastille limits TARGET add cpu 0,1,2
 
-    Options:
+      Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode. 
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode. 

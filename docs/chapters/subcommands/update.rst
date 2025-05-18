@@ -45,8 +45,9 @@ will be updated just like the release shown above.
 
   ishmael ~ # bastille update help
   Usage: bastille update [option(s)] TARGET
-    Options:
 
-    -a | --auto             Auto mode. Start/stop jail(s) if required.
-    -f | --force            Force update a release.
-    -x | --debug            Enable debug mode.
+      Options:
+
+      -a | --auto             Auto mode. Start/stop jail(s) if required.
+      -f | --force            Force update a release.
+      -x | --debug            Enable debug mode.

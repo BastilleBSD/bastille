@@ -1,7 +1,7 @@
 cp
 ==
 
-This command allows copying files from host to jail(s).
+Copy files from host to jail(s).
 
 .. code-block:: shell
 
@@ -25,7 +25,8 @@ Unless you see errors reported in the output the ``cp`` was successful.
 
   ishmael ~ # bastille cp help
   Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH
-    Options:
 
-    -q | --quiet          Suppress output.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -q | --quiet          Suppress output.
+      -x | --debug          Enable debug mode.

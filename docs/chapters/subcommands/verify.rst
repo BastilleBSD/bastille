@@ -37,6 +37,7 @@ release or template .
 
   ishmael ~ # bastille verify help
   Usage: bastille verify [option(s)] RELEASE|TEMPLATE
-    Options:
 
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -x | --debug          Enable debug mode.

@@ -40,8 +40,9 @@ To show only the differences between the releases, use the ``diff`` command.
 
   ishmael ~ # bastille etcupdate help
   Usage: bastille etcupdate [option(s)] [bootstrap|TARGET] [diff|resolve|update RELEASE]
-    Options:
 
-    -d | --dry-run          Show output, but do not apply.
-    -f | --force            Force a re-bootstrap of a RELEASE.
-    -x | --debug            Enable debug mode.
+      Options:
+
+      -d | --dry-run          Show output, but do not apply.
+      -f | --force            Force a re-bootstrap of a RELEASE.
+      -x | --debug            Enable debug mode.

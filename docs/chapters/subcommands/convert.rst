@@ -1,17 +1,18 @@
 convert
 =======
 
-Convert allows converting a thin jail to a thick jail.
-It also allows converting a thick jail to a customized release.
+Convert a thin jail to a thick jail.
 
-Converting a thin jail to a thick jail requires only the target jail.
+Convert a thick jail to a custom release.
+
+Converting a thin jail to a thick jail requires only the TARGET arg.
 
 .. code-block:: shell
 
   ishmael ~ # bastille convert azkaban
 
-Converting a thick jail to a custom release requires a target jail as 
-well as custom release name.
+Converting a thick jail to a custom release requires the TARGET and
+RELEASE as args.
 
 .. code-block:: shell
 
@@ -26,8 +27,9 @@ This release can then be used to create a thick jail using the ``--no-validate``
 .. code-block:: shell
 
   ishmael ~ # bastille convert help
-  Usage: bastille convert [option(s)] TARGET
-    Options:
+  Usage: bastille convert [option(s)] TARGET [RELEASE]
+
+      Options:
 	
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode.

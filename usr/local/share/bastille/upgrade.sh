@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille upgrade [option(s)] TARGET [NEWRELEASE|install]"
+    error_notify "Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE|install"
     cat << EOF
 	
     Options:

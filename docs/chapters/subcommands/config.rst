@@ -1,7 +1,7 @@
 config
 ======
 
-Get,set or remove properties from targeted jail(s).
+Get, set or remove properties from targeted jail(s).
 
 Getting a property that *is* defined in jail.conf:
 
@@ -38,8 +38,8 @@ The restart message will appear every time a property is removed.
 .. code-block:: shell
 
   ishmael ~ # bastille config help
-  Usage: bastille config TARGET [get|set|remove] PROPERTY [VALUE]
-    Options:
+  Usage: bastille config [option(s)] TARGET [get|(set|add)|remove] PROPERTY [VALUE]
 
-    -x | --debug          Enable debug mode.
+      Options:
 
+      -x | --debug          Enable debug mode.

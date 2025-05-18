@@ -7,7 +7,10 @@ targeted jail(s).
 .. code-block:: shell
 
   ishmael ~ # bastille zfs help
-  Usage: bastille zfs TARGET [set|get|snap|destroy_snap|df|usage] [key=value|date]
-    Options:
+  Usage: bastille zfs [option(s)] TARGET [destroy_snap|(df|usage)|get|set|(snap|snapshot)] [key=value|date]
+                                         [jail pool/dataset /jail/path]
+                                         [unjail pool/dataset]
 
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -x | --debug          Enable debug mode.

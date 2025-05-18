@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille edit [option(s)] TARGET [filename]"
+    error_notify "Usage: bastille edit [option(s)] TARGET [FILE]"
     cat << EOF
 	
     Options:

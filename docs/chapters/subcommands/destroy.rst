@@ -21,11 +21,12 @@ option will retain the release cache (*.txz file), if you choose to keep it.
 .. code-block:: shell
 
   ishmael ~ # bastille destroy help
-  Usage: bastille destroy [option(s)] [JAIL|RELEASE]
-    Options:
+  Usage: bastille destroy [option(s)] JAIL|RELEASE
 
-    -a | --auto              Auto mode. Start/stop jail(s) if required.
-    -c | --no-cache          Do no destroy cache when destroying a release.
-    -f | --force             Force unmount any mounted datasets when destroying a jail or release (ZFS only).
-    -y | --yes               Do no prompt. Just destroy.
-    -x | --debug             Enable debug mode.
+      Options:
+
+      -a | --auto              Auto mode. Start/stop jail(s) if required.
+      -c | --no-cache          Do no destroy cache when destroying a release.
+      -f | --force             Force unmount any mounted datasets when destroying a jail or release (ZFS only).
+      -y | --yes               Do no prompt. Just destroy.
+      -x | --debug             Enable debug mode.

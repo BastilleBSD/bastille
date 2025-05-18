@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille convert [option(s)] [TARGET|TARGET RELEASE]"
+    error_notify "Usage: bastille convert [option(s)] TARGET [RELEASE]"
     cat << EOF
 	
     Options:

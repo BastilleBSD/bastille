@@ -15,8 +15,9 @@ See ``man sysrc(8)`` for more info.
 .. code-block:: shell
 
   ishmael ~ # bastille sysrc help
-  Usage: bastille sysrc [option(s)] TARGET args
-    Options:
+  Usage: bastille sysrc [option(s)] TARGET ARGS
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode.
