@@ -295,6 +295,7 @@ set_target_single() {
     export JAILS
 }
 
+# This function is run immediately
 set_zfs_mountpoints() {
 
     # We have to do this if ALTROOT is enabled/present
@@ -322,6 +323,7 @@ set_zfs_mountpoints() {
 
     fi
 }
+set_zfs_mountpoints
 
 target_all_jails() {
     local _JAILS="$(bastille list jails)"
