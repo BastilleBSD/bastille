@@ -18,9 +18,10 @@ are stopped will not be started.
 
   ishmael ~ # bastille restart help
   Usage: bastille start [option(s)] TARGET
-    Options:
 
-    -b | --boot                 Respect jail boot setting.
-    -d | --delay VALUE          Time (seconds) to wait after starting each jail.
-    -v | --verbose              Print every action on jail restart.
-    -x | --debug                Enable debug mode.
+      Options:
+
+      -b | --boot                 Respect jail boot setting.
+      -d | --delay VALUE          Time (seconds) to wait after starting each jail.
+      -v | --verbose              Print every action on jail restart.
+      -x | --debug                Enable debug mode.

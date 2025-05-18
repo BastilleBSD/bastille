@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille service [option(s)] TARGET SERVICE_NAME ACTION"
+    error_notify "Usage: bastille service [option(s)] TARGET SERVICE_NAME ARGS"
     cat << EOF
 	
     Options:

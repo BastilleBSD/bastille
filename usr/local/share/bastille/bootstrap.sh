@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]"
+    error_notify "Usage: bastille bootstrap [option(s)] RELEASE|TEMPLATE [update|arch]"
     cat << EOF
 	
     Options:

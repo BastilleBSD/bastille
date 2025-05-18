@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille template [option(s)] TARGET [--convert|project/template]"
+    error_notify "Usage: bastille template [option(s)] TARGET [--convert] TEMPLATE"
     cat << EOF
 
     Options:

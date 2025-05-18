@@ -12,12 +12,14 @@ placed in the template directory, which defaults to
 ``/usr/local/bastille/templates``. The Bastillefile should contain the template
 hooks. See the chapter called Template for a list of supported hooks.
 
+The TEMPLATE arg should be called with the ``project/template`` format.
+
 .. code-block:: shell
 
   ishmael ~ # bastille template help
-  Usage: bastille template [option(s)] TARGET [--convert|project/template]
+  Usage: bastille template [option(s)] TARGET [--convert] TEMPLATE
   
-    Options:
+      Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode.

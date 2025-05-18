@@ -122,7 +122,8 @@ begin applying your template.
 .. code-block:: shell
 
   ishmael ~ # bastille bootstrap help
-  Usage: bastille bootstrap [option(s)] [RELEASE|TEMPLATE] [update|arch]
-    Options:
+  Usage: bastille bootstrap [option(s)] RELEASE|TEMPLATE [update|arch]
 
-    -x | --debug           Enable debug mode.
+      Options:
+
+      -x | --debug           Enable debug mode.

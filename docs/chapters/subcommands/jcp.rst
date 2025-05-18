@@ -1,7 +1,7 @@
 jcp
 ===
 
-This command allows copying files from jail to jail(s).
+Copy files from jail to jail(s).
 
 .. code-block:: shell
 
@@ -23,7 +23,8 @@ Unless you see errors reported in the output the ``jcp`` was successful.
 
   ishmael ~ # bastille jcp help
   Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DEST_JAIL JAIL_PATH
-    Options:
 
-    -q | --quiet          Suppress output.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -q | --quiet          Suppress output.
+      -x | --debug          Enable debug mode.

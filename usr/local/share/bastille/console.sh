@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille console [option(s)] TARGET [user]"
+    error_notify "Usage: bastille console [option(s)] TARGET [USER]"
     cat << EOF
 	
     Options:

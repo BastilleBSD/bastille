@@ -15,7 +15,8 @@ Unless you see errors reported in the output the ``rcp`` was successful.
 
   ishmael ~ # bastille rcp help
   Usage: bastille rcp [option(s)] TARGET JAIL_PATH HOST_PATH
-    Options:
 
-    -q | --quiet          Suppress output.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -q | --quiet          Suppress output.
+      -x | --debug          Enable debug mode.

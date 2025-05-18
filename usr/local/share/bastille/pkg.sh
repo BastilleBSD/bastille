@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille pkg [option(s)] TARGET COMMAND args"
+    error_notify "Usage: bastille pkg [option(s)] TARGET ARGS"
     cat << EOF
 
     Options:

@@ -12,7 +12,8 @@ in the jail.
 
   ishmael ~ # bastille htop help
   Usage: bastille htop [options(s)] TARGET
-    Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode.

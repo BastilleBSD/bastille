@@ -11,7 +11,8 @@ Rename a jail.
 
   ishmael ~ # bastille rename help
   Usage: bastille rename [option(s)] TARGET NEW_NAME
-    Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode.

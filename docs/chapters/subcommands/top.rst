@@ -12,7 +12,8 @@ This command runs ``top`` in the targeted jail.
 
   ishmael ~ # bastille top help
   Usage: bastille top [options(s)] TARGET
-    Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+      Options:
+
+      -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -x | --debug          Enable debug mode.

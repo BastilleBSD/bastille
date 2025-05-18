@@ -33,13 +33,13 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille clone [option(s)] TARGET NEWNAME IPADDRESS"
+    error_notify "Usage: bastille clone [option(s)] TARGET NEW_NAME IP"
     cat << EOF
 	
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
-    -l | --live           Clone a running jail. ZFS only. Jail must be running. Cannot be used with [-a|--auto].
+    -l | --live           Clone a running jail (ZFS only). Cannot be used with [-a|--auto].
     -x | --debug          Enable debug mode.
 
 EOF

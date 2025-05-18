@@ -73,10 +73,10 @@ only redirect using the default one.
   # bastille rdr --help
   Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
  
-    Options:
+      Options:
 
-    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
-    -x | --debug                                 Enable debug mode.
+      -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+      -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
+      -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+      -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
+      -x | --debug                                 Enable debug mode.

@@ -34,7 +34,7 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille network [option(s)] TARGET [remove|add] INTERFACE [IP_ADDRESS]"
+    error_notify "Usage: bastille network [option(s)] TARGET [remove|add] INTERFACE [IP]"
     cat << EOF
 	
     Options:
