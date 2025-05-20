@@ -93,19 +93,6 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
-escape_special_characters() {
-
-    # Escape special charcters for jail.conf files
-    # Only "." for now
-
-    local _string="${1}"
-
-    _escaped_string="$(echo ${_string} | sed 's#\.#\\\.#g')"
-
-    echo "${_escaped_string}"
-
-}
-
 # Parallel mode, don't exceed process limit
 bastille_running_jobs() {
 
@@ -515,6 +502,19 @@ EOF
             fi
         fi
     fi
+}
+
+parse_value_jail_conf() {
+
+    # Escape special charcters for compatability with jail.conf files
+    # Only "." for now
+
+    local _string="${1}"
+
+    _escaped_string="$(echo ${_string} | sed 's#\.#\\\.#g')"
+
+    echo "${_escaped_string}"
+
 }
 
 validate_netconf() {
