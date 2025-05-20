@@ -82,11 +82,12 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Check for too many args
-if [ "$#" -gt 1 ]; then
+if [ "$#" -gt 2 ]; then
     usage
 fi
 
 OPT_CONFIG="${1}"
+OPT_ARG="${2}"
 
 bastille_root_check
 
@@ -138,26 +139,34 @@ configure_loopback_interface() {
 }
 
 configure_shared_interface() {
+
+    _auto_if="${1}"
     _interface_list="$(ifconfig -l)"
     _interface_count=0
+
     if [ -z "${_interface_list}" ]; then
         error_exit "Unable to detect interfaces, exiting."
     fi
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)" ]; then
         info "\nAttempting to configure shared interface for bastille..."
         info "\nListing available interfaces..."
-        for _if in ${_interface_list}; do
-            echo "[${_interface_count}] ${_if}"
-            _if_num="${_if_num} [${_interface_count}]${_if}"
-            _interface_count=$(expr ${_interface_count} + 1)
-        done
-        # shellcheck disable=SC3045
-        read -p "Please select the interface you would like to use: " _interface_choice
-        if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
-            error_exit "Invalid input number, aborting!"
+        if [ -z "${_auto_if}" ]; then
+            for _if in ${_interface_list}; do
+                echo "[${_interface_count}] ${_if}"
+                _if_num="${_if_num} [${_interface_count}]${_if}"
+                _interface_count=$(expr ${_interface_count} + 1)
+            done
+            # shellcheck disable=SC3045
+            read -p "Please select the interface you would like to use: " _interface_choice
+            if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
+                error_exit "Invalid input number, aborting!"
+            else
+                _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+            fi
         else
-            _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+            _interface_select="${_auto_if}"
         fi
+
         # Adjust bastille.conf to reflect above choices
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback=""
         sysrc cloned_interfaces-="lo1"
@@ -171,30 +180,38 @@ configure_shared_interface() {
 }
 
 configure_bridge() {
+
+    _auto_if="${1}"
     _bridge_name="bastillebridge"
     _interface_list="$(ifconfig -l)"
     _interface_count=0
+
     if [ -z "${_interface_list}" ]; then
         error_exit "Unable to detect interfaces, exiting."
     fi
     if ! ifconfig -g bridge | grep -oqw "${_bridge_name}"; then
         info "\nConfiguring ${_bridge_name} bridge interface..."
-        info "\nListing available interfaces..."
-        for _if in ${_interface_list}; do
-            if ifconfig -g bridge | grep -oqw "${_if}" || ifconfig -g lo | grep -oqw "${_if}"; then
-                continue
+
+        if [ -z "${_auto_if}" ]; then
+            info "\nListing available interfaces..."
+            for _if in ${_interface_list}; do
+                if ifconfig -g bridge | grep -oqw "${_if}" || ifconfig -g lo | grep -oqw "${_if}"; then
+                    continue
+                else
+                    echo "[${_interface_count}] ${_if}"
+                    _if_num="${_if_num} [${_interface_count}]${_if}"
+                    _interface_count=$(expr ${_interface_count} + 1)
+                fi
+            done
+            # shellcheck disable=SC3045
+            read -p "Please select the interface to attach the bridge to: " _interface_choice
+            if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
+                error_exit "Invalid input number, aborting!"
             else
-                echo "[${_interface_count}] ${_if}"
-                _if_num="${_if_num} [${_interface_count}]${_if}"
-                _interface_count=$(expr ${_interface_count} + 1)
+                _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
             fi
-        done
-        # shellcheck disable=SC3045
-        read -p "Please select the interface to attach the bridge to: " _interface_choice
-        if ! echo "${_interface_choice}" | grep -Eq "^[0-9]+$"; then
-            error_exit "Invalid input number, aborting!"
         else
-            _interface_select=$(echo "${_if_num}" | grep -wo "\[${_interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+            _interface_select="${_auto_if}"
         fi
         # Create bridge and persist on reboot
         ifconfig bridge0 create
@@ -271,21 +288,41 @@ fi
 
 # Configure storage
 configure_storage() {
+
     if mount | grep "zfs" >/dev/null 2>/dev/null; then
+
+        _auto_zpool="${1}"
+
         if [ ! "$(kldstat -m zfs)" ]; then
             info "\nZFS module not loaded; skipping..."
         elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
             info "\nZFS has already been configured!"
         else
-            ## attempt to determine bastille_zroot from `zpool list`
-            bastille_zroot=$(zpool list | grep -v NAME | awk '{print $1}')
-            if [ "$(echo "${bastille_zroot}" | wc -l)" -gt 1 ]; then
-              error_notify "Error: Multiple ZFS pools available:\n${bastille_zroot}"
-              error_notify "Set desired pool using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_zpool=ZPOOL_NAME\""
-              error_exit "Don't forget to also enable ZFS using \"sysrc -f ${BASTILLE_CONFIG} bastille_zfs_enable=YES\""
+            if [ -z "${_auto_zpool}" ]; then
+                _zpool_list=$(zpool list | grep -v NAME | awk '{print $1}')
+                _zpool_count=0
+                if [ "$(zpool list | grep -v NAME | awk '{print $1}' | wc -l)" -eq 1 ]; then
+                    _bastille_zpool="${_zpool_list}"
+                else
+                    info "\nMultiple zpools detected:"
+                    for _zpool in ${_zpool_list}; do
+                        echo "[${_zpool_count}] ${_zpool}"
+                        _zpool_num="${_zpool_num} [${_zpool_count}]${_zpool}"
+                        _zpool_count=$(expr ${_zpool_count} + 1)
+                    done
+                    # shellcheck disable=SC3045
+                    read -p "Please select the zpool for Bastille to use: " _zpool_choice
+                    if ! echo "${_zpool_choice}" | grep -Eq "^[0-9]+$"; then
+                        error_exit "Invalid input number, aborting!"
+                    else
+                        _zpool_select=$(echo "${_zpool_num}" | grep -wo "\[${_zpool_choice}\][^ ]*" | sed 's/\[.*\]//g')
+                    fi
+                fi
+            else
+                _bastille_zpool="${_auto_zpool}"
             fi
             sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_enable=YES
-            sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${bastille_zroot}"
+            sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${_bastille_zpool}"
             info "\nUsing ZFS filesystem."
         fi
     elif mount | grep "ufs" >/dev/null 2>/dev/null; then
@@ -364,7 +401,7 @@ case "${OPT_CONFIG}" in
             read -p "Do you really want to continue setting up the shared interface? [y|n]:" _answer
             case "${_answer}" in
                 [Yy]|[Yy][Ee][Ss])
-                    configure_shared_interface
+                    configure_shared_interface "${OPT_ARG}"
                     ;;
                 [Nn]|[Nn][Oo])
                     error_exit "Shared interface setup cancelled."
@@ -376,7 +413,7 @@ case "${OPT_CONFIG}" in
         fi
         ;;
     storage)
-        configure_storage
+        configure_storage "${OPT_ARG}"
         ;;
     vnet)
         configure_vnet
@@ -386,7 +423,7 @@ case "${OPT_CONFIG}" in
             error_exit "[ERROR]: 'bridge' does not support [-y|--yes]."
         else
             configure_vnet
-            configure_bridge
+            configure_bridge "${OPT_ARG}"
         fi
         ;;
     *)
