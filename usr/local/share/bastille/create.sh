@@ -44,6 +44,7 @@ usage() {
     -C | --clone                             Create a clone jail.
     -D | --dual                              Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
     -E | --empty                             Create an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+    -g | --gateway IP                        Specify a default router/gateway for the jail.
     -L | --linux                             Create a Linux jail (experimental).
     -M | --static-mac                        Generate a static MAC address for jail (VNET only).
          --no-validate                       Do not validate the release when creating the jail.
@@ -53,7 +54,7 @@ usage() {
     -V | --vnet                              Enable VNET, and attach to an existing, physical interface.
     -v | --vlan VLANID                       Creates the jail with specified VLAN ID (VNET only).
     -x | --debug                             Enable debug mode.
-    -Z | --zfs-opts [zfs,options]            Comma separated list of ZFS options to create the jail with. This overrides the defaults.
+    -Z | --zfs-opts zfs,options              Comma separated list of ZFS options to create the jail with. This overrides the defaults.
 
 EOF
     exit 1
@@ -620,7 +621,9 @@ create_jail() {
                 _ifconfig_inet=SYNCDHCP
             else
                 # Else apply the default gateway
-                if [ -n "${bastille_network_gateway}" ]; then
+                if [ -n "${OPT_GATEWAY}" ]; then
+                    _gateway="${OPT_GATEWAY}"
+                elif [ -n "${bastille_network_gateway}" ]; then
                     _gateway="${bastille_network_gateway}"
                 else
                     _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
@@ -718,6 +721,7 @@ STATIC_MAC=""
 DUAL_STACK=""
 VALIDATE_RELEASE="1"
 PRIORITY="99"
+OPT_GATEWAY=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -739,6 +743,16 @@ while [ $# -gt 0 ]; do
         -E|--empty)
             EMPTY_JAIL="1"
             shift
+            ;;
+        -g|--gateway)
+            OPT_GATEWAY="${2}"
+	    # Validate gateway
+            if [ -n "${OPT_GATEWAY}" ]; then
+                if ! validate_ip "${OPT_GATEWAY}" >/dev/null 2>/dev/null; then
+                    error_exit "[ERROR]: Not a valid gateway: ${OPT_GATEWAY}"
+                fi
+            fi
+            shift 2
             ;;
         -L|--linux)
             LINUX_JAIL="1"
