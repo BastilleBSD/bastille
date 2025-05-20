@@ -351,7 +351,7 @@ for _jail in ${JAILS}; do
 
     if [ -s "${bastille_template}/Bastillefile" ]; then
         # Ignore blank lines and comments. -- cwells
-        SCRIPT=$(awk '{ if (substr($0, length, 1) == "\\") { printf "%s", substr($0, 1, length-1); } else { print $0; } }' "${rocinante_template}/Bastillefile" | grep -v '^[[:blank:]]*$' | grep -v '^[[:blank:]]*#')
+        SCRIPT=$(awk '{ if (substr($0, length, 1) == "\\") { printf "%s", substr($0, 1, length-1); } else { print $0; } }' "${bastille_template}/Bastillefile" | grep -v '^[[:blank:]]*$' | grep -v '^[[:blank:]]*#')
         # Use a newline as the separator. -- cwells
         IFS='
 '
