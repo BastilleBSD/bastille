@@ -186,6 +186,8 @@ validate_netif() {
     else
         error_exit "[ERROR]: Invalid: (${INTERFACE})."
     fi
+
+    INTERFACE="$(parse_value_jail_conf ${INTERFACE})"
 }
 
 validate_release() {
