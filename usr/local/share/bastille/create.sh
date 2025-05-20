@@ -49,6 +49,7 @@ usage() {
     -M | --static-mac                        Generate a static MAC address for jail (VNET only).
          --no-validate                       Do not validate the release when creating the jail.
          --no-boot                           Create jail with boot=off.
+    -n | --nameserver                        Specify a nameserver for the jail.
     -p | --priority VALUE                    Set priority value for jail.
     -T | --thick                             Creates a thick container, they consume more space as they are self contained and independent.
     -V | --vnet                              Enable VNET, and attach to an existing, physical interface.
@@ -689,6 +690,11 @@ create_jail() {
         fi
     fi
 
+    # Apply nameserver (if set)
+    if [ -n "${OPT_NAMESERVER}" ]; then
+        sed -i '' "\#nameserver.*# s#nameserver.*#nameserver ${OPT_NAMESERVER}#" "${bastille_jail_resolv_conf}"
+    fi
+
     # Apply values changed by the template. -- cwells
     if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
         bastille restart "${NAME}"
@@ -722,6 +728,7 @@ DUAL_STACK=""
 VALIDATE_RELEASE="1"
 PRIORITY="99"
 OPT_GATEWAY=""
+OPT_NAMESERVER=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -744,7 +751,7 @@ while [ $# -gt 0 ]; do
             EMPTY_JAIL="1"
             shift
             ;;
-        -g|--gateway)
+        -g|--gateway|--defaultrouter)
             OPT_GATEWAY="${2}"
 	    # Validate gateway
             if [ -n "${OPT_GATEWAY}" ]; then
@@ -761,6 +768,16 @@ while [ $# -gt 0 ]; do
         -M|--static-mac)
             STATIC_MAC="1"
             shift
+            ;;
+        -n|--nameserver)
+            OPT_NAMESERVER="${2}"
+	    # Validate nameserver
+            if [ -n "${OPT_NAMESERVER}" ]; then
+                if ! validate_ip "${OPT_NAMESERVER}" >/dev/null 2>/dev/null; then
+                    error_exit "[ERROR]: Not a valid nameserver: ${OPT_NAMESERVER}"
+                fi
+            fi
+            shift 2
             ;;
         -p|--priority)
 	    if echo "${2}" | grep -Eoq "^[0-9]+$"; then
@@ -787,11 +804,11 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -v|--vlan)
-	          if echo "${2}" | grep -Eq '^[0-9]+$'; then
+            if echo "${2}" | grep -Eq '^[0-9]+$'; then
                 VLAN_ID="${2}"
-	          else
+            else
                 error_exit "Not a valid VLAN ID: ${2}"
-	          fi
+            fi
             shift 2
             ;;
         -x|--debug)
