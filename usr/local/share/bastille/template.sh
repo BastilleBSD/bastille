@@ -63,7 +63,16 @@ get_arg_name() {
 
 parse_arg_value() {
     # Parses the value after = and then escapes back/forward slashes and single quotes in it. -- cwells
-    echo "${1}" | sed -E 's/[^=]+=?//' | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/'\''/'\''\\'\'\''/g' -e 's/&/\\&/g' -e 's/"//g'
+    # Enclose ARG value inside ""
+    echo "${1}" | \
+    sed -E 's/[^=]+=?//' | \
+    sed -e 's/\\/\\\\/g' \
+    -e 's/\//\\\//g' \
+    -e 's/'\''/'\''\\'\'\''/g' \
+    -e 's/&/\\&/g' \
+    -e 's/"//g' \
+    -e 's/^/"/' \
+    -e 's/$/"/'
 }
 
 get_arg_value() {
