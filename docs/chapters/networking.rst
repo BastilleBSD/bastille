@@ -1,6 +1,43 @@
 Networking
 ==========
 
+Host Network Configuration
+--------------------------
+
+Bastille will automatically add and remove IP addressess to specified interfaces
+as jails are started and stopped. Below is an outline of how Bastille handles
+different types of jail network configs.
+
+* VNET mode. For VNET jails (non-bridged) bastille will create a bridge
+  interface and attach your jail to it. It will be called ``em0bridge`` or
+  whatever your interface is called. This will be used for the host/jail epairs.
+  Bastille will create/destroy these epairs as the jail is started/stopped.
+
+* Bridged VNET mode. For bridged VNET jails, you must manually create a bridge
+  interface to attach your jail to. Bastille will then create and attach the
+  host/jail epairs to this interface when the jail starts, and remove them when
+  it stops.
+
+* Alias mode. For classic/standard jails that use an IP that is accessible
+  within your local subnet (alias mode) bastille will add the IP to the
+  specified interface as an alias.
+
+* NAT mode. For classic/standard jails that use an IP not reachable in you local
+  subnet, bastille will add the IP to the specified interface as an alias, and
+  additionally add it the the pf firewall table to allow the jail outbound
+  access. If you do not specify an interface, Bastille will assume you have run
+  the ``bastille setup`` command and will attemplt to use ``bastille0`` (which
+  is created using the setup command) as it's interface. If you have not run
+  ``bastille setup`` and do not specify an interface, Bastille will error.
+
+* Inherit mode. For classic/standard jails that are set to ``inherit`` or
+  ``ip_hostname``, bastille will simply set ``ip4`` to ``inherit`` inside the
+  jail config. The jail will then function according the jail(8) documentation.
+
+* ip_hostname mode. For classic/standard jails that are set to ``ip_hostname``,
+  bastille will simply set ``ip4`` to ``ip_hostname`` inside the jail config.
+  The jail will then function according the jail(8) documentation.
+
 IP Address Options
 ------------------
 
@@ -50,70 +87,6 @@ by quoting and IPv4 and IPv6 address together as seen in the following example.
 
 For the ``inherit`` and ``ip_hostname`` options, you can also specify
 ``-D|--dual`` to use both IPv4 and IPv6 inside the jail.
-
-Host Network Configuration
---------------------------
-
-Bastille will automatically add and remove IP addressess to specified interfaces
-as jails are started and stopped. Below is an outline of how Bastille handles
-different types of jail network configs.
-
-* VNET mode. For VNET jails (non-bridged) bastille will create a bridge
-  interface and attach your jail to it. It will be called ``em0bridge`` or
-  whatever your interface is called. This will be used for the host/jail epairs.
-  Bastille will create/destroy these epairs as the jail is started/stopped.
-
-* Bridged VNET mode. For bridged VNET jails, you must manually create a bridge
-  interface to attach your jail to. Bastille will then create and attach the
-  host/jail epairs to this interface when the jail starts, and remove them when
-  it stops.
-
-* Alias mode. For classic/standard jails that use an IP that is accessible
-  within your local subnet (alias mode) bastille will add the IP to the
-  specified interface as an alias.
-
-* NAT mode. For classic/standard jails that use an IP not reachable in you local
-  subnet, bastille will add the IP to the specified interface as an alias, and
-  additionally add it the the pf firewall table to allow the jail outbound
-  access. If you do not specify an interface, Bastille will assume you have run
-  the ``bastille setup`` command and will attemplt to use ``bastille0`` (which
-  is created using the setup command) as it's interface. If you have not run
-  ``bastille setup`` and do not specify an interface, Bastille will error.
-
-* Inherit mode. For classic/standard jails that are set to ``inherit`` or
-  ``ip_hostname``, bastille will simply set ``ip4`` to ``inherit`` inside the
-  jail config. The jail will then function according the jail(8) documentation.
-
-* ip_hostname mode. For classic/standard jails that are set to ``ip_hostname``,
-  bastille will simply set ``ip4`` to ``ip_hostname`` inside the jail config.
-  The jail will then function according the jail(8) documentation.
-
-Network Scenarios
------------------
-
-Here's the scenario. You've installed Bastille at home or in the cloud and want
-to get started putting applications in secure little containers, but how do you
-get these containers on the network? Bastille tries to be flexible about how to
-network containerized applications. Four methods are described here.
-
-1. Home or Small Office
-
-2. Cloud with IPV4 and multiple IPV6
-
-3. Cloud with single IPV4 (internal bridge)
-
-4. Cloud with a single IPV4 (external bridge)
-
-Please choose the option which is most appropriate for your environment.
-
-First a few notes. Bastille tries to verify that the interface name you provide
-is a valid interface. In FreeBSD network interfaces have different names, but
-look something like ``em0``, ``bge0``, ``re0``, ``vtnet0`` etc. Running the
-``ifconfig`` command will tell you the name of your existing interfaces.
-Bastille also checks for a valid syntax IP4 or IP6 address. When you are testing
-calling out from your containers, please note that the ping command is disabled
-within the containers, because raw socket access are a security hole. Instead,
-install and test with ``wget/curl/fetch`` instead.
 
 Shared Interface
 ----------------
@@ -328,6 +301,47 @@ on your system is.
    cloned_interfaces="bridge0"
    ifconfig_bridge0_name="bastille0bridge"
    ifconfig_bastille0bridge="addm vtnet0 up"
+
+VLAN Configuration
+------------------
+
+Bastille supports VLANs to some extent when creating jails. When creating a jail, use
+the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set the proper
+variables inside the jails `rc.conf` to add the jail to the specified VLAN.
+
+You cannot use the ``-V`` options with interfaces that have dots (.) in the name, which is the 
+standard way of naming a VLAN interface. This is due to the limitations 
+of the JIB script that Bastille uses to manage VNET jails.
+
+You can however use ``-B`` with VLAN interfaces (even with dots in the name). Below
+is an ``rc.conf`` snippet that was provided by a user who has such a configuration.
+
+.. code-block:: shell
+
+  # rename ethernet interfaces
+  ifconfig_igb1_name="eth1"
+  ifconfig_eth1_descr="vm/jail ethernet interface"
+
+  # setup vlans
+  vlans_eth1="10 20 30"
+
+  # setup bridges
+  cloned_interfaces="bridge10 bridge20 bridge30"
+  ifconfig_bridge10_name="eth1.10bridge"
+  ifconfig_bridge20_name="eth1.20bridge"
+  ifconfig_bridge30_name="eth1.30bridge"
+  ifconfig_eth1_10bridge="addm eth1.10 up"
+  ifconfig_eth1_20bridge="addm eth1.20 up"
+  ifconfig_eth1_30bridge="addm eth1.30 up"
+
+  # bring interfaces up
+  ifconfig_eth1="up"
+  ifconfig_eth1_10="up"
+  ifconfig_eth1_20="up"
+  ifconfig_eth1_30="up"
+
+Notice that the interfaces are bridge interfaces, and can be used with ``-B``
+without issue.
 
 Regarding Routes
 ----------------
