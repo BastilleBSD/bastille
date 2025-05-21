@@ -47,7 +47,7 @@ usage() {
     -g | --gateway IP                        Specify a default router/gateway for the jail.
     -L | --linux                             Create a Linux jail (experimental).
     -M | --static-mac                        Generate a static MAC address for jail (VNET only).
-    -n | --nameserver                        Specify a nameserver for the jail.
+    -n | --nameserver IP,IP                  Specify nameserver(s) for the jail. Comma separated.
          --no-validate                       Do not validate the release when creating the jail.
          --no-boot                           Create jail with boot=off.
     -p | --priority VALUE                    Set priority value for jail.
