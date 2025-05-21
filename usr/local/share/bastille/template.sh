@@ -266,6 +266,7 @@ for _script_arg in "$@"; do
     esac
 done
 
+# Exit if we can't find/read ARG_FILE
 if [ -n "${ARG_FILE}" ] && [ ! -f "${ARG_FILE}" ]; then
     error_exit "[ERROR]: File not found: ${ARG_FILE}"
 fi
@@ -292,6 +293,7 @@ for _jail in ${JAILS}; do
         _jail_ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g' | awk '{print $1}')"
         _jail_ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g' | awk '{print $1}')"
     fi
+
     ## remove value if ip4 was not set or disabled, otherwise get value
     if [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disable" ]; then
         _jail_ip4='' # In case it was -. -- cwells
@@ -300,6 +302,7 @@ for _jail in ${JAILS}; do
     else
         _jail_ip4="$(echo ${_jail_ip4} | sed -E 's#/[0-9]+$##g')"
     fi
+
     ## remove value if ip6 was not set or disabled, otherwise get value
     if [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; then
         _jail_ip6='' # In case it was -. -- cwells
@@ -308,6 +311,7 @@ for _jail in ${JAILS}; do
     else
         _jail_ip6="$(echo ${_jail_ip6} | sed -E 's#/[0-9]+$##g')"
     fi
+
     # print error when both ip4 and ip6 are not set
     if { [ "${_jail_ip4}" = "not set" ] || [ "${_jail_ip4}" = "disable" ]; } && \
        { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; } then
@@ -351,25 +355,31 @@ for _jail in ${JAILS}; do
 
     if [ -s "${bastille_template}/Bastillefile" ]; then
         # Ignore blank lines and comments. -- cwells
-        SCRIPT=$(awk '{ if (substr($0, length, 1) == "\\") { printf "%s", substr($0, 1, length-1); } else { print $0; } }' "${bastille_template}/Bastillefile" | grep -v '^[[:blank:]]*$' | grep -v '^[[:blank:]]*#')
+        SCRIPT=$(grep -v '^[[:blank:]]*$' "${bastille_template}/Bastillefile" | grep -v '^[[:blank:]]*#')
         # Use a newline as the separator. -- cwells
         IFS='
 '
         set -f
         for _line in ${SCRIPT}; do
+
             # First word converted to lowercase is the Bastille command. -- cwells
             _cmd=$(echo "${_line}" | awk '{print tolower($1);}')
+
             # Rest of the line with "arg" variables replaced will be the arguments. -- cwells
             _args=$(echo "${_line}" | awk -F '[ ]' '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
 
             # Apply overrides for commands/aliases and arguments. -- cwells
             case $_cmd in
                 arg) # This is a template argument definition. -- cwells
+
                     _arg_name=$(get_arg_name "${_args}")
                     _arg_value=$(get_arg_value "${_args}" "$@")
+
+                    # Warn if no value is present for the ARG
                     if [ -z "${_arg_value}" ]; then
                         warn "[WARNING]: No value provided for arg: ${_arg_name}"
                     fi
+
                     # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
                     ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${_arg_name}}/${_arg_value}/g'"
                     continue
@@ -390,7 +400,12 @@ for _jail in ${JAILS}; do
                 fstab|mount)
                     _cmd='mount' ;;
                 include)
-                    _cmd='template' ;;
+                    _cmd='template'
+                    # If ARG_FILE was given, pass it to INCLUDE template
+                    if [ -n "${ARG_FILE}" ]; then
+                        _args="${_args} --arg-file ${ARG_FILE}"
+                    fi
+                    ;;
                 overlay)
                     _cmd='cp'
                     _args="${bastille_template}/${_args} /"
