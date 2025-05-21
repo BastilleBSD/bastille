@@ -692,7 +692,8 @@ create_jail() {
 
     # Apply nameserver (if set)
     if [ -n "${OPT_NAMESERVER}" ]; then
-        sed -i '' "s#nameserver.*#nameserver ${OPT_NAMESERVER}#" "${bastille_jail_resolv_conf}"
+        sed -i '' "/^nameserver.*/d" "${bastille_jail_resolv_conf}"
+        echo "nameserver ${OPT_NAMESERVER}" >> "${bastille_jail_resolv_conf}"
     fi
 
     # Apply values changed by the template. -- cwells
