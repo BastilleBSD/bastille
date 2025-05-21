@@ -186,8 +186,6 @@ validate_netif() {
     else
         error_exit "[ERROR]: Invalid: (${INTERFACE})."
     fi
-
-    INTERFACE="$(parse_value_jail_conf ${INTERFACE})"
 }
 
 validate_release() {
@@ -694,7 +692,7 @@ create_jail() {
 
     # Apply nameserver (if set)
     if [ -n "${OPT_NAMESERVER}" ]; then
-        sed -i '' "\#nameserver.*# s#nameserver.*#nameserver ${OPT_NAMESERVER}#" "${bastille_jail_resolv_conf}"
+        sed -i '' "s#nameserver.*#nameserver ${OPT_NAMESERVER}#" "${bastille_jail_resolv_conf}"
     fi
 
     # Apply values changed by the template. -- cwells
@@ -775,9 +773,11 @@ while [ $# -gt 0 ]; do
             OPT_NAMESERVER="${2}"
 	    # Validate nameserver
             if [ -n "${OPT_NAMESERVER}" ]; then
-                if ! validate_ip "${OPT_NAMESERVER}" >/dev/null 2>/dev/null; then
-                    error_exit "[ERROR]: Not a valid nameserver: ${OPT_NAMESERVER}"
-                fi
+                for _nameserver in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
+                    if ! validate_ip "${_nameserver}" >/dev/null 2>/dev/null; then
+                        error_exit "[ERROR]: Invalid nameserver(s): ${OPT_NAMESERVER}"
+                    fi
+                done
             fi
             shift 2
             ;;
