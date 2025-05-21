@@ -38,8 +38,9 @@ usage() {
 
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+    -a | --auto               Auto mode. Start/stop jail(s) if required.
+    -r | --recursive          Pass ARGS recursively to INCLUDE templates (only if supplied using '--arg').
+    -x | --debug              Enable debug mode.
 
 EOF
     exit 1
@@ -131,6 +132,7 @@ line_in_file() {
 
 # Handle options.
 AUTO=0
+OPT_RECURSIVE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -138,6 +140,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         -a|--auto)
             AUTO=1
+            shift
+            ;;
+        -r|--recursive)
+            OPT_RECURSIVE=1
             shift
             ;;
         -x|--debug)
@@ -148,6 +154,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
+                    r) OPT_RECURSIVE=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
@@ -170,6 +177,8 @@ bastille_template=${bastille_templatesdir}/${TEMPLATE}
 if [ -z "${HOOKS}" ]; then
     HOOKS='LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
 fi
+shift 2
+ARG_STRING="$@"
 
 bastille_root_check
 
@@ -401,9 +410,9 @@ for _jail in ${JAILS}; do
                     _cmd='mount' ;;
                 include)
                     _cmd='template'
-                    # If ARG_FILE was given, pass it to INCLUDE template
-                    if [ -n "${ARG_FILE}" ]; then
-                        _args="${_args} --arg-file ${ARG_FILE}"
+                    if [ "${OPT_RECURSIVE}" -eq 1 ]; then
+                        # Pass any --arg* to INCLUDE
+                        _args="${_args} ${ARG_STRING}"
                     fi
                     ;;
                 overlay)
