@@ -504,19 +504,6 @@ EOF
     fi
 }
 
-parse_value_jail_conf() {
-
-    # Escape special charcters for compatability with jail.conf files
-    # Only "." for now
-
-    local _string="${1}"
-
-    _escaped_string="$(echo ${_string} | sed 's#\.#\\\.#g')"
-
-    echo "${_escaped_string}"
-
-}
-
 validate_netconf() {
 
     # Add default 'bastille_network_vnet_type' on old config file
