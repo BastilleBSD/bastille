@@ -38,6 +38,10 @@ different types of jail network configurations.
   bastille will simply set ``ip4`` to ``ip_hostname`` inside the jail config.
   The jail will then function according the jail(8) documentation.
 
+You cannot use ``-V|--vnet`` with any interface that is already a member of another
+bridge. For example, if you create a bridge, and assign ``vtnet0`` as a member, you
+will not be able to use ``vtnet0`` with ``-V|--vnet``.
+
 IP Address Options
 ------------------
 

@@ -182,7 +182,6 @@ configure_shared_interface() {
 configure_bridge() {
 
     _auto_if="${1}"
-    _bridge_name="bastillebridge"
     _interface_list="$(ifconfig -l)"
     _interface_count=0
 
@@ -214,12 +213,13 @@ configure_bridge() {
             _interface_select="${_auto_if}"
         fi
         # Create bridge and persist on reboot
+        _bridge_name="${_interface_select}bridge"
         ifconfig bridge0 create
-        ifconfig bridge0 name bastillebridge
-        ifconfig bastillebridge addm ${_interface_select} up
+        ifconfig bridge0 name ${_bridge_name}
+        ifconfig ${_bridge_name} addm ${_interface_select} up
         sysrc cloned_interfaces+="bridge0"
-        sysrc ifconfig_bridge0_name="bastillebridge"
-        sysrc ifconfig_bastillebridge="addm ${_interface_select} up"
+        sysrc ifconfig_bridge0_name="${_bridge_name}"
+        sysrc ifconfig_${_bridge_name}="addm ${_interface_select} up"
 
         info "\nBridge interface successfully configured: [${_bridge_name}]"
     else
