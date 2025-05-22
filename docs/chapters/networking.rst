@@ -19,15 +19,15 @@ different types of jail network configurations.
   it stops.
 
 * Alias mode: For classic/standard jails that use an IP that is accessible
-  within your local subnet (alias mode) bastille will add the IP to the
+  within your local subnet (alias mode) Bastille will add the IP to the
   specified interface as an alias.
 
-* NAT mode: For classic/standard jails that use an IP not reachable in you local
-  subnet, bastille will add the IP to the specified interface as an alias, and
-  additionally add it the the pf firewall table to allow the jail outbound
+* NAT mode: For classic/standard jails that use an IP not reachable in your local
+  subnet, Bastille will add the IP to the specified interface as an alias, and
+  additionally, add it to the pf firewall table (if available) to allow the jail outbound
   access. If you do not specify an interface, Bastille will assume you have run
-  the ``bastille setup`` command and will attemplt to use ``bastille0`` (which
-  is created using the setup command) as it's interface. If you have not run
+  the ``bastille setup`` command and will attempt to use ``bastille0`` (which
+  is created using the setup command) as its interface. If you have not run
   ``bastille setup`` and do not specify an interface, Bastille will error.
 
 * Inherit mode: For classic/standard jails that are set to ``inherit`` or
