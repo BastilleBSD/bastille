@@ -179,10 +179,16 @@ validate_netif() {
 
     local LIST_INTERFACES="$(ifconfig -l)"
 
-    if echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
-        info "\nValid: (${INTERFACE})."
-    else
+    if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         error_exit "[ERROR]: Invalid: (${INTERFACE})."
+    elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
+        for _bridge in $(ifconfig -g bridge | grep -vw "${INTERFACE}bridge"); do
+            if ifconfig ${_bridge} | grep "member" | grep -owq "${INTERFACE}"; then
+                error_exit "[ERROR]: Interface (${INTERFACE}) is already a member of bridge: ${_bridge}"
+            fi
+        done
+    else
+        info "\nValid: (${INTERFACE})."
     fi
 }
 
