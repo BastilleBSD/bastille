@@ -189,7 +189,7 @@ validate_netif() {
     # Don't allow dots in INTERFACE if -V
     if [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
         if echo "${INTERFACE}" | grep -q "\."; then
-	    error_exit "[ERROR]: [-V|--vnet] does not support dots \(.\) in interface names."
+	    error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
         fi
     fi
 }
