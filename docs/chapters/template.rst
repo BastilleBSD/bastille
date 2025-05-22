@@ -60,45 +60,60 @@ Template Automation Hooks
 Template Hook Descriptions
 --------------------------
 
-ARG         - set an ARG value to be used in the template
+``ARG``       - set an ARG value to be used in the template
 
 ARGS will default to the value set inside the template, but can be changed by
-including ``--arg ARG=VALUE`` when running the template. Multiple ARGS can also
-be specified as seen below. If no ARG value is given, the ``template`` command
-will exit.
+including ``--arg ARG=VALUE`` when running the template.
+
+Multiple ARGS can also be specified as seen below. If no ARG value is given, Bastille
+will show a warning, but continue on with the rest of the template.
 
 .. code-block:: shell
 
   ishmael ~ # bastille template azkaban sample/template --arg ARG=VALUE --arg ARG1=VALUE
 
+The ``ARG`` hook has a wide range of functionality, including passing KEY=VALUE pairs
+to any templates called with the ``INCLUDE`` hook. See the following example...
 
-CMD           - run the specified command
+.. code-block:: shell
 
-CONFIG        - set the specified property and value
+  ARG JAIL
+  ARG IP
 
-CP/OVERLAY    - copy specified files from template directory to specified path inside jail
+  INCLUDE other/template --arg JAIL=${JAIL} --arg IP=${IP}
 
-INCLUDE       - specify a template to include. Make sure the template is
+If the above template is called with ``--arg JAIL=myjail --arg IP=10.3.3.3``, these values will
+be passed along to ``other/template`` as well, with the matching variable. So ``${JAIL}`` will be
+``myjail`` and ``${IP}`` will be ``10.3.3.3``.
+
+
+``CMD``           - run the specified command
+
+``CONFIG``        - set the specified property and value
+
+``CP/OVERLAY``    - copy specified files from template directory to specified path inside jail
+
+``INCLUDE``       - specify a template to include. Make sure the template is
 bootstrapped, or you are using the template url
 
-LIMITS        - set the specified resource value for the jail
+``LIMITS``        - set the specified resource value for the jail
 
-LINE_IN_FILE  - add specified word to specified file if not present
+``LINE_IN_FILE``  - add specified word to specified file if not present
 
-MOUNT         - mount specified files/directories inside the jail
+``MOUNT``         - mount specified files/directories inside the jail
 
-PKG           - install specified packages inside jail
+``PKG``           - install specified packages inside jail
 
-RDR           - redirect specified ports to the jail
+``RDR``           - redirect specified ports to the jail
 
-RENDER        - replace ARG values inside specified files inside the jail. If a
+``RENDER``        - replace ARG values inside specified files inside the jail. If a
 directory is specified, ARGS will be replaced in all files underneath
 
-RESTART       - restart the jail
+``RESTART``       - restart the jail
 
-SERVICE       - run `service` command inside the jail with specified arguments
+``SERVICE``       - run `service` command inside the jail with specified arguments
 
-SYSRC         - run `sysrc` inside the jail with specified arguments
+``SYSRC``         - run `sysrc` inside the jail with specified arguments
 
 Special Hook Cases
 ------------------
