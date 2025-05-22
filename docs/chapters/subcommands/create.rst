@@ -61,8 +61,10 @@ options. See the below help output.
       -C | --clone                             Create a clone jail.
       -D | --dual                              Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
       -E | --empty                             Create an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+      -g | --gateway IP                        Specify a default router/gateway for the jail.
       -L | --linux                             Create a Linux jail (experimental).
       -M | --static-mac                        Generate a static MAC address for jail (VNET only).
+      -n | --nameserver IP,IP                  Specify nameserver(s) for the jail. Comma separated.
            --no-validate                       Do not validate the release when creating the jail.
            --no-boot                           Create jail with boot=off.
       -p | --priority VALUE                    Set priority value for jail.
@@ -70,4 +72,4 @@ options. See the below help output.
       -V | --vnet                              Enable VNET, and attach to an existing, physical interface.
       -v | --vlan VLANID                       Creates the jail with specified VLAN ID (VNET only).
       -x | --debug                             Enable debug mode.
-      -Z | --zfs-opts [zfs,options]            Comma separated list of ZFS options to create the jail with. This overrides the defaults.
+      -Z | --zfs-opts zfs,options              Comma separated list of ZFS options to create the jail with. This overrides the defaults.
