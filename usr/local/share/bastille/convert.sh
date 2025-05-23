@@ -39,6 +39,7 @@ usage() {
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -y | --yes            Do not prompt. Just convert.
     -x | --debug          Enable debug mode.
 
 EOF
@@ -47,6 +48,7 @@ EOF
 
 # Handle options.
 AUTO=0
+AUTO_YES=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -54,6 +56,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         -a|--auto)
             AUTO=1
+            shift
+            ;;
+        -y|--yes)
+            AUTO_YES=1
             shift
             ;;
         -x|--debug)
@@ -64,6 +70,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
+                    y) AUTO_YES=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
@@ -265,19 +272,27 @@ if [ "$#" -eq 1 ]; then
     elif ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         error_exit "[ERROR]: ${TARGET} is not a thin container."
     fi
-
-    # Make sure the user agree with the conversion
-    # Be interactive here since this cannot be easily undone
-    while :; do
-        warn "\n[WARNING]: Jail conversion from thin to thick can't be undone!\n"
-        # shellcheck disable=SC2162
+    
+    # Ask if user is sure they want to convert the jail
+    # but only if AUTO_YES=0
+    if [ "${AUTO_YES}" -ne 1 ]; then
+        warn "/n[WARNING]: Jail conversion from thin to thick can't be undone!\n"
         # shellcheck disable=SC3045
-        read -p "Do you really wish to convert '${TARGET}' into a thick container? [y/N]:" yn
-        case ${yn} in
-            [Yy]) start_convert;;
-            [Nn]) exit 0;;
+        read -p "Are you sure you want to continue? [y|n]:" _answer
+        case "${_answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                start_convert
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "[ERROR]: Cancelled by user."
+                ;;
+            *)
+                error_exit "[ERROR]: Invalid input. Please answer 'y' or 'n'."
+                ;;
         esac
-    done
+    elif [ "${AUTO_YES}" -eq 1 ]; then
+        start_convert
+    fi
 
 elif  [ "$#" -eq 2 ]; then
 

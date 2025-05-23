@@ -32,4 +32,5 @@ This release can then be used to create a thick jail using the ``--no-validate``
       Options:
 	
       -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -y | --yes            Do not prompt. Just convert.
       -x | --debug          Enable debug mode.
