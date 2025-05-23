@@ -39,6 +39,7 @@ usage() {
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -y | --yes            Do not prompt. Just convert.
     -x | --debug          Enable debug mode.
 
 EOF
@@ -47,6 +48,7 @@ EOF
 
 # Handle options.
 AUTO=0
+AUTO_YES=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -54,6 +56,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         -a|--auto)
             AUTO=1
+            shift
+            ;;
+        -y|--yes)
+            AUTO_YES=1
             shift
             ;;
         -x|--debug)
@@ -64,6 +70,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
+                    y) AUTO_YES=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
