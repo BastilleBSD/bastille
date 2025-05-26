@@ -103,7 +103,7 @@ Linux Jail
 ^^^^^^^^^^
 
 Linux jails are still considered experimental, but they seem to work. First we
-must bootstrap a linux distro (Linux distros are bootstrapped with the Debian tool `debootstrap <https://wiki.debian.org/Debootstrap>`).
+must bootstrap a linux distro (Linux distros are bootstrapped with the Debian tool debootstrap).
 
 .. code-block:: shell
 
