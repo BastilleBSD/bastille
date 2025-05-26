@@ -5,7 +5,7 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: A job to run test in FreeBSD
+    name: BastilleBSD testing
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
@@ -30,3 +30,9 @@ jobs:
           sysctl hw.ncpu
           sysctl hw.physmem
           sysctl hw.usermem
+on:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:
+      - main
+      
