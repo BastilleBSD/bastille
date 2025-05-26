@@ -9,16 +9,12 @@ jobs:
     if: ${{ github.event.pull_request.base.ref == 'master' }}
     runs-on: ubuntu-latest
     name: BastilleBSD testing
-    env:
-      MYTOKEN : ${{ secrets.MYTOKEN }}
-      MYTOKEN2: "value2"
     steps:
     - uses: actions/checkout@v4
     - name: Test in FreeBSD
       id: test
       uses: vmactions/freebsd-vm@v1
       with:
-        envs: 'MYTOKEN MYTOKEN2'
         usesh: true
         prepare: |
           pkg install -y git
