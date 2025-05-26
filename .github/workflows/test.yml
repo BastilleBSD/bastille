@@ -31,6 +31,7 @@ jobs:
           git clone https://github.com/BastilleBSD/bastille.git
           cd bastille
           make install
+          rocinante template tests/masterTest
           
       
 
