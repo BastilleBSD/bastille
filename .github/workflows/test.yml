@@ -30,7 +30,6 @@ jobs:
           cd ..
           git clone https://github.com/BastilleBSD/bastille.git
           cd bastille
-          git checkout $branch
           make install
           
       
