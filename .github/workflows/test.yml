@@ -1,8 +1,9 @@
 name: Bastille_Testing
 
 on: 
-  pull_request_review:
-    types: [submitted, edited]
+  pull_request:
+    branches:
+      - master
 jobs:
   test:
     if: ${{ github.event.pull_request.base.ref == 'master' }}
@@ -20,10 +21,9 @@ jobs:
         envs: 'MYTOKEN MYTOKEN2'
         usesh: true
         prepare: |
-          pkg install -y curl
+          pkg install -y git
 
         run: |
-          pkg install git
           git clone https://github.com/BastilleBSD/rocinante.git
           cd rocinante && make install
           rocinante bootstrap https://github.com/BastilleBSD/rocinante.git
