@@ -1,0 +1,32 @@
+name: Test
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: A job to run test in FreeBSD
+    env:
+      MYTOKEN : ${{ secrets.MYTOKEN }}
+      MYTOKEN2: "value2"
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test in FreeBSD
+      id: test
+      uses: vmactions/freebsd-vm@v1
+      with:
+        envs: 'MYTOKEN MYTOKEN2'
+        usesh: true
+        prepare: |
+          pkg install -y curl
+
+        run: |
+          pwd
+          ls -lah
+          whoami
+          env
+          freebsd-version
+          sysctl hw.model
+          sysctl hw.ncpu
+          sysctl hw.physmem
+          sysctl hw.usermem
