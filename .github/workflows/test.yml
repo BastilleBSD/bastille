@@ -18,7 +18,7 @@ jobs:
         usesh: true
         prepare: |
           pkg install -y git
-
+          zpool list
         run: |
           git clone https://github.com/BastilleBSD/rocinante.git
           cd rocinante && make install
