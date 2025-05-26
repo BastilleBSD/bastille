@@ -1,11 +1,11 @@
-name: Test
+name: Bastille_Testing
 
 on: 
-  pull_request:
-    branches:
-      - master
+  pull_request_review:
+    types: [submitted, edited]
 jobs:
   test:
+    if: ${{ github.event.pull_request.base.ref == 'master' }}
     runs-on: ubuntu-latest
     name: BastilleBSD testing
     env:
@@ -23,14 +23,16 @@ jobs:
           pkg install -y curl
 
         run: |
-          pwd
-          ls -lah
-          whoami
-          env
-          freebsd-version
-          sysctl hw.model
-          sysctl hw.ncpu
-          sysctl hw.physmem
-          sysctl hw.usermem
-
+          pkg install git
+          git clone https://github.com/BastilleBSD/rocinante.git
+          cd rocinante && make install
+          rocinante bootstrap https://github.com/BastilleBSD/rocinante.git
+          cd ..
+          git clone https://github.com/BastilleBSD/bastille.git
+          cd bastille
+          git checkout $branch
+          make install
+          
       
+
+
