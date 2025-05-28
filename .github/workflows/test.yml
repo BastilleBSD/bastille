@@ -21,7 +21,6 @@ jobs:
 
         run: |
           ifconfig
-          mkdir /work/tmp
           git clone https://github.com/BastilleBSD/rocinante.git
           cd rocinante && make install
           rocinante bootstrap https://github.com/BastilleBSD/rocinante.git
