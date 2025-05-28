@@ -20,6 +20,7 @@ jobs:
           pkg install -y git
 
         run: |
+          ifconfig
           git clone https://github.com/BastilleBSD/rocinante.git
           cd rocinante && make install
           rocinante bootstrap https://github.com/BastilleBSD/rocinante.git
