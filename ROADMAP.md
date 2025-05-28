@@ -1,9 +1,9 @@
 2025 Bastille Roadmap
 =====================
 
-1. Bastille CI/CD
+1. Bastille CI/CD (in progress)
 2. Container Monitoring
-3. Bastille API
+3. Bastille API (in progress)
 4. Nomad Driver for clustering
 
 Bastille CI/CD ~ 1.0.x-beta
