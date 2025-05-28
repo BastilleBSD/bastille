@@ -308,6 +308,9 @@ jail_export() {
 
         if [ -n "${bastille_zfs_zpool}" ]; then
 
+            if [ "$(zfs get -H -o value encryption ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET})" = "on" ]; then
+                error_exit "[ERROR]: Exporting jails in encryoted datasets is not supported."
+            fi
             if [ -n "${RAW_EXPORT}" ]; then
 
                 FILE_EXT=""
@@ -315,10 +318,12 @@ jail_export() {
                 export_check
 
                 # Export the raw container recursively and cleanup temporary snapshots
-                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" \
-                > "${bastille_backupsdir}/${TARGET}_${DATE}"
-
-                clean_zfs_snap
+                if ! zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" > "${bastille_backupsdir}/${TARGET}_${DATE}"; then
+                    clean_zfs_snap
+                    error_exit "[ERROR]: Failed to export jail: ${TARGET}"
+                else
+                    clean_zfs_snap
+                fi
 
             elif [ -n "${GZIP_EXPORT}" ]; then
 
@@ -327,10 +332,12 @@ jail_export() {
                 export_check
 
                 # Export the raw container recursively and cleanup temporary snapshots
-                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | \
-                gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
-
-                clean_zfs_snap
+                if ! zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+                    clean_zfs_snap
+                    error_exit "[ERROR]: Failed to export jail: ${TARGET}"
+                else
+                    clean_zfs_snap
+                fi
 
             elif [ -n "${XZ_EXPORT}" ]; then
 
@@ -339,10 +346,12 @@ jail_export() {
                 export_check
 
                 # Export the container recursively and cleanup temporary snapshots
-                zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | \
-                xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
-
-                clean_zfs_snap
+                if ! zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+                    clean_zfs_snap
+                    error_exit "[ERROR]: Failed to export jail: ${TARGET}"
+                else
+                    clean_zfs_snap
+                fi
 
             else
 
@@ -355,6 +364,8 @@ jail_export() {
                 if ! zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"; then
                     clean_zfs_snap
                     error_exit "[ERROR]: An export option is required, see 'bastille export, otherwise the user must redirect to standard output."
+                else
+                    clean_zfs_snap
                 fi
             fi
         fi
@@ -366,7 +377,9 @@ jail_export() {
             # Create standard tgz backup archive
             info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
-            cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
+            if ! cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+                error_exit "[ERROR]: Failed to export jail: ${TARGET}"
+            fi
 
         elif [ -n "${TXZ_EXPORT}" ]; then
 
@@ -375,7 +388,10 @@ jail_export() {
             # Create standard txz backup archive
             info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
-            cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"
+            if ! cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+                error_exit "[ERROR]: Failed to export jail: ${TARGET}"
+            fi
+
         else
             error_exit "[ERROR]: export option required"
         fi
@@ -383,7 +399,7 @@ jail_export() {
 
     # shellcheck disable=SC2181
     if [ "$?" -ne 0 ]; then
-        error_exit "[ERROR]: Failed to export '${TARGET}' container."
+        error_exit "[ERROR]: Failed to export jail: ${TARGET}"
     else
         if [ -z "${USER_EXPORT}" ]; then
 
