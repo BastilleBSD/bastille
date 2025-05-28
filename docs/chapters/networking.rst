@@ -311,18 +311,23 @@ VLAN Configuration
 
 Bastille supports VLANs to some extent when creating jails. When creating a jail, use
 the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set the proper
-variables inside the jails `rc.conf` to add the jail to the specified VLAN.
+variables inside the jails `rc.conf` to add the jail to the specified VLAN. Using this method
+the bridge for the jail must carry tagged VLAN packets, e.g. you can bridge a VLAN trunk to
+the jail and in the jail you then can access all VLANs. But be careful: This may have
+security implications.
 
-You cannot use the ``-V`` options with interfaces that have dots (.) in the name, which is the 
+You cannot use the ``-V``/``--vnet`` options with interfaces that have dots (.) in the name, which is the 
 standard way of naming a VLAN interface. This is due to the limitations 
 of the JIB script that Bastille uses to manage VNET jails.
 
-You can however use ``-B`` with VLAN interfaces (even with dots in the name). Below
-is an ``rc.conf`` snippet that was provided by a user who has such a configuration.
+You can however use ``-B``/``--bridge`` with VLAN interfaces (even with dots in the name).
+Using this method you create bridge interfaces in ``rc.conf`` and only add VLANs, that are needed
+for the jail. The jail only has access to this VLAN then and not to the whole trunk.
+Below is an ``rc.conf`` snippet that was provided by a user who has such a configuration.
 
 .. code-block:: shell
 
-  # rename ethernet interfaces
+  # rename ethernet interfaces (optional)
   ifconfig_igb1_name="eth1"
   ifconfig_eth1_descr="vm/jail ethernet interface"
 
@@ -344,7 +349,7 @@ is an ``rc.conf`` snippet that was provided by a user who has such a configurati
   ifconfig_eth1_20="up"
   ifconfig_eth1_30="up"
 
-Notice that the interfaces are bridge interfaces, and can be used with ``-B``
+Notice that the interfaces are bridge interfaces, and can be used with ``-B``/``--bridge``
 without issue.
 
 Regarding Routes
