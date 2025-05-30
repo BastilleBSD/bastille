@@ -3,6 +3,7 @@ ARG HOST_RESOLV_CONF=/etc/resolv.conf
 CMD touch /etc/rc.conf
 CMD touch /etc/periodic.conf
 CMD sysrc -f /etc/periodic.conf daily_status_world_kernel="NO"
+CMD pw user mod root -h -
 
 SYSRC syslogd_flags="-ss"
 SYSRC sendmail_enable="NO"
