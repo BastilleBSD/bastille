@@ -18,7 +18,6 @@ jobs:
         usesh: true
         prepare: |
           pkg install -y git
-          zpool list
         run: |
           ifconfig
           mkdir /temp
