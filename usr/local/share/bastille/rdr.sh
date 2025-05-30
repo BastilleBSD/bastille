@@ -159,7 +159,7 @@ load_rdr_rule() {
 
     local inet="${1}"
     local if_name="${2}"
-    local if=ext_if=\"${2}\"
+    local if="${bastille_network_pf_ext_if}"=\"${2}\"
     local src="${3}"
     local dst="${4}"
     local proto="${5}"
@@ -194,7 +194,7 @@ load_rdr_log_rule() {
 
     local inet="${1}"
     local if_name="${2}"
-    local if=ext_if=\"${2}\"
+    local if="${bastille_network_pf_ext_if}"=\"${2}\"
     local src="${3}"
     local dst="${4}"
     local proto="${5}"
