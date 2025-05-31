@@ -539,7 +539,7 @@ fi
 
 ## Filter sane release names
 case "${1}" in
-    2.[0-9]*)
+    [2-4].[0-9]*)
         ## check for MidnightBSD releases name
         NAME_VERIFY=$(echo "${RELEASE}")
         UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
