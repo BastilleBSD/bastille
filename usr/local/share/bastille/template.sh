@@ -330,7 +330,7 @@ for _jail in ${JAILS}; do
 
     # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
     # Values provided by default (without being defined by the user) are listed here. -- cwells
-    ARG_REPLACEMENTS="-e 's/\${jail_ip4}/${_jail_ip4}/g' -e 's/\${jail_ip6}/${_jail_ip6}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
+    ARG_REPLACEMENTS="-e 's/\${JAIL_IP}/${_jail_ip4}/g' -e 's/\${JAIL_IP6}/${_jail_ip6}/g' -e 's/\${JAIL_NAME}/${_jail}/g'"
     # This is parsed outside the HOOKS loop so an ARG file can be used with a Bastillefile. -- cwells
     if [ -s "${bastille_template}/ARG" ]; then
         while read _line; do
