@@ -368,7 +368,7 @@ debootstrap_release() {
 
     # Fetch the Linux flavor
     info "\nFetching ${PLATFORM_OS} distfiles..."
-    if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
+    if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} ${DEBOOTSTRAP_OPTS} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
 
         ## perform cleanup only for stale/empty directories on failure
         if checkyesno bastille_zfs_enable; then
@@ -477,6 +477,7 @@ done
 RELEASE="${1}"
 OPTION="${2}"
 NOCACHEDIR=
+DEBOOTSTRAP_OPTS=
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
@@ -657,6 +658,7 @@ case "${1}" in
         LINUX_FLAVOR="bookworm"
         DIR_BOOTSTRAP="Debian12"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        DEBOOTSTRAP_OPTS="--exclude=usr-is-merged"
         debootstrap_release
         ;;
     *)
