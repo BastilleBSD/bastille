@@ -86,6 +86,10 @@ If the above template is called with ``--arg JAIL=myjail --arg IP=10.3.3.3``, th
 be passed along to ``other/template`` as well, with the matching variable. So ``${JAIL}`` will be
 ``myjail`` and ``${IP}`` will be ``10.3.3.3``.
 
+The ARG hook has three values that are built in, and will differ for every jail. The values
+are ``JAIL_NAME``, ``JAIL_IP``, and ``JAIL_IP6``. These can be used inside any template without
+setting the values at the top of the Bastillefile. The values are automatically retrieved from
+the targeted jails configuration.
 
 ``CMD``           - run the specified command
 
