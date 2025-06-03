@@ -141,19 +141,20 @@ validate_ip() {
             set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    error_exit "Invalid: (${TEST_IP})"
+                    error_continue "Invalid: (${TEST_IP})"
                 fi
             done
 
             if ifconfig | grep -qwF "${TEST_IP}"; then
                 warn "\nWarning: IP address already in use (${TEST_IP})."
+                IP4_ADDR="${_ip}"
             else
                 info "\nValid: (${_ip})."
                 IP4_ADDR="${_ip}"
             fi
 
         else
-            error_exit "Invalid: (${_ip})."
+            error_continue "Invalid: (${_ip})."
         fi
     fi
 }
@@ -400,15 +401,12 @@ update_jailconf_vnet() {
                                 sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
                             fi
                         else
-                            if [ "${IP6_ADDR}" = "SLAAC" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
-                            fi
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
                         fi
                     fi
 
                     # Replace epair description
                     sed -i '' "/${_jail_if}/ s|${_jail_vnet} host interface for Bastille jail ${TARGET}|${_jail_vnet} host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
-
                     break
                 fi
             done
@@ -467,9 +465,7 @@ update_jailconf_vnet() {
                                 sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
                             fi
                         else
-                            if [ "${IP6_ADDR}" = "SLAAC" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
-                            fi
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
                         fi
                     fi
                     break
@@ -504,6 +500,30 @@ clone_jail() {
                 validate_ips
             else
                 usage
+            fi
+
+            # Validate proper IP settings
+            if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
+                # VNET
+                if grep -Eoq "ifconfig_vnet0=" "${bastille_jailsdir}/root/etc/rc.conf"; then
+                    if [ -z "${IP4_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                    fi
+                if grep -Eoq "ifconfig_vnet0_ipv6=" "${bastille_jailsdir}/root/etc/rc.conf"; then
+                    if [ -z "${IP6_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                    fi
+                fi
+            else
+                if [ "$(bastille config ${TARGET} get ip4.addr)" != "not set" ]; then
+                    if [ -z "${IP4_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                    fi
+                elif [ "$(bastille config ${TARGET} get ip6.addr)" != "not set" ]; then
+                    if [ -z "${IP6_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                    fi
+                fi
             fi
 
             if [ -n "${bastille_zfs_zpool}" ]; then
