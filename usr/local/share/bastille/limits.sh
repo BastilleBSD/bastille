@@ -130,7 +130,7 @@ add_cpuset() {
 
     # Persist cpuset value
     echo "${_cpuset_rule}" >> "${bastille_jailsdir}/${_jail}/cpuset.conf"
-    echo -e "Limits: ${OPTION} ${VALUE}"
+    echo -e "[CPU LIMITS]: ${OPTION} ${VALUE}"
 
     # Restart jail to apply cpuset
     bastille restart ${_jail}
@@ -183,7 +183,7 @@ for _jail in ${JAILS}; do
                 fi
                 if [ "${OPT_LOG}" -eq 1 ]; then
                     echo -e "[LOGGING]: ${OPTION} ${VALUE}"
-                    rctl -a "${_rctl_rule} ${_rctl_rule_log}"
+                    rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
                 else
                     echo -e "${OPTION} ${VALUE}"
                     rctl -a "${_rctl_rule}"
