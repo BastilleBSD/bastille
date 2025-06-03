@@ -165,29 +165,32 @@ for _jail in ${JAILS}; do
             else
                 # Add rctl rule to rctl.conf
                 _rctl_rule="jail:${_jail}:${OPTION}:deny=${VALUE}/jail"
-                 _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
+                _rctl_rule_log="jail:${_jail}:${OPTION}:log=${VALUE}/jail"
                 # Check whether the entry already exists and, if so, update it. -- cwells
                 if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
     	            _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
     	            _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
+    	            _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
                     sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    if [ "${OPT_LOG}" -eq 1 ]; then
+                        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    fi
                 else # Just append the entry. -- cwells
                     echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-                    echo -e "${OPTION} ${VALUE}"
-                    rctl -a "${_rctl_rule}"
-                fi
-
-                if [ "${OPT_LOG}" -eq 1 ]; then
-                    if grep -qs "jail:${_jail}:${OPTION}:deny" "${bastille_jailsdir}/${_jail}/rctl.conf"; then
-    	                _escaped_option=$(echo "${OPTION}" | sed 's/\//\\\//g')
-    	                _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
-                        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-                    else # Just append the entry. -- cwells
+                    if [ "${OPT_LOG}" -eq 1 ]; then
                         echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
                     fi
-                    echo -e "[LOGGING]: ${OPTION} ${VALUE}"
-                    rctl -a "${_rctl_rule_log}"
+                    if [ "${OPT_LOG}" -eq 1 ]; then
+                        echo -e "[LOGGING]: ${OPTION} ${VALUE}"
+                    else
+                        echo -e "${OPTION} ${VALUE}"
+                    fi
+                    rctl -a "${_rctl_rule}"
+                    if [ "${OPT_LOG}" -eq 1 ]; then
+                        rctl -a "${_rctl_rule_log}"
+                    fi
                 fi
+            fi
             ;;
 
         remove)
