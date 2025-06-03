@@ -180,15 +180,13 @@ for _jail in ${JAILS}; do
                     if [ "${OPT_LOG}" -eq 1 ]; then
                         echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
                     fi
-                    if [ "${OPT_LOG}" -eq 1 ]; then
-                        echo -e "[LOGGING]: ${OPTION} ${VALUE}"
-                    else
-                        echo -e "${OPTION} ${VALUE}"
-                    fi
+                fi
+                if [ "${OPT_LOG}" -eq 1 ]; then
+                    echo -e "[LOGGING]: ${OPTION} ${VALUE}"
+                    rctl -a "${_rctl_rule} ${_rctl_rule_log"
+                else
+                    echo -e "${OPTION} ${VALUE}"
                     rctl -a "${_rctl_rule}"
-                    if [ "${OPT_LOG}" -eq 1 ]; then
-                        rctl -a "${_rctl_rule_log}"
-                    fi
                 fi
             fi
             ;;
