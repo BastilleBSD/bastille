@@ -43,7 +43,7 @@ usage() {
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -l | --log            Enable logging tor specified rule (rctl only).
+    -l | --log            Enable logging for the specified rule (rctl only).
     -x | --debug          Enable debug mode.
 
 EOF
