@@ -79,7 +79,7 @@ validate_name() {
 validate_ip() {
 
     local _ip="${1}"
-    local _ip6=$(echo "${_ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
+    local _ip6="$(echo ${_ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
 
     if [ -n "${_ip6}" ]; then
         info "\nValid: (${_ip6})."
