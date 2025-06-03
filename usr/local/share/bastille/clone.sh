@@ -113,10 +113,8 @@ validate_ip() {
     local _ip6="$(echo ${_ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
 
     if [ -n "${_ip6}" ]; then
-    	if [ "${_ip6}" = "SLAAC" ];  then
-            if [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
-                error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip6})."
-            fi
+    	if [ "${_ip6}" = "SLAAC" ] && [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
+            error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip6})."
         fi
         info "\nValid: (${_ip6})."
         IP6_ADDR="${_ip6}"
