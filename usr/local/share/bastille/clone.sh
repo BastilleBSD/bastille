@@ -117,10 +117,9 @@ validate_ip() {
             if [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
                 error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip6})."
             fi
-        else
-            info "\nValid: (${_ip6})."
-            IP6_ADDR="${_ip6}"
         fi
+        info "\nValid: (${_ip6})."
+        IP6_ADDR="${_ip6}"
     elif [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
 	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
                 error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
