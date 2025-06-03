@@ -43,6 +43,7 @@ usage() {
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
+    -l | --log            Enable logging tor specified rule (rctl only).
     -x | --debug          Enable debug mode.
 
 EOF
@@ -51,6 +52,7 @@ EOF
 
 # Handle options.
 AUTO=0
+OPT_LOG=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -58,6 +60,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         -a|--auto)
             AUTO=1
+            shift
+            ;;
+        -l|--log)
+            OPT_LOG=1
             shift
             ;;
         -x|--debug)
@@ -68,6 +74,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
+                    l) OPT_LOG=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
                 esac
@@ -166,14 +173,21 @@ for _jail in ${JAILS}; do
     	            _escaped_rctl_rule=$(echo "${_rctl_rule}" | sed 's/\//\\\//g')
     	            _escaped_rctl_rule_log=$(echo "${_rctl_rule_log}" | sed 's/\//\\\//g')
                     sed -i '' -E "s/jail:${_jail}:${_escaped_option}:deny.+/${_escaped_rctl_rule}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
-                    sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    if [ "${OPT_LOG}" -eq 1 ]; then
+                        sed -i '' -E "s/jail:${_jail}:${_escaped_option}:log.+/${_escaped_rctl_rule_log}/" "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    fi
                 else # Just append the entry. -- cwells
                     echo "${_rctl_rule}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
-                    echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    if [ "${OPT_LOG}" -eq 1 ]; then
+                        echo "${_rctl_rule_log}" >> "${bastille_jailsdir}/${_jail}/rctl.conf"
+                    fi
                 fi
 
                 echo -e "${OPTION} ${VALUE}"
-                rctl -a "${_rctl_rule}" "${_rctl_rule_log}"
+                rctl -a "${_rctl_rule}"
+                if [ "${OPT_LOG}" -eq 1 ]; then
+                    rctl -a "${_rctl_rule_log}"
+                fi
             fi
             ;;
 
