@@ -83,21 +83,21 @@ validate_ip() {
 
     if [ -n "${_ip6}" ]; then
         info "\nValid: (${_ip6})."
-	# This is only used in this function to set IPX_DEFINITION
+	    # This is only used in this function to set IPX_DEFINITION
         local ipx_addr="ip6.addr"
     else
         if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
-	    if [ -n "${VNET_JAIL}" ]; then
+	        if [ -n "${VNET_JAIL}" ]; then
                 error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip})."
-	    else
+	        else
                 info "\nValid: (${_ip})."
-	    fi
+	        fi
         elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ] || [ "${_ip}" = "0.0.0.0" ]; then
-	    if [ -z "${VNET_JAIL}" ]; then
+	        if [ -z "${VNET_JAIL}" ]; then
                 error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
-	    else
+	        else
                 info "\nValid: (${_ip})."
-	    fi
+	        fi
         else
             local IFS
             if echo "${_ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then

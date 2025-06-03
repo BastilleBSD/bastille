@@ -168,7 +168,7 @@ update_jailconf_vnet() {
             sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
 
             # Replace epair description
-            sed -i '' "s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+            sed -i '' "s|${_new_host_epair} host interface for Bastille jail ${TARGET}|${_new_host_epair} host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
 
             # Replace epair name in /etc/rc.conf
             sed -i '' "/ifconfig/ s|${_target_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
