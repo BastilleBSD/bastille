@@ -50,4 +50,5 @@ This file can be edited manually using ``bastille edit TARGET cpuset.conf``.
       Options:
 
       -a | --auto           Auto mode. Start/stop jail(s) if required.
+      -l | --log            Enable logging for the specified rule (rctl only).
       -x | --debug          Enable debug mode. 
