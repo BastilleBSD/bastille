@@ -183,7 +183,7 @@ for _jail in ${JAILS}; do
                 fi
                 if [ "${OPT_LOG}" -eq 1 ]; then
                     echo -e "[LOGGING]: ${OPTION} ${VALUE}"
-                    rctl -a "${_rctl_rule} ${_rctl_rule_log"
+                    rctl -a "${_rctl_rule} ${_rctl_rule_log}"
                 else
                     echo -e "${OPTION} ${VALUE}"
                     rctl -a "${_rctl_rule}"
