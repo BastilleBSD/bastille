@@ -109,42 +109,64 @@ fi
 
 validate_ip() {
 
-    local IP="${1}"
-    IP6_MODE="disable"
-    ip6=$(echo "${IP}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$))')
+    local _ip="${1}"
+    local _ip6="$(echo ${_ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
 
-    if [ -n "${ip6}" ]; then
-
-        info "\nValid: (${ip6})."
-        IP6_MODE="new"
-
-    elif { [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; } && [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-
-        info "\nValid: (${IP})."
-
+    if [ -n "${_ip6}" ]; then
+    	if [ "${_ip6}" = "SLAAC" ] && [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
+            error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip6})."
+        fi
+        info "\nValid: (${_ip6})."
+        IP6_ADDR="${_ip6}"
+    elif [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
+	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
+	        else
+                info "\nValid: (${_ip})."
+                IP4_ADDR="${_ip}"
+                IP6_ADDR="${_ip}"
+	        fi
+    elif [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
+        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
+            info "\nValid: (${_ip})."
+            IP4_ADDR="${_ip}"
+        else
+            error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip})."
+        fi
     else
-
         local IFS
-        if echo "${IP}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${IP}" | cut -d / -f1)
+        if echo "${_ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+            TEST_IP=$(echo "${_ip}" | cut -d / -f1)
             IFS=.
             set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    error_exit "Invalid: (${TEST_IP})"
+                    error_continue "Invalid: (${TEST_IP})"
                 fi
             done
 
             if ifconfig | grep -qwF "${TEST_IP}"; then
                 warn "\nWarning: IP address already in use (${TEST_IP})."
+                IP4_ADDR="${_ip}"
             else
-                info "\nValid: (${IP})."
+                info "\nValid: (${_ip})."
+                IP4_ADDR="${_ip}"
             fi
 
         else
-            error_exit "Invalid: (${IP})."
+            error_continue "Invalid: (${_ip})."
         fi
     fi
+}
+
+validate_ips() {
+
+    IP4_ADDR=""
+    IP6_ADDR=""
+
+    for ip in ${IP}; do
+        validate_ip "${ip}"
+    done
 }
 
 update_jailconf() {
@@ -181,9 +203,9 @@ update_jailconf() {
                     _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 fi
                 if [ "${_interface}" != "not set" ]; then
-                    sed -i '' "s#.*ip4.addr = .*#  ip4.addr = ${_interface}|${IP};#" "${JAIL_CONFIG}"
+                    sed -i '' "s#.*ip4.addr = .*#  ip4.addr = ${_interface}|${IP4_ADDR};#" "${JAIL_CONFIG}"
                 else
-                    sed -i '' "\#ip4.addr = .*# s#${_ip}#${IP}#" "${JAIL_CONFIG}"
+                    sed -i '' "\#ip4.addr = .*# s#${_ip}#${IP4_ADDR}#" "${JAIL_CONFIG}"
                 fi
                 sed -i '' "\#ip4.addr += .*# s#${_ip}#127.0.0.1#" "${JAIL_CONFIG}"
             done
@@ -196,12 +218,11 @@ update_jailconf() {
                     _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
                 fi
                 if [ "${_interface}" != "not set" ]; then
-                    sed -i '' "s#.*${_interface} = .*#  ip6.addr = ${_interface}|${IP};/" "${JAIL_CONFIG}"
+                    sed -i '' "s#.*${_interface} = .*#  ip6.addr = ${_interface}|${IP6_ADDR};/" "${JAIL_CONFIG}"
                 else
-                    sed -i '' "\#ip6.addr = .*# s#${_ip}#${IP}#" "${JAIL_CONFIG}"
+                    sed -i '' "\#ip6.addr = .*# s#${_ip}#${IP6_ADDR}#" "${JAIL_CONFIG}"
                 fi
-                sed -i '' "\#ip6.addr += .*# s#${_ip}#127.0.0.1#" "${JAIL_CONFIG}"
-                sed -i '' "s#ip6 = .*#ip6 = ${IP6_MODE};#" "${JAIL_CONFIG}"
+                sed -i '' "\#ip6.addr += .*# s#${_ip}#::1#" "${JAIL_CONFIG}"
             done
         fi
     fi
@@ -272,34 +293,52 @@ update_jailconf_vnet() {
                         sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
                     fi
 
-                    # Replace epair description
-                    sed -i '' "/${_new_host_epair}/ s|vnet host interface for Bastille jail ${TARGET}|vnet host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
-
                     # Update /etc/rc.conf
                     local _jail_vnet="$(grep ${_target_jail_epair} "${_rc_conf}" | grep -Eo -m 1 "vnet[0-9]+")"
                     local _jail_vnet_vlan="$(grep "vlans_${_jail_vnet}" "${_rc_conf}" | sed 's/.*=//g')"
                     sed -i '' "s|${_target_jail_epair}_name|${_new_jail_epair}_name|" "${_rc_conf}"
-                    if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
-                        if [ -n "${_jail_vnet_vlan}" ]; then
-                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                    # IP4
+                    if [ -n "${IP4_ADDR}" ]; then
+                        if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
+                            if [ -n "${_jail_vnet_vlan}" ]; then
+                                if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                                else
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP4_ADDR}"
+                                fi
                             else
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP}"
+                                if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                                else
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP4_ADDR}"
+                                fi
                             fi
                         else
-                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                            if [ -n "${_jail_vnet_vlan}" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
                             else
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
                             fi
-                        fi
-                    else
-                        if [ -n "${_jail_vnet_vlan}" ]; then
-                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
-                        else
-                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
                         fi
                     fi
+                    # IP6
+                    if [ -n "${IP6_ADDR}" ]; then
+                        if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
+                            if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled accept_rtadv"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                            fi
+                        else
+                            if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
+                            fi
+                        fi
+                    fi
+
+                    # Replace epair description
+                    sed -i '' "/${_new_host_epair}/ s|${_jail_vnet} host interface for Bastille jail ${TARGET}|${_jail_vnet} host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+
                     break
                 fi
             done
@@ -329,27 +368,45 @@ update_jailconf_vnet() {
 
                     # Update /etc/rc.conf
                     sed -i '' "s|ifconfig_e0b_${_if}_name|ifconfig_e0b_${_jail_if}_name|" "${_rc_conf}"
-                    if grep "vnet0" "${_rc_conf}" | grep -q ${_jail_if}; then
-                        if [ -n "${_jail_vnet_vlan}" ]; then
-                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                    # IP4
+                    if [ -n "${IP4_ADDR}" ]; then
+                        if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
+                            if [ -n "${_jail_vnet_vlan}" ]; then
+                                if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                                else
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP4_ADDR}"
+                                fi
                             else
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP}"
+                                if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                                else
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP4_ADDR}"
+                                fi
                             fi
                         else
-                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                            if [ -n "${_jail_vnet_vlan}" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
                             else
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
                             fi
-                        fi
-                    else
-                        if [ -n "${_jail_vnet_vlan}" ]; then
-                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
-                        else
-                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
                         fi
                     fi
+                    # IP6
+                    if [ -n "${IP6_ADDR}" ]; then
+                        if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
+                            if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled accept_rtadv"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                            fi
+                        else
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
+                        fi
+                    fi
+
+                    # Replace epair description
+                    sed -i '' "/${_jail_if}/ s|${_jail_vnet} host interface for Bastille jail ${TARGET}|${_jail_vnet} host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
                     break
                 fi
             done
@@ -375,25 +432,40 @@ update_jailconf_vnet() {
 
                     # Update /etc/rc.conf
                     sed -i '' "s|ifconfig_ng0_${_if}_name|ifconfig_ng0_${_jail_if}_name|" "${_rc_conf}"
-                    if grep "vnet0" "${_rc_conf}" | grep -q ${_jail_if}; then
-                        if [ -n "${_jail_vnet_vlan}" ]; then
-                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                    # IP4
+                    if [ -n "${IP4_ADDR}" ]; then
+                        if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
+                            if [ -n "${_jail_vnet_vlan}" ]; then
+                                if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="SYNCDHCP"
+                                else
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP4_ADDR}"
+                                fi
                             else
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0_${_jail_vnet_vlan}="inet ${IP}"
+                                if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                                else
+                                    sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP4_ADDR}"
+                                fi
                             fi
                         else
-                            if [ "${IP}" = "0.0.0.0" ] || [ "${IP}" = "DHCP" ]; then
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0="SYNCDHCP"
+                            if [ -n "${_jail_vnet_vlan}" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
                             else
-                                sysrc -f "${_rc_conf}" ifconfig_vnet0="inet ${IP}"
+                                sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
                             fi
                         fi
-                    else
-                        if [ -n "${_jail_vnet_vlan}" ]; then
-                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_${_jail_vnet_vlan}="SYNCDHCP"
+                    fi
+                    # IP6
+                    if [ -n "${IP6_ADDR}" ]; then
+                        if grep "vnet0" "${_rc_conf}" | grep -q "${_new_jail_epair}_name"; then
+                            if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled accept_rtadv"
+                            else
+                                sysrc -f "${_rc_conf}" ifconfig_vnet0_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                            fi
                         else
-                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                            sysrc -f "${_rc_conf}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
                         fi
                     fi
                     break
@@ -425,9 +497,34 @@ clone_jail() {
             fi
 
             if [ -n "${IP}" ]; then
-                validate_ip "${IP}"
+                validate_ips
             else
                 usage
+            fi
+
+            # Validate proper IP settings
+            if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
+                # VNET
+                if grep -Eoq "ifconfig_vnet0=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+                    if [ -z "${IP4_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                    fi
+                fi
+                if grep -Eoq "ifconfig_vnet0_ipv6=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+                    if [ -z "${IP6_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                    fi
+                fi
+            else
+                if [ "$(bastille config ${TARGET} get ip4.addr)" != "not set" ]; then
+                    if [ -z "${IP4_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                    fi
+                elif [ "$(bastille config ${TARGET} get ip6.addr)" != "not set" ]; then
+                    if [ -z "${IP6_ADDR}" ]; then
+                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                    fi
+                fi
             fi
 
             if [ -n "${bastille_zfs_zpool}" ]; then

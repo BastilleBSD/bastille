@@ -65,7 +65,8 @@ validate_name() {
 
     local NAME_VERIFY=${NAME}
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
-
+    
+    # Make sure NAME has only allowed characters
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
@@ -77,20 +78,26 @@ validate_name() {
 
 validate_ip() {
 
-    _ip="${1}"
-    _ip6=$(echo "${_ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')
+    local _ip="${1}"
+    local _ip6="$(echo ${_ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
 
     if [ -n "${_ip6}" ]; then
-
         info "\nValid: (${_ip6})."
-
-        ipx_addr="ip6.addr"
-
+	    # This is only used in this function to set IPX_DEFINITION
+        local ipx_addr="ip6.addr"
     else
-        if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
-
-            info "\nValid: (${_ip})."
-
+        if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
+	        if [ -n "${VNET_JAIL}" ]; then
+                error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip})."
+	        else
+                info "\nValid: (${_ip})."
+	        fi
+        elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ] || [ "${_ip}" = "0.0.0.0" ]; then
+	        if [ -z "${VNET_JAIL}" ]; then
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
+	        else
+                info "\nValid: (${_ip})."
+	        fi
         else
             local IFS
             if echo "${_ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
@@ -151,7 +158,17 @@ validate_ip() {
             IP6_DEFINITION=""
             IP6_MODE="disable"
         fi
-    elif echo "${_ip}" | grep -qvE '(SLAAC|DHCP|0[.]0[.]0[.]0)'; then
+    elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SLAAC" ] || [ "${_ip}" = "0.0.0.0" ]; then
+        if [ -n "${VNET_JAIL}" ]; then
+            if [ "${ipx_addr}" = "ip4.addr" ]; then
+                IP4_ADDR="${_ip}"
+            elif [ "${ipx_addr}" = "ip6.addr" ]; then
+                IP6_ADDR="${_ip}"
+            fi
+        else
+	    error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip})."
+        fi
+    else
         if [ "${ipx_addr}" = "ip4.addr" ]; then
             IP4_ADDR="${_ip}"
             IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
@@ -621,15 +638,16 @@ create_jail() {
 
     if [ -n "${VNET_JAIL}" ]; then
         if [ -n "${bastille_template_vnet}" ]; then
+	
             ## rename interface to generic vnet0
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//; s/-/_/g')
-
             _gateway=''
             _gateway6=''
             _ifconfig_inet=''
             _ifconfig_inet6=''
 
-            if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP)'; then
+            # Determine default gateway option
+            if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
                 # Enable DHCP if requested
                 _ifconfig_inet=SYNCDHCP
             else
@@ -642,12 +660,14 @@ create_jail() {
                     _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
                 fi
             fi
+	    
             # Add IPv4 address (this is empty if DHCP is used)
             if [ -n "${IP4_ADDR}" ]; then
-                    _ifconfig_inet="${_ifconfig_inet} inet ${IP4_ADDR}"
+                _ifconfig_inet="${_ifconfig_inet} inet ${IP4_ADDR}"
             fi
+	    
             # Enable IPv6 if used
-            if [ "${IP6_MODE}" != "disable" ]; then
+            if [ -n "${IP6_ADDR}" ]; then
                 _ifconfig_inet6='inet6 -ifdisabled'
                 if echo "${IP}" | grep -qE 'SLAAC'; then
                     # Enable SLAAC if requested
@@ -661,13 +681,16 @@ create_jail() {
                     fi
                 fi
             fi
+	    
             # Add IPv6 address (this is empty if SLAAC is used)
             if [ -n "${IP6_ADDR}" ]; then
-                    _ifconfig_inet6="${_ifconfig_inet6} ${IP6_ADDR}"
+                _ifconfig_inet6="${_ifconfig_inet6} ${IP6_ADDR}"
             fi
-            # Join together IPv4 and IPv6 parts of ifconfig
-            _ifconfig="${_ifconfig_inet} ${_ifconfig_inet6}"
-            bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}"
+	    
+            # We need to pass IP4 and IP6 separately
+            _ifconfig="${_ifconfig_inet}"
+	    _ifconfig6="${_ifconfig_inet6}"
+            bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
 
             # Add VLAN ID if it was given
 	    if [ -n "${VLAN_ID}" ]; then

@@ -177,15 +177,15 @@ fi
 
 validate_ip() {
 
-    IP6_ENABLE=0
     local ip="${1}"
     local ip6="$( echo "${ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
 
     if [ -n "${ip6}" ]; then
         info "\nValid: (${ip6})."
-        IP6_ENABLE=1
-    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ]; then
+        IP6_ADDR="${ip6}"
+    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
         info "\nValid: (${ip})."
+        IP4_ADDR="${ip}"
     else
         local IFS
         if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
@@ -198,6 +198,7 @@ validate_ip() {
                 fi
             done
             info "\nValid: (${ip})."
+            IP4_ADDR="${ip}"
         else
             error_exit "Invalid: (${ip})."
         fi
@@ -303,12 +304,18 @@ EOF
 	
         # Add config to /etc/rc.conf
         sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_if_vnet}"
-	if [ -n "${_ip}" ]; then
+	    if [ -n "${IP6_ADDR}" ]; then
+            if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
+            else
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+            fi
+        elif [ -n "${IP4_ADDR}" ]; then
             # If 0.0.0.0 set DHCP, else set static IP address
-            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
+            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
                 sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
             else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${IP4_ADDR}"
             fi
         fi
 
@@ -350,16 +357,22 @@ EOF
             fi
             # Add config to /etc/rc.conf
             sysrc -f "${_jail_rc_config}" ifconfig_e0b_${_jail_if}_name="${_if_vnet}"
-	    if [ -n "${_ip}" ]; then
+	        if [ -n "${IP6_ADDR}" ]; then
+                if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
+                else
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                fi
+            elif [ -n "${IP4_ADDR}" ]; then
                 # If 0.0.0.0 set DHCP, else set static IP address
-                if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
+                if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
                     sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
                 else
-                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${IP4_ADDR}"
                 fi
-	    fi
-
+            fi
             echo "Added VNET interface: \"${_if}\""
+
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
             for _num in $(seq 0 "${_bastille_if_num_range}"); do
                 if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
@@ -392,16 +405,17 @@ EOF
             fi
             # Add config to /etc/rc.conf
             sysrc -f "${_jail_rc_config}" ifconfig_jng_${_jail_if}_name="${_if_vnet}"
-	    if [ -n "${_ip}" ]; then
+	        if [ -n "${_ip}" ]; then
                 # If 0.0.0.0 set DHCP, else set static IP address
                 if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
                     sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
                 else
                     sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${_ip}"
                 fi
-	    fi
+	        fi
             echo "Added VNET interface: \"${_if}\""
         fi
+
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
         # Remove ending brace (it is added again with the netblock)
         sed -i '' '/}/d' "${_jail_config}"
@@ -412,19 +426,24 @@ EOF
 }
 EOF
         # Add config to /etc/rc.conf
-	if [ -n "${_ip}" ]; then
-            # If 0.0.0.0 set DHCP, else set static IP address
-            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if}="SYNCDHCP"
+	    if [ -n "${IP6_ADDR}" ]; then
+            if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
             else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if}="inet ${_ip}"
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
             fi
-	fi
-
+        elif [ -n "${IP4_ADDR}" ]; then
+            # If 0.0.0.0 set DHCP, else set static IP address
+            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
+            else
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="inet ${IP4_ADDR}"
+            fi
+        fi
         echo "Added Passthrough interface: \"${_if}\""
  
     elif [ "${CLASSIC}" -eq 1 ]; then
-        if [ "${IP6_ENABLE}" -eq 1 ]; then
+        if [ -n "${IP6_ADDR}" ]; then
             sed -i '' "s/interface = .*/&\n  ip6.addr += ${_if}|${_ip};/" ${_jail_config}
         else
             sed -i '' "s/interface = .*/&\n  ip4.addr += ${_if}|${_ip};/" ${_jail_config}
