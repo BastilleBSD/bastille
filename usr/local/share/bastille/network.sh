@@ -423,6 +423,7 @@ EOF
         cat << EOF >> "${_jail_config}"
   ## ${_if} interface
   vnet.interface += ${_if};
+  exec.prestop += "ifconfig ${_if} -vnet ${_jailname}";
 }
 EOF
         # Add config to /etc/rc.conf
