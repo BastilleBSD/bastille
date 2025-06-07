@@ -46,7 +46,7 @@ EOF
 
 validate_release_url() {
 
-    info "\nBootstrapping release: ${RELEASE}..."
+    info "\nBootstrapping release: ${RELEASE}"
 
     ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
