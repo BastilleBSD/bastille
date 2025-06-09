@@ -388,41 +388,25 @@ generate_vnet_jail_netblock() {
     get_bastille_if_count
     local _bastille_if_num_range=$((_bastille_if_count + 1))
     if [ -n "${use_unique_bridge}" ]; then
-        if [ "${_bastille_if_count}" -gt 0 ]; then  
-            for _num in $(seq 0 "${_bastille_if_num_range}"); do
-                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
-                    if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
-                        local host_epair=e${_num}a_${jail_name}
-                        local jail_epair=e${_num}b_${jail_name}
-                    else
-                        local host_epair=epair${_num}a
-                        local jail_epair=epair${_num}b
-                    fi
-                    break
+        for _num in $(seq 0 "${_bastille_if_num_range}"); do
+            if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+                if [ "$(echo -n "e${_num}a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
+                    local host_epair=e${_num}a_${jail_name}
+                    local jail_epair=e${_num}b_${jail_name}
+                else
+                    local host_epair=epair${_num}a
+                    local jail_epair=epair${_num}b
                 fi
-            done
-        else
-            if [ "$(echo -n "e0a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
-                local _num=0
-                local host_epair=e${_num}a_${jail_name}
-                local jail_epair=e${_num}b_${jail_name}
-            else
-                local _num=0
-                local host_epair=epair${_num}a
-                local jail_epair=epair${_num}b
+                break
             fi
-        fi
+        done
     else
-        if [ "${_bastille_if_count}" -gt 0 ]; then  
-            for _num in $(seq 0 "${_bastille_if_num_range}"); do
-                if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
-                    local _jail_if="bastille${_num}"
-                    break
-                fi
-            done
-        else
-            local _jail_if="bastille0"
-        fi
+        for _num in $(seq 0 "${_bastille_if_num_range}"); do
+            if ! echo "${_bastille_if_list}" | grep -oqswx "${_num}"; then
+                local _jail_if="bastille${_num}"
+                break
+            fi
+        done
     fi
     ## If BRIDGE is enabled, generate bridge config, else generate VNET config
     if [ -n "${use_unique_bridge}" ]; then
