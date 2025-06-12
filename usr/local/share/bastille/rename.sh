@@ -141,7 +141,7 @@ update_jailconf_vnet() {
         # For VNET jails that use the JIB script
         if grep " ${_if_suffix} " ${_jail_conf} | grep -Eoq "jib addm"; then
 
-            local _epair_num="$(grep -Eo -m 1 "${_if}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
+            local _epair_num="$(grep -Eo -m 1 "${_if_prefix}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
             local _target_host_epair="$(grep -Eo -m 1 "e${_epair_num}a_.* " "${_jail_conf}")"
             local _target_jail_epair="$(grep -Eo -m 1 "e${_epair_num}b_.* " "${_jail_conf}")"
 
@@ -152,12 +152,12 @@ update_jailconf_vnet() {
             else
 	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
 	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-    	        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-                local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+    	        local _new_host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
+                local _new_jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
             fi
 
-            local _new_if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
-            local _new_if_suffix="$(echo ${_if} | awk -F'_' '{print $2}')"
+            local _new_if_prefix="$(echo ${_new_host_epair} | awk -F'_' '{print $1}')"
+            local _new_if_suffix="$(echo ${_new_host_epair} | awk -F'_' '{print $2}')"
 
             # Replace host epair name in jail.conf                  
             #sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
@@ -180,7 +180,7 @@ update_jailconf_vnet() {
             
         elif grep " ${_if_suffix} " ${_jail_conf} | grep -Eoq "jng bridge"; then
         
-            local _ngif_num="$(grep -Eo -m 1 "${_if}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
+            local _ngif_num="$(grep -Eo -m 1 "${_if_prefix}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
             local _target_ngif="$(grep -Eo -m 1 "ng${_ngif_num}_.* " "${_jail_conf}")"
 
             if [ "$(echo -n "ng${_ngif_num}_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
@@ -189,7 +189,7 @@ update_jailconf_vnet() {
             else
 	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
 	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-    	        local host_ngif="ng${_epair_num}_${name_prefix}xx${name_suffix}"
+    	        local _new_ngif="ng${_epair_num}_${name_prefix}xx${name_suffix}"
             fi
 
             local _new_if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
@@ -208,7 +208,7 @@ update_jailconf_vnet() {
 
         elif grep "${_if}" ${_jail_conf} | grep -Eoq "epair create"; then
 
-            local _epair_num="$(grep -Eo -m 1 "${_if}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
+            local _epair_num="$(grep -Eo -m 1 "${_if_prefix}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
             local _target_host_epair="$(grep -Eo -m 1 "e${_epair_num}a_.* " "${_jail_conf}")"
             local _target_jail_epair="$(grep -Eo -m 1 "e${_epair_num}b_.* " "${_jail_conf}")"
 
@@ -219,8 +219,8 @@ update_jailconf_vnet() {
             else
 	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
 	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-    	        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-                local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+    	        local _new_host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
+                local _new_jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
             fi
 
             # Replace host epair name in jail.conf                  
