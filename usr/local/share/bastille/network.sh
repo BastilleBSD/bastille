@@ -241,31 +241,33 @@ add_interface() {
 
     # Determine number of interfaces
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-        local _if_list="$(grep -Eo 'e[0-9]+a_[^;" ]+' ${_jail_conf} | sort -u)"
+        local _if_list="$(grep -Eo 'e[0-9]+a_[^;" ]+' ${_jail_config} | sort -u)"
         local _epair_count="$(echo "${_if_list}" | grep -Eo "[0-9]+" | wc -l)"
-	local _epair_num=$((_epair_count + 1))
+	local _epair_num_range=$((_epair_count + 1))
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-        local _if_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${_jail_conf} | sort -u)"
+        local _if_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${_jail_config} | sort -u)"
         local _ngif_count="$(echo "${_if_list}" | grep -Eo "[0-9]+" | wc -l)"
-        local _ngif_num=$((_old_if_prefix + 1))
+        local _ngif_num_range=$((_ngif_count + 1))
     fi
 
     if [ "${BRIDGE}" -eq 1 ]; then
-        if [ "$(echo -n "e${_num}a_${_jailname}" | awk '{print length}')" -lt 16 ]; then
-            local host_epair=e${_epair_num}a_${_jailname}
-            local jail_epair=e${_epair_num}b_${_jailname}
-        else
-            name_prefix="$(echo ${_jailname} | cut -c1-7)"
-            name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
-            local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-            local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
-        fi
-        # Remove ending brace (it is added again with the netblock)
-        sed -i '' '/}/d' "${_jail_config}"
-        if [ "${STATIC_MAC}" -eq 1 ]; then
-            # Generate NETBLOCK with static MAC
-            generate_static_mac "${_jailname}" "${_if}"
-            cat << EOF >> "${_jail_config}"
+        for _epair_num in $(seq 0 ${_epair_num_range}); do
+            if ! grep -Eoqs "e${_epair_num}a_" "${_jail_config}"; then
+                if [ "$(echo -n "e${_epair_num}a_${_jailname}" | awk '{print length}')" -lt 16 ]; then
+                    local host_epair=e${_epair_num}a_${_jailname}
+                    local jail_epair=e${_epair_num}b_${_jailname}
+                else
+                    name_prefix="$(echo ${_jailname} | cut -c1-7)"
+                    name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
+                    local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
+                    local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+                fi
+                # Remove ending brace (it is added again with the netblock)
+                sed -i '' '/}/d' "${_jail_config}"
+                if [ "${STATIC_MAC}" -eq 1 ]; then
+                    # Generate NETBLOCK with static MAC
+                    generate_static_mac "${_jailname}" "${_if}"
+                    cat << EOF >> "${_jail_config}"
   ## ${host_epair} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "epair${_epair_num}=\\\$(ifconfig epair create) && ifconfig \\\${epair${_epair_num}} up name ${host_epair} && ifconfig \\\${epair${_epair_num}%a}b up name ${jail_epair}";
@@ -277,9 +279,9 @@ add_interface() {
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
-        else
-            # Generate NETBLOCK without static MAC
-            cat << EOF >> "${_jail_config}"
+                else
+                    # Generate NETBLOCK without static MAC
+                    cat << EOF >> "${_jail_config}"
   ## ${host_epair} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "epair${_epair_num}=\\\$(ifconfig epair create) && ifconfig \\\${epair${_epair_num}} up name ${host_epair} && ifconfig \\\${epair${_epair_num}%a}b up name ${jail_epair}";
@@ -289,46 +291,51 @@ EOF
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
-        fi
+                fi
 	
-        # Add config to /etc/rc.conf
-        sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_jail_vnet}"
-	    if [ -n "${IP6_ADDR}" ]; then
-            if [ "${IP6_ADDR}" = "SLAAC" ]; then
-                sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
-            else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                # Add config to /etc/rc.conf
+                sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_jail_vnet}"
+	       if [ -n "${IP6_ADDR}" ]; then
+                    if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                        sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
+                    else
+                        sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                    fi
+                elif [ -n "${IP4_ADDR}" ]; then
+                    # If 0.0.0.0 set DHCP, else set static IP address
+                    if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
+                        sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                    else
+                        sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="inet ${IP4_ADDR}"
+                    fi
+                fi
+                break
             fi
-        elif [ -n "${IP4_ADDR}" ]; then
-            # If 0.0.0.0 set DHCP, else set static IP address
-            if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
-                sysrc -f "${_jail_rc_config}" ifconfig_${_if_vnet}="SYNCDHCP"
-            else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="inet ${IP4_ADDR}"
-            fi
-        fi
+        done
 
         echo "Added interface: \"${_if}\""
 
     elif [ "${VNET}" -eq 1 ]; then
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-            if [ "$(echo -n "e${_num}a_${_jailname}" | awk '{print length}')" -lt 16 ]; then
-                local host_epair=e${_epair_num}a_${_jailname}
-                local jail_epair=e${_epair_num}b_${_jailname}
-	        local jib_epair=${jail_name}
-            else
-                name_prefix="$(echo ${_jailname} | cut -c1-7)"
-                name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
-                local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-                local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
-                local jib_epair="${name_prefix}xx${name_suffix}"
-            fi
-            # Remove ending brace (it is added again with the netblock)
-            sed -i '' '/}/d' "${_jail_config}"
-            if [ "${STATIC_MAC}" -eq 1 ]; then
-                # Generate NETBLOCK with static MAC
-                generate_static_mac "${_jailname}" "${_if}"
-                cat << EOF >> "${_jail_config}"
+            for _epair_num in $(seq 0 ${_epair_num_range}); do
+                if ! grep -Eoqs "e${_epair_num}a_" "${_jail_config}"; then
+                    if [ "$(echo -n "e${_epair_num}a_${_jailname}" | awk '{print length}')" -lt 16 ]; then
+                        local host_epair=e${_epair_num}a_${_jailname}
+                        local jail_epair=e${_epair_num}b_${_jailname}
+	               local jib_epair=${jail_name}
+                    else
+                        name_prefix="$(echo ${_jailname} | cut -c1-7)"
+                        name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
+                        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
+                        local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+                        local jib_epair="${name_prefix}xx${name_suffix}"
+                    fi
+                    # Remove ending brace (it is added again with the netblock)
+                    sed -i '' '/}/d' "${_jail_config}"
+                    if [ "${STATIC_MAC}" -eq 1 ]; then
+                        # Generate NETBLOCK with static MAC
+                        generate_static_mac "${_jailname}" "${_if}"
+                        cat << EOF >> "${_jail_config}"
   ## ${host_epair} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "jib addm ${jib_epair} ${_if}";
@@ -338,9 +345,9 @@ EOF
   exec.poststop += "jib destroy ${jib_epair}";
 }
 EOF
-            else
-                # Generate NETBLOCK without static MAC
-                cat << EOF >> "${_jail_config}"
+                    else
+                        # Generate NETBLOCK without static MAC
+                        cat << EOF >> "${_jail_config}"
   ## ${host_epair} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "jib addm ${jib_epair} ${_if}";
@@ -348,43 +355,48 @@ EOF
   exec.poststop += "jib destroy ${jib_epair}";
 }
 EOF
-            fi
-            # Add config to /etc/rc.conf
-            sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_jail_vnet}"
-	    if [ -n "${IP6_ADDR}" ]; then
-                if [ "${IP6_ADDR}" = "SLAAC" ]; then
-                    sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
-                else
-                    sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                    fi
+                    # Add config to /etc/rc.conf
+                    sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_jail_vnet}"
+	           if [ -n "${IP6_ADDR}" ]; then
+                        if [ "${IP6_ADDR}" = "SLAAC" ]; then
+                            sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
+                        else
+                            sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                        fi
+                    elif [ -n "${IP4_ADDR}" ]; then
+                        # If 0.0.0.0 set DHCP, else set static IP address
+                        if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
+                            sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                        else
+                            sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="inet ${IP4_ADDR}"
+                        fi
+                    fi
+                    break
                 fi
-            elif [ -n "${IP4_ADDR}" ]; then
-                # If 0.0.0.0 set DHCP, else set static IP address
-                if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
-                    sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="SYNCDHCP"
-                else
-                    sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="inet ${IP4_ADDR}"
-                fi
-            fi
+            done
+            
             echo "Added VNET interface: \"${_if}\""
 
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-
-            if [ "$(echo -n "ng${_ngif_num}_${_jailname}" | awk '{print length}')" -lt 16 ]; then
-                # Generate new netgraph interface name
-                local _ngif="ng${_ngif_num}_${_jailname}"
-                local jng_if="${_jailname}"
-            else
-	        name_prefix="$(echo ${_jailname} | cut -c1-7)"
-	        name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
-    	        local _ngif="ng${_ngif_num}_${name_prefix}xx${name_suffix}"
-    	        local jng_if="${name_prefix}xx${name_suffix}"
-            fi
-            # Remove ending brace (it is added again with the netblock)
-            sed -i '' '/}/d' "${_jail_config}"
-            if [ "${STATIC_MAC}" -eq 1 ]; then
-                # Generate NETBLOCK with static MAC
-                generate_static_mac "${_jailname}" "${_if}"
-                cat << EOF >> "${_jail_config}"
+            for _ngif_num in $(seq 0 ${_ngif_num_range}); do
+                if ! grep -Eoqs "e${_ngif_num}a_" "${_jail_config}"; then
+                    if [ "$(echo -n "ng${_ngif_num}_${_jailname}" | awk '{print length}')" -lt 16 ]; then
+                        # Generate new netgraph interface name
+                        local _ngif="ng${_ngif_num}_${_jailname}"
+                        local jng_if="${_jailname}"
+                    else
+	                name_prefix="$(echo ${_jailname} | cut -c1-7)"
+	                name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
+    	                local _ngif="ng${_ngif_num}_${name_prefix}xx${name_suffix}"
+    	                local jng_if="${name_prefix}xx${name_suffix}"
+                    fi
+                    # Remove ending brace (it is added again with the netblock)
+                    sed -i '' '/}/d' "${_jail_config}"
+                    if [ "${STATIC_MAC}" -eq 1 ]; then
+                        # Generate NETBLOCK with static MAC
+                        generate_static_mac "${_jailname}" "${_if}"
+                        cat << EOF >> "${_jail_config}"
   ## ${_ngif} interface
   vnet.interface += ${_ngif};
   exec.prestart += "jng bridge ${jng_if} ${_if}";
@@ -392,27 +404,30 @@ EOF
   exec.poststop += "jng shutdown ${jng_if}";
 }
 EOF
-            else
-                # Generate NETBLOCK without static MAC
-                cat << EOF >> "${_jail_config}"
+                    else
+                        # Generate NETBLOCK without static MAC
+                        cat << EOF >> "${_jail_config}"
   ## ${_ngif} interface
   vnet.interface += ${_ngif};
   exec.prestart += "jng bridge ${jng_if} ${_if}";
   exec.poststop += "jng shutdown ${jng_if}";
 }
 EOF
-            fi
-            # Add config to /etc/rc.conf
-            sysrc -f "${_jail_rc_config}" ifconfig_${_ngif}_name="${_jail_vnet}"
-	        if [ -n "${_ip}" ]; then
-                # If 0.0.0.0 set DHCP, else set static IP address
-                if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
-                    sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="SYNCDHCP"
-                else
-                    sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="inet ${_ip}"
-                fi
-	        fi
-            echo "Added VNET interface: \"${_if}\""
+                    fi
+                    # Add config to /etc/rc.conf
+                    sysrc -f "${_jail_rc_config}" ifconfig_${_ngif}_name="${_jail_vnet}"
+	           if [ -n "${_ip}" ]; then
+                        # If 0.0.0.0 set DHCP, else set static IP address
+                        if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ]; then
+                            sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                        else
+                            sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="inet ${_ip}"
+                        fi
+	           fi
+	           break
+	       fi
+	   done           
+            echo "Added VNET interface: \"${_if}\""    
         fi
 
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
