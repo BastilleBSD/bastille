@@ -410,7 +410,7 @@ generate_vnet_jail_netblock() {
             cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
-  exec.prestart += "epair=\\\$(ifconfig epair create) && ifconfig \\\${epair} up name ${host_epair} && ifconfig \\\${epair%a}b up name ${jail_epair}";
+  exec.prestart += "epair0=\\\$(ifconfig epair create) && ifconfig \\\${epair0} up name ${host_epair} && ifconfig \\\${epair0%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${external_interface} addm ${host_epair}";
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
@@ -423,7 +423,7 @@ EOF
             cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
-  exec.prestart += "epair=\\\$(ifconfig epair create) && ifconfig \\\${epair} up name ${host_epair} && ifconfig \\\${epair%a}b up name ${jail_epair}";
+  exec.prestart += "epair0=\\\$(ifconfig epair create) && ifconfig \\\${epair0} up name ${host_epair} && ifconfig \\\${epair0%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${external_interface} addm ${host_epair}";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${external_interface} deletem ${host_epair}";
