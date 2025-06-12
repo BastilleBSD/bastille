@@ -491,8 +491,8 @@ remove_interface() {
                 local _epairb="$(grep "e[0-9]+b_${_jib_epair}" ${_jail_config})"
                 local _if_jail="${_epairb}"
             else
-                local _epaira="$(grep "e[0-9]+a_[^;" ]+" ${_jail_config})"
-                local _epairb="$(grep "e[0-9]+b_[^;" ]+" ${_jail_config})"
+                local _epaira="$(grep 'e[0-9]+a_[^;" ]+' ${_jail_config})"
+                local _epairb="$(grep 'e[0-9]+b_[^;" ]+' ${_jail_config})"
                 local _if_jail="${_epairb}"
             fi
 
@@ -603,7 +603,7 @@ add_vlan() {
         local _jail_epair="$(grep "e[0-9]+b_${_jib_epair}" ${_jail_config})"
 	local _jail_vnet="$(grep "${_jail_epair}_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${BRIDGE}" -eq 1 ]; then
-        local _jail_epair="$(grep "e[0-9]+b_[^;" ]+" ${_jail_config})"
+        local _jail_epair="$(grep 'e[0-9]+b_[^;" ]+' ${_jail_config})"
 	local _jail_vnet="$(grep "${_jail_epair}_name" ${_jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
         local _jail_vnet="${_interface}"
