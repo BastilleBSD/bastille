@@ -278,6 +278,14 @@ update_jailconf_vnet() {
                 sed -i '' "s|= ${_old_jail_epair};|= ${_new_jail_epair};|g" "${_jail_conf}"
                 sed -i '' "s|${_old_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
 
+                # If jail had a static MAC, generate one for clone
+                if grep ether ${_jail_conf} | grep -qoc ${_new_jail_epair}; then
+                    local external_interface="$(grep ${_new_jail_epair} ${_jail_conf} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
+                    generate_static_mac "${NEWNAME}" "${external_interface}"
+                    sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*a\";|${_new_jail_epair} ether ${macaddr}a\";|" "${_jail_conf}"
+                    sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
+                fi
+
                 # Replace epair description
                 sed -i '' "s|host interface for Bastille jail ${TARGET}|host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
 
@@ -298,19 +306,19 @@ update_jailconf_vnet() {
                 sed -i '' "s|up name ${_old_jail_epair}|up name ${_new_jail_epair}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
 
+                # If jail had a static MAC, generate one for clone
+                if grep -q ether ${_jail_conf}; then
+                    local external_interface="$(grep "e${_epair_num}a" ${_jail_conf} | grep -o '[^ ]* addm' | awk '{print $1}')"
+                    generate_static_mac "${NEWNAME}" "${external_interface}"
+                    sed -i '' "s|${_new_host_epair} ether.*:.*:.*:.*:.*:.*a\";|${_new_host_epair} ether ${macaddr}a\";|" "${_jail_conf}"
+                    sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
+                fi
+
                 # Replace epair description
                 sed -i '' "s|host interface for Bastille jail ${TARGET}|host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
 
                 # Replace epair name in /etc/rc.conf
                 sed -i '' "/ifconfig/ s|${_old_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
-            fi
-
-            # If jail had a static MAC, generate one for clone
-            if grep -q ether ${_jail_conf}; then
-                local external_interface="$(grep "e${_epari_num}a" ${_jail_conf} | grep -o '[^ ]* addm' | awk '{print $1}')"
-                generate_static_mac "${NEWNAME}" "${external_interface}"
-                sed -i '' "s|${_new_host_epair} ether.*:.*:.*:.*:.*:.*a\";|${_new_host_epair} ether ${macaddr}a\";|" "${_jail_conf}"
-                sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
             fi
 
             # Update /etc/rc.conf
