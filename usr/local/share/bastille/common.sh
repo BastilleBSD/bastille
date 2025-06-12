@@ -415,7 +415,6 @@ generate_vnet_jail_netblock() {
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
-  exec.poststop += "ifconfig ${external_interface} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
         else
@@ -426,7 +425,6 @@ EOF
   exec.prestart += "epair0=\\\$(ifconfig epair create) && ifconfig \\\${epair0} up name ${host_epair} && ifconfig \\\${epair0%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${external_interface} addm ${host_epair}";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
-  exec.poststop += "ifconfig ${external_interface} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
         fi
@@ -442,7 +440,7 @@ EOF
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
-  exec.poststop += "jib destroy ${jib_epair}";
+  exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
             else
                 ## Generate VNET config without static MAC address
@@ -451,7 +449,7 @@ EOF
   vnet.interface = ${jail_epair};
   exec.prestart += "jib addm ${jib_epair} ${external_interface}";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
-  exec.poststop += "jib destroy ${jib_epair}";
+  exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
             fi
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
