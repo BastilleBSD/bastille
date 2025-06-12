@@ -141,7 +141,7 @@ update_jailconf_vnet() {
         # For if_bridge network type
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
 
-            local _epair_num=$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")
+            local _epair_num="$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")"
             local _old_host_epair="${_if}"
             local _old_jail_epair="${_old_if_prefix%a}b_${_old_if_suffix}"
 
@@ -200,7 +200,7 @@ update_jailconf_vnet() {
         # For netgraph network type
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
         
-            local _ngif_num=$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")
+            local _ngif_num="$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")"
             local _old_ngif="${_if}"
 
             if [ "$(echo -n "ng${_ngif_num}_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
