@@ -271,7 +271,7 @@ update_jailconf_vnet() {
                 # Replace host epair name in jail.conf                  
                 sed -i '' "s|jib addm ${_old_if_suffix}|jib addm ${_new_if_suffix}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
-                sed -i '' "s|destroy ${_old_if_suffix}|destroy ${_new_if_suffix}|g" "${_jail_conf}"
+                sed -i '' "s|${_old_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
 
                 # Replace jail epair name in jail.conf
@@ -297,7 +297,6 @@ update_jailconf_vnet() {
                 sed -i '' "s|up name ${_old_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
                 sed -i '' "s|addm ${_old_host_epair}|addm ${_new_host_epair}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
-                sed -i '' "s|deletem ${_old_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
 
