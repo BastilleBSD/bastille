@@ -266,7 +266,7 @@ update_jailconf_vnet() {
             local _new_if_prefix="$(echo ${_new_host_epair} | awk -F'_' '{print $1}')"
             local _new_if_suffix="$(echo ${_new_host_epair} | awk -F'_' '{print $2}')"
 
-            if grep "${_old_if_suffix}" "${_jail_conf}" | grep "jib addm"; then
+            if grep "${_old_if_suffix}" "${_jail_conf}" | grep -oq "jib addm"; then
                 # For -V jails
                 # Replace host epair name in jail.conf                  
                 sed -i '' "s|jib addm ${_old_if_suffix}|jib addm ${_new_if_suffix}|g" "${_jail_conf}"
