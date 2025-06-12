@@ -128,38 +128,106 @@ update_jailconf_vnet() {
     # Change bastille interface name (only needed for bridged epairs)
     # We still gather interface names for JIB and JNG managed interfaces (for future use)
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-        local _if_list="$(grep -Eo 'epair[0-9]+|e[0-9]+_bastille[0-9]+' ${_jail_conf} | sort -u)"
+        local _if_list="$(grep -Eo 'e[0-9]+a_.* ' ${_jail_conf} | sort -u)"
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-        local _if_list="$(grep -Eo 'ng[0-9]+_bastille[0-9]+' ${_jail_conf} | sort -u)"
+        local _if_list="$(grep -Eo 'ng[0-9]+_.* ' ${_jail_conf} | sort -u)"
     fi
 
     for _if in ${_if_list}; do
-        if echo ${_if} | grep -Eoq 'epair[0-9]+'; then
 
-            # Check if epair name = jail name
-            local _epair_num="$(grep -Eo -m 1 "epair[0-9]+" "${_jail_conf}" | grep -Eo "[0-9]+")" 
-            if grep -E "epair[0-9]+a" "${_jail_conf}" | grep -Eo "e[0-9]+a_${TARGET}"; then
-                local _target_host_epair="$(grep -Eo -m 1 "e[0-9]+a_${TARGET}" "${_jail_conf}")"
-                local _target_jail_epair="$(grep -Eo -m 1 "e[0-9]+b_${TARGET}" "${_jail_conf}")"
-            else
-                local _target_host_epair="$(grep -Eo -m 1 "epair[0-9]+a" "${_jail_conf}")"
-                local _target_jail_epair="$(grep -Eo -m 1 "epair[0-9]+b" "${_jail_conf}")"
-            fi
+        local _if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
+        local _if_suffix="$(echo ${_if} | awk -F'_' '{print $2}')"
+
+        # For VNET jails that use the JIB script
+        if grep " ${_if_suffix} " ${_jail_conf} | grep -Eoq "jib addm"; then
+
+            local _epair_num="$(grep -Eo -m 1 "${_if}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
+            local _target_host_epair="$(grep -Eo -m 1 "e${_epair_num}a_.* " "${_jail_conf}")"
+            local _target_jail_epair="$(grep -Eo -m 1 "e${_epair_num}b_.* " "${_jail_conf}")"
 
             if [ "$(echo -n "e${_epair_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
                 # Generate new epair name
                 local _new_host_epair="e${_epair_num}a_${NEWNAME}"
                 local _new_jail_epair="e${_epair_num}b_${NEWNAME}"
             else
-                local _new_host_epair="epair${_epair_num}a"
-                local _new_jail_epair="epair${_epair_num}b"
+	            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
+	            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
+    	        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
+                local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+            fi
+
+            local _new_if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
+            local _new_if_suffix="$(echo ${_if} | awk -F'_' '{print $2}')"
+
+            # Replace host epair name in jail.conf                  
+            #sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
+            sed -i '' "s|jib addm ${_if_suffix}|jib addm ${_new_if_suffix}|g" "${_jail_conf}"
+            sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
+            #sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
+            sed -i '' "s|${_if_suffix} destroy|${_new_if_suffix} destroy|g" "${_jail_conf}"
+            sed -i '' "s|${_target_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
+
+            # Replace jail epair name in jail.conf
+            sed -i '' "s|= ${_target_jail_epair};|= ${_new_jail_epair};|g" "${_jail_conf}"
+            #sed -i '' "s|up name ${_target_jail_epair}|up name ${_new_jail_epair}|g" "${_jail_conf}"
+            sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
+
+            # Replace epair description
+            sed -i '' "s|host interface for Bastille jail ${TARGET}|host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+
+            # Replace epair name in /etc/rc.conf
+            sed -i '' "/ifconfig/ s|${_target_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
+            
+        elif grep " ${_if_suffix} " ${_jail_conf} | grep -Eoq "jng bridge"; then
+        
+            local _ngif_num="$(grep -Eo -m 1 "${_if}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
+            local _target_ngif="$(grep -Eo -m 1 "ng${_ngif_num}_.* " "${_jail_conf}")"
+
+            if [ "$(echo -n "ng${_ngif_num}_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
+                # Generate new epair name
+                local _new_ngif="ng${_ngif_num}_${NEWNAME}"
+            else
+	            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
+	            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
+    	        local host_ngif="ng${_epair_num}_${name_prefix}xx${name_suffix}"
+            fi
+
+            local _new_if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
+            local _new_if_suffix="$(echo ${_if} | awk -F'_' '{print $2}')"
+
+            # Replace netgraph interface name                
+            sed -i '' "s|jng bridge ${_if_suffix}|jng bridge ${_new_if_suffix}|g" "${_jail_conf}"
+            sed -i '' "s|${_target_ngif} ether|${_new_ngif} ether|g" "${_jail_conf}"
+            sed -i '' "s|jng shutdown ${_if_suffix}|jng shutdown ${_new_if_suffix}|g" "${_jail_conf}"
+
+            # Replace jail epair name in jail.conf
+            sed -i '' "s|= ${_target_ngif};|= ${_new_ngif};|g" "${_jail_conf}"
+
+            # Replace epair name in /etc/rc.conf
+            sed -i '' "/ifconfig/ s|${_target_ngif}|${_new_ngif}|g" "${_rc_conf}"
+
+        elif grep "${_if}" ${_jail_conf} | grep -Eoq "epair create"; then
+
+            local _epair_num="$(grep -Eo -m 1 "${_if}" "${_jail_conf}" | grep -Eo "[0-9]+")" 
+            local _target_host_epair="$(grep -Eo -m 1 "e${_epair_num}a_.* " "${_jail_conf}")"
+            local _target_jail_epair="$(grep -Eo -m 1 "e${_epair_num}b_.* " "${_jail_conf}")"
+
+            if [ "$(echo -n "e${_epair_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
+                # Generate new epair name
+                local _new_host_epair="e${_epair_num}a_${NEWNAME}"
+                local _new_jail_epair="e${_epair_num}b_${NEWNAME}"
+            else
+	            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
+	            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
+    	        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
+                local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
             fi
 
             # Replace host epair name in jail.conf                  
             sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
             sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
-            sed -i '' "s|${_target_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
+            sed -i '' "s|${_target_host_epair} destroy|${_new_jail_epair} destroy|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
 
             # Replace jail epair name in jail.conf
@@ -168,7 +236,7 @@ update_jailconf_vnet() {
             sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
 
             # Replace epair description
-            sed -i '' "s|${_new_host_epair} host interface for Bastille jail ${TARGET}|${_new_host_epair} host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
+            sed -i '' "s|host interface for Bastille jail ${TARGET}|host interface for Bastille jail ${NEWNAME}|g" "${_jail_conf}"
 
             # Replace epair name in /etc/rc.conf
             sed -i '' "/ifconfig/ s|${_target_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
