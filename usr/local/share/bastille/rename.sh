@@ -150,8 +150,8 @@ update_jailconf_vnet() {
                 local _new_host_epair="e${_epair_num}a_${NEWNAME}"
                 local _new_jail_epair="e${_epair_num}b_${NEWNAME}"
             else
-	            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
-	            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
+	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
+	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
     	        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
                 local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
             fi
@@ -187,8 +187,8 @@ update_jailconf_vnet() {
                 # Generate new epair name
                 local _new_ngif="ng${_ngif_num}_${NEWNAME}"
             else
-	            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
-	            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
+	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
+	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
     	        local host_ngif="ng${_epair_num}_${name_prefix}xx${name_suffix}"
             fi
 
@@ -217,8 +217,8 @@ update_jailconf_vnet() {
                 local _new_host_epair="e${_epair_num}a_${NEWNAME}"
                 local _new_jail_epair="e${_epair_num}b_${NEWNAME}"
             else
-	            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
-	            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
+	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
+	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
     	        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
                 local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
             fi
@@ -227,7 +227,7 @@ update_jailconf_vnet() {
             sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
             sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
-            sed -i '' "s|${_target_host_epair} destroy|${_new_jail_epair} destroy|g" "${_jail_conf}"
+            sed -i '' "s|${_target_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
 
             # Replace jail epair name in jail.conf
