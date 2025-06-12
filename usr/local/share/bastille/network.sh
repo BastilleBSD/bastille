@@ -275,7 +275,6 @@ add_interface() {
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig ${host_epair} description \"${_jail_vnet} host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "ifconfig ${_if} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
@@ -287,7 +286,6 @@ EOF
   exec.prestart += "epair${_epair_num}=\\\$(ifconfig epair create) && ifconfig \\\${epair${_epair_num}} up name ${host_epair} && ifconfig \\\${epair${_epair_num}%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${_if} addm ${host_epair}";
   exec.prestart += "ifconfig ${host_epair} description \"${_jail_vnet} host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "ifconfig ${_if} deletem ${host_epair}";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
@@ -342,7 +340,7 @@ EOF
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig ${host_epair} description \"${_jail_vnet} host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "jib destroy ${jib_epair}";
+  exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
                     else
@@ -352,7 +350,7 @@ EOF
   vnet.interface += ${jail_epair};
   exec.prestart += "jib addm ${jib_epair} ${_if}";
   exec.prestart += "ifconfig ${host_epair} description \"${_jail_vnet} host interface for Bastille jail ${_jailname}\"";
-  exec.poststop += "jib destroy ${jib_epair}";
+  exec.poststop += "ifconfig ${host_epair} destroy";
 }
 EOF
                     fi
