@@ -160,16 +160,13 @@ update_jailconf_vnet() {
             local _new_if_suffix="$(echo ${_new_host_epair} | awk -F'_' '{print $2}')"
 
             # Replace host epair name in jail.conf                  
-            #sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|jib addm ${_if_suffix}|jib addm ${_new_if_suffix}|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
-            #sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_if_suffix} destroy|${_new_if_suffix} destroy|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} description|${_new_host_epair} description|g" "${_jail_conf}"
 
             # Replace jail epair name in jail.conf
             sed -i '' "s|= ${_target_jail_epair};|= ${_new_jail_epair};|g" "${_jail_conf}"
-            #sed -i '' "s|up name ${_target_jail_epair}|up name ${_new_jail_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_jail_epair} ether|${_new_jail_epair} ether|g" "${_jail_conf}"
 
             # Replace epair description
@@ -225,6 +222,7 @@ update_jailconf_vnet() {
 
             # Replace host epair name in jail.conf                  
             sed -i '' "s|up name ${_target_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
+            sed -i '' "s|addm ${_target_host_epair}|addm ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
             sed -i '' "s|deletem ${_target_host_epair}|deletem ${_new_host_epair}|g" "${_jail_conf}"
             sed -i '' "s|${_target_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
