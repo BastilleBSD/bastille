@@ -280,7 +280,7 @@ update_jailconf_vnet() {
 
                 # If jail had a static MAC, generate one for clone
                 if grep ether ${_jail_conf} | grep -qoc ${_new_jail_epair}; then
-                    local external_interface="$(grep ${_new_jail_epair} ${_jail_conf} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
+                    local external_interface="$(grep ${_new_if_suffix} ${_jail_conf} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
                     generate_static_mac "${NEWNAME}" "${external_interface}"
                     sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*a\";|${_new_jail_epair} ether ${macaddr}a\";|" "${_jail_conf}"
                     sed -i '' "s|${_new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${_new_jail_epair} ether ${macaddr}b\";|" "${_jail_conf}"
@@ -401,7 +401,7 @@ update_jailconf_vnet() {
 
             # If jail had a static MAC, generate one for clone
             if grep ether ${_jail_conf} | grep -qoc ${_new_ngif}; then
-                local external_interface="$(grep ${_new_ngif} ${_jail_conf} | grep -o 'jng bridge.*' | awk '{print $4}' | sed 's/["|;]//g')"
+                local external_interface="$(grep ${_new_if_suffix} ${_jail_conf} | grep -o 'jng bridge.*' | awk '{print $4}' | sed 's/["|;]//g')"
                 generate_static_mac "${NEWNAME}" "${external_interface}"
                 sed -i '' "s|${_new_ngif} ether.*:.*:.*:.*:.*:.*a\";|${_new_ngif} ether ${macaddr}a\";|" "${_jail_conf}"
             fi
