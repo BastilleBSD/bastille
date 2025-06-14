@@ -549,7 +549,7 @@ update_jail_syntax_v1() {
         sed -i '' "s|ifconfig.*destroy|ifconfig ${new_host_epair} destroy|g" "${jail_config}"
 
         # Change rc.conf
-        sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_config}"
+        sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
 
     elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
 
@@ -576,7 +576,7 @@ update_jail_syntax_v1() {
         sed -i '' "s|jib destroy.*|ifconfig ${new_host_epair} destroy\";|g" "${jail_config}"
 
         # Change rc.conf
-        sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_config}"
+        sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
 
     fi
 }
