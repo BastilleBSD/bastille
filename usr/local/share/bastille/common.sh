@@ -539,6 +539,7 @@ update_jail_syntax_v1() {
         sed -i '' "/.*exec.prestart.*ifconfig.*up name.*;/d" "${jail_config}"
         sed -i '' "/.*exec.poststop.*ifconfig.*deletem.*;/d" "${jail_config}"
 
+        # Change jail.conf
         sed -i '' "s|.*vnet.interface =.*|  vnet.interface = ${new_jail_epair};|g" "${jail_config}"
         sed -i '' "s|.*ifconfig epair.*create.*|  exec.prestart += \"epair0=\\\\\$(ifconfig epair create) \&\& ifconfig \\\\\${epair0} up name ${new_host_epair} \&\& ifconfig \\\\\${epair0%a}b up name ${new_jail_epair}\";|g" "${jail_config}"
         sed -i '' "s|addm.*|addm ${new_host_epair}\";|g" "${jail_config}"
@@ -546,6 +547,9 @@ update_jail_syntax_v1() {
         sed -i '' "/ether.*:.*:.*:.*:.*:.*b/ s|ifconfig.*ether|ifconfig ${new_jail_epair} ether|g" "${jail_config}"
         sed -i '' "s|ifconfig.*description|ifconfig ${new_host_epair} description|g" "${jail_config}"
         sed -i '' "s|ifconfig.*destroy|ifconfig ${new_host_epair} destroy|g" "${jail_config}"
+
+        # Change rc.conf
+        sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_config}"
 
     elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
 
@@ -563,12 +567,16 @@ update_jail_syntax_v1() {
             local jib_epair="${name_prefix}xx${name_suffix}"
         fi
 
+        # Change jail.conf
         sed -i '' "s|.*vnet.interface =.*|  vnet.interface = ${new_jail_epair};|g" "${jail_config}"
         sed -i '' "s|jib addm.*|jib addm ${jib_epair} ${external_interface}|g" "${jail_config}"
         sed -i '' "/ether.*:.*:.*:.*:.*:.*a/ s|ifconfig.*ether|ifconfig ${new_host_epair} ether|g" "${jail_config}"
         sed -i '' "/ether.*:.*:.*:.*:.*:.*b/ s|ifconfig.*ether|ifconfig ${new_jail_epair} ether|g" "${jail_config}"
         sed -i '' "s|ifconfig.*description|ifconfig ${new_host_epair} description|g" "${jail_config}"
         sed -i '' "s|jib destroy.*|ifconfig ${new_host_epair} destroy\";|g" "${jail_config}"
+
+        # Change rc.conf
+        sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_config}"
 
     fi
 }
