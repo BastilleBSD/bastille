@@ -486,11 +486,11 @@ remove_interface() {
 
             if [ -n "${_jib_epair}" ]; then
                 local _epaira="$(grep -m 1 -A 1 "${_if}" ${_jail_config} | grep -Eo "e[0-9]+a_${_jib_epair}")"
-                local _epairb="${_epaira%a_}b_"
+                local _epairb="$(echo ${_epaira} | sed 's/a_/b_/')"
                 local _if_jail="${_epairb}"
             else
                 local _epaira="$(grep -m 1 "${_if}" ${_jail_config} | grep -Eo 'e[0-9]+a_[^;" ]+')"
-                local _epairb="${_epaira%a_}b_"
+                local _epairb="$(echo ${_epaira} | sed 's/a_/b_/')"
                 local _if_jail="${_epairb}"
             fi
 
