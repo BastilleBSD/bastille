@@ -516,4 +516,61 @@ checkyesno() {
     esac
 }
 
+update_jail_syntax_v1() {
+
+    local jail="${1}"
+    local jail_config="${bastille_jailsdir}/${jail}/jail.conf"
+    local jail_rc_config="${bastille_jailsdir}/${jail}/root/etc/rc.conf"
+
+    # Only apply if old syntax is found
+    if grep -Eoq "exec.prestart.*ifconfig epair[0-9]+ create.*" "${jail_config}"; then
+
+        if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
+            local new_host_epair=e0a_${jail}
+            local new_jail_epair=e0b_${jail}
+        else
+	    name_prefix="$(echo ${jail} | cut -c1-7)"
+	    name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
+	    local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
+            local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
+        fi
+
+        # Delete unneeded lines
+        sed -i '' "/.*exec.prestart.*ifconfig.*up name.*;/d" "${jail_config}"
+        sed -i '' "/.*exec.poststop.*ifconfig.*deletem.*;/d" "${jail_config}"
+
+        sed -i '' "s|.*vnet.interface =.*|  vnet.interface = ${new_jail_epair};|g" "${jail_config}"
+        sed -i '' "s|.*ifconfig epair.*create.*|  exec.prestart += \"epair0=\\\\\$(ifconfig epair create) \&\& ifconfig \\\\\${epair0} up name ${new_host_epair} \&\& ifconfig \\\\\${epair0%a}b up name ${new_jail_epair}\";|g" "${jail_config}"
+        sed -i '' "s|addm.*|addm ${new_host_epair}\";|g" "${jail_config}"
+        sed -i '' "/ether.*:.*:.*:.*:.*:.*a/ s|ifconfig.*ether|ifconfig ${new_host_epair} ether|g" "${jail_config}"
+        sed -i '' "/ether.*:.*:.*:.*:.*:.*b/ s|ifconfig.*ether|ifconfig ${new_jail_epair} ether|g" "${jail_config}"
+        sed -i '' "s|ifconfig.*description|ifconfig ${new_host_epair} description|g" "${jail_config}"
+        sed -i '' "s|ifconfig.*destroy|ifconfig ${new_host_epair} destroy|g" "${jail_config}"
+
+    elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
+
+        local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
+
+        if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
+            local new_host_epair=e0a_${jail}
+            local new_jail_epair=e0b_${jail}
+            local jib_epair="${jail}"
+        else
+	    name_prefix="$(echo ${jail} | cut -c1-7)"
+	    name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
+	    local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
+            local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
+            local jib_epair="${name_prefix}xx${name_suffix}"
+        fi
+
+        sed -i '' "s|.*vnet.interface =.*|  vnet.interface = ${new_jail_epair};|g" "${jail_config}"
+        sed -i '' "s|jib addm.*|jib addm ${jib_epair} ${external_interface}|g" "${jail_config}"
+        sed -i '' "/ether.*:.*:.*:.*:.*:.*a/ s|ifconfig.*ether|ifconfig ${new_host_epair} ether|g" "${jail_config}"
+        sed -i '' "/ether.*:.*:.*:.*:.*:.*b/ s|ifconfig.*ether|ifconfig ${new_jail_epair} ether|g" "${jail_config}"
+        sed -i '' "s|ifconfig.*description|ifconfig ${new_host_epair} description|g" "${jail_config}"
+        sed -i '' "s|jib destroy.*|ifconfig ${new_host_epair} destroy\";|g" "${jail_config}"
+
+    fi
+}
+
 set_bastille_mountpoints
