@@ -34,8 +34,9 @@ We have tried our best to auto-convert each jails `jail.conf` and `rc.conf` to t
 syntax (this happens when the jail is stopped). It isn't a huge change (only a handful
 of lines), but if you do have an issue please open a bug report.
 
-After updating, you must stop all your jails, then start them (don't use restart) to have Bastille convert
-the `jail.conf` and `rc.conf` files. This simply involves renaming the epairs to the new syntax.
+After updating, you must restart all your jails (probably one at a time, in case of issues)
+to have Bastille convert the `jail.conf` and `rc.conf` files. This simply involves renaming
+the epairs to the new syntax.
 
 If you have used the `network` sub-command to add any amount of interfaces, you will have to edit the `jail.conf`
 and `rc.conf` files for each jail to update the names of the epair interfaces. This is because all epairs will have been renamed to
