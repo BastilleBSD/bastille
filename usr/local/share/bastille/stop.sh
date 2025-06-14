@@ -159,6 +159,8 @@ for _jail in ${JAILS}; do
         done
     fi
 
+    update_jail_syntax_v1 "${_jail}"
+
     ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
