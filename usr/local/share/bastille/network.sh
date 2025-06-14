@@ -311,7 +311,7 @@ EOF
             fi
         done
 
-        echo "Added interface: \"${_if}\""
+        echo "Added bridge interface: \"${_if}\""
 
     elif [ "${VNET}" -eq 1 ]; then
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
@@ -462,8 +462,6 @@ EOF
             sed -i '' "s/interface = .*/&\n  ip4.addr += ${_if}|${_ip};/" ${_jail_config}
         fi
     fi
-
-    echo "Added interface: \"${_if}\""
 }
 
 remove_interface() {
@@ -487,12 +485,12 @@ remove_interface() {
             local _if_type="if_bridge"
 
             if [ -n "${_jib_epair}" ]; then
-                local _epaira="$(grep "e[0-9]+a_${_jib_epair}" ${_jail_config})"
-                local _epairb="$(grep "e[0-9]+b_${_jib_epair}" ${_jail_config})"
+                local _epaira="$(grep -A 1 "${_if}" ${_jail_config} | grep "e[0-9]+a_${_jib_epair}")"
+                local _epairb="${_epaira%a_}b_"
                 local _if_jail="${_epairb}"
             else
-                local _epaira="$(grep 'e[0-9]+a_[^;" ]+' ${_jail_config})"
-                local _epairb="$(grep 'e[0-9]+b_[^;" ]+' ${_jail_config})"
+                local _epaira="$(grep -m 1 "${_if}" ${_jail_config} | grep 'e[0-9]+a_[^;" ]+')"
+                local _epairb="${_epaira%a_}b_"
                 local _if_jail="${_epairb}"
             fi
 
@@ -509,7 +507,7 @@ remove_interface() {
         # Get vnetX value from rc.conf
         if [ "${_if_type}" = "if_bridge" ]; then
             if grep -oq "${_if_jail}" ${_jail_config}; then
-                local _if_vnet="$(grep ${_if_jail} ${_jail_rc_config} | grep -Eo 'vnet[0-9]+')"
+                local _if_vnet="$(grep "${_if_jail}" ${_jail_rc_config} | grep -Eo 'vnet[0-9]+')"
             else
                 error_exit "[ERROR]: Interface not found: ${_if_jail}"
             fi
