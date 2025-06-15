@@ -5,7 +5,7 @@ deployment and management of containerized applications on FreeBSD.
 
 [Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
 
-1.0 Potentially Breaking Chnages
+1.0 Potentially Breaking Changes
 ================================
 
 Up until version 1.0.20250714, Bastille has handled epairs for `-V` jails using the
