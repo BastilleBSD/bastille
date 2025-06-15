@@ -17,7 +17,8 @@ Starting with version 1.0.20250714, we are now handling all epairs dynamically, 
 the use of both types of VNET jails without issue. We have also selected a naming scheme
 that will allow for consistency across these jail types. The naming scheme is as follows...
 
-`e0a_jailname` and `e0b_jailname` are the default interfaces for every jail. This will allow better management
+`e0a_jailname` and `e0b_jailname` are the default epair interfaces for every jail. The `a` side
+is on the host, while the `b` is in the jail. This will allow better management
 when trying to figure out which jail a given epair is linked to. Due to a limitation in how long
 an interface name can be, Bastille will truncate "jailname" to avoid errors if it is too long. So, `mylongjailname`
 will be `e0a_mylongjxxme` and `e0b_mylongjxxme`. The `xx` part is necessary due to another limitation
