@@ -118,13 +118,8 @@ environment or user. Then, it can be used in a couple of ways.
    BASTILLE_CONFIG=config.conf``. This config will then always be used when
    running Bastille with that user. See notes below...
 
-- Exporting the ``BASTILLE_CONFIG`` variable will only export it for the current
-session. If you want to persist the export, see documentation for the shell that
-you use.
+- Exporting the ``BASTILLE_CONFIG`` variable will only export it for the current session. If you want to persist the export, see documentation for the shell that you use.
 
-- If you use sudo, you will need to run it with ``sudo -E bastille
-bootstrap...`` to preserve your users environment. This can also be persisted by
-editing the sudoers file.
+- If you use sudo, you will need to run it with ``sudo -E bastille bootstrap...`` to preserve your users environment. This can also be persisted by editing the sudoers file.
 
-- If you do set the ``BASTILLE_CONFIG`` variable, you do not need to specify the
-config file when running Bastille as that specified user.
+- If you do set the ``BASTILLE_CONFIG`` variable, you do not need to specify the config file when running Bastille as that specified user.
