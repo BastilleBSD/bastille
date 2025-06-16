@@ -11,7 +11,7 @@ release = '0.14.20250420-beta'
 
 # -- General configuration ---------------------------------------------------
 
-extensions = ['sphinx_rtd_theme']
+extensions = ['sphinx_rtd_theme','sphinx_rtd_dark_mode']
 
 templates_path = ['_templates']
 
@@ -33,20 +33,21 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 html_theme_options = {
-    'logo_only': False,
-    'prev_next_buttons_location': 'bottom',
-    'style_external_links': False,
-    'vcs_pageview_mode': '',
-    'style_nav_header_background': 'white',
-    'flyout_display': 'hidden',
-    'version_selector': True,
-    'language_selector': True,
-    # Toc options
     'collapse_navigation': True,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
+    'flyout_display': 'hidden',
     'includehidden': True,
-    'titles_only': False
+    'language_selector': True,
+    'logo_only': False,
+    'navigation_depth': 4,
+    'prev_next_buttons_location': 'bottom',
+    'sticky_navigation': True,
+    'style_external_links': False,
+    'style_nav_header_background': 'white',
+    'theme_switcher': True,
+    'default_mode': 'auto',
+    'titles_only': False,
+    'vcs_pageview_mode': '',
+    'version_selector': True,
 }
 
 # -- Options for HTMLHelp output ---------------------------------------------
