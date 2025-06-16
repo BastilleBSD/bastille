@@ -41,7 +41,6 @@ usage() {
 
     -a | --auto                 Start/stop the jail(s) if required.
     -B | --bridge               Add a bridged VNET interface to an existing jail.
-    -C | --classic              Add an interface to a classic (non-VNET) jail.
     -M | --static-mac           Generate a static MAC address for the interface.
     -n | --no-ip                Create interface without an IP (VNET only).
     -P | --passthrough          Pass the entire interface through to the jail.
@@ -56,8 +55,8 @@ EOF
 # Handle options.
 AUTO=0
 BRIDGE=0
-CLASSIC=0
 STATIC_MAC=0
+STANDARD=0
 PASSTHROUGH=0
 VNET=0
 VLAN_ID=""
@@ -75,10 +74,6 @@ while [ "$#" -gt 0 ]; do
             BRIDGE=1
             shift
             ;;
-        -C|--classic)
-            CLASSIC=1
-            shift
-            ;; 
         -M|--static-mac)
             STATIC_MAC=1
             shift
@@ -112,7 +107,6 @@ while [ "$#" -gt 0 ]; do
                 case ${_o} in
                     a) AUTO=1 ;;
                     B) BRIDGE=1 ;;
-                    C) CLASSIC=1 ;;
                     M) STATIC_MAC=1 ;;
                     n) NO_IP=1 ;;
                     P) PASSTHROUGH=1 ;;
@@ -140,16 +134,19 @@ else
     IP=""
 fi
 
+# Default is standard interface
+if [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then 
+    STANDARD=1
+fi
+
 if [ "${ACTION}" = "add" ]; then
     if { [ "${VNET}" -eq 1 ] && [ "${BRIDGE}" -eq 1 ]; } || \
-       { [ "${VNET}" -eq 1 ] && [ "${CLASSIC}" -eq 1 ]; } || \
+       { [ "${VNET}" -eq 1 ] && [ "${STANDARD}" -eq 1 ]; } || \
        { [ "${VNET}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } || \
-       { [ "${BRIDGE}" -eq 1 ] && [ "${CLASSIC}" -eq 1 ]; } || \
+       { [ "${BRIDGE}" -eq 1 ] && [ "${STANDARD}" -eq 1 ]; } || \
        { [ "${BRIDGE}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } || \
-       { [ "${CLASSIC}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } then
-        error_exit "[ERROR]: Only one of [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] should be set."
-    elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${CLASSIC}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then 
-        error_exit "[ERROR]: [-B|--bridge], [-C|--classic], [-P|--passthrough] or [-V|--vnet] must be set."
+       { [ "${STANDARD}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } then
+        error_exit "[ERROR]: Only one of [-B|--bridge], [-P|--passthrough] or [-V|--vnet] should be set."
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
         error_exit "[ERROR]: VLANs can only be used with VNET interfaces."
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
@@ -455,7 +452,7 @@ EOF
         fi
         echo "Added Passthrough interface: \"${_if}\""
  
-    elif [ "${CLASSIC}" -eq 1 ]; then
+    elif [ "${STANDARD}" -eq 1 ]; then
         if [ -n "${IP6_ADDR}" ]; then
             sed -i '' "s/interface = .*/&\n  ip6.addr += ${_if}|${_ip};/" ${_jail_config}
         else
@@ -674,7 +671,7 @@ case "${ACTION}" in
             if [ "${AUTO}" -eq 1 ]; then
                 bastille start "${TARGET}"
             fi
-        elif [ "${CLASSIC}" -eq 1 ]; then
+        elif [ "${STANDARD}" -eq 1 ]; then
             if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
                 error_exit "[ERROR]: ${TARGET} is a VNET jail."
             else
