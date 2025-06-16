@@ -1,10 +1,3 @@
-import os
-on_rtd = os.environ.get('READTHEDOCS') == 'True'
-if on_rtd:
-    html_theme = 'default'
-else:
-    html_theme = 'sphinx_rtd_theme'
-
 # -- Project information -----------------------------------------------------
 
 project = 'Bastille'
@@ -16,11 +9,9 @@ version = '0.14.20250420'
 # The full version, including alpha/beta/rc tags
 release = '0.14.20250420-beta'
 
-
 # -- General configuration ---------------------------------------------------
 
-extensions = [
-]
+extensions = ['sphinx_rtd_theme','sphinx_rtd_dark_mode']
 
 templates_path = ['_templates']
 
@@ -37,8 +28,27 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = None
 
 # -- Options for HTML output -------------------------------------------------
-
+html_logo = 'images/bastille.jpeg'
+html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+html_theme_options = {
+    'collapse_navigation': True,
+    'flyout_display': 'hidden',
+    'includehidden': True,
+    'language_selector': True,
+    'logo_only': False,
+    'navigation_depth': 4,
+    'prev_next_buttons_location': 'bottom',
+    'sticky_navigation': True,
+    'style_external_links': False,
+    'style_nav_header_background': 'white',
+    'theme_switcher': True,
+    'default_mode': 'auto',
+    'titles_only': False,
+    'vcs_pageview_mode': '',
+    'version_selector': True,
+}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

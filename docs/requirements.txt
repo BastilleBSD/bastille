@@ -1,1 +1,4 @@
 docutils < 0.18
+sphinx
+sphinx_rtd_theme
+sphinx-rtd-dark-mode
