@@ -410,8 +410,7 @@ jail_export() {
         if [ -z "${USER_EXPORT}" ]; then
 
             # Generate container checksum file
-            cd "${bastille_backupsdir}" || error_exit "Failed to change directory."
-            sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
+            sha256 -q "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}" > "${bastille_backupsdir}/${TARGET}_${DATE}.sha256"
 
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
 
