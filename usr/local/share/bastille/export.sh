@@ -417,13 +417,12 @@ jail_export() {
         error_exit "[ERROR]: Failed to export jail: ${TARGET}"
     else
         if [ -z "${USER_EXPORT}" ]; then
-
             # Generate container checksum file
             cd "${bastille_backupsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_backupsdir}"
-            sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
-
+            if ! sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"; then
+	        error_exit "[ERROR]: Failed to generate sha256 file."
+	    fi
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
-
         fi
         exit 0
     fi
