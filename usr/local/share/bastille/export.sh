@@ -385,7 +385,7 @@ jail_export() {
             info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
             cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailsdir}"
-            if ! tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/{TARGET}_${DATE}${FILE_EXT}"; then
+            if ! tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
                 error_exit "[ERROR]: Failed to export jail: ${TARGET}"
             fi
 
