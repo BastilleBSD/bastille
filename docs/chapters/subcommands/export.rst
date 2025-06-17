@@ -26,6 +26,7 @@ Available options are:
 
       Options:
 
+      -a | --auto             Auto mode. Start/stop jail(s) if required.
            --gz               Export a ZFS jail using GZIP(.gz) compressed image.
       -r | --raw              Export a ZFS jail to an uncompressed RAW image.
       -s | --safe             Safely stop and start a ZFS jail before the exporting process.

@@ -42,6 +42,7 @@ usage() {
 	
     Options:
 
+    -a | --auto             Auto mode. Start/stop jail(s) if required.
          --gz               Export a ZFS jail using GZIP(.gz) compressed image.
     -r | --raw              Export a ZFS jail to an uncompressed RAW image.
     -s | --safe             Safely stop and start a ZFS jail before the exporting process.
@@ -49,6 +50,7 @@ usage() {
          --txz              Export a jail using simple .txz compressed archive instead.
     -v | --verbose          Be more verbose during the ZFS send operation.
          --xz               Export a ZFS jail using XZ(.xz) compressed image.
+    -x | --debug             Enable debug mode.
 
 Note: If no export option specified, the jail should be redirected to standard output.
 
@@ -69,6 +71,7 @@ opt_count() {
 }
 
 # Reset export options
+AUTO=0
 GZIP_EXPORT=
 XZ_EXPORT=
 SAFE_EXPORT=
@@ -132,6 +135,10 @@ else
         case "${1}" in
             -h|--help|help)
                 usage
+                ;;
+            -a|--auto)
+                AUTO=1
+                shift
                 ;;
             --gz)
                 GZIP_EXPORT="1"
@@ -404,8 +411,7 @@ jail_export() {
         if [ -z "${USER_EXPORT}" ]; then
 
             # Generate container checksum file
-            cd "${bastille_backupsdir}" || error_exit "Failed to change directory."
-            sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
+            sha256 -q "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}" > "${bastille_backupsdir}/${TARGET}_${DATE}.sha256"
 
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
 
