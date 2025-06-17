@@ -34,5 +34,6 @@ Available options are:
            --txz              Export a jail using simple .txz compressed archive instead.
       -v | --verbose          Be more verbose during the ZFS send operation.
            --xz               Export a ZFS jail using XZ(.xz) compressed image.
+      -x | --debug            Enable debug mode.
 
   Note: If no export option specified, the container should be redirected to standard output.
