@@ -42,6 +42,7 @@ usage() {
 	
     Options:
 
+    -a | --auto             Auto mode. Start/stop jails if required.
          --gz               Export a ZFS jail using GZIP(.gz) compressed image.
     -r | --raw              Export a ZFS jail to an uncompressed RAW image.
     -s | --safe             Safely stop and start a ZFS jail before the exporting process.
@@ -69,6 +70,7 @@ opt_count() {
 }
 
 # Reset export options
+AUTO=0
 GZIP_EXPORT=
 XZ_EXPORT=
 SAFE_EXPORT=
@@ -132,6 +134,10 @@ else
         case "${1}" in
             -h|--help|help)
                 usage
+                ;;
+            -a|--auto)
+                AUTO=1
+                shift
                 ;;
             --gz)
                 GZIP_EXPORT="1"
