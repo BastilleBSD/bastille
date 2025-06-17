@@ -50,7 +50,7 @@ usage() {
          --txz              Export a jail using simple .txz compressed archive instead.
     -v | --verbose          Be more verbose during the ZFS send operation.
          --xz               Export a ZFS jail using XZ(.xz) compressed image.
-    -x | --debug             Enable debug mode.
+    -x | --debug            Enable debug mode.
 
 Note: If no export option specified, the jail should be redirected to standard output.
 
@@ -179,9 +179,15 @@ else
                enable_debug
                shift
                ;;
-            -*)
-                error_notify "[ERROR]: Unknown Option: \"${1}\""
-                usage
+            -*) 
+                for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                    case ${_opt} in
+                        a) AUTO=1 ;;
+                        x) enable_debug ;;
+                        *) error_exit "[ERROR]: Unknown Option: \"${1}\""
+                    esac
+                done
+                shift
                 ;;
             *)
                 break
