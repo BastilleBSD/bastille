@@ -384,7 +384,8 @@ jail_export() {
             # Create standard tgz backup archive
             info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
-            if ! cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+            cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailsdir}"
+            if ! tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${TARGET}_${DATE}${FILE_EXT}"; then
                 error_exit "[ERROR]: Failed to export jail: ${TARGET}"
             fi
 
@@ -395,7 +396,8 @@ jail_export() {
             # Create standard txz backup archive
             info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
-            if ! cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+            cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailssdir}"
+            if ! tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${TARGET}_${DATE}${FILE_EXT}"; then
                 error_exit "[ERROR]: Failed to export jail: ${TARGET}"
             fi
 
@@ -411,7 +413,8 @@ jail_export() {
         if [ -z "${USER_EXPORT}" ]; then
 
             # Generate container checksum file
-            sha256 -q "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}" > "${bastille_backupsdir}/${TARGET}_${DATE}.sha256"
+            cd "${bastille_backupsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_backupsdir}"
+            sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
 
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
 
