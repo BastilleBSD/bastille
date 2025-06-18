@@ -26,6 +26,7 @@ Available options are:
 
       Options:
 
+      -a | --auto             Auto mode. Start/stop jail(s) if required.
            --gz               Export a ZFS jail using GZIP(.gz) compressed image.
       -r | --raw              Export a ZFS jail to an uncompressed RAW image.
       -s | --safe             Safely stop and start a ZFS jail before the exporting process.
@@ -33,5 +34,6 @@ Available options are:
            --txz              Export a jail using simple .txz compressed archive instead.
       -v | --verbose          Be more verbose during the ZFS send operation.
            --xz               Export a ZFS jail using XZ(.xz) compressed image.
+      -x | --debug            Enable debug mode.
 
   Note: If no export option specified, the container should be redirected to standard output.

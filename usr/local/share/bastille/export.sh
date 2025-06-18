@@ -42,6 +42,7 @@ usage() {
 	
     Options:
 
+    -a | --auto             Auto mode. Start/stop jail(s) if required.
          --gz               Export a ZFS jail using GZIP(.gz) compressed image.
     -r | --raw              Export a ZFS jail to an uncompressed RAW image.
     -s | --safe             Safely stop and start a ZFS jail before the exporting process.
@@ -49,6 +50,7 @@ usage() {
          --txz              Export a jail using simple .txz compressed archive instead.
     -v | --verbose          Be more verbose during the ZFS send operation.
          --xz               Export a ZFS jail using XZ(.xz) compressed image.
+    -x | --debug            Enable debug mode.
 
 Note: If no export option specified, the jail should be redirected to standard output.
 
@@ -69,6 +71,7 @@ opt_count() {
 }
 
 # Reset export options
+AUTO=0
 GZIP_EXPORT=
 XZ_EXPORT=
 SAFE_EXPORT=
@@ -133,6 +136,10 @@ else
             -h|--help|help)
                 usage
                 ;;
+            -a|--auto)
+                AUTO=1
+                shift
+                ;;
             --gz)
                 GZIP_EXPORT="1"
                 opt_count
@@ -172,9 +179,15 @@ else
                enable_debug
                shift
                ;;
-            -*)
-                error_notify "[ERROR]: Unknown Option: \"${1}\""
-                usage
+            -*) 
+                for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                    case ${_opt} in
+                        a) AUTO=1 ;;
+                        x) enable_debug ;;
+                        *) error_exit "[ERROR]: Unknown Option: \"${1}\""
+                    esac
+                done
+                shift
                 ;;
             *)
                 break
@@ -377,7 +390,8 @@ jail_export() {
             # Create standard tgz backup archive
             info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
-            if ! cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+            cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailsdir}"
+            if ! tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
                 error_exit "[ERROR]: Failed to export jail: ${TARGET}"
             fi
 
@@ -388,7 +402,8 @@ jail_export() {
             # Create standard txz backup archive
             info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
-            if ! cd "${bastille_jailsdir}" && tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+            cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailssdir}"
+            if ! tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
                 error_exit "[ERROR]: Failed to export jail: ${TARGET}"
             fi
 
@@ -402,13 +417,12 @@ jail_export() {
         error_exit "[ERROR]: Failed to export jail: ${TARGET}"
     else
         if [ -z "${USER_EXPORT}" ]; then
-
             # Generate container checksum file
-            cd "${bastille_backupsdir}" || error_exit "Failed to change directory."
-            sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"
-
+            cd "${bastille_backupsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_backupsdir}"
+            if ! sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"; then
+	        error_exit "[ERROR]: Failed to generate sha256 file."
+	    fi
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
-
         fi
         exit 0
     fi
