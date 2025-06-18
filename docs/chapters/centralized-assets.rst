@@ -69,7 +69,7 @@ to create a custom release based on your jail.
   ishmael ~ # bastille convert myjail myrelease
   
 Once this process completes, you will be able to run the following command to create a jail
-bases off of your newly created release.
+based off your newly created release.
 
 Please note that using this approach is experimental. It will be up to the end user to keep
 track of which official FreeBSD release their custom release is based on. The ``osrelease``

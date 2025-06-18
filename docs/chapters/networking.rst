@@ -81,9 +81,9 @@ Note that jails support specifying an IP without the subnet (/24 or whatever
 yours is) but we highly recommend setting it, especially on VNET jails. Not
 doing so can cause issues in some rare cases.
 
-Bastille also supports IPv6. Instead of an IPv4 address, you can specify and
+Bastille also supports IPv6. Instead of an IPv4 address, you can specify an
 IPv6 address when creating a jail to use IPv6. It is also possible to use both
-by quoting and IPv4 and IPv6 address together as seen in the following example.
+by quoting an IPv4 and IPv6 address together as seen in the following example.
 
 .. code-block:: shell
 
@@ -153,7 +153,7 @@ hexadecimal characters.  At vultr they said:
 
 Your server was assigned the following six section subnet:
 
-2001:19f0:6c01:114c:: / 64
+2001:19f0:6c01:114c::/64
 
 The `vultr ipv6 subnet calculator
 <https://www.vultr.com/resources/subnet-calculator-ipv6/?prefix_length=64&display=long&ipv6_address=2001%3Adb8%3Aacad%3Ae%3A%3A%2F64>`_
@@ -260,7 +260,7 @@ bridge, use the ``-B`` option, an IP/netmask and external bridge.
   bastille create -B azkaban 13.2-RELEASE 192.168.1.50/24 bridge0
 
 Bastille will automagically create the needed interface(s), attach it to the specified
-bridge and connect / disconnect containers as they are started and stopped.
+bridge and connect/disconnect containers as they are started and stopped.
 The bridge needs to be created/enabled before creating and starting the jail.
 
 Below are the steps to creating a bridge for this purpose.
@@ -311,8 +311,8 @@ VLAN Configuration
 
 Bastille supports VLANs to some extent when creating jails. When creating a jail, use
 the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set the proper
-variables inside the jails `rc.conf` to add the jail to the specified VLAN. Using this method
-the bridge for the jail must carry tagged VLAN packets, e.g. you can bridge a VLAN trunk to
+variables inside the jails `rc.conf` to add the jail to the specified VLAN. When using this method,
+the interface being assigned must carry tagged VLAN packets, e.g. you can bridge a VLAN trunk to
 the jail and in the jail you then can access all VLANs. But be careful: This may have
 security implications.
 
@@ -321,8 +321,8 @@ standard way of naming a VLAN interface. This is due to the limitations
 of the JIB script that Bastille uses to manage VNET jails.
 
 You can however use ``-B|--bridge`` with VLAN interfaces (even with dots in the name).
-Using this method you create bridge interfaces in ``rc.conf`` and only add VLANs, that are needed
-for the jail. The jail only has access to this VLAN then and not to the whole trunk.
+Using this method you create bridge interfaces in ``rc.conf`` and only add VLANs that are needed
+for the jail. The jail only has access to these VLANs and not to the whole trunk.
 Below is an ``rc.conf`` snippet that was provided by a user who has such a configuration.
 
 .. code-block:: shell
