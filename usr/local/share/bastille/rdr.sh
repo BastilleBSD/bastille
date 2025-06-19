@@ -108,6 +108,17 @@ check_rdr_ip_validity() {
     fi
 }
 
+check_rdr_table_validity() {
+
+    local table="${1}"
+
+    if ! pfctl -t "${table}" -T show; then
+        info "\nValid: (${table})."
+    else
+        info "\nValid: (${table})."
+    fi
+}
+
 validate_rdr_rule() {
 
     local if="${1}"
@@ -261,9 +272,14 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         -s|--source)
-            check_rdr_ip_validity "${2}"
+	    if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*"; then
+                check_rdr_ip_validity "${2}"
+		RDR_SRC="${2}"
+	    else
+                check_rdr_table_validity "${2}"
+		RDR_SRC="$(echo "${2}" | sed -e 's/^/</' -e 's/$/>/')"
+	    fi
             OPTION_SRC=1
-            RDR_SRC="${2}"
             shift 2
             ;;
         -t|--type)
