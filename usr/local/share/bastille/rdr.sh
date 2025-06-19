@@ -38,11 +38,11 @@ usage() {
 	
     Options:
 
-    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
-    -x | --debug                                 Enable debug mode.
+    -d | --destination [destination]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -i | --interface   [interface]            Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s | --source      [source]               Limit rdr to a source IP or table. Useful to only allow access from certain sources.
+    -t | --type        [ipv4|ipv6]            Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -x | --debug                              Enable debug mode.
 
 EOF
     exit 1
