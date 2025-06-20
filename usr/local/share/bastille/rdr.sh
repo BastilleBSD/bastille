@@ -272,7 +272,7 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         -s|--source)
-	    if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*"; then
+	    if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*)"; then
                 check_rdr_ip_validity "${2}"
 		RDR_SRC="${2}"
 	    else
