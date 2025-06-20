@@ -248,6 +248,7 @@ OPTION_IF=0
 OPTION_SRC=0
 OPTION_DST=0
 OPTION_INET_TYPE=0
+OPT_SRC_TABLE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -277,6 +278,7 @@ while [ "$#" -gt 0 ]; do
 		RDR_SRC="${2}"
 	    else
                 check_rdr_table_validity "${2}"
+		OPT_SRC_TABLE=1
 		RDR_SRC="$(echo "${2}" | sed -e 's/^/</' -e 's/$/>/')"
 	    fi
             OPTION_SRC=1
@@ -357,8 +359,8 @@ while [ "$#" -gt 0 ]; do
         tcp|udp)
             if [ "$#" -lt 3 ]; then
                 usage
-            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ];then
-                error_exit "[ERROR]: [-t|--type] must be set when using [-s|--source] or [-d|--destination]"
+            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ] && [ "${OPT_SRC_TABLE}" -eq 0 ];then
+                error_exit "[ERROR]: [-t|--type] must be set when NOT using a table as [-s|--source] or [-d|--destination]."
             elif [ "$#" -eq 3 ]; then
                 check_jail_validity
                 validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
