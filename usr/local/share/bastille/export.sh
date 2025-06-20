@@ -93,36 +93,43 @@ if [ -n "${bastille_export_options}" ]; then
 
     info "Default export option(s): '${DEFAULT_EXPORT_OPTS}'"
 
+    # Don't shift here when default export options are explicitly denoted in the config file, hence TARGET will always be $1.
     for opt in ${DEFAULT_EXPORT_OPTS}; do
         case "${opt}" in
+            -a|--auto)
+                AUTO="1"
+                ;;
             --gz)
                 GZIP_EXPORT="1"
                 opt_count
-                shift;;
+                ;;
             --xz)
                 XZ_EXPORT="1"
                 opt_count
-                shift;;
+                ;;
             --tgz)
                 TGZ_EXPORT="1"
                 opt_count
                 zfs_enable_check
-                shift;;
+                ;;
             --txz)
                 TXZ_EXPORT="1"
                 opt_count
                 zfs_enable_check
-                shift;;
+                ;;
             -s|--safe)
                 SAFE_EXPORT="1"
-                shift;;
+                ;;
             -r|--raw)
                 RAW_EXPORT="1"
                 opt_count
-                shift ;;
+                ;;
             -v|--verbose)
                 OPT_ZSEND="-Rv"
-                shift;;
+                ;;
+            -x)
+               enable_debug
+               ;;
             -*) error_notify "[ERROR]: Unknown Option: \"${1}\""
                 usage;;
         esac
@@ -179,7 +186,7 @@ else
                enable_debug
                shift
                ;;
-            -*) 
+            -*)
                 for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                     case ${_opt} in
                         a) AUTO=1 ;;
