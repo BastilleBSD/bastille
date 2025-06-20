@@ -112,7 +112,7 @@ check_rdr_table_validity() {
 
     local table="${1}"
 
-    if ! pfctl -t "${table}" -T show; then
+    if ! pfctl -t "${table}" -T show > /dev/null 2>&1; then
         error_exit "\nInvalid: (${table})."
     else
         info "\nValid: (${table})."
