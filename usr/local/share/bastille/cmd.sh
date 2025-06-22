@@ -122,4 +122,4 @@ for _jail in ${JAILS}; do
 done
 wait
 
-bastille_print_exit_code
+bastille_return_exit_code
