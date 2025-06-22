@@ -38,11 +38,11 @@ usage() {
 	
     Options:
 
-    -d | --destination [destination ip]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s | --source      [source ip]               Limit rdr to a source IP. Useful to only allow access from a certian IP or subnet.
-    -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
-    -x | --debug                                 Enable debug mode.
+    -d | --destination [destination]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -i | --interface   [interface]            Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
+    -s | --source      [source]               Limit rdr to a source IP or table. Useful to only allow access from certain sources.
+    -t | --type        [ipv4|ipv6]            Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -x | --debug                              Enable debug mode.
 
 EOF
     exit 1
@@ -105,6 +105,17 @@ check_rdr_ip_validity() {
         else
             error_exit "Invalid: (${ip})."
         fi
+    fi
+}
+
+check_rdr_table_validity() {
+
+    local table="${1}"
+
+    if ! pfctl -t "${table}" -T show > /dev/null 2>&1; then
+        error_exit "\nInvalid: (${table})."
+    else
+        info "\nValid: (${table})."
     fi
 }
 
@@ -237,6 +248,7 @@ OPTION_IF=0
 OPTION_SRC=0
 OPTION_DST=0
 OPTION_INET_TYPE=0
+OPT_SRC_TABLE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -261,9 +273,15 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         -s|--source)
-            check_rdr_ip_validity "${2}"
+	    if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*)"; then
+                check_rdr_ip_validity "${2}"
+		RDR_SRC="${2}"
+	    else
+                check_rdr_table_validity "${2}"
+		OPT_SRC_TABLE=1
+		RDR_SRC="$(echo "${2}" | sed -e 's/^/</' -e 's/$/>/')"
+	    fi
             OPTION_SRC=1
-            RDR_SRC="${2}"
             shift 2
             ;;
         -t|--type)
@@ -341,8 +359,8 @@ while [ "$#" -gt 0 ]; do
         tcp|udp)
             if [ "$#" -lt 3 ]; then
                 usage
-            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ];then
-                error_exit "[ERROR]: [-t|--type] must be set when using [-s|--source] or [-d|--destination]"
+            elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ] && [ "${OPT_SRC_TABLE}" -eq 0 ];then
+                error_exit "[ERROR]: [-t|--type] must be set when NOT using a table as [-s|--source] or [-d|--destination]."
             elif [ "$#" -eq 3 ]; then
                 check_jail_validity
                 validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
