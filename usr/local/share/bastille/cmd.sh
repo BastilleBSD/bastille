@@ -84,8 +84,10 @@ bastille_root_check
 
 TARGET="${1}"
 shift 1
-COUNT=0
-RETURN=0
+
+# Use mktemp to store exit codes
+export TMP_BASTILLE_EXIT_CODE="$(mktemp)"
+echo 0 > "${TMP_BASTILLE_EXIT_CODE}"
 
 set_target "${TARGET}"
 
@@ -104,8 +106,6 @@ for _jail in ${JAILS}; do
 
     info "\n[${_jail}]:"
 
-    COUNT=$(($COUNT+1))
-
     # Allow executing commands on linux jails
     if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
         jexec -l -u root "${_jail}" "$@"
@@ -113,17 +113,7 @@ for _jail in ${JAILS}; do
         jexec -l -U root "${_jail}" "$@"
     fi
 	
-    ERROR_CODE=$?
-	
-    if [ "${ERROR_CODE}" -ne 0 ]; then
-        warn "[${_jail}]: ${ERROR_CODE}"
-    fi
-	
-    if [ "$COUNT" -eq 1 ]; then
-        RETURN=${ERROR_CODE}
-    else 
-        RETURN=$(($RETURN+$ERROR_CODE))
-    fi
+    bastille_check_exit_code "${_jail}" "$?"
 
     ) &
 
@@ -132,8 +122,4 @@ for _jail in ${JAILS}; do
 done
 wait
 
-# Check when a command is executed in all running jails. (bastille cmd ALL ...)
-if [ "${COUNT}" -gt 1 ] && [ "${RETURN}" -gt 0 ]; then
-    RETURN=1
-    return "${RETURN}"
-fi
+bastille_return_exit_code
