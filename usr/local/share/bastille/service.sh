@@ -102,6 +102,8 @@ for _jail in ${JAILS}; do
     info "\n[${_jail}]:"
 	
     jexec -l "${_jail}" /usr/sbin/service "$@"
+
+    bastille_check_exit_code "${_jail}" "$?"
 	
     ) &
 	
@@ -109,3 +111,5 @@ for _jail in ${JAILS}; do
 	
 done
 wait
+
+bastille_return_exit_code
