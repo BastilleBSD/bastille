@@ -93,6 +93,37 @@ warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
+# This function checks and adds any error code
+# that is not "0" to the tmp file
+bastille_check_exit_code() {
+
+    local jail="${1}"
+    local exit_code="${2}"
+    
+    # Set exit code variable
+    if [ -z "${TMP_BASTILLE_EXIT_CODE}" ]; then
+        error_exit "[ERROR]: Exit code status not set."
+    else
+        local old_exit_code="$(cat ${TMP_BASTILLE_EXIT_CODE})"
+    fi
+
+    if [ "${exit_code}" -ne 0 ]; then
+        local new_exit_code="$(( ${old_exit_code} + ${exit_code} ))"
+        echo "${new_exit_code}" > "${TMP_BASTILLE_EXIT_CODE}"
+        error_notify "[ERROR CODE]: ${exit_code}"
+    fi
+}
+
+# This needs to be the last function called
+# if used on any command
+bastille_print_exit_code() {
+
+    local exit_code="$(cat ${TMP_BASTILLE_EXIT_CODE})"
+    
+    rm -f ${TMP_BASTILLE_EXIT_CODE}
+    return "${exit_code}"
+}
+
 # Parallel mode, don't exceed process limit
 bastille_running_jobs() {
 
