@@ -116,7 +116,7 @@ bastille_check_exit_code() {
 
 # This needs to be the last function called
 # if used on any command
-bastille_print_exit_code() {
+bastille_return_exit_code() {
 
     local exit_code="$(cat ${TMP_BASTILLE_EXIT_CODE})"
     
