@@ -75,7 +75,7 @@ while [ "$#" -gt 0 ]; do
         -*) 
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    a) AUTO=1 ;;
+                   a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
                     y) AUTO_YES=1 ;;
                     x) enable_debug ;;
@@ -124,15 +124,15 @@ pkg_run_command() {
         jexec -l "${_jail}" /usr/bin/apt "$@"
     elif [ "${USE_HOST_PKG}" -eq 1 ]; then
         if [ "${AUTO_YES}" -eq 1 ]; then
-            env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${_jail} $@
+            env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${_jail} "$@"
         else
-            /usr/sbin/pkg -j ${_jail} $@
+            /usr/sbin/pkg -j ${_jail} "$@"
         fi
     else
         if [ "${AUTO_YES}" -eq 1 ]; then
-            jexec -l -U root ${_jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg $@
+            jexec -l -U root ${_jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@"
         else
-            jexec -l -U root ${_jail} /usr/sbin/pkg $@
+            jexec -l -U root ${_jail} /usr/sbin/pkg "$@"
         fi
     fi
 
