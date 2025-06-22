@@ -75,7 +75,7 @@ while [ "$#" -gt 0 ]; do
         -*) 
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    a) AUTO=1 ;;
+                   a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
                     y) AUTO_YES=1 ;;
                     x) enable_debug ;;
@@ -96,6 +96,9 @@ fi
 
 TARGET="${1}"
 shift
+# Use mktemp to store exit codes
+export TMP_BASTILLE_EXIT_CODE="$(mktemp)"
+echo 0 > "${TMP_BASTILLE_EXIT_CODE}"
         
 bastille_root_check
 set_target "${TARGET}"
@@ -116,35 +119,25 @@ pkg_run_command() {
     bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
 
     if [ -f "/usr/sbin/mport" ]; then
-        if ! jexec -l -U root "${_jail}" /usr/sbin/mport "$@"; then
-            errors=1
-        fi
+        jexec -l -U root "${_jail}" /usr/sbin/mport "$@"
     elif [ -f "${bastille_jail_path}/usr/bin/apt" ]; then
-        if ! jexec -l "${_jail}" /usr/bin/apt "$@"; then
-            errors=1
-        fi
+        jexec -l "${_jail}" /usr/bin/apt "$@"
     elif [ "${USE_HOST_PKG}" -eq 1 ]; then
         if [ "${AUTO_YES}" -eq 1 ]; then
-            _jail_cmd="env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${_jail} $@"
+            env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${_jail} "$@"
         else
-            _jail_cmd="/usr/sbin/pkg -j ${_jail} $@"
-        fi
-        if ! ${_jail_cmd}; then
-            errors=1
+            /usr/sbin/pkg -j ${_jail} "$@"
         fi
     else
         if [ "${AUTO_YES}" -eq 1 ]; then
-            _jail_cmd="jexec -l -U root ${_jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg $@"
+            jexec -l -U root ${_jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@"
         else
-            _jail_cmd="jexec -l -U root ${_jail} /usr/sbin/pkg $@"
-        fi
-        if ! ${_jail_cmd}; then
-            errors=1
+            jexec -l -U root ${_jail} /usr/sbin/pkg "$@"
         fi
     fi
-}
 
-errors=0
+    bastille_check_exit_code "${_jail}" "$?" 
+}
 
 for _jail in ${JAILS}; do
 
@@ -170,9 +163,6 @@ for _jail in ${JAILS}; do
 	
 done
 wait
+echo
 
-if [ $errors -ne 0 ]; then
-    error_exit "[ERROR]: Failed to apply on some jails, please check logs"
-else
-    echo
-fi
+bastille_return_exit_code
