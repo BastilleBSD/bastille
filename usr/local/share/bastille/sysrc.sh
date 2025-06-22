@@ -103,9 +103,13 @@ for _jail in ${JAILS}; do
 	
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
 
+    bastille_check_exit_code "${_jail}" "$?"
+
     ) &
 	
     bastille_running_jobs "${bastille_process_limit}"
 	
 done
 wait
+
+bastille_return_exit_code
