@@ -166,6 +166,17 @@ snapshot_srtipname() {
 }
 
 snapshot_safecheck() {
+    # Check existence for the given snapshot.
+    if [ -n "${SNAP_RESTORE}" ] || [ -n "${SNAP_DESTROY}" ]; then
+        snapshot_srtipname
+        TARGET_CHECK=$(echo ${TARGET} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${JAIL_TARGET}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+        if [ -n "${TARGET_CHECK}" ]; then
+            if ! zfs list -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_TARGET}/root@${TARGET_CHECK}" >/dev/null 2>&1; then
+                error_exit "[ERROR]: Snapshot not found: ${TARGET_CHECK}"
+            fi
+        fi
+    fi
+
     # Safely stop the jail bfore snapshot/restore.
     if [ -n "${SNAP_SAFELY}" ]; then
         snapshot_srtipname
@@ -189,16 +200,6 @@ snapshot_safecheck() {
         DATE=$(date +%F-%H%M%S)
         NAME_MD5X6=$(echo "${DATE} ${TARGET}" | md5 | cut -b -6)
         SNAPSHOT_NAME="Bastille_${NAME_MD5X6}_${TARGET}_${DATE}"
-    fi
-
-    if [ -n "${SNAP_RESTORE}" ] || [ -n "${SNAP_DESTROY}" ]; then
-        snapshot_srtipname
-        TARGET_CHECK=$(echo ${TARGET} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${JAIL_TARGET}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
-        if [ -n "${TARGET_CHECK}" ]; then
-            if ! zfs list -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_TARGET}/root@${TARGET_CHECK}" >/dev/null 2>&1; then
-                error_exit "[ERROR]: Snapshot not found: ${TARGET_CHECK}"
-            fi
-        fi
     fi
 }
 
