@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=0.14.20250420
+BASTILLE_VERSION="0.14.20250420"
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -68,7 +68,7 @@ bastille_perms_check() {
 
 usage() {
     cat << EOF
-	
+
 Bastille is an open-source system for automating deployment and management of
 containerized applications on FreeBSD.
 
@@ -104,6 +104,7 @@ Available Commands:
   restart     Restart a running container.
   service     Manage services within targeted container(s).
   setup       Attempt to auto-configure network, firewall and storage on new installs.
+  snapshot    Creates, restore, destroy bastille quick ZFS snapshots for the specified container.
   start       Start a stopped container.
   stop        Stop a running container.
   sysrc       Safely edit rc files within targeted container(s).
@@ -218,6 +219,7 @@ case "${CMD}" in
     rdr| \
     rename| \
     setup| \
+    snapshot| \
     top| \
     update| \
     upgrade| \
@@ -264,5 +266,5 @@ if [ -f "${SCRIPTPATH}" ]; then
     exec "${SH}" "${SCRIPTPATH}" "$@"
 
 else
-    error_exit "${SCRIPTPATH} not found."	
+    error_exit "${SCRIPTPATH} not found."
 fi
