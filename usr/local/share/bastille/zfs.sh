@@ -46,7 +46,6 @@ usage() {
     destroy                 Destroy a ZFS snapshot on the specified container.
     -a | --auto             Auto mode. Start/stop jail(s) if required.
     -v | --verbose          Be more verbose during the snapshot destroy operation.
-    -n | --dryrun           Do a dry-run(no actual deletion) to determine what data would be deleted.
     -x | --debug            Enable debug mode.
 
 EOF
@@ -232,8 +231,8 @@ snapshot_checks() {
     # Check existence for the given snapshot.
     if [ -n "${SNAP_ROLLBACK}" ] || [ -n "${SNAP_DESTROY}" ]; then
         if [ -n "${TAG}" ]; then
-            # Early warning about missing snapshot parent dataset for reference, this may happen when
-            # more recent snapshots were deleted by either, intentional or automatically.
+            # Early warning about missing required snapshot/parent dataset for reference, this may happen when
+            # more recent snapshots were deleted by either, intentional or automatically when rollback older snapshots.
             if ! zfs list -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}@${TAG}" >/dev/null 2>&1; then
                 info "\n[${_jail}]:"
                 warn "[WARNING]: Either snapshot '${TAG}' not exist or parent dataset appears to be missing."
