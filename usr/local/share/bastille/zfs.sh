@@ -58,6 +58,7 @@ SNAP_CREATE=
 SNAP_ROLLBACK=
 SNAP_DESTROY=
 SNAP_VERBOSE=
+SNAP_BATCH=
 
 zfs_jail_dataset() {
 
@@ -206,6 +207,10 @@ fi
 TARGET="${1}"
 ACTION="${2}"
 
+if [ "${TARGET}" = "ALL" -o "${TARGET}" = "all" ]; then
+    SNAP_BATCH="1"
+fi
+
 bastille_root_check
 set_target "${TARGET}"
 
@@ -247,10 +252,12 @@ snapshot_checks() {
 
     # Generate a relatively short but unique name for the snapshots based on the current date/jail name.
     if [ -n "${SNAP_NAME_GEN}" ]; then
-        DATE=$(date +%F-%H%M%S)
-        NAME_MD5X6=$(echo "${DATE} ${TARGET}" | md5 | cut -b -6)
-        SNAPSHOT_NAME="Bastille_${NAME_MD5X6}_${TARGET}_${DATE}"
-        TAG="${SNAPSHOT_NAME}"
+       for _JAIL in ${_jail}; do
+            DATE=$(date +%F-%H%M%S)
+            NAME_MD5X6=$(echo "${DATE} ${TARGET}" | md5 | cut -b -6)
+            SNAPSHOT_NAME="Bastille_${NAME_MD5X6}_${_JAIL}_${DATE}"
+            TAG="${SNAPSHOT_NAME}"
+        done
     fi
 }
 
@@ -276,6 +283,11 @@ snapshot_create() {
     # Start the jail after snapshot if requested.
     if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
+    fi
+
+    # Delay a sec for batch snapshot creation safety.
+    if [ -n "${SNAP_BATCH}" ]; then
+        sleep 1
     fi
 }
 
