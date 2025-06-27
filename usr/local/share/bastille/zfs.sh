@@ -58,6 +58,7 @@ SNAP_CREATE=
 SNAP_ROLLBACK=
 SNAP_DESTROY=
 SNAP_VERBOSE=
+SNAP_CHECK=
 SNAP_BATCH=
 
 zfs_jail_dataset() {
@@ -241,6 +242,13 @@ snapshot_checks() {
             SNAPSHOT_NAME="Bastille_${NAME_MD5X6}_${_JAIL}_${DATE}"
             TAG="${SNAPSHOT_NAME}"
         done
+
+        # Check for the generated snapshot name.
+        SNAP_CHECK=$(echo ${TAG} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+        if [ -z "${SNAP_CHECK}" ]; then
+            info "\n[${_jail}]:"
+            error_notify "[ERROR]: Failed validation for the generated snapshot name."
+        fi
     fi
 }
 
@@ -268,8 +276,8 @@ snapshot_create() {
         bastille start "${_jail}"
     fi
 
-    # Delay a sec for batch snapshot creation safety.
-    if [ -n "${SNAP_BATCH}" ]; then
+    # Delay a sec only for batch snapshot creation when using md5 to generate names.
+    if [ -n "${SNAP_BATCH}" ] && [ -n "${SNAP_CHECK}" ]; then
         sleep 1
     fi
 }
