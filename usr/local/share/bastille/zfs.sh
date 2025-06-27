@@ -233,28 +233,11 @@ snapshot_checks() {
         fi
     fi
 
-    # Check existence for the given snapshot.
-    if [ -n "${SNAP_ROLLBACK}" ] || [ -n "${SNAP_DESTROY}" ]; then
-        if [ -n "${TAG}" ]; then
-            # Early warning about missing required snapshot/parent dataset for reference, this may happen when
-            # more recent snapshots were deleted by either, intentional or automatically when rollback older snapshots.
-            if ! zfs list -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}@${TAG}" >/dev/null 2>&1; then
-                info "\n[${_jail}]:"
-                warn "[WARNING]: Either snapshot '${TAG}' not exist or parent dataset appears to be missing."
-            fi
-        fi
-    elif [ -n "${SNAP_CREATE}" ]; then
-        if zfs list -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}@${TAG}" >/dev/null 2>&1; then
-            info "\n[${_jail}]:"
-            warn "[WARNING]: Looks like the snapshot '${TAG}' already exist, See 'bastille list snapshot'."
-        fi
-    fi
-
     # Generate a relatively short but unique name for the snapshots based on the current date/jail name.
     if [ -n "${SNAP_NAME_GEN}" ]; then
        for _JAIL in ${_jail}; do
             DATE=$(date +%F-%H%M%S)
-            NAME_MD5X6=$(echo "${DATE} ${TARGET}" | md5 | cut -b -6)
+            NAME_MD5X6=$(echo "${DATE} ${_JAIL}" | md5 | cut -b -6)
             SNAPSHOT_NAME="Bastille_${NAME_MD5X6}_${_JAIL}_${DATE}"
             TAG="${SNAPSHOT_NAME}"
         done
