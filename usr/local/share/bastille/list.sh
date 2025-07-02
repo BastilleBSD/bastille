@@ -56,6 +56,16 @@ pretty_json() {
       -e 's/^\[\(.*\)\]$/[\n\1\n]/'
 }
 
+get_jail_list() {
+
+    # Check if we want only a single jail, or all jails
+    if [ -n "${TARGET}" ]; then
+        JAIL_LIST="$(list_jail_priority ${TARGET} | sort -k2 -n | awk '{print $1}')"
+    else
+        JAIL_LIST="$(list_jail_priority "$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")" | sort -k2 -n | awk '{print $1}')"
+    fi
+}
+
 get_max_lengths() {
 
     if [ -d "${bastille_jailsdir}" ]; then
@@ -279,13 +289,7 @@ list_bastille(){
      _tmp_list=
     
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sBoot%*sPrio%*sState%*sType%*sIP Address%*sPublished Ports%*sRelease%*sTags\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} + ${SPACER} - 4))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
@@ -342,13 +346,7 @@ list_all(){
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sBoot%*sPrio%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
@@ -405,13 +403,7 @@ list_ips() {
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sIP Address\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
@@ -452,13 +444,7 @@ list_paths() {
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
@@ -498,13 +484,7 @@ list_ports() {
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sPublished Ports\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
@@ -544,13 +524,7 @@ list_state() {
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sState\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
