@@ -54,7 +54,6 @@ EOF
 
 AUTO="0"
 SNAP_NAME_GEN=
-SNAP_CREATE=
 SNAP_ROLLBACK=
 SNAP_DESTROY=
 SNAP_VERBOSE=
@@ -209,7 +208,7 @@ fi
 TARGET="${1}"
 ACTION="${2}"
 
-if [ "${TARGET}" = "ALL" -o "${TARGET}" = "all" ]; then
+if [ "${TARGET}" = "ALL" ] || [ "${TARGET}" = "all" ]; then
     SNAP_BATCH="1"
 fi
 
@@ -272,7 +271,6 @@ snapshot_create() {
     # Attempt to snapshot the container.
     # Thiw will create a ZFS snapshot for the specified container with an auto-generated name with the
     # following format "Bastille_XXXXXX_JAILNAME_YYYY-MM-DD-HHMMSS" unless a name tag is manually entered.
-    SNAP_CREATE="1"
     if [ -z "${TAG}" ]; then
         SNAP_NAME_GEN="1"
     fi
