@@ -58,7 +58,8 @@ SNAP_CREATE=
 SNAP_ROLLBACK=
 SNAP_DESTROY=
 SNAP_VERBOSE=
-SNAP_CHECK=
+SNAP_TAGCHECK=
+SNAP_GENCHECK=
 SNAP_BATCH=
 
 zfs_jail_dataset() {
@@ -226,6 +227,20 @@ if [ -z "${bastille_zfs_zpool}" ]; then
 fi
 
 snapshot_checks() {
+    # Check if we requested ALL jails.
+    if [ -n "${SNAP_ROLLBACK}" ]; then
+        if [ -n "${SNAP_BATCH}" ]; then
+            TARGET="${_jail}"
+
+            # Check if is a bastille created snapshot with a unique name and warn about unwanted errors.
+            # Just warn here and don't exit, as a user may copy/use that unique name for other targets manually.
+            SNAP_TAGCHECK=$(echo ${TAG} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+            if [ -n "${SNAP_TAGCHECK}" ]; then
+                warn "\n[WARNING]: A snapshot with unique name was given for ALL targets, ignore unwanted errors."
+            fi
+        fi
+    fi
+
     # Check if jail is running and stop if requested.
     if [ -z "${SNAP_DESTROY}" ]; then
         check_target_is_stopped "${_jail}" || \
@@ -241,11 +256,12 @@ snapshot_checks() {
             NAME_MD5X6=$(echo "${DATE} ${_JAIL}" | md5 | cut -b -6)
             SNAPSHOT_NAME="Bastille_${NAME_MD5X6}_${_JAIL}_${DATE}"
             TAG="${SNAPSHOT_NAME}"
+            SNAPSHOT_NAME=
         done
 
         # Check for the generated snapshot name.
-        SNAP_CHECK=$(echo ${TAG} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
-        if [ -z "${SNAP_CHECK}" ]; then
+        SNAP_GENCHECK=$(echo ${TAG} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+        if [ -z "${SNAP_GENCHECK}" ]; then
             info "\n[${_jail}]:"
             error_notify "[ERROR]: Failed validation for the generated snapshot name."
         fi
@@ -275,15 +291,10 @@ snapshot_create() {
     if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     fi
-
-    # Delay a sec only for batch snapshot creation when using md5 to generate names.
-    if [ -n "${SNAP_BATCH}" ] && [ -n "${SNAP_CHECK}" ]; then
-        sleep 1
-    fi
 }
 
 snapshot_rollback() {
-    # This feature is intended work with snapshots created  by either, bastille or manually created byu the user.
+    # This feature is intended work with snapshots created  by either, bastille or manually created by the user.
     # An error about "more recent snapshots or bookmarks exist" will appears if the '-r' flag is not specified.
     SNAP_ROLLBACK="1"
     snapshot_checks
