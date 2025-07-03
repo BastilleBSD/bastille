@@ -34,7 +34,7 @@
 
 usage() {
     error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [ip(s)] [jail(s)] [limit(s)] [log(s)]"
-    error_notify "                                                [path(s)] [port(s)] [prio|priority] [release(s)] [state(s)] [template(s)]"
+    error_notify "                                                [path(s)] [port(s)] [prio|priority] [release(s)] [snapshot(s)] [state(s)] [template(s)]"
     cat << EOF
     Options:
 
@@ -606,6 +606,20 @@ list_release(){
     fi
 }
 
+list_snapshot(){
+    # TODO: Avility to list snapshot data for a single target.
+    # List snapshots with its usage data for valid bastille jails only.
+    if [ -d "${bastille_jailsdir}" ]; then
+        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+        for _JAIL in ${JAIL_LIST}; do
+            if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
+                info "\n[${_JAIL}]:"
+                zfs list -r -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_JAIL}"
+            fi
+        done
+    fi
+}
+
 list_template(){
     find "${bastille_templatesdir}" -type d -maxdepth 2 | sed "s#${bastille_templatesdir}/##g"
 }
@@ -766,6 +780,10 @@ if [ "$#" -eq 1 ]; then
             ;;
         release|releases)
             list_release "${2}"
+            ;;
+        snapshot|snapshots)
+            list_snapshot
+            exit 0
             ;;
         template|templates)
             list_template
