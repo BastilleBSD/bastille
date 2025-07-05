@@ -38,14 +38,24 @@ usage() {
     cat << EOF
     Options:
 
-    -d | --down            List stopped jails only.
-    -j | --json            List jails or sub-arg(s) in json format.
-    -p | --pretty          Print JSON in columns.
-    -u | --up              List running jails only.
-    -x | --debug           Enable debug mode.
+    -d | --down                List stopped jails only.
+    -j | --json                List jails or sub-arg(s) in json format.
+    -p | --pretty              Print JSON in columns.
+    -s | --sort VALUE          Print info in VALUE order.
+    -u | --up                  List running jails only.
+    -x | --debug               Enable debug mode.
 
 EOF
     exit 1
+}
+
+print_info() {
+
+    # Print jails in given order
+    for _file in $(echo ${_tmp_list} | sort); do
+        cat ${_file}
+        rm -f ${_file}
+    done | sort -n -k${OPT_COLUMN}
 }
 
 pretty_json() {
@@ -60,9 +70,9 @@ get_jail_list() {
 
     # Check if we want only a single jail, or all jails
     if [ -n "${TARGET}" ]; then
-        JAIL_LIST="$(list_jail_priority ${TARGET} | sort -k2 -n | awk '{print $1}')"
+        JAIL_LIST="${TARGET}"
     else
-        JAIL_LIST="$(list_jail_priority "$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")" | sort -k2 -n | awk '{print $1}')"
+        JAIL_LIST="$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")"
     fi
 }
 
@@ -334,11 +344,7 @@ list_bastille(){
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
+    print_info
 }
 
 list_all(){
@@ -391,11 +397,7 @@ list_all(){
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
+    print_info
 }
 
 list_ips() {
@@ -430,12 +432,7 @@ list_ips() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
-
+    print_info
 }
 
 
@@ -471,12 +468,7 @@ list_paths() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
-
+    print_info
 }
 
 list_ports() {
@@ -511,12 +503,7 @@ list_ports() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
-
+    print_info
 }
 
 list_state() {
@@ -551,12 +538,7 @@ list_state() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
-
+    print_info
 }
 
 # TODO: Check the correct usage or arguments here. See SC2120.
@@ -616,6 +598,7 @@ TARGET=""
 OPT_JSON=0
 OPT_PRETTY=0
 OPT_STATE="all"
+OPT_COLUMN="2"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -633,13 +616,32 @@ while [ "$#" -gt 0 ]; do
             OPT_PRETTY=1
             shift
             ;;
+        -s|--sort)
+            if [ -n "${3}" ]; then
+                error_exit "[ERROR]: [-s|--sort] can only be used with 'bastille list'."
+            fi
+            case "${2}" in
+                jid) OPT_COLUMN="1" ;;
+                name) OPT_COLUMN="2" ;;
+                boot) OPT_COLUMN="3" ;;
+                prio|priority) OPT_COLUMN="4" ;;
+                state) OPT_COLUMN="5" ;;
+                type|jailtype) OPT_COLUMN="6" ;;
+                ip) OPT_COLUMN="7" ;;
+                ports) OPT_COLUMN="8" ;;
+                release) OPT_COLUMN="9" ;;
+                tags) OPT_COLUMN="10" ;;
+                *) error_exit "Invalid sort option: \"${2}\"" ;;
+            esac
+            shift 2
+            ;;
         -u|--up)
             OPT_STATE="Up"
             shift
             ;;
         -x|--debug)
             enable_debug
-	   shift
+	    shift
             ;;
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
