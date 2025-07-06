@@ -435,7 +435,6 @@ list_ips() {
     print_info
 }
 
-
 list_paths() {
 
      _tmp_list=
@@ -530,6 +529,41 @@ list_state() {
         get_jail_info "${_jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_STATE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
+    done
+    wait
+
+    print_info
+}
+
+list_type() {
+
+     _tmp_list=
+
+    get_max_lengths
+    get_jail_list
+
+    # Print header
+    printf " JID%*sName%*sType\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
+
+    for _jail in ${JAIL_LIST}; do
+
+        # Validate jail.conf existence
+        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        else
+            continue
+        fi
+
+        (
+
+        get_jail_info "${_jail}"
+
+        printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_TYPE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
         ) > "${_tmp_jail}" &
 
@@ -738,6 +772,17 @@ if [ "$#" -eq 1 ]; then
                 fi
             else
                 list_state
+            fi
+            ;;
+        type)
+            if [ "${OPT_JSON}" -eq 1 ]; then
+                if [ "${OPT_PRETTY}" -eq 1 ]; then
+                    list_type | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Type\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
+                else
+                    list_type | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Type\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                fi
+            else
+                list_type
             fi
             ;;
         release|releases)
