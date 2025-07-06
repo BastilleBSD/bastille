@@ -52,7 +52,7 @@ EOF
 print_info() {
 
     # Print jails in given order
-    for _file in $(echo ${_tmp_list} | sort); do
+    for _file in $(echo ${_tmp_list}); do
         cat ${_file}
         rm -f ${_file}
     done | sort ${OPT_SORT}
@@ -655,14 +655,14 @@ while [ "$#" -gt 0 ]; do
                 error_exit "[ERROR]: [-s|--sort] can only be used with 'bastille list'."
             fi
             case "${2}" in
-                jid) OPT_SORT="-n -k1" ;;
+                jid) OPT_SORT="-k1 -n" ;;
                 name) OPT_SORT="-k2" ;;
                 boot) OPT_SORT="-k3" ;;
-                prio|priority) OPT_SORT="-n -k4" ;;
+                prio|priority) OPT_SORT="-k4 -n" ;;
                 state) OPT_SORT="-k5" ;;
                 type|jailtype) OPT_SORT="-k6" ;;
-                ip) OPT_SORT="-n -k7" ;;
-                ports) OPT_SORT="-n -k8" ;;
+                ip) OPT_SORT="-k7 -n" ;;
+                ports) OPT_SORT="-k8 -n" ;;
                 release) OPT_SORT="-k9" ;;
                 tags) OPT_SORT="-k10" ;;
                 *) error_exit "Invalid sort option: \"${2}\"" ;;
@@ -732,7 +732,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         ip|ips)
-            OPT_SORT="-n -k3"
+            OPT_SORT="-k3 -n"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_ips | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"IP Address\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
@@ -756,7 +756,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         rdr|port|ports)
-            OPT_SORT="-n -k3"
+            OPT_SORT="-k3 -n"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_ports | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Published Ports\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
