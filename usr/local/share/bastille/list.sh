@@ -55,7 +55,7 @@ print_info() {
     for _file in $(echo ${_tmp_list} | sort); do
         cat ${_file}
         rm -f ${_file}
-    done | sort -n -k${OPT_COLUMN}
+    done | sort ${OPT_SORT}
 }
 
 pretty_json() {
@@ -632,7 +632,7 @@ TARGET=""
 OPT_JSON=0
 OPT_PRETTY=0
 OPT_STATE="all"
-OPT_COLUMN="2"
+OPT_SORT="-k2"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -655,16 +655,16 @@ while [ "$#" -gt 0 ]; do
                 error_exit "[ERROR]: [-s|--sort] can only be used with 'bastille list'."
             fi
             case "${2}" in
-                jid) OPT_COLUMN="1" ;;
-                name) OPT_COLUMN="2" ;;
-                boot) OPT_COLUMN="3" ;;
-                prio|priority) OPT_COLUMN="4" ;;
-                state) OPT_COLUMN="5" ;;
-                type|jailtype) OPT_COLUMN="6" ;;
-                ip) OPT_COLUMN="7" ;;
-                ports) OPT_COLUMN="8" ;;
-                release) OPT_COLUMN="9" ;;
-                tags) OPT_COLUMN="10" ;;
+                jid) OPT_SORT="-n -k1" ;;
+                name) OPT_SORT="-k2" ;;
+                boot) OPT_SORT="-k3" ;;
+                prio|priority) OPT_SORT="-n -k4" ;;
+                state) OPT_SORT="-k5" ;;
+                type|jailtype) OPT_SORT="-k6" ;;
+                ip) OPT_SORT="-n -k7" ;;
+                ports) OPT_SORT="-n -k8" ;;
+                release) OPT_SORT="-k9" ;;
+                tags) OPT_SORT="-k10" ;;
                 *) error_exit "Invalid sort option: \"${2}\"" ;;
             esac
             shift 2
@@ -720,6 +720,7 @@ fi
 if [ "$#" -eq 1 ]; then
     case "${1}" in
         -a|--all|all)
+            OPT_SORT="-k2"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_all | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Boot\":\"%s\",\"Prio\":\"%s\",\"State\":\"%s\",\"IP Address\":\"%s\",\"Published Ports\":\"%s\",\"Hostname\":\"%s\",\"Release\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3,$4,$5,$6,$7,$8,$9} END{print "\n]"}' | pretty_json
@@ -731,6 +732,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         ip|ips)
+            OPT_SORT="-n -k3"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_ips | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"IP Address\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
@@ -742,6 +744,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         path|paths)
+            OPT_SORT="-k3"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_paths | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Path\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
@@ -753,6 +756,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         rdr|port|ports)
+            OPT_SORT="-n -k3"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_ports | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Published Ports\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
@@ -764,6 +768,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         state|status)
+            OPT_SORT="-k3"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_state | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"State\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
@@ -774,7 +779,8 @@ if [ "$#" -eq 1 ]; then
                 list_state
             fi
             ;;
-        type)
+        type|jailtype)
+            OPT_SORT="-k3"
             if [ "${OPT_JSON}" -eq 1 ]; then
                 if [ "${OPT_PRETTY}" -eq 1 ]; then
                     list_type | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Type\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
