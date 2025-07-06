@@ -34,18 +34,28 @@
 
 usage() {
     error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [ip(s)] [jail(s)] [limit(s)] [log(s)]"
-    error_notify "                                                [path(s)] [port(s)] [prio|priority] [release(s)] [state(s)] [template(s)]"
+    error_notify "                                                [path(s)] [port(s)] [prio|priority] [release(s)] [state(s)] [template(s)] [type]"
     cat << EOF
     Options:
 
-    -d | --down            List stopped jails only.
-    -j | --json            List jails or sub-arg(s) in json format.
-    -p | --pretty          Print JSON in columns.
-    -u | --up              List running jails only.
-    -x | --debug           Enable debug mode.
+    -d | --down                List stopped jails only.
+    -j | --json                List jails or sub-arg(s) in json format.
+    -p | --pretty              Print JSON in columns.
+    -s | --sort VALUE          Print info in VALUE order.
+    -u | --up                  List running jails only.
+    -x | --debug               Enable debug mode.
 
 EOF
     exit 1
+}
+
+print_info() {
+
+    # Print jails in given order
+    for _file in $(echo ${_tmp_list} | sort); do
+        cat ${_file}
+        rm -f ${_file}
+    done | sort -n -k${OPT_COLUMN}
 }
 
 pretty_json() {
@@ -54,6 +64,16 @@ pretty_json() {
       -e 's/}$/\n  }/g' \
       -e 's/},/\n  },/g' \
       -e 's/^\[\(.*\)\]$/[\n\1\n]/'
+}
+
+get_jail_list() {
+
+    # Check if we want only a single jail, or all jails
+    if [ -n "${TARGET}" ]; then
+        JAIL_LIST="${TARGET}"
+    else
+        JAIL_LIST="$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")"
+    fi
 }
 
 get_max_lengths() {
@@ -279,13 +299,7 @@ list_bastille(){
      _tmp_list=
     
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sBoot%*sPrio%*sState%*sType%*sIP Address%*sPublished Ports%*sRelease%*sTags\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} + ${SPACER} - 4))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
@@ -330,11 +344,7 @@ list_bastille(){
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
+    print_info
 }
 
 list_all(){
@@ -342,13 +352,7 @@ list_all(){
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sBoot%*sPrio%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
@@ -393,11 +397,7 @@ list_all(){
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
+    print_info
 }
 
 list_ips() {
@@ -405,13 +405,7 @@ list_ips() {
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sIP Address\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
@@ -438,27 +432,15 @@ list_ips() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
-
+    print_info
 }
-
 
 list_paths() {
 
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
@@ -485,12 +467,7 @@ list_paths() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
-
+    print_info
 }
 
 list_ports() {
@@ -498,13 +475,7 @@ list_ports() {
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sPublished Ports\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
@@ -531,12 +502,7 @@ list_ports() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
-
+    print_info
 }
 
 list_state() {
@@ -544,13 +510,7 @@ list_state() {
      _tmp_list=
 
     get_max_lengths
-
-    # Check if we want only a single jail, or all jails
-    if [ -n "${TARGET}" ]; then
-        JAIL_LIST="${TARGET}"
-    else
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-    fi
+    get_jail_list
 
     # Print header
     printf " JID%*sName%*sState\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
@@ -577,12 +537,42 @@ list_state() {
     done
     wait
 
-    # Print jails in order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
-    done
+    print_info
+}
 
+list_type() {
+
+     _tmp_list=
+
+    get_max_lengths
+    get_jail_list
+
+    # Print header
+    printf " JID%*sName%*sType\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
+
+    for _jail in ${JAIL_LIST}; do
+
+        # Validate jail.conf existence
+        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
+            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        else
+            continue
+        fi
+
+        (
+
+        get_jail_info "${_jail}"
+
+        printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_TYPE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
+
+        ) > "${_tmp_jail}" &
+
+        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+
+    done
+    wait
+
+    print_info
 }
 
 # TODO: Check the correct usage or arguments here. See SC2120.
@@ -642,6 +632,7 @@ TARGET=""
 OPT_JSON=0
 OPT_PRETTY=0
 OPT_STATE="all"
+OPT_COLUMN="2"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -659,13 +650,32 @@ while [ "$#" -gt 0 ]; do
             OPT_PRETTY=1
             shift
             ;;
+        -s|--sort)
+            if [ -n "${3}" ]; then
+                error_exit "[ERROR]: [-s|--sort] can only be used with 'bastille list'."
+            fi
+            case "${2}" in
+                jid) OPT_COLUMN="1" ;;
+                name) OPT_COLUMN="2" ;;
+                boot) OPT_COLUMN="3" ;;
+                prio|priority) OPT_COLUMN="4" ;;
+                state) OPT_COLUMN="5" ;;
+                type|jailtype) OPT_COLUMN="6" ;;
+                ip) OPT_COLUMN="7" ;;
+                ports) OPT_COLUMN="8" ;;
+                release) OPT_COLUMN="9" ;;
+                tags) OPT_COLUMN="10" ;;
+                *) error_exit "Invalid sort option: \"${2}\"" ;;
+            esac
+            shift 2
+            ;;
         -u|--up)
             OPT_STATE="Up"
             shift
             ;;
         -x|--debug)
             enable_debug
-	   shift
+	    shift
             ;;
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
@@ -762,6 +772,17 @@ if [ "$#" -eq 1 ]; then
                 fi
             else
                 list_state
+            fi
+            ;;
+        type)
+            if [ "${OPT_JSON}" -eq 1 ]; then
+                if [ "${OPT_PRETTY}" -eq 1 ]; then
+                    list_type | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Type\":\"%s\"}",$1,$2,$3} END{print "\n]"}' | pretty_json
+                else
+                    list_type | awk 'BEGIN{print "["} NR>1{if(NR>2)print ","; printf "  {\"JID\":\"%s\",\"Name\":\"%s\",\"Type\":\"%s\"}",$1,$2,$3} END{print "\n]"}'
+                fi
+            else
+                list_type
             fi
             ;;
         release|releases)
