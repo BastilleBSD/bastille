@@ -127,8 +127,13 @@ if [ "$#" -ne 2 ]; then
 fi
 
 TARGET="${1}"
-USER="$(echo ${2} | awk -F"@" '{print $1}')"
-HOST="$(echo ${2} | awk -F"@" '{print $2}')"
+if echo "${2}" | grep -q "@"; then
+    USER="$(echo ${2} | awk -F"@" '{print $1}')"
+    HOST="$(echo ${2} | awk -F"@" '{print $2}')"
+else
+    USER="$(whoami)"
+    HOST="${2}"
+fi
 if echo "${HOST}" | grep -q ":"; then
     PORT="$(echo ${HOST} | awk -F":" '{print $2}')"
     HOST="$(echo ${HOST} | awk -F":" '{print $1}')"
