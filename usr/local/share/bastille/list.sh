@@ -34,7 +34,7 @@
 
 usage() {
     error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [ip(s)] [jail(s)] [limit(s)] [log(s)]"
-    error_notify "                                                [path(s)] [port(s)] [prio|priority] [release(s)] [snapshot(s)] [state(s)] [template(s)] [type]"
+    error_notify "                                                [path(s)] [port(s)] [prio|priority] [release(s)] [state(s)] [template(s)] [type]"
     cat << EOF
     Options:
 
