@@ -107,7 +107,7 @@ Use "bastille -p|--parallel VALUE command" to run bastille in parallel mode.
 
 ```
 
-## 0.14-beta
+## 1.0.x
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 
