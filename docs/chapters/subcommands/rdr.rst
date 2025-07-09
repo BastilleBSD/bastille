@@ -68,8 +68,8 @@ The options can be used together, as seen above.
 If you have multiple interfaces assigned to your jail, ``bastille rdr`` will
 only redirect using the default one.
 
-It is also possible to specify a pf table as the source, providing it exists. Simply use the table
-name instead of an IP address or subnet.
+It is also possible to specify a pf table as the source, providing it exists.
+Simply use the table name instead of an IP address or subnet.
 
 .. code-block:: shell
 

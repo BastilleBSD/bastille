@@ -13,10 +13,10 @@ different types of jail network configurations.
   whatever your interface is called. This will be used for the host/jail epairs.
   Bastille will create/destroy these epairs as the jail is started/stopped.
 
-* Bridged VNET mode: For bridged VNET jails (``-B``) you must manually create a bridge
-  interface to attach your jail to. Bastille will then create and attach the
-  host/jail epairs to this interface when the jail starts, and remove them when
-  it stops.
+* Bridged VNET mode: For bridged VNET jails (``-B``) you must manually create a
+  bridge interface to attach your jail to. Bastille will then create and attach
+  the host/jail epairs to this interface when the jail starts, and remove them\
+  when it stops.
 
 * Alias mode: For classic/standard jails that use an IP that is accessible
   within your local subnet (alias mode) Bastille will add the IP to the
@@ -24,10 +24,10 @@ different types of jail network configurations.
 
 * NAT mode: For classic/standard jails that use an IP not reachable in your local
   subnet, Bastille will add the IP to the specified interface as an alias, and
-  additionally, add it to the pf firewall table (if available) to allow the jail outbound
-  access. If you do not specify an interface, Bastille will assume you have run
-  the ``bastille setup`` command and will attempt to use ``bastille0`` (which
-  is created using the setup command) as its interface. If you have not run
+  additionally, add it to the pf firewall table (if available) to allow the jail
+  outbound access. If you do not specify an interface, Bastille will assume you
+  have run the ``bastille setup`` command and will attempt to use ``bastille0``
+  (which is created using the setup command) as its interface. If you have not run
   ``bastille setup`` and do not specify an interface, Bastille will error.
 
 * Inherit mode: For classic/standard jails that are set to ``inherit`` or
@@ -38,9 +38,9 @@ different types of jail network configurations.
   bastille will simply set ``ip4`` to ``ip_hostname`` inside the jail config.
   The jail will then function according the jail(8) documentation.
 
-You cannot use ``-V|--vnet`` with any interface that is already a member of another
-bridge. For example, if you create a bridge, and assign ``vtnet0`` as a member, you
-will not be able to use ``vtnet0`` with ``-V|--vnet``.
+You cannot use ``-V|--vnet`` with any interface that is already a member of
+another bridge. For example, if you create a bridge, and assign ``vtnet0`` as a
+member, you will not be able to use ``vtnet0`` with ``-V|--vnet``.
 
 IP Address Options
 ------------------
@@ -95,8 +95,9 @@ For the ``inherit`` and ``ip_hostname`` options, you can also specify
 Shared Interface
 ----------------
 
-This scenario works best when you have just one computer, or a home or small office network
-that is separated from the rest of the internet by a router. So you are free to use
+This scenario works best when you have just one computer, or a home or small
+office network that is separated from the rest of the internet by a router. So
+you are free to use
 `private IP addresses
 <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`_.
 
@@ -118,9 +119,10 @@ reach services at that address.
 This method is the simplest. All you need to know is the name of your network
 interface and a free IP on your local network.
 
-We can also run ``bastille setup shared`` to configure our primary interface as a default
-interface for Bastille to use. Once we have run the command and chosen our interface, it will
-not be necessary to specify an interface in our create command.
+We can also run ``bastille setup shared`` to configure our primary interface as
+a default interface for Bastille to use. Once we have run the command and chosen
+our interface, it will not be necessary to specify an interface in our create
+command.
 
 .. code-block:: shell
 
@@ -128,8 +130,8 @@ not be necessary to specify an interface in our create command.
 
 This will automatically use the interface we selected during the setup command.
 
-Note that we cannot use the ``shared`` option together with the ``loopback`` option. Configuring
-one using the ``bastille setup`` command will disable the other.
+Note that we cannot use the ``shared`` option together with the ``loopback``
+option. Configuring one using the ``bastille setup`` command will disable the other.
 
 Shared Interface on IPV6 network (vultr.com)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -259,8 +261,8 @@ bridge, use the ``-B`` option, an IP/netmask and external bridge.
 
   bastille create -B azkaban 13.2-RELEASE 192.168.1.50/24 bridge0
 
-Bastille will automagically create the needed interface(s), attach it to the specified
-bridge and connect/disconnect containers as they are started and stopped.
+Bastille will automagically create the needed interface(s), attach it to the
+specified bridge and connect/disconnect containers as they are started and stopped.
 The bridge needs to be created/enabled before creating and starting the jail.
 
 Below are the steps to creating a bridge for this purpose.
@@ -309,21 +311,23 @@ on your system is.
 VLAN Configuration
 ------------------
 
-Bastille supports VLANs to some extent when creating jails. When creating a jail, use
-the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set the proper
-variables inside the jails `rc.conf` to add the jail to the specified VLAN. When using this method,
-the interface being assigned must carry tagged VLAN packets, e.g. you can bridge a VLAN trunk to
-the jail and in the jail you then can access all VLANs. But be careful: This may have
-security implications.
+Bastille supports VLANs to some extent when creating jails. When creating a jail,
+use the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set
+the proper variables inside the jails `rc.conf` to add the jail to the specified
+VLAN. When using this method, the interface being assigned must carry tagged VLAN
+packets, e.g. you can bridge a VLAN trunk to the jail and in the jail you then can
+access all VLANs. But be careful: This may have security implications.
 
-You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the name, which is the 
-standard way of naming a VLAN interface. This is due to the limitations 
-of the JIB script that Bastille uses to manage VNET jails.
+You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
+name, which is the standard way of naming a VLAN interface. This is due to the
+limitations of the JIB script that Bastille uses to manage VNET jails.
 
-You can however use ``-B|--bridge`` with VLAN interfaces (even with dots in the name).
-Using this method you create bridge interfaces in ``rc.conf`` and only add VLANs that are needed
-for the jail. The jail only has access to these VLANs and not to the whole trunk.
-Below is an ``rc.conf`` snippet that was provided by a user who has such a configuration.
+You can however use ``-B|--bridge`` with VLAN interfaces (even with dots in the
+name). Using this method you create bridge interfaces in ``rc.conf`` and only
+add VLANs that are needed for the jail. The jail only has access to these VLANs
+and not to the whole trunk.
+Below is an ``rc.conf`` snippet that was provided by a user who has such a
+configuration.
 
 .. code-block:: shell
 
@@ -397,11 +401,13 @@ To enable netgraph, run `bastille setup netgraph`. This will load and persist th
 required kernel modules. Once netgraph is configured, any VNET jails
 you create will be managed with netgraph.
 
-Note that you should only enable netgraph on a new system. Bastille is set up to use either
-`netgraph` or `if_bridge` as the VNET management, and uses `if_bridge` as the default, as it
-always has. The `netgraph` option is new, and should only be used with new systems.
+Note that you should only enable netgraph on a new system. Bastille is set up to
+use either `netgraph` or `if_bridge` as the VNET management, and uses `if_bridge`
+as the default, as it always has. The `netgraph` option is new, and should only
+be used with new systems.
 
-This value is set with the `bastille_network_vnet_type` option inside the config file.
+This value is set with the `bastille_network_vnet_type` option inside the config
+file.
 
 loopback (bastille0)
 ^^^^^^^^^^^^^^^^^^^^
@@ -423,9 +429,9 @@ traffic out of containers and can selectively redirect traffic into containers
 based on connection ports (ie; 80, 443, etc.)
 
 To set up the loopback address automatically, we can simply run ``bastille setup``.
-This will configure the storage, pf firewall, and loopback addresses for us. To set
-these up individually, we can run ``bastille setup storage``, ``bastille setup firewall``,
-and ``bastille setup loopback`` respectively.
+This will configure the storage, pf firewall, and loopback addresses for us.
+To set these up individually, we can run ``bastille setup storage``,
+``bastille setup firewall``, and ``bastille setup loopback`` respectively.
 
 Alternatively, you can do it all manually, as shown below.
 
@@ -512,8 +518,8 @@ ssh session and continue.
 
 This step only needs to be done once in order to prepare the host.
 
-Note that we cannot use the ``loopback`` option together with the ``shared`` option. Configuring
-one using the ``bastille setup`` command will disable the other.
+Note that we cannot use the ``loopback`` option together with the ``shared``
+option. Configuring one using the ``bastille setup`` command will disable the other.
 
 local_unbound
 -------------

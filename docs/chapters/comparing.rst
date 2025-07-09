@@ -112,11 +112,13 @@ as a list of popular managers and their status on each option.
 | Support      |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 
-We do our best to stay true and honest as to what other jail managers do and don't do.
+We do our best to stay true and honest as to what other jail managers do and
+don't do.
 If you see an error, you can open a PR on the BastillBSD github repo.
 
-We also realize that each jail manger does certain things better than other, and perhaps
-certain things worse. Some do this, others do that. They are all different, and each user
-should choose the one they want to use based on their needs.
+We also realize that each jail manger does certain things better than other, and
+perhaps certain things worse. Some do this, others do that. They are all
+different, and each user should choose the one they want to use based on their
+needs.
 
 Thanks for using BastilleBSD!

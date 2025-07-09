@@ -18,7 +18,8 @@ RELEASE as args.
 
   ishmael ~ # bastille convert azkaban myrelease
 
-This release can then be used to create a thick jail using the ``--no-validate`` flag.
+This release can then be used to create a thick jail using the ``--no-validate``
+flag.
 
 .. code-block:: shell
 

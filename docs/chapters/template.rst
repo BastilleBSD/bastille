@@ -65,15 +65,15 @@ Template Hook Descriptions
 ARGS will default to the value set inside the template, but can be changed by
 including ``--arg ARG=VALUE`` when running the template.
 
-Multiple ARGS can also be specified as seen below. If no ARG value is given, Bastille
-will show a warning, but continue on with the rest of the template.
+Multiple ARGS can also be specified as seen below. If no ARG value is given,
+Bastille will show a warning, but continue on with the rest of the template.
 
 .. code-block:: shell
 
   ishmael ~ # bastille template azkaban sample/template --arg ARG=VALUE --arg ARG1=VALUE
 
-The ``ARG`` hook has a wide range of functionality, including passing KEY=VALUE pairs
-to any templates called with the ``INCLUDE`` hook. See the following example...
+The ``ARG`` hook has a wide range of functionality, including passing KEY=VALUE
+pairs to any templates called with the ``INCLUDE`` hook. See the following example...
 
 .. code-block:: shell
 
@@ -82,14 +82,15 @@ to any templates called with the ``INCLUDE`` hook. See the following example...
 
   INCLUDE other/template --arg JAIL=${JAIL} --arg IP=${IP}
 
-If the above template is called with ``--arg JAIL=myjail --arg IP=10.3.3.3``, these values will
-be passed along to ``other/template`` as well, with the matching variable. So ``${JAIL}`` will be
-``myjail`` and ``${IP}`` will be ``10.3.3.3``.
+If the above template is called with ``--arg JAIL=myjail --arg IP=10.3.3.3``,
+these values will be passed along to ``other/template`` as well, with the
+matching variable. So ``${JAIL}`` will be ``myjail`` and ``${IP}`` will be
+``10.3.3.3``.
 
-The ARG hook has three values that are built in, and will differ for every jail. The values
-are ``JAIL_NAME``, ``JAIL_IP``, and ``JAIL_IP6``. These can be used inside any template without
-setting the values at the top of the Bastillefile. The values are automatically retrieved from
-the targeted jails configuration.
+The ARG hook has three values that are built in, and will differ for every jail.
+The values are ``JAIL_NAME``, ``JAIL_IP``, and ``JAIL_IP6``. These can be used
+inside any template without setting the values at the top of the Bastillefile.
+The values are automatically retrieved from the targeted jails configuration.
 
 ``CMD``           - run the specified command
 
