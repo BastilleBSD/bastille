@@ -3,10 +3,17 @@ Bastille 1.0.x
 [Bastille](https://bastillebsd.org/) is an open-source system for automating
 deployment and management of containerized applications on FreeBSD.
 
-[Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
+Check the [Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
+
+
+Potencially breaking changes in 1.0 ⚠️
+========================================
+Please read the [1.0 release announcement](https://github.com/BastilleBSD/bastille/releases/tag/1.0.20250714)
+first if you are upgrading from 0.14.x
+
 
 Bastille Compared to Other Jail Managers
-========================================
+----------------------------------------
 
 See the [comparison table.](COMPARE.md)
 
