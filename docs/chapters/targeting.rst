@@ -22,14 +22,18 @@ quotes, as seen below.
 Priority
 --------
 
-The priority value determines in what order commands are executed if multiple jails are targetted, including the ALL target.
+The priority value determines in what order commands are executed if multiple
+jails are targetted, including the ALL target.
 
-It also controls in what order jails are started and stopped on system startup and shutdown. This requires Bastille to be enabled
-with ``sysrc bastille_enable=YES``. Jails will start in order starting at the lowest value, and will stop in order starting
-at the highest value. So, jails with a priority value of 1 will start first, and stop last.
+It also controls in what order jails are started and stopped on system startup
+and shutdown. This requires Bastille to be enabled with ``sysrc bastille_enable=YES``.
+Jails will start in order starting at the lowest value, and will stop in order
+starting at the highest value. So, jails with a priority value of 1 will start
+first, and stop last.
 
-When jails are created with Bastille, this value defaults to ``99``, but can be overridden with ``-p|--priority VALUE`` on
-creation. See ``bastille create --priority 90 TARGET...``.
+When jails are created with Bastille, this value defaults to ``99``, but can be
+overridden with ``-p|--priority VALUE`` on creation.
+See ``bastille create --priority 90 TARGET...``.
 
 This value can be changed using ``bastille config TARGET set priority VALUE``.
 
@@ -38,14 +42,15 @@ This value will be shown using ``bastille list all``.
 Parallel Mode
 -------------
 
-Any command that supports multiple targets, also supports parallel mode. This means that
-Bastille will run the command on multiple jails at a single time, depending on the value
-given.
+Any command that supports multiple targets, also supports parallel mode. This
+means that Bastille will run the command on multiple jails at a single time,
+depending on the value given.
 
 To use parallel mode, run ``bastille -p 4 pkg ALL update``, for example, to start
 updating packages in all jails, 4 processes at a time.
 
-Note that the ``-p`` option should follow the main ``bastille`` command, and not the sub-command.
+Note that the ``-p`` option should follow the main ``bastille`` command, and not
+the sub-command.
 
 Examples: Containers
 --------------------

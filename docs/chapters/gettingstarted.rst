@@ -12,10 +12,11 @@ will attempt to configure the networking, storage, and firewall on your system
 for use with Bastille.
 
 By default the setup command will configure a loopback interface, storage (ZFS if
-enabled, otherwise UFS) and the pf firewall if you run it as below without any options.
+enabled, otherwise UFS) and the pf firewall if you run it as below without any
+options.
 
-Alternatively, you can run the ``setup`` command with any of the supported options to 
-configure the selected option by itself.
+Alternatively, you can run the ``setup`` command with any of the supported
+options to configure the selected option by itself.
 
 To see a list of available options and switches, see the ``setup`` subcommand.
 
@@ -103,7 +104,8 @@ Linux Jail
 ^^^^^^^^^^
 
 Linux jails are still considered experimental, but they seem to work. First we
-must bootstrap a linux distro (Linux distros are bootstrapped with the Debian tool debootstrap).
+must bootstrap a linux distro (Linux distros are bootstrapped with the Debian
+tool debootstrap).
 
 .. code-block:: shell
 
