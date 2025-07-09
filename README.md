@@ -1,4 +1,4 @@
-Bastille
+Bastille 1.0.x
 ========
 [Bastille](https://bastillebsd.org/) is an open-source system for automating
 deployment and management of containerized applications on FreeBSD.
