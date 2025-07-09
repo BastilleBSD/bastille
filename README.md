@@ -5,50 +5,6 @@ deployment and management of containerized applications on FreeBSD.
 
 [Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
 
-1.0 Potentially Breaking Changes
-==============================
-
-Up until version 1.0.20250714, Bastille has handled epairs for `-V` jails 
-using the jib script included in FreeBSD installs. However, for `-B` jails, 
-Bastille statically assigned an epair to each jail. This means you can only 
-run one type (`-V` or `-B`) of VNET jails on a given system.
-
-Starting with version 1.0.20250714, we are now handling all epairs 
-dynamically, allowing the use of both types of VNET jails without issue. We 
-have also selected a naming scheme that will allow for consistency across 
-these jail types. The naming scheme is as follows...
-
-`e0a_jailname` and `e0b_jailname` are the default epair interfaces for every 
-jail. The `a` side is on the host, while the `b` is in the jail. This will 
-allow better management when trying to figure out which jail a given epair is 
-linked to. Due to a limitation in how long an interface name can be, Bastille 
-will truncate "jailname" to avoid errors if it is too long. So, 
-`mylongjailname` will be `e0a_mylongjxxme` and `e0b_mylongjxxme`. The `xx` 
-part is necessary due to another limitation that does not allow dots (\.) in 
-interface names when using the jib script.
-
-If you decide to add an interface using the `network` sub-command, they will 
-be named `e1a_jailname` and `e1b_jailname` respectively. The number included 
-will increment by 1 for each interface you add.
-
-Mandatory
----------
-
-We have tried our best to auto-convert each jails `jail.conf` and `rc.conf` 
-to the new syntax (this happens when the jail is stopped). It isn't a huge 
-change (only a handful of lines), but if you do have an issue please open a 
-bug report.
-
-After updating, you must restart all your jails (probably one at a time, in 
-case of issues) to have Bastille convert the `jail.conf` and `rc.conf` files. 
-This simply involves renaming the epairs to the new syntax.
-
-If you have used the `network` sub-command to add any number of interfaces, you 
-will have to edit the `jail.conf` and `rc.conf` files for each jail to update 
-the names of the epair interfaces. This is because all epairs will have been 
-renamed to `e0...` in both files. For each additional one, simply increment 
-the number by 1.
-
 Bastille Compared to Other Jail Managers
 ========================================
 
