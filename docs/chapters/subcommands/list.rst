@@ -20,6 +20,5 @@ Use ``-p|--pretty`` to print in columns instead of rows.
       -d | --down                List stopped jails only.
       -j | --json                List jails or sub-arg(s) in json format.
       -p | --pretty              Print JSON in columns.
-      -s | --sort VALUE          Print info in VALUE order.
       -u | --up                  List running jails only.
       -x | --debug               Enable debug mode.
