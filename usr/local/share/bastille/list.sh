@@ -194,8 +194,8 @@ get_jail_info() {
         # Get info if jail is UP
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
             # Get IP for VNET jails
-            JAIL_IP4="$(jexec -l ${JAIL_NAME} ifconfig -an | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}')"
-            JAIL_IP6="$(jexec -l ${JAIL_NAME} ifconfig -an | grep "inet6" | grep -Ev 'lo[0-9]+| ::1 | fe80::' | awk '{print $2}' | sed 's/%.*//g')"
+            JAIL_IP4="$(jexec -l ${JAIL_NAME} ifconfig -an | grep "^[[:space:]]*inet " | grep -v "127.0.0.1" | awk '{print $2}')"
+            JAIL_IP6="$(jexec -l ${JAIL_NAME} ifconfig -an | grep "^[[:space:]]*inet6" | grep -Ev 'lo[0-9]+| ::1 | fe80::' | awk '{print $2}' | sed 's/%.*//g')"
         else
             # Get IP for standard jails
             JAIL_IP4=$(jls -j ${JAIL_NAME} ip4.addr | sed 's/,/\n/g')
