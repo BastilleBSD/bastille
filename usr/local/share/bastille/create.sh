@@ -69,6 +69,8 @@ validate_name() {
     # Make sure NAME has only allowed characters
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
+    elif [ "${VNET_JAIL}" -eq 1 ] && echo "${NAME_VERIFY}" | grep -qE '(-|_)'; then
+        error_exit "[ERROR]: VNET jail names may not contain (-|_) characters."
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "[ERROR]: Jail names may not contain special characters!"
     elif echo "${NAME_VERIFY}" | grep -qE '^[0-9]+$'; then
@@ -759,6 +761,7 @@ EMPTY_JAIL=""
 THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
+VNET_JAIL_BRIDGE=""
 VLAN_ID=""
 LINUX_JAIL=""
 STATIC_MAC=""
