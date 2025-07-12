@@ -317,7 +317,7 @@ EOF
                     if [ "$(echo -n "e${_epair_num}a_${_jailname}" | awk '{print length}')" -lt 16 ]; then
                         local host_epair=e${_epair_num}a_${_jailname}
                         local jail_epair=e${_epair_num}b_${_jailname}
-	               local jib_epair=${jail_name}
+                        local jib_epair=${_jailname}
                     else
                         name_prefix="$(echo ${_jailname} | cut -c1-7)"
                         name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
