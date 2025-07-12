@@ -203,6 +203,7 @@ case "${CMD}" in
     # Commands that don't allow parallel mode
     bootstrap| \
     clone| \
+    cmd| \
     console| \
     convert| \
     create| \
@@ -217,6 +218,7 @@ case "${CMD}" in
     rcp| \
     rdr| \
     rename| \
+    service| \
     setup| \
     top| \
     update| \
@@ -227,7 +229,6 @@ case "${CMD}" in
         fi
         ;;
     # Commands that allow parallel mode
-    cmd| \
     config| \
     cp| \
     destroy| \
@@ -237,7 +238,6 @@ case "${CMD}" in
     mount| \
     pkg| \
     restart| \
-    service| \
     start| \
     stop| \
     sysrc| \
