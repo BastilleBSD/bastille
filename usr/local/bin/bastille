@@ -207,6 +207,7 @@ case "${CMD}" in
     console| \
     convert| \
     create| \
+    destroy| \
     edit| \
     etcupdate| \
     export| \
@@ -214,7 +215,9 @@ case "${CMD}" in
     import| \
     limits| \
     list| \
+    migrate| \
     network| \
+    pkg| \
     rcp| \
     rdr| \
     rename| \
@@ -231,12 +234,9 @@ case "${CMD}" in
     # Commands that allow parallel mode
     config| \
     cp| \
-    destroy| \
     jcp| \
     limits| \
-    migrate| \
     mount| \
-    pkg| \
     restart| \
     start| \
     stop| \

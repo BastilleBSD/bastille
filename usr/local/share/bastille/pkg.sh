@@ -140,29 +140,8 @@ pkg_run_command() {
 }
 
 for _jail in ${JAILS}; do
-
-    if [ "${AUTO_YES}" -eq 1 ]; then
-
-        (
-
-        pkg_run_command "$@"
-
-        ) &
-
-    else
-
-        (
-
-        pkg_run_command "$@"
-
-        )
-
-    fi
-
-    bastille_running_jobs "${bastille_process_limit}"
-	
+    pkg_run_command "$@"
 done
-wait
 echo
 
 bastille_return_exit_code

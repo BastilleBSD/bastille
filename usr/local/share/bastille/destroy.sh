@@ -334,17 +334,7 @@ case "${TARGET}" in
         # Destroy targeted jail(s)
         set_target "${TARGET}" "reverse"
         for _jail in ${JAILS}; do
-            if [ "${AUTO_YES}" -eq 1 ]; then
-                (
-                    destroy_jail "${_jail}"
-                ) &
-            else
-                (
-                    destroy_jail "${_jail}"
-                )
-            fi
-            bastille_running_jobs "${bastille_process_limit}"
+            destroy_jail "${_jail}"
         done
-        wait
         ;;
 esac
