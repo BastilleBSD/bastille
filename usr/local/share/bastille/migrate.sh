@@ -348,8 +348,6 @@ validate_host_status "${USER}" "${HOST}" "${PORT}"
 
 for _jail in ${JAILS}; do
 
-    (
-
     # Validate jail state
     if [ "${LIVE}" -eq 1 ]; then
         if ! check_target_is_running "${_jail}"; then
@@ -371,9 +369,5 @@ for _jail in ${JAILS}; do
 
     info "\nSuccessfully migrated '${_jail}' to '${HOST}'.\n"
 
-    ) &
-
-    bastille_running_jobs "${bastille_process_limit}"
-
 done
-wait
+echo
