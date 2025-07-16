@@ -160,7 +160,7 @@ snapshot_checks() {
     # Verify rollback snapshots
     if [ "${SNAP_ROLLBACK}" -eq 1 ]; then
         if [ -n "${TAG}" ]; then
-            SNAP_CHECK_TAG="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail} | grep -o "${TAG}$" | tail -n 1)"
+            SNAP_TAG_CHECK="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail} | grep -o "${TAG}$" | tail -n 1)"
         else
             TAG="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail} | grep -o "bastille_${_jail}_.*$" | tail -n 1)"
             SNAP_TAG_CHECK=$(echo ${TAG} | grep -wo "bastille_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
