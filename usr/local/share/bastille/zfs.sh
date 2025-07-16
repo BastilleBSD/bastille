@@ -119,7 +119,7 @@ zfs_unjail_dataset() {
 
 zfs_snapshot() {
     # shellcheck disable=SC2140
-    zfs snapshot ${OPT_CREATE} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     _return=$?
 }
 
@@ -188,13 +188,6 @@ snapshot_checks() {
 snapshot_create() {
 
     snapshot_checks
-
-    if [ "${OPT_VERBOSE}" -eq 1 ]; then
-        OPT_CREATE="-v -r"
-    else
-        OPT_CREATE="-r"
-    fi
-
     zfs_snapshot
 
     # Check for exit status and notify only for user reference.
