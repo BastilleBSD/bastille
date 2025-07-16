@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.0.1.250714
+BASTILLE_VERSION=f5332cbf
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -226,7 +226,8 @@ case "${CMD}" in
     top| \
     update| \
     upgrade| \
-    verify)
+    verify| \
+    zfs)
         if [ "${bastille_parallel_mode}" -eq 1 ]; then
             error_exit "Command does not support parallel mode: ${CMD}"
         fi
@@ -243,8 +244,7 @@ case "${CMD}" in
     sysrc| \
     tags| \
     template| \
-    umount| \
-    zfs)
+    umount)
         ;;
     *)
         usage
