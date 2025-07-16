@@ -52,8 +52,6 @@ EOF
 }
 
 zfs_jail_dataset() {
-
-    info "\n[${_jail}]:"
     
     # Exit if MOUNT or DATASET is empty
     if [ -z "${MOUNT}" ] || [ -z "${DATASET}" ]; then
@@ -91,8 +89,6 @@ zfs_jail_dataset() {
 
 zfs_unjail_dataset() {
 
-    info "\n[${_jail}]:"
-
     # Exit if DATASET is empty
     if [ -z "${DATASET}" ]; then
         usage
@@ -122,40 +118,34 @@ zfs_unjail_dataset() {
 }
 
 zfs_snapshot() {
-    info "\n[${_jail}]:"
     # shellcheck disable=SC2140
-    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+    zfs snapshot ${OPT_CREATE} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     _return=$?
 }
 
 zfs_rollback() {
-    info "\n[${_jail}]:"
     # shellcheck disable=SC2140
     zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     _return=$?
 }
 
 zfs_destroy_snapshot() {
-    info "\n[${_jail}]:"
     # shellcheck disable=SC2140
     zfs destroy ${OPT_DESTROY} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     _return=$?
 }
 
 zfs_set_value() {
-    info "\n[${_jail}]:"
     zfs set "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
     _return=$?
 }
 
 zfs_get_value() {
-    info "\n[${_jail}]:"
     zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
     _return=$?
 }
 
 zfs_disk_usage() {
-    info "\n[${_jail}]:"
     zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
     _return=$?
 }
@@ -168,24 +158,29 @@ snapshot_checks() {
     fi
 
     # Verify rollback snapshots
-    if [ "${SNAP_ROLLBACK}" -eq 1 ] && [ -n "${TAG}" ]; then
-        SNAP_TAG_CHECK=$(echo ${TAG} | grep -wo "bastille_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
-        if [ -n "${SNAP_TAG_CHECK}" ]; then
-            warn "\n[WARNING]: A snapshot with unique name was given for ALL targets, ignore unwanted errors."
+    if [ "${SNAP_ROLLBACK}" -eq 1 ]; then
+        if [ -n "${TAG}" ]; then
+            SNAP_CHECK_TAG="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail} | grep -o "${TAG}$" | tail -n 1)"
+        else
+            TAG="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail} | grep -o "bastille_${_jail}_.*$" | tail -n 1)"
+            SNAP_TAG_CHECK=$(echo ${TAG} | grep -wo "bastille_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
         fi
-    else
-        error_exit "[ERROR]: Rollback operation requires a tag name."
-    fi
-
+        if [ -z "${SNAP_TAG_CHECK}" ]; then
+            error_continue "[ERROR]: Snapshot not found: ${TAG}"
+        fi
+    elif [ "${SNAP_DESTROY}" -eq 1 ]; then
+        if [ -z "${TAG}" ]; then
+            error_continue "[ERROR]: Destroying snapshots requires a TAG to be specified."
+        fi
     # Generate a relatively short but unique name for the snapshots based on the current date/jail name.
-    if [ "${AUTO_TAG}" -eq 1 ]; then
+    elif [ "${AUTO_TAG}" -eq 1 ]; then
         DATE=$(date +%F-%H%M%S)
         TAG="bastille_${_jail}_${DATE}"
         # Check for the generated snapshot name.
         SNAP_GEN_CHECK=""
         SNAP_GEN_CHECK=$(echo ${TAG} | grep -wo "bastille_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
         if [ -z "${SNAP_GEN_CHECK}" ]; then
-            error_notify "[ERROR]: Failed validation for the generated snapshot name."
+            error_notify "[ERROR]: Failed to validate snapshot name."
         fi
     fi
 }
@@ -193,13 +188,20 @@ snapshot_checks() {
 snapshot_create() {
 
     snapshot_checks
+
+    if [ "${OPT_VERBOSE}" -eq 1 ]; then
+        OPT_CREATE="-v -r"
+    else
+        OPT_CREATE="-r"
+    fi
+
     zfs_snapshot
 
     # Check for exit status and notify only for user reference.
     if [ "${_return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to create snapshot."
     else
-        echo "Snapshot successfully created: ${TAG}."
+        echo "Snapshot created: ${TAG}"
     fi
 }
 
@@ -214,7 +216,7 @@ snapshot_rollback() {
     if [ "${_return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to restore snapshot: ${TAG}."
     else
-        echo "Snapshot successfully rolled back: ${TAG}"
+        echo "Snapshot restored: ${TAG}"
     fi
 }
 
@@ -229,6 +231,7 @@ snapshot_destroy() {
     else
         OPT_DESTROY="-r"
     fi
+    
     zfs_destroy_snapshot
 
     # Check for exit status and just notify.
@@ -343,4 +346,3 @@ for _jail in ${JAILS}; do
     esac
 
 done
-echo
