@@ -239,7 +239,9 @@ set_target() {
         target_all_jails
     else
         for _jail in ${_TARGET}; do
-            if [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_jail}" | grep -Eq '^[0-9]+$'; then
+            if grep -Eohw "${_jail}" "${bastille_jailsdir}/*/tags"; then
+                _jail="$(bastille tags ALL list ${_jail} | tr '\n' ' ')"
+            elif [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_jail}" | grep -Eq '^[0-9]+$'; then
                 if get_jail_name "${_jail}" > /dev/null; then
                     _jail="$(get_jail_name ${_jail})"
                 else
