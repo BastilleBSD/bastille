@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.0.20250714
+BASTILLE_VERSION=1.0.1.250714
 
 # Validate config file
 # Copy default when 'setup' is called
