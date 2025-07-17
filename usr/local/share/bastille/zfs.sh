@@ -126,6 +126,7 @@ zfs_snapshot() {
 zfs_rollback() {
     # shellcheck disable=SC2140
     zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+    # shellcheck disable=SC2140
     zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}/root"@"${TAG}"
     _return=$?
 }
