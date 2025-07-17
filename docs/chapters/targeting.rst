@@ -9,7 +9,8 @@ jail, a tag, or by typing the starting few characters of a jail. If more than on
 matching jail is found, you will see an error saying so.
 
 If you use a tag as the TARGET, Bastille will target any and all jail(s) that have
-the tag assigned.
+the tag assigned. If you have a jail with the same name as the tag you are trying to
+target, Bastille will target the jail, and not the tag.
 
 Targeting a release is done by providing the exact release name. (Note: do not
 include the ``-pX`` point-release version.)
