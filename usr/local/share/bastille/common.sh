@@ -239,9 +239,7 @@ set_target() {
         target_all_jails
     else
         for _jail in ${_TARGET}; do
-            if grep -Eohw "${_jail}" "${bastille_jailsdir}/*/tags"; then
-                _jail="$(bastille tags ALL list ${_jail} | tr '\n' ' ')"
-            elif [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_jail}" | grep -Eq '^[0-9]+$'; then
+            if [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_jail}" | grep -Eq '^[0-9]+$'; then
                 if get_jail_name "${_jail}" > /dev/null; then
                     _jail="$(get_jail_name ${_jail})"
                 else
@@ -251,7 +249,11 @@ set_target() {
                 if jail_autocomplete "${_jail}" > /dev/null; then
                     _jail="$(jail_autocomplete ${_jail})"
                 elif [ $? -eq 2 ]; then
-                    error_continue "Jail not found \"${_jail}\""
+	            if grep -Ehoqw ${_jail} ${bastille_jailsdir}/*/tags; then
+                        _jail="$(grep -Eow ${_jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
+                    else
+                        error_continue "Jail not found \"${_jail}\""
+		    fi
                 else
                     echo
                     exit 1
