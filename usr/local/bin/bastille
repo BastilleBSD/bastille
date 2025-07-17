@@ -226,7 +226,8 @@ case "${CMD}" in
     top| \
     update| \
     upgrade| \
-    verify)
+    verify| \
+    zfs)
         if [ "${bastille_parallel_mode}" -eq 1 ]; then
             error_exit "Command does not support parallel mode: ${CMD}"
         fi
@@ -243,8 +244,7 @@ case "${CMD}" in
     sysrc| \
     tags| \
     template| \
-    umount| \
-    zfs)
+    umount)
         ;;
     *)
         usage

@@ -34,36 +34,24 @@
 
 usage() {
     
-    error_notify "Usage: bastille zfs [option(s)] TARGET [destroy|(df|usage)|get|set|(snap|snapshot)] [key=value|date]"
-    error_notify "                                       [jail pool/dataset /jail/path]"
-    error_notify "                                       [unjail pool/dataset]"
+    error_notify "Usage: bastille zfs [option(s)] TARGET destroy|rollback|snapshot [TAG]"
+    error_notify "                                       df|usage"
+    error_notify "                                       get|set key=value"
+    error_notify "                                       jail pool/dataset /jail/path"
+    error_notify "                                       unjail pool/dataset"
 
     cat << EOF
     Options:
 
-    snapshot                Create a ZFS snapshot for the specified container.
-    rollback                Rollback a ZFS snapshot on the specified container.
-    destroy                 Destroy a ZFS snapshot on the specified container.
     -a | --auto             Auto mode. Start/stop jail(s) if required.
-    -v | --verbose          Be more verbose during the snapshot destroy operation.
+    -v | --verbose          Enable verbose mode.
     -x | --debug            Enable debug mode.
 
 EOF
     exit 1
 }
 
-AUTO="0"
-SNAP_NAME_GEN=
-SNAP_ROLLBACK=
-SNAP_DESTROY=
-SNAP_VERBOSE=
-SNAP_TAGCHECK=
-SNAP_GENCHECK=
-SNAP_BATCH=
-
 zfs_jail_dataset() {
-
-    info "\n[${_jail}]:"
     
     # Exit if MOUNT or DATASET is empty
     if [ -z "${MOUNT}" ] || [ -z "${DATASET}" ]; then
@@ -101,8 +89,6 @@ zfs_jail_dataset() {
 
 zfs_unjail_dataset() {
 
-    info "\n[${_jail}]:"
-
     # Exit if DATASET is empty
     if [ -z "${DATASET}" ]; then
         usage
@@ -132,42 +118,131 @@ zfs_unjail_dataset() {
 }
 
 zfs_snapshot() {
-    info "\n[${_jail}]:"
     # shellcheck disable=SC2140
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     _return=$?
 }
 
 zfs_rollback() {
-    info "\n[${_jail}]:"
     # shellcheck disable=SC2140
-    zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}"@"${TAG}"
+    zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+    # shellcheck disable=SC2140
+    zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}/root"@"${TAG}"
     _return=$?
 }
 
 zfs_destroy_snapshot() {
-    info "\n[${_jail}]:"
     # shellcheck disable=SC2140
-    zfs destroy ${_opts} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
+    zfs destroy ${OPT_DESTROY} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"@"${TAG}"
     _return=$?
 }
 
 zfs_set_value() {
-    info "\n[${_jail}]:"
     zfs set "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
+    _return=$?
 }
 
 zfs_get_value() {
-    info "\n[${_jail}]:"
     zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
+    _return=$?
 }
 
 zfs_disk_usage() {
-    info "\n[${_jail}]:"
     zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"
+    _return=$?
 }
 
-# Handle some options.
+snapshot_checks() {
+
+    # Generate a TAG if not given
+    if [ -z "${TAG}" ]; then
+        AUTO_TAG=1
+    fi
+
+    # Verify rollback snapshots
+    if [ "${SNAP_ROLLBACK}" -eq 1 ]; then
+        if [ -n "${TAG}" ]; then
+            SNAP_TAG_CHECK="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail} | grep -o "${TAG}$" | tail -n 1)"
+        else
+            TAG="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail} | grep -o "bastille_${_jail}_.*$" | tail -n 1)"
+            SNAP_TAG_CHECK=$(echo ${TAG} | grep -wo "bastille_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+        fi
+        if [ -z "${SNAP_TAG_CHECK}" ]; then
+            error_continue "[ERROR]: Snapshot not found: ${TAG}"
+        fi
+    elif [ "${SNAP_DESTROY}" -eq 1 ]; then
+        if [ -z "${TAG}" ]; then
+            error_continue "[ERROR]: Destroying snapshots requires a TAG to be specified."
+        fi
+    # Generate a relatively short but unique name for the snapshots based on the current date/jail name.
+    elif [ "${AUTO_TAG}" -eq 1 ]; then
+        DATE=$(date +%F-%H%M%S)
+        TAG="bastille_${_jail}_${DATE}"
+        # Check for the generated snapshot name.
+        SNAP_GEN_CHECK=""
+        SNAP_GEN_CHECK=$(echo ${TAG} | grep -wo "bastille_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+        if [ -z "${SNAP_GEN_CHECK}" ]; then
+            error_notify "[ERROR]: Failed to validate snapshot name."
+        fi
+    fi
+}
+
+snapshot_create() {
+
+    snapshot_checks
+    zfs_snapshot
+
+    # Check for exit status and notify only for user reference.
+    if [ "${_return}" -ne 0 ]; then
+        error_notify "[ERROR]: Failed to create snapshot."
+    else
+        echo "Snapshot created: ${TAG}"
+    fi
+}
+
+snapshot_rollback() {
+
+    # This feature is intended work with snapshots created by bastille or manually created by the user.
+    # An error about "more recent snapshots or bookmarks exist" will appears if the '-r' flag is not specified.
+    snapshot_checks
+    zfs_rollback
+
+    # Check for exit status and just notify.
+    if [ "${_return}" -ne 0 ]; then
+        error_notify "[ERROR]: Failed to restore snapshot: ${TAG}."
+    else
+        echo "Snapshot restored: ${TAG}"
+    fi
+}
+
+snapshot_destroy() {
+
+    # Destroy specified bastille
+    snapshot_checks
+
+    # Set some options.
+    if [ "${OPT_VERBOSE}" -eq 1 ]; then
+        OPT_DESTROY="-v -r"
+    else
+        OPT_DESTROY="-r"
+    fi
+    
+    zfs_destroy_snapshot
+
+    # Check for exit status and just notify.
+    if [ "${_return}" -ne 0 ]; then
+        error_notify "[ERROR]: Failed to destroy snapshot: ${TAG}"
+    else
+        echo "Snapshot destroyed: ${TAG}"
+    fi
+}
+
+# Handle options.
+AUTO=0
+AUTO_TAG=0
+SNAP_ROLLBACK=0
+SNAP_DESTROY=0
+OPT_VERBOSE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -178,7 +253,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -v|--verbose)
-            SNAP_VERBOSE="1"
+            OPT_VERBOSE="1"
             shift
             ;;
         -x|--debug)
@@ -208,10 +283,6 @@ fi
 TARGET="${1}"
 ACTION="${2}"
 
-if [ "${TARGET}" = "ALL" ] || [ "${TARGET}" = "all" ]; then
-    SNAP_BATCH="1"
-fi
-
 bastille_root_check
 set_target "${TARGET}"
 
@@ -225,120 +296,13 @@ if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "[ERROR]: ZFS zpool not defined."
 fi
 
-snapshot_checks() {
-    # Check if we requested ALL jails.
-    if [ -n "${SNAP_ROLLBACK}" ]; then
-        if [ -n "${SNAP_BATCH}" ]; then
-            TARGET="${_jail}"
-
-            # Check if is a bastille created snapshot with a unique name and warn about unwanted errors.
-            # Just warn here and don't exit, as a user may copy/use that unique name for other targets manually.
-            SNAP_TAGCHECK=$(echo ${TAG} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
-            if [ -n "${SNAP_TAGCHECK}" ]; then
-                warn "\n[WARNING]: A snapshot with unique name was given for ALL targets, ignore unwanted errors."
-            fi
-        fi
-    fi
-
-    # Check if jail is running and stop if requested.
-    if [ -z "${SNAP_DESTROY}" ]; then
-        check_target_is_stopped "${_jail}" || \
-        if [ "${AUTO}" -eq 1 ]; then
-            bastille stop "${_jail}"
-        fi
-    fi
-
-    # Generate a relatively short but unique name for the snapshots based on the current date/jail name.
-    if [ -n "${SNAP_NAME_GEN}" ]; then
-       for _JAIL in ${_jail}; do
-            DATE=$(date +%F-%H%M%S)
-            NAME_MD5X6=$(echo "${DATE} ${_JAIL}" | md5 | cut -b -6)
-            SNAPSHOT_NAME="Bastille_${NAME_MD5X6}_${_JAIL}_${DATE}"
-            TAG="${SNAPSHOT_NAME}"
-            SNAPSHOT_NAME=
-        done
-
-        # Check for the generated snapshot name.
-        SNAP_GENCHECK=$(echo ${TAG} | grep -wo "Bastille_[0-9a-fA-F]\{6\}_${_jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
-        if [ -z "${SNAP_GENCHECK}" ]; then
-            info "\n[${_jail}]:"
-            error_notify "[ERROR]: Failed validation for the generated snapshot name."
-        fi
-    fi
-}
-
-snapshot_create() {
-    # Attempt to snapshot the container.
-    # Thiw will create a ZFS snapshot for the specified container with an auto-generated name with the
-    # following format "Bastille_XXXXXX_JAILNAME_YYYY-MM-DD-HHMMSS" unless a name tag is manually entered.
-    if [ -z "${TAG}" ]; then
-        SNAP_NAME_GEN="1"
-    fi
-
-    snapshot_checks
-    zfs_snapshot
-
-    # Check for exit status and notify only for user reference.
-    if [ "${_return}" -ne 0 ]; then
-        error_notify "[ERROR]: Failed to snapshot jail: '${_jail}'"
-    else
-        info "Snapshot for ${_jail} successfully created as '${TAG}'."
-    fi
-
-    # Start the jail after snapshot if requested.
-    if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${_jail}"
-    fi
-}
-
-snapshot_rollback() {
-    # This feature is intended work with snapshots created  by either, bastille or manually created by the user.
-    # An error about "more recent snapshots or bookmarks exist" will appears if the '-r' flag is not specified.
-    SNAP_ROLLBACK="1"
-    snapshot_checks
-    zfs_rollback
-
-    # Check for exit status and just notify.
-    if [ "${_return}" -ne 0 ]; then
-        error_notify "[ERROR]: Failed to restore '${TAG}' snapshot for '${_jail}'."
-    else
-        info "Snapshot '${TAG}' successfully rolled back for '${_jail}'."
-    fi
-
-    # Start the jail after rollback if requested.
-    if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${_jail}"
-    fi
-}
-
-snapshot_destroy() {
-    # Destroy the user specifier bastille snapshot.
-    SNAP_DESTROY="1"
-    snapshot_checks
-
-    # Set some options.
-    if [ -n "${SNAP_VERBOSE}" ]; then
-        _opts="-v -r"
-    else
-        _opts="-r"
-    fi
-    zfs_destroy_snapshot
-
-    # Check for exit status and just notify.
-    if [ "${_return}" -ne 0 ]; then
-        error_notify "[ERROR]: Failed to destroy '${TAG}' snapshot for '${_jail}'"
-    else
-        info "Snapshot '${TAG}' destroyed successfully."
-        exit 0
-    fi
-}
-
 for _jail in ${JAILS}; do
 
-    (
+    info "\n[${_jail}]:"
 
     case "${ACTION}" in
         destroy|destroy_snap|destroy_snapshot)
+            SNAP_DESTROY=1
             TAG="${3}"
             snapshot_destroy
             ;;
@@ -355,6 +319,7 @@ for _jail in ${JAILS}; do
             zfs_jail_dataset
             ;;
         rollback)
+            SNAP_ROLLBACK=1
             TAG="${3}"
             snapshot_rollback
             ;;
@@ -375,9 +340,4 @@ for _jail in ${JAILS}; do
             ;;
     esac
 
-    ) &
-
-    bastille_running_jobs "${bastille_process_limit}"
-
 done
-wait
