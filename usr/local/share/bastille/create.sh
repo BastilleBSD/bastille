@@ -90,13 +90,13 @@ validate_ip() {
     else
         if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
 	        if [ -n "${VNET_JAIL}" ]; then
-                error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
 	        else
                 info "\nValid: (${_ip})."
 	        fi
         elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ] || [ "${_ip}" = "0.0.0.0" ]; then
 	        if [ -z "${VNET_JAIL}" ]; then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
+                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${_ip})."
 	        else
                 info "\nValid: (${_ip})."
 	        fi
