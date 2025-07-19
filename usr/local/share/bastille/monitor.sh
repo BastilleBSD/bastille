@@ -48,8 +48,6 @@ EOF
     exit 1
 }
 
-LOGFILE="/var/log/bastille/monitor.log"
-
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -64,7 +62,7 @@ while [ "$#" -gt 0 ]; do
             if [ ! -f "${bastille_monitor_cron_path}" ]; then
                 mkdir -p /usr/local/etc/cron.d
                 echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
-                echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${LOGFILE}"
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
                 echo "Cron entry enabled."
 	    else
                 echo "Cron entry already enabled."
@@ -75,7 +73,7 @@ while [ "$#" -gt 0 ]; do
         -d|--disable)
             if [ -f "${bastille_monitor_cron_path}" ]; then
                 rm -f "${bastille_monitor_cron_path}"
-                echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${LOGFILE}"
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
                 echo "Cron entry disabled."
 	    else
                 echo "Cron entry already disabled."
@@ -128,11 +126,11 @@ for _jail in ${JAILS}; do
         for _service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
             if ! bastille service "${_jail}" "${_service}" status; then
-                echo "$(date '+%Y-%m-%d %H:%M:%S'): ${_service} service not running in ${_jail}. Restarting..." | tee -a "$LOGFILE"
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): ${_service} service not running in ${_jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
 
                 ## attempt to restart the service if needed; update logs if unable
                 if ! bastille service "${_jail}" "${_service}" restart; then
-                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${_service} service in ${_jail}." | tee -a "$LOGFILE"
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${_service} service in ${_jail}." | tee -a "${bastille_monitor_logfile}"
                     SERVICE_FAILED=1
                 fi
             fi
@@ -147,7 +145,7 @@ for _jail in ${JAILS}; do
                     tmpfile="$(mktemp)"
                     sort "${bastille_jail_monitor}" | uniq > "${tmpfile}"
                     mv "${tmpfile}" "${bastille_jail_monitor}"
-                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${LOGFILE}"
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
                 done
             ;;
             del*)
@@ -156,7 +154,7 @@ for _jail in ${JAILS}; do
                     tmpfile="$(mktemp)"
                     grep -Ev "^${_service}\$" "${bastille_jail_monitor}" > "${tmpfile}"
                     mv "${tmpfile}" "${bastille_jail_monitor}"
-                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${LOGFILE}"
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
                     # delete monitor file if empty
                     [ ! -s "${bastille_jail_monitor}" ] && rm "${bastille_jail_monitor}"
                 done
