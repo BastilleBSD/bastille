@@ -34,8 +34,8 @@ bastille_tzdata=""                                                    ## default
 bastille_resolv_conf="/etc/resolv.conf"                               ## default: "/etc/resolv.conf"
 
 ## bootstrap urls
-bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"          ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
-bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
+bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"   ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
+bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/"    ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
 bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"          ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
 ## ZFS options
@@ -68,3 +68,8 @@ bastille_template_clone="default/clone"                               ## default
 bastille_template_thin="default/thin"                                 ## default: "default/thin"
 bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"
 bastille_template_vlan="default/vlan"                                 ## default: "default/vlan"
+
+## Monitoring
+bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"   ## default: "/usr/local/etc/cron.d/bastille-monitor"
+bastille_monitor_cron="* * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"  # default: "*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"
+bastille_monitor_healthchecks=""                                      ## default: ""
