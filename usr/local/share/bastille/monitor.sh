@@ -191,9 +191,11 @@ done
 
 # Final ping to healthcheck URL
 if [ "$SERVICE_FAILED" -eq 0 ]; then
-  curl -fsS --retry 3 "${bastille_monitor_healthchecks}" > /dev/null 2>&1
-else
-  curl -fsS --retry 3 "${bastille_monitor_healthchecks}/fail" > /dev/null 2>&1
+    if [ -n "${bastille_monitor_healthchecks}" ]; then
+        curl -fsS --retry 3 "${bastille_monitor_healthchecks}" > /dev/null 2>&1
+    else
+        curl -fsS --retry 3 "${bastille_monitor_healthchecks}/fail" > /dev/null 2>&1
+    fi
 fi
 
 wait
