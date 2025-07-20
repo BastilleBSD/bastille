@@ -593,8 +593,6 @@ update_jail_syntax_v1() {
         warn "Please review your jail.conf file after completion."
         warm "VNET jails created without -M will be assigned a new MAC address."
 
-        if [ "$(echo -n "e0a_${ja
-
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
 
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
