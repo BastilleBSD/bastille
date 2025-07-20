@@ -6,10 +6,17 @@ deployment and management of containerized applications on FreeBSD.
 Check the [Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
 
 
-Potencially breaking changes in 1.0 ⚠️
+Potentially breaking changes in 1.0 ⚠️
 ========================================
 Please read the [1.0 release announcement](https://github.com/BastilleBSD/bastille/releases/tag/1.0.20250714)
 first if you are upgrading from 0.14.x
+
+Important
+---------
+If you have any VNET jails (created with -V), the MAC addresses
+will change if you did not also use -M when creating them. This
+is due to the JIB script generating a MAC based on the jail interface
+name.
 
 
 Bastille Compared to Other Jail Managers
