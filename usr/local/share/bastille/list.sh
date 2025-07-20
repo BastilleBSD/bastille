@@ -100,10 +100,10 @@ get_max_lengths() {
 
         # Set max length for VNET jail IPs
         # shellcheck disable=SC2046
-        MAX_LENGTH_JAIL_VNET_IP6="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -Eho '\b(([0-9a-fA-F]{1,4}:){1,7}|:):([0-9a-fA-F]{1,4}:?){0,6}[0-9a-fA-F]{1,4}\b' $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | awk '{print length}' | sort -nr | head -n 1)"
+        MAX_LENGTH_JAIL_VNET_IP6="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet.*=.*inet6" $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | grep -Eho "(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?" | sed "s/\// /g" | awk '{print length}' | sort -nr | head -n 1)"
         MAX_LENGTH_JAIL_VNET_IP6=${MAX_LENGTH_JAIL_VNET_IP6:-10}
         # shellcheck disable=SC2046
-        MAX_LENGTH_JAIL_VNET_IP="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet.*=" $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | sed -n "s/^ifconfig_vnet.*=\"\(.*\)\"$/\1/p"| sed "s/\// /g" | awk '{ if ($1 == "inet ") print length($2); else if ($1 == "inet6") print length($3); else print 15 }' | sort -nr | head -n 1)"
+        MAX_LENGTH_JAIL_VNET_IP="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet.*=.*inet " $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | grep -o "inet .*" | sed "s/\// /g" | awk '{print length($2)}' | sort -nr | head -n 1)"
         MAX_LENGTH_JAIL_VNET_IP=${MAX_LENGTH_JAIL_VNET_IP:-10}
         if [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_VNET_IP6}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_IP}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP}; fi
         if [ "${MAX_LENGTH_JAIL_VNET_IP6}" -gt "${MAX_LENGTH_JAIL_VNET_IP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP6}" -gt "${MAX_LENGTH_JAIL_IP}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP6}; fi
@@ -230,8 +230,8 @@ get_jail_info() {
 
         # Get info if jail is DOWN
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
-            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $3}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
+            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet .*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
+            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -Eow "(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?" | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')    
         else
             JAIL_IP4=$(sed -n "s/^[ ].*ip4.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
             JAIL_IP6=$(sed -n "s/^[ ].*ip6.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
