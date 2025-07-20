@@ -560,11 +560,6 @@ update_jail_syntax_v1() {
     # Only apply if old syntax is found
     if grep -Eoq "exec.prestart.*ifconfig epair[0-9]+ create.*" "${jail_config}"; then
 
-        warn "\n[WARNING]\n"
-        warn "Updating jail.conf to new syntax..."
-        warn "Please review your jail.conf file after completion."
-        warm "VNET jails created without -M will be assigned a new MAC address."
-
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
@@ -592,6 +587,13 @@ update_jail_syntax_v1() {
         sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
 
     elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
+
+        warn "\n[WARNING]\n"
+        warn "Updating jail.conf file..."
+        warn "Please review your jail.conf file after completion."
+        warm "VNET jails created without -M will be assigned a new MAC address."
+
+        if [ "$(echo -n "e0a_${ja
 
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
 
