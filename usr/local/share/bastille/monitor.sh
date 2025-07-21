@@ -39,10 +39,10 @@ usage() {
 
     Options:
 
-    -x | --debug      Enable debug mode.
-    -e | --enable     Enable (install) bastille-monitor cronjob. Configurable in bastille.conf.
-    -d | --disable    Disable (uninstall) bastille-monitor cronjob.
-    -s | --status     Return monitor status (Enabled or Disabled).
+    -e | --enable           Enable (install) bastille-monitor cronjob. Configurable in bastille.conf.
+    -d | --disable          Disable (uninstall) bastille-monitor cronjob.
+    -s | --status           Return monitor status (Enabled or Disabled).
+    -x | --debug            Enable debug mode.
 
 EOF
     exit 1
@@ -53,34 +53,30 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
-        ;;
-        -x|--debug)
-            enable_debug
-            shift
-        ;;
+            ;;
         -e|--enable)
             if [ ! -f "${bastille_monitor_cron_path}" ]; then
                 mkdir -p /usr/local/etc/cron.d
                 echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
                 echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
                 echo "Cron entry enabled."
-	    else
+	        else
                 echo "Cron entry already enabled."
-	    fi
+	        fi
             shift
             exit 0
-        ;;
+            ;;
         -d|--disable)
             if [ -f "${bastille_monitor_cron_path}" ]; then
                 rm -f "${bastille_monitor_cron_path}"
                 echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
                 echo "Cron entry disabled."
-	    else
+	        else
                 echo "Cron entry already disabled."
             fi
             shift
             exit 0
-        ;;
+            ;;
         -s|--status)
             if [ -f "${bastille_monitor_cron_path}" ]; then
                 echo "Bastille Monitor is Enabled."
@@ -90,13 +86,17 @@ while [ "$#" -gt 0 ]; do
                 exit 1
             fi
             shift
-        ;;
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
+            ;;
         -*)
             error_exit "[ERROR]: Unknown Option: \"${1}\""
-        ;;
+            ;;
         *)
             break
-        ;;
+            ;;
     esac
 done
 
@@ -182,9 +182,6 @@ for _jail in ${JAILS}; do
         esac
     fi
 
-    bastille_running_jobs "${bastille_process_limit}"
-
-
 done
 
 # Final ping to healthcheck URL
@@ -195,5 +192,3 @@ if [ "$SERVICE_FAILED" -eq 0 ]; then
         curl -fsS --retry 3 "${bastille_monitor_healthchecks}/fail" > /dev/null 2>&1
     fi
 fi
-
-wait
