@@ -75,11 +75,10 @@ case "${1}" in
             mkdir -p /usr/local/etc/cron.d
             echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
             echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-            echo "Cron entry enabled."
+            info "\nBastille Monitor enabled.\n"
 	    exit 0
 	else
-            echo "Cron entry already enabled."
-	    exit 1
+            error_exit "\nBastille Monitor already enabled.\n"
 	fi
         ;;
     disable)
@@ -87,20 +86,19 @@ case "${1}" in
         if [ -f "${bastille_monitor_cron_path}" ]; then
             rm -f "${bastille_monitor_cron_path}"
             echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-            echo "Cron entry disabled."
+            info "\nBastille Monitor disabled.\n"
 	    exit 0
 	else
-            echo "Cron entry already disabled."
-	    exit 1
+            error_exit "\nBastille Monitor already disabled.\n"
         fi
         ;;
     status)
         [ "$#" -eq 1 ] || usage
         if [ -f "${bastille_monitor_cron_path}" ]; then
-            echo "Bastille Monitor is Enabled."
+            info "\nBastille Monitor is Enabled.\n"
 	    exit 0
         else
-            echo "Bastille Monitor is Disabled."
+            info "\nBastille Monitor is Disabled.\n"
 	    exit 1
         fi
         ;;
@@ -110,10 +108,6 @@ TARGET="${1}"
 ACTION="${2}"
 SERVICE="${3}"
 SERVICE_FAILED=0
-
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-    usage
-fi
 
 bastille_root_check
 set_target "${TARGET}"
@@ -128,7 +122,7 @@ for _jail in ${JAILS}; do
     fi
 
     ## iterate service(s) and check service status; restart on failure
-    if [ $# -eq 1 ] && [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
+    if [ "$#" -eq 1 ] && [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
         for _service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
             if ! bastille service "${_jail}" "${_service}" status; then
@@ -146,6 +140,7 @@ for _jail in ${JAILS}; do
     if [ -n "${ACTION}" ]; then
         case ${ACTION} in
             add)
+	        [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
                     echo "${_service}" >> "${bastille_jail_monitor}"
                     tmpfile="$(mktemp)"
@@ -155,6 +150,7 @@ for _jail in ${JAILS}; do
                 done
                 ;;
             del*)
+	        [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
                     [ ! -f "${bastille_jail_monitor}" ] && break # skip if no monitor file
                     tmpfile="$(mktemp)"
@@ -166,6 +162,7 @@ for _jail in ${JAILS}; do
                 done
                 ;;
             list)
+	        [ -z "${SERVICE}" ] || usage
                 if [ -n "${SERVICE}" ]; then
                     if echo "${SERVICE}" | grep ','; then
                         usage # Only one service per query
