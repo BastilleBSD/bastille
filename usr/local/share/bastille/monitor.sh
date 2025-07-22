@@ -67,8 +67,6 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-[ "$#" -eq 0 ] && usage
-
 # Handle global actions.
 case "${1}" in
     enable)
@@ -105,6 +103,8 @@ case "${1}" in
         fi
         ;;
 esac
+
+[ "$#" -eq 0 ] && usage
 
 TARGET="${1}"
 ACTION="${2}"
