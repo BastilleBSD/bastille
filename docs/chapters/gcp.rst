@@ -69,7 +69,7 @@ them through the external interface:
   pass out
   
   pass in proto tcp to port {22}
-  pass in inet proto icmp icmp-type { echoreq }
+  pass in proto icmp icmp-type { echoreq }
   pass in on $bridge_if
 
 Restart the host and make sure everything comes up correctly. You should see the

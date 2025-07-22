@@ -469,7 +469,7 @@ Create the firewall rules:
   block in all
   pass out quick keep state
   antispoof for $ext_if inet
-  pass in inet proto tcp from any to any port ssh flags S/SA modulate state
+  pass in proto tcp from any to any port ssh flags S/SA modulate state
 
 - Make sure to change the ``ext_if`` variable to match your host system
 interface.

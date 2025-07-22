@@ -277,7 +277,7 @@ rdr-anchor "rdr/*"
 block in all
 pass out quick keep state
 antispoof for \$ext_if inet
-pass in inet proto tcp from any to any port ssh flags S/SA keep state
+pass in proto tcp from any to any port ssh flags S/SA keep state
 EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
