@@ -67,6 +67,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+[ "$#" -eq 0 ] && usage
+
 # Handle global actions.
 case "${1}" in
     enable)
@@ -142,39 +144,37 @@ for _jail in ${JAILS}; do
             add)
 	        [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
-                    echo "${_service}" >> "${bastille_jail_monitor}"
-                    tmpfile="$(mktemp)"
-                    sort "${bastille_jail_monitor}" | uniq > "${tmpfile}"
-                    mv "${tmpfile}" "${bastille_jail_monitor}"
-                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
+                    if ! grep -qE "^${_service}\$" "${bastille_jail_monitor}"; then
+                        echo "${_service}" >> "${bastille_jail_monitor}"
+                        echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
+		    fi
                 done
                 ;;
             del*)
 	        [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
                     [ ! -f "${bastille_jail_monitor}" ] && break # skip if no monitor file
-                    tmpfile="$(mktemp)"
-                    grep -Ev "^${_service}\$" "${bastille_jail_monitor}" > "${tmpfile}"
-                    mv "${tmpfile}" "${bastille_jail_monitor}"
-                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
+                    if grep -qE "^${_service}\$" "${bastille_jail_monitor}"; then
+		        sed -i '' "/^${_service}\$/d" "${bastille_jail_monitor}"
+	                echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
+		    fi
                     # delete monitor file if empty
                     [ ! -s "${bastille_jail_monitor}" ] && rm "${bastille_jail_monitor}"
                 done
                 ;;
             list)
-	        [ -z "${SERVICE}" ] || usage
                 if [ -n "${SERVICE}" ]; then
                     if echo "${SERVICE}" | grep ','; then
                         usage # Only one service per query
                     fi
                     [ ! -f "${bastille_jail_monitor}" ] && continue # skip if there is no monitor file
                     if grep -qE "^${SERVICE}\$" "${bastille_jail_monitor}"; then
-                        #echo "${_jail}"
-                        continue
+                        echo "${_jail}"
+			continue
                     fi
                 else
                     if [ -f "${bastille_jail_monitor}" ]; then
-                        echo -n "${_jail}: "
+		        info "\n[${_jail}]:"
                         xargs < "${bastille_jail_monitor}"
                     fi
                 fi
