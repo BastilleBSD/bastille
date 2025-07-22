@@ -34,14 +34,14 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille monitor [option(s)] TARGET [add|delete|list] [service1 service2]"
+    error_notify "Usage: bastille monitor [option(s)] enable|disable|status"
+    error_notify "                                    TARGET add|delete service1,service2"
+    error_notify "                                    TARGET list"
+    error_notify "                                    TARGET"
     cat << EOF
 
     Options:
 
-    -e | --enable           Enable (install) bastille-monitor cronjob. Configurable in bastille.conf.
-    -d | --disable          Disable (uninstall) bastille-monitor cronjob.
-    -s | --status           Return monitor status (Enabled or Disabled).
     -x | --debug            Enable debug mode.
 
 EOF
@@ -53,39 +53,6 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
-            ;;
-        -e|--enable)
-            if [ ! -f "${bastille_monitor_cron_path}" ]; then
-                mkdir -p /usr/local/etc/cron.d
-                echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
-                echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-                echo "Cron entry enabled."
-	        else
-                echo "Cron entry already enabled."
-	        fi
-            shift
-            exit 0
-            ;;
-        -d|--disable)
-            if [ -f "${bastille_monitor_cron_path}" ]; then
-                rm -f "${bastille_monitor_cron_path}"
-                echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-                echo "Cron entry disabled."
-	        else
-                echo "Cron entry already disabled."
-            fi
-            shift
-            exit 0
-            ;;
-        -s|--status)
-            if [ -f "${bastille_monitor_cron_path}" ]; then
-                echo "Bastille Monitor is Enabled."
-                exit 0
-            else
-                echo "Bastille Monitor is Disabled."
-                exit 1
-            fi
-            shift
             ;;
         -x|--debug)
             enable_debug
@@ -100,14 +67,53 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ $# -gt 3 ]; then
-    usage
-fi
+# Handle global actions.
+case "${1}" in
+    enable)
+        [ "$#" -eq 1 ] || usage
+        if [ ! -f "${bastille_monitor_cron_path}" ]; then
+            mkdir -p /usr/local/etc/cron.d
+            echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
+            echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
+            echo "Cron entry enabled."
+	    exit 0
+	else
+            echo "Cron entry already enabled."
+	    exit 1
+	fi
+        ;;
+    disable)
+        [ "$#" -eq 1 ] || usage
+        if [ -f "${bastille_monitor_cron_path}" ]; then
+            rm -f "${bastille_monitor_cron_path}"
+            echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
+            echo "Cron entry disabled."
+	    exit 0
+	else
+            echo "Cron entry already disabled."
+	    exit 1
+        fi
+        ;;
+    status)
+        [ "$#" -eq 1 ] || usage
+        if [ -f "${bastille_monitor_cron_path}" ]; then
+            echo "Bastille Monitor is Enabled."
+	    exit 0
+        else
+            echo "Bastille Monitor is Disabled."
+	    exit 1
+        fi
+        ;;
+esac
 
 TARGET="${1}"
 ACTION="${2}"
 SERVICE="${3}"
 SERVICE_FAILED=0
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    usage
+fi
 
 bastille_root_check
 set_target "${TARGET}"
@@ -147,7 +153,7 @@ for _jail in ${JAILS}; do
                     mv "${tmpfile}" "${bastille_jail_monitor}"
                     echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
                 done
-            ;;
+                ;;
             del*)
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
                     [ ! -f "${bastille_jail_monitor}" ] && break # skip if no monitor file
@@ -158,7 +164,7 @@ for _jail in ${JAILS}; do
                     # delete monitor file if empty
                     [ ! -s "${bastille_jail_monitor}" ] && rm "${bastille_jail_monitor}"
                 done
-            ;;
+                ;;
             list)
                 if [ -n "${SERVICE}" ]; then
                     if echo "${SERVICE}" | grep ','; then
@@ -175,10 +181,10 @@ for _jail in ${JAILS}; do
                         xargs < "${bastille_jail_monitor}"
                     fi
                 fi
-            ;;
+                ;;
             *)
                 usage
-            ;;
+                ;;
         esac
     fi
 
