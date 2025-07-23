@@ -36,7 +36,7 @@
 usage() {
     error_notify "Usage: bastille monitor [option(s)] enable|disable|status"
     error_notify "                                    TARGET add|delete service1,service2"
-    error_notify "                                    TARGET list"
+    error_notify "                                    TARGET list [service]"
     error_notify "                                    TARGET"
     cat << EOF
 
@@ -78,7 +78,7 @@ case "${1}" in
             info "\nBastille Monitor enabled.\n"
 	    exit 0
 	else
-            error_exit "\nBastille Monitor already enabled.\n"
+            error_exit "\nBastille Monitor already enabled."
 	fi
         ;;
     disable)
@@ -89,7 +89,7 @@ case "${1}" in
             info "\nBastille Monitor disabled.\n"
 	    exit 0
 	else
-            error_exit "\nBastille Monitor already disabled.\n"
+            error_exit "\nBastille Monitor already disabled."
         fi
         ;;
     status)
@@ -104,7 +104,9 @@ case "${1}" in
         ;;
 esac
 
-[ "$#" -eq 0 ] && usage
+if [ "$#" -eq 0 ]; then
+    usage
+fi
 
 TARGET="${1}"
 ACTION="${2}"
@@ -124,10 +126,10 @@ for _jail in ${JAILS}; do
     fi
 
     ## iterate service(s) and check service status; restart on failure
-    if [ "$#" -eq 1 ] && [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
+    if [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
         for _service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
-            if ! bastille service "${_jail}" "${_service}" status; then
+            if ! bastille service "${_jail}" "${_service}" status >/dev/null 2>/dev/null; then
                 echo "$(date '+%Y-%m-%d %H:%M:%S'): ${_service} service not running in ${_jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
 
                 ## attempt to restart the service if needed; update logs if unable
@@ -137,14 +139,12 @@ for _jail in ${JAILS}; do
                 fi
             fi
         done
-    fi
-
-    if [ -n "${ACTION}" ]; then
+    elif [ -n "${ACTION}" ]; then
         case ${ACTION} in
             add)
 	        [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
-                    if ! grep -qEs "^${_service}\$" "${bastille_jail_monitor}" 2>/dev/null 2>&1; then
+                    if ! grep -Eqs "^${_service}\$" "${bastille_jail_monitor}"; then
                         echo "${_service}" >> "${bastille_jail_monitor}"
                         echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
 		    fi
@@ -154,7 +154,7 @@ for _jail in ${JAILS}; do
 	        [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
                     [ ! -f "${bastille_jail_monitor}" ] && break # skip if no monitor file
-                    if grep -qEs "^${_service}\$" "${bastille_jail_monitor}" 2>/dev/null 2>&1; then
+                    if grep -Eqs "^${_service}\$" "${bastille_jail_monitor}"; then
 		        sed -i '' "/^${_service}\$/d" "${bastille_jail_monitor}"
 	                echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
 		    fi
@@ -168,13 +168,13 @@ for _jail in ${JAILS}; do
                         usage # Only one service per query
                     fi
                     [ ! -f "${bastille_jail_monitor}" ] && continue # skip if there is no monitor file
-                    if grep -qEs "^${SERVICE}\$" "${bastille_jail_monitor}" 2>/dev/null 2>&1; then
+                    if grep -Eqs "^${SERVICE}\$" "${bastille_jail_monitor}"; then
                         echo "${_jail}"
 			continue
                     fi
                 else
                     if [ -f "${bastille_jail_monitor}" ]; then
-		        info "\n[${_jail}]:"
+		        echo -n "${_jail}: "
                         xargs < "${bastille_jail_monitor}"
                     fi
                 fi
