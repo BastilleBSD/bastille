@@ -129,11 +129,11 @@ for _jail in ${JAILS}; do
     if [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
         for _service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
-            if ! jexec -l -u root "${_jail}" service "${_service}" status >/dev/null 2>/dev/null; then
+            if ! jexec -l -U root "${_jail}" service "${_service}" status >/dev/null 2>/dev/null; then
                 echo "$(date '+%Y-%m-%d %H:%M:%S'): ${_service} service not running in ${_jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
 
                 ## attempt to restart the service if needed; update logs if unable
-                if ! jexec -l -u root "${_jail}" service "${_service}" restart; then
+                if ! jexec -l -U root "${_jail}" service "${_service}" restart; then
                     echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${_service} service in ${_jail}." | tee -a "${bastille_monitor_logfile}"
                     SERVICE_FAILED=1
                 fi
