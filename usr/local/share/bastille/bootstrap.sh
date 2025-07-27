@@ -388,7 +388,7 @@ debootstrap_release() {
     fi
 
     case "${LINUX_FLAVOR}" in
-        bionic|focal|jammy|buster|bullseye|bookworm)
+        bionic|focal|jammy|buster|bullseye|bookworm|noble)
         info "Increasing APT::Cache-Start"
         echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
         ;;
@@ -635,6 +635,13 @@ case "${1}" in
         PLATFORM_OS="Ubuntu/Linux"
         LINUX_FLAVOR="jammy"
         DIR_BOOTSTRAP="Ubuntu_2204"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        debootstrap_release
+        ;;
+    ubuntu_noble|noble|ubuntu-noble)
+        PLATFORM_OS="Ubuntu/Linux"
+        LINUX_FLAVOR="noble"
+        DIR_BOOTSTRAP="Ubuntu_2404"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
         debootstrap_release
         ;;
