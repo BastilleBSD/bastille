@@ -260,7 +260,7 @@ add_interface() {
                     local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
                 fi
                 # Remove ending brace (it is added again with the netblock)
-                sed -i '' '/}/d' "${_jail_config}"
+                sed -i '' '/^}$/d' "${_jail_config}"
                 if [ "${STATIC_MAC}" -eq 1 ]; then
                     # Generate NETBLOCK with static MAC
                     generate_static_mac "${_jailname}" "${_if}"
@@ -326,7 +326,7 @@ EOF
                         local jib_epair="${name_prefix}xx${name_suffix}"
                     fi
                     # Remove ending brace (it is added again with the netblock)
-                    sed -i '' '/}/d' "${_jail_config}"
+                    sed -i '' '/^}$/d' "${_jail_config}"
                     if [ "${STATIC_MAC}" -eq 1 ]; then
                         # Generate NETBLOCK with static MAC
                         generate_static_mac "${_jailname}" "${_if}"
@@ -387,7 +387,7 @@ EOF
     	                local jng_if="${name_prefix}xx${name_suffix}"
                     fi
                     # Remove ending brace (it is added again with the netblock)
-                    sed -i '' '/}/d' "${_jail_config}"
+                    sed -i '' '/^}$/d' "${_jail_config}"
                     if [ "${STATIC_MAC}" -eq 1 ]; then
                         # Generate NETBLOCK with static MAC
                         generate_static_mac "${_jailname}" "${_if}"
@@ -427,7 +427,7 @@ EOF
 
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
         # Remove ending brace (it is added again with the netblock)
-        sed -i '' '/}/d' "${_jail_config}"
+        sed -i '' '/^}$/d' "${_jail_config}"
         # Generate NETBLOCK (static MAC not used on passthrough)
         cat << EOF >> "${_jail_config}"
   ## ${_if} interface
