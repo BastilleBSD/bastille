@@ -337,7 +337,7 @@ post_create_jail() {
 
     # Using relative paths here.
     # MAKE SURE WE'RE IN THE RIGHT PLACE.
-    cd "${bastille_jail_path}" || error_exit "Could not cd to ${bastille_jail_path}"
+    cd "${bastille_jail_path}" || error_exit "Could not access directory: ${bastille_jail_path}"
 
     if [ ! -f "${bastille_jail_conf}" ]; then
         if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
@@ -386,14 +386,20 @@ create_jail() {
             if [ -n "${bastille_zfs_zpool}" ]; then
                 ## create required zfs datasets, mountpoint inherited from system
                 if [ -z "${CLONE_JAIL}" ]; then
-                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
+                    if ! zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"; then
+		        error_exit "[ERROR]: Failed to create jail dataset: ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
+	            fi
                 fi
                 if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
-                    zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                    if ! zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"; then
+		        error_exit "[ERROR]: Failed to create jail root dataset: ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+	            fi
                 fi
             fi
         else
-            mkdir -p "${bastille_jailsdir}/${NAME}/root"
+            if ! mkdir -p "${bastille_jailsdir}/${NAME}/root"; then
+	        error_exit "[ERROR]: Failed to create jail directory: ${bastille_jailsdir}/${NAME}/root"
+	    fi
         fi
     # Check if the jail directory has been mounted under UFS (not supported)
     elif [ ! -d "${bastille_jailsdir}/${NAME}/root" ] && ! checkyesno bastille_zfs_enable; then
