@@ -29,25 +29,37 @@ rcvar=${name}_enable
 : ${bastille_conf:="/usr/local/etc/bastille/bastille.conf"}
 : ${bastille_startup_delay:=0}
 : ${bastille_parallel_limit:=1}
+: ${bastille_jail_list:=ALL}
 
 command=/usr/local/bin/${name}
 start_cmd="bastille_start"
 stop_cmd="bastille_stop"
 restart_cmd="bastille_restart"
 
+list_jails() {
+    local _jailsdir
+    _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
+    bastille_jail_list=$(find ${_jailsdir}/* -mindepth 1 -maxdepth 1 -type f -name jail.conf \
+        | xargs -n1 dirname \
+        | xargs -n1 basename)
+}
+
 bastille_start()
 {
-    ${command} -p ${bastille_parallel_limit} start --boot --delay ${bastille_startup_delay} ALL
+    list_jails
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} start --boot --delay ${bastille_startup_delay} JAIL
 }
 
 bastille_stop()
 {
-    ${command} -p ${bastille_parallel_limit} stop ALL
+    list_jails
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} stop JAIL
 }
 
 bastille_restart()
 {
-    ${command} -p ${bastille_parallel_limit} restart --boot --delay ${bastille_startup_delay} ALL
+    list_jails
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} restart --boot --delay ${bastille_startup_delay} JAIL
 }
 
 load_rc_config ${name}
