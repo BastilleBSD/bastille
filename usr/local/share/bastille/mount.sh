@@ -144,8 +144,6 @@ fi
 
 for _jail in ${JAILS}; do
 
-    (
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else
@@ -202,10 +200,5 @@ for _jail in ${JAILS}; do
     echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab" || error_continue "Failed to create fstab entry: ${_fstab_entry}"
     mount -F "${bastille_jailsdir}/${_jail}/fstab" -a || error_continue "Failed to mount volume: ${_fullpath}"
     echo "Added: ${_fstab_entry}"
-
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
+		
 done
-wait

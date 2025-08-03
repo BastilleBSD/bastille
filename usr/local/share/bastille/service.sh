@@ -82,9 +82,7 @@ fi
 
 TARGET="${1}"
 shift
-# Use mktemp to store exit codes
-export TMP_BASTILLE_EXIT_CODE="$(mktemp)"
-echo 0 > "${TMP_BASTILLE_EXIT_CODE}"
+ERRORS=0
 
 bastille_root_check
 set_target "${TARGET}"
@@ -104,9 +102,14 @@ for _jail in ${JAILS}; do
 	
     jexec -l "${_jail}" /usr/sbin/service "$@"
 
-    bastille_check_exit_code "${_jail}" "$?"
-	
-done
-echo
+    if [ "$?" -ne 0 ]; then
+        ERRORS=$((ERRORS + 1))
+    fi
 
-bastille_return_exit_code
+done
+
+if [ "${ERRORS}" -ne 0 ]; then
+    error_exit "[ERROR]: Command failed on ${ERRORS} jails."
+fi
+
+echo

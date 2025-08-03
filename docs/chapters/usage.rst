@@ -53,4 +53,3 @@ Usage
   Use "bastille -v|--version" for version information.
   Use "bastille command -h|--help" for more information about a command.
   Use "bastille -c|--config config.conf command" to specify a non-default config file.
-  Use "bastille -p|--parallel VALUE command" to run bastille in parallel mode.

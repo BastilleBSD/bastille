@@ -86,11 +86,61 @@ error_exit() {
 }
 
 info() {
+    # Print content in green
     echo -e "${COLOR_GREEN}$*${COLOR_RESET}"
 }
 
 warn() {
+    # Print content in yellow
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+}
+
+# This function checks and adds any error code
+# that is not "0" to the tmp file
+bastille_check_exit_code() {
+
+    local jail="${1}"
+    local exit_code="${2}"
+    
+    # Set exit code variable
+    if [ -z "${TMP_BASTILLE_EXIT_CODE}" ]; then
+        error_exit "[ERROR]: Exit code status not set."
+    else
+        local old_exit_code="$(cat ${TMP_BASTILLE_EXIT_CODE})"
+    fi
+
+    if [ "${exit_code}" -ne 0 ]; then
+        local new_exit_code="$(( ${old_exit_code} + ${exit_code} ))"
+        echo "${new_exit_code}" > "${TMP_BASTILLE_EXIT_CODE}"
+        error_notify "[ERROR CODE]: ${exit_code}"
+    fi
+}
+
+# This needs to be the last function called
+# if used on any command
+bastille_return_exit_code() {
+
+    local exit_code="$(cat ${TMP_BASTILLE_EXIT_CODE})"
+    
+    rm -f ${TMP_BASTILLE_EXIT_CODE}
+    return "${exit_code}"
+}
+
+# Parallel mode, don't exceed process limit
+bastille_running_jobs() {
+
+  _process_limit="${1}"
+  _running_jobs=$((_running_jobs + 1))
+
+  if [ "${_running_jobs}" -ge "${_process_limit}" ]; then
+
+    # Wait for at least one process to finish
+    wait 2>/dev/null || wait
+
+    _running_jobs=$((_running_jobs - 1))
+
+  fi
+
 }
 
 check_target_exists() {
@@ -512,11 +562,6 @@ update_jail_syntax_v1() {
     # Only apply if old syntax is found
     if grep -Eoq "exec.prestart.*ifconfig epair[0-9]+ create.*" "${jail_config}"; then
 
-        warn "\n[WARNING]\n"
-        warn "Updating jail.conf file..."
-        warn "Please review your jail.conf file after completion."
-        warm "VNET jails created without -M will be assigned a new MAC address."
-
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
@@ -544,11 +589,6 @@ update_jail_syntax_v1() {
         sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
 
     elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
-
-        warn "\n[WARNING]\n"
-        warn "Updating jail.conf file..."
-        warn "Please review your jail.conf file after completion."
-        warm "VNET jails created without -M will be assigned a new MAC address."
 
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
 

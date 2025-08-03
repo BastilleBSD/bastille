@@ -112,17 +112,12 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    (
-
     # Only restart running jails
     if check_target_is_running "${_jail}"; then
         bastille stop ${_stop_options} ${_jail}
         bastille start ${_start_options} ${_jail}
     fi
 
-    ) &
-
-    bastille_running_jobs "${bastille_process_limit}"
-
 done
-wait
+
+echo

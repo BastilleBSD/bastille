@@ -83,13 +83,12 @@ fi
 TARGET="${1}"
 HOST_PATH="${2}"
 JAIL_PATH="${3}"
+ERRORS=0
 
 bastille_root_check
 set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
-
-    (
 
     info "\n[${_jail}]:"
 	
@@ -97,12 +96,12 @@ for _jail in ${JAILS}; do
     jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
 	
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
+        ERRORS=$((ERRORS + 1))
         error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"
     fi
-
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
 	
 done
-wait
+
+if [ "${ERRORS}" -ne 0 ]; then
+    error_exit "[ERROR]: Command failed on ${ERRORS} jails."
+fi
