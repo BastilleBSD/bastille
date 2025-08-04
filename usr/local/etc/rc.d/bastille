@@ -37,28 +37,37 @@ stop_cmd="bastille_stop"
 restart_cmd="bastille_restart"
 
 list_jails() {
-    local _jailsdir
-    _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    bastille_jail_list=$(find ${_jailsdir}/* -mindepth 1 -maxdepth 1 -type f -name jail.conf \
-        | xargs -n1 dirname \
-        | xargs -n1 basename)
+    local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
+    local _jail_list=$(find ${_jailsdir}/* -mindepth 1 -maxdepth 1 -type f -name jail.conf | xargs -n1 dirname | xargs -n1 basename)
+    for _jail in ${_jail_list}; do
+        _priority="$(sysrc -f ${_jailsdir}/${_jail}/settings.conf -n priority)"
+        echo "${_jail} ${_priority}"
+    done
 }
 
-bastille_start()
-{
-    list_jails
+sort_jails() {
+    local _order="${1}"
+    if [ "${_order}" = "forward" ]; then
+        bastille_jail_list="$(list_jails | sort -k2 -n | awk '{print $1}')"
+    elif [ "${_order}" = "reverse" ]; then
+        bastille_jail_list="$(list_jails | sort -k2 -nr | awk '{print $1}')"
+    else
+        echo "[ERROR]: Fatal error, could not get jail list."
+    fi
+}
+
+bastille_start() {
+    sort_jails "forward"
     echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} start --boot --delay ${bastille_startup_delay} JAIL
 }
 
-bastille_stop()
-{
-    list_jails
+bastille_stop() {
+    sort_jails "reverse"
     echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} stop JAIL
 }
 
-bastille_restart()
-{
-    list_jails
+bastille_restart() {
+    sort_jails "forward"
     echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} restart --boot --delay ${bastille_startup_delay} JAIL
 }
 
