@@ -43,19 +43,6 @@ This value can be changed using ``bastille config TARGET set priority VALUE``.
 
 This value will be shown using ``bastille list all``.
 
-Parallel Mode
--------------
-
-Any command that supports multiple targets, also supports parallel mode. This
-means that Bastille will run the command on multiple jails at a single time,
-depending on the value given.
-
-To use parallel mode, run ``bastille -p 4 pkg ALL update``, for example, to start
-updating packages in all jails, 4 processes at a time.
-
-Note that the ``-p`` option should follow the main ``bastille`` command, and not
-the sub-command.
-
 Examples: Containers
 --------------------
 

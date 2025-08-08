@@ -88,8 +88,6 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    (
-
     # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
@@ -130,9 +128,6 @@ for _jail in ${JAILS}; do
     
     echo "Unmounted: ${_jailpath}"
 	
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
 done
-wait
+
+echo

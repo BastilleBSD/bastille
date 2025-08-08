@@ -140,7 +140,7 @@ for _jail in ${JAILS}; do
     else
         check_fib "${_jail}"
         LOGIN="$(jexec -l "${_jail}" which login)"
-        ${_setfib} jexec -l "${_jail}" $LOGIN -f root
+        ${_setfib} jexec -l "${_jail}" ${LOGIN} -f root
     fi
     
 done

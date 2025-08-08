@@ -77,8 +77,6 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    (
-
     bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"
     case ${ACTION} in
         add)
@@ -120,9 +118,4 @@ for _jail in ${JAILS}; do
         ;;
     esac
 	
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
 done
-wait

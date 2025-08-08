@@ -88,13 +88,12 @@ shift 2
 set_target "${TARGET}"
 
 case "${ACTION}" in
-    get)
+    get|remove)
         if [ "$#" -ne 1 ]; then
-            error_notify 'Too many parameters for [get|remove] operation.'
-            usage
+            error_exit "[ERROR]: Too many parameters for [get|remove] operation."
         fi
         ;;
-    add|set|remove) 
+    add|set) 
         ;;
     *)
         error_exit "[ERROR]: Only (add|set), get and remove are supported."
@@ -125,8 +124,6 @@ print_jail_conf() {
 } 
 
 for _jail in ${JAILS}; do
-
-    (
     
     # Backwards compatibility for specifying only an IP with ip[4|6].addr
     if [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip4.addr" ]; then
@@ -310,13 +307,8 @@ for _jail in ${JAILS}; do
             rm "${_tmpfile}"
         fi
     fi
-
-    ) &
-
-    bastille_running_jobs "${bastille_process_limit}"
 	
 done
-wait
 
 # Only display this message once at the end (not for every jail). -- cwells
 if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ "${BASTILLE_PROPERTY}" -eq 0 ]; then

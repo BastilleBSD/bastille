@@ -104,8 +104,6 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    (
-
     # Continue if '-b|--boot' is set and 'boot=off'
     if [ "${BOOT}" -eq 1 ]; then
         BOOT_ENABLED="$(sysrc -f ${bastille_jailsdir}/${_jail}/settings.conf -n boot)"
@@ -219,10 +217,5 @@ for _jail in ${JAILS}; do
 
     # Delay between jail action
     sleep "${DELAY_TIME}"
-
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
 	
 done
-wait
