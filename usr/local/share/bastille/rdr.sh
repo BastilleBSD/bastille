@@ -363,9 +363,9 @@ while [ "$#" -gt 0 ]; do
                 error_exit "[ERROR]: [-t|--type] must be set when NOT using a table as [-s|--source] or [-d|--destination]."
             elif [ "$#" -eq 3 ]; then
                 check_jail_validity
-                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
-                persist_rdr_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
-                load_rdr_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
+                validate_rdr_rule "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
+                persist_rdr_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
+                load_rdr_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
 		# Temp block to remove old format after new format is loaded the first time
 		while read rules; do
                 if [ "$(echo ${rules} | wc -w)" -lt 6 ]; then
@@ -386,18 +386,18 @@ while [ "$#" -gt 0 ]; do
                             done
                             if [ "${2}" = "(" ] && [ "${last}" = ")" ] ; then
                                 check_jail_validity
-                                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
-                                persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
-                                load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
+                                validate_rdr_rule "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
+                                persist_rdr_log_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                                load_rdr_log_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
                                 shift $#
                             else
                                 usage
                             fi
                         elif [ $# -eq 1 ]; then
                             check_jail_validity
-                            validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
-                            persist_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
-                            load_rdr_log_rule $RDR_INET $RDR_IF $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                            validate_rdr_rule "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
+                            persist_rdr_log_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
+                            load_rdr_log_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                             shift 1
                         else
                             usage
@@ -417,13 +417,13 @@ while [ "$#" -gt 0 ]; do
             fi
             if [ "$#" -eq 7 ] && { [ "${5}" = "tcp" ] || [ "${5}" = "udp" ]; } then
                 check_jail_validity
-                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
+                validate_rdr_rule "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_rule "$@"
                 load_rdr_rule "$@"
                 shift "$#"
             elif [ "$#" -ge 8 ] && [ "${8}" = "log" ]; then
                 check_jail_validity
-                validate_rdr_rule $RDR_IF $RDR_SRC $RDR_DST $1 $2 $3
+                validate_rdr_rule "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_log_rule "$@"
                 load_rdr_log_rule "$@"
                 shift "$#"
