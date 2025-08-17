@@ -159,8 +159,10 @@ get_jail_info() {
     # Get jail type
     if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
         JAIL_TYPE="thin"
-    elif [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
-        JAIL_TYPE="clone"
+    elif checkyesno bastille_zfs_enable; then
+        if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
+            JAIL_TYPE="clone"
+        fi
     elif [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then
         JAIL_TYPE="linux"
     else
