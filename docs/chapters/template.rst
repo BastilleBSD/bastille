@@ -250,7 +250,7 @@ directory names in the ``bastille/templates`` directory.
   chsh: user information updated
   Template Complete.
 
-.. _Bastille Templates: https://gitlab.com/BastilleBSD-Templates
+.. _Bastille Templates: https://github.com/BastilleBSD/templates
 
 Using Ports in Templates
 ------------------------
