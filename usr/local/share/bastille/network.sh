@@ -211,6 +211,13 @@ validate_netif() {
     else
         error_exit "Invalid: (${_interface})."
     fi
+
+	# Don't allow dots in INTERFACE if -V
+    if [ "${VNET}" -eq 1 ] && [ "${BRIDGE}" -eq 0 ]; then
+        if echo "${INTERFACE}" | grep -q "\."; then
+	        error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
+        fi
+    fi
 }
 
 check_interface_added() {
