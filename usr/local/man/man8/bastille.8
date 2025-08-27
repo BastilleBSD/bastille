@@ -1,4 +1,4 @@
-.Dd 2020/04/12
+.Dd 2025/08/27
 .Dt bastille 8
 .Os FreeBSD
 .Sh NAME
@@ -11,12 +11,8 @@ bastille - Bastille is an open-source system for automating deployment
 .Op arg
 .Sh DESCRIPTION
 .Nm To start all containers during boot use:
-.Pp 
+.Pp
 sysrc bastille_enable=YES
-.Pp
-.Nm To start only selected containers use:
-.Pp
-sysrc bastille_list="foo bar baz"
 .Pp
 .Nm The following modules are available:
 .Pp
@@ -37,6 +33,8 @@ cp(1) files from host to targeted container(s).
 Create a new thin container or a thick container if -T|--thick option specified.
 .It destroy
 Destroy a stopped container or a FreeBSD release.
+.It edit
+Edit container configuration files (advanced).
 .It export
 Exports a container archive or image.
 .It help
@@ -104,7 +102,7 @@ bastille create -V myjail 12.1-RELEASE 0.0.0.0 em0
 .It clone
 Clone an existing container.
 .It import (updated)
-Support for iocage and ezjail import 
+Support for iocage and ezjail import
 .Pp
 .El
 .Nm Features added in 0.6.20200202:
