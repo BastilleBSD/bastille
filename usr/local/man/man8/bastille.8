@@ -1,0 +1,122 @@
+.Dd 2020/04/12
+.Dt bastille 8
+.Os FreeBSD
+.Sh NAME
+bastille - Bastille is an open-source system for automating deployment
+\ and management of containerized applications on FreeBSD.
+.Sh SYNOPSIS
+.Nm bastille
+.Ar command
+.Ar TARGET
+.Op arg
+.Sh DESCRIPTION
+.Nm To start all containers during boot use:
+.Pp 
+sysrc bastille_enable=YES
+.Pp
+.Nm To start only selected containers use:
+.Pp
+sysrc bastille_list="foo bar baz"
+.Pp
+.Nm The following modules are available:
+.Pp
+.Bl -tag -width -indent
+.It bootstrap
+Bootstrap a FreeBSD release for container base.
+.It clone
+Clone an existing container.
+.It cmd
+Execute arbitrary command on targeted container(s).
+.It console
+Console into a running container.
+.It convert
+Convert a thin container into a thick container.
+.It cp
+cp(1) files from host to targeted container(s).
+.It create
+Create a new thin container or a thick container if -T|--thick option specified.
+.It destroy
+Destroy a stopped container or a FreeBSD release.
+.It export
+Exports a container archive or image.
+.It help
+Help about any command
+.It htop
+Interactive process viewer (requires htop).
+.It import
+Import a container archive or image.
+.It list
+List containers, releases, templates, logs, limits or backups.
+.It limits
+Apply resources limits to targeted container(s). See rctl(8).
+.It pkg
+Manipulate binary packages within targeted container(s). See pkg(8).
+.It restart
+Restart a running container.
+.It rdr
+Redirect host port to container port.
+.It service
+Manage services within targeted container(s).
+.It start
+Start a stopped container.
+.It stop
+Stop a running container.
+.It sysrc
+Safely edit rc files within targeted container(s).
+.It tags
+Add tags to targeted container(s).
+.It template
+Apply file templates to targeted container(s).
+.It top
+Display and update information about the top(1) cpu processes.
+.It update
+Update container base -pX release.
+.It upgrade
+Upgrade container release to X.Y-RELEASE.
+.It verify
+Compare release against a "known good" index.
+.It zfs
+Manage (get|set) zfs attributes on targeted container(s).
+.El
+.Pp
+.Sh FILES
+.Bl -tag -width "/Users/joeuser/Library/really_long_file_name" -compact
+.It Pa /usr/local/bin/bastille
+Bastille executable
+.El
+.Pp
+.Sh BUGS
+Please report any bugs on Github
+.Nm https://github.com/BastilleBSD/bastille/issues
+.Pp
+.Sh EXAMPLE
+bastille bootstrap 12.1-RELEASE
+.Pp
+bastille create myjail 12.1-RELEASE 10.0.0.1 em0
+.Pp
+.Nm To create a container with VNET and DHCP use
+.Pp
+bastille create -V myjail 12.1-RELEASE 0.0.0.0 em0
+.Sh HISTORY
+.Nm Features added in 0.6.20200412:
+.Pp
+.Bl -tag -width -indent
+.It clone
+Clone an existing container.
+.It import (updated)
+Support for iocage and ezjail import 
+.Pp
+.El
+.Nm Features added in 0.6.20200202:
+.Pp
+.Bl -tag -width -indent
+.It convert
+Convert a thin container into a thick container.
+.It export
+Exports a container archive or image.
+.It import
+Import a container archive or image.
+.It limits
+Apply resources limits to targeted container(s). See rctl(8).
+.It rdr
+Redirect host port to container port.
