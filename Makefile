@@ -12,6 +12,7 @@ install:
 	@echo "BASTILLE_VERSION: ${BASTILLE_BRANCH}-${BASTILLE_VERSION}"
 	@sed -i '' "s/BASTILLE_VERSION=.*/BASTILLE_VERSION=${BASTILLE_BRANCH}-${BASTILLE_VERSION}/" usr/local/bin/bastille
 	@cp -Rv usr /
+	@gzip -n /usr/local/share/man/man8/bastille.8
 	@echo
 	@echo "This method is for testing & development."
 	@echo "Please report any issues to https://github.com/BastilleBSD/bastille/issues"
