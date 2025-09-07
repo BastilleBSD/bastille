@@ -97,12 +97,10 @@ for _jail in ${JAILS}; do
 
     # Workaround to properly copy host resolv.conf to jail if the host file is a symlink.
     if [ "${host_path}" = "${bastille_resolv_conf}" ] && [ -L "${host_path}" ]; then
-        _option="${OPTION}L"
-    else
-        _option="${OPTION}"
+        OPTION="${OPTION}L"
     fi
 
-    if ! cp "${_option}" "${host_path}" "${jail_path}"; then
+    if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
         ERRORS=$((ERRORS + 1))
         error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"
     fi
