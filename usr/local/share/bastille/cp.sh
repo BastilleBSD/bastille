@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille cp [option(s)] TARGET HOST_PATH JAIL_PATH"
     cat << EOF
-	
+
     Options:
 
     -q | --quiet          Suppress output.
@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -91,15 +91,22 @@ set_target "${TARGET}"
 for _jail in ${JAILS}; do
 
     info "\n[${_jail}]:"
-	
+
     host_path="${HOST_PATH}"
     jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
-	
-    if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
+
+    # Workaround to properly copy host resolv.conf to jail if the host file is a symlink.
+    if [ "${host_path}" = "${bastille_resolv_conf}" ] && [ -L "${host_path}" ]; then
+        _option="${OPTION}L"
+    else
+        _option="${OPTION}"
+    fi
+
+    if ! cp "${_option}" "${host_path}" "${jail_path}"; then
         ERRORS=$((ERRORS + 1))
         error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"
     fi
-	
+
 done
 
 if [ "${ERRORS}" -ne 0 ]; then
