@@ -25,7 +25,7 @@ uninstall:
 	@rm -rvf /usr/local/share/bastille
 	@echo
 	@echo "removing man page"
-	@rm -rvf /usr/local/share/man/man8/bastille.8
+	@rm -rvf /usr/local/man/man8/bastille.8
 	@echo
 	@echo "removing configuration file"
 	@rm -rvf /usr/local/etc/bastille/bastille.conf.sample
