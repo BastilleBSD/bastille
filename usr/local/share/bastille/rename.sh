@@ -211,10 +211,10 @@ update_jailconf_vnet() {
     	        local _new_ngif="ng${_ngif_num}_${name_prefix}xx${name_suffix}"
             fi
 
-            local _new_if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
-            local _new_if_suffix="$(echo ${_if} | awk -F'_' '{print $2}')"
+            local _new_if_prefix="$(echo ${_new_ngif} | awk -F'_' '{print $1}')"
+            local _new_if_suffix="$(echo ${_new_ngif} | awk -F'_' '{print $2}')"
 
-            # Replace netgraph interface name                
+            # Replace netgraph interface name
             sed -i '' "s|jng bridge ${_old_if_suffix}|jng bridge ${_new_if_suffix}|g" "${_jail_conf}"
             sed -i '' "s|${_old_ngif} ether|${_new_ngif} ether|g" "${_jail_conf}"
             sed -i '' "s|jng shutdown ${_old_if_suffix}|jng shutdown ${_new_if_suffix}|g" "${_jail_conf}"
