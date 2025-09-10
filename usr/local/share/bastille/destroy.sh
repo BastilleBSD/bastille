@@ -292,7 +292,7 @@ case "${TARGET}" in
         ;;
     *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
         ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([0-9]{1,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
         destroy_rel
         ;;
     *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
