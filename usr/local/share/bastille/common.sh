@@ -201,11 +201,11 @@ set_target() {
                 if jail_autocomplete "${_jail}" > /dev/null; then
                     _jail="$(jail_autocomplete ${_jail})"
                 elif [ $? -eq 2 ]; then
-	            if grep -Ehoqw ${_jail} ${bastille_jailsdir}/*/tags; then
+                if grep -Ehoqw ${_jail} ${bastille_jailsdir}/*/tags 2>/dev/null; then
                         _jail="$(grep -Eow ${_jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
                     else
                         error_continue "Jail not found \"${_jail}\""
-		    fi
+            fi
                 else
                     echo
                     exit 1
@@ -359,32 +359,32 @@ generate_vnet_jail_netblock() {
                 local host_epair=e0a_${jail_name}
                 local jail_epair=e0b_${jail_name}
             else
-	        name_prefix="$(echo ${jail_name} | cut -c1-7)"
-	        name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-	        local host_epair="e0a_${name_prefix}xx${name_suffix}"
+            name_prefix="$(echo ${jail_name} | cut -c1-7)"
+            name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
+            local host_epair="e0a_${name_prefix}xx${name_suffix}"
                 local jail_epair="e0b_${name_prefix}xx${name_suffix}"
             fi
         else
             if [ "$(echo -n "e0a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                 local host_epair=e0a_${jail_name}
                 local jail_epair=e0b_${jail_name}
-	        local jib_epair=${jail_name}
+            local jib_epair=${jail_name}
             else
-	        name_prefix="$(echo ${jail_name} | cut -c1-7)"
-	        name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-	        local host_epair="e0a_${name_prefix}xx${name_suffix}"
+            name_prefix="$(echo ${jail_name} | cut -c1-7)"
+            name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
+            local host_epair="e0a_${name_prefix}xx${name_suffix}"
                 local jail_epair="e0b_${name_prefix}xx${name_suffix}"
                 local jib_epair="${name_prefix}xx${name_suffix}"
-	    fi
+        fi
         fi
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
         if [ "$(echo -n "ng0_${jail_name}" | awk '{print length}')" -lt 16 ]; then
             local ng_if=ng0_${jail_name}
-	    local jng_if=${jail_name}
+        local jng_if=${jail_name}
         else
-	    name_prefix="$(echo ${jail_name} | cut -c1-7)"
-	    name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-	    local ng_if="ng0_${name_prefix}xx${name_suffix}"
+        name_prefix="$(echo ${jail_name} | cut -c1-7)"
+        name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
+        local ng_if="ng0_${name_prefix}xx${name_suffix}"
             local jng_if="${name_prefix}xx${name_suffix}"
         fi
     fi
@@ -521,9 +521,9 @@ update_jail_syntax_v1() {
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
         else
-	    name_prefix="$(echo ${jail} | cut -c1-7)"
-	    name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
-	    local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
+        name_prefix="$(echo ${jail} | cut -c1-7)"
+        name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
+        local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
             local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
         fi
 
@@ -557,9 +557,9 @@ update_jail_syntax_v1() {
             local new_jail_epair=e0b_${jail}
             local jib_epair="${jail}"
         else
-	    name_prefix="$(echo ${jail} | cut -c1-7)"
-	    name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
-	    local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
+        name_prefix="$(echo ${jail} | cut -c1-7)"
+        name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
+        local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
             local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
             local jib_epair="${name_prefix}xx${name_suffix}"
         fi
