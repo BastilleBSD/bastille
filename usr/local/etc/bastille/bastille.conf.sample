@@ -42,7 +42,7 @@ bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"
 bastille_zfs_enable="NO"                                              ## default: "NO"
 bastille_zfs_zpool=""                                                 ## default: ""
 bastille_zfs_prefix="bastille"                                        ## default: "bastille"
-bastille_zfs_options="-o compress=lz4 -o atime=off"                   ## default: "-o compress=lz4 -o atime=off"
+bastille_zfs_options="-o compress=on -o atime=off"                   ## default: "-o compress=lz4 -o atime=off"
 
 ## Export/Import options
 bastille_compress_xz_options="-0 -v"                                  ## default "-0 -v"
