@@ -22,7 +22,7 @@ Apply the below patch to set the correct MTU. You may need to ``cp
   --- /usr/local/bin/jib	2022-07-31 03:27:04.163245000 +0000
   +++ jib.fixed	2022-07-31 03:41:16.710401000 +0000
   @@ -299,14 +299,14 @@
-   
+
    		# Make sure the interface has been bridged
    		if ! ifconfig "$iface$bridge" > /dev/null 2>&1; then
   -			new=$( ifconfig bridge create ) || return
@@ -31,12 +31,12 @@ Apply the below patch to set the correct MTU. You may need to ``cp
    			ifconfig $new name "$iface$bridge" || return
    			ifconfig "$iface$bridge" up || return
    		fi
-   
+
    		# Create a new interface to the bridge
   -		new=$( ifconfig epair create ) || return
   +		new=$( ifconfig epair create mtu 1460 ) || return
    		ifconfig "$iface$bridge" addm $new || return
-   
+
    		# Rename the new interface
 
 ## Configure bridge interface
@@ -58,16 +58,16 @@ them through the external interface:
 .. code-block:: text
   ext_if="vtnet0"
   bridge_if="vtnet0bridge"
-  
+
   set skip on lo
   scrub in
 
   # permissive NAT allows jail bridge and wireguard tunnels
   nat on $ext_if inet from !($ext_if) -> ($ext_if:0)
-  
+
   block in
   pass out
-  
+
   pass in proto tcp to port {22}
   pass in proto icmp icmp-type { echoreq }
   pass in on $bridge_if

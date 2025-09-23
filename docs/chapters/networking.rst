@@ -1,7 +1,7 @@
 Networking
 ==========
 
-Bastille is very flexible with its networking options. Below are the supported 
+Bastille is very flexible with its networking options. Below are the supported
 networking modes, how they work, and some tips on where you might want to use each
 one.
 
@@ -153,7 +153,7 @@ you are free to use
 <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`_.
 
 In this environment, we can create the container, give it a
-unique private ip address within our local subnet, and attach 
+unique private ip address within our local subnet, and attach
 its ip address to our primary interface.
 
 .. code-block:: shell
@@ -210,7 +210,7 @@ Your server was assigned the following six section subnet:
 
 The `vultr ipv6 subnet calculator
 <https://www.vultr.com/resources/subnet-calculator-ipv6/?prefix_length=64&display=long&ipv6_address=2001%3Adb8%3Aacad%3Ae%3A%3A%2F64>`_
-is helpful in making sense of that ipv6 address. 
+is helpful in making sense of that ipv6 address.
 
 We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0
 

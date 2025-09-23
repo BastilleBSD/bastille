@@ -1,6 +1,6 @@
 name: Bastille_Testing
 
-on: 
+on:
   pull_request:
     branches:
       - master
@@ -29,7 +29,4 @@ jobs:
           cd bastille
           make install
           rocinante template tests/masterTest
-          
-      
-
 

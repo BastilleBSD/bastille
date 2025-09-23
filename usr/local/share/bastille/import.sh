@@ -37,7 +37,7 @@ usage() {
     # If no file/extension specified, will import from standard input
     error_notify "Usage: bastille import [option(s)] FILE [RELEASE]"
     cat << EOF
-	
+
     Options:
 
     -f | --force               Force an archive import regardless if the checksum file does not match or missing.
@@ -77,14 +77,14 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     f) OPT_FORCE=1 ;;
 		    M) OPT_STATIC_MAC=1 ;;
                     v) OPT_ZRECV="-u -v" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -137,7 +137,7 @@ validate_archive() {
 }
 
 update_zfsmount() {
-	
+
     # Update the mountpoint property on the received ZFS data stream
     OLD_ZFS_MOUNTPOINT=$(zfs get -H mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" | awk '{print $3}')
     NEW_ZFS_MOUNTPOINT="${bastille_jailsdir}/${TARGET_TRIM}/root"
@@ -232,7 +232,7 @@ generate_config() {
             IPVX_CONFIG=$(grep -wo "jail_${TARGET_TRIM}_ip=.*" ${PROP_CONFIG} | tr -d '" ' | sed "s/jail_${TARGET_TRIM}_ip=//")
 	    if [ -z "${RELEASE}" ]; then
                 CONFIG_RELEASE=$(echo ${PROP_CONFIG} | grep -o '[0-9]\{2\}\.[0-9]_RELEASE' | sed 's/_/-/g')
-	    else 
+	    else
                 CONFIG_RELEASE="${RELEASE}"
 	    fi
         fi

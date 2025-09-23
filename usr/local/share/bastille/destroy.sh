@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille destroy [option(s)] JAIL|RELEASE"
     cat << EOF
-	
+
     Options:
 
     -a | --auto              Auto mode. Start/stop jail(s) if required.
@@ -256,7 +256,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;

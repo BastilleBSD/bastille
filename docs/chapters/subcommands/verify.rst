@@ -23,7 +23,7 @@ release or template .
   Detected Bastillefile hook.
   [Bastillefile]:
   CMD mkdir -p /usr/local/etc/pkg/repos
-  CMD echo 'FreeBSD: { url: "pkg+http://pkg.FreeBSD.org/${ABI}/latest" }' > 
+  CMD echo 'FreeBSD: { url: "pkg+http://pkg.FreeBSD.org/${ABI}/latest" }' >
   /usr/local/etc/pkg/repos/FreeBSD.conf
   CONFIG set allow.mlock=1;
   CONFIG set ip6=inherit;

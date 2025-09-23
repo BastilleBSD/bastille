@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille edit [option(s)] TARGET [FILE]"
     cat << EOF
-	
+
     Options:
 
     -x | --debug          Enable debug mode.
@@ -71,7 +71,7 @@ fi
 TARGET="${1}"
 if [ "$#" -eq 2 ]; then
     TARGET_FILENAME="${2}"
-else 
+else
     TARGET_FILENAME="jail.conf"
 fi
 

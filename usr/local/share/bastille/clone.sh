@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille clone [option(s)] TARGET NEW_NAME IP"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
@@ -70,7 +70,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
@@ -251,7 +251,7 @@ update_jailconf_vnet() {
             local _epair_num="$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")"
             local _old_host_epair="${_if}"
             local _old_jail_epair="${_old_if_prefix%a}b_${_old_if_suffix}"
-	    
+
             if [ "$(echo -n "e${_epair_num}a_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
                 # Generate new epair name
                 local _new_host_epair="e${_epair_num}a_${NEWNAME}"
@@ -268,7 +268,7 @@ update_jailconf_vnet() {
 
             if grep "${_old_if_suffix}" "${_jail_conf}" | grep -oq "jib addm"; then
                 # For -V jails
-                # Replace host epair name in jail.conf                  
+                # Replace host epair name in jail.conf
                 sed -i '' "s|jib addm ${_old_if_suffix}|jib addm ${_new_if_suffix}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
@@ -293,7 +293,7 @@ update_jailconf_vnet() {
                 sed -i '' "/ifconfig/ s|${_old_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
             else
                 # For -B jails
-                # Replace host epair name in jail.conf                  
+                # Replace host epair name in jail.conf
                 sed -i '' "s|up name ${_old_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
                 sed -i '' "s|addm ${_old_host_epair}|addm ${_new_host_epair}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
@@ -384,7 +384,7 @@ update_jailconf_vnet() {
             local _new_if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
             local _new_if_suffix="$(echo ${_if} | awk -F'_' '{print $2}')"
 
-            # Replace netgraph interface name                
+            # Replace netgraph interface name
             sed -i '' "s|jng bridge ${_old_if_suffix}|jng bridge ${_new_if_suffix}|g" "${_jail_conf}"
             sed -i '' "s|${_old_ngif} ether|${_new_ngif} ether|g" "${_jail_conf}"
             sed -i '' "s|jng shutdown ${_old_if_suffix}|jng shutdown ${_new_if_suffix}|g" "${_jail_conf}"
@@ -515,7 +515,7 @@ clone_jail() {
             fi
 
         else
-		 
+
             check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
                 bastille stop "${TARGET}"
             else

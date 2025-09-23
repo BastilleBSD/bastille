@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille console [option(s)] TARGET [USER]"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     x) enable_debug ;;
                     a) AUTO=1 ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -90,7 +90,7 @@ validate_user() {
 
     local _jail="${1}"
     local _user="${2}"
-	
+
     if jexec -l "${_jail}" id "${_user}" >/dev/null 2>&1; then
         USER_SHELL="$(jexec -l "${_jail}" getent passwd "${_user}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
@@ -110,7 +110,7 @@ validate_user() {
 check_fib() {
 
     local _jail="${1}"
-	
+
     fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
 
     if [ -n "${fib}" ]; then
@@ -132,7 +132,7 @@ for _jail in ${JAILS}; do
     fi
 
     info "\n[${_jail}]:"
-    
+
     LOGIN="$(jexec -l "${_jail}" which login)"
 
     if [ -n "${USER}" ]; then
@@ -142,5 +142,5 @@ for _jail in ${JAILS}; do
         LOGIN="$(jexec -l "${_jail}" which login)"
         ${_setfib} jexec -l "${_jail}" ${LOGIN} -f root
     fi
-    
+
 done

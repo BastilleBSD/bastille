@@ -95,7 +95,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
@@ -104,7 +104,7 @@ while [ "$#" -gt 0 ]; do
                     l) LIVE=1 ;;
                     p) OPT_PASSWORD=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -144,7 +144,7 @@ validate_host_status() {
     local _user="${1}"
     local _host="${2}"
     local _port="${3}"
-    
+
     info "\nChecking remote host status..."
 
     # Host uptime
@@ -364,7 +364,7 @@ for _jail in ${JAILS}; do
     fi
 
     info "\nAttempting to migrate '${_jail}' to '${HOST}'..."
-    
+
     migrate_jail "${_jail}" "${USER}" "${HOST}" "${PORT}"
 
     info "\nSuccessfully migrated '${_jail}' to '${HOST}'.\n"

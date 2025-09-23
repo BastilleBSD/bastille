@@ -23,7 +23,7 @@ To see a list of available options and switches, see the ``setup`` subcommand.
 .. code-block:: shell
 
   ishmael ~ # bastille setup
-  
+
 Bootstrapping a Release
 -----------------------
 
@@ -33,7 +33,7 @@ Then we need to bootstrap a release for bastille to use. We will use
 .. code-block:: shell
 
   ishmael ~ # bastille bootstrap 14.2-RELEASE
-  
+
 Creating a Jail
 ---------------
 

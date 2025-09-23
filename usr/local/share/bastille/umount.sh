@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille umount [option(s)] TARGET JAIL_PATH"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -96,7 +96,7 @@ for _jail in ${JAILS}; do
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
-	
+
     info "\n[${_jail}]:"
 
     _jailpath="$( echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"
@@ -125,9 +125,9 @@ for _jail in ${JAILS}; do
     if [ -f "${_jailpath}" ]; then
         rm -f "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
     fi
-    
+
     echo "Unmounted: ${_jailpath}"
-	
+
 done
 
 echo

@@ -60,12 +60,12 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -103,7 +103,7 @@ for _jail in ${JAILS}; do
         info "\n[${_jail}]:"
         error_continue "Jail is already stopped."
     fi
-	
+
     info "\n[${_jail}]:"
 
     # Remove RDR rules
@@ -153,7 +153,7 @@ for _jail in ${JAILS}; do
             else
                 _ip="$(echo ${_ip} | sed -E 's#/[0-9]+$##g')"
             fi
-            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
+            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
         done
     fi
 

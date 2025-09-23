@@ -144,12 +144,12 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -281,7 +281,7 @@ for _jail in ${JAILS}; do
     fi
 
     info "\n[${_jail}]:"
-    
+
     echo "Applying template: ${TEMPLATE}..."
 
     ## get jail ip4 and ip6 values
@@ -311,7 +311,7 @@ for _jail in ${JAILS}; do
        { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; } then
         error_notify "Jail IP not found: ${_jail}"
     fi
-    
+
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
         if grep -qw "${_jail}" "${bastille_template}/TARGET"; then
@@ -471,7 +471,7 @@ for _jail in ${JAILS}; do
             echo
         fi
     done
-    
+
     info "\nTemplate applied: ${TEMPLATE}"
-	
+
 done

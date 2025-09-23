@@ -4,7 +4,7 @@ create
 Create a jail uning any available bootstrapped release. To create a jail,
 simply provide a name, bootstrapped release, and IP address.
 
-The format is ``bastille create NAME RELEASE IP [INTERFACE]`` 
+The format is ``bastille create NAME RELEASE IP [INTERFACE]``
 
 Note that the ``interface`` is optional. Bastille will use the default interface
 that is configured when running the setup command. See ``bastille setup -l`` or
@@ -56,7 +56,7 @@ options. See the below help output.
   Usage: bastille create [option(s)] NAME RELEASE IP [INTERFACE]"
 
       Options:
-    
+
       -B | --bridge                            Enable VNET, and attach to a specified, already existing external bridge.
       -C | --clone                             Create a clone jail.
       -D | --dual                              Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).

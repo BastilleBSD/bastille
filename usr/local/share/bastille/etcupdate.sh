@@ -32,7 +32,7 @@
 usage() {
     error_notify "Usage: bastille etcupdate [option(s)] [bootstrap|TARGET] [diff|resolve|update RELEASE]"
     cat << EOF
-	
+
     Options:
 
     -d | --dry-run          Show output, but do not apply.
@@ -92,7 +92,7 @@ diff_review() {
     fi
 
     echo "Running: etcupdate --diff mode"
-    etcupdate diff -D "${bastille_jailsdir}/${_jail}/root"  
+    etcupdate diff -D "${bastille_jailsdir}/${_jail}/root"
 }
 
 resolve_conflicts() {
@@ -104,7 +104,7 @@ resolve_conflicts() {
     fi
 
     echo "Running: etcupdate resolve"
-    etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"  
+    etcupdate resolve -D "${bastille_jailsdir}/${_jail}/root"
 }
 
 update_jail_etc() {
@@ -144,13 +144,13 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     d) DRY_RUN=1 ;;
                     f) FORCE=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift

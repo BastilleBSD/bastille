@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille restart [option(s)] TARGET"
     cat << EOF
-	
+
     Options:
 
     -b | --boot                 Respect jail boot setting.
@@ -74,7 +74,7 @@ while [ "$#" -gt 0 ]; do
             _stop_options="${_stop_options} -x"
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     b)
@@ -84,13 +84,13 @@ while [ "$#" -gt 0 ]; do
                         _start_options="${_start_options} -v"
                         _stop_options="${_stop_options} -v"
                         ;;
-                    x) 
+                    x)
                         _start_options="${_start_options} -x"
                         _stop_options="${_stop_options} -x"
                         ;;
                     *)
                         error_exit "[ERROR]: Unknown Option: \"${1}\""
-                        ;; 
+                        ;;
                 esac
             done
             shift

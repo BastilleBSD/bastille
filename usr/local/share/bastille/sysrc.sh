@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille sysrc [option(s)] TARGET ARGS"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -60,12 +60,12 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -99,13 +99,13 @@ for _jail in ${JAILS}; do
     fi
 
     info "\n[${_jail}]:"
-	
+
     jexec -l "${_jail}" /usr/sbin/sysrc "$@"
 
     if [ "$?" -ne 0 ]; then
         ERRORS=$((ERRORS + 1))
     fi
-	
+
 done
 
 if [ "${ERRORS}" -ne 0 ]; then

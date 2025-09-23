@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille rdr [option(s)] TARGET [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ]"
     cat << EOF
-	
+
     Options:
 
     -d | --destination [destination]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
@@ -76,7 +76,7 @@ check_jail_validity() {
     else
         error_exit "[ERROR]: VNET jails do not support rdr."
     fi
-    
+
     # Check if rdr-anchor is defined in pf.conf
     if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
         error_exit "[ERROR]: rdr-anchor not found in pf.conf"
@@ -185,7 +185,7 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_name}" 
+            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_name}"
         fi
     fi
     # Create IPv6 rdr rule (if ip6.addr is enabled)
@@ -228,7 +228,7 @@ load_rdr_log_rule() {
 
     # Create IPv6 rdr rule with log (if ip6.addr is enabled)
     # shellcheck disable=SC2193
-    if [ -n "${JAIL_IP6}" ] && { [ "${inet}" = "ipv6" ] || [ "${inet}" = "dual" ]; } then 
+    if [ -n "${JAIL_IP6}" ] && { [ "${inet}" = "ipv6" ] || [ "${inet}" = "dual" ]; } then
         if ! ( pfctl -a "rdr/${TARGET}" -Psn;
             printf '%s\nrdr pass %s on $%s inet6 proto %s from %s to %s port %s -> %s port %s\n' "$if" "$log" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
             | pfctl -a "rdr/${TARGET}" -f-; then
@@ -355,7 +355,7 @@ while [ "$#" -gt 0 ]; do
                 fi
             fi
             shift
-            ;;	    
+            ;;
         tcp|udp)
             if [ "$#" -lt 3 ]; then
                 usage
@@ -388,7 +388,7 @@ while [ "$#" -gt 0 ]; do
                                 check_jail_validity
                                 validate_rdr_rule "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
                                 persist_rdr_log_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
-                                load_rdr_log_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"                                
+                                load_rdr_log_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $proto $host_port $jail_port "$@"
                                 shift $#
                             else
                                 usage
@@ -412,7 +412,7 @@ while [ "$#" -gt 0 ]; do
         *)
             if [ "${1}" = "dual" ] || [ "${1}" = "ipv4" ] || [ "${1}" = "ipv6" ]; then
                 RDR_INET="${1}"
-            else 
+            else
                 usage
             fi
             if [ "$#" -eq 7 ] && { [ "${5}" = "tcp" ] || [ "${5}" = "udp" ]; } then

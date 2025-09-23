@@ -18,7 +18,7 @@ The TEMPLATE arg should be called with the ``project/template`` format.
 
   ishmael ~ # bastille template help
   Usage: bastille template [option(s)] TARGET [--convert] TEMPLATE
-  
+
       Options:
 
       -a | --auto           Auto mode. Start/stop jail(s) if required.

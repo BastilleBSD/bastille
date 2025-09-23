@@ -39,7 +39,7 @@ usage() {
     cat << EOF
 
     Options:
-    
+
     -B | --bridge                            Enable VNET, and attach to a specified, already existing external bridge.
     -C | --clone                             Create a clone jail.
     -D | --dual                              Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
@@ -65,7 +65,7 @@ validate_name() {
 
     local NAME_VERIFY=${NAME}
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
-    
+
     # Make sure NAME has only allowed characters
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
@@ -607,7 +607,7 @@ create_jail() {
                     if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
                         install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
                     fi
-                fi 
+                fi
             fi
         fi
     elif [ -n "${LINUX_JAIL}" ]; then
@@ -646,7 +646,7 @@ create_jail() {
 
     if [ -n "${VNET_JAIL}" ]; then
         if [ -n "${bastille_template_vnet}" ]; then
-	
+
             ## rename interface to generic vnet0
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//; s/-/_/g')
             _gateway=''
@@ -668,12 +668,12 @@ create_jail() {
                     _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
                 fi
             fi
-	    
+
             # Add IPv4 address (this is empty if DHCP is used)
             if [ -n "${IP4_ADDR}" ]; then
                 _ifconfig_inet="${_ifconfig_inet} inet ${IP4_ADDR}"
             fi
-	    
+
             # Enable IPv6 if used
             if [ -n "${IP6_ADDR}" ]; then
                 _ifconfig_inet6='inet6 -ifdisabled'
@@ -689,12 +689,12 @@ create_jail() {
                     fi
                 fi
             fi
-	    
+
             # Add IPv6 address (this is empty if SLAAC is used)
             if [ -n "${IP6_ADDR}" ]; then
                 _ifconfig_inet6="${_ifconfig_inet6} ${IP6_ADDR}"
             fi
-	    
+
             # We need to pass IP4 and IP6 separately
             _ifconfig="${_ifconfig_inet}"
 	    _ifconfig6="${_ifconfig_inet6}"
@@ -832,7 +832,7 @@ while [ $# -gt 0 ]; do
 	    if echo "${2}" | grep -Eoq "^[0-9]+$"; then
                 PRIORITY="${2}"
 		shift 2
-	    else 
+	    else
                 error_exit "Not a valid priority value: \"${2}\""
 	    fi
             ;;
@@ -868,7 +868,7 @@ while [ $# -gt 0 ]; do
             bastille_zfs_options="${2}"
             shift 2
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     B) VNET_JAIL=1 VNET_JAIL_BRIDGE=1 ;;
@@ -880,7 +880,7 @@ while [ $# -gt 0 ]; do
                     T) THICK_JAIL=1 ;;
                     V) VNET_JAIL=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift

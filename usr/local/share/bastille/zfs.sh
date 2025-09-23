@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    
+
     error_notify "Usage: bastille zfs [option(s)] TARGET destroy|rollback|snapshot [TAG]"
     error_notify "                                       df|usage"
     error_notify "                                       get|set key=value"
@@ -52,7 +52,7 @@ EOF
 }
 
 zfs_jail_dataset() {
-    
+
     # Exit if MOUNT or DATASET is empty
     if [ -z "${MOUNT}" ] || [ -z "${DATASET}" ]; then
         usage
@@ -68,7 +68,7 @@ zfs_jail_dataset() {
     # Validate jail state
     check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${_jail}"
-    else 
+    else
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
@@ -100,7 +100,7 @@ zfs_unjail_dataset() {
     # Validate jail state
     check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${_jail}"
-    else 
+    else
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
@@ -226,7 +226,7 @@ snapshot_destroy() {
     else
         OPT_DESTROY="-r"
     fi
-    
+
     zfs_destroy_snapshot
 
     # Check for exit status and just notify.
@@ -260,12 +260,12 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
