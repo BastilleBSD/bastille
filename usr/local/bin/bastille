@@ -164,7 +164,7 @@ while [ "$#" -gt 0 ]; do
                 error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
             fi
             # Load common.sh after setting BASTILLE_CONFIG
-            . /usr/local/share/bastille/common.sh 
+            . /usr/local/share/bastille/common.sh
             shift 2
             ;;
         -*)
@@ -243,5 +243,5 @@ if [ -f "${SCRIPTPATH}" ]; then
     exec "${SH}" "${SCRIPTPATH}" "$@"
 
 else
-    error_exit "${SCRIPTPATH} not found."	
+    error_exit "${SCRIPTPATH} not found."
 fi

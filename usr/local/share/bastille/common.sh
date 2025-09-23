@@ -34,7 +34,7 @@
 # because all commands load this file
 # shellcheck disable=SC1090
 . ${BASTILLE_CONFIG}
-	
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -56,7 +56,7 @@ enable_debug() {
     # Enable debug mode.
     warn "***DEBUG MODE***"
     set -x
-} 
+}
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.
@@ -287,7 +287,7 @@ set_bastille_mountpoints() {
         bastille_logsdir_mountpoint="${bastille_logsdir}"
 
         # Add _altroot to *dir* if set
-        if [ "${_altroot}" != "-" ]; then  
+        if [ "${_altroot}" != "-" ]; then
             # Set *dir* to include ALTROOT
             bastille_prefix="${_altroot}${bastille_prefix}"
             bastille_backupsdir="${_altroot}${bastille_backupsdir}"
@@ -295,7 +295,7 @@ set_bastille_mountpoints() {
             bastille_jailsdir="${_altroot}${bastille_jailsdir}"
             bastille_releasesdir="${_altroot}${bastille_releasesdir}"
             bastille_templatesdir="${_altroot}${bastille_templatesdir}"
-            bastille_logsdir="${_altroot}${bastille_logsdir}" 
+            bastille_logsdir="${_altroot}${bastille_logsdir}"
         fi
     fi
 }

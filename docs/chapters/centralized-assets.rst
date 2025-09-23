@@ -36,7 +36,7 @@ access, simply use ``ro`` instead of ``rw`` as the option.
 .. code-block:: shell
 
   ishmael ~ # bastille mount "jail1 jail2" /my/host/directory /my/jail/directory nullfs rw 0 0
-  
+
 Cloning
 -------
 
@@ -46,9 +46,9 @@ To clone your jail, use the following command.
 .. code-block:: shell
 
   ishmael ~ # bastille clone myjail mynewjail 10.0.0.3
-  
+
 This will create an exact duplicate of ``myjail`` at ``mynewjail``.
-  
+
 Custom Releases
 ---------------
 
@@ -61,14 +61,14 @@ process will not work with any other jail types.
 .. code-block:: shell
 
   ishmael ~ # bastille create -T myjail 14.2-RELEASE 10.0.0.1
-  
+
 Once the jail is up and running, configure it to your liking, then run the
 following commmand to create a custom release based on your jail.
 
 .. code-block:: shell
 
   ishmael ~ # bastille convert myjail myrelease
-  
+
 Once this process completes, you will be able to run the following command to
 create a jail based off your newly created release.
 

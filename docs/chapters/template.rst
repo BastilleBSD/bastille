@@ -132,7 +132,7 @@ escape it. Escaping it will cause errors.
 Bootstrapping Templates
 -----------------------
 
-The official templates for Bastille are all on Gthub, and mirror the directory 
+The official templates for Bastille are all on Gthub, and mirror the directory
 structure of the ports tree.  So, ``nginx`` is in the ``www`` directory in the
 templates, just like it is in the FreeBSD ports tree.  To bootstrap the
 entire set of official predefined templates run the following command:
@@ -155,7 +155,7 @@ Creating Templates
 Templates can be created and placed inside the templates directory in the
 ``project/template`` format. Alternatively you can run the ``bastille template``
 command from a relative path, making sure it is still in the above format.
- 
+
 Template Examples
 -----------------
 

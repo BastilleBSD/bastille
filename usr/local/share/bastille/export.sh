@@ -39,7 +39,7 @@ usage() {
     # If no compression option specified, user must redirect standard output
     error_notify "Usage: bastille export [option(s)] TARGET PATH"
     cat << EOF
-	
+
     Options:
 
     -a | --auto             Auto mode. Start/stop jail(s) if required.
@@ -275,7 +275,7 @@ clean_zfs_snap() {
     zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"
 }
 
-export_check() { 
+export_check() {
     # Inform the user about the exporting method
     if [ -z "${USER_EXPORT}" ]; then
         if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then

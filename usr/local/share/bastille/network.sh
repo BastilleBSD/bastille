@@ -36,7 +36,7 @@
 usage() {
     error_notify "Usage: bastille network [option(s)] TARGET [remove|add] INTERFACE [IP]"
     cat << EOF
-	
+
     Options:
 
     -a | --auto                 Start/stop jail(s) if required.
@@ -47,7 +47,7 @@ usage() {
     -V | --vnet                 Add a VNET interface.
     -v | --vlan VLANID          Assign VLAN ID to interface (VNET only).
     -x | --debug                Enable debug mode.
-    
+
 EOF
     exit 1
 }
@@ -101,7 +101,7 @@ while [ "$#" -gt 0 ]; do
         -x|--debug)
             enable_debug
             shift
-            ;;        
+            ;;
         -*)
             for _o in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${_o} in
@@ -112,7 +112,7 @@ while [ "$#" -gt 0 ]; do
                     P) PASSTHROUGH=1 ;;
                     V) VNET=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -135,7 +135,7 @@ else
 fi
 
 # Default is standard interface
-if [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then 
+if [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then
     STANDARD=1
 fi
 
@@ -224,11 +224,11 @@ check_interface_added() {
 
     local _jailname="${1}"
     local _if="${2}"
-    local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf" 
+    local _jail_config="${bastille_jailsdir}/${_jailname}/jail.conf"
 
     if grep -qo "${_if}" "${_jail_config}"; then
         return 0
-    else 
+    else
         return 1
     fi
 }
@@ -294,7 +294,7 @@ EOF
 }
 EOF
                 fi
-	
+
                 # Add config to /etc/rc.conf
                 sysrc -f "${_jail_rc_config}" ifconfig_${jail_epair}_name="${_jail_vnet}"
 	        if [ -n "${IP6_ADDR}" ]; then
@@ -377,7 +377,7 @@ EOF
                     break
                 fi
             done
-            
+
             echo "Added VNET interface: \"${_if}\""
 
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
@@ -428,8 +428,8 @@ EOF
 	           fi
 	           break
 	       fi
-	   done           
-            echo "Added VNET interface: \"${_if}\""    
+	   done
+            echo "Added VNET interface: \"${_if}\""
         fi
 
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
@@ -458,7 +458,7 @@ EOF
             fi
         fi
         echo "Added Passthrough interface: \"${_if}\""
- 
+
     elif [ "${STANDARD}" -eq 1 ]; then
         if [ -n "${IP6_ADDR}" ]; then
             sed -i '' "s/interface = .*/&\n  ip6.addr += ${_if}|${_ip};/" ${_jail_config}
@@ -507,7 +507,7 @@ remove_interface() {
         else
             error_exit "[ERROR]: Could not find interface inside jail: \"${_if_jail}\""
         fi
-        
+
         # Get vnetX value from rc.conf
         if [ "${_if_type}" = "if_bridge" ]; then
             if grep -oq "${_if_jail}" ${_jail_config}; then
@@ -528,7 +528,7 @@ remove_interface() {
                 error_exit "[ERROR]: Interface not found: ${_if_jail}"
             fi
         fi
-    
+
         # Do not allow removing default vnet0 interface
         if [ "${_if_vnet}" = "vnet0" ]; then
             error_exit "[ERROR]: Default interface cannot be removed."
@@ -538,7 +538,7 @@ remove_interface() {
         if [ -z "${_if_jail}" ]; then
             error_exit "[ERROR]: Could not find specifed interface."
         fi
-       
+
         # Remove interface from /etc/rc.conf
         if [ "${_if_type}" = "if_bridge" ]; then
             if [ -n "${_if_vnet}" ] && echo ${_if_vnet} | grep -Eoq 'vnet[0-9]+'; then
@@ -563,11 +563,11 @@ remove_interface() {
         # Remove VNET interface from jail.conf (VNET)
         if [ -n "${_if_jail}" ]; then
             if [ "${_if_type}" = "if_bridge" ]; then
-                sed -i '' "/.*${_epaira}.*/d" "${_jail_config}" 
+                sed -i '' "/.*${_epaira}.*/d" "${_jail_config}"
                 sed -i '' "/.*${_epairb}.*/d" "${_jail_config}"
                 sed -i '' "/.*${_if}.*/d" "${_jail_config}"
             elif [ "${_if_type}" = "netgraph" ]; then
-                sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}" 
+                sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}"
                 sed -i '' "/.*${_if}.*/d" "${_jail_config}"
             elif [ "${_if_type}" = "passthrough" ]; then
                 sed -i '' "/.*${_if_jail}.*/d" "${_jail_config}"
@@ -690,7 +690,7 @@ case "${ACTION}" in
         fi
         ;;
     remove|delete)
-        check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\"" 
+        check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\""
         validate_netif "${INTERFACE}"
         if ! grep -q "${INTERFACE}" ${bastille_jailsdir}/${TARGET}/jail.conf; then
             error_exit "[ERROR]: Interface not found in jail.conf: \"${INTERFACE}\""

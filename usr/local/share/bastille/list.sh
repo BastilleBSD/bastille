@@ -235,7 +235,7 @@ get_jail_info() {
         # Get info if jail is DOWN
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
             JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet .*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
-            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -Eow "(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?" | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')    
+            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -Eow "(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?" | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
         else
             JAIL_IP4=$(sed -n "s/^[ ].*ip4.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
             JAIL_IP6=$(sed -n "s/^[ ].*ip6.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
@@ -275,7 +275,7 @@ get_jail_info() {
     if [ "${OPT_STATE}" != "all" ] && [ "${JAIL_STATE}" != "${OPT_STATE}" ]; then
         # shellcheck disable=SC2104
         continue
-    fi 
+    fi
 
     # Add ... if JAIL_PORTS is too long
     JAIL_PORTS_FULL="${JAIL_PORTS}"
@@ -300,7 +300,7 @@ get_jail_info() {
 list_bastille(){
 
      _tmp_list=
-    
+
     get_max_lengths
     get_jail_list
 
@@ -317,13 +317,13 @@ list_bastille(){
         fi
 
         (
-        
+
         get_jail_info "${_jail}"
 
         # Get JAIL_IP count
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
 
-        # Print JAIL_IP in columns if -gt 1 
+        # Print JAIL_IP in columns if -gt 1
         if [ ${JAIL_IP_COUNT} -gt 1 ]; then
             # vnet0 has more than one IPs assigned.
             # Put each IP in its own line below the jails first address. For instance:

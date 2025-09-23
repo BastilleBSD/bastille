@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE|install"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -66,13 +66,13 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     f) OPTION="-F" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -93,7 +93,7 @@ NEWRELEASE="${2}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-# Check for unsupported actions    
+# Check for unsupported actions
 if [ -f "/bin/midnightbsd-version" ]; then
     error_exit "[ERROR]: Not yet supported on MidnightBSD."
 fi
@@ -186,7 +186,7 @@ jail_upgrade() {
         -d "${_workdir}" \
         -f "${_freebsd_update_conf}" \
         -r "${_newrelease}" upgrade
-        
+
         # Update "osrelease" inside jail.conf using 'bastille config'
         bastille config ${_jailname} set osrelease ${_newrelease}
         warn "Please run 'bastille upgrade ${_jailname} install', restart the jail, then run 'bastille upgrade ${_jailname} install' again to finish installing updates."
@@ -201,7 +201,7 @@ jail_updates_install() {
     local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
 
     # Finish installing upgrade on a thick container
-    if [ -d "${bastille_jailsdir}/${_jailname}" ]; then 
+    if [ -d "${bastille_jailsdir}/${_jailname}" ]; then
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
         -j "${_jailname}" \
         -d "${_workdir}" \

@@ -40,7 +40,7 @@ usage() {
     error_notify "                                  [vnet]"
     error_notify "                                  [storage]"
     cat << EOF
-	
+
     Options:
 
     -y | --yes             Assume always yes on prompts.
@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     y) AUTO_YES=1 ;;

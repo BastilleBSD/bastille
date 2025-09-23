@@ -88,7 +88,7 @@ for remote systems you can use rsync:
 
      rsync -avh /iocage/images/jailname_$(date +%F).* root@10.0.1.10:/usr/local/bastille/backups/
 
-     
+
 Import the iocage backup file (use zip file name)
 
 .. code-block:: shell

@@ -69,13 +69,13 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     f) OPTION="-F" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -134,7 +134,7 @@ jail_update() {
     local _workdir="${_jailpath}/var/db/freebsd-update"
 
     # Update a thick container
-    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then   
+    if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
         CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
         if [ -z "${CURRENT_VERSION}" ]; then
             error_exit "[ERROR]: Can't determine '${TARGET}' version."
@@ -186,10 +186,10 @@ template_update() {
     if [ -d $_template_path ]; then
         info "\n[${BASTILLE_TEMPLATE}]:"
         if ! git -C $_template_path pull; then
-            error_exit "[ERROR]: ${BASTILLE_TEMPLATE} update unsuccessful."    
+            error_exit "[ERROR]: ${BASTILLE_TEMPLATE} update unsuccessful."
         fi
         bastille verify "${BASTILLE_TEMPLATE}"
-    else 
+    else
         error_exit "[ERROR]: ${BASTILLE_TEMPLATE} not found. See 'bastille bootstrap'."
     fi
 }
@@ -212,7 +212,7 @@ templates_update() {
 
     if [ "$_updated_templates" -ne "0" ]; then
         info "\n$_updated_templates templates updated."
-    else 
+    else
         error_exit "[ERROR]: No templates found. See 'bastille bootstrap'."
     fi
 }

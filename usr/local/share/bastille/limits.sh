@@ -36,10 +36,10 @@
 usage() {
     error_notify "Usage: bastille limits [option(s)] TARGET [add|remove|clear|reset|(list|show [active])|stats] OPTION [VALUE]"
     cat << EOF
-	
+
 	Example: bastille limits TARGET add memoryuse 1G
     Example: bastille limits TARGET add cpu 0,1,2
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -70,13 +70,13 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     l) OPT_LOG=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -93,7 +93,7 @@ fi
 
 TARGET="${1}"
 ACTION="${2}"
-# Retain support for no action (will default to add) 
+# Retain support for no action (will default to add)
 if [ "${ACTION}" != "add" ] && [ "${ACTION}" != "remove" ] && [ "${ACTION}" != "clear" ] && [ "${ACTION}" != "list" ] && [ "${ACTION}" != "show" ] && [ "${ACTION}" != "reset" ] && [ "${ACTION}" != "stats" ]; then
     ACTION="add"
     shift 1
@@ -148,7 +148,7 @@ for _jail in ${JAILS}; do
     fi
 
     info "\n[${_jail}]:"
-    
+
     case "${ACTION}" in
 
         add)
@@ -299,5 +299,5 @@ for _jail in ${JAILS}; do
             ;;
 
     esac
-	
+
 done

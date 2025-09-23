@@ -36,7 +36,7 @@
 usage() {
     error_notify "Usage: bastille config [option(s)] TARGET [get|(set|add)|remove] PROPERTY [VALUE]"
     cat << EOF
-	
+
     Options:
 
     -x | --debug          Enable debug mode.
@@ -52,7 +52,7 @@ print_jail_conf() {
     # line
     jail -f "$1" -e '
 '
-} 
+}
 
 # Handle options.
 while [ "$#" -gt 0 ]; do
@@ -93,7 +93,7 @@ case "${ACTION}" in
             error_exit "[ERROR]: Too many parameters for [get|remove] operation."
         fi
         ;;
-    add|set) 
+    add|set)
         ;;
     *)
         error_exit "[ERROR]: Only (add|set), get and remove are supported."
@@ -121,10 +121,10 @@ print_jail_conf() {
     # line
     jail -f "${1}" -e '
 '
-} 
+}
 
 for _jail in ${JAILS}; do
-    
+
     # Backwards compatibility for specifying only an IP with ip[4|6].addr
     if [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip4.addr" ]; then
         if ! echo "${VALUE}" | grep -q "|"; then
@@ -135,7 +135,7 @@ for _jail in ${JAILS}; do
             VALUE="$(bastille config ${_jail} get ip6.addr | awk -F"|" '{print $1}')|${VALUE}"
         fi
     fi
-    
+
     # Handle Bastille specific properties
     # Currently only 'depend' 'priority' and 'boot'
     if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
@@ -307,7 +307,7 @@ for _jail in ${JAILS}; do
             rm "${_tmpfile}"
         fi
     fi
-	
+
 done
 
 # Only display this message once at the end (not for every jail). -- cwells

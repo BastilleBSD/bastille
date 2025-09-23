@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille convert [option(s)] TARGET [RELEASE]"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -66,13 +66,13 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     y) AUTO_YES=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -106,7 +106,7 @@ validate_release_name() {
 
     local _name=${1}
     local _sanity="$(echo "${_name}" | tr -c -d 'a-zA-Z0-9-_')"
-	
+
     if [ -n "$(echo "${_sanity}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Release names may not begin with (-|_) characters!"
     elif [ "${_name}" != "${_sanity}" ]; then
@@ -119,7 +119,7 @@ convert_jail_to_release() {
 
     _jailname="${1}"
     _release="${2}"
-    
+
     info "\nAttempting to create '${_release}' from '${_jailname}'..."
 
     if checkyesno bastille_zfs_enable; then
@@ -272,7 +272,7 @@ if [ "$#" -eq 1 ]; then
     elif ! grep -qw ".bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         error_exit "[ERROR]: ${TARGET} is not a thin container."
     fi
-    
+
     # Ask if user is sure they want to convert the jail
     # but only if AUTO_YES=0
     if [ "${AUTO_YES}" -ne 1 ]; then

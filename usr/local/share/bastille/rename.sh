@@ -53,7 +53,7 @@ while [ "$#" -gt 0 ]; do
             AUTO=1
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
@@ -161,7 +161,7 @@ update_jailconf_vnet() {
 
             if grep "${_old_if_suffix}" "${_jail_conf}" | grep -oq "jib addm"; then
                 # For -V jails
-                # Replace host epair name in jail.conf                  
+                # Replace host epair name in jail.conf
                 sed -i '' "s|jib addm ${_old_if_suffix}|jib addm ${_new_if_suffix}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} destroy|${_new_host_epair} destroy|g" "${_jail_conf}"
@@ -178,7 +178,7 @@ update_jailconf_vnet() {
                 sed -i '' "/ifconfig/ s|${_old_jail_epair}|${_new_jail_epair}|g" "${_rc_conf}"
             else
                 # For -B jails
-                # Replace host epair name in jail.conf                  
+                # Replace host epair name in jail.conf
                 sed -i '' "s|up name ${_old_host_epair}|up name ${_new_host_epair}|g" "${_jail_conf}"
                 sed -i '' "s|addm ${_old_host_epair}|addm ${_new_host_epair}|g" "${_jail_conf}"
                 sed -i '' "s|${_old_host_epair} ether|${_new_host_epair} ether|g" "${_jail_conf}"
@@ -198,7 +198,7 @@ update_jailconf_vnet() {
             fi
         # For netgraph network type
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-        
+
             local _ngif_num="$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")"
             local _old_ngif="${_if}"
 

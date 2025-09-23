@@ -38,7 +38,7 @@ usage() {
 
     Options:
 
-    -b | --boot                 Respect jail boot setting. 
+    -b | --boot                 Respect jail boot setting.
     -d | --delay VALUE          Time (seconds) to wait after starting each jail.
     -v | --verbose              Print every action on jail start.
     -x | --debug                Enable debug mode.
@@ -76,13 +76,13 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     b) BOOT=1 ;;
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -121,14 +121,14 @@ for _jail in ${JAILS}; do
             bastille start ${_depend_jail}
         fi
     done
-	
+
     if check_target_is_running "${_jail}"; then
         info "\n[${_jail}]:"
         error_continue "Jail is already running."
     fi
 
     info "\n[${_jail}]:"
-	
+
     # Validate interfaces and add IPs to firewall table
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
         _ip4_interfaces="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
@@ -217,5 +217,5 @@ for _jail in ${JAILS}; do
 
     # Delay between jail action
     sleep "${DELAY_TIME}"
-	
+
 done

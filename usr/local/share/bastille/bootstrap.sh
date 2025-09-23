@@ -35,9 +35,9 @@
 usage() {
     error_notify "Usage: bastille bootstrap [option(s)] RELEASE|TEMPLATE [update|arch]"
     cat << EOF
-	
+
     Options:
-    
+
     -x | --debug           Enable debug mode.
 
 EOF
@@ -297,7 +297,7 @@ bootstrap_release() {
 
     info "\nBootstrap successful."
     echo "See 'bastille --help' for available commands."
-	
+
 }
 
 debootstrap_release() {
@@ -443,12 +443,12 @@ bootstrap_template() {
             cp -fR "${_project_dir}" "${bastille_templatesdir}"
             bastille verify "${_complete_template}"
         done
-        
+
         # Remove the cloned repo
         if [ -n "${_user}" ]; then
             rm -r "${bastille_templatesdir:?}/${_user:?}"
         fi
-        
+
     else
         # Verify a single template
         bastille verify "${_user}/${_repo}"
@@ -465,7 +465,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             error_exit "[ERROR]: Unknown Option: \"${1}\""
             ;;
         *)

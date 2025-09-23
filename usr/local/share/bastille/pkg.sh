@@ -72,14 +72,14 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                    a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
                     y) AUTO_YES=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -97,7 +97,7 @@ fi
 TARGET="${1}"
 shift
 ERRORS=0
-        
+
 bastille_root_check
 set_target "${TARGET}"
 
@@ -137,7 +137,7 @@ for _jail in ${JAILS}; do
     if [ "$?" -ne 0 ]; then
         ERRORS=$((ERRORS + 1))
     fi
-    
+
 done
 
 if [ "${ERRORS}" -ne 0 ]; then

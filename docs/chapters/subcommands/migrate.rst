@@ -13,7 +13,7 @@ port by supplying it as in ``user@host:port``.
 
   ishmael ~ # bastille migrate help
   Usage: bastille migrate [option(s)] TARGET USER@HOST[:PORT]
-  
+
       Examples:
 
       bastille migrate attica migrate@192.168.10.100
