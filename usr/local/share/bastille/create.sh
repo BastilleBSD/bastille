@@ -700,12 +700,12 @@ create_jail() {
             _ifconfig="${_ifconfig_inet}"
             _ifconfig6="${_ifconfig_inet6}"
 
-            # Use interface name as EPAIR and VNET when PASSTHROUGH is selected
+            # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
             # Use default "vnet0" otherwise
-            if [ -n "${VNET_JAIL_PASSTHROUGH}" ]; then
-                bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg VNET="${IF}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+            if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
+                bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
             else
-                bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
             fi
 
             # Add VLAN ID if it was given
@@ -716,6 +716,7 @@ create_jail() {
         fi
     fi
 
+    # Apply thick/clone/empty/linux/thin template
     if [ -n "${THICK_JAIL}" ]; then
         if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
@@ -778,7 +779,7 @@ THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
 VNET_JAIL_BRIDGE=""
-VNET_JAIL_PASSTHROUGH=""
+VNET_JAIL_PASSTHROUGH=0
 VLAN_ID=""
 LINUX_JAIL=""
 STATIC_MAC=""
@@ -829,7 +830,7 @@ while [ $# -gt 0 ]; do
             ;;
         -n|--nameserver)
             OPT_NAMESERVER="${2}"
-	    # Validate nameserver
+            # Validate nameserver
             if [ -n "${OPT_NAMESERVER}" ]; then
                 for _nameserver in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
                     if ! validate_ip "${_nameserver}" >/dev/null 2>/dev/null; then
@@ -838,14 +839,6 @@ while [ $# -gt 0 ]; do
                 done
             fi
             shift 2
-            ;;
-        -p|--priority)
-	    if echo "${2}" | grep -Eoq "^[0-9]+$"; then
-                PRIORITY="${2}"
-		shift 2
-	    else
-                error_exit "Not a valid priority value: \"${2}\""
-	    fi
             ;;
         --no-boot)
             BOOT="off"
@@ -859,6 +852,14 @@ while [ $# -gt 0 ]; do
             VNET_JAIL="1"
             VNET_JAIL_PASSTHROUGH="1"
             shift
+            ;;
+        -p|--priority)
+            if echo "${2}" | grep -Eoq "^[0-9]+$"; then
+                PRIORITY="${2}"
+                shift 2
+            else
+                error_exit "Not a valid priority value: \"${2}\""
+            fi
             ;;
         -T|--thick)
             THICK_JAIL="1"
@@ -909,19 +910,23 @@ while [ $# -gt 0 ]; do
 done
 
 # Validate options
+# Do not allow EMPTY_JAIL with any other jail type
 if [ -n "${EMPTY_JAIL}" ]; then
     if [ -n "${CLONE_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
         error_exit "[ERROR]: Empty jail option can't be used with other options."
     fi
+# Do not allow LINUX_JAIL with any other jail type
 elif [ -n "${LINUX_JAIL}" ]; then
     if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${CLONE_JAIL}" ]; then
         error_exit "[ERROR]: Linux jail option can't be used with other options."
     fi
+# Do not allow CLONE_JAIL and THICK_JAIL together
 elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
     error_exit "[ERROR]: Clonejail and Thickjail can't be used together."
+# VLAN_ID can only be used with VNET jails
 elif [ -z "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ] && [ -n "${VLAN_ID}" ]; then
     error_exit "[ERROR]: VLANs can only be used with VNET and bridged VNET jails."
-# Don't allow -B and -P together
+# Don't allow VNET_JAIL_BRIDGE and VNET_JAIL_PASSTHROUGH together
 elif [ -n "${VNET_JAIL_BRIDGE}" ] && [ -n "${VNET_JAIL_PASSTHROUGH}" ]; then
     error_exit "[ERROR]: [-B|--bridge] and [-P|--passthrough] cannot be used together."
 fi
