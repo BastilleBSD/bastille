@@ -34,28 +34,29 @@
 
 usage() {
     # Build an independent usage for the create command
-    # If no option specified, will create a thin container by default
+    # If no option specified, will create a thin jail by default
     error_notify "Usage: bastille create [option(s)] NAME RELEASE IP [INTERFACE]"
     cat << EOF
 
     Options:
 
-    -B | --bridge                            Enable VNET, and attach to a specified, already existing external bridge.
-    -C | --clone                             Create a clone jail.
-    -D | --dual                              Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
-    -E | --empty                             Create an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
-    -g | --gateway IP                        Specify a default router/gateway for the jail.
-    -L | --linux                             Create a Linux jail (experimental).
-    -M | --static-mac                        Generate a static MAC address for jail (VNET only).
-    -n | --nameserver IP,IP                  Specify nameserver(s) for the jail. Comma separated.
-         --no-validate                       Do not validate the release when creating the jail.
-         --no-boot                           Create jail with boot=off.
-    -p | --priority VALUE                    Set priority value for jail.
-    -T | --thick                             Creates a thick container, they consume more space as they are self contained and independent.
-    -V | --vnet                              Enable VNET, and attach to an existing, physical interface.
-    -v | --vlan VLANID                       Creates the jail with specified VLAN ID (VNET only).
-    -x | --debug                             Enable debug mode.
-    -Z | --zfs-opts zfs,options              Comma separated list of ZFS options to create the jail with. This overrides the defaults.
+    -B | --bridge                   Enable VNET, and attach to a specified, already existing bridge.
+    -C | --clone                    Create a clone jail.
+    -D | --dual                     Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
+    -E | --empty                    Create an empty jail, intended for custom jail builds (thin/thick/linux or unsupported).
+    -g | --gateway IP               Specify a default router/gateway for the jail.
+    -L | --linux                    Create a Linux jail (experimental).
+    -M | --static-mac               Generate a static MAC address for jail (VNET only).
+    -n | --nameserver IP,IP         Specify nameserver(s) for the jail. Comma separated.
+         --no-validate              Do not validate the release when creating the jail.
+         --no-boot                  Create jail with boot=off.
+    -P | --passthrough              Enable VNET, and pass the specified interface into the jail.
+    -p | --priority VALUE           Set priority value for the jail.
+    -T | --thick                    Create a thick jail. This is an entirely self contained and independant jail.
+    -V | --vnet                     Enable VNET, and attach to an existing, physical interface.
+    -v | --vlan VLANID              Creates the jail with specified VLAN ID (VNET only).
+    -x | --debug                    Enable debug mode.
+    -Z | --zfs-opts zfs,options     Comma separated list of ZFS options to create the jail with. This overrides the defaults.
 
 EOF
     exit 1
@@ -645,21 +646,21 @@ create_jail() {
     fi
 
     if [ -n "${VNET_JAIL}" ]; then
+
         if [ -n "${bastille_template_vnet}" ]; then
 
-            ## rename interface to generic vnet0
+            # Retrieve epair name from jail.conf
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//; s/-/_/g')
             _gateway=''
             _gateway6=''
             _ifconfig_inet=''
             _ifconfig_inet6=''
 
-            # Determine default gateway option
+            # Check for DHCP
             if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
-                # Enable DHCP if requested
-                _ifconfig_inet=SYNCDHCP
+                _ifconfig_inet="SYNCDHCP"
             else
-                # Else apply the default gateway
+                # Set Gateway
                 if [ -n "${OPT_GATEWAY}" ]; then
                     _gateway="${OPT_GATEWAY}"
                 elif [ -n "${bastille_network_gateway}" ]; then
@@ -681,7 +682,7 @@ create_jail() {
                     # Enable SLAAC if requested
                     _ifconfig_inet6="${_ifconfig_inet6} accept_rtadv"
                 else
-                    # Else apply the default gateway
+                    # Set Gateway
                     if [ -n "${bastille_network_gateway6}" ]; then
                         _gateway6="${bastille_network_gateway6}"
                     else
@@ -697,15 +698,24 @@ create_jail() {
 
             # We need to pass IP4 and IP6 separately
             _ifconfig="${_ifconfig_inet}"
-	    _ifconfig6="${_ifconfig_inet6}"
-            bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+            _ifconfig6="${_ifconfig_inet6}"
+
+            # Use interface name as EPAIR and VNET when PASSTHROUGH is selected
+            # Use default "vnet0" otherwise
+            if [ -n "${VNET_JAIL_PASSTHROUGH}" ]; then
+                bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg VNET="${IF}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+            else
+                bastille template "${NAME}" ${bastille_template_vnet} --arg EPAIR="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+            fi
 
             # Add VLAN ID if it was given
-	    if [ -n "${VLAN_ID}" ]; then
+            if [ -n "${VLAN_ID}" ]; then
                 bastille template "${NAME}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="${_ifconfig}"
-	    fi
+            fi
+
         fi
     fi
+
     if [ -n "${THICK_JAIL}" ]; then
         if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
@@ -768,6 +778,7 @@ THICK_JAIL=""
 CLONE_JAIL=""
 VNET_JAIL=""
 VNET_JAIL_BRIDGE=""
+VNET_JAIL_PASSTHROUGH=""
 VLAN_ID=""
 LINUX_JAIL=""
 STATIC_MAC=""
@@ -844,6 +855,11 @@ while [ $# -gt 0 ]; do
             VALIDATE_RELEASE=""
             shift
             ;;
+        -P|--passthrough)
+            VNET_JAIL="1"
+            VNET_JAIL_PASSTHROUGH="1"
+            shift
+            ;;
         -T|--thick)
             THICK_JAIL="1"
             shift
@@ -877,6 +893,7 @@ while [ $# -gt 0 ]; do
                     E) EMPTY_JAIL=1 ;;
                     L) LINUX_JAIL=1 ;;
                     M) STATIC_MAC=1 ;;
+                    P) VNET_JAIL=1 VNET_JAIL_PASSTHROUGH=1 ;;
                     T) THICK_JAIL=1 ;;
                     V) VNET_JAIL=1 ;;
                     x) enable_debug ;;
@@ -904,6 +921,9 @@ elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
     error_exit "[ERROR]: Clonejail and Thickjail can't be used together."
 elif [ -z "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ] && [ -n "${VLAN_ID}" ]; then
     error_exit "[ERROR]: VLANs can only be used with VNET and bridged VNET jails."
+# Don't allow -B and -P together
+elif [ -n "${VNET_JAIL_BRIDGE}" ] && [ -n "${VNET_JAIL_PASSTHROUGH}" ]; then
+    error_exit "[ERROR]: [-B|--bridge] and [-P|--passthrough] cannot be used together."
 fi
 
 NAME="$1"
@@ -929,13 +949,17 @@ if [ -n "${NAME}" ]; then
 fi
 
 # Validate interface type
-if [ -n "${VNET_JAIL}" ] && [ -n "${VNET_JAIL_BRIDGE}" ]; then
+if [ -n "${VNET_JAIL_BRIDGE}" ]; then
     if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
         error_exit "[ERROR]: Interface is not a bridge: ${INTERFACE}"
     fi
 elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
     if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
         error_exit "[ERROR]: Interface is a bridge: ${INTERFACE}"
+    fi
+elif [ -n "${VNET_JAIL_PASSTHROUGH}" ]; then
+    if ! ifconfig -l | grep -owq "${INTERFACE}"; then
+        error_exit "[ERROR]: Interface does not exist: ${INTERFACE}"
     fi
 fi
 
