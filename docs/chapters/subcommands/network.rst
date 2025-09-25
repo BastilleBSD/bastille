@@ -40,11 +40,11 @@ network TARGET remove INTERFACE`` while both jails are stopped.
 
       Options:
 
-      -a | --auto                 Start/stop jail(s) if required.
-      -B | --bridge               Add a bridge VNET interface.
-      -M | --static-mac           Generate a static MAC address for the interface (VNET only).
-      -n | --no-ip                Create interface without an IP (VNET only).
-      -P | --passthrough          Add a raw interface.
-      -V | --vnet                 Add a VNET interface.
-      -v | --vlan VLANID          Assign VLAN ID to interface (VNET only).
-      -x | --debug                Enable debug mode.
+      -a | --auto            Start/stop jail(s) if required.
+      -B | --bridge          Add a bridge VNET interface.
+      -M | --static-mac      Generate a static MAC address for the interface (VNET only).
+      -n | --no-ip           Create interface without an IP (VNET only).
+      -P | --passthrough     Add a raw interface.
+      -V | --vnet            Add a VNET interface.
+      -v | --vlan VLANID     Assign VLAN ID to interface (VNET only).
+      -x | --debug           Enable debug mode.
