@@ -70,7 +70,7 @@ validate_name() {
     # Make sure NAME has only allowed characters
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
-    elif [ -n "${VNET_JAIL}" ] && echo "${NAME_VERIFY}" | grep -qE '(-|_)'; then
+    elif [ "${VNET_JAIL}" -eq 1 ] && echo "${NAME_VERIFY}" | grep -qE '(-|_)'; then
         error_exit "[ERROR]: VNET jail names may not contain (-|_) characters."
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "[ERROR]: Jail names may not contain special characters!"
@@ -90,13 +90,13 @@ validate_ip() {
         local ipx_addr="ip6.addr"
     else
         if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
-	        if [ -n "${VNET_JAIL}" ]; then
+	        if [ "${VNET_JAIL}" -eq 1 ]; then
                 error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
 	        else
                 info "\nValid: (${_ip})."
 	        fi
         elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ] || [ "${_ip}" = "0.0.0.0" ]; then
-	        if [ -z "${VNET_JAIL}" ]; then
+	        if [ "${VNET_JAIL}" -eq 0 ]; then
                 error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${_ip})."
 	        else
                 info "\nValid: (${_ip})."
@@ -140,7 +140,7 @@ validate_ip() {
 
     # Determine IP/Interface mode
     if [ "${_ip}" = "inherit" ]; then
-        if [ -n "${DUAL_STACK}" ]; then
+        if [ "${DUAL_STACK}" -eq 1 ]; then
             IP4_DEFINITION="ip4 = ${_ip};"
             IP6_DEFINITION="ip6 = ${_ip};"
             IP6_MODE="new"
@@ -150,7 +150,7 @@ validate_ip() {
             IP6_MODE="disable"
         fi
     elif [ "${_ip}" = "ip_hostname" ]; then
-        if [ -n "${DUAL_STACK}" ]; then
+        if [ "${DUAL_STACK}" -eq 1 ]; then
             IP_HOSTNAME="${_ip}"
             IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION="${IP_HOSTNAME};"
@@ -162,7 +162,7 @@ validate_ip() {
             IP6_MODE="disable"
         fi
     elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SLAAC" ] || [ "${_ip}" = "0.0.0.0" ]; then
-        if [ -n "${VNET_JAIL}" ]; then
+        if [ "${VNET_JAIL}" -eq 1 ]; then
             if [ "${ipx_addr}" = "ip4.addr" ]; then
                 IP4_ADDR="${_ip}"
             elif [ "${ipx_addr}" = "ip6.addr" ]; then
@@ -203,7 +203,7 @@ validate_netif() {
 
     if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         error_exit "[ERROR]: Invalid: (${INTERFACE})."
-    elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
+    elif [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
         for _bridge in $(ifconfig -g bridge | grep -vw "${INTERFACE}bridge"); do
             if ifconfig ${_bridge} | grep "member" | grep -owq "${INTERFACE}"; then
                 error_exit "[ERROR]: Interface (${INTERFACE}) is already a member of bridge: ${_bridge}"
@@ -212,8 +212,9 @@ validate_netif() {
     else
         info "\nValid: (${INTERFACE})."
     fi
-    # Don't allow dots in INTERFACE if -V
-    if [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
+
+    # Don't allow dots in INTERFACE for -V|--vnet jails
+    if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
         if echo "${INTERFACE}" | grep -q "\."; then
 	    error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
         fi
@@ -224,7 +225,7 @@ validate_release() {
 
     ## ensure the user set the Linux(experimental) option explicitly
     if [ -n "${UBUNTU}" ]; then
-        if [ -z "${LINUX_JAIL}" ]; then
+        if [ "${LINUX_JAIL}" -eq 0 ]; then
             usage
         fi
     fi
@@ -310,7 +311,7 @@ generate_vnet_jail_conf() {
         devfs_ruleset_value=13
     fi
 
-    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_JAIL_BRIDGE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
+    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_INTERFACE_TYPE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
 
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
@@ -335,7 +336,6 @@ EOF
 post_create_jail() {
 
     # Common config checks and settings.
-
     # Using relative paths here.
     # MAKE SURE WE'RE IN THE RIGHT PLACE.
     cd "${bastille_jail_path}" || error_exit "Could not access directory: ${bastille_jail_path}"
@@ -353,7 +353,7 @@ post_create_jail() {
     fi
 
     if [ ! -f "${bastille_jail_fstab}" ]; then
-        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+        if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
         else
             touch "${bastille_jail_fstab}"
@@ -361,7 +361,7 @@ post_create_jail() {
     fi
 
     # Generate the jail configuration file.
-    if [ -n "${VNET_JAIL}" ]; then
+    if [ "${VNET_JAIL}" -eq 1 ]; then
         generate_vnet_jail_conf
     else
         generate_jail_conf
@@ -386,21 +386,21 @@ create_jail() {
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
                 ## create required zfs datasets, mountpoint inherited from system
-                if [ -z "${CLONE_JAIL}" ]; then
+                if [ "${CLONE_JAIL}" -eq 0 ]; then
                     if ! zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"; then
-		        error_exit "[ERROR]: Failed to create jail dataset: ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
-	            fi
+                        error_exit "[ERROR]: Failed to create jail dataset: ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}"
+                    fi
                 fi
-                if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+                if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
                     if ! zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"; then
-		        error_exit "[ERROR]: Failed to create jail root dataset: ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-	            fi
+                        error_exit "[ERROR]: Failed to create jail root dataset: ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                    fi
                 fi
             fi
         else
             if ! mkdir -p "${bastille_jailsdir}/${NAME}/root"; then
-	        error_exit "[ERROR]: Failed to create jail directory: ${bastille_jailsdir}/${NAME}/root"
-	    fi
+                error_exit "[ERROR]: Failed to create jail directory: ${bastille_jailsdir}/${NAME}/root"
+            fi
         fi
     # Check if the jail directory has been mounted under UFS (not supported)
     elif [ ! -d "${bastille_jailsdir}/${NAME}/root" ] && ! checkyesno bastille_zfs_enable; then
@@ -411,7 +411,7 @@ create_jail() {
 
 
     ## PoC for Linux jails @hackacad
-    if [ -n "${LINUX_JAIL}" ]; then
+    if [ "${LINUX_JAIL}" -eq 1 ]; then
         info "\nCreating a linuxjail. This may take a while...\n"
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
@@ -455,8 +455,8 @@ create_jail() {
         fi
     fi
 
-    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
-        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+    if [ "${EMPTY_JAIL}" -eq 0 ] && [ "${LINUX_JAIL}" -eq 0 ]; then
+        if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             if [ ! -d "${bastille_jail_base}" ]; then
                 mkdir -p "${bastille_jail_base}"
             fi
@@ -472,7 +472,7 @@ create_jail() {
         # Check and apply required settings.
         post_create_jail
 
-        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+        if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
             info "\nCreating a thinjail..."
             for _link in ${LINK_LIST}; do
@@ -488,7 +488,7 @@ create_jail() {
             fi
         fi
 
-        if [ -z "${THICK_JAIL}" ] && [ -z "${CLONE_JAIL}" ]; then
+        if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             ## rw
             ## copy only required files for thin jails
             FILE_LIST=".cshrc .profile COPYRIGHT dev etc media mnt net proc root tmp var usr/obj usr/tests"
@@ -504,7 +504,7 @@ create_jail() {
         else
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
-                    if [ -n "${CLONE_JAIL}" ]; then
+                    if [ "${CLONE_JAIL}" -eq 1 ]; then
                         info "\nCreating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
@@ -516,7 +516,7 @@ create_jail() {
 
                         # Check and apply required settings.
                         post_create_jail
-                    elif [ -n "${THICK_JAIL}" ]; then
+                    elif [ "${THICK_JAIL}" -eq 1 ]; then
 
                         info "\nCreating a thickjail. This may take a while..."
 
@@ -566,7 +566,7 @@ create_jail() {
             fi
         fi
 
-        if [ -z "${LINUX_JAIL}" ]; then
+        if [ "${LINUX_JAIL}" -eq 0 ]; then
             ## create home directory if missing
             if [ ! -d "${bastille_jail_path}/usr/home" ]; then
                 mkdir -p "${bastille_jail_path}/usr/home"
@@ -594,9 +594,9 @@ create_jail() {
             sed -i '' 's|[0-9],[0-9]\{2\}.*[0-9]-[0-9].*root.*kerntz -a|#& # Disabled by bastille|' "etc/crontab"
         fi
 
-        ## VNET specific
-        if [ -n "${VNET_JAIL}" ]; then
-            ## VNET requires jib or jng script
+        # VNET specific
+        if [ "${VNET_JAIL}" -eq 1 ]; then
+            # VNET requires jib or jng script
             if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
                 if [ ! "$(command -v jib)" ]; then
                     if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
@@ -611,10 +611,10 @@ create_jail() {
                 fi
             fi
         fi
-    elif [ -n "${LINUX_JAIL}" ]; then
+    elif [ "${LINUX_JAIL}" -eq 1 ]; then
         ## Generate configuration for Linux jail
         generate_linux_jail_conf
-    elif [ -n "${EMPTY_JAIL}" ]; then
+    elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         ## Generate minimal configuration for empty jail
         generate_minimal_conf
     fi
@@ -622,15 +622,15 @@ create_jail() {
     # Set strict permissions on the jail by default
     chmod 0700 "${bastille_jailsdir}/${NAME}"
 
-    # Apply boot, depends and priority settings before starting jail
+    # Apply boot, depend and priority settings before starting jail
     sysrc -f "${bastille_jailsdir}/${NAME}/settings.conf" boot=${BOOT} >/dev/null
     sysrc -f "${bastille_jailsdir}/${NAME}/settings.conf" depend="" >/dev/null
     sysrc -f "${bastille_jailsdir}/${NAME}/settings.conf" priority="${PRIORITY}" >/dev/null
 
     # Jail must be started before applying the default template. -- cwells
-    if [ -z "${EMPTY_JAIL}" ]; then
+    if [ "${EMPTY_JAIL}" -eq 0 ]; then
         bastille start "${NAME}"
-    elif [ -n "${EMPTY_JAIL}" ]; then
+    elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         # Don't start empty jails unless a template defined.
         if [ -n "${bastille_template_empty}" ]; then
             bastille start "${NAME}"
@@ -638,14 +638,14 @@ create_jail() {
     fi
 
     # Exit if jail was not started, except for empty jails
-    if [ -z "${EMPTY_JAIL}" ]; then
+    if [ "${EMPTY_JAIL}" -eq 0 ]; then
         if ! check_target_is_running "${NAME}"; then
             bastille destroy -afy "${NAME}"
             error_exit "[ERROR]: Failed to create jail: ${NAME}"
         fi
     fi
 
-    if [ -n "${VNET_JAIL}" ]; then
+    if [ "${VNET_JAIL}" -eq 1 ]; then
 
         if [ -n "${bastille_template_vnet}" ]; then
 
@@ -672,7 +672,7 @@ create_jail() {
 
             # Add IPv4 address (this is empty if DHCP is used)
             if [ -n "${IP4_ADDR}" ]; then
-                _ifconfig_inet="${_ifconfig_inet} inet ${IP4_ADDR}"
+                _ifconfig_inet="inet ${IP4_ADDR}"
             fi
 
             # Enable IPv6 if used
@@ -717,20 +717,20 @@ create_jail() {
     fi
 
     # Apply thick/clone/empty/linux/thin template
-    if [ -n "${THICK_JAIL}" ]; then
+    if [ "${THICK_JAIL}" -eq 1 ]; then
         if [ -n "${bastille_template_thick}" ]; then
             bastille template "${NAME}" ${bastille_template_thick} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
-    elif [ -n "${CLONE_JAIL}" ]; then
+    elif [ "${CLONE_JAIL}" -eq 1 ]; then
         if [ -n "${bastille_template_clone}" ]; then
             bastille template "${NAME}" ${bastille_template_clone} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
-    elif [ -n "${EMPTY_JAIL}" ]; then
+    elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         if [ -n "${bastille_template_empty}" ]; then
             bastille template "${NAME}" ${bastille_template_empty} --arg BASE_TEMPLATE="${bastille_template_base}" --arg HOST_RESOLV_CONF="${bastille_resolv_conf}"
         fi
     ## Using templating function to fetch necessary packges @hackacad
-    elif [ -n "${LINUX_JAIL}" ]; then
+    elif [ "${LINUX_JAIL}" -eq 1 ]; then
         info "\nFetching packages..."
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
@@ -753,9 +753,9 @@ create_jail() {
     fi
 
     # Apply values changed by the template. -- cwells
-    if [ -z "${EMPTY_JAIL}" ] && [ -z "${LINUX_JAIL}" ]; then
+    if [ "${EMPTY_JAIL}" -eq 0 ] && [ "${LINUX_JAIL}" -eq 0 ]; then
         bastille restart "${NAME}"
-    elif [ -n "${EMPTY_JAIL}" ]; then
+    elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         # Don't restart empty jails unless a template defined.
         if [ -n "${bastille_template_empty}" ]; then
             bastille restart "${NAME}"
@@ -774,17 +774,18 @@ fi
 
 # Handle options.
 BOOT="on"
-EMPTY_JAIL=""
-THICK_JAIL=""
-CLONE_JAIL=""
-VNET_JAIL=""
-VNET_JAIL_BRIDGE=""
+EMPTY_JAIL=0
+THICK_JAIL=0
+CLONE_JAIL=0
+VNET_JAIL=0
+VNET_JAIL_STANDARD=0
+VNET_JAIL_BRIDGE=0
 VNET_JAIL_PASSTHROUGH=0
 VLAN_ID=""
-LINUX_JAIL=""
-STATIC_MAC=""
-DUAL_STACK=""
-VALIDATE_RELEASE="1"
+LINUX_JAIL=0
+STATIC_MAC=0
+DUAL_STACK=0
+VALIDATE_RELEASE=1
 PRIORITY="99"
 OPT_GATEWAY=""
 OPT_NAMESERVER=""
@@ -794,25 +795,25 @@ while [ $# -gt 0 ]; do
             usage
             ;;
         -B|--bridge)
-            VNET_JAIL="1"
-            VNET_JAIL_BRIDGE="1"
+            VNET_JAIL=1
+            VNET_JAIL_BRIDGE=1
             shift
             ;;
         -C|--clone)
-            CLONE_JAIL="1"
+            CLONE_JAIL=1
             shift
             ;;
         -D|--dual)
-            DUAL_STACK="1"
+            DUAL_STACK=1
             shift
             ;;
         -E|--empty)
-            EMPTY_JAIL="1"
+            EMPTY_JAIL=1
             shift
             ;;
         -g|--gateway|--defaultrouter)
             OPT_GATEWAY="${2}"
-	    # Validate gateway
+            # Validate gateway
             if [ -n "${OPT_GATEWAY}" ]; then
                 if ! validate_ip "${OPT_GATEWAY}" >/dev/null 2>/dev/null; then
                     error_exit "[ERROR]: Not a valid gateway: ${OPT_GATEWAY}"
@@ -821,11 +822,11 @@ while [ $# -gt 0 ]; do
             shift 2
             ;;
         -L|--linux)
-            LINUX_JAIL="1"
+            LINUX_JAIL=1
             shift
             ;;
         -M|--static-mac)
-            STATIC_MAC="1"
+            STATIC_MAC=1
             shift
             ;;
         -n|--nameserver)
@@ -845,12 +846,12 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         --no-validate|no-validate)
-            VALIDATE_RELEASE=""
+            VALIDATE_RELEASE=0
             shift
             ;;
         -P|--passthrough)
-            VNET_JAIL="1"
-            VNET_JAIL_PASSTHROUGH="1"
+            VNET_JAIL=1
+            VNET_JAIL_PASSTHROUGH=1
             shift
             ;;
         -p|--priority)
@@ -862,11 +863,12 @@ while [ $# -gt 0 ]; do
             fi
             ;;
         -T|--thick)
-            THICK_JAIL="1"
+            THICK_JAIL=1
             shift
             ;;
         -V|--vnet)
-            VNET_JAIL="1"
+            VNET_JAIL=1
+            VNET_JAIL_STANDARD=1
             shift
             ;;
         -v|--vlan)
@@ -896,7 +898,7 @@ while [ $# -gt 0 ]; do
                     M) STATIC_MAC=1 ;;
                     P) VNET_JAIL=1 VNET_JAIL_PASSTHROUGH=1 ;;
                     T) THICK_JAIL=1 ;;
-                    V) VNET_JAIL=1 ;;
+                    V) VNET_JAIL=1 VNET_JAIL_STANDARD=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
@@ -911,24 +913,38 @@ done
 
 # Validate options
 # Do not allow EMPTY_JAIL with any other jail type
-if [ -n "${EMPTY_JAIL}" ]; then
-    if [ -n "${CLONE_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${LINUX_JAIL}" ]; then
+if [ "${EMPTY_JAIL}" -eq 1 ]; then
+    if [ "${CLONE_JAIL}" -eq 1 ] || [ "${THICK_JAIL}" -eq 1 ] || [ "${VNET_JAIL}" -eq 1 ] || [ "${LINUX_JAIL}" -eq 1 ]; then
         error_exit "[ERROR]: Empty jail option can't be used with other options."
     fi
 # Do not allow LINUX_JAIL with any other jail type
-elif [ -n "${LINUX_JAIL}" ]; then
-    if [ -n "${EMPTY_JAIL}" ] || [ -n "${VNET_JAIL}" ] || [ -n "${THICK_JAIL}" ] || [ -n "${CLONE_JAIL}" ]; then
+elif [ "${LINUX_JAIL}" -eq 1 ]; then
+    if [ "${EMPTY_JAIL}" -eq 1 ] || [ "${VNET_JAIL}" -eq 1 ] || [ "${THICK_JAIL}" -eq 1 ] || [ "${CLONE_JAIL}" -eq 1 ]; then
         error_exit "[ERROR]: Linux jail option can't be used with other options."
     fi
 # Do not allow CLONE_JAIL and THICK_JAIL together
-elif [ -n "${CLONE_JAIL}" ] && [ -n "${THICK_JAIL}" ]; then
+elif [ "${CLONE_JAIL}" -eq 1 ] && [ "${THICK_JAIL}" -eq 1 ]; then
     error_exit "[ERROR]: Clonejail and Thickjail can't be used together."
 # VLAN_ID can only be used with VNET jails
-elif [ -z "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ] && [ -n "${VLAN_ID}" ]; then
-    error_exit "[ERROR]: VLANs can only be used with VNET and bridged VNET jails."
-# Don't allow VNET_JAIL_BRIDGE and VNET_JAIL_PASSTHROUGH together
-elif [ -n "${VNET_JAIL_BRIDGE}" ] && [ -n "${VNET_JAIL_PASSTHROUGH}" ]; then
-    error_exit "[ERROR]: [-B|--bridge] and [-P|--passthrough] cannot be used together."
+elif [ "${VNET_JAIL}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
+    error_exit "[ERROR]: VLANs can only be used with VNET jails."
+# Don't allow multiple VNET jail types
+elif { [ "${VNET_JAIL_STANDARD}" -eq 1 ] && [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; } || \
+     { [ "${VNET_JAIL_STANDARD}" -eq 1 ] && [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; } || \
+     { [ "${VNET_JAIL_BRIDGE}" -eq 1 ] && [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; } then
+    error_exit "[ERROR]: Only one of [-V|--vnet], [-B|--bridge] or [-P|--passthrough] can be selected."
+# Don't allow STATIC_MAC with VNET_JAIL_PASSTHROUGH
+elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ] && [ "${STATIC_MAC}" -eq 1 ]; then
+    error_exit "[ERROR]: [-P|--passthrough] does not support [-M|--static-mac]."
+fi
+
+# Set interface type for VNET jails
+if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
+    VNET_INTERFACE_TYPE="standard"
+elif [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; then
+    VNET_INTERFACE_TYPE="bridge"
+elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
+    VNET_INTERFACE_TYPE="passthrough"
 fi
 
 NAME="$1"
@@ -938,7 +954,7 @@ INTERFACE="$4"
 
 info "\nAttempting to create jail: ${NAME}"
 
-if [ -n "${EMPTY_JAIL}" ]; then
+if [ "${EMPTY_JAIL}" -eq 1 ]; then
     if [ $# -ne 1 ]; then
         usage
     fi
@@ -954,26 +970,27 @@ if [ -n "${NAME}" ]; then
 fi
 
 # Validate interface type
-if [ -n "${VNET_JAIL_BRIDGE}" ]; then
+if [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; then
     if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
         error_exit "[ERROR]: Interface is not a bridge: ${INTERFACE}"
     fi
-elif [ -n "${VNET_JAIL}" ] && [ -z "${VNET_JAIL_BRIDGE}" ]; then
+elif [ "${VNET_INTERFACE_TYPE}" = "standard" ]; then
     if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
         error_exit "[ERROR]: Interface is a bridge: ${INTERFACE}"
     fi
-elif [ -n "${VNET_JAIL_PASSTHROUGH}" ]; then
+elif [ "${VNET_INTERFACE_TYPE}" = "passthrough" ]; then
     if ! ifconfig -l | grep -owq "${INTERFACE}"; then
         error_exit "[ERROR]: Interface does not exist: ${INTERFACE}"
     fi
 fi
 
 # Do not allow netgraph with -B|--bridge yet...
-if [ "${bastille_network_vnet_type}" = "netgraph" ] && [ -n "${VNET_JAIL_BRIDGE}" ]; then
-    error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] option."
+if { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } || \
+   { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } then
+    error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] or [-P|--passthrough] option."
 fi
 
-if [ -n "${LINUX_JAIL}" ] && [ -n "${VALIDATE_RELEASE}" ]; then
+if [ "${LINUX_JAIL}" -eq 1 ] && [ "${VALIDATE_RELEASE}" -eq 1 ]; then
     case "${RELEASE}" in
     bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
         ## check for FreeBSD releases name
@@ -1006,8 +1023,8 @@ if [ -n "${LINUX_JAIL}" ] && [ -n "${VALIDATE_RELEASE}" ]; then
     esac
 fi
 
-if [ -z "${EMPTY_JAIL}" ]; then
-    if [ -n "${VALIDATE_RELEASE}" ]; then
+if [ "${EMPTY_JAIL}" -eq 0 ]; then
+    if [ "${VALIDATE_RELEASE}" -eq 1 ]; then
         ## verify release
         case "${RELEASE}" in
         [2-4].[0-9]*)
@@ -1106,7 +1123,7 @@ if [ -z "${EMPTY_JAIL}" ]; then
     if [ -n "${INTERFACE}" ]; then
         validate_netif
         validate_netconf
-    elif [ -n "${VNET_JAIL}" ]; then
+    elif [ "${VNET_JAIL}" -eq 1 ]; then
         if [ -z "${INTERFACE}" ]; then
             if [ -z "${bastille_network_shared}" ]; then
                 # User must specify interface on vnet jails.
