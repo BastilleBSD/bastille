@@ -39,14 +39,14 @@ usage() {
 
     Options:
 
-    -a | --auto                 Start/stop jail(s) if required.
-    -B | --bridge               Add a bridge VNET interface.
-    -M | --static-mac           Generate a static MAC address for the interface (VNET only).
-    -n | --no-ip                Create interface without an IP (VNET only).
-    -P | --passthrough          Add a raw interface.
-    -V | --vnet                 Add a VNET interface.
-    -v | --vlan VLANID          Assign VLAN ID to interface (VNET only).
-    -x | --debug                Enable debug mode.
+    -a | --auto            Start/stop jail(s) if required.
+    -B | --bridge          Add a bridge VNET interface.
+    -M | --static-mac      Generate a static MAC address for the interface (VNET only).
+    -n | --no-ip           Create interface without an IP (VNET only).
+    -P | --passthrough     Add a raw interface.
+    -V | --vnet            Add a VNET interface.
+    -v | --vlan VLANID     Assign VLAN ID to interface (VNET only).
+    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
@@ -443,18 +443,18 @@ EOF
 }
 EOF
         # Add config to /etc/rc.conf
-	if [ -n "${IP6_ADDR}" ]; then
+	    if [ -n "${IP6_ADDR}" ]; then
             if [ "${IP6_ADDR}" = "SLAAC" ]; then
-                sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if}_ipv6="inet6 -ifdisabled accept_rtadv"
             else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if}_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
             fi
         elif [ -n "${IP4_ADDR}" ]; then
             # If 0.0.0.0 set DHCP, else set static IP address
             if [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
-                sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="SYNCDHCP"
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if}="SYNCDHCP"
             else
-                sysrc -f "${_jail_rc_config}" ifconfig_${_jail_vnet}="inet ${IP4_ADDR}"
+                sysrc -f "${_jail_rc_config}" ifconfig_${_if}="inet ${IP4_ADDR}"
             fi
         fi
         echo "Added Passthrough interface: \"${_if}\""
