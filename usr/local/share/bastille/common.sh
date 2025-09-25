@@ -447,7 +447,7 @@ EOF
 EOF
             fi
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-            if [ "${static_mac}" - eq 1 ]; then
+            if [ "${static_mac}" -eq 1 ]; then
                 # Generate VNET config with static MAC address
                 generate_static_mac "${jail_name}" "${external_interface}"
                 cat <<-EOF
