@@ -144,7 +144,13 @@ jail_update() {
             -j "${_jailname}" \
             -d "${_workdir}" \
             -f "${_freebsd_update_conf}" \
-            fetch install
+            fetch
+            env PAGER="/bin/cat" freebsd-update ${OPTION} \
+            --not-running-from-cron \
+            -j "${_jailname}" \
+            -d "${_workdir}" \
+            -f "${_freebsd_update_conf}" \
+            install
         fi
     fi
 }
