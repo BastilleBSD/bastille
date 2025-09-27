@@ -349,50 +349,55 @@ generate_static_mac() {
 generate_vnet_jail_netblock() {
 
     local jail_name="${1}"
-    local use_unique_bridge="${2}"
+    # interface_type can be "standard" "bridge" or "passthrough"
+    local interface_type="${2}"
     local external_interface="${3}"
     local static_mac="${4}"
 
+    # Set epair/interface values for host/jail
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-        if [ -n "${use_unique_bridge}" ]; then
+        if [ "${interface_type}" = "bridge" ]; then
             if [ "$(echo -n "e0a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                 local host_epair=e0a_${jail_name}
                 local jail_epair=e0b_${jail_name}
             else
-            name_prefix="$(echo ${jail_name} | cut -c1-7)"
-            name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-            local host_epair="e0a_${name_prefix}xx${name_suffix}"
+                name_prefix="$(echo ${jail_name} | cut -c1-7)"
+                name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
+                local host_epair="e0a_${name_prefix}xx${name_suffix}"
                 local jail_epair="e0b_${name_prefix}xx${name_suffix}"
             fi
-        else
+        elif [ "${interface_type}" = "standard" ]; then
             if [ "$(echo -n "e0a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                 local host_epair=e0a_${jail_name}
                 local jail_epair=e0b_${jail_name}
-            local jib_epair=${jail_name}
+                local jib_epair=${jail_name}
             else
-            name_prefix="$(echo ${jail_name} | cut -c1-7)"
-            name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-            local host_epair="e0a_${name_prefix}xx${name_suffix}"
+                name_prefix="$(echo ${jail_name} | cut -c1-7)"
+                name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
+                local host_epair="e0a_${name_prefix}xx${name_suffix}"
                 local jail_epair="e0b_${name_prefix}xx${name_suffix}"
                 local jib_epair="${name_prefix}xx${name_suffix}"
-        fi
+            fi
+        elif [ "${interface_type}" = "passthrough" ]; then
+            host_epair="${external_interface}"
+            jail_epair="${external_interface}"
         fi
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
         if [ "$(echo -n "ng0_${jail_name}" | awk '{print length}')" -lt 16 ]; then
             local ng_if=ng0_${jail_name}
-        local jng_if=${jail_name}
+            local jng_if=${jail_name}
         else
-        name_prefix="$(echo ${jail_name} | cut -c1-7)"
-        name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-        local ng_if="ng0_${name_prefix}xx${name_suffix}"
+            name_prefix="$(echo ${jail_name} | cut -c1-7)"
+            name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
+            local ng_if="ng0_${name_prefix}xx${name_suffix}"
             local jng_if="${name_prefix}xx${name_suffix}"
         fi
     fi
 
-    ## If BRIDGE is enabled, generate bridge config, else generate VNET config
-    if [ -n "${use_unique_bridge}" ]; then
-        if [ -n "${static_mac}" ]; then
-            ## Generate bridged VNET config with static MAC address
+    # VNET_JAIL_BRIDGE
+    if [ "${interface_type}" = "bridge" ]; then
+        if [ "${static_mac}" -eq 1 ]; then
+            # Generate BRIDGE config with static MAC address
             generate_static_mac "${jail_name}" "${external_interface}"
             cat <<-EOF
   vnet;
@@ -405,7 +410,7 @@ generate_vnet_jail_netblock() {
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
         else
-            ## Generate bridged VNET config without static MAC address
+            # Generate BRIDGE config without static MAC address
             cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
@@ -415,10 +420,12 @@ EOF
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
         fi
-    else
+
+    # VNET_JAIL_STANDARD
+    elif [ "${interface_type}" = "standard" ]; then
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-            if [ -n "${static_mac}" ]; then
-                ## Generate VNET config with static MAC address
+            if [ "${static_mac}" -eq 1 ]; then
+                # Generate VNET config with static MAC address
                 generate_static_mac "${jail_name}" "${external_interface}"
                 cat <<-EOF
   vnet;
@@ -430,7 +437,7 @@ EOF
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
             else
-                ## Generate VNET config without static MAC address
+                # Generate VNET config without static MAC address
                 cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
@@ -440,8 +447,8 @@ EOF
 EOF
             fi
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-            if [ -n "${static_mac}" ]; then
-                ## Generate VNET config with static MAC address
+            if [ "${static_mac}" -eq 1 ]; then
+                # Generate VNET config with static MAC address
                 generate_static_mac "${jail_name}" "${external_interface}"
                 cat <<-EOF
   vnet;
@@ -451,7 +458,7 @@ EOF
   exec.poststop += "jng shutdown ${jng_if}";
 EOF
             else
-                ## Generate VNET config without static MAC address
+                # Generate VNET config without static MAC address
                 cat <<-EOF
   vnet;
   vnet.interface = ${ng_if};
@@ -460,6 +467,14 @@ EOF
 EOF
             fi
         fi
+
+    # VNET_JAIL_PASSTHROUGH
+    elif [ "${interface_type}" = "passthrough" ]; then
+        cat <<-EOF
+  vnet;
+  vnet.interface = ${external_interface};
+  exec.prestop += "ifconfig ${external_interface} -vnet ${jail_name}";
+EOF
     fi
 }
 
