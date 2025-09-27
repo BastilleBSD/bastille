@@ -106,6 +106,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 TARGET="${1}"
+ERRORS=0
 
 bastille_root_check
 set_target "${TARGET}"
@@ -116,8 +117,12 @@ for _jail in ${JAILS}; do
     if check_target_is_running "${_jail}"; then
         bastille stop ${_stop_options} ${_jail}
         bastille start ${_start_options} ${_jail}
+    else
+        ERRORS=$((ERRORS + 1))
     fi
 
 done
 
-echo
+if [ "${ERRORS}" -ne 0 ]; then
+    error_exit "[ERROR]: Failed to restart ${ERRORS} jails."
+fi
