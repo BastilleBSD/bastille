@@ -3,8 +3,9 @@ restart
 
 Restart jail(s).
 
-Bastille will only restart targeted jail(s) if they are running. Jails that
-are stopped will not be started.
+Bastille will attempt to stop, the start the targetted jail(s). If a jail is not running, Bastille
+will still start it. To avoide this, run the restart command with ``-i|--ignore`` to skip any jail(s)
+that are not running.
 
 .. code-block:: shell
 
@@ -21,7 +22,8 @@ are stopped will not be started.
 
       Options:
 
-      -b | --boot                 Respect jail boot setting.
-      -d | --delay VALUE          Time (seconds) to wait after starting each jail.
-      -v | --verbose              Print every action on jail restart.
-      -x | --debug                Enable debug mode.
+      -b | --boot            Respect jail boot setting.
+      -d | --delay VALUE     Time (seconds) to wait after starting each jail.
+      -i | --ignore          Ignore stopped jails (do not start if stopped).
+      -v | --verbose         Print every action on jail restart.
+      -x | --debug           Enable debug mode.

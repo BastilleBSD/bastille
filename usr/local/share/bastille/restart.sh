@@ -38,10 +38,11 @@ usage() {
 
     Options:
 
-    -b | --boot                 Respect jail boot setting.
-    -d | --delay VALUE          Time (seconds) to wait after starting each jail.
-    -v | --verbose              Print every action on jail start.
-    -x | --debug                Enable debug mode.
+    -b | --boot            Respect jail boot setting.
+    -d | --delay VALUE     Time (seconds) to wait after starting each jail.
+    -i | --ignore          Ignore stopped jails (do not start if stopped).
+    -v | --verbose         Print every action on jail start.
+    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
@@ -51,6 +52,7 @@ EOF
 # We pass these to start and stop.
 _start_options=""
 _stop_options=""
+IGNORE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -63,6 +65,10 @@ while [ "$#" -gt 0 ]; do
         -d|--delay)
             _start_options="${_start_options} -d ${2}"
             shift 2
+            ;;
+        -i|--ignore)
+            IGNORE=1
+            shift
             ;;
         -v|--verbose)
             _start_options="${_start_options} -v"
@@ -77,20 +83,11 @@ while [ "$#" -gt 0 ]; do
         -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
-                    b)
-                        _start_options="${_start_options} -b"
-                        ;;
-                    v)
-                        _start_options="${_start_options} -v"
-                        _stop_options="${_stop_options} -v"
-                        ;;
-                    x)
-                        _start_options="${_start_options} -x"
-                        _stop_options="${_stop_options} -x"
-                        ;;
-                    *)
-                        error_exit "[ERROR]: Unknown Option: \"${1}\""
-                        ;;
+                    b) _start_options="${_start_options} -b" ;;
+                    i) IGNORE=1 ;;
+                    v) _start_options="${_start_options} -v" _stop_options="${_stop_options} -v" ;;
+                    x) _start_options="${_start_options} -x" _stop_options="${_stop_options} -x" ;;
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -113,16 +110,15 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    # Only restart running jails
-    if check_target_is_running "${_jail}"; then
+    # Restart all jails except if --ignore
+    if [ "${IGNORE}" -eq 0 ]; then
         bastille stop ${_stop_options} ${_jail}
         bastille start ${_start_options} ${_jail}
-    else
-        ERRORS=$((ERRORS + 1))
+    elif [ "${IGNORE}" -eq 1 ]; then
+        if check_target_is_stopped "${_jail}"; then
+            info "\n[${_jail}]:"
+            error_continue "Jail is stopped."
+        fi
     fi
 
 done
-
-if [ "${ERRORS}" -ne 0 ]; then
-    error_exit "[ERROR]: Failed to restart ${ERRORS} jails."
-fi
