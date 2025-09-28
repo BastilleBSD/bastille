@@ -93,10 +93,20 @@ validate_name() {
     local NAME_VERIFY="${NEWNAME}"
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
 
-    if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
+    if echo "${NAME_VERIFY}" | grep -q "[.]"; then
+        error_exit "[ERROR]: Jail names may not contain a dot(.)!"
+    elif [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "[ERROR]: Jail names may not contain special characters!"
+    elif [ "$(bastille config ${TARGET} get vnet)" = "enabled" ]; then
+        if [ "$(echo -n "e0a_${NAME_VERIFY}" | awk '{print length}')" -ge 16 ]; then
+            name_prefix="$(echo ${NAME_VERIFY} | cut -c1-7)"
+            name_suffix="$(echo ${NAME_VERIFY} | rev | cut -c1-2 | rev)"
+            if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_"${name_prefix}"xx"${name_suffix}" 2>/dev/null; then
+                error_exit "[ERROR]: Invalid jail name due to epair naming limitations. See documentation for details."
+            fi
+        fi
     fi
 }
 
