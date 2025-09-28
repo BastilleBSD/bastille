@@ -109,7 +109,7 @@ clone_validate_jail_name() {
         if [ "$(echo -n "e0a_${NEWNAME}" | awk '{print length}')" -ge 16 ]; then
             name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
             name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-            if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_"${name_prefix}"xx"${name_suffix}" 2>/dev/null; then
+            if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_${name_prefix}xx${name_suffix}" 2>/dev/null; then
                 error_exit "[ERROR]: Invalid jail name due to epair naming limitations. See documentation for details."
             fi
         fi
