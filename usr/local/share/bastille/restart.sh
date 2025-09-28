@@ -103,7 +103,6 @@ if [ "$#" -ne 1 ]; then
 fi
 
 TARGET="${1}"
-ERRORS=0
 
 bastille_root_check
 set_target "${TARGET}"
