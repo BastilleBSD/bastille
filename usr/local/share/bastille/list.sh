@@ -156,21 +156,6 @@ get_jail_info() {
     # Get JID value
     JID="$(jls -j ${JAIL_NAME} jid 2>/dev/null)"
 
-    # Get jail type
-    if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
-        JAIL_TYPE="thin"
-    elif [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then
-        JAIL_TYPE="linux"
-    elif checkyesno bastille_zfs_enable; then
-        if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
-            JAIL_TYPE="clone"
-        else
-            JAIL_TYPE="thick"
-        fi
-    else
-        JAIL_TYPE="thick"
-    fi
-
     # Get jail tags
     JAIL_TAGS=""
     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/tags" ]; then
@@ -188,6 +173,23 @@ get_jail_info() {
     IS_LINUX_JAIL=0
     if [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
     IS_LINUX_JAIL=${IS_LINUX_JAIL:-0}
+
+    # Get jail type
+    if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
+        JAIL_TYPE="thin"
+    elif [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ] && [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 0 ]; then
+        JAIL_TYPE="linux"
+    elif [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
+        JAIL_TYPE="hybrid"
+    elif checkyesno bastille_zfs_enable; then
+        if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
+            JAIL_TYPE="clone"
+        else
+            JAIL_TYPE="thick"
+        fi
+    else
+        JAIL_TYPE="thick"
+    fi
 
     # Gather variable that depend on jail being UP or DOWN
     if [ "$(/usr/sbin/jls name | awk "/^${JAIL_NAME}$/")" ]; then
