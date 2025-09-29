@@ -224,8 +224,7 @@ get_jail_info() {
         # Get release (FreeBSD or Linux)
         if [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
             JAIL_RELEASE=$(jexec -l ${JAIL_NAME} freebsd-version -u 2> /dev/null)
-        fi
-        if [ "${IS_LINUX_JAIL}" -eq 1 ]; then
+        elif [ "${IS_LINUX_JAIL}" -eq 1 ]; then
             JAIL_RELEASE=$(grep -hE "^NAME=.*$|^VERSION_ID=.*$|^VERSION_CODENAME=.*$" "${JAIL_PATH}/etc/os-release" 2> /dev/null | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | awk -F'=' '{ a[$1] = $2; o++ } o%3 == 0 { print a["VERSION_CODENAME"] " (" a["NAME"] " " a["VERSION_ID"] ")" }')
         fi
 
