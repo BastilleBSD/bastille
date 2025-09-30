@@ -156,21 +156,6 @@ get_jail_info() {
     # Get JID value
     JID="$(jls -j ${JAIL_NAME} jid 2>/dev/null)"
 
-    # Get jail type
-    if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
-        JAIL_TYPE="thin"
-    elif [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then
-        JAIL_TYPE="linux"
-    elif checkyesno bastille_zfs_enable; then
-        if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
-            JAIL_TYPE="clone"
-        else
-            JAIL_TYPE="thick"
-        fi
-    else
-        JAIL_TYPE="thick"
-    fi
-
     # Get jail tags
     JAIL_TAGS=""
     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/tags" ]; then
@@ -186,8 +171,23 @@ get_jail_info() {
     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/bin/freebsd-version" ] || [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille/bin/freebsd-version" ] || [ "$(grep -c "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_FREEBSD_JAIL=1; fi
     IS_FREEBSD_JAIL=${IS_FREEBSD_JAIL:-0}
     IS_LINUX_JAIL=0
-    if [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
+    if [ "$(grep -c "^linprocfs.*${bastille_jailsdir}/${JAIL_NAME}/proc.*linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
     IS_LINUX_JAIL=${IS_LINUX_JAIL:-0}
+
+    # Get jail type
+    if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
+        JAIL_TYPE="thin"
+    elif [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 0 ]; then
+        JAIL_TYPE="linux"
+    elif checkyesno bastille_zfs_enable; then
+        if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
+            JAIL_TYPE="clone"
+        else
+            JAIL_TYPE="thick"
+        fi
+    else
+        JAIL_TYPE="thick"
+    fi
 
     # Gather variable that depend on jail being UP or DOWN
     if [ "$(/usr/sbin/jls name | awk "/^${JAIL_NAME}$/")" ]; then
@@ -222,8 +222,7 @@ get_jail_info() {
         # Get release (FreeBSD or Linux)
         if [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
             JAIL_RELEASE=$(jexec -l ${JAIL_NAME} freebsd-version -u 2> /dev/null)
-        fi
-        if [ "${IS_LINUX_JAIL}" -eq 1 ]; then
+        elif [ "${IS_LINUX_JAIL}" -eq 1 ]; then
             JAIL_RELEASE=$(grep -hE "^NAME=.*$|^VERSION_ID=.*$|^VERSION_CODENAME=.*$" "${JAIL_PATH}/etc/os-release" 2> /dev/null | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | awk -F'=' '{ a[$1] = $2; o++ } o%3 == 0 { print a["VERSION_CODENAME"] " (" a["NAME"] " " a["VERSION_ID"] ")" }')
         fi
 
