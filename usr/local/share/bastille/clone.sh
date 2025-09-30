@@ -102,10 +102,19 @@ IP="${3}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-## don't allow for dots(.) in container names
-if echo "${NEWNAME}" | grep -q "[.]"; then
-    error_exit "[ERROR]: Jail names may not contain a dot(.)!"
-fi
+clone_validate_jail_name() {
+    if echo "${NEWNAME}" | grep -q "[.]"; then
+        error_exit "[ERROR]: Jail names may not contain a dot(.)!"
+    elif [ "$(bastille config ${TARGET} get vnet)" = "enabled" ]; then
+        if [ "$(echo -n "e0a_${NEWNAME}" | awk '{print length}')" -ge 16 ]; then
+            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
+            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
+            if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_${name_prefix}xx${name_suffix}" 2>/dev/null; then
+                error_exit "[ERROR]: The jail name causes a collision with the epair interface naming. See documentation for details."
+            fi
+        fi
+    fi
+}
 
 validate_ip() {
 
@@ -554,6 +563,6 @@ clone_jail() {
 
 info "\nAttempting to clone '${TARGET}' to '${NEWNAME}'..."
 
-clone_jail
+clone_validate_jail_name
 
-echo
+clone_jail

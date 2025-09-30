@@ -76,6 +76,12 @@ validate_name() {
         error_exit "[ERROR]: Jail names may not contain special characters!"
     elif echo "${NAME_VERIFY}" | grep -qE '^[0-9]+$'; then
         error_exit "[ERROR]: Jail names may not contain only digits."
+    elif { [ "${VNET_JAIL_BRIDGE}" -eq 1 ] || [ "${VNET_JAIL_STANDARD}" -eq 1 ]; } && [ "$(echo -n "e0a_${NAME_VERIFY}" | awk '{print length}')" -ge 16 ]; then
+        name_prefix="$(echo ${NAME_VERIFY} | cut -c1-7)"
+        name_suffix="$(echo ${NAME_VERIFY} | rev | cut -c1-2 | rev)"
+        if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_${name_prefix}xx${name_suffix}" 2>/dev/null; then
+            error_exit "[ERROR]: The jail name causes a collision with the epair interface naming. See documentation for details."
+        fi
     fi
 }
 

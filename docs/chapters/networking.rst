@@ -140,6 +140,19 @@ by quoting an IPv4 and IPv6 address together as seen in the following example.
 For the ``inherit`` and ``ip_hostname`` options, you can also specify
 ``-D|--dual`` to use both IPv4 and IPv6 inside the jail.
 
+Networking Limitations
+----------------------
+
+* Bastille handles the epair naming scheme by creating an epair, then naming it ``e0a_JAILNAME`` for
+  host, and ``e0b_JAILNAME`` for the jail. A know limitaion is that interface cannot exceed 16
+  characters. If it is more that 16 characters, FreeBSD will complain and fail to bring it up. To mitigate
+  this, Bastille will truncate the interface name if it exceeds the character limit in the following manner.
+  If your jail is called ``mylongjailnamehere``, Bastille will truncate the epairs to ``e0a_mylongjxxre`` and
+  ``e0b_mylongjxxre``, by using the first 11 characters, then ``xx``, then the last two characters.
+  This can cause issues if your jail naming scheme is similar to the follwoing example...
+  
+  ``nextcloud1jail`` ``nextcloud2jail`` ``nextcloud3jail``
+
 Network Scenarios
 -----------------
 
