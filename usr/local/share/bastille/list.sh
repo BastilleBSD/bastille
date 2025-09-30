@@ -71,7 +71,7 @@ get_jail_list() {
     if [ -n "${TARGET}" ]; then
         JAIL_LIST="${TARGET}"
     else
-        JAIL_LIST="$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")"
+        JAIL_LIST="$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")"
     fi
 }
 
@@ -583,7 +583,7 @@ list_release(){
     if [ -d "${bastille_releasesdir}" ]; then
         # TODO: Check if this can be changed to `find` as SC2012 suggests.
         # shellcheck disable=SC2012
-        REL_LIST="$(ls "${bastille_releasesdir}" | sed "s/\n//g")"
+        REL_LIST="$(ls -v --color=never "${bastille_releasesdir}" | sed "s/\n//g")"
         for _REL in ${REL_LIST}; do
             if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ] || [ -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
                 if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
@@ -602,7 +602,7 @@ list_snapshot(){
     # TODO: Ability to list snapshot data for a single target.
     # List snapshots with its usage data for valid bastille jails only.
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for _JAIL in ${JAIL_LIST}; do
             if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                 info "\n[${_JAIL}]:"
@@ -618,7 +618,7 @@ list_template(){
 
 list_jail(){
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for _JAIL in ${JAIL_LIST}; do
             if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                 echo "${_JAIL}"
@@ -637,7 +637,7 @@ list_limit(){
 
 list_import(){
     # shellcheck disable=SC2010
-    ls "${bastille_backupsdir}" | grep -v ".sha256$"
+    ls -v "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 
 bastille_root_check

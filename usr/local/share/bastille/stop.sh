@@ -88,7 +88,7 @@ set_target "${TARGET}" "reverse"
 for _jail in ${JAILS}; do
 
     # Validate that all jails that 'depend' on this one are stopped
-    for _depend_jail in $(ls --color=never ${bastille_jailsdir} | sed -e 's/\n//g'); do
+    for _depend_jail in $(ls -v --color=never ${bastille_jailsdir} | sed -e 's/\n//g'); do
     if ! grep -hoqsw "depend=" ${bastille_jailsdir}/${_depend_jail}/settings.conf; then
         sysrc -q -f ${bastille_jailsdir}/${_depend_jail}/settings.conf depend="" >/dev/null
     fi
