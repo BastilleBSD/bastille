@@ -156,7 +156,7 @@ destroy_rel() {
     BASE_HASCHILD="0"
     if [ -d "${bastille_jailsdir}" ]; then
 
-        JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
 
         for _jail in ${JAIL_LIST}; do
 
