@@ -171,16 +171,14 @@ get_jail_info() {
     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/bin/freebsd-version" ] || [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille/bin/freebsd-version" ] || [ "$(grep -c "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_FREEBSD_JAIL=1; fi
     IS_FREEBSD_JAIL=${IS_FREEBSD_JAIL:-0}
     IS_LINUX_JAIL=0
-    if [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
+    if [ "$(grep -c "^linprocfs.*${bastille_jailsdir}/${JAIL_NAME}/proc.*linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
     IS_LINUX_JAIL=${IS_LINUX_JAIL:-0}
 
     # Get jail type
     if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
         JAIL_TYPE="thin"
-    elif [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ] && [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 0 ]; then
+    elif [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 0 ]; then
         JAIL_TYPE="linux"
-    elif [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
-        JAIL_TYPE="hybrid"
     elif checkyesno bastille_zfs_enable; then
         if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
             JAIL_TYPE="clone"
