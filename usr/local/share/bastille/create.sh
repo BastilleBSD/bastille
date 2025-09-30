@@ -80,7 +80,7 @@ validate_name() {
         name_prefix="$(echo ${NAME_VERIFY} | cut -c1-7)"
         name_suffix="$(echo ${NAME_VERIFY} | rev | cut -c1-2 | rev)"
         if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_${name_prefix}xx${name_suffix}" 2>/dev/null; then
-            error_exit "[ERROR]: Invalid jail name, due to epair naming limitations. See documentation for details."
+            error_exit "[ERROR]: The jail name causes a collision with the epair interface naming. See documentation for details."
         fi
     fi
 }
