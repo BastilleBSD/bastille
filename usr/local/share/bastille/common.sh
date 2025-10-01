@@ -563,7 +563,7 @@ update_jail_syntax_v1() {
         warn "\n[WARNING]\n"
         warn "Updating jail.conf file..."
         warn "Please review your jail.conf file after completion."
-        warm "VNET jails created without -M will be assigned a new MAC address."
+        warn "VNET jails created without -M will be assigned a new MAC address."
 
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
 
