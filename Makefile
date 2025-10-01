@@ -11,7 +11,7 @@ install:
 	@echo
 	@echo "Updating Bastille version to match git revision."
 	@echo "BASTILLE_VERSION: ${BASTILLE_DEV_VERSION}"
-	@sed -i '' "s/BASTILLE_VERSION=.*$/BASTILLE_VERSION=${BASTILLE_DEV_VERSION}/" usr/local/bin/bastille
+	@sed -i '' "s|BASTILLE_VERSION=.*|BASTILLE_VERSION=${BASTILLE_DEV_VERSION}|" usr/local/bin/bastille
 	@cp -Rv usr /
 	@gzip -f -n /usr/local/share/man/man8/bastille.8
 	@echo
