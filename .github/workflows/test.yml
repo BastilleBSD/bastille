@@ -29,4 +29,3 @@ jobs:
           cd bastille
           make install
           rocinante template tests/masterTest
-

@@ -1,4 +1,4 @@
-Bastille 1.0.x
+Bastille 1.x
 ========
 [Bastille](https://bastillebsd.org/) is an open-source system for automating
 deployment and management of containerized applications on FreeBSD.
@@ -6,7 +6,7 @@ deployment and management of containerized applications on FreeBSD.
 Check the [Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
 
 
-Potentially breaking changes in 1.0 ⚠️
+Potentially breaking changes since 1.0 ⚠️
 ========================================
 Up until version 1.0.20250714, Bastille has handled epairs for -V jails
 using the jib script included in FreeBSD installs. However, for -B jails,
@@ -159,7 +159,7 @@ Use "bastille command -h|--help" for more information about a command.
 Use "bastille -c|--config config.conf command" to specify a non-default config file.
 ```
 
-## 1.0.x
+## 1.x
 This document outlines the basic usage of the Bastille container management
 framework. This release is still considered beta.
 

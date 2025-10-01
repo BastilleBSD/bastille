@@ -34,7 +34,7 @@
 
 usage() {
 
-    error_notify "Usage: bastille zfs [option(s)] TARGET destroy|rollback|snapshot [TAG]"
+    error_notify "Usage: bastille zfs [option(s)] TARGET destroy|rollback [TAG]|snapshot [TAG]"
     error_notify "                                       df|usage"
     error_notify "                                       get|set key=value"
     error_notify "                                       jail pool/dataset /jail/path"
