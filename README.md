@@ -18,18 +18,17 @@ dynamically, allowing the use of both types of VNET jails without issue. We
 have also selected a naming scheme that will allow for consistency across
 these jail types. The naming scheme is as follows:
 
-e0a_jailname and e0b_jailname are the default epair interfaces for every
-jail. The a side is on the host, while the b is in the jail. This will
+`e0a_jailname` and `e0b_jailname` are the default epair interfaces for every
+jail. The `e0a` side is on the host, while the `e0b` is in the jail. This will
 allow better management when trying to figure out which jail a given epair is
-linked to. Due to a limitation in how long an interface name can be, Bastille
-will truncate "jailname" to avoid errors if it is too long. So,
-mylongjailname will be e0a_mylongjxxme and e0b_mylongjxxme. The xx
-part is necessary due to another limitation that does not allow dots (.) in
-interface names when using the jib script.
+linked to. Due to a limitations in how long an interface name can be, Bastille
+will name any epairs whose jail names exceed the maximum length, to
+`e0b_bastille1` and `e0b_bastille1` with the `1` incrementing by 1 for
+each new epair. So, mylongjailname will be `e0a_bastille2` and `e0b_bastille2`.
 
 If you decide to add an interface using the network sub-command, they will
-be named e1a_jailname and e1b_jailname respectively. The number included
-will increment by 1 for each interface you add.
+be named `e1a_jailname` and `e1b_jailname` respectively. The number included
+in the prefix `eXa_` will increment by 1 for each interface you add.
 
 Mandatory
 ---------
