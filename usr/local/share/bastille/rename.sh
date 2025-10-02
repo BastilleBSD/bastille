@@ -99,14 +99,6 @@ validate_name() {
         error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
     elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
         error_exit "[ERROR]: Jail names may not contain special characters!"
-    elif [ "$(bastille config ${TARGET} get vnet)" = "enabled" ]; then
-        if [ "$(echo -n "e0a_${NAME_VERIFY}" | awk '{print length}')" -ge 16 ]; then
-            name_prefix="$(echo ${NAME_VERIFY} | cut -c1-7)"
-            name_suffix="$(echo ${NAME_VERIFY} | rev | cut -c1-2 | rev)"
-            if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_${name_prefix}xx${name_suffix}" 2>/dev/null; then
-                error_exit "[ERROR]: The jail name causes a collision with the epair interface naming. See documentation for details."
-            fi
-        fi
     fi
 }
 
@@ -160,10 +152,13 @@ update_jailconf_vnet() {
                 local _new_host_epair="e${_epair_num}a_${NEWNAME}"
                 local _new_jail_epair="e${_epair_num}b_${NEWNAME}"
             else
-	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
-	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-    	        local _new_host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-                local _new_jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+                get_bastille_epair_count
+                local epair_num=1
+                while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                    epair_num=$((epair_num + 1))
+                done
+                local _new_host_epair="e0a_bastille${epair_num}"
+                local _new_jail_epair="e0b_bastille${epair_num}"
             fi
 
             local _new_if_prefix="$(echo ${_new_host_epair} | awk -F'_' '{print $1}')"
@@ -211,16 +206,8 @@ update_jailconf_vnet() {
 
             local _ngif_num="$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")"
             local _old_ngif="${_if}"
-
-            if [ "$(echo -n "ng${_ngif_num}_${NEWNAME}" | awk '{print length}')" -lt 16 ]; then
-                # Generate new netgraph interface name
-                local _new_ngif="ng${_ngif_num}_${NEWNAME}"
-            else
-	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
-	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-    	        local _new_ngif="ng${_ngif_num}_${name_prefix}xx${name_suffix}"
-            fi
-
+            # Generate new netgraph interface name
+            local _new_ngif="ng${_ngif_num}_${NEWNAME}"
             local _new_if_prefix="$(echo ${_new_ngif} | awk -F'_' '{print $1}')"
             local _new_if_suffix="$(echo ${_new_ngif} | awk -F'_' '{print $2}')"
 

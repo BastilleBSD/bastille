@@ -105,14 +105,6 @@ set_target_single "${TARGET}"
 clone_validate_jail_name() {
     if echo "${NEWNAME}" | grep -q "[.]"; then
         error_exit "[ERROR]: Jail names may not contain a dot(.)!"
-    elif [ "$(bastille config ${TARGET} get vnet)" = "enabled" ]; then
-        if [ "$(echo -n "e0a_${NEWNAME}" | awk '{print length}')" -ge 16 ]; then
-            name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
-            name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-            if find "${bastille_jailsdir}"/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -oqs "e0b_${name_prefix}xx${name_suffix}" 2>/dev/null; then
-                error_exit "[ERROR]: The jail name causes a collision with the epair interface naming. See documentation for details."
-            fi
-        fi
     fi
 }
 
@@ -254,7 +246,7 @@ update_jailconf_vnet() {
         local _old_if_prefix="$(echo ${_if} | awk -F'_' '{print $1}')"
         local _old_if_suffix="$(echo ${_if} | awk -F'_' '{print $2}')"
 
-	# For if_bridge network type
+        # For if_bridge network type
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
 
             local _epair_num="$(echo "${_old_if_prefix}" | grep -Eo "[0-9]+")"
@@ -266,10 +258,13 @@ update_jailconf_vnet() {
                 local _new_host_epair="e${_epair_num}a_${NEWNAME}"
                 local _new_jail_epair="e${_epair_num}b_${NEWNAME}"
             else
-	        name_prefix="$(echo ${NEWNAME} | cut -c1-7)"
-	        name_suffix="$(echo ${NEWNAME} | rev | cut -c1-2 | rev)"
-    	        local _new_host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-                local _new_jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+                get_bastille_epair_count
+                local epair_num=1
+                while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                    epair_num=$((epair_num + 1))
+                done
+                local host_epair="e0a_bastille${epair_num}"
+                local jail_epair="e0b_bastille${epair_num}"
             fi
 
             local _new_if_prefix="$(echo ${_new_host_epair} | awk -F'_' '{print $1}')"
