@@ -247,7 +247,7 @@ add_interface() {
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
         local _if_list="$(grep -Eo 'e[0-9]+a_[^;" ]+' ${_jail_config} | sort -u)"
         local _epair_count="$(echo "${_if_list}" | grep -Eo "[0-9]+" | wc -l)"
-	local _epair_num_range=$((_epair_count + 1))
+        local _epair_num_range=$((_epair_count + 1))
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
         local _if_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${_jail_config} | sort -u)"
         local _ngif_count="$(echo "${_if_list}" | grep -Eo "[0-9]+" | wc -l)"
@@ -261,10 +261,13 @@ add_interface() {
                     local host_epair=e${_epair_num}a_${_jailname}
                     local jail_epair=e${_epair_num}b_${_jailname}
                 else
-                    name_prefix="$(echo ${_jailname} | cut -c1-7)"
-                    name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
-                    local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-                    local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
+                    get_bastille_epair_count
+                    local global_epair_num=1
+                    while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${global_epair_num}"; do
+                        global_epair_num=$((global_epair_num + 1))
+                    done
+                    local host_epair="e0a_bastille${global_epair_num}"
+                    local jail_epair="e0b_bastille${global_epair_num}"
                 fi
                 # Remove ending brace (it is added again with the netblock)
                 sed -i '' '/^}$/d' "${_jail_config}"
@@ -326,11 +329,14 @@ EOF
                         local jail_epair=e${_epair_num}b_${_jailname}
                         local jib_epair=${_jailname}
                     else
-                        name_prefix="$(echo ${_jailname} | cut -c1-7)"
-                        name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
-                        local host_epair="e${_epair_num}a_${name_prefix}xx${name_suffix}"
-                        local jail_epair="e${_epair_num}b_${name_prefix}xx${name_suffix}"
-                        local jib_epair="${name_prefix}xx${name_suffix}"
+                        get_bastille_epair_count
+                        local global_epair_num=1
+                        while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${global_epair_num}"; do
+                            global_epair_num=$((global_epair_num + 1))
+                        done
+                        local host_epair="e0a_bastille${global_epair_num}"
+                        local jail_epair="e0b_bastille${global_epair_num}"
+                        local jib_epair="bastille${global_epair_num}"
                     fi
                     # Remove ending brace (it is added again with the netblock)
                     sed -i '' '/^}$/d' "${_jail_config}"
@@ -387,11 +393,6 @@ EOF
                         # Generate new netgraph interface name
                         local _ngif="ng${_ngif_num}_${_jailname}"
                         local jng_if="${_jailname}"
-                    else
-	                name_prefix="$(echo ${_jailname} | cut -c1-7)"
-	                name_suffix="$(echo ${_jailname} | rev | cut -c1-2 | rev)"
-    	                local _ngif="ng${_ngif_num}_${name_prefix}xx${name_suffix}"
-    	                local jng_if="${name_prefix}xx${name_suffix}"
                     fi
                     # Remove ending brace (it is added again with the netblock)
                     sed -i '' '/^}$/d' "${_jail_config}"

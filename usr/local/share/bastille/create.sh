@@ -1173,5 +1173,3 @@ if check_target_exists "${NAME}"; then
 fi
 
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"
-
-echo
