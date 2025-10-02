@@ -392,7 +392,7 @@ generate_vnet_jail_netblock() {
                 done
                 local host_epair="e0a_bastille${epair_num}"
                 local jail_epair="e0b_bastille${epair_num}"
-                local jib_epai="bastille${epair_num}"
+                local jib_epair="bastille${epair_num}"
             fi
         elif [ "${interface_type}" = "passthrough" ]; then
             host_epair="${external_interface}"
