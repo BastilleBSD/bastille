@@ -545,10 +545,13 @@ update_jail_syntax_v1() {
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
         else
-        name_prefix="$(echo ${jail} | cut -c1-7)"
-        name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
-        local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
-            local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
+            get_bastille_epair_count
+            local epair_num=1
+            while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                epair_num=$((epair_num + 1))
+            done
+            local new_host_epair="e0a_bastille${epair_num}"
+            local new_jail_epair="e0b_bastille${epair_num}"
         fi
 
         # Delete unneeded lines
@@ -581,11 +584,14 @@ update_jail_syntax_v1() {
             local new_jail_epair=e0b_${jail}
             local jib_epair="${jail}"
         else
-        name_prefix="$(echo ${jail} | cut -c1-7)"
-        name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
-        local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
-            local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
-            local jib_epair="${name_prefix}xx${name_suffix}"
+            get_bastille_epair_count
+            local epair_num=1
+            while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                epair_num=$((epair_num + 1))
+            done
+            local new_host_epair="e0a_bastille${epair_num}"
+            local new_jail_epair="e0b_bastille${epair_num}"
+            local jib_epair="bastille${epair_num}"
         fi
 
         # Change jail.conf
