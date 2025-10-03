@@ -145,19 +145,20 @@ For the ``inherit`` and ``ip_hostname`` options, you can also specify
 Networking Limitations
 ----------------------
 
-* Bastille handles the epair naming scheme by creating an epair, then naming it
-  ``e0a_JAILNAME`` for host, and ``e0b_JAILNAME`` for the jail. A know limitaion
-  is that interface cannot exceed 16 characters. If it is more that 16 characters,
-  FreeBSD will complain and fail to bring it up. To mitigate this, Bastille will
-  truncate the interface name if it exceeds the character limit in the following
-  manner.
-  If your jail is called ``mylongjailnamehere``, Bastille will truncate the
-  epairs to ``e0a_mylongjxxre`` and ``e0b_mylongjxxre``, by using the first 11
-  characters, then ``xx``, then the last two characters.
-  This can cause issues if your jail naming scheme is similar to the following
-  example...
-  
-  ``nextcloud1jail`` ``nextcloud2jail`` ``nextcloud3jail``
+VNET Jail Interface Names
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* FreeBSD has certain limitations when it comes to interface names. One
+  of these is that interface names cannot be longer than 15 characters.
+  Because of this, Bastille uses a generic name for any epairs created
+  whose corresponding jail name exceeds the maximum length. See below...
+
+  ``e0a_jailname`` and ``e0b_jailname`` are the default epair interfaces for every
+  jail. The ``e0a`` side is on the host, while the ``e0b`` is in the jail. Due
+  to the above mentioned limitations, Bastille will name any epairs whose
+  jail names exceed the maximum length, to ``e0b_bastilleX`` and ``e0b_bastilleX``
+  with the ``X`` starting at ``1`` and incrementing by 1 for each new epair.
+  So, ``mylongjailname`` will be ``e0a_bastille2`` and ``e0b_bastille2``.
 
 Network Scenarios
 -----------------
