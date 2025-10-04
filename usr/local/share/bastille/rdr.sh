@@ -144,6 +144,10 @@ persist_rdr_rule() {
     local host_port="${6}"
     local jail_port="${7}"
 
+    if echo "$if" | grep -qs " "; then
+        if=\"$if\"
+    fi
+
     if ! grep -qs "$inet $if $src $dst $proto $host_port $jail_port" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         echo "$inet $if $src $dst $proto $host_port $jail_port" >> "${bastille_jailsdir}/${TARGET}/rdr.conf"
     fi
@@ -160,6 +164,10 @@ persist_rdr_log_rule() {
     local jail_port="${7}"
     shift 7;
     log=$@;
+
+    if echo "$if" | grep -qs " "; then
+        if=\"$if\"
+    fi
 
     if ! grep -qs "$inet $if $src $dst $proto $host_port $jail_port $log" "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
         echo "$inet $if $src $dst $proto $host_port $jail_port $log" >> "${bastille_jailsdir}/${TARGET}/rdr.conf"
