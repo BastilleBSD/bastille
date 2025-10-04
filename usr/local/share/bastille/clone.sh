@@ -386,7 +386,7 @@ update_jailconf_vnet() {
             local old_ngif="${if}"
             # Generate new netgraph interface name
             local new_ngif="ng${ngif_num}_${NEWNAME}"
-            # shellcheck disable=SC2046
+            # shellcheck disable=SC2034
             local new_if_prefix="$(echo ${if} | awk -F'_' '{print $1}')"
             local new_if_suffix="$(echo ${if} | awk -F'_' '{print $2}')"
 
