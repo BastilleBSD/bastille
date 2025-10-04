@@ -211,7 +211,7 @@ for _jail in ${JAILS}; do
     # Add rdr rules
     if [ -s "${bastille_jailsdir}/${_jail}/rdr.conf" ]; then
         while read _rules; do
-            bastille rdr ${_jail} ${_rules}
+            eval "bastille rdr ${_jail} ${_rules}"
         done < "${bastille_jailsdir}/${_jail}/rdr.conf"
     fi
 
