@@ -34,10 +34,11 @@ The ``rdr`` command includes 4 additional options:
 
 .. code-block:: shell
 
-    -d | --destination [destination]          Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -i | --interface   [interface]            Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-    -s | --source      [source]               Limit rdr to a source IP or table. Useful to only allow access from certain sources.
-    -t | --type        [ipv4|ipv6]            Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -d | --destination IP            Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+    -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comman separated.
+    -s | --source      IP|table      Limit rdr to a source IP or table.
+    -t | --type        ipv4|ipv6     Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -x | --debug                     Enable debug mode.
 
 .. code-block:: shell
 
@@ -78,8 +79,8 @@ Simply use the table name instead of an IP address or subnet.
 
       Options:
 
-      -d | --destination [destination]             Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-      -i | --interface   [interface]               Set the interface to create the rdr rule on. Useful if you have multiple interfaces.
-      -s | --source      [source]                  Limit rdr to a source IP or table. Useful to only allow access from certain sources.
-      -t | --type        [ipv4|ipv6]               Specify IP type. Must be used if -s or -d are used. Defaults to both.
-      -x | --debug                                 Enable debug mode.
+      -d | --destination IP            Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
+      -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comman separated.
+      -s | --source      IP|table      Limit rdr to a source IP or table.
+      -t | --type        ipv4|ipv6     Specify IP type. Must be used if -s or -d are used. Defaults to both.
+      -x | --debug                     Enable debug mode.
