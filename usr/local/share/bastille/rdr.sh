@@ -169,8 +169,8 @@ persist_rdr_log_rule() {
 load_rdr_rule() {
 
     local inet="${1}"
-    local if_name="${2}"
-    local if="${bastille_network_pf_ext_if}"=\"${2}\"
+    local if_name="{ $(echo ${2} | sed 's/,/ /') }"
+    local if="${bastille_network_pf_ext_if}"=\"${if_name}\"
     local src="${3}"
     local dst="${4}"
     local proto="${5}"
@@ -204,8 +204,8 @@ load_rdr_rule() {
 load_rdr_log_rule() {
 
     local inet="${1}"
-    local if_name="${2}"
-    local if="${bastille_network_pf_ext_if}"=\"${2}\"
+    local if_name="{ $(echo ${2} | sed 's/,/ /') }"
+    local if="${bastille_network_pf_ext_if}"=\"${if_name}\"
     local src="${3}"
     local dst="${4}"
     local proto="${5}"
@@ -264,13 +264,14 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         -i|--interface)
-            if ifconfig | grep -owq "${2}:"; then
-                OPTION_IF=1
-                RDR_IF="${2}"
-                shift 2
-            else
-                error_exit "[ERROR]: '${2}' is not a valid interface."
-            fi
+            for if in $(echo "${2}" | sed 's/,/ /'); do
+                if ! ifconfig | grep -owq "${if}:"; then
+                    error_exit "[ERROR]: '${if}' is not a valid interface."
+                fi
+            done
+            OPTION_IF=1
+            RDR_IF="${2}"
+            shift 2
             ;;
         -s|--source)
 	    if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*)"; then
@@ -320,7 +321,9 @@ set_target_single "${TARGET}"
 
 while [ "$#" -gt 0 ]; do
     case "${1}" in
+
         list)
+
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "[ERROR]: Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
@@ -331,7 +334,9 @@ while [ "$#" -gt 0 ]; do
             fi
             shift
             ;;
+
         clear)
+
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "[ERROR]: Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
@@ -342,7 +347,9 @@ while [ "$#" -gt 0 ]; do
             fi
             shift
             ;;
+
         reset)
+
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "[ERROR]: Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
@@ -356,7 +363,9 @@ while [ "$#" -gt 0 ]; do
             fi
             shift
             ;;
+
         tcp|udp)
+
             if [ "$#" -lt 3 ]; then
                 usage
             elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ] && [ "${OPT_SRC_TABLE}" -eq 0 ];then
@@ -409,7 +418,9 @@ while [ "$#" -gt 0 ]; do
                 esac
             fi
             ;;
+
         *)
+
             if [ "${1}" = "dual" ] || [ "${1}" = "ipv4" ] || [ "${1}" = "ipv6" ]; then
                 RDR_INET="${1}"
             else
