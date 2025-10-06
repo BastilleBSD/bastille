@@ -334,7 +334,7 @@ if [ "${OPT_PASSWORD}" -eq 1 ]; then
     _opt_ssh_key=
 else
     _migrate_user_home="$(getent passwd ${USER} | cut -d: -f6)"
-    _migrate_user_ssh_key="${_migrate_user_home}/.ssh/id_rsa"
+    _migrate_user_ssh_key="find ${_migrate_user_home}/.ssh -maxdepth 1 -type f ! -name '*.pub' | grep -Eos 'id_.*'"
     _opt_ssh_key="-i ${_migrate_user_ssh_key}"
 
     # Exit if no keys found
