@@ -40,6 +40,7 @@ usage() {
 
     bastille migrate attica migrate@192.168.10.100
     bastille migrate attica migrate@192.168.1.10:20022
+    bastille migrate --keyfile id_rsa attica migrate@192.168.1.10
 
     Options:
 
@@ -47,6 +48,7 @@ usage() {
     -b | --backup            Retain archives on remote system.
     -d | --destroy           Destroy local jail after migration.
        | --doas              Use 'doas' instead of 'sudo'.
+    -k | --keyfile           Specify an alternative private keyfile name. Must be in '~/.ssh`
     -l | --live              Migrate a running jail (ZFS only).
     -p | --password          Use password based authentication.
     -x | --debug             Enable debug mode.
@@ -60,6 +62,7 @@ AUTO=0
 LIVE=0
 OPT_BACKUP=0
 OPT_DESTROY=0
+OPT_KEYFILE=""
 OPT_PASSWORD=0
 OPT_SU="sudo"
 while [ "$#" -gt 0 ]; do
@@ -82,6 +85,10 @@ while [ "$#" -gt 0 ]; do
         --doas)
             OPT_SU="doas"
             shift
+            ;;
+        -k|--keyfile)
+            OPT_KEYFILE="${2}"
+            shift 2
             ;;
         -l|--live)
             LIVE=1
@@ -333,13 +340,29 @@ fi
 if [ "${OPT_PASSWORD}" -eq 1 ]; then
     _opt_ssh_key=
 else
+
     _migrate_user_home="$(getent passwd ${USER} | cut -d: -f6)"
-    _migrate_user_ssh_key="find ${_migrate_user_home}/.ssh -maxdepth 1 -type f ! -name '*.pub' | grep -Eos 'id_.*'"
+
+    # Validate custom keyfile
+    if [ -n "${OPT_KEYFILE}" ]; then
+        if ! [ -f "${_migrate_user_home}/.ssh/${OPT_KEYFILE}" ]; then
+            error_exit "[ERROR]: Keyfile not found: ${_migrate_user_home}/.ssh/${OPT_KEYFILE}"
+        else
+            _migrate_user_ssh_key="${_migrate_user_home}/.ssh/${OPT_KEYFILE}"
+        fi
+    else
+        _migrate_user_ssh_key="find ${_migrate_user_home}/.ssh -maxdepth 1 -type f ! -name '*.pub' | grep -Eos 'id_.*'"
+    fi
+
     _opt_ssh_key="-i ${_migrate_user_ssh_key}"
 
     # Exit if no keys found
     if [ -z "${_migrate_user_home}" ] || [ -z "${_migrate_user_ssh_key}" ]; then
         error_exit "[ERROR]: Could not find keys for user: ${USER}"
+    # Exit if multiple keys
+    elif [ "$(echo "${_migrate_user_ssh_key}" | wc -l)" -ne 1 ]; then
+        error_notify "[ERROR]: Multiple ssh keys found:\n${_migrate_user_ssh_key}"
+        error_exit "Please use -k|--keyfile to specify one."
     fi
 fi
 
