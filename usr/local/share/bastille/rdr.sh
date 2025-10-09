@@ -240,7 +240,7 @@ load_rdr_log_rule() {
 }
 
 # Handle options.
-RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}')"
+RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}' | sed -e 's/{ //' -e 's/ }//')"
 RDR_SRC="any"
 RDR_DST="any"
 RDR_INET="dual"
