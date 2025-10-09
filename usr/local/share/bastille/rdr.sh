@@ -258,7 +258,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         -d|--destination)
             if ifconfig | grep -owq "inet ${2}"; then
-	        OPTION_DST=1
+                OPTION_DST=1
                 RDR_DST="${2}"
                 shift 2
             else
@@ -277,12 +277,12 @@ while [ "$#" -gt 0 ]; do
             ;;
         -s|--source)
 	    if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*)"; then
-                check_rdr_ip_validity "${2}"
-		RDR_SRC="${2}"
+            check_rdr_ip_validity "${2}"
+            RDR_SRC="${2}"
 	    else
-                check_rdr_table_validity "${2}"
-		OPT_SRC_TABLE=1
-		RDR_SRC="$(echo "${2}" | sed -e 's/^/</' -e 's/$/>/')"
+            check_rdr_table_validity "${2}"
+            OPT_SRC_TABLE=1
+            RDR_SRC="$(echo "${2}" | sed -e 's/^/</' -e 's/$/>/')"
 	    fi
             OPTION_SRC=1
             shift 2
@@ -377,11 +377,11 @@ while [ "$#" -gt 0 ]; do
                 validate_rdr_rule "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
                 persist_rdr_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
                 load_rdr_rule $RDR_INET "$RDR_IF" $RDR_SRC $RDR_DST $1 $2 $3
-		# Temp block to remove old format after new format is loaded the first time
-		while read rules; do
-                if [ "$(echo ${rules} | wc -w)" -lt 6 ]; then
-                    sed -i '' "/^${rules}$/d" "${bastille_jailsdir}/${TARGET}/rdr.conf"
-                fi
+                # Temp block to remove old format after new format is loaded the first time
+                while read rules; do
+                    if [ "$(echo ${rules} | wc -w)" -lt 6 ]; then
+                        sed -i '' "/^${rules}$/d" "${bastille_jailsdir}/${TARGET}/rdr.conf"
+                    fi
                 done < "${bastille_jailsdir}/${TARGET}/rdr.conf"
                 shift "$#"
             else
