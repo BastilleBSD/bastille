@@ -169,7 +169,8 @@ persist_rdr_log_rule() {
 load_rdr_rule() {
 
     local inet="${1}"
-    local if_name="{ $(echo ${2} | sed 's/,/ /') }"
+    local if_raw="${2}"
+    local if_name="{ $(echo ${if_raw} | sed 's/,/ /') }"
     local if="${bastille_network_pf_ext_if}"=\"${if_name}\"
     local src="${3}"
     local dst="${4}"
@@ -185,7 +186,7 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_name}"
+            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
     # Create IPv6 rdr rule (if ip6.addr is enabled)
@@ -196,7 +197,7 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_name}"
+            echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
 }
@@ -204,7 +205,8 @@ load_rdr_rule() {
 load_rdr_log_rule() {
 
     local inet="${1}"
-    local if_name="{ $(echo ${2} | sed 's/,/ /') }"
+    local if_raw="${2}"
+    local if_name="{ $(echo ${if_raw} | sed 's/,/ /') }"
     local if="${bastille_network_pf_ext_if}"=\"${if_name}\"
     local src="${3}"
     local dst="${4}"
@@ -222,7 +224,7 @@ load_rdr_log_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_name}"
+            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
 
@@ -234,7 +236,7 @@ load_rdr_log_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_name}"
+            echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
 }
