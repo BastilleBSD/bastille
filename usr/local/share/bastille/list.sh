@@ -232,7 +232,7 @@ get_jail_info() {
     else
 
         # Set state to Down or n/a
-        JAIL_STATE=$(if [ "$(sed -n "/^${JAIL_NAME} {$/,/^}$/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | awk '$0 ~ /^'${JAIL_NAME}' \{|\}/ { printf "%s",$0 }')" = "${JAIL_NAME} {}" ]; then echo "Down"; else echo "n/a"; fi)
+        JAIL_STATE=$(if [ "$(sed -n "/^${JAIL_NAME} {$/,/^}$/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | awk '$0 ~ /^'"${JAIL_NAME}"' \{$/ || $0 ~ /^\}$/ { printf "%s", $0 }')" = "${JAIL_NAME} {}" ]; then echo "Down"; else echo "n/a"; fi)
 
         # Get info if jail is DOWN
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
