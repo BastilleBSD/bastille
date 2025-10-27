@@ -46,6 +46,8 @@ EOF
 
 validate_release_url() {
 
+    local major_version=$(echo ${RELEASE} | grep -Eo '^[0-9]+')
+
     info "\nBootstrapping release: ${RELEASE}..."
 
     ## check upstream url, else warn user
@@ -53,21 +55,32 @@ validate_release_url() {
 
         RELEASE="${NAME_VERIFY}"
 
-        info "\nFetching ${PLATFORM_OS} distfiles..."
-
-        if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
-            error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
-        fi
-
         # Alternate RELEASE/ARCH fetch support
         if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
             ARCH="i386"
             RELEASE="${RELEASE}-${ARCH}"
         fi
 
-        bootstrap_directories
-        bootstrap_release
+        # Use PKGBASE for version 15 and above
+        if [ "${PLATFORM_OS}" = "FreeBSD" ] && [ "${major_version}" -ge 15 ]; then
 
+            info "\nUsing pkgbase..."
+
+            bootstrap_directories
+            bootstrap_pkgbase_release
+
+        else
+
+            info "\nFetching ${PLATFORM_OS} distfiles..."
+
+            if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
+                error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
+            fi
+
+            bootstrap_directories
+            bootstrap_release
+
+        fi
     else
         usage
     fi
@@ -191,6 +204,106 @@ bootstrap_directories() {
        else
            mkdir -p "${bastille_releasesdir}/${RELEASE}"
        fi
+    fi
+}
+
+bootstrap_pkgbase_release() {
+
+    local release="${RELEASE}"
+    local minor_version=$(echo ${release} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+    local major_version=$(echo ${release} | grep -Eo '^[0-9]+')
+    local mirror_type="srv"
+    local abi="${PLATFORM_OS}:${major_version}:${HW_MACHINE_ARCH}"
+    local signature_type="fingerprints"
+    local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkg"
+    local host_fingerprintsdir="/usr/share/keys/pkg"
+    local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
+    if [ "${FREEBSD_BRANCH}" = "release" ]; then
+        local repo_name="FreeBSD-base-release-${minor_version}"
+    elif [ "${FREEBSD_BRANCH}" = "current" ]; then
+        local repo_name="FreeBSD-base-latest"
+    fi
+    local repo_dir="${bastille_sharedir}/pkgbase"
+
+    ## If release exists quit, else bootstrap additional packages
+    if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
+
+        ## check pkgbase package list and skip existing sets
+        bastille_pkgbase_packages=$(echo "${bastille_pkgbase_packages}" | sed "s/base-jail//")
+
+        ## check if release already bootstrapped, else continue bootstrapping
+        if [ -z "${bastille_pkgbase_packages}" ]; then
+            info "\nBootstrap appears complete!\n"
+            exit 0
+        else
+            info "\nFetching additional packages..."
+        fi
+    fi
+
+    # Copy fingerprints into releasedir
+    mkdir -p "${release_fingerprintsdir}"
+
+    if ! cp -a "${host_fingerprintsdir}" "${release_fingerprintsdir}"; then
+        error_exit "[ERROR]: Failed to copy fingerprints directory."
+    fi
+
+    # Ensure repo is up to date
+    if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
+             --repo-conf-dir="${repo_dir}" \
+             -o IGNORE_OSVERSION="yes" \
+             -o ABI="${abi}" \
+             -o ASSUME_ALWAYS_YES="yes" \
+             -o FINGERPRINTS="${fingerprints}" \
+             update -r "${repo_name}"; then
+        error_notify "[ERROR]: Failed to update repository: ${repo_name}"
+    fi
+
+    for package in ${bastille_pkgbase_packages}; do
+
+        ## Set bootstrap status
+        bootstrap_status="0"	
+
+        if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" info "FreeBSD-set-${package}" 2>/dev/null; then
+
+            if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
+                     --repo-conf-dir="${repo_dir}" \
+                     -o IGNORE_OSVERSION="yes" \
+                     -o ABI="${abi}" \
+                     -o ASSUME_ALWAYS_YES="yes" \
+                     -o FINGERPRINTS="${fingerprints}" \
+                     install -r "${repo_name}" \
+                     freebsd-set-"${package}"; then
+
+                bootstrap_status="1"
+            fi
+        else
+            error_continue "[ERROR]: Package set already installed: ${package}"
+        fi
+
+        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
+        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
+
+    done
+
+    # Cleanup if bootstrap failed
+    if [ "${bootstrap_status}" -ne "0" ]; then
+        ## perform cleanup only for stale/empty directories on failure
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
+                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
+                fi
+            fi
+        fi
+        if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
+            if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
+                rm -rf "${bastille_releasesdir:?}/${RELEASE}"
+            fi
+        fi
+        error_exit "[ERROR]: Bootstrap failed."
+    else
+        info "\nBootstrap successful."
+        echo "See 'bastille --help' for available commands."
     fi
 }
 
@@ -538,7 +651,7 @@ fi
 [ -n "${BASTILLE_URL_MIDNIGHTBSD}" ] && bastille_url_midnightbsd="${BASTILLE_URL_MIDNIGHTBSD}"
 
 ## Filter sane release names
-case "${1}" in
+case "${RELEASE}" in
     [2-4].[0-9]*)
         ## check for MidnightBSD releases name
         NAME_VERIFY=$(echo "${RELEASE}")
@@ -551,6 +664,7 @@ case "${1}" in
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
         UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
         PLATFORM_OS="FreeBSD"
+        FREEBSD_BRANCH="current"
         validate_release_url
         ;;
     *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
@@ -558,6 +672,7 @@ case "${1}" in
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]{1,2})\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
         UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
         PLATFORM_OS="FreeBSD"
+        FREEBSD_BRANCH="release"
         validate_release_url
         ;;
     *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
