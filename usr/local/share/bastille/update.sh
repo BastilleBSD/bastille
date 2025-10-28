@@ -87,6 +87,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 TARGET="${1}"
+PKGBASE=0
 
 bastille_root_check
 
@@ -97,13 +98,6 @@ fi
 if freebsd-version | grep -qi HBSD; then
     error_exit "[ERROR]: Not yet supported on HardenedBSD."
 fi
-
-# Check for alternate/unsupported archs
-arch_check() {
-    if echo "${TARGET}" | grep -w "[0-9]\{1,2\}\.[0-9]\-RELEASE\-i386"; then
-        ARCH_I386="1"
-    fi
-}
 
 jail_check() {
 
@@ -124,14 +118,69 @@ jail_check() {
         error_notify "[ERROR]: ${TARGET} is not a thick container."
         error_exit "See 'bastille update RELEASE' to update thin jails."
     fi
+
+    # Validate update method
+    CURRENT_VERSION="$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)"
+    MINOR_VERSION=$(echo ${CURRENT_VERSION} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+    MAJOR_VERSION=$(echo ${CURRENT_VERSION} | grep -Eo '^[0-9]+')
+    if echo "${CURRENT_VERSION}" | grep -oq "-CURRENT"; then
+        FREEBSD_BRANCH="current"
+    else
+        FREEBSD_BRANCH="release"
+    fi
+    if [ -z "${CURRENT_VERSION}" ]; then
+        error_exit "[ERROR]: Can't determine '${TARGET}' version."
+    fi
+    if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" -N 2>/dev/null; then
+        PKGBASE=1
+    fi
+}
+
+jail_update_pkgbase() {
+
+    local jailpath="${bastille_jailsdir}/${TARGET}/root"
+    local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
+    local fingerprints="${jailpath}/usr/share/keys/pkg"
+    if [ "${FREEBSD_BRANCH}" = "release" ]; then
+        local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+    elif [ "${FREEBSD_BRANCH}" = "current" ]; then
+        local repo_name="FreeBSD-base-latest"
+    fi
+    local repo_dir="${bastille_sharedir}/pkgbase"
+
+    # Update jail
+    if [ -d "${jailpath}" ]; then
+        # Update repo (pkgbase)
+        if ! pkg --rootdir "${jailpath}" \
+                 --repo-conf-dir "${repo_dir}" \
+                  -o IGNORE_OSVERSION="yes" \
+                  -o ABI="${abi}" \
+                  -o ASSUME_ALWAYS_YES="yes" \
+                  -o FINGERPRINTS="${fingerprints}" \
+                  update -r "${repo_name}"; then
+            error_exit "[ERROR]: Failed to update pkg repo: ${repo_name}"
+        fi
+        # Update jail
+        if ! pkg --rootdir "${jailpath}" \
+                 --repo-conf-dir "${repo_dir}" \
+                  -o IGNORE_OSVERSION="yes" \
+                  -o ABI="${abi}" \
+                  -o ASSUME_ALWAYS_YES="yes" \
+                  -o FINGERPRINTS="${fingerprints}" \
+                  upgrade -r "${repo_name}"; then
+            error_exit "[ERROR]: Failed to upgrade jail: ${TARGET}"
+        fi
+    else
+        error_exit "[ERROR]: Jail not found: ${TARGET}"
+    fi
 }
 
 jail_update() {
 
-    local _jailname="${1}"
-    local _jailpath="${bastille_jailsdir}/${TARGET}/root"
-    local _freebsd_update_conf="${_jailpath}/etc/freebsd-update.conf"
-    local _workdir="${_jailpath}/var/db/freebsd-update"
+    local jailname="${TARGET}"
+    local jailpath="${bastille_jailsdir}/${TARGET}/root"
+    local freebsd_update_conf="${jailpath}/etc/freebsd-update.conf"
+    local work_dir="${jailpath}/var/db/freebsd-update"
 
     # Update a thick container
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
@@ -141,43 +190,102 @@ jail_update() {
         else
             env PAGER="/bin/cat" freebsd-update ${OPTION} \
             --not-running-from-cron \
-            -j "${_jailname}" \
-            -d "${_workdir}" \
-            -f "${_freebsd_update_conf}" \
+            -j "${jailname}" \
+            -d "${work_dir}" \
+            -f "${freebsd_update_conf}" \
             fetch
             env PAGER="/bin/cat" freebsd-update ${OPTION} \
             --not-running-from-cron \
-            -j "${_jailname}" \
-            -d "${_workdir}" \
-            -f "${_freebsd_update_conf}" \
+            -j "${jailname}" \
+            -d "${work_dir}" \
+            -f "${freebsd_update_conf}" \
             install
         fi
     fi
 }
 
+release_check() {
+
+    if echo "${TARGET}" | grep -w "[0-9]\{1,2\}\.[0-9]\-RELEASE\-i386"; then
+        ARCH_I386="1"
+    fi
+
+    # Validate update method
+    MINOR_VERSION=$(echo ${TARGET} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+    MAJOR_VERSION=$(echo ${TARGET} | grep -Eo '^[0-9]+')
+    if echo "${TARGET}" | grep -oq "-CURRENT"; then
+        FREEBSD_BRANCH="current"
+    else
+        FREEBSD_BRANCH="release"
+    fi
+    if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_releasesdir}/${TARGET}" -N 2>/dev/null; then
+        PKGBASE=1
+    fi
+}
+
+release_update_pkgbase() {
+
+    local release_dir="${bastille_releasesdir}/${TARGET}"
+    local abi="FreeBSD:${major_version}:${HW_MACHINE_ARCH}"
+    local fingerprints="${release_dir}/usr/share/keys/pkg"
+    if [ "${FREEBSD_BRANCH}" = "release" ]; then
+        local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+    elif [ "${FREEBSD_BRANCH}" = "current" ]; then
+        local repo_name="FreeBSD-base-latest"
+    fi
+    local repo_dir="${bastille_sharedir}/pkgbase"
+
+    # Update a release base (affects child containers)
+    if [ -d "${release_dir}" ]; then
+        # Update repo (pkgbase)
+        if ! pkg --rootdir "${release_dir}" \
+                 --repo-conf-dir "${repo_dir}" \
+                  -o IGNORE_OSVERSION="yes" \
+                  -o ABI="${abi}" \
+                  -o ASSUME_ALWAYS_YES="yes" \
+                  -o FINGERPRINTS="${fingerprints}" \
+                  update -r "${repo_name}"; then
+            error_exit "[ERROR]: Failed to update pkg repo: ${repo_name}"
+        fi
+        # Update release (pkgbase)
+        if ! pkg --rootdir "${release_dir}" \
+                 --repo-conf-dir "${repo_dir}" \
+                  -o IGNORE_OSVERSION="yes" \
+                  -o ABI="${abi}" \
+                  -o ASSUME_ALWAYS_YES="yes" \
+                  -o FINGERPRINTS="${fingerprints}" \
+                  upgrade -r "${repo_name}"; then
+            error_exit "[ERROR]: Failed to upgrade release: ${TARGET}"
+        fi
+    else
+        error_notify "[ERROR]: Release not found: ${TARGET}"
+        error_exit "See 'bastille bootstrap RELEASE'"
+    fi
+}
+
 release_update() {
 
-    local _releasepath="${bastille_releasesdir}/${TARGET}"
-    local _freebsd_update_conf="${_releasepath}/etc/freebsd-update.conf"
-    local _workdir="${_releasepath}/var/db/freebsd-update"
+    local release_dir="${bastille_releasesdir}/${TARGET}"
+    local freebsd_update_conf="${release_dir}/etc/freebsd-update.conf"
+    local work_dir="${release_dir}/var/db/freebsd-update"
 
     # Update a release base(affects child containers)
-    if [ -d "${_releasepath}" ]; then
+    if [ -d "${release_dir}" ]; then
         TARGET_TRIM="${TARGET}"
         if [ -n "${ARCH_I386}" ]; then
             TARGET_TRIM=$(echo "${TARGET}" | sed 's/-i386//')
         fi
         env PAGER="/bin/cat" freebsd-update ${OPTION} \
         --not-running-from-cron \
-        -b "${_releasepath}" \
-        -d "${_workdir}" \
-        -f "${_freebsd_update_conf}" \
+        -b "${release_dir}" \
+        -d "${work_dir}" \
+        -f "${freebsd_update_conf}" \
         fetch --currently-running "${TARGET_TRIM}"
         env PAGER="/bin/cat" freebsd-update ${OPTION} \
         --not-running-from-cron \
-        -b "${_releasepath}" \
-        -d "${_workdir}" \
-        -f "${_freebsd_update_conf}" \
+        -b "${release_dir}" \
+        -d "${work_dir}" \
+        -f "${freebsd_update_conf}" \
         install --currently-running "${TARGET_TRIM}"
     else
         error_exit "[ERROR]: ${TARGET} not found. See 'bastille bootstrap RELEASE'."
@@ -187,9 +295,9 @@ release_update() {
 template_update() {
 
     # Update a template
-    _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
+    template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
 
-    if [ -d $_template_path ]; then
+    if [ -d ${template_path} ]; then
         info "\n[${BASTILLE_TEMPLATE}]:"
         if ! git -C $_template_path pull; then
             error_exit "[ERROR]: ${BASTILLE_TEMPLATE} update unsuccessful."
@@ -203,25 +311,29 @@ template_update() {
 templates_update() {
 
     # Update all templates
-    _updated_templates=0
+    updated_templates=0
+
     if [ -d  ${bastille_templatesdir} ]; then
         # shellcheck disable=SC2045
-        for _template_path in $(ls -d ${bastille_templatesdir}/*/*); do
-            if [ -d $_template_path/.git ]; then
-                BASTILLE_TEMPLATE=$(echo "$_template_path" | awk -F / '{ print $(NF-1) "/" $NF }')
+        for template_path in $(ls -d ${bastille_templatesdir}/*/*); do
+            if [ -d $template_path/.git ]; then
+                BASTILLE_TEMPLATE=$(echo "$template_path" | awk -F / '{ print $(NF-1) "/" $NF }')
                 template_update
-
-                _updated_templates=$((_updated_templates+1))
+                updated_templates=$((updated_templates+1))
             fi
         done
     fi
 
-    if [ "$_updated_templates" -ne "0" ]; then
-        info "\n$_updated_templates templates updated."
+    # Verify template updates
+    if [ "$updated_templates" -ne "0" ]; then
+        info "\n$updated_templates templates updated."
     else
         error_exit "[ERROR]: No templates found. See 'bastille bootstrap'."
     fi
 }
+
+# Set needed variables for pkgbase
+HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 # Check what we should update
 if [ "${TARGET}" = 'TEMPLATES' ]; then
@@ -230,9 +342,17 @@ elif echo "${TARGET}" | grep -Eq '^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$'; then
     BASTILLE_TEMPLATE="${TARGET}"
     template_update
 elif echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
-    arch_check
-    release_update
+    release_check
+    if [ "${PKGBASE}" -eq 1 ]; then
+        release_update_pkgbase
+    else
+        release_update
+    fi
 else
     jail_check
-    jail_update "${TARGET}"
+    if [ "${PKGBASE}" -eq 1 ]; then
+        jail_update_pkgbase
+    else
+        jail_update
+    fi
 fi

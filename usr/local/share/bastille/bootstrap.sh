@@ -38,48 +38,47 @@ usage() {
 
     Options:
 
-    -x | --debug           Enable debug mode.
+    -p | --pkgbase     Bootstrap using pkgbase (15.0-RELEASE and above).
+    -x | --debug       Enable debug mode.
 
 EOF
     exit 1
 }
 
-validate_release_url() {
+validate_release() {
 
-    local major_version=$(echo ${RELEASE} | grep -Eo '^[0-9]+')
+    MAJOR_VERSION=$(echo ${RELEASE} | grep -Eo '^[0-9]+')
+    MINOR_VERSION=$(echo ${RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+	
+    if [ "${MAJOR_VERSION}" -ge 16 ]; then
+        PKGBASE=1
+    fi
+
+    if [ "${PLATFORM_OS}" != "FreeBSD" ] && [ "${PKGBASE}" -eq 1 ]; then
+        error_exit "[ERROR]: Pkgbase can only be used with FreeBSD releases."
+    fi
 
     info "\nBootstrapping release: ${RELEASE}..."
 
     ## check upstream url, else warn user
     if [ -n "${NAME_VERIFY}" ]; then
-
-        RELEASE="${NAME_VERIFY}"
-
         # Alternate RELEASE/ARCH fetch support
         if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
             ARCH="i386"
             RELEASE="${RELEASE}-${ARCH}"
         fi
 
-        # Use PKGBASE for version 15 and above
-        if [ "${PLATFORM_OS}" = "FreeBSD" ] && [ "${major_version}" -ge 15 ]; then
-
+        if [ "${PKGBASE}" -eq 1 ]; then
             info "\nUsing pkgbase..."
-
             bootstrap_directories
             bootstrap_pkgbase_release
-
-        else
-
+        elif [ "${PKGBASE}" -eq 0 ]; then
             info "\nFetching ${PLATFORM_OS} distfiles..."
-
             if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
                 error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
             fi
-
             bootstrap_directories
             bootstrap_release
-
         fi
     else
         usage
@@ -209,9 +208,6 @@ bootstrap_directories() {
 
 bootstrap_pkgbase_release() {
 
-    local release="${RELEASE}"
-    local minor_version=$(echo ${release} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
-    local major_version=$(echo ${release} | grep -Eo '^[0-9]+')
     local mirror_type="srv"
     local abi="${PLATFORM_OS}:${major_version}:${HW_MACHINE_ARCH}"
     local signature_type="fingerprints"
@@ -219,7 +215,7 @@ bootstrap_pkgbase_release() {
     local host_fingerprintsdir="/usr/share/keys/pkg"
     local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
     if [ "${FREEBSD_BRANCH}" = "release" ]; then
-        local repo_name="FreeBSD-base-release-${minor_version}"
+        local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
     elif [ "${FREEBSD_BRANCH}" = "current" ]; then
         local repo_name="FreeBSD-base-latest"
     fi
@@ -569,17 +565,29 @@ bootstrap_template() {
 }
 
 # Handle options.
+PKGBASE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -p|--pkgbase)
+            PKGBASE=1
+            shift
             ;;
         -x|--debug)
             enable_debug
             shift
             ;;
         -*)
-            error_exit "[ERROR]: Unknown Option: \"${1}\""
+            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${_opt} in
+                    p) PKGBASE=1 ;;
+                    x) enable_debug ;;
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
+                esac
+            done
+            shift
             ;;
         *)
             break
@@ -657,7 +665,7 @@ case "${RELEASE}" in
         NAME_VERIFY=$(echo "${RELEASE}")
         UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
         PLATFORM_OS="MidnightBSD"
-        validate_release_url
+        validate_release
         ;;
     *-CURRENT|*-current)
         ## check for FreeBSD releases name
@@ -665,7 +673,7 @@ case "${RELEASE}" in
         UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
         PLATFORM_OS="FreeBSD"
         FREEBSD_BRANCH="current"
-        validate_release_url
+        validate_release
         ;;
     *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
         ## check for FreeBSD releases name
@@ -673,14 +681,14 @@ case "${RELEASE}" in
         UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
         PLATFORM_OS="FreeBSD"
         FREEBSD_BRANCH="release"
-        validate_release_url
+        validate_release
         ;;
     *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
         ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
         UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${NAME_VERIFY}"
         PLATFORM_OS="HardenedBSD"
-        validate_release_url
+        validate_release
         ;;
     *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
         ## check for HardenedBSD(specific stable build releases)
@@ -689,7 +697,7 @@ case "${RELEASE}" in
         NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
         UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
         PLATFORM_OS="HardenedBSD"
-        validate_release_url
+        validate_release
         ;;
     *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
         ## check for HardenedBSD(latest stable build release)
@@ -698,7 +706,7 @@ case "${RELEASE}" in
         NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-BUILD-//g')
         UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
         PLATFORM_OS="HardenedBSD"
-        validate_release_url
+        validate_release
         ;;
     current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
         ## check for HardenedBSD(specific current build releases)
@@ -707,7 +715,7 @@ case "${RELEASE}" in
         NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
         UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
         PLATFORM_OS="HardenedBSD"
-        validate_release_url
+        validate_release
         ;;
     current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
         ## check for HardenedBSD(latest current build release)
@@ -716,7 +724,7 @@ case "${RELEASE}" in
         NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-BUILD-//g')
         UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
         PLATFORM_OS="HardenedBSD"
-        validate_release_url
+        validate_release
         ;;
     http?://*/*/*)
         BASTILLE_TEMPLATE_URL=${1}
@@ -786,10 +794,10 @@ case "${RELEASE}" in
         ;;
 esac
 
-case "${OPTION}" in
-    update)
-        bastille update "${RELEASE}"
-        ;;
-esac
-
-echo
+if [ "${PKGBASE}" -eq 0 ]; then
+    case "${OPTION}" in
+        update)
+            bastille update "${RELEASE}"
+            ;;
+    esac
+fi
