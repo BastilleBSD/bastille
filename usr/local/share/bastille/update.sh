@@ -226,7 +226,7 @@ release_check() {
 release_update_pkgbase() {
 
     local release_dir="${bastille_releasesdir}/${TARGET}"
-    local abi="FreeBSD:${major_version}:${HW_MACHINE_ARCH}"
+    local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
     local fingerprints="${release_dir}/usr/share/keys/pkg"
     if [ "${FREEBSD_BRANCH}" = "release" ]; then
         local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
