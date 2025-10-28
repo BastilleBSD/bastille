@@ -209,7 +209,7 @@ bootstrap_directories() {
 bootstrap_pkgbase_release() {
 
     local mirror_type="srv"
-    local abi="${PLATFORM_OS}:${major_version}:${HW_MACHINE_ARCH}"
+    local abi="${PLATFORM_OS}:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
     local signature_type="fingerprints"
     local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkg"
     local host_fingerprintsdir="/usr/share/keys/pkg"
