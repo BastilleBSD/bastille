@@ -272,16 +272,8 @@ else
         thin_jail_check "${TARGET}"
     else
         thick_jail_check "${TARGET}"
-        if echo "${TARGET}" | grep -oq "-CURRENT"; then
-            FREEBSD_BRANCH="current"
-        else
-            FREEBSD_BRANCH="release"
-        fi
-        if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" -N 2>/dev/null; then
-            PKGBASE=1
-        fi
     fi
-    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/etc/freebsd-version)"
+    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version)"
     if [ -z "${OLD_RELEASE}" ]; then
         OLD_RELEASE="$(bastille config ${TARGET} get osrelease)"
     fi
@@ -291,12 +283,21 @@ else
     NEW_MAJOR_VERSION=$(echo ${NEW_RELEASE} | grep -Eo '^[0-9]+')
     # Check if jail is already running NEW_RELEASE
     if [ "${OLD_MAJOR_VERSION}.${OLD_MINOR_VERSION}" = "${NEW_MAJOR_VERSION}.${NEW_MINOR_VERSION}" ]; then
-        error_notify "[ERROR]: Jail is already running '${NEW_VERSION}' release."
+        error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
         if [ "${THIN_JAIL}" -eq 1 ]; then
             error_exit "See 'bastille update RELEASE' to update the release."
         else
             error_exit "See 'bastille update TARGET' to update the jail."
         fi
+    fi
+    # Validate PKGBASE or non-PKGBASE
+    if echo "${TARGET}" | grep -oq "-CURRENT"; then
+        FREEBSD_BRANCH="current"
+    else
+        FREEBSD_BRANCH="release"
+    fi
+    if [ "${NEW_MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" -N 2>/dev/null; then
+        PKGBASE=1
     fi
 	if [ "${PKGBASE}" -eq 1 ]; then
         jail_upgrade_pkgbase
