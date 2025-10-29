@@ -133,9 +133,6 @@ release_check() {
         error_exit "[ERROR]: ${NEW_RELEASE} is not a valid release."
     fi
 
-    # Check if jail is already running NEW_RELEASE
-    if [ "${NEW_RELEASE}"
-
     # Exit if NEW_RELEASE doesn't exist
     if [ "${THIN_JAIL}" -eq 1 ]; then
         if [ ! -d "${bastille_releasesdir}/${NEW_RELEASE}" ]; then
