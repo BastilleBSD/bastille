@@ -170,6 +170,9 @@ jail_update_pkgbase() {
                   upgrade -r "${repo_name}"; then
             error_exit "[ERROR]: Failed to upgrade jail: ${TARGET}"
         fi
+        # Update release version (including patch level)
+        NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+        bastille config ${TARGET} set osrelease ${NEW_VERSION}
     else
         error_exit "[ERROR]: Jail not found: ${TARGET}"
     fi
@@ -201,6 +204,9 @@ jail_update() {
             -f "${freebsd_update_conf}" \
             install
         fi
+        # Update release version (including patch level)
+        NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+        bastille config ${TARGET} set osrelease ${NEW_VERSION}
     fi
 }
 
