@@ -133,6 +133,9 @@ release_check() {
         error_exit "[ERROR]: ${NEW_RELEASE} is not a valid release."
     fi
 
+    # Check if jail is already running NEW_RELEASE
+    if [ "${NEW_RELEASE}"
+
     # Exit if NEW_RELEASE doesn't exist
     if [ "${THIN_JAIL}" -eq 1 ]; then
         if [ ! -d "${bastille_releasesdir}/${NEW_RELEASE}" ]; then
@@ -145,17 +148,22 @@ release_check() {
 jail_upgrade_pkgbase() {
 
     # Only thick jails should be targetted here
-    local old_release="$(jexec -l ${TARGET} freebsd-version 2>/dev/null)"
-    local new_release="${NEW_RELEASE}"
     local jailpath="${bastille_jailsdir}/${TARGET}/root"
-    local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
+    local abi="FreeBSD:${NEW_MAJOR_VERSION}:${HW_MACHINE_ARCH}"
     local fingerprints="${jailpath}/usr/share/keys/pkg"
     if [ "${FREEBSD_BRANCH}" = "release" ]; then
-        local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+        local repo_name="FreeBSD-base-release-${NEW_MINOR_VERSION}"
     elif [ "${FREEBSD_BRANCH}" = "current" ]; then
         local repo_name="FreeBSD-base-latest"
     fi
     local repo_dir="${bastille_sharedir}/pkgbase"
+
+    info "\n[${TARGET}]:"
+
+    if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
+        error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}'"
+        error_notify "See 'bastille update TARGET' to update jail."
+    fi
 
     # Upgrade jail with pkgbase (thick only)
     if [ -d "${jailpath}" ]; then
@@ -185,47 +193,40 @@ jail_upgrade_pkgbase() {
     else
         error_exit "[ERROR]: Jail not found: ${TARGET}"
     fi
-    info "\nUpgraded ${TARGET}: ${old_release} -> ${new_release}"
+    info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
 }
 
 jail_upgrade() {
 
-    if [ "${THIN_JAIL}" -eq 1 ]; then
-        local old_release="$(bastille config ${TARGET} get osrelease)"
-    else
-        local old_release="$(jexec -l ${TARGET} freebsd-version 2>/dev/null)"
-    fi
+    info "\n[${TARGET}]:"
+
     local jailpath="${bastille_jailsdir}/${TARGET}/root"
     local work_dir="${jailpath}/var/db/freebsd-update"
     local freebsd_update_conf="${jailpath}/etc/freebsd-update.conf"
 
     # Upgrade a thin jail
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-        if [ "${old_release}" = "not set" ]; then
-            local old_release="$(grep "${bastille_releasesdir}.*\.bastille.*nullfs.*" "${bastille_jailsdir}/${TARGET}/fstab" | awk -F"/releases/" '{print $2}' | awk '{print $1}')"
-        fi
-        local new_release="${NEW_RELEASE}"
         # Update "osrelease" entry inside fstab
-        sed -i '' "/.bastille/ s|${old_release}|${new_release}|g" "${bastille_jailsdir}/${TARGET}/fstab"
+        sed -i '' "/.bastille/ s|${OLD_RELEASE}|${NEW_RELEASE}|g" "${bastille_jailsdir}/${TARGET}/fstab"
         # Update "osrelease" inside jail.conf using 'bastille config'
-        bastille config ${TARGET} set osrelease ${new_release}
+        bastille config ${TARGET} set osrelease ${NEW_RELEASE}
         # Start jail if AUTO=1
         if [ "${AUTO}" -eq 1 ]; then
             bastille start "${TARGET}"
         fi
-        info "\nUpgraded ${TARGET}: ${old_release} -> ${new_release}"
+        info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
         echo "See 'bastille etcupdate TARGET' to update /etc"
     else
         # Upgrade a thick jail
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
-        --currently-running "${old_release}" \
+        --currently-running "${OLD_RELEASE}" \
         -j "${TARGET}" \
         -d "${work_dir}" \
         -f "${freebsd_update_conf}" \
-        -r "${new_release}" upgrade
+        -r "${NEW_RELEASE}" upgrade
 
         # Update "osrelease" inside jail.conf using 'bastille config'
-        bastille config ${TARGET} set osrelease ${new_release}
+        bastille config ${TARGET} set osrelease ${NEW_RELEASE}
         warn "Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates."
     fi
 }
@@ -235,6 +236,8 @@ jail_updates_install() {
     local jailpath="${bastille_jailsdir}/${TARGET}/root"
     local work_dir="${jailpath}/var/db/freebsd-update"
     local freebsd_update_conf="${jailpath}/etc/freebsd-update.conf"
+
+    info "\n[${TARGET}]:"
 
     # Finish installing upgrade on a thick container
     if [ -d "${jailpath}" ]; then
@@ -265,7 +268,6 @@ if [ "${NEW_RELEASE}" = "install" ]; then
     else
         thick_jail_check "${TARGET}"
     fi
-    info "\n[${TARGET}]:"
     jail_updates_install "${TARGET}"
 else
     release_check
@@ -273,8 +275,6 @@ else
         thin_jail_check "${TARGET}"
     else
         thick_jail_check "${TARGET}"
-        MINOR_VERSION=$(echo ${NEW_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
-        MAJOR_VERSION=$(echo ${NEW_RELEASE} | grep -Eo '^[0-9]+')
         if echo "${TARGET}" | grep -oq "-CURRENT"; then
             FREEBSD_BRANCH="current"
         else
@@ -284,7 +284,20 @@ else
             PKGBASE=1
         fi
     fi
-    info "\n[${TARGET}]:"
+    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/freebsd-version)"
+    OLD_MINOR_VERSION=$(echo ${OLD_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+    OLD_MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
+    NEW_MINOR_VERSION=$(echo ${NEW_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+    NEW_MAJOR_VERSION=$(echo ${NEW_RELEASE} | grep -Eo '^[0-9]+')
+    # Check if jail is already running NEW_RELEASE
+    if [ "${OLD_MAJOR_VERSION}.${OLD_MINOR_VERSION}" = "${NEW_MAJOR_VERSION}.${NEW_MINOR_VERSION}" ]; then
+        error_notify "[ERROR]: Jail is already running '${NEW_VERSION}' release."
+        if [ "${THIN_JAIL}" -eq 1 ]; then
+            error_exit "See 'bastille update RELEASE' to update the release."
+        else
+            error_exit "See 'bastille update TARGET' to update the jail."
+        fi
+    fi
 	if [ "${PKGBASE}" -eq 1 ]; then
         jail_upgrade_pkgbase
     else
