@@ -291,7 +291,7 @@ else
         fi
     fi
     # Validate PKGBASE or non-PKGBASE
-    if echo "${TARGET}" | grep -oq "-CURRENT"; then
+    if echo "${NEW_RELEASE}" | grep -oq "\-CURRENT"; then
         FREEBSD_BRANCH="current"
     else
         FREEBSD_BRANCH="release"

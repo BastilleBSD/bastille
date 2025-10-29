@@ -123,7 +123,7 @@ jail_check() {
     CURRENT_VERSION="$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)"
     MINOR_VERSION=$(echo ${CURRENT_VERSION} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
     MAJOR_VERSION=$(echo ${CURRENT_VERSION} | grep -Eo '^[0-9]+')
-    if echo "${CURRENT_VERSION}" | grep -oq "-CURRENT"; then
+    if echo "${CURRENT_VERSION}" | grep -oq "\-CURRENT"; then
         FREEBSD_BRANCH="current"
     else
         FREEBSD_BRANCH="release"
