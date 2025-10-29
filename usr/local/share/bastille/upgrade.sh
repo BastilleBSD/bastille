@@ -145,9 +145,9 @@ release_check() {
 jail_upgrade_pkgbase() {
 
     # Only thick jails should be targetted here
-    local old_release="$(jexec -l ${jailname} freebsd-version 2>/dev/null)"
+    local old_release="$(jexec -l ${TARGET} freebsd-version 2>/dev/null)"
     local new_release="${NEW_RELEASE}"
-    local jailpath="${bastille_jailsdir}/${jailname}/root"
+    local jailpath="${bastille_jailsdir}/${TARGET}/root"
     local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
     local fingerprints="${jailpath}/usr/share/keys/pkg"
     if [ "${FREEBSD_BRANCH}" = "release" ]; then
@@ -185,48 +185,48 @@ jail_upgrade_pkgbase() {
     else
         error_exit "[ERROR]: Jail not found: ${TARGET}"
     fi
-    info "\nUpgraded ${jailname}: ${old_release} -> ${new_release}"
+    info "\nUpgraded ${TARGET}: ${old_release} -> ${new_release}"
 }
 
 jail_upgrade() {
 
     if [ "${THIN_JAIL}" -eq 1 ]; then
-        local old_release="$(bastille config ${jailname} get osrelease)"
+        local old_release="$(bastille config ${TARGET} get osrelease)"
     else
-        local old_release="$(jexec -l ${jailname} freebsd-version 2>/dev/null)"
+        local old_release="$(jexec -l ${TARGET} freebsd-version 2>/dev/null)"
     fi
-    local jailpath="${bastille_jailsdir}/${jailname}/root"
+    local jailpath="${bastille_jailsdir}/${TARGET}/root"
     local work_dir="${jailpath}/var/db/freebsd-update"
     local freebsd_update_conf="${jailpath}/etc/freebsd-update.conf"
 
     # Upgrade a thin jail
-    if grep -qw "${bastille_jailsdir}/${jailname}/root/.bastille" "${bastille_jailsdir}/${jailname}/fstab"; then
+    if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
         if [ "${old_release}" = "not set" ]; then
-            local old_release="$(grep "${bastille_releasesdir}.*\.bastille.*nullfs.*" "${bastille_jailsdir}/${jailname}/fstab" | awk -F"/releases/" '{print $2}' | awk '{print $1}')"
+            local old_release="$(grep "${bastille_releasesdir}.*\.bastille.*nullfs.*" "${bastille_jailsdir}/${TARGET}/fstab" | awk -F"/releases/" '{print $2}' | awk '{print $1}')"
         fi
         local new_release="${NEW_RELEASE}"
         # Update "osrelease" entry inside fstab
-        sed -i '' "/.bastille/ s|${old_release}|${new_release}|g" "${bastille_jailsdir}/${jailname}/fstab"
+        sed -i '' "/.bastille/ s|${old_release}|${new_release}|g" "${bastille_jailsdir}/${TARGET}/fstab"
         # Update "osrelease" inside jail.conf using 'bastille config'
-        bastille config ${jailname} set osrelease ${new_release}
+        bastille config ${TARGET} set osrelease ${new_release}
         # Start jail if AUTO=1
         if [ "${AUTO}" -eq 1 ]; then
-            bastille start "${jailname}"
+            bastille start "${TARGET}"
         fi
-        info "\nUpgraded ${jailname}: ${old_release} -> ${new_release}"
+        info "\nUpgraded ${TARGET}: ${old_release} -> ${new_release}"
         echo "See 'bastille etcupdate TARGET' to update /etc"
     else
         # Upgrade a thick jail
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
         --currently-running "${old_release}" \
-        -j "${jailname}" \
+        -j "${TARGET}" \
         -d "${work_dir}" \
         -f "${freebsd_update_conf}" \
         -r "${new_release}" upgrade
 
         # Update "osrelease" inside jail.conf using 'bastille config'
-        bastille config ${jailname} set osrelease ${new_release}
-        warn "Please run 'bastille upgrade ${jailname} install', restart the jail, then run 'bastille upgrade ${jailname} install' again to finish installing updates."
+        bastille config ${TARGET} set osrelease ${new_release}
+        warn "Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates."
     fi
 }
 
@@ -239,12 +239,12 @@ jail_updates_install() {
     # Finish installing upgrade on a thick container
     if [ -d "${jailpath}" ]; then
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
-        -j "${jailname}" \
+        -j "${TARGET}" \
         -d "${work_dir}" \
         -f "${freebsd_update_conf}" \
         install
     else
-        error_exit "[ERROR]: ${jailname} not found. See 'bastille bootstrap RELEASE'."
+        error_exit "[ERROR]: ${TARGET} not found. See 'bastille bootstrap RELEASE'."
     fi
 }
 
