@@ -281,7 +281,10 @@ else
             PKGBASE=1
         fi
     fi
-    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/freebsd-version)"
+    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/etc/freebsd-version)"
+    if [ -z "${OLD_RELEASE}" ]; then
+        OLD_RELEASE="$(bastille config ${TARGET} get osrelease)"
+    fi
     OLD_MINOR_VERSION=$(echo ${OLD_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
     OLD_MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
     NEW_MINOR_VERSION=$(echo ${NEW_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
