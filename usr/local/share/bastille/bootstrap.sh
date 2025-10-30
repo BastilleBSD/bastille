@@ -49,7 +49,11 @@ validate_release() {
 
     MAJOR_VERSION=$(echo ${RELEASE} | grep -Eo '^[0-9]+')
     MINOR_VERSION=$(echo ${RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
-	
+
+    if [ "${PKGBASE}" -eq 1 ] && [ "${MAJOR_VERSION}" -le 14 ]; then
+        error_exit "[ERROR]: Pkgbase is not supported for release: ${RELEASE}"
+    fi
+
     if [ "${MAJOR_VERSION}" -ge 16 ]; then
         PKGBASE=1
     fi
