@@ -219,7 +219,7 @@ release_check() {
     # Validate update method
     MINOR_VERSION=$(echo ${TARGET} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
     MAJOR_VERSION=$(echo ${TARGET} | grep -Eo '^[0-9]+')
-    if echo "${TARGET}" | grep -oq "-CURRENT"; then
+    if echo "${TARGET}" | grep -oq "\-CURRENT"; then
         FREEBSD_BRANCH="current"
     else
         FREEBSD_BRANCH="release"
