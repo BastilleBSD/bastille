@@ -160,6 +160,20 @@ VNET Jail Interface Names
   with the ``X`` starting at ``1`` and incrementing by 1 for each new epair.
   So, ``mylongjailname`` will be ``e0a_bastille2`` and ``e0b_bastille2``.
 
+Netgraph and Proxmox VE
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* When running a FreeBSD VM on Proxmox VE, you might encounter crashes when using
+  Netraph. This bug is being tracked at
+  https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=238326
+
+  One workaround is to add the following line to the ``jail.conf`` file of the affected
+  jail(s).
+
+.. code-block:: shell
+
+  exec.prestop += "jng shutdown JAILNAME";
+
 Network Scenarios
 -----------------
 
