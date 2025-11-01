@@ -126,4 +126,5 @@ begin applying your template.
 
       Options:
 
+      -p | --pkgbase     Bootstrap using pkgbase (15.0-RELEASE and above).
       -x | --debug           Enable debug mode.
