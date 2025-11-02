@@ -8,7 +8,7 @@ ARG IFCONFIG6
 
 SYSRC ifconfig_${INTERFACE}_name=${VNET}
 SYSRC ifconfig_${VNET}="${IFCONFIG}"
-SYSRC ifconfig_${VNET}_descr="${VNET}:${EXT_INTERFACE}"
+SYSRC ifconfig_${VNET}_descr="${EXT_INTERFACE} jail interface"
 
 # Apply IFCONFIG6 if set
 CMD if [ -n "${IFCONFIG6}" ]; then /usr/sbin/sysrc ifconfig_${VNET}_ipv6="${IFCONFIG6}"; fi
