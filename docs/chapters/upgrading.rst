@@ -79,10 +79,6 @@ Thin Jails
 Minor Release Upgrades - Pkgbase
 --------------------------------
 
-Upgrading jails that use a pkgbase release is slightky different
-but runs the same commands. Bastille will automatically detect
-if your jail is using pkgbase or not.
-
 To upgrade Bastille jails for a minor release (ie; 15.1 > 15.2) you can do the
 following:
 
