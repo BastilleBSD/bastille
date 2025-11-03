@@ -715,7 +715,7 @@ create_jail() {
                 if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
                     bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
                 else
-                    bastille template "${NAME}" ${bastille_template_vnet}  --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
                 fi
             fi
 
