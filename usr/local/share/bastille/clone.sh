@@ -465,6 +465,37 @@ clone_jail() {
 
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
 
+        if [ -n "${IP}" ]; then
+            validate_ips
+        else
+            usage
+        fi
+
+        # Validate proper IP settings
+        if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
+            # VNET
+            if grep -Eoq "ifconfig_vnet0=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+                if [ -z "${IP4_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                fi
+            fi
+            if grep -Eoq "ifconfig_vnet0_ipv6=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+                if [ -z "${IP6_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                fi
+            fi
+        else
+            if [ "$(bastille config ${TARGET} get ip4.addr)" != "not set" ]; then
+                if [ -z "${IP4_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                fi
+            elif [ "$(bastille config ${TARGET} get ip6.addr)" != "not set" ]; then
+                if [ -z "${IP6_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                fi
+            fi
+        fi
+
         if checkyesno bastille_zfs_enable; then
 
             # Validate jail state
@@ -479,37 +510,6 @@ clone_jail() {
                     info "\n[${TARGET}]:"
                     error_notify "Jail is running."
                     error_exit "Use [-a|--auto] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
-                fi
-            fi
-
-            if [ -n "${IP}" ]; then
-                validate_ips
-            else
-                usage
-            fi
-
-            # Validate proper IP settings
-            if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
-                # VNET
-                if grep -Eoq "ifconfig_vnet0=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
-                    if [ -z "${IP4_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
-                    fi
-                fi
-                if grep -Eoq "ifconfig_vnet0_ipv6=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
-                    if [ -z "${IP6_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
-                    fi
-                fi
-            else
-                if [ "$(bastille config ${TARGET} get ip4.addr)" != "not set" ]; then
-                    if [ -z "${IP4_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
-                    fi
-                elif [ "$(bastille config ${TARGET} get ip6.addr)" != "not set" ]; then
-                    if [ -z "${IP6_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
-                    fi
                 fi
             fi
 
