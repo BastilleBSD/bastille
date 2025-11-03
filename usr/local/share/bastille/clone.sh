@@ -304,7 +304,9 @@ update_jailconf_vnet() {
 
                 # Replace epair name in /etc/rc.conf
                 sed -i '' "/ifconfig/ s|${old_jail_epair}|${new_jail_epair}|g" "${jail_rc_config}"
+
             else
+
                 # For -B jails
                 # Replace host epair name in jail.conf
                 sed -i '' "s|up name ${old_host_epair}|up name ${new_host_epair}|g" "${jail_config}"
@@ -331,12 +333,16 @@ update_jailconf_vnet() {
 
                 # Replace epair name in /etc/rc.conf
                 sed -i '' "/ifconfig/ s|${old_jail_epair}|${new_jail_epair}|g" "${jail_rc_config}"
+
             fi
 
             # Update /etc/rc.conf
             local jail_vnet="$(grep ${old_jail_epair} "${jail_rc_config}" | grep -Eo -m 1 "vnet[0-9]+")"
             local jail_vnet_vlan="$(grep "vlans_${jail_vnet}" "${jail_rc_config}" | sed 's/.*=//g')"
+
+            # Change epair name
             sed -i '' "s|${old_jail_epair}_name|${new_jail_epair}_name|" "${jail_rc_config}"
+
             # IP4
             if [ -n "${IP4_ADDR}" ]; then
                 if grep "vnet0" "${jail_rc_config}" | grep -q "${new_jail_epair}_name"; then
@@ -361,6 +367,7 @@ update_jailconf_vnet() {
                     fi
                 fi
             fi
+
             # IP6
             if [ -n "${IP6_ADDR}" ]; then
                 if grep "vnet0" "${jail_rc_config}" | grep -q "${new_jail_epair}_name"; then

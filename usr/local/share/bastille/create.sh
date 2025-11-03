@@ -700,12 +700,23 @@ create_jail() {
             _ifconfig="${_ifconfig_inet}"
             _ifconfig6="${_ifconfig_inet6}"
 
-            # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
-            # Use default "vnet0" otherwise
-            if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
-            else
-                bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+            # Set jail interface description if "if_bridge"
+            if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+                # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
+                # Use default "vnet0" otherwise
+                if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                else
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                fi
+            elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+                # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
+                # Use default "vnet0" otherwise
+                if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                else
+                    bastille template "${NAME}" ${bastille_template_vnet}  --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                fi
             fi
 
             # Add VLAN ID if it was given

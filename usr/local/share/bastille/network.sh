@@ -242,25 +242,40 @@ add_interface() {
     local ip="${3}"
     local jail_config="${bastille_jailsdir}/${jailname}/jail.conf"
     local jail_rc_config="${bastille_jailsdir}/${jailname}/root/etc/rc.conf"
-    local jail_vnet_count="$(grep -Eo 'vnet[1-9]+' ${jail_rc_config} | sort -u | wc -l)"
-    local jail_vnet="vnet$((jail_vnet_count + 1))"
+    local jail_vnet_list="$(grep -Eo 'vnet[0-9]+' ${jail_rc_config} | sort -u | wc -l)"
+    # Set vnetX number
+    local jail_vnet_num="0"
+    while echo "${jail_vnet_list}" | grep -Eosq "vnet${jail_vnet_num}"; do
+        jail_vnet_num=$((jail_vnet_num + 1))
+    done
+    local jail_vnet="vnet${jail_vnet_num}"
 
     # Determine number of interfaces
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
         local epair_list="$(grep -Eo 'e[0-9]+a_[^;" ]+' ${jail_config} | sort -u)"
         local epair_suffix="$(grep -m 1 -Eo 'e[0-9]+a_[^;" ]+' ${jail_config} | awk -F"_" '{print $2}')"
+        local epair_num="0"
+        while echo "${epair_list}" | grep -Eosq "e${epair_num}a_"; do
+            epair_num=$((epair_num + 1))
+        done
+        if [ "${jail_vnet_num}" -ne "${epair_num}" ]; then
+            error_exit "[ERROR]: Jail vnet+epair interface numbers do not match."
+        fi
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
         local ng_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${jail_config} | sort -u)"
         local ng_suffix="$(grep -m 1 -Eo 'ng[0-9]+_[^;" ]+' ${jail_config} | awk -F"_" '{print $2}')"
+        local ng_num="0"
+        while echo "${ng_list}" | grep -Eosq "ng${ng_num}_"; do
+            ng_num=$((ng_num + 1))
+        done
+        if [ "${jail_vnet_num}" -ne "${ng_num}" ]; then
+            error_exit "[ERROR]: Jail vnet+netgraph interface numbers do not match."
+        fi
     fi
 
     # BRIDGE interface
     if [ "${BRIDGE}" -eq 1 ]; then
 
-        local epair_num=1
-        while echo "${epair_list}" | grep -Eosq "e${epair_num}a_"; do
-            epair_num=$((epair_num + 1))
-        done
         local host_epair=e${epair_num}a_${epair_suffix}
         local jail_epair=e${epair_num}b_${epair_suffix}
 
@@ -296,7 +311,9 @@ EOF
 
         # Add config to /etc/rc.conf
         sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_name="${jail_vnet}"
-	if [ -n "${IP6_ADDR}" ]; then
+        sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_descr="jail interface for ${if}"
+
+        if [ -n "${IP6_ADDR}" ]; then
             if [ "${IP6_ADDR}" = "SLAAC" ]; then
                 sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
             else
@@ -318,10 +335,6 @@ EOF
         # if_bridge
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
 
-            local epair_num=1
-            while echo "${epair_list}" | grep -Eosq "e${epair_num}a_"; do
-                epair_num=$((epair_num + 1))
-            done
             local host_epair=e${epair_num}a_${epair_suffix}
             local jail_epair=e${epair_num}b_${epair_suffix}
             local jib_epair=${epair_suffix}
@@ -356,8 +369,9 @@ EOF
 
             # Add config to /etc/rc.conf
             sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_name="${jail_vnet}"
+            sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_descr="jail interface for ${if}"
 
-	    if [ -n "${IP6_ADDR}" ]; then
+            if [ -n "${IP6_ADDR}" ]; then
                 if [ "${IP6_ADDR}" = "SLAAC" ]; then
                     sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
                 else
@@ -376,10 +390,6 @@ EOF
         # netgraph
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
 
-            local ng_num=1
-            while echo "${ng_list}" | grep -Eosq "ng${ng_num}_"; do
-                ng_num=$((ng_num + 1))
-            done
             local ng_if=ng${ng_num}_${ng_suffix}
             local jng_if=${ng_suffix}
 
