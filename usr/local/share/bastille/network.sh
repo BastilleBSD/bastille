@@ -311,7 +311,7 @@ EOF
 
         # Add config to /etc/rc.conf
         sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_name="${jail_vnet}"
-        sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_descr="jail interface for ${if}"
+        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_descr="jail interface for ${if}"
 
         if [ -n "${IP6_ADDR}" ]; then
             if [ "${IP6_ADDR}" = "SLAAC" ]; then
@@ -369,7 +369,7 @@ EOF
 
             # Add config to /etc/rc.conf
             sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_name="${jail_vnet}"
-            sysrc -f "${jail_rc_config}" ifconfig_${jail_epair}_descr="jail interface for ${if}"
+            sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_descr="jail interface for ${if}"
 
             if [ -n "${IP6_ADDR}" ]; then
                 if [ "${IP6_ADDR}" = "SLAAC" ]; then
