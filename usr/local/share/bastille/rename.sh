@@ -155,9 +155,9 @@ update_jailconf_vnet() {
                     local new_jail_epair="e${epair_num}b_${old_if_suffix}"
                 else
                     get_bastille_epair_count
-                    local epair_num=1
-                    while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
-                        bastille_epair_num=$((epair_num + 1))
+                    local bastille_epair_num=1
+                    while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${bastille_epair_num}"; do
+                        bastille_epair_num=$((bastille_epair_num + 1))
                     done
                     local new_host_epair="e${epair_num}a_bastille${bastille_epair_num}"
                     local new_jail_epair="e${epair_num}b_bastille${bastille_epair_num}"
