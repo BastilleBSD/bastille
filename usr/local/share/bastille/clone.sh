@@ -241,6 +241,13 @@ update_jailconf_vnet() {
         local if_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${jail_config} | sort -u)"
     fi
 
+    # Set CLONE_MULTI_INTERFACE
+    if [ "$(echo ${if_list} | wc -l)" -gt 1 ]; then
+        CLONE_MULTI_INTERFACE=1
+    else
+        CLONE_MULTI_INTERFACE=0
+    fi
+
     # We need to following to prevent incremental bastille1, bastille2 etc...
     local reuse_new_suffix=""
 
@@ -361,9 +368,9 @@ update_jailconf_vnet() {
                     fi
                 else
                     if [ -n "${jail_vnet_vlan}" ]; then
-                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_${jail_vnet_vlan}="SYNCDHCP"
+                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_${jail_vnet_vlan}=""
                     else
-                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="SYNCDHCP"
+                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}=""
                     fi
                 fi
             fi
@@ -555,6 +562,9 @@ clone_jail() {
         error_exit "[ERROR]: An error has occurred while attempting to clone '${TARGET}'."
     else
         info "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
+        if [ "${CLONE_MULTI_INTERFACE}" -eq 1 ]; then
+            info "\nEdit 'rc.conf' to manually set network info for non-default interfaces."
+        fi
     fi
 
     # Start jails if AUTO=1 or LIVE=1
