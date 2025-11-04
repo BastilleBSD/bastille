@@ -231,6 +231,7 @@ update_jailconf() {
 
 update_jailconf_vnet() {
 
+    CLONE_INTERFACE_COUNT=0
     local jail_config="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local jail_rc_config="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
 
@@ -241,18 +242,12 @@ update_jailconf_vnet() {
         local if_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${jail_config} | sort -u)"
     fi
 
-    # Set CLONE_MULTI_INTERFACE
-    if [ "$(echo ${if_list} | wc -l)" -gt 1 ]; then
-        CLONE_MULTI_INTERFACE=1
-    else
-        CLONE_MULTI_INTERFACE=0
-    fi
-
     # We need to following to prevent incremental bastille1, bastille2 etc...
     local reuse_new_suffix=""
 
     for if in ${if_list}; do
 
+        CLONE_INTERFACE_COUNT=$((CLONE_INTERFACE_COUNT + 1))
         local old_if_prefix="$(echo ${if} | awk -F'_' '{print $1}')"
         local old_if_suffix="$(echo ${if} | awk -F'_' '{print $2}')"
 
@@ -562,7 +557,7 @@ clone_jail() {
         error_exit "[ERROR]: An error has occurred while attempting to clone '${TARGET}'."
     else
         info "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
-        if [ "${CLONE_MULTI_INTERFACE}" -eq 1 ]; then
+        if [ "${CLONE_INTERFACE_COUNT}" -gt 1 ]; then
             info "\nEdit 'rc.conf' to manually set network info for non-default interfaces."
         fi
     fi
