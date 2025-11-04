@@ -231,6 +231,7 @@ update_jailconf() {
 
 update_jailconf_vnet() {
 
+    CLONE_INTERFACE_COUNT=0
     local jail_config="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local jail_rc_config="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
 
@@ -246,6 +247,7 @@ update_jailconf_vnet() {
 
     for if in ${if_list}; do
 
+        CLONE_INTERFACE_COUNT=$((CLONE_INTERFACE_COUNT + 1))
         local old_if_prefix="$(echo ${if} | awk -F'_' '{print $1}')"
         local old_if_suffix="$(echo ${if} | awk -F'_' '{print $2}')"
 
@@ -282,61 +284,67 @@ update_jailconf_vnet() {
             if grep "${old_if_suffix}" "${jail_config}" | grep -oq "jib addm"; then
                 # For -V jails
                 # Replace host epair name in jail.conf
-                sed -i '' "s|jib addm ${old_if_suffix}|jib addm ${new_if_suffix}|g" "${jail_config}"
-                sed -i '' "s|${old_host_epair} ether|${new_host_epair} ether|g" "${jail_config}"
-                sed -i '' "s|${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_config}"
-                sed -i '' "s|${old_host_epair} description|${new_host_epair} description|g" "${jail_config}"
+                sed -i '' "s|jib addm ${old_if_suffix}\>|jib addm ${new_if_suffix}|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} ether|${new_host_epair} ether|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} description|${new_host_epair} description|g" "${jail_config}"
 
                 # Replace jail epair name in jail.conf
                 sed -i '' "s|= ${old_jail_epair};|= ${new_jail_epair};|g" "${jail_config}"
-                sed -i '' "s|${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_config}"
+                sed -i '' "s|\<${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_config}"
 
                 # If jail had a static MAC, generate one for clone
                 if grep ether ${jail_config} | grep -qoc ${new_jail_epair}; then
                     local external_interface="$(grep ${new_if_suffix} ${jail_config} | grep -o 'addm.*' | awk '{print $3}' | sed 's/["|;]//g')"
                     generate_static_mac "${NEWNAME}" "${external_interface}"
-                    sed -i '' "s|${new_jail_epair} ether.*:.*:.*:.*:.*:.*a\";|${new_jail_epair} ether ${macaddr}a\";|" "${jail_config}"
-                    sed -i '' "s|${new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${new_jail_epair} ether ${macaddr}b\";|" "${jail_config}"
+                    sed -i '' "s|\<${new_jail_epair} ether.*:.*:.*:.*:.*:.*a\";|${new_jail_epair} ether ${macaddr}a\";|" "${jail_config}"
+                    sed -i '' "s|\<${new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${new_jail_epair} ether ${macaddr}b\";|" "${jail_config}"
                 fi
 
                 # Replace epair description
-                sed -i '' "s|host interface for Bastille jail ${TARGET}|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
+                sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
 
                 # Replace epair name in /etc/rc.conf
-                sed -i '' "/ifconfig/ s|${old_jail_epair}|${new_jail_epair}|g" "${jail_rc_config}"
+                sed -i '' "/ifconfig/ s|\<${old_jail_epair}\>|${new_jail_epair}|g" "${jail_rc_config}"
+
             else
+
                 # For -B jails
                 # Replace host epair name in jail.conf
-                sed -i '' "s|up name ${old_host_epair}|up name ${new_host_epair}|g" "${jail_config}"
-                sed -i '' "s|addm ${old_host_epair}|addm ${new_host_epair}|g" "${jail_config}"
-                sed -i '' "s|${old_host_epair} ether|${new_host_epair} ether|g" "${jail_config}"
-                sed -i '' "s|${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_config}"
-                sed -i '' "s|${old_host_epair} description|${new_host_epair} description|g" "${jail_config}"
+                sed -i '' "s|up name ${old_host_epair}\>|up name ${new_host_epair}|g" "${jail_config}"
+                sed -i '' "s|addm ${old_host_epair}\>|addm ${new_host_epair}|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} ether|${new_host_epair} ether|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} description|${new_host_epair} description|g" "${jail_config}"
 
                 # Replace jail epair name in jail.conf
                 sed -i '' "s|= ${old_jail_epair};|= ${new_jail_epair};|g" "${jail_config}"
-                sed -i '' "s|up name ${old_jail_epair}|up name ${new_jail_epair}|g" "${jail_config}"
-                sed -i '' "s|${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_config}"
+                sed -i '' "s|up name ${old_jail_epair}\>|up name ${new_jail_epair}|g" "${jail_config}"
+                sed -i '' "s|\<${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_config}"
 
                 # If jail had a static MAC, generate one for clone
                 if grep -q ether ${jail_config}; then
                     local external_interface="$(grep "e${epair_num}a" ${jail_config} | grep -o '[^ ]* addm' | awk '{print $1}')"
                     generate_static_mac "${NEWNAME}" "${external_interface}"
-                    sed -i '' "s|${new_host_epair} ether.*:.*:.*:.*:.*:.*a\";|${new_host_epair} ether ${macaddr}a\";|" "${jail_config}"
-                    sed -i '' "s|${new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${new_jail_epair} ether ${macaddr}b\";|" "${jail_config}"
+                    sed -i '' "s|\<${new_host_epair} ether.*:.*:.*:.*:.*:.*a\";|${new_host_epair} ether ${macaddr}a\";|" "${jail_config}"
+                    sed -i '' "s|\<${new_jail_epair} ether.*:.*:.*:.*:.*:.*b\";|${new_jail_epair} ether ${macaddr}b\";|" "${jail_config}"
                 fi
 
                 # Replace epair description
-                sed -i '' "s|host interface for Bastille jail ${TARGET}|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
+                sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
 
                 # Replace epair name in /etc/rc.conf
-                sed -i '' "/ifconfig/ s|${old_jail_epair}|${new_jail_epair}|g" "${jail_rc_config}"
+                sed -i '' "/ifconfig/ s|\<${old_jail_epair}\>|${new_jail_epair}|g" "${jail_rc_config}"
+
             fi
 
             # Update /etc/rc.conf
             local jail_vnet="$(grep ${old_jail_epair} "${jail_rc_config}" | grep -Eo -m 1 "vnet[0-9]+")"
             local jail_vnet_vlan="$(grep "vlans_${jail_vnet}" "${jail_rc_config}" | sed 's/.*=//g')"
-            sed -i '' "s|${old_jail_epair}_name|${new_jail_epair}_name|" "${jail_rc_config}"
+
+            # Change epair name
+            sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|" "${jail_rc_config}"
+
             # IP4
             if [ -n "${IP4_ADDR}" ]; then
                 if grep "vnet0" "${jail_rc_config}" | grep -q "${new_jail_epair}_name"; then
@@ -355,12 +363,13 @@ update_jailconf_vnet() {
                     fi
                 else
                     if [ -n "${jail_vnet_vlan}" ]; then
-                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_${jail_vnet_vlan}="SYNCDHCP"
+                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_${jail_vnet_vlan}=""
                     else
-                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="SYNCDHCP"
+                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}=""
                     fi
                 fi
             fi
+
             # IP6
             if [ -n "${IP6_ADDR}" ]; then
                 if grep "vnet0" "${jail_rc_config}" | grep -q "${new_jail_epair}_name"; then
@@ -377,7 +386,7 @@ update_jailconf_vnet() {
             fi
 
             # Replace epair description
-            sed -i '' "/${new_host_epair}/ s|${jail_vnet} host interface for Bastille jail ${TARGET}|${jail_vnet} host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
+            sed -i '' "/${new_host_epair}/ s|\<${jail_vnet} host interface for Bastille jail ${TARGET}\>|${jail_vnet} host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
 
         # Update netgraph VNET (non-bridged) config
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
@@ -391,15 +400,15 @@ update_jailconf_vnet() {
             local new_if_suffix="$(echo ${if} | awk -F'_' '{print $2}')"
 
             # Replace netgraph interface name
-            sed -i '' "s|jng bridge ${old_if_suffix}|jng bridge ${new_if_suffix}|g" "${jail_config}"
-            sed -i '' "s|${old_ngif} ether|${new_ngif} ether|g" "${jail_config}"
-            sed -i '' "s|jng shutdown ${old_if_suffix}|jng shutdown ${new_if_suffix}|g" "${jail_config}"
+            sed -i '' "s|jng bridge ${old_if_suffix}\>|jng bridge ${new_if_suffix}|g" "${jail_config}"
+            sed -i '' "s|\<${old_ngif} ether|${new_ngif} ether|g" "${jail_config}"
+            sed -i '' "s|jng shutdown ${old_if_suffix}\>|jng shutdown ${new_if_suffix}|g" "${jail_config}"
 
             # Replace jail epair name in jail.conf
             sed -i '' "s|= ${old_ngif};|= ${new_ngif};|g" "${jail_config}"
 
             # Replace epair name in /etc/rc.conf
-            sed -i '' "/ifconfig/ s|${old_ngif}|${new_ngif}|g" "${jail_rc_config}"
+            sed -i '' "/ifconfig/ s|\<${old_ngif}\>|${new_ngif}|g" "${jail_rc_config}"
 
             local jail_vnet="$(grep ${if} "${jail_rc_config}" | grep -Eo -m 1 "vnet[0-9]+")"
             local jail_vnet_vlan="$(grep "vlans_${jail_vnet}" "${jail_rc_config}" | sed 's/.*=//g')"
@@ -408,11 +417,12 @@ update_jailconf_vnet() {
             if grep ether ${jail_config} | grep -qoc ${new_ngif}; then
                 local external_interface="$(grep ${new_if_suffix} ${jail_config} | grep -o 'jng bridge.*' | awk '{print $4}' | sed 's/["|;]//g')"
                 generate_static_mac "${NEWNAME}" "${external_interface}"
-                sed -i '' "s|${new_ngif} ether.*:.*:.*:.*:.*:.*a\";|${new_ngif} ether ${macaddr}a\";|" "${jail_config}"
+                sed -i '' "s|\<${new_ngif} ether.*:.*:.*:.*:.*:.*a\";|${new_ngif} ether ${macaddr}a\";|" "${jail_config}"
             fi
 
             # Update /etc/rc.conf
             sed -i '' "s|ifconfig_${old_ngif}_name|ifconfig_${new_ngif}_name|" "${jail_rc_config}"
+
             # IP4
             if [ -n "${IP4_ADDR}" ]; then
                 if grep "vnet0" "${jail_rc_config}" | grep -q "${new_ngif}_name"; then
@@ -457,6 +467,37 @@ clone_jail() {
 
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
 
+        if [ -n "${IP}" ]; then
+            validate_ips
+        else
+            usage
+        fi
+
+        # Validate proper IP settings
+        if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
+            # VNET
+            if grep -Eoq "ifconfig_vnet0=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+                if [ -z "${IP4_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                fi
+            fi
+            if grep -Eoq "ifconfig_vnet0_ipv6=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+                if [ -z "${IP6_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                fi
+            fi
+        else
+            if [ "$(bastille config ${TARGET} get ip4.addr)" != "not set" ]; then
+                if [ -z "${IP4_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
+                fi
+            elif [ "$(bastille config ${TARGET} get ip6.addr)" != "not set" ]; then
+                if [ -z "${IP6_ADDR}" ]; then
+                    error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
+                fi
+            fi
+        fi
+
         if checkyesno bastille_zfs_enable; then
 
             # Validate jail state
@@ -471,37 +512,6 @@ clone_jail() {
                     info "\n[${TARGET}]:"
                     error_notify "Jail is running."
                     error_exit "Use [-a|--auto] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
-                fi
-            fi
-
-            if [ -n "${IP}" ]; then
-                validate_ips
-            else
-                usage
-            fi
-
-            # Validate proper IP settings
-            if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
-                # VNET
-                if grep -Eoq "ifconfig_vnet0=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
-                    if [ -z "${IP4_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
-                    fi
-                fi
-                if grep -Eoq "ifconfig_vnet0_ipv6=" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
-                    if [ -z "${IP6_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
-                    fi
-                fi
-            else
-                if [ "$(bastille config ${TARGET} get ip4.addr)" != "not set" ]; then
-                    if [ -z "${IP4_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
-                    fi
-                elif [ "$(bastille config ${TARGET} get ip6.addr)" != "not set" ]; then
-                    if [ -z "${IP6_ADDR}" ]; then
-                        error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
-                    fi
                 fi
             fi
 
@@ -547,6 +557,9 @@ clone_jail() {
         error_exit "[ERROR]: An error has occurred while attempting to clone '${TARGET}'."
     else
         info "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
+        if [ "${CLONE_INTERFACE_COUNT}" -gt 1 ]; then
+            info "\nEdit 'rc.conf' to manually set network info for non-default interfaces."
+        fi
     fi
 
     # Start jails if AUTO=1 or LIVE=1
