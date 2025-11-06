@@ -33,16 +33,15 @@ as a list of popular managers and their status on each option.
 | Jail         | Yes         | Yes          | Yes       | No        | Yes       |
 | Dependency   |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
-| Impo         | Yes         | Yes          | Yes       | Yes       | Yes       |
-| rt/Export    |             |              |           |           |           |
+| Import/      | Yes         | Yes          | Yes       | Yes       | Yes       |
+| Export       |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Boot         | Yes         | Yes          | No        | Yes using | Yes       |
 | Order        |             |              |           | 'rcorder' |           |
 | Priorities   |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Linux        | Yes         | Yes          | No        | No        | Yes       |
-| c            |             |              |           |           |           |
-| ontainers    |             |              |           |           |           |
+| Containers   |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Automation   | Templates   | Makejail,    | Flavours, | Flavours  | Plugins   |
 |              |             | Initscripts, | Images    |           |           |
