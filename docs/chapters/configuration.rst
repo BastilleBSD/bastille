@@ -11,6 +11,8 @@ Support.
 The default configuration file is located at
 ``/usr/local/etc/bastille/bastille.conf.sample``.
 
+See :doc:`<chapters/configuration>`
+
 Notes
 -----
 
