@@ -59,9 +59,9 @@ name.
 
 If you did use -M when creating them, the MAC should stay the same.
 
-Bastille Compared to Other Jail Managers
-========================================
-See the [comparison table.](COMPARE.md)
+Comparing Bastille to Other Jail Managers
+=========================================
+See [Comparing](https://bastille.readthedocs.io/en/latest/chapters/comparing.html)
 
 
 Installation
@@ -138,7 +138,7 @@ Available Commands:
   rcp         cp(1) files from a jail to host.
   rdr         Redirect host port to jail port.
   rename      Rename a jail.
-  restart     Restart a running jail.
+  restart     Restart a jail.
   service     Manage services within targeted jail(s).
   setup       Attempt to auto-configure network, firewall, storage and more...
   start       Start a stopped jail.

@@ -41,6 +41,24 @@ This is the default `bastille.conf` file.
   ## bastille_bootstrap_archives="base lib32 ports src test"
   bastille_bootstrap_archives="base"                                    ## default: "base"
 
+  ## pkgbase package sets (used for FreeBSD 15+)
+  ## Any set with [-dbg] can be installed with debugging
+  ## symbols by adding '-dbg' to the package set
+  ## base[-dbg]          - Base system
+  ## base-jail[-dbg]     - Base system for jails
+  ## devel[-dbg]         - Development tools
+  ## kernels[-dbg]       - Base system kernels
+  ## lib32[-dbg]         - 32-bit compatability libraries
+  ## minimal[-dbg]       - Basic multi-user system
+  ## minimal-jail[-dbg]  - Basic multi-user jail system
+  ## optional[-dbg]      - Optional base system software
+  ## optional-jail[-dbg] - Optional base system software for jails
+  ## src                 - System source code
+  ## tests               - System test suite
+  ## Whitespace separated list:
+  ## bastille_pkgbase_packages="base-jail lib32-dbg src"
+  bastille_pkgbase_packages="base-jail"                                 ## default: "base-jail"
+
   ## default timezone
   bastille_tzdata=""                                                    ## default: empty to use host's time zone
 
