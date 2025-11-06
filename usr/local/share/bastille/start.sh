@@ -181,6 +181,17 @@ for _jail in ${JAILS}; do
         fi
     fi
 
+    # Validate jailed datasets mountpoint
+    if [ -s "${bastille_jailsdir}/${_jail}/zfs.conf" ]; then
+        while read dataset mount; do
+            if [ "$(zfs get -H -o value mountpoint ${dataset})" != "${mount}" ]; then
+                zfs set jailed=off "${dataset}"
+                zfs set mountpoint="${mount}" "${dataset}"
+                zfs set jailed=on "${dataset}"
+            fi
+        done < "${bastille_jailsdir}/${_jail}/zfs.conf"
+    fi
+
     # Start jail
     jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
 
