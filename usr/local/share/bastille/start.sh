@@ -181,18 +181,19 @@ for _jail in ${JAILS}; do
         fi
     fi
 
-    # Start jail
-    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
-
-    # Add ZFS jailed datasets
+    # Validate jailed datasets mountpoint
     if [ -s "${bastille_jailsdir}/${_jail}/zfs.conf" ]; then
-        while read _dataset _mount; do
-            zfs set jailed=on "${_dataset}"
-            zfs jail ${_jail} "${_dataset}"
-            jexec -l -U root "${_jail}" zfs set mountpoint="${_mount}" "${_dataset}"
-            jexec -l -U root "${_jail}" zfs mount "${_dataset}" 2>/dev/null
+        while read dataset mount; do
+            if [ "$(zfs get -H -o value mountpoint ${dataset})" != "${mount}" ]; then
+                zfs set jailed=off "${dataset}"
+                zfs set mountpoint="${mount}" "${dataset}"
+                zfs set jailed=on "${dataset}"
+            fi
         done < "${bastille_jailsdir}/${_jail}/zfs.conf"
     fi
+
+    # Start jail
+    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
 
     # Add rctl limits
     if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
