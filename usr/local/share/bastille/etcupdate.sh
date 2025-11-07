@@ -223,7 +223,7 @@ while [ "$#" -gt 0 ]; do
                     FREEBSD_BRANCH="release"
                 fi
                 info "\nAttempting to bootstrap etcupdate release: ${RELEASE}..."
-                if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_releasesdir}/${RELEASE}" -N 2>/dev/null; then
+                if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_releasesdir}/${RELEASE}" which /usr/bin/uname >/dev/null 2>&1; then
                     PKGBASE=1
                 else
                     PKGBASE=0
