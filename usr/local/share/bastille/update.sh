@@ -131,7 +131,7 @@ jail_check() {
     if [ -z "${CURRENT_VERSION}" ]; then
         error_exit "[ERROR]: Can't determine '${TARGET}' version."
     fi
-    if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" -N 2>/dev/null; then
+    if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
         PKGBASE=1
     fi
 }
@@ -224,7 +224,7 @@ release_check() {
     else
         FREEBSD_BRANCH="release"
     fi
-    if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_releasesdir}/${TARGET}" -N 2>/dev/null; then
+    if [ "${MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_releasesdir}/${TARGET}" which /usr/bin/uname > /dev/null 2>&1; then
         PKGBASE=1
     fi
 }
