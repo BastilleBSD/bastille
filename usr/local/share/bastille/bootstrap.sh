@@ -278,9 +278,6 @@ bootstrap_pkgbase_release() {
             error_continue "[ERROR]: Package set already installed: ${package}"
         fi
 
-        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
-
     done
 
     # Cleanup if bootstrap failed
@@ -300,6 +297,10 @@ bootstrap_pkgbase_release() {
         fi
         error_exit "[ERROR]: Bootstrap failed."
     else
+
+        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
+        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
+
         info "\nBootstrap successful."
         echo "See 'bastille --help' for available commands."
     fi
