@@ -73,7 +73,7 @@ validate_release() {
         fi
 
         if [ "${PKGBASE}" -eq 1 ]; then
-            info "\nUsing pkgbase..."
+            info "\nUsing PkgBase..."
             bootstrap_directories
             bootstrap_pkgbase_release
         elif [ "${PKGBASE}" -eq 0 ]; then
@@ -231,7 +231,7 @@ bootstrap_pkgbase_release() {
 
         ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_pkgbase_packages}" ]; then
-            info "\nBootstrap appears complete!\n"
+            info "\nBootstrap appears complete!"
             exit 0
         else
             info "\nFetching additional packages..."
@@ -239,8 +239,9 @@ bootstrap_pkgbase_release() {
     fi
 
     # Copy fingerprints into releasedir
-    mkdir -p "${release_fingerprintsdir}"
-
+    if ! mkdir -p "${release_fingerprintsdir}"; then
+        error_exit "[ERROR]: Faild to create fingerprints directory."
+    fi
     if ! cp -a "${host_fingerprintsdir}" "${release_fingerprintsdir}"; then
         error_exit "[ERROR]: Failed to copy fingerprints directory."
     fi
@@ -256,13 +257,14 @@ bootstrap_pkgbase_release() {
         error_notify "[ERROR]: Failed to update repository: ${repo_name}"
     fi
 
-    for package in ${bastille_pkgbase_packages}; do
+    # Reset ERROR_COUNT
+    ERROR_COUNT="0"
 
-        ## Set bootstrap status
-        bootstrap_status="0"	
+    for package in ${bastille_pkgbase_packages}; do	
 
+        # Check if package set is already installed
         if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" info "FreeBSD-set-${package}" 2>/dev/null; then
-
+            # Install package set
             if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
                      --repo-conf-dir="${repo_dir}" \
                      -o IGNORE_OSVERSION="yes" \
@@ -272,16 +274,15 @@ bootstrap_pkgbase_release() {
                      install -r "${repo_name}" \
                      freebsd-set-"${package}"; then
 
-                bootstrap_status="1"
+                ERROR_COUNT=$((ERROR_COUNT + 1))
             fi
         else
             error_continue "[ERROR]: Package set already installed: ${package}"
         fi
-
     done
 
-    # Cleanup if bootstrap failed
-    if [ "${bootstrap_status}" -ne "0" ]; then
+    # Cleanup if failed
+    if [ "${ERROR_COUNT}" -ne "0" ]; then
         ## perform cleanup only for stale/empty directories on failure
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -289,8 +290,7 @@ bootstrap_pkgbase_release() {
                     zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
                 fi
             fi
-        fi
-        if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
+        elif [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
             if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
                 rm -rf "${bastille_releasesdir:?}/${RELEASE}"
             fi
@@ -298,11 +298,14 @@ bootstrap_pkgbase_release() {
         error_exit "[ERROR]: Bootstrap failed."
     else
 
+        # Silence motd at login
         touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
         touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
 
+        # Success
         info "\nBootstrap successful."
         echo "See 'bastille --help' for available commands."
+
     fi
 }
 

@@ -299,6 +299,7 @@ else
     if [ "${NEW_MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
         PKGBASE=1
     fi
+    # Validate THIN_JAIL+PKGBASE
 	if [ "${PKGBASE}" -eq 1 ] && [ "${THIN_JAIL}" -eq 0 ]; then
         jail_upgrade_pkgbase
     else
