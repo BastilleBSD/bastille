@@ -347,7 +347,7 @@ if [ "${TARGET}" = 'TEMPLATES' ]; then
 elif echo "${TARGET}" | grep -Eq '^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$'; then
     BASTILLE_TEMPLATE="${TARGET}"
     template_update
-elif echo "${TARGET}" | grep -q "[0-9]\{2\}.[0-9]-RELEASE"; then
+elif echo "${TARGET}" | grep -Eq "[0-9]\{2\}.[0-9](\-RELEASE|\-CURRENT)"; then
     release_check
     if [ "${PKGBASE}" -eq 1 ]; then
         release_update_pkgbase
