@@ -84,7 +84,7 @@ See [Documentation](https://bastille.readthedocs.io/en/latest/)
 
 See [Comparing](https://bastille.readthedocs.io/en/latest/chapters/comparing.html)
 
-## Breaking Changes ⚠
+## Breaking Changes
 
 ### Version 1.x
 
