@@ -12,7 +12,7 @@ https://docs.bastillebsd.org.
    :caption: Contents:
 
    chapters/installation
-   chapters/gettingstarted
+   chapters/gettin-gstarted
    chapters/configuration
    chapters/targeting
    chapters/jail-startup-configuration
