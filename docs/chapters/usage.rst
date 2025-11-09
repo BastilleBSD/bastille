@@ -35,7 +35,7 @@ Usage
     rcp         cp(1) files from a jail to host.
     rdr         Redirect host port to jail port.
     rename      Rename a jail.
-    restart     Restart a running jail.
+    restart     Restart a jail.
     service     Manage services within targeted jail(s).
     setup       Attempt to auto-configure network, firewall and storage and more...
     start       Start a stopped jail.

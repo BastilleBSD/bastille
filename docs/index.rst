@@ -27,6 +27,7 @@ https://docs.bastillebsd.org.
    chapters/zfs-support
    chapters/gcp
    chapters/migration
+   chapters/pkgbase
 
    copyright
 
