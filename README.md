@@ -1,7 +1,8 @@
-Bastille 1.x
-========
-[Bastille](https://bastillebsd.org/) is an open-source system for automating
-deployment and management of containerized applications on FreeBSD.
+<p align="center">
+    <img src="docs/images/bastille.jpeg" width="60%" height="auto" />
+</p>
+
+----
 
 
 Table of Contents
@@ -14,12 +15,16 @@ Table of Contents
    * [Getting Started](#getting-started)
    * [Documentation](#documentation)
    * [Comparing](#comparing)
+   * [Breaking Changes](#breaking-changes)
+   * [Support](#support)
 
 
 # Bastille
 
-[Bastille](https://bastillebsd.org/) is an open-source system for automating
+Bastille is an open-source system for automating
 deployment and management of containerized applications on FreeBSD.
+
+[Official BastilleBSD Website](https://bastillebsd.org)
 
 ## Installation
 
@@ -80,7 +85,6 @@ See [Documentation](https://bastille.readthedocs.io/en/latest/)
 See [Comparing](https://bastille.readthedocs.io/en/latest/chapters/comparing.html)
 
 ## Breaking Changes ⚠
-======================
 
 ### Version 1.x
 
@@ -135,7 +139,7 @@ name.
 
 If you did use -M when creating them, the MAC should stay the same.
 
-### Support
+## Support
 
 If you've found a bug in Bastille, please submit it to the [Bastille Issue
 Tracker](https://github.com/bastillebsd/bastille/issues/new)
