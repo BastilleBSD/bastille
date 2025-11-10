@@ -228,12 +228,32 @@ configure_bridge() {
 }
 
 configure_vnet() {
-    # Ensure jib script is in place for VNET jails
-    if [ ! "$(command -v jib)" ]; then
-        if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
-            install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+
+    # Ensure proper jail helper script
+    if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+        if [ ! "$(command -v jib)" ]; then
+            if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+                install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+            fi
+        fi
+    elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+        if [ ! "$(command -v jng)" ]; then
+            if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
+                install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
+            fi
         fi
     fi
+
+    # Set some sysctl values
+    sysctl net.inet.ip.forwarding=1
+    sysctl net.link.bridge.pfil_bridge=0
+    sysctl net.link.bridge.pfil_onlyip=0
+    sysctl net.link.bridge.pfil_member=0
+    echo net.inet.ip.forwarding=1 >> /etc/sysctl.conf
+    echo net.link.bridge.pfil_bridge=0 >> /etc/sysctl.conf
+    echo net.link.bridge.pfil_onlyip=0 >> /etc/sysctl.conf
+    echo net.link.bridge.pfil_member=0 >> /etc/sysctl.conf
+
     # Create default VNET ruleset
     if [ ! -f /etc/devfs.rules ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
         info "\nCreating bastille_vnet devfs.rules"
