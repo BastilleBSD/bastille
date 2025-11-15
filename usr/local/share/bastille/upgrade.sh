@@ -273,7 +273,7 @@ else
     else
         thick_jail_check "${TARGET}"
     fi
-    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version)"
+    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
     if [ -z "${OLD_RELEASE}" ]; then
         OLD_RELEASE="$(bastille config ${TARGET} get osrelease)"
     fi
