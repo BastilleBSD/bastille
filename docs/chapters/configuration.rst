@@ -6,8 +6,8 @@ Bastille is configured using a default config file located at
 should run ``bastille setup``. This will ask if you want to copy the sample
 config file to the above location. The defaults are sensible for UFS, but
 if you use ZFS, ``bastille setup`` will configure it for you. If you have
-multiple zpools, Bastille will ask which one you want to use. See also
-:doc:`ZFS Support <chapters/zfs-support>`.
+multiple zpools, Bastille will ask which one you want to use. See also 
+:doc:`ZFS Support <zfs-support>`.
 
 This is the default `bastille.conf` file.
 
