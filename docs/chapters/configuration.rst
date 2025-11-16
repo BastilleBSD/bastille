@@ -4,9 +4,10 @@ Configuration
 Bastille is configured using a default config file located at
 ``/usr/local/etc/bastille/bastille.conf``. When first installing bastille, you
 should run ``bastille setup``. This will ask if you want to copy the sample
-config file to the above location. The defaults are sensible for UFS, but if you
-want to use ZFS, you will have to change a few options. See the chapter on ZFS
-Support.
+config file to the above location. The defaults are sensible for UFS, but
+if you use ZFS, ``bastille setup`` will configure it for you. If you have
+multiple zpools, Bastille will ask which one you want to use. See also
+:doc:`ZFS Support <chapters/zfs-support>`.
 
 This is the default `bastille.conf` file.
 
@@ -98,28 +99,12 @@ This is the default `bastille.conf` file.
   bastille_template_clone="default/clone"                               ## default: "default/clone"
   bastille_template_thin="default/thin"                                 ## default: "default/thin"
   bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"
-
-Notes
------
-
-The options here are fairly self-explanitory, but there are some things to note.
-
-* If you use ZFS, DO NOT create the bastille dataset. You must only create the
-  parent. Bastille must be allowed to create the ``bastille`` child dataset, or
-  you will have issues. So, if you want bastille to live at
-  ``zroot/data/bastille`` you should set ``bastille_zfs_zpool`` to ``zroot`` and
-  ``bastille_zfs_prefix`` to ``data/bastille`` but you should only create
-  ``zroot/data`` before running bastille for the first time.
-
-* Bastille will mount the dataset it creates at ``bastille_prefix`` which
-  defaults to ``/usr/local/bastille``. So if you want to navigate to your jails,
-  you will use the ``bastille_prefix`` as the location because this is where the
-  will be mounted.
+  bastille_template_vlan="default/vlan"                                 ## default: "default/vlan"
 
 Custom Configuration
 --------------------
 
-Bastille now supports using a custom config in addition to the default one. This
+Bastille supports using a custom config in addition to the default one. This
 is nice if you have multiple users, or want to store different
 jails at different locations based on your needs.
 

@@ -11,23 +11,24 @@ https://docs.bastillebsd.org.
    :maxdepth: 2
    :caption: Contents:
 
-   chapters/installation
-   chapters/gettingstarted
-   chapters/configuration
-   chapters/targeting
-   chapters/jail-startup-configuration
-   chapters/networking
-   chapters/usage
    chapters/comparing
-   chapters/upgrading
-   chapters/centralized-assets
-   chapters/subcommands/index
-   chapters/template
+   chapters/installation
+   chapters/getting-started
+   chapters/configuration
    chapters/jail-config
-   chapters/zfs-support
+   chapters/jail-startup-configuration
+   chapters/targeting
+   chapters/subcommands/index
+   chapters/usage
+   chapters/networking
    chapters/gcp
+   chapters/upgrading
    chapters/migration
+   chapters/centralized-assets
+   chapters/template
+   chapters/linux-jails
    chapters/pkgbase
+   chapters/zfs-support
 
    copyright
 

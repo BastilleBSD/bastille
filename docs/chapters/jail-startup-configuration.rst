@@ -11,7 +11,7 @@ the priority option. Jails will start in order starting at the lowest value, and
 will stop in order starting at the highest value. So, jails with a priority value
 of 1 will start first, and stop last.
 
-See the chapter on targeting for more info.
+See :doc:`Targeting <chapters/targeting>`for more info.
 
 Boot
 ----

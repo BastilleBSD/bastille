@@ -1,71 +1,33 @@
-Bastille 1.x
-========
-[Bastille](https://bastillebsd.org/) is an open-source system for automating
+<p align="center">
+    <img src="docs/images/bastille.jpeg" width="60%" height="auto" />
+</p>
+
+----
+
+
+Table of Contents
+=================
+
+* [Table of Contents](#table-of-contents)
+* [Bastille](#bastille)
+   * [Installation](#installation)
+   * [Usage](#usage)
+   * [Getting Started](#getting-started)
+   * [Documentation](#documentation)
+   * [Comparing](#comparing)
+   * [Breaking Changes](#breaking-changes)
+   * [Support](#support)
+
+
+# Bastille
+
+Bastille is an open-source system for automating
 deployment and management of containerized applications on FreeBSD.
 
-Check the [Bastille Documentation](https://bastille.readthedocs.io/en/latest/)
+[Official BastilleBSD Website](https://bastillebsd.org)
 
+## Installation
 
-Potentially breaking changes since 1.0 ⚠️
-========================================
-Up until version 1.0.20250714, Bastille has handled epairs for -V jails
-using the jib script included in FreeBSD installs. However, for -B jails,
-Bastille statically assigned an epair to each jail. This means you can only
-run one type (-V or -B) of VNET jails on a given system.
-
-Starting with version 1.0.20250714, we are now handling all epairs
-dynamically, allowing the use of both types of VNET jails without issue. We
-have also selected a naming scheme that will allow for consistency across
-these jail types. The naming scheme is as follows:
-
-`e0a_jailname` and `e0b_jailname` are the default epair interfaces for every
-jail. The `e0a` side is on the host, while the `e0b` is in the jail. This will
-allow better management when trying to figure out which jail a given epair is
-linked to. Due to a limitations in how long an interface name can be, Bastille
-will name any epairs whose jail names exceed the maximum length, to
-`e0b_bastille1` and `e0b_bastille1` with the `1` incrementing by 1 for
-each new epair. So, mylongjailname will be `e0a_bastille2` and `e0b_bastille2`.
-
-If you decide to add an interface using the network sub-command, they will
-be named `e1a_jailname` and `e1b_jailname` respectively. The number included
-in the prefix `eXa_` will increment by 1 for each interface you add.
-
-Mandatory
----------
-We have tried our best to auto-convert each jails jail.conf and rc.conf
-to the new syntax (this happens when the jail is stopped). It isn't a huge
-change (only a handful of lines), but if you do have an issue please open a
-bug report.
-
-After updating, you must restart all your jails (probably one at a time, in
-case of issues) to have Bastille convert the jail.conf and rc.conf files.
-This simply involves renaming the epairs to the new syntax.
-
-If you have used the network sub-command to add any number of interfaces, you
-will have to edit the jail.conf and rc.conf files for each jail to update
-the names of the epair interfaces. This is because all epairs will have been
-renamed to e0... in both files. For each additional one, simply increment
-the number by 1.
-
-Important
----------
-Due to the JIB script that gets used when creating VNET jails, you
-will face changes with the MAC address if these jails.
-
-If you have any VNET jails (created with -V), the MAC addresses
-will change if you did not also use -M when creating them. This
-is due to the JIB script generating a MAC based on the jail interface
-name.
-
-If you did use -M when creating them, the MAC should stay the same.
-
-Comparing Bastille to Other Jail Managers
-=========================================
-See [Comparing](https://bastille.readthedocs.io/en/latest/chapters/comparing.html)
-
-
-Installation
-============
 Bastille is available for installation from the official FreeBSD ports tree.
 
 **pkg**
@@ -91,10 +53,12 @@ make install
 sysrc bastille_enable=YES
 ```
 
-Upgrading from a previous version
----------------------------------
+### Upgrading
+
 When upgrading from a previous version of bastille (e.g. 0.10.20230714 to
 0.10.20231013) you will need to update your bastille.conf
+
+Be sure to read the [Breaking Changes](#breaking-changes) below.
 
 ```shell
 cd /usr/local/etc/bastille
@@ -104,143 +68,78 @@ diff -u bastille.conf bastille.conf.sample
 Merge the lines that are present in the new bastille.conf.sample into
 your bastille.conf
 
-Basic Usage
------------
-```shell
-Bastille is an open-source system for automating deployment and management of
-containerized applications on FreeBSD.
+## Usage
 
-Usage:
-  bastille [options(s)] command [option(s)] TARGET [args]
+See [Usage](https://bastille.readthedocs.io/en/latest/chapters/usage.html)
 
-Available Commands:
-  bootstrap   Bootstrap a release for jail base.
-  clone       Clone an existing jail.
-  cmd         Execute arbitrary command(s) in targeted jail(s).
-  config      Get, set or remove a config value for the targeted jail(s).
-  console     Console into a jail.
-  convert     Convert thin jail to thick jai. Convert jail to custom release base.
-  cp          cp(1) files from host to targeted jail(s).
-  create      Create a jail.
-  destroy     Destroy a jail or release.
-  edit        Edit jail configuration files (advanced).
-  export      Export a jail.
-  help        Help about any command.
-  htop        Interactive process viewer (requires htop).
-  import      Import a jail.
-  jcp         cp(1) files from a jail to jail(s).
-  limits      Apply resources limits to targeted jail(s). See rctl(8) and cpuset(1).
-  list        List jails, releases, templates and more...
-  migrate     Migrate targeted jail(s) to a remote system.
-  mount       Mount a volume inside targeted jail(s).
-  network     Add or remove interfaces from targeted jail(s).
-  pkg         Manipulate binary packages within targeted jail(s). See pkg(8).
-  rcp         cp(1) files from a jail to host.
-  rdr         Redirect host port to jail port.
-  rename      Rename a jail.
-  restart     Restart a jail.
-  service     Manage services within targeted jail(s).
-  setup       Attempt to auto-configure network, firewall, storage and more...
-  start       Start a stopped jail.
-  stop        Stop a running jail.
-  sysrc       Safely edit rc files within targeted jail(s).
-  tags        Add or remove tags to targeted jail(s).
-  template    Apply file templates to targeted jail(s).
-  top         Display and update information about the top(1) cpu processes.
-  umount      Unmount a volume from targeted jail(s).
-  update      Update jail base -pX release.
-  upgrade     Upgrade jail release to X.Y-RELEASE.
-  verify      Compare release against a "known good" index.
-  zfs         Manage (get|set) ZFS attributes on targeted container(s).
+## Getting Started
 
-Use "bastille -v|--version" for version information.
-Use "bastille command -h|--help" for more information about a command.
-Use "bastille -c|--config config.conf command" to specify a non-default config file.
-```
+See [Getting Started](https://bastille.readthedocs.io/en/latest/chapters/getting-started.html)
 
-## 1.x
-This document outlines the basic usage of the Bastille container management
-framework. This release is still considered beta.
+## Documentation
 
-Setup Requirements
-==================
-Bastille can now (attempt) to configure the networking, firewall and storage
-automatically. This feature is new since version 0.10.20231013.
+See [Documentation](https://bastille.readthedocs.io/en/latest/)
 
-**bastille setup**
+## Comparing
 
-```shell
-ishmael ~ # bastille setup -h
-Usage: bastille setup [-p|pf|firewall] [-l|loopback] [-s|shared] [-z|zfs|storage] [-v|vnet] [-b|bridge]
-```
+See [Comparing](https://bastille.readthedocs.io/en/latest/chapters/comparing.html)
 
-On fresh installations it is likely safe to run `bastille setup` with no
-arguments. This will configure the firewall, the loopback interface and attempt
-to determine ZFS vs UFS storage.
+## Breaking Changes
 
-If you have an existing firewall, or customized network design, you may want to
-run individual options; eg `bastille setup zfs` or `bastille setup vnet`.
+### Version 1.x
 
-Note: The `bastille setup` command can configure and enable PF but it does not
-automatically reload the firewall. You will still need to manually `service pf
-start`.  At that point you'll likely be disconnected if configuring a remote
-host. Simply reconnect the ssh session and continue.
+Up until version 1.0.20250714, Bastille has handled epairs for -V jails
+using the jib script included in FreeBSD installs. However, for -B jails,
+Bastille statically assigned an epair to each jail. This means you can only
+run one type (-V or -B) of VNET jails on a given system.
 
-This step only needs to be done once in order to prepare the host.
+Starting with version 1.0.20250714, we are now handling all epairs
+dynamically, allowing the use of both types of VNET jails without issue. We
+have also selected a naming scheme that will allow for consistency across
+these jail types. The naming scheme is as follows:
 
-Example (create, start, console)
-================================
-This example creates, starts and consoles into the container.
+`e0a_jailname` and `e0b_jailname` are the default epair interfaces for every
+jail. The `e0a` side is on the host, while the `e0b` is in the jail. This will
+allow better management when trying to figure out which jail a given epair is
+linked to. Due to a limitations in how long an interface name can be, Bastille
+will name any epairs whose jail names exceed the maximum length, to
+`e0b_bastille1` and `e0b_bastille1` with the `1` incrementing by 1 for
+each new epair. So, mylongjailname will be `e0a_bastille2` and `e0b_bastille2`.
 
-```shell
-ishmael ~ # bastille create alcatraz 14.0-RELEASE 10.17.89.10/24
-```
+If you decide to add an interface using the network sub-command, they will
+be named `e1a_jailname` and `e1b_jailname` respectively. The number included
+in the prefix `eXa_` will increment by 1 for each interface you add.
 
-```shell
-ishmael ~ # bastille start alcatraz
-[alcatraz]:
-alcatraz: created
-```
+### Mandatory
 
-```shell
-ishmael ~ # bastille console alcatraz
-[alcatraz]:
-FreeBSD 14.0-RELEASE GENERIC
+We have tried our best to auto-convert each jails jail.conf and rc.conf
+to the new syntax (this happens when the jail is stopped). It isn't a huge
+change (only a handful of lines), but if you do have an issue please open a
+bug report.
 
-Welcome to FreeBSD!
+After updating, you must restart all your jails (probably one at a time, in
+case of issues) to have Bastille convert the jail.conf and rc.conf files.
+This simply involves renaming the epairs to the new syntax.
 
-Release Notes, Errata: https://www.FreeBSD.org/releases/
-Security Advisories:   https://www.FreeBSD.org/security/
-FreeBSD Handbook:      https://www.FreeBSD.org/handbook/
-FreeBSD FAQ:           https://www.FreeBSD.org/faq/
-Questions List:        https://www.FreeBSD.org/lists/questions/
-FreeBSD Forums:        https://forums.FreeBSD.org/
+If you have used the network sub-command to add any number of interfaces, you
+will have to edit the jail.conf and rc.conf files for each jail to update
+the names of the epair interfaces. This is because all epairs will have been
+renamed to e0... in both files. For each additional one, simply increment
+the number by 1.
 
-Documents installed with the system are in the /usr/local/share/doc/freebsd/
-directory, or can be installed later with:  pkg install en-freebsd-doc
-For other languages, replace "en" with a language code like de or fr.
+### Important Limitations
 
-Show the version of FreeBSD installed:  freebsd-version ; uname -a
-Please include that output and any error messages when posting questions.
-Introduction to manual pages:  man man
-FreeBSD directory layout:      man hier
+Due to the JIB script that gets used when creating VNET jails, you
+will face changes with the MAC address if these jails.
 
-To change this login announcement, see motd(5).
-root@alcatraz:~ #
-```
+If you have any VNET jails (created with -V), the MAC addresses
+will change if you did not also use -M when creating them. This
+is due to the JIB script generating a MAC based on the jail interface
+name.
 
-```shell
-root@alcatraz:~ # ps -auxw
-USER   PID %CPU %MEM  VSZ  RSS TT  STAT STARTED    TIME COMMAND
-root 83222  0.0  0.0 6412 2492  -  IsJ  02:21   0:00.00 /usr/sbin/syslogd -ss
-root 88531  0.0  0.0 6464 2508  -  SsJ  02:21   0:00.01 /usr/sbin/cron -s
-root  6587  0.0  0.0 6912 2788  3  R+J  02:42   0:00.00 ps -auxw
-root 92441  0.0  0.0 6952 3024  3  IJ   02:21   0:00.00 login [pam] (login)
-root 92565  0.0  0.0 7412 3756  3  SJ   02:21   0:00.01 -csh (csh)
-root@alcatraz:~ #
-```
+If you did use -M when creating them, the MAC should stay the same.
 
-Community Support
-=================
+## Support
+
 If you've found a bug in Bastille, please submit it to the [Bastille Issue
-Tracker](https://github.com/bastillebsd/bastille/issues/new).
+Tracker](https://github.com/bastillebsd/bastille/issues/new)
