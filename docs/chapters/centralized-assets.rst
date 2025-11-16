@@ -21,7 +21,7 @@ you prefer.
 
   ishmael ~ # bastille template "jail1 jail2" project/template
 
-See the chapter on templates for details on how to create your own templates.
+See :doc:`/chapters/template` for more details on templates.
 
 Mounting
 --------
