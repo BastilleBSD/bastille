@@ -393,4 +393,3 @@ for _jail in ${JAILS}; do
     info "\nSuccessfully migrated '${_jail}' to '${HOST}'.\n"
 
 done
-echo

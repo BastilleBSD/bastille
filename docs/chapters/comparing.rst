@@ -18,8 +18,7 @@ as a list of popular managers and their status on each option.
 |              | Shell       | Shell, C     | Shell,    | Shell     | Shell,    |
 |              |             |              | Rust      |           | Python    |
 +--------------+-------------+--------------+-----------+-----------+-----------+
-| Dep          | None        | C            | Rust      | None      | Python    |
-|endencies     |             |              |           |           |           |
+| Dependencies | None        | C            | Rust      | None      | Python    |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Jail         | vnet,       | clone,       | thick     | basejail  | clone,    |
 | Types        | bridged     | copy,        |           |           | basejail, |

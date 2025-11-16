@@ -184,5 +184,5 @@ no longer need the option to revert the change you can destroy the old release.
 ``bastille destroy X.Y-RELEASE`` to fully delete the release, including the
 cache (cache is not used with pkgbase).
 
-``bastille destroy [-c|--no-cache] X.Y-RELEASE`` to retain the cache directory
+``bastille destroy -c|--no-cache X.Y-RELEASE`` to retain the cache directory
 (not supported when using pkgbase).

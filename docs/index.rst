@@ -15,8 +15,6 @@ https://docs.bastillebsd.org.
    chapters/installation
    chapters/getting-started
    chapters/configuration
-   chapters/jail-config
-   chapters/jail-startup-configuration
    chapters/targeting
    chapters/subcommands/index
    chapters/usage
