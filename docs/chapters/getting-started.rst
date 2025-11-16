@@ -18,7 +18,7 @@ enabled, otherwise UFS) and the ``pf`` firewall.
 Alternatively, you can run ``bastille setup OPTION`` command with any of the supported
 options to configure the selected option by itself.
 
-To see a list of available options, see the ``setup`` subcommand.
+To see a list of available options, see the :doc:`/chapters/subcommands/setup` subcommand.
 
 .. code-block:: shell
 
@@ -57,7 +57,7 @@ There are a few different types of jails we can create, described below.
   you are doing. Created with the ``--empty|-E`` option.
 
 * Linux jails are jails that run linux. Created with the ``--linux|-L`` option.
-  See :doc:`Linux Jails <chapters/linux-jails>`.
+  See :doc:`/chapters/linux-jails`.
 
 We will focus on thin jails for this guide.
 
@@ -78,7 +78,7 @@ To be able to reach a service inside the jail, use ``bastille rdr``.
   ishmael ~ # bastille rdr nextcloud tcp 80 80
 
 This will forward traffic from port 80 on the host to port 80 inside the jail.
-See also :doc:`rdr <rdr>`.
+See also :doc:`/chapters/subcommands/rdr`.
 
 VNET Jail
 ^^^^^^^^^

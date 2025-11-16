@@ -111,5 +111,3 @@ done
 if [ "${ERRORS}" -ne 0 ]; then
     error_exit "[ERROR]: Command failed on ${ERRORS} jails."
 fi
-
-echo

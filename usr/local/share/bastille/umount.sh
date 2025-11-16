@@ -129,5 +129,3 @@ for _jail in ${JAILS}; do
     echo "Unmounted: ${_jailpath}"
 
 done
-
-echo
