@@ -98,6 +98,7 @@ fi
 TARGET="${1}"
 NEWNAME="${2}"
 IP="${3}"
+CLONE_INTERFACE_COUNT=0
 
 bastille_root_check
 set_target_single "${TARGET}"
@@ -231,7 +232,6 @@ update_jailconf() {
 
 update_jailconf_vnet() {
 
-    CLONE_INTERFACE_COUNT=0
     local jail_config="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local jail_rc_config="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
 
