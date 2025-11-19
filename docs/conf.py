@@ -5,9 +5,9 @@ copyright = '2018-2025, Christer Edwards'
 author = 'Christer Edwards'
 
 # The short X.Y version
-version = '1.1.1'
+version = '1.1.2'
 # The full version, including alpha/beta/rc tags
-release = '1.1.1.2511118'
+release = '1.1.2.2511119'
 
 # -- General configuration ---------------------------------------------------
 
