@@ -212,6 +212,7 @@ configure_bridge() {
         else
             _interface_select="${_auto_if}"
         fi
+
         # Create bridge and persist on reboot
         _bridge_name="${_interface_select}bridge"
         ifconfig bridge0 create
@@ -220,6 +221,17 @@ configure_bridge() {
         sysrc cloned_interfaces+="bridge0"
         sysrc ifconfig_bridge0_name="${_bridge_name}"
         sysrc ifconfig_${_bridge_name}="addm ${_interface_select} up"
+
+        # Set some sysctl values
+        sysctl net.inet.ip.forwarding=1
+        sysctl net.link.bridge.pfil_bridge=0
+        sysctl net.link.bridge.pfil_onlyip=0
+        sysctl net.link.bridge.pfil_member=0
+        echo net.inet.ip.forwarding=1 >> /etc/sysctl.conf
+        echo net.link.bridge.pfil_bridge=0 >> /etc/sysctl.conf
+        echo net.link.bridge.pfil_onlyip=0 >> /etc/sysctl.conf
+        echo net.link.bridge.pfil_member=0 >> /etc/sysctl.conf
+
 
         info "\nBridge interface successfully configured: [${_bridge_name}]"
     else
@@ -243,16 +255,6 @@ configure_vnet() {
             fi
         fi
     fi
-
-    # Set some sysctl values
-    sysctl net.inet.ip.forwarding=1
-    sysctl net.link.bridge.pfil_bridge=0
-    sysctl net.link.bridge.pfil_onlyip=0
-    sysctl net.link.bridge.pfil_member=0
-    echo net.inet.ip.forwarding=1 >> /etc/sysctl.conf
-    echo net.link.bridge.pfil_bridge=0 >> /etc/sysctl.conf
-    echo net.link.bridge.pfil_onlyip=0 >> /etc/sysctl.conf
-    echo net.link.bridge.pfil_member=0 >> /etc/sysctl.conf
 
     # Create default VNET ruleset
     if [ ! -f /etc/devfs.rules ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
