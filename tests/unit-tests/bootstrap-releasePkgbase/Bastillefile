@@ -1,0 +1,6 @@
+# unit-tests/bootstrap-releasePkgbase
+
+ARG RELEASE
+
+INCLUDE core/bootstrap-release --arg OPTIONS="-p" --arg RELEASE=${RELEASE}
+INCLUDE core/destroy-release --arg RELEASE=${RELEASE}

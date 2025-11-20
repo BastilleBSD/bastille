@@ -1,0 +1,4 @@
+ARG OPTIONS
+ARG TEMPLATE
+
+CMD bastille verify ${OPTIONS} ${TEMPLATE}

@@ -1,0 +1,14 @@
+# unit-tests/tags
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/tags --arg JAIL=${JAIL} --arg ACTION=add --arg TAGS="prod,web"
+
+INCLUDE core/tags --arg JAIL=${JAIL} --arg ACTION=delete --arg TAGS="prod,web"
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}

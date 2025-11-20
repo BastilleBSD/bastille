@@ -1,0 +1,6 @@
+# unit-tests/setup-bridge
+
+ARG OPTIONS="bridge"
+ARG ARGS
+
+INCLUDE core/setup --arg OPTIONS=${OPTIONS} --arg ARGS=${ARGS}

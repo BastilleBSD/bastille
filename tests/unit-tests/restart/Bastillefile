@@ -1,0 +1,15 @@
+# unit-tests/restart
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/restart --arg JAIL=${JAIL}
+INCLUDE core/restart --arg OPTIONS="-d 5" --arg JAIL=${JAIL}
+INCLUDE core/restart --arg OPTIONS="-b" --arg JAIL=${JAIL}
+INCLUDE core/restart --arg OPTIONS="-i" --arg JAIL=${JAIL}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}

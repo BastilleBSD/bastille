@@ -1,0 +1,14 @@
+# unit-tests/cp
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG HOST_PATH
+ARG JAIL_PATH
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/cp --arg JAIL=${JAIL} --arg HOST_PATH=${HOST_PATH} --arg JAIL_PATH=${JAIL_PATH}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}
