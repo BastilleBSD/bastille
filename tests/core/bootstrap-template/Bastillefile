@@ -1,0 +1,4 @@
+ARG TEMPLATE_URL
+ARG OPTIONS
+
+CMD bastille bootstrap ${OPTIONS} ${TEMPLATE_URL}

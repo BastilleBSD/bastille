@@ -1,0 +1,5 @@
+ARG OPTIONS
+ARG JAIL
+ARG RELEASE
+
+CMD bastille convert ${OPTIONS} ${JAIL} ${RELEASE}

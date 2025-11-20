@@ -1,0 +1,4 @@
+ARG OPTIONS
+ARG RELEASE
+
+CMD bastille verify ${OPTIONS} ${RELEASE}
