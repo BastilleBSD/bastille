@@ -117,15 +117,18 @@ render() {
 }
 
 line_in_file() {
-    _jailpath="${1}"
-    _filepath="$(echo ${2} | awk '{print $2}')"
-    _line="$(echo ${2} | awk '{print $1}')"
-    if [ -f "${_jailpath}/${_filepath}" ]; then
-        if ! grep -qxF "${_line}" "${_jailpath}/${_filepath}"; then
-            echo "${_line}" >> "${_jailpath}/${_filepath}"
+
+    local jail_path="${1}"
+    eval set -- "${2}"
+    local line="${1}"
+    local file_path="${2}"
+
+    if [ -f "${jail_path}/${file_path}" ]; then
+        if ! grep -qxF "${line}" "${jail_path}/${file_path}"; then
+            echo "${line}" >> "${jail_path}/${file_path}"
 	fi
     else
-        warn "[WARNING]: Path not found for line_in_file: ${_filepath}"
+        warn "[WARNING]: Path not found for line_in_file: ${file_path}"
     fi
 }
 
