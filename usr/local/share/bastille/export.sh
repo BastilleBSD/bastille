@@ -257,7 +257,7 @@ elif [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
 fi
 
 # Don't allow LIVE with TXZ_EXPORT or TGZ_EXPORT
-if { [ "${TXZ_EXPORT}" -eq 1 ] || [ "${TGZ_EXPORT}" -eq 1 ] || "${TZST_EXPORT}" -eq 1 ]; } && [ "${LIVE}" -eq 1 ]; then
+if { [ "${TXZ_EXPORT}" -eq 1 ] || [ "${TGZ_EXPORT}" -eq 1 ] || [ "${TZST_EXPORT}" -eq 1 ]; } && [ "${LIVE}" -eq 1 ]; then
     error_exit "[ERROR]: Archive mode cannot be used with [-l|--live]."
 fi
 
