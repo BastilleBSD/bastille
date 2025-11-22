@@ -461,7 +461,7 @@ VLAN Limitations
   Doing so will prevent the jail from having network access.
 
 Tip: Don't forget to set you gateway and nameserver is applicable
-using `-g|--gateway` and `-n|--nameserver`.
+using ``-g|--gateway`` and ``-n|--nameserver``.
 
 Regarding Routes
 ----------------
