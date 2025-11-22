@@ -26,14 +26,16 @@ Available options are:
 
       Options:
 
-      -a | --auto             Auto mode. Start/stop jail(s) if required.
-           --gz               Export a ZFS jail using GZIP(.gz) compressed image.
-      -r | --raw              Export a ZFS jail to an uncompressed RAW image.
-      -s | --safe             Safely stop and start a ZFS jail before the exporting process.
-           --tgz              Export a jail using simple .tgz compressed archive instead.
-           --txz              Export a jail using simple .txz compressed archive instead.
-      -v | --verbose          Be more verbose during the ZFS send operation.
-           --xz               Export a ZFS jail using XZ(.xz) compressed image.
-      -x | --debug            Enable debug mode.
+      -a | --auto        Auto mode. Start/stop jail(s) if required.
+      -l | --live        Export a running jail (ZFS only).
+           --gz          Export to '.gz' compressed image (ZFS only).
+           --xz          Export to a '.xz' compressed image (ZFS only).
+           --zst         Export to a .zst compressed image (ZFS only).
+           --raw         Export to an uncompressed RAW image (ZFS only).
+           --tgz         Export to a '.tgz' compressed archive.
+           --txz         Export to a '.txz' compressed archive.
+           --tzst        Export to a '.tzst' compressed archive.
+      -v | --verbose     Enable verbose mode (ZFS only).
+      -x | --debug       Enable debug mode.
 
-  Note: If no export option specified, the container should be redirected to standard output.
+      Note: If no export option specified, the container should be redirected to standard output.

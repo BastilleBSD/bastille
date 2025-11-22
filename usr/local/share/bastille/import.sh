@@ -40,12 +40,12 @@ usage() {
 
     Options:
 
-    -f | --force               Force an archive import regardless if the checksum file does not match or missing.
-    -M | --static-mac          Generate static MAC for jail when importing foreign jails like iocage.
-    -v | --verbose             Be more verbose during the ZFS receive operation.
-    -x | --debug               Enable debug mode.
+    -f | --force          Force an archive import regardless if the checksum file does not match or missing.
+    -M | --static-mac     Generate static MAC for jail when importing foreign jails like iocage.
+    -v | --verbose        Enable verbose mode (ZFS only).
+    -x | --debug          Enable debug mode.
 
-Tip: If no option specified, container should be imported from standard input.
+    Tip: If no option specified, container should be imported from standard input.
 
 EOF
     exit 1
@@ -58,9 +58,9 @@ OPT_STATIC_MAC=""
 USER_IMPORT=
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-	-h|--help|help)
+        -h|--help|help)
             usage
-	        ;;
+            ;;
         -f|--force)
             OPT_FORCE="1"
             shift
@@ -81,7 +81,7 @@ while [ "$#" -gt 0 ]; do
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     f) OPT_FORCE=1 ;;
-		    M) OPT_STATIC_MAC=1 ;;
+                    M) OPT_STATIC_MAC=1 ;;
                     v) OPT_ZRECV="-u -v" ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -111,8 +111,12 @@ fi
 if [ -z "${bastille_decompress_gz_options}" ]; then
     bastille_decompress_gz_options="-k -d -c -v"
 fi
+if [ -z "${bastille_decompress_zst_options}" ]; then
+    bastille_decompress_zst_options="-k -d -c -v"
+fi
 
 validate_archive() {
+
     # Compare checksums on the target archive
     # Skip validation for unsupported archive
     if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
@@ -438,6 +442,7 @@ update_config() {
 }
 
 workout_components() {
+
     if [ "${FILE_EXT}" = ".tar" ]; then
         # Workaround to determine the tarball path/components before extract(assumes path/jails/target)
         JAIL_PATH=$(tar -tvf ${bastille_backupsdir}/${TARGET} | grep -wo "/.*/jails/${TARGET_TRIM}" | tail -n1)
@@ -451,6 +456,7 @@ workout_components() {
 }
 
 vnet_requirements() {
+
     # VNET jib script requirement
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
         if [ ! "$(command -v jib)" ]; then
@@ -472,6 +478,7 @@ vnet_requirements() {
 }
 
 config_netif() {
+
     # Get interface from bastille configuration
     if [ -n "${bastille_network_loopback}" ]; then
         NETIF_CONFIG="${bastille_network_loopback}"
@@ -509,8 +516,9 @@ update_symlinks() {
 }
 
 create_zfs_datasets() {
+
     # Prepare the ZFS environment and restore from file
-    info "\nImporting '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
+    info "\nImporting '${TARGET_TRIM}' from compressed ${FILE_EXT} archive."
     echo "Preparing ZFS environment..."
 
     # Create required ZFS datasets, mountpoint inherited from system
@@ -526,12 +534,14 @@ remove_zfs_datasets() {
 }
 
 jail_import() {
+
     # Attempt to import container from file
-    FILE_TRIM=$(echo "${TARGET}" | sed 's/\.xz//g;s/\.gz//g;s/\.tgz//g;s/\.txz//g;s/\.zip//g;s/\.tar\.gz//g;s/\.tar//g')
+    FILE_TRIM=$(echo "${TARGET}" | sed 's/\.xz//g;s/\.gz//g;s/\.zst//g;s/\.tgz//g;s/\.txz//g;s/\.tzst//g;s/\.zip//g;s/\.tar\.gz//g;s/\.tar//g')
     FILE_EXT=$(echo "${TARGET}" | sed "s/${FILE_TRIM}//g")
     if [ -d "${bastille_jailsdir}" ]; then
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
+
                 if [ "${FILE_EXT}" = ".xz" ]; then
                     validate_archive
                     # Import from compressed xz on ZFS systems
@@ -539,9 +549,9 @@ jail_import() {
                     echo "Receiving ZFS data stream..."
                     xz ${bastille_decompress_xz_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
-
                     # Update ZFS mountpoint property if required
                     update_zfsmount
+
                 elif [ "${FILE_EXT}" = ".gz" ]; then
                     validate_archive
                     # Import from compressed xz on ZFS systems
@@ -549,7 +559,16 @@ jail_import() {
                     echo "Receiving ZFS data stream..."
                     gzip ${bastille_decompress_gz_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
+                    # Update ZFS mountpoint property if required
+                    update_zfsmount
 
+                elif [ "${FILE_EXT}" = ".zst" ]; then
+                    validate_archive
+                    # Import from compressed zst on ZFS systems
+                    info "\nImporting '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
+                    echo "Receiving ZFS data stream..."
+                    zstd ${bastille_decompress_zst_options} "${bastille_backupsdir}/${TARGET}" | \
+                    zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     # Update ZFS mountpoint property if required
                     update_zfsmount
 
@@ -557,7 +576,6 @@ jail_import() {
                     validate_archive
                     # Prepare the ZFS environment and restore from existing .txz file
                     create_zfs_datasets
-
                     # Extract required files to the new datasets
                     info "\nExtracting files from '${TARGET}' archive..."
                     tar --exclude='root' -Jxf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
@@ -565,11 +583,11 @@ jail_import() {
                     if [ "$?" -ne 0 ]; then
                         remove_zfs_datasets
                     fi
+
                 elif [ "${FILE_EXT}" = ".tgz" ]; then
                     validate_archive
                     # Prepare the ZFS environment and restore from existing .tgz file
                     create_zfs_datasets
-
                     # Extract required files to the new datasets
                     info "\nExtracting files from '${TARGET}' archive..."
                     tar --exclude='root' -xf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
@@ -577,7 +595,21 @@ jail_import() {
                     if [ "$?" -ne 0 ]; then
                         remove_zfs_datasets
                     fi
+
+                elif [ "${FILE_EXT}" = ".tzst" ]; then
+                    validate_archive
+                    # Prepare the ZFS environment and restore from existing .tgz file
+                    create_zfs_datasets
+                    # Extract required files to the new datasets
+                    info "\nExtracting files from '${TARGET}' archive..."
+                    tar --exclude='root' -xf "${bastille_backupsdir}/${TARGET}" --strip-components 1 -C "${bastille_jailsdir}/${TARGET_TRIM}"
+                    tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components 2 -C "${bastille_jailsdir}/${TARGET_TRIM}/root" "${TARGET_TRIM}/root"
+                    if [ "$?" -ne 0 ]; then
+                        remove_zfs_datasets
+                    fi
+
                 elif [ "${FILE_EXT}" = ".zip" ]; then
+
                     validate_archive
                     # Attempt to import a foreign/iocage container
                     info "\nImporting '${TARGET_TRIM}' from foreign compressed ${FILE_EXT} archive."
@@ -608,7 +640,9 @@ jail_import() {
 
                     # Generate fstab and jail.conf files
                     generate_config
+
                 elif [ "${FILE_EXT}" = ".tar.gz" ]; then
+
                     # Attempt to import a foreign/ezjail container
                     # Prepare the ZFS environment and restore from existing .tar.gz file
                     create_zfs_datasets
@@ -622,12 +656,13 @@ jail_import() {
                     else
                         generate_config
                     fi
+
                 elif [ "${FILE_EXT}" = ".tar" ]; then
+
                     # Attempt to import a foreign/qjail container
                     # Prepare the ZFS environment and restore from existing .tar file
                     create_zfs_datasets
                     workout_components
-
                     # Extract required files to the new datasets
                     info "\nExtracting files from '${TARGET}' archive..."
                     tar -xf "${bastille_backupsdir}/${TARGET}" --strip-components "${CONF_TRIM}" -C "${bastille_jailsdir}/${TARGET_TRIM}" "${JAIL_CONF}"
@@ -641,7 +676,9 @@ jail_import() {
                     else
                         update_config
                     fi
+
                 elif [ -z "${FILE_EXT}" ]; then
+
                     if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$'; then
                         validate_archive
                         # Based on the file name, looks like we are importing a raw bastille image
@@ -669,19 +706,31 @@ jail_import() {
         else
             # Import from standard supported archives on UFS systems
             if [ "${FILE_EXT}" = ".txz" ]; then
+
                 info "\nExtracting files from '${TARGET}' archive..."
-                tar -Jxf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
+                tar -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
+
             elif [ "${FILE_EXT}" = ".tgz" ]; then
+
                 info "\nExtracting files from '${TARGET}' archive..."
-                tar -xf  "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
+                tar -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
+
+            elif [ "${FILE_EXT}" = ".tzst" ]; then
+
+                info "\nExtracting files from '${TARGET}' archive..."
+                tar -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}"
+
             elif [ "${FILE_EXT}" = ".tar.gz" ]; then
+
                 # Attempt to import/configure foreign/ezjail container
                 info "\nExtracting files from '${TARGET}' archive..."
                 mkdir "${bastille_jailsdir}/${TARGET_TRIM}"
                 tar -xf "${bastille_backupsdir}/${TARGET}" -C "${bastille_jailsdir}/${TARGET_TRIM}"
                 mv "${bastille_jailsdir}/${TARGET_TRIM}/ezjail" "${bastille_jailsdir}/${TARGET_TRIM}/root"
                 generate_config
+
             elif [ "${FILE_EXT}" = ".tar" ]; then
+
                 # Attempt to import/configure foreign/qjail container
                 info "\nExtracting files from '${TARGET}' archive..."
                 mkdir -p "${bastille_jailsdir}/${TARGET_TRIM}/root"
@@ -729,9 +778,9 @@ fi
 # Check if archive exist then trim archive name
 if [ -f "${bastille_backupsdir}/${TARGET}" ]; then
     # Filter unsupported/unknown archives
-    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.xz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.gz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.tgz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.txz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.zip$\|-[0-9]\{12\}.[0-9]\{2\}.tar.gz$\|@[0-9]\{12\}.[0-9]\{2\}.tar$'; then
+    if echo "${TARGET}" | grep -q '_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.xz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.gz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.zst$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.tgz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.txz$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}.tzst$\|_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.zip$\|-[0-9]\{12\}.[0-9]\{2\}.tar.gz$\|@[0-9]\{12\}.[0-9]\{2\}.tar$'; then
         if ls "${bastille_backupsdir}" | awk "/^${TARGET}$/" >/dev/null; then
-            TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.xz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.gz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.tgz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.txz//;s/_[0-9]*-[0-9]*-[0-9]*.zip//;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//;s/@[0-9]\{12\}.[0-9]\{2\}.tar//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*//")
+            TARGET_TRIM=$(echo "${TARGET}" | sed "s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.xz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.gz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.zst//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.tgz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.txz//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*.tzst//;s/_[0-9]*-[0-9]*-[0-9]*.zip//;s/-[0-9]\{12\}.[0-9]\{2\}.tar.gz//;s/@[0-9]\{12\}.[0-9]\{2\}.tar//;s/_[0-9]*-[0-9]*-[0-9]*-[0-9]*//")
         fi
     else
         error_exit "[ERROR]: Unrecognized archive name."
