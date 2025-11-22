@@ -396,21 +396,29 @@ on your system is.
 VLAN Configuration
 ------------------
 
+Jail VLAN Tagging
+^^^^^^^^^^^^^^^^^
+
 Bastille supports VLANs to some extent when creating jails. When creating a jail,
 use the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set
 the proper variables inside the jails `rc.conf` to add the jail to the specified
-VLAN. When using this method, the interface being assigned must carry tagged VLAN
-packets, e.g. you can bridge a VLAN trunk to the jail and in the jail you then can
-access all VLANs. But be careful: This may have security implications.
+VLAN. The jail will then take care of tagging the traffic. Do not use ``-v|--vlan``
+if you have already configured the host interface to tag the traffic. See limitations
+below.
 
-You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
-name, which is the standard way of naming a VLAN interface. This is due to the
-limitations of the JIB script that Bastille uses to manage VNET jails.
+When using this method, the interface being assigned must be a trunk interface.
+This means that it passes all traffic, leaving any VLAN tags as they are.
 
-You can however use ``-B|--bridge`` with VLAN interfaces (even with dots in the
-name). Using this method you create bridge interfaces in ``rc.conf`` and only
-add VLANs that are needed for the jail. The jail only has access to these VLANs
-and not to the whole trunk.
+Host VLAN Tagging
+^^^^^^^^^^^^^^^^^
+
+Another method is to configure a host interface to tag the traffic. This way, the
+jail doesn't have to worry about it.
+
+You can only use ``-B|--bridge`` with host VLAN interfaces, due to the limitation
+mentioned below. With this method we create the bridge interfaces in ``rc.conf``
+and configure them to tag the traffic by VLAD ID.
+
 Below is an ``rc.conf`` snippet that was provided by a user who has such a
 configuration.
 
@@ -440,6 +448,17 @@ configuration.
 
 Notice that the interfaces are bridge interfaces, and can be used with ``-B|--bridge``
 without issue.
+
+VLAN Limitations
+^^^^^^^^^^^^^^^^
+
+You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
+name, which is the standard way of naming a VLAN interface. This is due to the
+limitations of the JIB script that Bastille uses to manage VNET jails.
+
+Do not attempt to configure both the host and the jail to tag VLAN traffic.
+If you use the host method, do not use ``-v|--vlan`` when creating the jail.
+Doing so will prevent the jail from having network access.
 
 Regarding Routes
 ----------------
