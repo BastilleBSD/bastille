@@ -452,13 +452,16 @@ without issue.
 VLAN Limitations
 ^^^^^^^^^^^^^^^^
 
-You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
-name, which is the standard way of naming a VLAN interface. This is due to the
-limitations of the JIB script that Bastille uses to manage VNET jails.
+* You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
+  name, which is the standard way of naming a VLAN interface. This is due to the
+  limitations of the JIB script that Bastille uses to manage VNET jails.
 
-Do not attempt to configure both the host and the jail to tag VLAN traffic.
-If you use the host method, do not use ``-v|--vlan`` when creating the jail.
-Doing so will prevent the jail from having network access.
+* Do not attempt to configure both the host and the jail to tag VLAN traffic.
+  If you use the host method, do not use ``-v|--vlan`` when creating the jail.
+  Doing so will prevent the jail from having network access.
+
+Tip: Don't forget to set you gateway and nameserver is applicable
+using `-g|--gateway` and `-n|--nameserver`.
 
 Regarding Routes
 ----------------
