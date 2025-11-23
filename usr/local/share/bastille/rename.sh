@@ -183,7 +183,7 @@ update_jailconf_vnet() {
                 sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_conf}"
 
                 # Replace epair name in /etc/rc.conf
-                sed -i '' "/ifconfig/ s|\<${old_jail_epair}\>|${new_jail_epair}|g" "${jail_rc_conf}"
+                sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_conf}"
             else
                 # For -B jails
                 # Replace host epair name in jail.conf
@@ -202,7 +202,7 @@ update_jailconf_vnet() {
                 sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_conf}"
 
                 # Replace epair name in /etc/rc.conf
-                sed -i '' "/ifconfig/ s|\<${old_jail_epair}\>|${new_jail_epair}|g" "${jail_rc_conf}"
+                sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_conf}"
             fi
         # For netgraph network type
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
@@ -224,7 +224,7 @@ update_jailconf_vnet() {
             sed -i '' "s|= ${old_ngif};|= ${new_ngif};|g" "${jail_conf}"
 
             # Replace epair name in /etc/rc.conf
-            sed -i '' "/ifconfig/ s|\<${old_ngif}\>|${new_ngif}|g" "${jail_rc_conf}"
+            sed -i '' "s|ifconfig_${old_ngif}_name|ifconfig_${new_ngif}_name|g" "${jail_rc_conf}"
         fi
     done
 }
