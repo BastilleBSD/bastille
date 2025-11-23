@@ -305,7 +305,7 @@ update_jailconf_vnet() {
                 sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
 
                 # Replace epair name in /etc/rc.conf
-                sed -i '' "/ifconfig/ s|\<${old_jail_epair}\>|${new_jail_epair}|g" "${jail_rc_config}"
+                sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
 
             else
 
@@ -334,16 +334,13 @@ update_jailconf_vnet() {
                 sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
 
                 # Replace epair name in /etc/rc.conf
-                sed -i '' "/ifconfig/ s|\<${old_jail_epair}\>|${new_jail_epair}|g" "${jail_rc_config}"
+                sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
 
             fi
 
             # Update /etc/rc.conf
             local jail_vnet="$(grep ${old_jail_epair} "${jail_rc_config}" | grep -Eo -m 1 "vnet[0-9]+")"
             local jail_vnet_vlan="$(grep "vlans_${jail_vnet}" "${jail_rc_config}" | sed 's/.*=//g')"
-
-            # Change epair name
-            sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|" "${jail_rc_config}"
 
             # IP4
             if [ -n "${IP4_ADDR}" ]; then
@@ -385,9 +382,6 @@ update_jailconf_vnet() {
                 fi
             fi
 
-            # Replace epair description
-            sed -i '' "/${new_host_epair}/ s|\<${jail_vnet} host interface for Bastille jail ${TARGET}\>|${jail_vnet} host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
-
         # Update netgraph VNET (non-bridged) config
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
 
@@ -408,7 +402,7 @@ update_jailconf_vnet() {
             sed -i '' "s|= ${old_ngif};|= ${new_ngif};|g" "${jail_config}"
 
             # Replace epair name in /etc/rc.conf
-            sed -i '' "/ifconfig/ s|\<${old_ngif}\>|${new_ngif}|g" "${jail_rc_config}"
+            sed -i '' "s|ifconfig_${old_ngif}_name|ifconfig_${new_ngif}_name|g" "${jail_rc_config}"
 
             local jail_vnet="$(grep ${if} "${jail_rc_config}" | grep -Eo -m 1 "vnet[0-9]+")"
             local jail_vnet_vlan="$(grep "vlans_${jail_vnet}" "${jail_rc_config}" | sed 's/.*=//g')"
@@ -419,9 +413,6 @@ update_jailconf_vnet() {
                 generate_static_mac "${NEWNAME}" "${external_interface}"
                 sed -i '' "s|\<${new_ngif} ether.*:.*:.*:.*:.*:.*a\";|${new_ngif} ether ${macaddr}a\";|" "${jail_config}"
             fi
-
-            # Update /etc/rc.conf
-            sed -i '' "s|ifconfig_${old_ngif}_name|ifconfig_${new_ngif}_name|" "${jail_rc_config}"
 
             # IP4
             if [ -n "${IP4_ADDR}" ]; then
