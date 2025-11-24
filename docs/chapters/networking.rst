@@ -95,7 +95,10 @@ member, you will not be able to use ``vtnet0`` with ``-V|--vnet``.
 IP Address Options
 ------------------
 
-Bastille includes a number of IP options.
+IPv4 Network
+^^^^^^^^^^^^
+
+Bastille includes a number of IP options for IPv4 networking.
 
 .. code-block:: shell
 
@@ -131,16 +134,40 @@ Note that jails support specifying an IP without the subnet (/24 or whatever
 yours is) but we highly recommend setting it, especially on VNET jails. Not
 doing so can cause issues in some rare cases.
 
+IPv6 Network
+^^^^^^^^^^^^
+
 Bastille also supports IPv6. Instead of an IPv4 address, you can specify an
-IPv6 address when creating a jail to use IPv6. It is also possible to use both
-by quoting an IPv4 and IPv6 address together as seen in the following example.
+IPv6 address when creating a jail to use IPv6.
 
 .. code-block:: shell
 
-  bastille create alcatraz 13.2-RELEASE "192.168.1.50/24 2001:19f0:6c01:114c:0:100/64" vtnet0
+  bastille create alcatraz 13.2-RELEASE 2001:19f0:6c01:114c:0:100/64 vtnet0
 
-For the ``inherit`` and ``ip_hostname`` options, you can also specify
-``-D|--dual`` to use both IPv4 and IPv6 inside the jail.
+The IP address specified above can be any of the following options.
+
+* A valid IPv6 address including the subnet.
+
+* SLAAC will configure your jail to use router advertisement to obtain an
+  address from your router. This should only be used with ``-V`` and ``-B``.
+
+Dual Stack Network
+^^^^^^^^^^^^^^^^^^
+
+It is also possible to use both IPv4 and IPv6 by quoting an IPv4 and IPv6 addresses together
+as seen in the following examples.
+
+.. code-block:: shell
+
+  bastille create alcatraz 14.3-RELEASE "192.168.1.50/24 2001:19f0:6c01:114c:0:100/64" vtnet0
+
+.. code-block:: shell
+
+  bastille create alcatraz 14.3-RELEASE "DHCP SLAAC" vtnet0
+
+Note: For the ``inherit`` and ``ip_hostname`` options, you can also specify
+``-D|--dual`` to use both IPv4 and IPv6 inside the jail. Otherwise, for dual
+stack networking, simply supply both IPv4 and IPv6 addresses as seen above.
 
 Networking Limitations
 ----------------------
