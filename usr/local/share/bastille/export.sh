@@ -247,18 +247,14 @@ if [ "${COMP_OPTION}" -gt "1" ]; then
     error_exit "[ERROR]: Only one compression format can be used during export."
 fi
 
-# Validate LIVE and AUTO
-if ! checkyesno bastille_zfs_enable; then
-    if [ "${LIVE}" -eq 1 ]; then
-        error_exit "[ERROR]: [-l|--live] can only be used with ZFS."
-    fi
-elif [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
+# Validate AUTO and LIVE
+if [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
     error_exit "[ERROR]: [-a|--auto] cannot be used with [-l|--live]."
 fi
 
-# Don't allow LIVE with TXZ_EXPORT or TGZ_EXPORT
+# Don't allow LIVE with T*_EXPORT
 if { [ "${TXZ_EXPORT}" -eq 1 ] || [ "${TGZ_EXPORT}" -eq 1 ] || [ "${TZST_EXPORT}" -eq 1 ]; } && [ "${LIVE}" -eq 1 ]; then
-    error_exit "[ERROR]: Archive mode cannot be used with [-l|--live]."
+    error_exit "[ERROR]: [-l|--live] cannot be used with simple archive modes."
 fi
 
 # Don't allow ZFS specific options if not enabled
