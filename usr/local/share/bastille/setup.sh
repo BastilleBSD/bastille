@@ -93,29 +93,34 @@ bastille_root_check
 
 # Configure netgraph
 configure_netgraph() {
-    if [ ! "$(kldstat -m netgraph)" ]; then
+    if ! kldstat -qm netgraph; then
         # Ensure jib script is in place for VNET jails
         if [ ! "$(command -v jng)" ]; then
-            if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
+            if [ -f "/usr/share/examples/jails/jng" ] && [ ! -f "/usr/local/bin/jng" ]; then
                 install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
             fi
         fi
-        sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
+
+        NETGRAPH_MODS="netgraph ng_netflow ng_ksocket ng_ether ng_bridge ng_eiface ng_socket"
+        CONFIG_PARAMS="netgraph_load ng_netflow_load ng_ksocket_load ng_ether_load ng_bridge_load ng_eiface_load ng_socket_load"
         info "\nConfiguring netgraph modules..."
-        kldload netgraph
-        kldload ng_netflow
-        kldload ng_ksocket
-        kldload ng_ether
-        kldload ng_bridge
-        kldload ng_eiface
-        kldload ng_socket
-        sysrc -f /boot/loader.conf netgraph_load="YES"
-        sysrc -f /boot/loader.conf ng_netflow_load="YES"
-        sysrc -f /boot/loader.conf ng_ksocket_load="YES"
-        sysrc -f /boot/loader.conf ng_ether_load="YES"
-        sysrc -f /boot/loader.conf ng_bridge_load="YES"
-        sysrc -f /boot/loader.conf ng_eiface_load="YES"
-        sysrc -f /boot/loader.conf ng_socket_load="YES"
+
+        # Load requried netgraph kernel modules
+        for _ng_kmod in ${NETGRAPH_MODS}; do
+            if ! kldstat -qm ${_ng_kmod}; then
+                kldload ${_ng_kmod}
+            fi
+        done
+
+        # Write required netgraph params to config file
+        for _conf_param in ${CONFIG_PARAMS}; do
+            if ! sysrc -f /boot/loader.conf -qc ${_conf_param}=YES; then
+                sysrc -f /boot/loader.conf ${_conf_param}="YES"
+            fi
+        done
+
+        # Set bastille_network_vnet_type to netgraph
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
         info "\nNetgraph has been successfully configured!"
     else
         info "\nNetgraph has already been configured!"
@@ -244,20 +249,20 @@ configure_vnet() {
     # Ensure proper jail helper script
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
         if [ ! "$(command -v jib)" ]; then
-            if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
+            if [ -f "/usr/share/examples/jails/jib" ] && [ ! -f "/usr/local/bin/jib" ]; then
                 install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
             fi
         fi
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
         if [ ! "$(command -v jng)" ]; then
-            if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
+            if [ -f "/usr/share/examples/jails/jng" ] && [ ! -f "/usr/local/bin/jng" ]; then
                 install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
             fi
         fi
     fi
 
     # Create default VNET ruleset
-    if [ ! -f /etc/devfs.rules ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
+    if [ ! -f "/etc/devfs.rules" ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
         info "\nCreating bastille_vnet devfs.rules"
         cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
