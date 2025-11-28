@@ -34,17 +34,19 @@
 
 usage() {
     error_notify "Usage: bastille setup [option(s)] [bridge]"
+    error_notify "                                  [linux]"
     error_notify "                                  [loopback]"
+    error_notify "                                  [netgraph]"
     error_notify "                                  [pf|firewall]"
     error_notify "                                  [shared]"
-    error_notify "                                  [vnet]"
     error_notify "                                  [storage]"
+    error_notify "                                  [vnet]"
     cat << EOF
 
     Options:
 
-    -y | --yes             Assume always yes on prompts.
-    -x | --debug           Enable debug mode.
+    -y | --yes       Assume always yes on prompts.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -91,9 +93,69 @@ OPT_ARG="${2}"
 
 bastille_root_check
 
+configure_linux() {
+
+    if ! kldstat -qn linux || \
+       ! kldstat -qn linux64 || \
+       ! kldstat -qm fdescfs || \
+       ! kldstat -qm linprocfs || \
+       ! kldstat -qm linsysfs || \
+       ! kldstat -qm tmpfs; then
+
+        required_mods="fdescfs linprocfs linsysfs tmpfs"
+        linuxarc_mods="linux linux64"
+
+        # Enable required modules
+        for mod in ${required_mods}; do
+            if ! kldstat -qm ${mod}; then
+                if [ ! "$(sysrc -f /boot/loader.conf -qn ${mod}_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf.local -qn ${mod}_load)" = "YES" ]; then
+                    info "\nLoading kernel module: ${mod}"
+                    kldload -v ${mod}
+                    info "\nPersisting module: ${mod}"
+                    sysrc -f /boot/loader.conf ${mod}_load=YES
+                else
+                    info "\nLoading kernel module: ${mod}"
+                    kldload -v ${mod}
+                fi
+            fi
+        done
+
+        # Mandatory Linux modules/rc.
+        for mod in ${linuxarc_mods}; do
+            if ! kldstat -qn ${mod}; then
+                info "\nLoading kernel module: ${mod}"
+                kldload -v ${mod}
+            fi
+        done
+
+        # Enable linux
+        if [ ! "$(sysrc -qn linux_enable)" = "YES" ] && [ ! "$(sysrc -f /etc/rc.conf.local -qn linux_enable)" = "YES" ]; then
+            sysrc linux_enable=YES
+        fi
+
+        # Install debootstrap package
+        if ! which -s debootstrap; then
+            pkg install -y debootstrap
+        fi
+
+        info "\nLinux has been successfully configured!"
+
+    else
+        info "\nLinux has already been configured!"
+    fi
+}
+
 # Configure netgraph
 configure_netgraph() {
-    if [ ! "$(kldstat -m netgraph)" ]; then
+
+    if ! kldstat -qm netgraph || \
+       ! kldstat -qm ng_netflow || \
+       ! kldstat -qm ng_ksocket || \
+       ! kldstat -qm ng_ether || \
+       ! kldstat -qm ng_bridge || \
+       ! kldstat -qm ng_eiface || \
+       ! kldstat -qm ng_socket; then
+
         # Ensure jib script is in place for VNET jails
         if [ ! "$(command -v jng)" ]; then
             if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
@@ -365,6 +427,27 @@ fi
 case "${OPT_CONFIG}" in
     pf|firewall)
         configure_pf
+        ;;
+    linux)
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            configure_linux
+        else
+            warn "[WARNING]: Running linux jails requires loading additional kernel"
+            warn "modules, as well as installing the 'debootstrap' package."
+            # shellcheck disable=SC3045
+            read -p "Do you want to proceed with setup? [y|n]:" _answer
+            case "${_answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    configure_linux
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "Linux setup cancelled."
+                    ;;
+                *)
+                    error_exit "Invalid selection. Please answer 'y' or 'n'"
+                    ;;
+            esac
+        fi
         ;;
     netgraph)
         if [ "${AUTO_YES}" -eq 1 ]; then

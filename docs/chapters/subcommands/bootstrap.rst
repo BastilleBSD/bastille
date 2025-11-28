@@ -101,12 +101,14 @@ Example
 
 Tips
 ^^^^
+
 See the documentation on templates for more information on how they work and
 how you can create or customize your own. Templates are a powerful part of
 Bastille and facilitate full container automation.
 
 Notes
 ^^^^^
+
 If you don't want to bother with git to use templates you can create them
 manually on the Bastille system and apply them.
 
@@ -127,4 +129,4 @@ begin applying your template.
       Options:
 
       -p | --pkgbase     Bootstrap using pkgbase (15.0-RELEASE and above).
-      -x | --debug           Enable debug mode.
+      -x | --debug       Enable debug mode.

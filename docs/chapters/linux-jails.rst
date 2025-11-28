@@ -3,8 +3,13 @@ Linux Jails
 
 Bastille can create Linux jails using the ``debootstrap`` tool. When
 attempting to create a Linux jail, Bastille will need to load some modules
-as well as install the ``debootstrap`` package. When prompted, enter
-'yes' when bootstrapping a Linux release.
+as well as install the ``debootstrap`` package.
+
+Getting Started
+---------------
+
+To get started, run ``bastille setup linux`` to load required modules
+and install the ``debootstrap`` package.
 
 Bootstrapping a Linux Release
 -----------------------------
