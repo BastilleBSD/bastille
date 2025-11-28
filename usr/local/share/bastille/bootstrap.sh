@@ -417,69 +417,16 @@ bootstrap_release() {
 
 debootstrap_release() {
 
+    info "\nEnsuring Linux compatability..."
+    if ! bastille setup -y linux >/dev/null 2>/dev/null; then
+        error_notify "[ERROR]: Failed to configure linux."
+        error_exit "See 'bastille setup linux' for more details."
+    fi
+
     # Make sure to check/bootstrap directories first.
     NOCACHEDIR=1
     RELEASE="${DIR_BOOTSTRAP}"
     bootstrap_directories
-
-    #check and install OS dependencies @hackacad
-    #ToDo: add function 'linux_pre' for sysrc etc.
-
-    required_mods="fdescfs linprocfs linsysfs tmpfs"
-    linuxarc_mods="linux linux64"
-    for _req_kmod in ${required_mods}; do
-        if [ ! "$(sysrc -f /boot/loader.conf -qn ${_req_kmod}_load)" = "YES" ] && \
-            [ ! "$(sysrc -f /boot/loader.conf.local -qn ${_req_kmod}_load)" = "YES" ]; then
-            warn "${_req_kmod} not enabled in /boot/loader.conf, Should I do that for you?  (N|y)"
-            read  answer
-            case "${answer}" in
-                [Nn][Oo]|[Nn]|"")
-                    error_exit "Cancelled, Exiting."
-                    ;;
-                [Yy][Ee][Ss]|[Yy])
-                    # Skip already loaded known modules.
-                    if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
-                        info "\nLoading kernel module: ${_req_kmod}"
-                        kldload -v ${_req_kmod}
-                    fi
-                    info "\nPersisting module: ${_req_kmod}"
-                    sysrc -f /boot/loader.conf ${_req_kmod}_load=YES
-                ;;
-            esac
-        else
-            # If already set in /boot/loader.conf, check and try to load the module.
-            if ! kldstat -m ${_req_kmod} >/dev/null 2>&1; then
-                info "\nLoading kernel module: ${_req_kmod}"
-                kldload -v ${_req_kmod}
-            fi
-        fi
-    done
-
-        # Mandatory Linux modules/rc.
-        for _lin_kmod in ${linuxarc_mods}; do
-            if ! kldstat -n ${_lin_kmod} >/dev/null 2>&1; then
-                info "\nLoading kernel module: ${_lin_kmod}"
-                kldload -v ${_lin_kmod}
-            fi
-        done
-
-        if [ ! "$(sysrc -qn linux_enable)" = "YES" ] && \
-            [ ! "$(sysrc -f /etc/rc.conf.local -qn linux_enable)" = "YES" ]; then
-            sysrc linux_enable=YES
-        fi
-
-    if ! which -s debootstrap; then
-        warn "Debootstrap not found. Should it be installed? (N|y)"
-        read  answer
-        case $answer in
-            [Nn][Oo]|[Nn]|"")
-                error_exit "[ERROR]: debootstrap is required for boostrapping a Linux jail."
-                ;;
-            [Yy][Ee][Ss]|[Yy])
-                pkg install -y debootstrap
-                ;;
-        esac
-    fi
 
     # Fetch the Linux flavor
     info "\nFetching ${PLATFORM_OS} distfiles..."
