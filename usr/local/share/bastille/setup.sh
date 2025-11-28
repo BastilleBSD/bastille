@@ -102,20 +102,20 @@ configure_linux() {
        ! kldstat -qm linsysfs || \
        ! kldstat -qm tmpfs; then
 
-        required_mods="fdescfs linprocfs linsysfs tmpfs"
-        linuxarc_mods="linux linux64"
+        local required_mods="fdescfs linprocfs linsysfs tmpfs"
+        local linuxarc_mods="linux linux64"
 
         # Enable required modules
         for mod in ${required_mods}; do
             if ! kldstat -qm ${mod}; then
                 if [ ! "$(sysrc -f /boot/loader.conf -qn ${mod}_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf.local -qn ${mod}_load)" = "YES" ]; then
                     info "\nLoading kernel module: ${mod}"
-                    kldload -v ${mod}
+                    kldload ${mod}
                     info "\nPersisting module: ${mod}"
                     sysrc -f /boot/loader.conf ${mod}_load=YES
                 else
                     info "\nLoading kernel module: ${mod}"
-                    kldload -v ${mod}
+                    kldload ${mod}
                 fi
             fi
         done
@@ -163,26 +163,23 @@ configure_netgraph() {
             fi
         fi
 
-        NETGRAPH_MODS="netgraph ng_netflow ng_ksocket ng_ether ng_bridge ng_eiface ng_socket"
-        CONFIG_PARAMS="netgraph_load ng_netflow_load ng_ksocket_load ng_ether_load ng_bridge_load ng_eiface_load ng_socket_load"
+        local required_mods="netgraph ng_netflow ng_ksocket ng_ether ng_bridge ng_eiface ng_socket"
+        
         info "\nConfiguring netgraph modules..."
 
         # Load requried netgraph kernel modules
-        for _ng_kmod in ${NETGRAPH_MODS}; do
-            if ! kldstat -qm ${_ng_kmod}; then
-                kldload ${_ng_kmod}
-            fi
-        done
-
-        # Write required netgraph params to config file
-        for _conf_param in ${CONFIG_PARAMS}; do
-            if ! sysrc -f /boot/loader.conf -qc ${_conf_param}=YES; then
-                sysrc -f /boot/loader.conf ${_conf_param}="YES"
+        for mod in ${required_mods}; do
+            if ! kldstat -qm ${mod}; then
+                info "\nLoading kernel module: ${mod}"
+                kldload -v ${mod}
+                info "\nPersisting module: ${mod}"
+                sysrc -f /boot/loader.conf ${mod}_load=YES
             fi
         done
 
         # Set bastille_network_vnet_type to netgraph
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
+
         info "\nNetgraph has been successfully configured!"
     else
         info "\nNetgraph has already been configured!"
