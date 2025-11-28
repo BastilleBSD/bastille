@@ -124,7 +124,7 @@ configure_linux() {
         for mod in ${linuxarc_mods}; do
             if ! kldstat -qn ${mod}; then
                 info "\nLoading kernel module: ${mod}"
-                kldload -v ${mod}
+                kldload ${mod}
             fi
         done
 
