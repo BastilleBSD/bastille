@@ -272,7 +272,7 @@ bootstrap_pkgbase_release() {
                      -o ASSUME_ALWAYS_YES="yes" \
                      -o FINGERPRINTS="${fingerprints}" \
                      install -r "${repo_name}" \
-                     freebsd-set-"${package}"; then
+                     FreeBSD-set-"${package}"; then
 
                 ERROR_COUNT=$((ERROR_COUNT + 1))
             fi

@@ -75,7 +75,7 @@ bootstrap_etc_release_pkgbase() {
                   -o ASSUME_ALWAYS_YES="yes" \
                   -o FINGERPRINTS="${fingerprints}" \
                   install -r "${repo_name}" \
-                  freebsd-set-src; then
+                  FreeBSD-set-src; then
             error_exit "[ERROR]: Failed to install package set: FreeBSD-set-src"
         fi
     else
