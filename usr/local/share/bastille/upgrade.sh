@@ -140,14 +140,12 @@ thick_jail_check() {
         if [ -z "${OLD_RELEASE}" ]; then
             error_exit "[ERROR]: Can't determine '${TARGET}' version."
         fi
-        OLD_MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
 
         # Check if jail is already running NEW_RELEASE
         if [ "${OLD_CONFIG_RELEASE}" = "${NEW_RELEASE}" ]; then
             error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
             error_exit "See 'bastille update TARGET' to update the jail."
         fi
-
     fi
 }
 
