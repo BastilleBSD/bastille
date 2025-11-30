@@ -113,8 +113,6 @@ thick_jail_check() {
         fi
 
         # Set VERSION
-        OLD_MINOR_VERSION=$(echo ${OLD_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
-        OLD_MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
         NEW_MINOR_VERSION=$(echo ${NEW_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
         NEW_MAJOR_VERSION=$(echo ${NEW_RELEASE} | grep -Eo '^[0-9]+')
 
