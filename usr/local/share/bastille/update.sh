@@ -208,6 +208,8 @@ jail_update_pkgbase() {
         if ! pkg --rootdir "${jailpath}" \
                  --repo-conf-dir "${repo_dir}" \
                  -o IGNORE_OSVERSION="yes" \
+                 -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                 -o VERSION_MINOR="${MINOR_VERSION}" \
                  -o ABI="${abi}" \
                  -o ASSUME_ALWAYS_YES="yes" \
                  -o FINGERPRINTS="${fingerprints}" \
@@ -219,11 +221,13 @@ jail_update_pkgbase() {
         # Update jail
         if ! pkg --rootdir "${jailpath}" \
                  --repo-conf-dir "${repo_dir}" \
-                  -o IGNORE_OSVERSION="yes" \
-                  -o ABI="${abi}" \
-                  -o ASSUME_ALWAYS_YES="yes" \
-                  -o FINGERPRINTS="${fingerprints}" \
-                  upgrade -r "${repo_name}"; then
+                 -o IGNORE_OSVERSION="yes" \
+                 -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                 -o VERSION_MINOR="${MINOR_VERSION}" \
+                 -o ABI="${abi}" \
+                 -o ASSUME_ALWAYS_YES="yes" \
+                 -o FINGERPRINTS="${fingerprints}" \
+                 upgrade -r "${repo_name}"; then
 
             error_exit "[ERROR]: Failed to update jail: ${TARGET}"
         fi
@@ -246,8 +250,8 @@ release_check() {
     TARGET="${NAME_VERIFY}"
 
     # Validate release existence
-    if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
-        error_exit "[ERROR]: Release not found: ${RELEASE}"
+    if [ ! -d "${bastille_releasesdir}/${TARGET}" ]; then
+        error_exit "[ERROR]: Release not found: ${TARGET}"
     fi
 
     # Verify PLATFORM_OS inside release

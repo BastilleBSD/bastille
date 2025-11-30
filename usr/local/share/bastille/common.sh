@@ -75,13 +75,6 @@ error_continue() {
     continue
 }
 
-error_return() {
-    local return="${1}"
-    shift 1
-    error_notify "$@"
-    return "${return}"
-}
-
 error_exit() {
     error_notify "$@"
     echo
