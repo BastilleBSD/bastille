@@ -677,7 +677,7 @@ create_jail() {
             else
                 # Set Gateway
                 if [ -n "${OPT_GATEWAY}" ]; then
-                    _gateway="${OPT_GATEWAY}"
+                    gateway="${OPT_GATEWAY}"
                 elif [ -n "${bastille_network_gateway}" ]; then
                     gateway="${bastille_network_gateway}"
                 else
@@ -708,12 +708,12 @@ create_jail() {
 
             # Add IPv6 address (this is empty if SLAAC is used)
             if [ -n "${IP6_ADDR}" ]; then
-                ifconfig_inet6="${_ifconfig_inet6} ${IP6_ADDR}"
+                ifconfig_inet6="${ifconfig_inet6} ${IP6_ADDR}"
             fi
 
             # We need to pass IP4 and IP6 separately
-            ifconfig="${_ifconfig_inet}"
-            ifconfig6="${_ifconfig_inet6}"
+            ifconfig="${ifconfig_inet}"
+            ifconfig6="${ifconfig_inet6}"
 
             # Set jail interface description if "if_bridge"
             if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
