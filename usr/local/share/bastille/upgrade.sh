@@ -104,19 +104,13 @@ thick_jail_check() {
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
 
-    # Set OLD_RELEASE
-    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
-    if [ -z "${OLD_RELEASE}" ]; then
-        error_exit "[ERROR]: Can't determine '${TARGET}' version."
-    fi
-
-    # Check if jail is already running NEW_RELEASE
-    if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
-        error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
-        error_exit "See 'bastille update TARGET' to update the jail."
-    fi
-
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
+
+        # Set OLD_RELEASE
+        OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
+        if [ -z "${OLD_RELEASE}" ]; then
+            error_exit "[ERROR]: Can't determine '${TARGET}' version."
+        fi
 
         # Set VERSION
         OLD_MINOR_VERSION=$(echo ${OLD_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
@@ -133,6 +127,29 @@ thick_jail_check() {
         if [ "${NEW_MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
             PKGBASE=1
         fi
+
+        # Check if jail is already running NEW_RELEASE
+        if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
+            error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
+            error_exit "See 'bastille update TARGET' to update the jail."
+        fi
+
+    elif [ "${PLATFORM_OS}" = "HardenedBSD" ]; then
+
+        # Set VERSION
+        OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
+        OLD_CONFIG_RELEASE="$(bastille config ${TARGET} get osrelease)"
+        if [ -z "${OLD_RELEASE}" ]; then
+            error_exit "[ERROR]: Can't determine '${TARGET}' version."
+        fi
+        OLD_MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
+
+        # Check if jail is already running NEW_RELEASE
+        if [ "${OLD_CONFIG_RELEASE}" = "${NEW_RELEASE}" ]; then
+            error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
+            error_exit "See 'bastille update TARGET' to update the jail."
+        fi
+
     fi
 }
 
@@ -193,8 +210,10 @@ release_check() {
             ;;
     esac
 
+    NEW_RELEASE="${NAME_VERIFY}"
+
     # Exit if NEW_RELEASE doesn't exist
-    if [ "${THIN_JAIL}" -eq 1 ]; then
+    if [ "${JAIL_TYPE}" = "thin" ]; then
         if [ ! -d "${bastille_releasesdir}/${NEW_RELEASE}" ]; then
             error_notify "[ERROR]: Release not found: ${NEW_RELEASE}"
             error_exit "See 'bastille bootstrap'."
@@ -224,6 +243,7 @@ jail_upgrade() {
 
         info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
         echo "See 'bastille etcupdate TARGET' to update /etc"
+        echo
 
     else
 
@@ -241,12 +261,50 @@ jail_upgrade() {
             -f "${freebsd_update_conf}" \
             -r "${NEW_RELEASE}" upgrade
 
-            # Update "osrelease" inside jail.conf using 'bastille config'
-            bastille config ${TARGET} set osrelease ${NEW_RELEASE} >/dev/null 2>/dev/null
-            warn "Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates."
+            UPGRADED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
+            if [ "${OLD_RELEASE}" = "${UPGRADED_RELEASE}" ]; then
+                info "\nNo upgrades available.\n"
+            else
+                # Update "osrelease" inside jail.conf using 'bastille config'
+                bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
+                warn "Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates."
+                echo
+            fi
 
         elif [ "${PLATFORM_OS}" = "HardenedBSD" ]; then
-            error_exit "[ERROR]: Not yet implemented."
+
+            local jailname="${TARGET}"
+            local jailpath="${bastille_jailsdir}/${TARGET}/root"
+            local hbsd_update_conf="${jailpath}/etc/hbsd-update.conf"
+
+            # Set proper vars in hbsd-update.conf
+            case ${NEW_RELEASE} in
+                current)
+                    branch="hardened/current/master"
+                    dnsrec="\$(uname -m).master.current.hardened.hardenedbsd.updates.hardenedbsd.org"
+                    ;;
+                *-stable)
+                    NEW_MAJOR_VERSION=$(echo ${NEW_RELEASE} | grep -Eo '^[0-9]+')
+                    branch="hardened/${MAJOR_VERSION}-stable/master"
+                    dnsrec="\$(uname -m).main.${MAJOR_VERSION}-stable.hardened.hardenedbsd.updates.hardenedbsd.org"
+                    ;;
+                *)
+                    error_exit "[ERROR]: Unknown ${PLATFORM_OS} release: ${NEW_RELEASE}"
+                    ;;
+            esac
+            sysrc -f "${hbsd_update_conf}" branch="${branch}" >/dev/null 2>/dev/null
+            sysrc -f "${hbsd_update_conf}" dnsrec="${dnsrec}" >/dev/null 2>/dev/null
+
+            hbsd-update \
+            -j "${jailname}" \
+            -c "${hbsd_update_conf}"
+
+            UPGRADED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
+            if [ "${OLD_RELEASE}" = "${UPGRADED_RELEASE}" ]; then
+                info "\nNo upgrades available.\n"
+            else
+                info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}\n"
+            fi
         fi
     fi
 }
@@ -334,18 +392,18 @@ jail_updates_install() {
 }
 
 # Set needed variables
-THIN_JAIL=0
+JAIL_TYPE=""
 PKGBASE=0
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 # Validate jail type (thick/thin)
 if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-    THIN_JAIL=1
+    JAIL_TYPE="thin"
 fi
 
 case ${NEW_RELEASE} in
     install)
-        if [ "${THIN_JAIL}" -eq 1 ]; then
+        if [ "${JAIL_TYPE}" = "thin" ]; then
             thin_jail_check "${TARGET}"
         else
             thick_jail_check "${TARGET}"
@@ -358,7 +416,7 @@ case ${NEW_RELEASE} in
         if [ "${PLATFORM_OS}" = "MidnightBSD" ] || [ -f "/bin/midnightbsd-version" ]; then
             error_exit "[ERROR]: Not yet supported on MidnightBSD."
         fi
-        if [ "${THIN_JAIL}" -eq 1 ]; then
+        if [ "${JAIL_TYPE}" = "thin" ]; then
             thin_jail_check "${TARGET}"
             jail_upgrade
         else
