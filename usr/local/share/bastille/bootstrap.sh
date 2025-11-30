@@ -283,14 +283,14 @@ bootstrap_release_legacy() {
                     errors=$((errors + 1))
                     error_continue "[ERROR]: Failed to validate archive: ${archive}.txz"
                 else
-                    info "\nChecksum validated."
                     echo "MANIFEST: ${SHA256_DIST}"
                     echo "DOWNLOAD: ${SHA256_FILE}"
+                    info "\nChecksum validated: ${archive}.txz"
                 fi
             fi
 
             # Extract distfile
-            info "\nExtracting archive: ${archive}.txz..."
+            info "\nExtracting archive: ${archive}.txz"
             if [ -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
                 if ! /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${archive}.txz"; then
                     errors=$((errors + 1))
@@ -714,7 +714,7 @@ if [ "${errors}" -eq 0 ]; then
     fi
 
     # Success
-    info "\nBootstrap successful."
+    info "\nBootstrap successful!"
     echo "See 'bastille --help' for available commands."
     echo
 else
