@@ -64,21 +64,24 @@ if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
-# Notify message on error
-# Do not echo blank line
+# Error messages/functions
+error_notify() {
+    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+}
+
 error_continue() {
     error_notify "$@"
     # shellcheck disable=SC2104
     continue
 }
 
-# Notify message on error, but do not exit
-error_notify() {
-    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+error_return() {
+    local return="${1}"
+    shift 1
+    error_notify "$@"
+    return "${return}"
 }
 
-# Notify message on error and exit
-# Echo blank line when exiting
 error_exit() {
     error_notify "$@"
     echo
