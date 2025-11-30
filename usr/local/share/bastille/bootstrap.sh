@@ -34,7 +34,7 @@
 
 usage() {
     error_notify "Usage: bastille bootstrap [option(s)] RELEASE [update|arch]"
-    error_notify "                                                               TEMPLATE"
+    error_notify "                                      TEMPLATE"
     cat << EOF
 
     Options:
@@ -47,9 +47,6 @@ EOF
 }
 
 bootstrap_directories() {
-
-    # Ensure required directories are in place
-
     ## ${bastille_prefix}
     if [ ! -d "${bastille_prefix}" ]; then
         if checkyesno bastille_zfs_enable; then
