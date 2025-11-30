@@ -155,45 +155,48 @@ jail_update() {
         local freebsd_update_conf="${jailpath}/etc/freebsd-update.conf"
         local work_dir="${jailpath}/var/db/freebsd-update"
 
-        env PAGER="/bin/cat" freebsd-update ${OPTION} \
-        --not-running-from-cron \
-        -j "${jailname}" \
-        -d "${work_dir}" \
-        -f "${freebsd_update_conf}" \
-        fetch
+        if ! env PAGER="/bin/cat" freebsd-update ${OPTION} \
+            --not-running-from-cron \
+            -j "${jailname}" \
+            -d "${work_dir}" \
+            -f "${freebsd_update_conf}" \
+            fetch; then
 
-        env PAGER="/bin/cat" freebsd-update ${OPTION} \
-        --not-running-from-cron \
-        -j "${jailname}" \
-        -d "${work_dir}" \
-        -f "${freebsd_update_conf}" \
-        install
-
-        # Update release version (including patch level)
-        NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-        if [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
-            bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null
+            error_exit "[ERROR]: Failed to fetch updates."
         fi
 
-    elif [ "${PLATFORM_OS}" = "HardenedBSD" ]; then
+        if ! env PAGER="/bin/cat" freebsd-update ${OPTION} \
+            --not-running-from-cron \
+            -j "${jailname}" \
+            -d "${work_dir}" \
+            -f "${freebsd_update_conf}" \
+            install; then
+
+            error_exit "[ERROR]: Failed to install updates."
+        fi
+
+    elif [ "${JAIL_PLATFORM_OS}" = "HardenedBSD" ]; then
 
         local jailname="${TARGET}"
         local jailpath="${bastille_jailsdir}/${TARGET}/root"
         local hbsd_update_conf="${jailpath}/etc/hbsd-update.conf"
 
-        hbsd-update \
-        -j "${jailname}" \
-        -c "${hbsd_update_conf}"
+        if ! hbsd-update \
+            -j "${jailname}" \
+            -c "${hbsd_update_conf}"; then
 
-        # Update release version (including patch level)
-        NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-        if [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
-            bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null
-        else
-            info "\nUpgrade complete: ${CURRENT_VERSION} > ${NEW_VERSION}"
+            error_exit "[ERROR]: Failed to install updates."
         fi
     fi
 
+    # Update release version (including patch level)
+    NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+    if [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
+        bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null
+        info "\nUpgrade complete: ${CURRENT_VERSION} > ${NEW_VERSION}\n"
+    else
+        info "\nNo updates available.\n"
+    fi
 }
 
 jail_update_pkgbase() {
@@ -231,15 +234,16 @@ jail_update_pkgbase() {
                   -o FINGERPRINTS="${fingerprints}" \
                   upgrade -r "${repo_name}"; then
 
-            error_exit "[ERROR]: Failed to upgrade jail: ${TARGET}"
+            error_exit "[ERROR]: Failed to update jail: ${TARGET}"
         fi
 
         # Update release version (including patch level)
         NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
         if [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
             bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null
+            info "\nUpgrade complete: ${CURRENT_VERSION} > ${NEW_VERSION}\n"
         else
-            info "\nUpgrade complete: ${CURRENT_VERSION} > ${NEW_VERSION}"
+            info "\nNo updates available.\n"
         fi
     else
         error_exit "[ERROR]: Jail not found: ${TARGET}"
@@ -297,19 +301,25 @@ release_update() {
             TARGET_TRIM=$(echo "${TARGET}" | sed 's/-i386//')
         fi
 
-        env PAGER="/bin/cat" freebsd-update ${OPTION} \
-        --not-running-from-cron \
-        -b "${release_dir}" \
-        -d "${work_dir}" \
-        -f "${freebsd_update_conf}" \
-        fetch --currently-running "${TARGET_TRIM}"
+        if ! env PAGER="/bin/cat" freebsd-update ${OPTION} \
+            --not-running-from-cron \
+            -b "${release_dir}" \
+            -d "${work_dir}" \
+            -f "${freebsd_update_conf}" \
+            fetch --currently-running "${TARGET_TRIM}"; then
 
-        env PAGER="/bin/cat" freebsd-update ${OPTION} \
-        --not-running-from-cron \
-        -b "${release_dir}" \
-        -d "${work_dir}" \
-        -f "${freebsd_update_conf}" \
-        install --currently-running "${TARGET_TRIM}"
+            error_exit "[ERROR]: Failed to fetch updates."
+        fi
+
+        if ! env PAGER="/bin/cat" freebsd-update ${OPTION} \
+            --not-running-from-cron \
+            -b "${release_dir}" \
+            -d "${work_dir}" \
+            -f "${freebsd_update_conf}" \
+            install --currently-running "${TARGET_TRIM}"; then
+
+            error_exit "[ERROR]: Failed to install updates."
+        fi
 
     elif [ "${RELEASE_PLATFORM_OS}" = "HardenedBSD" ]; then
 
@@ -321,9 +331,14 @@ release_update() {
         if [ -n "${ARCH_I386}" ]; then
             TARGET_TRIM=$(echo "${TARGET}" | sed 's/-i386//')
         fi
-        hbsd-update \
-        -r "${release_dir}" \
-        -c "${hbsd_update_conf}"
+
+        if ! hbsd-update \
+            -r "${release_dir}" \
+            -c "${hbsd_update_conf}"; then
+
+            error_exit "[ERROR]: Failed to install updates."
+        fi
+
     fi
 }
 
@@ -362,7 +377,7 @@ release_update_pkgbase() {
                   -o FINGERPRINTS="${fingerprints}" \
                   upgrade -r "${repo_name}"; then
 
-            error_exit "[ERROR]: Failed to upgrade release: ${TARGET}"
+            error_exit "[ERROR]: Failed to update release: ${TARGET}"
         fi
     fi
 }
