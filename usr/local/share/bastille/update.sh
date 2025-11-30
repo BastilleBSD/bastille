@@ -319,7 +319,7 @@ release_update() {
 
         hbsd-update \
         -r "${release_dir}" \
-        -c "${hbsd_update_conf}"; then
+        -c "${hbsd_update_conf}"
     fi
 }
 
