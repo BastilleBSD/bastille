@@ -591,7 +591,7 @@ list_release() {
         for release in ${release_list}; do
             if [ -f "${bastille_releasesdir}/${release}/root/.profile" ] || [ -d "${bastille_releasesdir}/${release}/debootstrap" ]; then
                 if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
-                    release_patchL=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
+                    release_patch=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
                     release_patch=${release_patch:-${release}}
                     echo "${release_patch}"
                 else
