@@ -582,19 +582,20 @@ list_type() {
 
 # TODO: Check the correct usage or arguments here. See SC2120.
 # shellcheck disable=SC2120
-list_release(){
+list_release() {
+
     if [ -d "${bastille_releasesdir}" ]; then
         # TODO: Check if this can be changed to `find` as SC2012 suggests.
         # shellcheck disable=SC2012
-        REL_LIST="$(ls -v --color=never "${bastille_releasesdir}" | sed "s/\n//g")"
-        for _REL in ${REL_LIST}; do
-            if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ] || [ -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
-                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
-                    REL_PATCH_LEVEL=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${_REL}/bin/freebsd-version" 2> /dev/null)
-                    REL_PATCH_LEVEL=${REL_PATCH_LEVEL:-${_REL}}
-                    echo "${REL_PATCH_LEVEL}"
+        release_list="$(ls -v --color=never "${bastille_releasesdir}" | sed "s/\n//g")"
+        for release in ${release_list}; do
+            if [ -f "${bastille_releasesdir}/${release}/root/.profile" ] || [ -d "${bastille_releasesdir}/${release}/debootstrap" ]; then
+                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
+                    release_patch=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
+                    release_patch=${release_patch:-${release}}
+                    echo "${release_patch}"
                 else
-                    echo "${_REL}"
+                    echo "${release}"
                 fi
             fi
         done

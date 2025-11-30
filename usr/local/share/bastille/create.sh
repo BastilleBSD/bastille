@@ -67,6 +67,10 @@ validate_name() {
     local NAME_VERIFY=${NAME}
     local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
 
+    if check_target_exists "${NAME}"; then
+        error_exit "[ERROR]: Jail already exists: ${NAME}"
+    fi
+
     # Make sure NAME has only allowed characters
     if [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Jail names may not begin with (-|_) characters!"
@@ -79,32 +83,60 @@ validate_name() {
     fi
 }
 
+validate_release() {
+
+    # Validate sane release name
+    if [ -n "${NAME_VERIFY}" ]; then
+        RELEASE="${NAME_VERIFY}"
+    else
+        usage
+    fi
+
+    # Validate Linux releases
+    if [ "${PLATFORM_OS}" = "Ubuntu" ] || [ "${PLATFORM_OS}" = "Debian" ]; then
+        if [ "${LINUX_JAIL}" -eq 0 ]; then
+            error_exit "[ERROR]: Linux releases can only be used with [-l|--linux]"
+        fi
+    elif [ "${PLATFORM_OS}" = "FreeBSD" ] || [ "${PLATFORM_OS}" = "HardenedBSD" ] || [ "${PLATFORM_OS}" = "MidnightBSD" ]; then
+        # Validate release existence
+        if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+            error_notify "[ERROR]: Release must be bootstrapped first."
+            error_exit "See 'bastille bootstrap'."
+        fi
+    else
+        error_exit "[ERROR]: Unable to validate Platform OS."
+    fi
+
+    # Set OS_RELEASE
+    OS_RELEASE="$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )"
+}
+
 validate_ip() {
 
-    local _ip="${1}"
-    local _ip6="$(echo ${_ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    local ip="${1}"
+    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
 
-    if [ -n "${_ip6}" ]; then
-        info "\nValid: (${_ip6})."
-	    # This is only used in this function to set IPX_DEFINITION
+    if [ -n "${ip6}" ]; then
+        info "\nValid: (${ip6})."
+        # This is only used in this function to set IPX_DEFINITION
         local ipx_addr="ip6.addr"
     else
-        if [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
+        if [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
 	        if [ "${VNET_JAIL}" -eq 1 ]; then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip})."
 	        else
-                info "\nValid: (${_ip})."
+                info "\nValid: (${ip})."
 	        fi
-        elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ] || [ "${_ip}" = "0.0.0.0" ]; then
+        elif [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ] || [ "${ip}" = "0.0.0.0" ]; then
 	        if [ "${VNET_JAIL}" -eq 0 ]; then
-                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${_ip})."
+                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${ip})."
 	        else
-                info "\nValid: (${_ip})."
+                info "\nValid: (${ip})."
 	        fi
         else
             local IFS
-            if echo "${_ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-                TEST_IP=$(echo "${_ip}" | cut -d / -f1)
+            if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+                TEST_IP=$(echo "${ip}" | cut -d / -f1)
                 IFS=.
                 set ${TEST_IP}
                 for quad in 1 2 3 4; do
@@ -113,9 +145,9 @@ validate_ip() {
                     fi
                 done
                 ipx_addr="ip4.addr"
-                info "\nValid: (${_ip})."
+                info "\nValid: (${ip})."
             else
-                error_continue "Invalid: (${_ip})."
+                error_continue "Invalid: (${ip})."
             fi
         fi
     fi
@@ -139,45 +171,45 @@ validate_ip() {
     fi
 
     # Determine IP/Interface mode
-    if [ "${_ip}" = "inherit" ]; then
+    if [ "${ip}" = "inherit" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
-            IP4_DEFINITION="ip4 = ${_ip};"
-            IP6_DEFINITION="ip6 = ${_ip};"
+            IP4_DEFINITION="ip4 = ${ip};"
+            IP6_DEFINITION="ip6 = ${ip};"
             IP6_MODE="new"
         else
-            IP4_DEFINITION="ip4 = ${_ip};"
+            IP4_DEFINITION="ip4 = ${ip};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
         fi
-    elif [ "${_ip}" = "ip_hostname" ]; then
+    elif [ "${ip}" = "ip_hostname" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
-            IP_HOSTNAME="${_ip}"
+            IP_HOSTNAME="${ip}"
             IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION="${IP_HOSTNAME};"
             IP6_MODE="new"
         else
-            IP_HOSTNAME="${_ip}"
+            IP_HOSTNAME="${ip}"
             IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
         fi
-    elif [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SLAAC" ] || [ "${_ip}" = "0.0.0.0" ]; then
+    elif [ "${ip}" = "DHCP" ] || [ "${ip}" = "SLAAC" ] || [ "${ip}" = "0.0.0.0" ]; then
         if [ "${VNET_JAIL}" -eq 1 ]; then
             if [ "${ipx_addr}" = "ip4.addr" ]; then
-                IP4_ADDR="${_ip}"
+                IP4_ADDR="${ip}"
             elif [ "${ipx_addr}" = "ip6.addr" ]; then
-                IP6_ADDR="${_ip}"
+                IP6_ADDR="${ip}"
             fi
         else
-	    error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip})."
+	    error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
         fi
     else
         if [ "${ipx_addr}" = "ip4.addr" ]; then
-            IP4_ADDR="${_ip}"
-            IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
+            IP4_ADDR="${ip}"
+            IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
         elif [ "${ipx_addr}" = "ip6.addr" ]; then
-            IP6_ADDR="${_ip}"
-            IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${_ip};"
+            IP6_ADDR="${ip}"
+            IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
             IP6_MODE="new"
         fi
     fi
@@ -221,23 +253,6 @@ validate_netif() {
     fi
 }
 
-validate_release() {
-
-    ## ensure the user set the Linux(experimental) option explicitly
-    if [ -n "${UBUNTU}" ]; then
-        if [ "${LINUX_JAIL}" -eq 0 ]; then
-            usage
-        fi
-    fi
-
-    ## check release name match, else show usage
-    if [ -n "${NAME_VERIFY}" ]; then
-        RELEASE="${NAME_VERIFY}"
-    else
-        usage
-    fi
-}
-
 generate_minimal_conf() {
 
     cat << EOF > "${bastille_jail_conf}"
@@ -270,7 +285,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
-  osrelease = ${RELEASE};
+  osrelease = ${OS_RELEASE};
 
   ${IP4_DEFINITION}
   ${IP6_DEFINITION}
@@ -326,7 +341,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
-  osrelease = ${RELEASE};
+  osrelease = ${OS_RELEASE};
 
 ${NETBLOCK}
 }
@@ -651,77 +666,77 @@ create_jail() {
 
             # Retrieve epair name from jail.conf
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//; s/-/_/g')
-            _gateway=''
-            _gateway6=''
-            _ifconfig_inet=''
-            _ifconfig_inet6=''
+            gateway=''
+            gateway6=''
+            ifconfig_inet=''
+            ifconfig_inet6=''
 
             # Check for DHCP
             if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
-                _ifconfig_inet="SYNCDHCP"
+                ifconfig_inet="SYNCDHCP"
             else
                 # Set Gateway
                 if [ -n "${OPT_GATEWAY}" ]; then
-                    _gateway="${OPT_GATEWAY}"
+                    gateway="${OPT_GATEWAY}"
                 elif [ -n "${bastille_network_gateway}" ]; then
-                    _gateway="${bastille_network_gateway}"
+                    gateway="${bastille_network_gateway}"
                 else
-                    _gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    gateway="$(netstat -4rn | awk '/default/ {print $2}')"
                 fi
             fi
 
             # Add IPv4 address (this is empty if DHCP is used)
             if [ -n "${IP4_ADDR}" ]; then
-                _ifconfig_inet="inet ${IP4_ADDR}"
+                ifconfig_inet="inet ${IP4_ADDR}"
             fi
 
             # Enable IPv6 if used
             if [ -n "${IP6_ADDR}" ]; then
-                _ifconfig_inet6='inet6 -ifdisabled'
+                ifconfig_inet6='inet6 -ifdisabled'
                 if echo "${IP}" | grep -qE 'SLAAC'; then
                     # Enable SLAAC if requested
-                    _ifconfig_inet6="${_ifconfig_inet6} accept_rtadv"
+                    ifconfig_inet6="${ifconfig_inet6} accept_rtadv"
                 else
                     # Set Gateway
                     if [ -n "${bastille_network_gateway6}" ]; then
-                        _gateway6="${bastille_network_gateway6}"
+                        gateway6="${bastille_network_gateway6}"
                     else
-                        _gateway6="$(netstat -6rn | awk '/default/ {print $2}')"
+                        gateway6="$(netstat -6rn | awk '/default/ {print $2}')"
                     fi
                 fi
             fi
 
             # Add IPv6 address (this is empty if SLAAC is used)
             if [ -n "${IP6_ADDR}" ]; then
-                _ifconfig_inet6="${_ifconfig_inet6} ${IP6_ADDR}"
+                ifconfig_inet6="${ifconfig_inet6} ${IP6_ADDR}"
             fi
 
             # We need to pass IP4 and IP6 separately
-            _ifconfig="${_ifconfig_inet}"
-            _ifconfig6="${_ifconfig_inet6}"
+            ifconfig="${ifconfig_inet}"
+            ifconfig6="${ifconfig_inet6}"
 
             # Set jail interface description if "if_bridge"
             if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
                 # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
                 # Use default "vnet0" otherwise
                 if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 else
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 fi
             elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
                 # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
                 # Use default "vnet0" otherwise
                 if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 else
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${_gateway}" --arg GATEWAY6="${_gateway6}" --arg IFCONFIG="${_ifconfig}" --arg IFCONFIG6="${_ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 fi
             fi
 
             # Add VLAN ID if it was given
             if [ -n "${VLAN_ID}" ]; then
-                bastille template "${NAME}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="${_ifconfig}"
+                bastille template "${NAME}" ${bastille_template_vlan} --arg VLANID="${VLAN_ID}" --arg IFCONFIG="${ifconfig}"
             fi
 
         fi
@@ -758,8 +773,8 @@ create_jail() {
     # Apply nameserver (if set)
     if [ -n "${OPT_NAMESERVER}" ]; then
         sed -i '' "/^nameserver.*/d" "${bastille_jail_resolv_conf}"
-        for _ns in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
-            echo "nameserver ${_ns}" >> "${bastille_jail_resolv_conf}"
+        for ns in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
+            echo "nameserver ${ns}" >> "${bastille_jail_resolv_conf}"
         done
     fi
 
@@ -775,13 +790,6 @@ create_jail() {
 }
 
 bastille_root_check
-
-if echo "${3}" | grep '@'; then
-    # shellcheck disable=SC2034
-    BASTILLE_JAIL_IP=$(echo "$3" | awk -F@ '{print $2}')
-    # shellcheck disable=SC2034
-    BASTILLE_JAIL_INTERFACES=$( echo "$3" | awk -F@ '{print $1}')
-fi
 
 # Handle options.
 BOOT="on"
@@ -1001,126 +1009,87 @@ if { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYP
     error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] or [-P|--passthrough] option."
 fi
 
-if [ "${LINUX_JAIL}" -eq 1 ] && [ "${VALIDATE_RELEASE}" -eq 1 ]; then
-    case "${RELEASE}" in
-    bionic|ubuntu_bionic|ubuntu|ubuntu-bionic)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=ubuntu_bionic
-        ;;
-    focal|ubuntu_focal|ubuntu-focal)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=ubuntu_focal
-        ;;
-    jammy|ubuntu_jammy|ubuntu-jammy)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=ubuntu_jammy
-        ;;
-    debian_buster|buster|debian-buster)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=buster
-        ;;
-    debian_bullseye|bullseye|debian-bullseye)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=bullseye
-        ;;
-    debian_bookworm|bookworm|debian-bookworm)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=bookworm
-        ;;
-    *)
-        error_notify "[ERROR]: Unknown linux release."
-        usage
-        ;;
-    esac
-fi
-
+# Filter sane release names
 if [ "${EMPTY_JAIL}" -eq 0 ]; then
     if [ "${VALIDATE_RELEASE}" -eq 1 ]; then
-        ## verify release
+        # Verify release
         case "${RELEASE}" in
-        [2-4].[0-9]*)
-            ## check for MidnightBSD releases name
-            NAME_VERIFY=$(echo "${RELEASE}")
-            validate_release
-            ;;
-        *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
-            ## check for FreeBSD releases name
-            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-            validate_release
-            ;;
-        *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
-            ## check for FreeBSD releases name
-            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-            validate_release
-            ;;
-        *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-            ## check for HardenedBSD releases name(previous infrastructure)
-            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-            validate_release
-            ;;
-        *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
-            ## check for HardenedBSD(specific stable build releases)
-            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-            validate_release
-            ;;
-        *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
-            ## check for HardenedBSD(latest stable build release)
-            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-            validate_release
-            ;;
-        current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
-            ## check for HardenedBSD(specific current build releases)
-            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
-            validate_release
-            ;;
-        current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
-            ## check for HardenedBSD(latest current build release)
-            NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-            validate_release
-            ;;
-        ubuntu_bionic|bionic|ubuntu-bionic)
-            UBUNTU="1"
-            NAME_VERIFY=Ubuntu_1804
-            validate_release
-            ;;
-        ubuntu_focal|focal|ubuntu-focal)
-            UBUNTU="1"
-            NAME_VERIFY=Ubuntu_2004
-            validate_release
-            ;;
-        ubuntu_jammy|jammy|ubuntu-jammy)
-            UBUNTU="1"
-            NAME_VERIFY=Ubuntu_2204
-            validate_release
-            ;;
-        debian_buster|buster|debian-buster)
-            NAME_VERIFY=Debian10
-            validate_release
-            ;;
-        debian_bullseye|bullseye|debian-bullseye)
-            NAME_VERIFY=Debian11
-            validate_release
-            ;;
-        debian_bookworm|bookworm|debian-bookworm)
-            NAME_VERIFY=Debian12
-            validate_release
-            ;;
-        *)
-            error_notify "Unknown Release."
-            usage
-            ;;
+            [2-4].[0-9]*)
+                ### MidnightBSD ##
+                PLATFORM_OS="MidnightBSD"
+                NAME_VERIFY=$(echo "${RELEASE}")
+                validate_release
+                ;;
+            *-current|*-CURRENT|*-current-I386|*-CURRENT-i386)
+                ### FreeBSD ###
+                PLATFORM_OS="FreeBSD"
+                NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+                validate_release
+                ;;
+            *-release|*-RELEASE|*-release-I386|*-RELEASE-i386|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
+                ### FreeBSD ###
+                PLATFORM_OS="FreeBSD"
+                NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+                validate_release
+                ;;
+            *\.*-stable|*\.*-STABLE)
+                ### FreeBSD ###
+                PLATFORM_OS="FreeBSD"
+                NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-STABLE)$' | tr '[:lower:]' '[:upper:]')
+                validate_release
+                ;;
+            current|CURRENT)
+                ### HardenedBSD ###
+                PLATFORM_OS="HardenedBSD"
+                NAME_VERIFY=$(echo "${RELEASE}" | sed 's/CURRENT/current/g')
+                validate_release
+                ;;
+            [1-9]*-stable|[1-9]*-STABLE)
+                ### HardenedBSD ###
+                PLATFORM_OS="HardenedBSD"
+                NAME_VERIFY=$(echo "${RELEASE}" | sed 's/STABLE/stable/g')
+                validate_release
+                ;;
+            ubuntu_bionic|bionic|ubuntu-bionic)
+                PLATFORM_OS="Ubuntu"
+                NAME_VERIFY=Ubuntu_1804
+                validate_release
+                ;;
+            ubuntu_focal|focal|ubuntu-focal)
+                PLATFORM_OS="Ubuntu"
+                NAME_VERIFY=Ubuntu_2004
+                validate_release
+                ;;
+            ubuntu_jammy|jammy|ubuntu-jammy)
+                PLATFORM_OS="Ubuntu"
+                NAME_VERIFY=Ubuntu_2204
+                validate_release
+                ;;
+            ubuntu_noble|noble|ubuntu-noble)
+                PLATFORM_OS="Ubuntu"
+                NAME_VERIFY=Ubuntu_2404
+                validate_release
+                ;;
+            debian_buster|buster|debian-buster)
+                PLATFORM_OS="Debian"
+                NAME_VERIFY=Debian10
+                validate_release
+                ;;
+            debian_bullseye|bullseye|debian-bullseye)
+                PLATFORM_OS="Debian"
+                NAME_VERIFY=Debian11
+                validate_release
+                ;;
+            debian_bookworm|bookworm|debian-bookworm)
+                PLATFORM_OS="Debian"
+                NAME_VERIFY=Debian12
+                validate_release
+                ;;
+            *)
+                error_notify "Unknown release: ${RELEASE}"
+                usage
+                ;;
         esac
-    fi
-
-    # Check for name/root/.bastille
-    if [ -d "${bastille_jailsdir}/${NAME}/root/.bastille" ]; then
-        error_exit "[ERROR]: ${NAME} already exists. ${NAME}/root/.bastille exists."
-    fi
-
-    # Check for required release
-    if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
-        error_notify "[ERROR]: Release must be bootstrapped first."
-        error_exit "See 'bastille bootstrap'."
     fi
 
     # Validate IP address
@@ -1131,14 +1100,14 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
     fi
 
     # Validate interface
+    # Interface must be set with vnet jails
     if [ -n "${INTERFACE}" ]; then
         validate_netif
         validate_netconf
     elif [ "${VNET_JAIL}" -eq 1 ]; then
         if [ -z "${INTERFACE}" ]; then
             if [ -z "${bastille_network_shared}" ]; then
-                # User must specify interface on vnet jails.
-                error_exit "[ERROR]: Network interface not defined."
+                error_exit "[ERROR]: Network interface not set."
             else
                 validate_netconf
             fi
@@ -1178,9 +1147,8 @@ fi
 if [ -z ${bastille_template_vnet+x} ]; then
     bastille_template_vnet='default/vnet'
 fi
-
-if check_target_exists "${NAME}"; then
-    error_exit "[ERROR]: Jail already exists: ${NAME}"
+if [ -z ${bastille_template_vlan+x} ]; then
+    bastille_template_vnet='default/vlan'
 fi
 
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"

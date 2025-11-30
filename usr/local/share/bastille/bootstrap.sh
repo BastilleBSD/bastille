@@ -33,7 +33,8 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille bootstrap [option(s)] RELEASE|TEMPLATE [update|arch]"
+    error_notify "Usage: bastille bootstrap [option(s)] RELEASE [update|arch]"
+    error_notify "                                      TEMPLATE"
     cat << EOF
 
     Options:
@@ -45,53 +46,7 @@ EOF
     exit 1
 }
 
-validate_release() {
-
-    MAJOR_VERSION=$(echo ${RELEASE} | grep -Eo '^[0-9]+')
-    MINOR_VERSION=$(echo ${RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
-
-    if [ "${PKGBASE}" -eq 1 ] && [ "${MAJOR_VERSION}" -le 14 ]; then
-        error_exit "[ERROR]: Pkgbase is not supported for release: ${RELEASE}"
-    fi
-
-    if [ "${MAJOR_VERSION}" -ge 16 ]; then
-        PKGBASE=1
-    fi
-
-    if [ "${PLATFORM_OS}" != "FreeBSD" ] && [ "${PKGBASE}" -eq 1 ]; then
-        error_exit "[ERROR]: Pkgbase can only be used with FreeBSD releases."
-    fi
-
-    info "\nBootstrapping release: ${RELEASE}..."
-
-    ## check upstream url, else warn user
-    if [ -n "${NAME_VERIFY}" ]; then
-        # Alternate RELEASE/ARCH fetch support
-        if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
-            ARCH="i386"
-            RELEASE="${RELEASE}-${ARCH}"
-        fi
-
-        if [ "${PKGBASE}" -eq 1 ]; then
-            info "\nUsing PkgBase..."
-            bootstrap_directories
-            bootstrap_pkgbase_release
-        elif [ "${PKGBASE}" -eq 0 ]; then
-            info "\nFetching ${PLATFORM_OS} distfiles..."
-            if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
-                error_exit "Unable to fetch MANIFEST. See 'bootstrap urls'."
-            fi
-            bootstrap_directories
-            bootstrap_release
-        fi
-    else
-        usage
-    fi
-}
-
 bootstrap_directories() {
-
-    # Ensure required directories are in place
 
     ## ${bastille_prefix}
     if [ ! -d "${bastille_prefix}" ]; then
@@ -210,254 +165,259 @@ bootstrap_directories() {
     fi
 }
 
-bootstrap_pkgbase_release() {
+cleanup_directories() {
 
-    local abi="${PLATFORM_OS}:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-    local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkg"
-    local host_fingerprintsdir="/usr/share/keys/pkg"
-    local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
-    if [ "${FREEBSD_BRANCH}" = "release" ]; then
-        local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
-    elif [ "${FREEBSD_BRANCH}" = "current" ]; then
-        local repo_name="FreeBSD-base-latest"
-    fi
-    local repo_dir="${bastille_sharedir}/pkgbase"
-
-    ## If release exists quit, else bootstrap additional packages
-    if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
-
-        ## check pkgbase package list and skip existing sets
-        bastille_pkgbase_packages=$(echo "${bastille_pkgbase_packages}" | sed "s/base-jail//")
-
-        ## check if release already bootstrapped, else continue bootstrapping
-        if [ -z "${bastille_pkgbase_packages}" ]; then
-            info "\nBootstrap appears complete!"
-            exit 0
-        else
-            info "\nFetching additional packages..."
-        fi
-    fi
-
-    # Copy fingerprints into releasedir
-    if ! mkdir -p "${release_fingerprintsdir}"; then
-        error_exit "[ERROR]: Faild to create fingerprints directory."
-    fi
-    if ! cp -a "${host_fingerprintsdir}" "${release_fingerprintsdir}"; then
-        error_exit "[ERROR]: Failed to copy fingerprints directory."
-    fi
-
-    # Ensure repo is up to date
-    if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
-             --repo-conf-dir="${repo_dir}" \
-             -o IGNORE_OSVERSION="yes" \
-             -o ABI="${abi}" \
-             -o ASSUME_ALWAYS_YES="yes" \
-             -o FINGERPRINTS="${fingerprints}" \
-             update -r "${repo_name}"; then
-        error_notify "[ERROR]: Failed to update repository: ${repo_name}"
-    fi
-
-    # Reset ERROR_COUNT
-    ERROR_COUNT="0"
-
-    for package in ${bastille_pkgbase_packages}; do	
-
-        # Check if package set is already installed
-        if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" info "FreeBSD-set-${package}" 2>/dev/null; then
-            # Install package set
-            if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
-                     --repo-conf-dir="${repo_dir}" \
-                     -o IGNORE_OSVERSION="yes" \
-                     -o ABI="${abi}" \
-                     -o ASSUME_ALWAYS_YES="yes" \
-                     -o FINGERPRINTS="${fingerprints}" \
-                     install -r "${repo_name}" \
-                     FreeBSD-set-"${package}"; then
-
-                ERROR_COUNT=$((ERROR_COUNT + 1))
+    # Cleanup on failed bootstrap
+    if checkyesno bastille_zfs_enable; then
+        if [ -n "${bastille_zfs_zpool}" ]; then
+            if zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}" >/dev/null 2>/dev/null; then
+                zfs destroy "${bastille_zfs_zpool:?}/${bastille_zfs_prefix:?}/cache/${RELEASE}"
             fi
-        else
-            error_continue "[ERROR]: Package set already installed: ${package}"
-        fi
-    done
-
-    # Cleanup if failed
-    if [ "${ERROR_COUNT}" -ne "0" ]; then
-        ## perform cleanup only for stale/empty directories on failure
-        if checkyesno bastille_zfs_enable; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
-                fi
-            fi
-        elif [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
-            if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                rm -rf "${bastille_releasesdir:?}/${RELEASE}"
+            if zfs list "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}" >/dev/null 2>/dev/null; then
+                zfs destroy "${bastille_zfs_zpool:?}/${bastille_zfs_prefix:?}/releases/${RELEASE}"
             fi
         fi
-        error_exit "[ERROR]: Bootstrap failed."
-    else
-
-        # Silence motd at login
-        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
-
-        # Success
-        info "\nBootstrap successful."
-        echo "See 'bastille --help' for available commands."
-
+    elif [ -d "${bastille_cachedir}/${RELEASE}" ]; then
+        if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
+            rm -rf "${bastille_cachedir:?}/${RELEASE}"
+        fi
+        if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
+            rm -rf "${bastille_releasesdir:?}/${RELEASE}"
+        fi
     fi
 }
 
-bootstrap_release() {
+validate_release() {
 
-    ## if release exists quit, else bootstrap additional distfiles
+    info "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
+
+    # Set release name to sane release
+    RELEASE="${NAME_VERIFY}"
+
+    ### FreeBSD ###
+    if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
+        MAJOR_VERSION=$(echo ${RELEASE} | grep -Eo '^[0-9]+')
+        MINOR_VERSION=$(echo ${RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+        if [ "${MAJOR_VERSION}" -ge 16 ]; then
+            PKGBASE=1
+        elif [ "${MAJOR_VERSION}" -le 14 ]  && [ "${PKGBASE}" -eq 1 ]; then
+            error_exit "[ERROR]: Pkgbase is not supported for release: ${RELEASE}"
+        fi
+    ### Linux ###
+    elif [ "${PLATFORM_OS}" = "Linux/Debian" ] || [ "${PLATFORM_OS}" = "Linux/Ubuntu" ]; then
+        info "\nEnsuring Linux compatability..."
+        if ! bastille setup -y linux >/dev/null 2>/dev/null; then
+            error_notify "[ERROR]: Failed to configure linux."
+            error_exit "See 'bastille setup linux' for more details."
+        fi
+    elif [ "${PLATFORM_OS}" != "FreeBSD" ]  && [ "${PKGBASE}" -eq 1 ]; then
+            error_exit "[ERROR]: Pkgbase is not supported for platform: ${PLATFORM_OS}"
+    fi
+
+
+    # Validate OPTION
+    if [ -n "${OPTION}" ]; then
+        # Alternate RELEASE/ARCH fetch support
+        if [ "${OPTION}" = "--i386" ] || [ "${OPTION}" = "--32bit" ]; then
+            ARCH="i386"
+            RELEASE="${RELEASE}-${ARCH}"
+        fi
+    fi
+}
+
+bootstrap_release_legacy() {
+
+    # Verify release URL
+    if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
+        ERRORS=$((ERRORS + 1))
+        error_return 1 "Unable to fetch MANIFEST. See 'bootstrap urls'."
+    fi
+
+    # Validate already installed archives
     if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
-        ## check distfiles list and skip existing cached files
         bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/base//")
-        # TODO check how to handle this
         # shellcheck disable=SC2010
         bastille_cached_files=$(ls "${bastille_cachedir}/${RELEASE}" | grep -v "MANIFEST" | tr -d ".txz")
         for distfile in ${bastille_cached_files}; do
             bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/${distfile}//")
         done
-
-        ## check if release already bootstrapped, else continue bootstrapping
         if [ -z "${bastille_bootstrap_archives}" ]; then
             info "\nBootstrap appears complete!\n"
             exit 0
-        else
-            info "\nFetching additional distfiles..."
         fi
     fi
 
-    for _archive in ${bastille_bootstrap_archives}; do
-        ## check if the dist files already exists then extract
-        FETCH_VALIDATION="0"
-        if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-            info "\nExtracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz..."
-            if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
-                ## silence motd at container login
-                touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-                touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
-            else
-                error_exit "[ERROR]: Failed to extract ${_archive}.txz."
+    # Bootstrap archives
+    for archive in ${bastille_bootstrap_archives}; do
+        if [ -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
+            info "\nExtracting ${PLATFORM_OS} archive: ${archive}.txz"
+            if ! /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${archive}.txz"; then
+                ERRORS=$((ERRORS + 1))
+                error_continue "[ERROR]: Failed to extract archive: ${archive}.txz."
             fi
         else
-            ## get the manifest for dist files checksum validation
+            # Fetch MANIFEST
             if [ ! -f "${bastille_cachedir}/${RELEASE}/MANIFEST" ]; then
-                fetch "${UPSTREAM_URL}/MANIFEST" -o "${bastille_cachedir}/${RELEASE}/MANIFEST" || FETCH_VALIDATION="1"
+                info "\nFetching MANIFEST..."
+                if ! fetch "${UPSTREAM_URL}/MANIFEST" -o "${bastille_cachedir}/${RELEASE}/MANIFEST"; then
+                    ERRORS=$((ERRORS + 1))
+                    error_continue "[ERROR]: Failed to fetch MANIFEST."
+                fi
             fi
 
-            if [ "${FETCH_VALIDATION}" -ne "0" ]; then
-                ## perform cleanup only for stale/empty directories on failure
-                if checkyesno bastille_zfs_enable; then
-                    if [ -n "${bastille_zfs_zpool}" ]; then
-                        if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
-                            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/cache/${RELEASE}"
-                        fi
-                        if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"
-                        fi
-                        fi
-                    fi
-                    if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
-                        if [ ! "$(ls -A "${bastille_cachedir}/${RELEASE}")" ]; then
-                            rm -rf "${bastille_cachedir:?}/${RELEASE}"
-                        fi
-                    fi
-                    if [ -d "${bastille_releasesdir}/${RELEASE}" ]; then
-                        if [ ! "$(ls -A "${bastille_releasesdir}/${RELEASE}")" ]; then
-                            rm -rf "${bastille_releasesdir:?}/${RELEASE}"
-                        fi
-                    fi
-                    error_exit "[ERROR]: Bootstrap failed."
+            # Fetch distfile
+            if [ ! -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
+                info "\nFetching distfile: ${archive}.txz"
+                if ! fetch "${UPSTREAM_URL}/${archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${archive}.txz"; then
+                    ERRORS=$((ERRORS + 1))
+                    error_continue "[ERROR]: Failed to fetch archive: ${archive}.txz"
                 fi
+            fi
 
-                ## fetch for missing dist files
-                if [ ! -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    if ! fetch "${UPSTREAM_URL}/${_archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
-                        ## alert only if unable to fetch additional dist files
-                        error_exit "[ERROR]: Failed to fetch ${_archive}.txz"
-                    fi
+            # Validate checksums
+            info "\nValidating checksum for archive: ${archive}.txz"
+            if [ -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
+                SHA256_DIST=$(grep -w "${archive}.txz" "${bastille_cachedir}/${RELEASE}/MANIFEST" | awk '{print $2}')
+                SHA256_FILE=$(sha256 -q "${bastille_cachedir}/${RELEASE}/${archive}.txz")
+                if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
+                    ERRORS=$((ERRORS + 1))
+                    error_continue "[ERROR]: Failed to validate checksum for archive: ${archive}.txz"
+                else
+                    echo "MANIFEST: ${SHA256_DIST}"
+                    echo "DOWNLOAD: ${SHA256_FILE}"
+                    info "\nChecksum validated."
                 fi
+            fi
 
-                ## compare checksums on the fetched dist files
-                if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    SHA256_DIST=$(grep -w "${_archive}.txz" "${bastille_cachedir}/${RELEASE}/MANIFEST" | awk '{print $2}')
-                    SHA256_FILE=$(sha256 -q "${bastille_cachedir}/${RELEASE}/${_archive}.txz")
-                    if [ "${SHA256_FILE}" != "${SHA256_DIST}" ]; then
-                        rm "${bastille_cachedir}/${RELEASE}/${_archive}.txz"
-                        error_exit "[ERROR]: Failed validation for ${_archive}.txz. Please retry bootstrap!"
-                    else
-                        info "\nValidated checksum for ${RELEASE}: ${_archive}.txz"
-                        echo "MANIFEST: ${SHA256_DIST}"
-                        echo "DOWNLOAD: ${SHA256_FILE}"
-                    fi
+            # Extract distfile
+            info "\nExtracting archive: ${archive}.txz"
+            if [ -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
+                if ! /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${archive}.txz"; then
+                    ERRORS=$((ERRORS + 1))
+                    error_continue "[ERROR]: Failed to extract archive: ${archive}.txz."
                 fi
-
-                ## extract the fetched dist files
-                if [ -f "${bastille_cachedir}/${RELEASE}/${_archive}.txz" ]; then
-                    info "\nExtracting ${PLATFORM_OS} ${RELEASE} ${_archive}.txz..."
-                    if /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${_archive}.txz"; then
-                        ## silence motd at container login
-                        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-                        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
-                    else
-                        error_exit "[ERROR]: Failed to extract ${_archive}.txz."
-                    fi
-                fi
+            fi
         fi
     done
 
-    info "\nBootstrap successful."
-    echo "See 'bastille --help' for available commands."
+    # Cleanup on error
+    if [ "${ERRORS}" -ne 0 ]; then
+        return "${ERRORS}"
+    fi
 
+    # Silence motd at container login
+    touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
+    touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
 }
 
-debootstrap_release() {
+bootstrap_release_pkgbase() {
 
-    info "\nEnsuring Linux compatability..."
-    if ! bastille setup -y linux >/dev/null 2>/dev/null; then
-        error_notify "[ERROR]: Failed to configure linux."
-        error_exit "See 'bastille setup linux' for more details."
-    fi
+    info "\nUsing PkgBase..."
 
-    # Make sure to check/bootstrap directories first.
-    NOCACHEDIR=1
-    RELEASE="${DIR_BOOTSTRAP}"
-    bootstrap_directories
+    ### FreeBSD ###
+    if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
 
-    # Fetch the Linux flavor
-    info "\nFetching ${PLATFORM_OS} distfiles..."
-    if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${DIR_BOOTSTRAP}; then
+        local abi="${PLATFORM_OS}:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
+        local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkg"
+        local host_fingerprintsdir="/usr/share/keys/pkg"
+        local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
+        if [ "${FREEBSD_BRANCH}" = "release" ]; then
+            local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+        elif [ "${FREEBSD_BRANCH}" = "current" ]; then
+            local repo_name="FreeBSD-base-latest"
+        fi
+        local repo_dir="${bastille_sharedir}/pkgbase"
 
-        ## perform cleanup only for stale/empty directories on failure
-        if checkyesno bastille_zfs_enable; then
-            if [ -n "${bastille_zfs_zpool}" ]; then
-                if [ ! "$(ls -A "${bastille_releasesdir}/${DIR_BOOTSTRAP}")" ]; then
-                    zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${DIR_BOOTSTRAP}"
+        # Validate COPYRIGHT existence
+        if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
+            # Verify package sets
+            bastille_pkgbase_packages=$(echo "${bastille_pkgbase_packages}" | sed "s/base-jail//")
+            if [ -z "${bastille_pkgbase_packages}" ]; then
+                info "\nBootstrap appears complete!"
+                exit 0
+            fi
+        fi
+
+        info "\nInstalling packages..."
+
+        # Copy fingerprints into releasedir
+        if ! mkdir -p "${release_fingerprintsdir}"; then
+            ERRORS=$((ERRORS + 1))
+            error_return 1 "[ERROR]: Faild to create fingerprints directory."
+        fi
+        if ! cp -a "${host_fingerprintsdir}" "${release_fingerprintsdir}"; then
+            ERRORS=$((ERRORS + 1))
+            error_return 1 "[ERROR]: Failed to copy fingerprints directory."
+        fi
+
+        # Update PkgBase repo
+        if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
+                 --repo-conf-dir="${repo_dir}" \
+                 -o IGNORE_OSVERSION="yes" \
+                 -o ABI="${abi}" \
+                 -o ASSUME_ALWAYS_YES="yes" \
+                 -o FINGERPRINTS="${fingerprints}" \
+                 update -r "${repo_name}"; then
+
+            ERRORS=$((ERRORS + 1))
+            error_return 1 "[ERROR]: Failed to update repository: ${repo_name}"
+        fi
+
+        for package in ${bastille_pkgbase_packages}; do	
+
+            # Check if package set is already installed
+            if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" info "FreeBSD-set-${package}" 2>/dev/null; then
+                # Install package set
+                if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
+                         --repo-conf-dir="${repo_dir}" \
+                         -o IGNORE_OSVERSION="yes" \
+                         -o ABI="${abi}" \
+                         -o ASSUME_ALWAYS_YES="yes" \
+                         -o FINGERPRINTS="${fingerprints}" \
+                         install -r "${repo_name}" \
+                         FreeBSD-set-"${package}"; then
+
+                    ERRORS=$((ERRORS + 1))
+                    error_continue "[ERROR]: Failed to install package set: ${package}"
                 fi
+            else
+                info "\nPackage set already installed: ${package}"
             fi
+        done
+
+        # Cleanup on error
+        if [ "${ERRORS}" -ne 0 ]; then
+            return "${ERRORS}"
         fi
 
-        if [ -d "${bastille_releasesdir}/${DIR_BOOTSTRAP}" ]; then
-            if [ ! "$(ls -A "${bastille_releasesdir}/${DIR_BOOTSTRAP}")" ]; then
-                rm -rf "${bastille_releasesdir:?}/${DIR_BOOTSTRAP}"
-            fi
-        fi
-        error_exit "[ERROR]: Bootstrap failed."
+        # Silence motd at login
+        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
+        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
     fi
+}
 
-    case "${LINUX_FLAVOR}" in
-        bionic|focal|jammy|buster|bullseye|bookworm|noble)
-        info "Increasing APT::Cache-Start"
-        echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${DIR_BOOTSTRAP}/etc/apt/apt.conf.d/00aptitude
-        ;;
-    esac
+bootstrap_release_linux() {
 
-    info "\nBootstrap successful."
-    info "\nSee 'bastille --help' for available commands."
+    if [ "${PLATFORM_OS}" = "Linux/Debian" ] || [ "${PLATFORM_OS}" = "Linux/Ubuntu" ]; then
+        # Fetch the Linux flavor
+        if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${RELEASE} "${bastille_releasesdir}"/${RELEASE}; then
+            ERRORS=$((ERRORS + 1))
+            error_return 1 "[ERROR]: Failed to fetch Linux release: ${RELEASE}"
+        fi
+
+        # Cleanup on error
+        if [ "${ERRORS}" -ne 0 ]; then
+            return "${ERRORS}"
+        fi
+
+        # Set necessary settings
+        case "${LINUX_FLAVOR}" in
+            bionic|focal|jammy|buster|bullseye|bookworm|noble)
+            info "Increasing APT::Cache-Start"
+            echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
+            ;;
+        esac
+    fi
 }
 
 bootstrap_template() {
@@ -475,50 +435,51 @@ bootstrap_template() {
     fi
 
     ## define basic variables
-    _url=${BASTILLE_TEMPLATE_URL}
-    _user=${BASTILLE_TEMPLATE_USER}
-    _repo=${BASTILLE_TEMPLATE_REPO%.*} # Remove the trailing ".git"
-    _raw_template_dir=${bastille_templatesdir}/${_user}/${_repo}
+    url=${BASTILLE_TEMPLATE_URL}
+    user=${BASTILLE_TEMPLATE_USER}
+    repo=${BASTILLE_TEMPLATE_REPO%.*} # Remove the trailing ".git"
+    raw_template_dir=${bastille_templatesdir}/${user}/${repo}
 
     ## support for non-git
     if ! which -s git; then
         error_notify "Git not found."
         error_exit "Not yet implemented."
     else
-        if [ ! -d "${_raw_template_dir}/.git" ]; then
-            git clone "${_url}" "${_raw_template_dir}" ||\
+        if [ ! -d "${raw_template_dir}/.git" ]; then
+            git clone "${url}" "${raw_template_dir}" ||\
                 error_notify "Clone unsuccessful."
-        elif [ -d "${_raw_template_dir}/.git" ]; then
-            git -C "${_raw_template_dir}" pull ||\
+        elif [ -d "${raw_template_dir}/.git" ]; then
+            git -C "${raw_template_dir}" pull ||\
                 error_notify "Template update unsuccessful."
         fi
     fi
 
-    if [ ! -f ${_raw_template_dir}/Bastillefile ]; then
+    if [ ! -f ${raw_template_dir}/Bastillefile ]; then
         # Extract template in project/template format
-        find "${_raw_template_dir}" -type f -name Bastillefile | while read -r _file; do
-            _template_dir="$(dirname ${_file})"
-            _project_dir="$(dirname ${_template_dir})"
-            _template_name="$(basename ${_template_dir})"
-            _project_name="$(basename ${_project_dir})"
-            _complete_template="${_project_name}/${_template_name}"
-            cp -fR "${_project_dir}" "${bastille_templatesdir}"
-            bastille verify "${_complete_template}"
+        find "${raw_template_dir}" -type f -name Bastillefile | while read -r _file; do
+            template_dir="$(dirname ${file})"
+            project_dir="$(dirname ${template_dir})"
+            template_name="$(basename ${template_dir})"
+            project_name="$(basename ${project_dir})"
+            complete_template="${project_name}/${template_name}"
+            cp -fR "${project_dir}" "${bastille_templatesdir}"
+            bastille verify "${complete_template}"
         done
 
         # Remove the cloned repo
-        if [ -n "${_user}" ]; then
-            rm -r "${bastille_templatesdir:?}/${_user:?}"
+        if [ -n "${user}" ]; then
+            rm -r "${bastille_templatesdir:?}/${user:?}"
         fi
 
     else
         # Verify a single template
-        bastille verify "${_user}/${_repo}"
+        bastille verify "${user}/${repo}"
     fi
 }
 
 # Handle options.
 PKGBASE=0
+ERRORS=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -550,13 +511,13 @@ done
 
 RELEASE="${1}"
 OPTION="${2}"
-NOCACHEDIR=
+NOCACHEDIR=""
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 
 bastille_root_check
 
-#Validate if ZFS is enabled in rc.conf and bastille.conf.
+# Validate if ZFS is enabled in rc.conf and bastille.conf.
 if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; then
     warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
     read answer
@@ -588,7 +549,6 @@ if checkyesno bastille_zfs_enable; then
 fi
 
 # bootstrapping from aarch64/arm64 Debian or Ubuntu require a different value for ARCH
-# create a new variable
 if [ "${HW_MACHINE_ARCH}" = "aarch64" ]; then
     HW_MACHINE_ARCH_LINUX="arm64"
 else
@@ -614,70 +574,43 @@ fi
 ## Filter sane release names
 case "${RELEASE}" in
     [2-4].[0-9]*)
-        ## check for MidnightBSD releases name
+        ### MidnightBSD ###
+        PLATFORM_OS="MidnightBSD"
         NAME_VERIFY=$(echo "${RELEASE}")
         UPSTREAM_URL="${bastille_url_midnightbsd}${HW_MACHINE_ARCH}/${NAME_VERIFY}"
-        PLATFORM_OS="MidnightBSD"
-        validate_release
         ;;
-    *-CURRENT|*-current)
-        ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
-        UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
+    *-current|*-CURRENT)
+        ### FreeBSD ###
         PLATFORM_OS="FreeBSD"
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-CURRENT)$' | tr '[:lower:]' '[:upper:]')
+        UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
         FREEBSD_BRANCH="current"
-        validate_release
+        ;;
+    *\.*-stable|*\.*-STABLE)
+        ### FreeBSD ###
+        PLATFORM_OS="FreeBSD"
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-STABLE)$' | tr '[:lower:]' '[:upper:]')
+        UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
+        FREEBSD_BRANCH="current"
         ;;
     *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
-        ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]{1,2})\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
-        UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
+        ### FreeBSD ###
         PLATFORM_OS="FreeBSD"
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
+        UPSTREAM_URL="${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}"
         FREEBSD_BRANCH="release"
-        validate_release
         ;;
-    *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
-        ## check for HardenedBSD releases name(previous infrastructure, keep for reference)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g' | sed 's/last/LAST/g')
-        UPSTREAM_URL="${bastille_url_hardenedbsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/hardenedbsd-${NAME_VERIFY}"
+    current|CURRENT)
+        ### HardenedBSD ###
         PLATFORM_OS="HardenedBSD"
-        validate_release
+        NAME_VERIFY=$(echo "${RELEASE}" | sed 's/CURRENT/current/g')
+        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_VERIFY}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/LATEST"
         ;;
-    *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
-        ## check for HardenedBSD(specific stable build releases)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g' | sed 's/STABLE/stable/g')
-        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-build-[0-9]\{1,3\}//g')
-        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-//g')
-        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
+    [1-9]*-stable|[1-9]*-STABLE)
+        ### HardenedBSD ###
         PLATFORM_OS="HardenedBSD"
-        validate_release
-        ;;
-    *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
-        ## check for HardenedBSD(latest stable build release)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/-BUILD-LATEST//g')
-        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/[0-9]\{1,2\}-stable-BUILD-//g')
-        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
-        PLATFORM_OS="HardenedBSD"
-        validate_release
-        ;;
-    current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
-        ## check for HardenedBSD(specific current build releases)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g' | sed 's/CURRENT/current/g')
-        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
-        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-//g')
-        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_BUILD}"
-        PLATFORM_OS="HardenedBSD"
-        validate_release
-        ;;
-    current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
-        ## check for HardenedBSD(latest current build release)
-        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '(current-build-latest)' | sed 's/CURRENT/current/g' | sed 's/build/BUILD/g' | sed 's/latest/LATEST/g')
-        NAME_RELEASE=$(echo "${NAME_VERIFY}" | sed 's/current-.*/current/g')
-        NAME_BUILD=$(echo "${NAME_VERIFY}" | sed 's/current-BUILD-//g')
-        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_RELEASE}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/${NAME_BUILD}"
-        PLATFORM_OS="HardenedBSD"
-        validate_release
+        NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)(-stable)$' | sed 's/STABLE/stable/g')
+        UPSTREAM_URL="${bastille_url_hardenedbsd}${NAME_VERIFY}/${HW_MACHINE}/${HW_MACHINE_ARCH}/installer/LATEST"
         ;;
     http?://*/*/*)
         BASTILLE_TEMPLATE_URL=${1}
@@ -692,65 +625,89 @@ case "${RELEASE}" in
         BASTILLE_TEMPLATE_REPO=$(echo "${git_repository}" | awk -F / '{ print $2 }')
         bootstrap_template
         ;;
-    #adding Ubuntu Bionic as valid "RELEASE" for POC @hackacad
     ubuntu_bionic|bionic|ubuntu-bionic)
-        PLATFORM_OS="Ubuntu/Linux"
+        PLATFORM_OS="Linux/Ubuntu"
         LINUX_FLAVOR="bionic"
-        DIR_BOOTSTRAP="Ubuntu_1804"
+        NAME_VERIFY="Ubuntu_1804"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-        debootstrap_release
         ;;
     ubuntu_focal|focal|ubuntu-focal)
-        PLATFORM_OS="Ubuntu/Linux"
+        PLATFORM_OS="Linux/Ubuntu"
         LINUX_FLAVOR="focal"
-        DIR_BOOTSTRAP="Ubuntu_2004"
+        NAME_VERIFY="Ubuntu_2004"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-        debootstrap_release
         ;;
     ubuntu_jammy|jammy|ubuntu-jammy)
-        PLATFORM_OS="Ubuntu/Linux"
+        PLATFORM_OS="Linux/Ubuntu"
         LINUX_FLAVOR="jammy"
-        DIR_BOOTSTRAP="Ubuntu_2204"
+        NAME_VERIFY="Ubuntu_2204"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-        debootstrap_release
         ;;
     ubuntu_noble|noble|ubuntu-noble)
-        PLATFORM_OS="Ubuntu/Linux"
+        PLATFORM_OS="Linux/Ubuntu"
         LINUX_FLAVOR="noble"
-        DIR_BOOTSTRAP="Ubuntu_2404"
+        NAME_VERIFY="Ubuntu_2404"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-        debootstrap_release
         ;;
-    debian_buster|buster|debian-buster)
-        PLATFORM_OS="Debian/Linux"
+    debian_buster|buster|debian-buster|debian10|Debian10)
+        PLATFORM_OS="Linux/Debian"
         LINUX_FLAVOR="buster"
-        DIR_BOOTSTRAP="Debian10"
+        NAME_VERIFY="Debian10"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-        debootstrap_release
         ;;
-    debian_bullseye|bullseye|debian-bullseye)
-        PLATFORM_OS="Debian/Linux"
+    debian_bullseye|bullseye|debian-bullseye|debian11|Debian11)
+        PLATFORM_OS="Linux/Debian"
         LINUX_FLAVOR="bullseye"
-        DIR_BOOTSTRAP="Debian11"
+        NAME_VERIFY="Debian11"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-        debootstrap_release
         ;;
-    debian_bookworm|bookworm|debian-bookworm)
-        PLATFORM_OS="Debian/Linux"
+    debian_bookworm|bookworm|debian-bookworm|debian12|Debian12)
+        PLATFORM_OS="Linux/Debian"
         LINUX_FLAVOR="bookworm"
-        DIR_BOOTSTRAP="Debian12"
+        NAME_VERIFY="Debian12"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
-        debootstrap_release
         ;;
     *)
         usage
         ;;
 esac
 
-if [ "${PKGBASE}" -eq 0 ]; then
-    case "${OPTION}" in
-        update)
-            bastille update "${RELEASE}"
-            ;;
-    esac
+# Bootstrap
+case ${PLATFORM_OS} in
+    FreeBSD|HardenedBSD|MidnightBSD)
+        validate_release
+        bootstrap_directories
+        if [ "${PKGBASE}" -eq 1 ]; then
+            bootstrap_release_pkgbase || cleanup_directories
+        else
+            bootstrap_release_legacy || cleanup_directories
+        fi
+        ;;
+    Linux/Ubuntu|Linux/Debian)
+        validate_release
+        bootstrap_directories
+        bootstrap_release_linux || cleanup_directories
+        ;;
+    *)
+        error_exit "[ERROR]: Unsupported platform."
+        ;;
+esac
+
+# Check for errors
+if [ "${ERRORS}" -eq 0 ]; then
+    # Check for OPTION=update
+    if [ "${PKGBASE}" -eq 0 ]; then
+        case "${OPTION}" in
+            update)
+                bastille update "${RELEASE}"
+                ;;
+        esac
+    fi
+
+    # Success
+    info "\nBootstrap successful."
+    echo "See 'bastille --help' for available commands."
+    echo
+else
+    error_exit "[ERROR]: Bootstrap failed!"
 fi
