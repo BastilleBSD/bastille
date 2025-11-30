@@ -230,7 +230,8 @@ bootstrap_release_legacy() {
     # Verify release URL
     if ! fetch -qo /dev/null "${UPSTREAM_URL}/MANIFEST" 2>/dev/null; then
         ERRORS=$((ERRORS + 1))
-        error_return 1 "Unable to fetch MANIFEST. See 'bootstrap urls'."
+        error_notify "Unable to fetch MANIFEST. See 'bootstrap urls'."
+        return 1
     fi
 
     # Validate already installed archives
@@ -302,7 +303,7 @@ bootstrap_release_legacy() {
 
     # Cleanup on error
     if [ "${ERRORS}" -ne 0 ]; then
-        return "${ERRORS}"
+        return 1
     fi
 
     # Silence motd at container login
@@ -318,8 +319,8 @@ bootstrap_release_pkgbase() {
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
 
         local abi="${PLATFORM_OS}:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkg"
-        local host_fingerprintsdir="/usr/share/keys/pkg"
+        local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+        local host_fingerprintsdir="/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
@@ -327,6 +328,24 @@ bootstrap_release_pkgbase() {
             local repo_name="FreeBSD-base-latest"
         fi
         local repo_dir="${bastille_sharedir}/pkgbase"
+
+        # Verify trusted pkg keys
+        if [ ! -f "${host_fingerprintsdir}/trusted/awskms-${MAJOR_VERSION}" ]; then
+            if ! fetch -o "${host_fingerprintsdir}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${MAJOR_VERSION}/trusted/awskms-${MAJOR_VERSION}
+            then
+                ERRORS=$((ERRORS + 1))
+                error_notify "[ERROR]: Failed to fetch trusted pkg keys."
+                return 1
+            fi
+        fi
+        if [ ! -f "${host_fingerprintsdir}/trusted/backup-signing-${MAJOR_VERSION}" ]; then
+            if ! fetch -o "${host_fingerprintsdir}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${MAJOR_VERSION}/trusted/backup-signing-${MAJOR_VERSION}
+            then
+                ERRORS=$((ERRORS + 1))
+                error_notify "[ERROR]: Failed to fetch trusted backup pkg keys."
+                return 1
+            fi
+        fi
 
         # Validate COPYRIGHT existence
         if [ -f "${bastille_releasesdir}/${RELEASE}/COPYRIGHT" ]; then
@@ -338,30 +357,36 @@ bootstrap_release_pkgbase() {
             fi
         fi
 
-        info "\nInstalling packages..."
-
         # Copy fingerprints into releasedir
         if ! mkdir -p "${release_fingerprintsdir}"; then
             ERRORS=$((ERRORS + 1))
-            error_return 1 "[ERROR]: Faild to create fingerprints directory."
+            error_notify "[ERROR]: Faild to create fingerprints directory."
+            return 1
         fi
         if ! cp -a "${host_fingerprintsdir}" "${release_fingerprintsdir}"; then
             ERRORS=$((ERRORS + 1))
-            error_return 1 "[ERROR]: Failed to copy fingerprints directory."
+            error_notify "[ERROR]: Failed to copy fingerprints directory."
+            return 1
         fi
+
+        info "\nUpdating ${repo_name} repository..."
 
         # Update PkgBase repo
         if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
                  --repo-conf-dir="${repo_dir}" \
                  -o IGNORE_OSVERSION="yes" \
+                 -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                 -o VERSION_MINOR="${MINOR_VERSION}" \
                  -o ABI="${abi}" \
                  -o ASSUME_ALWAYS_YES="yes" \
                  -o FINGERPRINTS="${fingerprints}" \
                  update -r "${repo_name}"; then
 
             ERRORS=$((ERRORS + 1))
-            error_return 1 "[ERROR]: Failed to update repository: ${repo_name}"
+            error_notify "[ERROR]: Failed to update repository: ${repo_name}"
         fi
+
+        info "\nInstalling packages..."
 
         for package in ${bastille_pkgbase_packages}; do	
 
@@ -371,6 +396,8 @@ bootstrap_release_pkgbase() {
                 if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
                          --repo-conf-dir="${repo_dir}" \
                          -o IGNORE_OSVERSION="yes" \
+                         -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                         -o VERSION_MINOR="${MINOR_VERSION}" \
                          -o ABI="${abi}" \
                          -o ASSUME_ALWAYS_YES="yes" \
                          -o FINGERPRINTS="${fingerprints}" \
@@ -387,7 +414,7 @@ bootstrap_release_pkgbase() {
 
         # Cleanup on error
         if [ "${ERRORS}" -ne 0 ]; then
-            return "${ERRORS}"
+            return 1
         fi
 
         # Silence motd at login
@@ -402,12 +429,8 @@ bootstrap_release_linux() {
         # Fetch the Linux flavor
         if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${RELEASE} "${bastille_releasesdir}"/${RELEASE}; then
             ERRORS=$((ERRORS + 1))
-            error_return 1 "[ERROR]: Failed to fetch Linux release: ${RELEASE}"
-        fi
-
-        # Cleanup on error
-        if [ "${ERRORS}" -ne 0 ]; then
-            return "${ERRORS}"
+            error_notify "[ERROR]: Failed to fetch Linux release: ${RELEASE}"
+            return 1
         fi
 
         # Set necessary settings
@@ -695,14 +718,13 @@ esac
 
 # Check for errors
 if [ "${ERRORS}" -eq 0 ]; then
+
     # Check for OPTION=update
-    if [ "${PKGBASE}" -eq 0 ]; then
-        case "${OPTION}" in
-            update)
-                bastille update "${RELEASE}"
-                ;;
-        esac
-    fi
+    case "${OPTION}" in
+        update)
+            bastille update "${RELEASE}"
+            ;;
+    esac
 
     # Success
     info "\nBootstrap successful."
