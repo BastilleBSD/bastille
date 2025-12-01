@@ -427,9 +427,9 @@ bootstrap_release_linux() {
 
     if [ "${PLATFORM_OS}" = "Linux/Debian" ] || [ "${PLATFORM_OS}" = "Linux/Ubuntu" ]; then
         # Fetch the Linux flavor
-        if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${RELEASE} "${bastille_releasesdir}"/${RELEASE}; then
+        if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${RELEASE}; then
             ERRORS=$((ERRORS + 1))
-            error_notify "[ERROR]: Failed to fetch Linux release: ${RELEASE}"
+            error_notify "[ERROR]: Failed to fetch Linux release: ${LINUX_FLAVOR}"
             return 1
         fi
 
