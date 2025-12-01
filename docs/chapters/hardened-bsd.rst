@@ -2,7 +2,7 @@ HardenedBSD
 ===========
 
 Bastille supports HardenedBSD as an OS since it is FreeBSD based. There
-are some differences in how HBSD handles release names, update, and
+are some differences in how HBSD handles release names, updates, and
 upgrades.
 
 Most of the Bastille commands will work with HardenedBSD, but please report
