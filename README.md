@@ -37,7 +37,7 @@ pkg install bastille
 
 **ports**
 ```shell
-portsnap fetch auto
+git clone https://git.freebsd.org/ports.git /usr/ports
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
@@ -56,7 +56,7 @@ sysrc bastille_enable=YES
 ### Upgrading
 
 When upgrading from a previous version of bastille (e.g. 0.10.20230714 to
-0.10.20231013) you will need to update your bastille.conf
+1.1.3.251130) you will need to update your bastille.conf
 
 Be sure to read the [Breaking Changes](#breaking-changes) below.
 
