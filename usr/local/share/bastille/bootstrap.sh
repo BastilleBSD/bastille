@@ -640,6 +640,7 @@ case "${RELEASE}" in
         BASTILLE_TEMPLATE_USER=$(echo "${1}" | awk -F / '{ print $4 }')
         BASTILLE_TEMPLATE_REPO=$(echo "${1}" | awk -F / '{ print $5 }')
         bootstrap_template
+        exit 0
         ;;
     git@*:*/*)
         BASTILLE_TEMPLATE_URL=${1}
@@ -647,6 +648,7 @@ case "${RELEASE}" in
         BASTILLE_TEMPLATE_USER=$(echo "${git_repository}" | awk -F / '{ print $1 }')
         BASTILLE_TEMPLATE_REPO=$(echo "${git_repository}" | awk -F / '{ print $2 }')
         bootstrap_template
+        exit 0
         ;;
     ubuntu_bionic|bionic|ubuntu-bionic)
         PLATFORM_OS="Linux/Ubuntu"
