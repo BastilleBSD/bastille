@@ -479,7 +479,7 @@ bootstrap_template() {
 
     if [ ! -f ${raw_template_dir}/Bastillefile ]; then
         # Extract template in project/template format
-        find "${raw_template_dir}" -type f -name Bastillefile | while read -r _file; do
+        find "${raw_template_dir}" -type f -name Bastillefile | while read -r file; do
             template_dir="$(dirname ${file})"
             project_dir="$(dirname ${template_dir})"
             template_name="$(basename ${template_dir})"
