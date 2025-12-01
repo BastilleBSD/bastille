@@ -112,7 +112,7 @@ for _jail in ${JAILS}; do
         _ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
         if [ "${_ip4}" != "not set" ] || [ "${_ip6}" != "not set" ]; then
             if which -s pfctl; then
-                if [ "$(bastille rdr ${_jail} list)" ]; then
+                if bastille rdr ${_jail} list >/dev/null 2>&1; then
                     bastille rdr "${_jail}" clear
                 fi
             fi
