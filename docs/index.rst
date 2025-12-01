@@ -24,6 +24,7 @@ https://docs.bastillebsd.org.
    chapters/migration
    chapters/centralized-assets
    chapters/template
+   chapters/hardened-bsd
    chapters/linux-jails
    chapters/pkgbase
    chapters/zfs-support
