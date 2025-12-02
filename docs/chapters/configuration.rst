@@ -99,7 +99,7 @@ This is the default `bastille.conf` file.
   bastille_template_clone="default/clone"                               ## default: "default/clone"
   bastille_template_thin="default/thin"                                 ## default: "default/thin"
   bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"
-  bastille_template_vnet="default/vlan"                                 ## default: "default/vlan"
+  bastille_template_vlan="default/vlan"                                 ## default: "default/vlan"
 
   ## Monitoring
   bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"                           ## default: "/usr/local/etc/cron.d/bastille-monitor"
