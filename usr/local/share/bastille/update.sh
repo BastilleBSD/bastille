@@ -184,7 +184,7 @@ jail_update() {
     UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
     if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
         bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
-        info "\nUpgrade complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
+        info "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
     else
         info "\nNo updates available.\n"
     fi
@@ -236,7 +236,7 @@ jail_update_pkgbase() {
         UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
         if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
             bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
-            info "\nUpgrade complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
+            info "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
         else
             info "\nNo updates available.\n"
         fi
