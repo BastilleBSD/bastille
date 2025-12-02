@@ -49,6 +49,7 @@ before attempting to upgrade to 16.0-RELEASE. This can be done in two ways.
      ./pkgbasify.lua
 
 2. Fetch the ``pkgbasify`` script and run it from the host using ``--rootdir``.
+   This requires using PR 34 in the ``pkgbasify`` repo.
 
 .. code-block:: shell
 
