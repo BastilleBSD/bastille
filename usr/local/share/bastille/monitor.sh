@@ -95,10 +95,10 @@ case "${1}" in
     status)
         [ "$#" -eq 1 ] || usage
         if [ -f "${bastille_monitor_cron_path}" ]; then
-            info "\nBastille Monitor: Active\n"
+            info "\nBastille Monitor Status: Active\n"
 	        exit 0
         else
-            info "\nBastille Monitor: Inactive\n"
+            info "\nBastille Monitor Status: Inactive\n"
 	        exit 1
         fi
         ;;
@@ -120,8 +120,8 @@ for _jail in ${JAILS}; do
 
     bastille_jail_monitor="${bastille_jailsdir}/${_jail}/monitor"
 
-    ## skip if no monitor file
-    if [ $? -eq 1 ] && [ ! -f "${bastille_jail_monitor}" ]; then
+    # Skip if no monitor file or stopped jail
+    if [ $? -eq 1 ] && { [ ! -f "${bastille_jail_monitor}" ] || ! check_target_is_running; }; then
         continue
     fi
 
