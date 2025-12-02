@@ -190,10 +190,10 @@ cleanup_directories() {
 
 validate_release() {
 
-    info "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
-
     # Set release name to sane release
     RELEASE="${NAME_VERIFY}"
+
+    info "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
 
     ### FreeBSD ###
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
