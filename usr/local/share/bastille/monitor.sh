@@ -120,8 +120,8 @@ for _jail in ${JAILS}; do
 
     bastille_jail_monitor="${bastille_jailsdir}/${_jail}/monitor"
 
-    # Skip if no monitor file or stopped jail
-    if [ $? -eq 1 ] && { [ ! -f "${bastille_jail_monitor}" ] || ! check_target_is_running; }; then
+    # Skip if jail is not running or no monitor file
+    if ! check_target_is_running || [ ! -f "${bastille_jail_monitor}" ]; then
         continue
     fi
 
