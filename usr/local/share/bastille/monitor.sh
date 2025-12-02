@@ -75,31 +75,31 @@ case "${1}" in
             mkdir -p /usr/local/etc/cron.d
             echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
             echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-            info "\nBastille Monitor enabled.\n"
-	    exit 0
-	else
-            error_exit "\nBastille Monitor already enabled."
-	fi
+            info "\nBastille Monitor: Enabled\n"
+	        exit 0
+	    else
+            error_exit "\nBastille Monitor is already enabled."
+	    fi
         ;;
     disable)
         [ "$#" -eq 1 ] || usage
         if [ -f "${bastille_monitor_cron_path}" ]; then
             rm -f "${bastille_monitor_cron_path}"
             echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-            info "\nBastille Monitor disabled.\n"
-	    exit 0
-	else
-            error_exit "\nBastille Monitor already disabled."
+            info "\nBastille Monitor: Disabled\n"
+	        exit 0
+	    else
+            error_exit "\nBastille Monitor is not enabled."
         fi
         ;;
     status)
         [ "$#" -eq 1 ] || usage
         if [ -f "${bastille_monitor_cron_path}" ]; then
-            info "\nBastille Monitor is Enabled.\n"
-	    exit 0
+            info "\nBastille Monitor: Active\n"
+	        exit 0
         else
-            info "\nBastille Monitor is Disabled.\n"
-	    exit 1
+            info "\nBastille Monitor: Inactive\n"
+	        exit 1
         fi
         ;;
 esac
@@ -147,17 +147,17 @@ for _jail in ${JAILS}; do
                     if ! grep -Eqs "^${_service}\$" "${bastille_jail_monitor}"; then
                         echo "${_service}" >> "${bastille_jail_monitor}"
                         echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
-		    fi
+                    fi
                 done
                 ;;
             del*)
-	        [ -z "${SERVICE}" ] && usage
+	            [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
                     [ ! -f "${bastille_jail_monitor}" ] && break # skip if no monitor file
                     if grep -Eqs "^${_service}\$" "${bastille_jail_monitor}"; then
-		        sed -i '' "/^${_service}\$/d" "${bastille_jail_monitor}"
-	                echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
-		    fi
+                        sed -i '' "/^${_service}\$/d" "${bastille_jail_monitor}"
+	                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
+		            fi
                     # delete monitor file if empty
                     [ ! -s "${bastille_jail_monitor}" ] && rm "${bastille_jail_monitor}"
                 done
@@ -170,11 +170,11 @@ for _jail in ${JAILS}; do
                     [ ! -f "${bastille_jail_monitor}" ] && continue # skip if there is no monitor file
                     if grep -Eqs "^${SERVICE}\$" "${bastille_jail_monitor}"; then
                         echo "${_jail}"
-			continue
+			            continue
                     fi
                 else
                     if [ -f "${bastille_jail_monitor}" ]; then
-                         info "\n[${_jail}]:"
+                        info "\n[${_jail}]:"
                         xargs < "${bastille_jail_monitor}"
                     fi
                 fi
@@ -184,7 +184,6 @@ for _jail in ${JAILS}; do
                 ;;
         esac
     fi
-
 done
 
 # Final ping to healthcheck URL
