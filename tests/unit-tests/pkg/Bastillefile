@@ -1,0 +1,18 @@
+# unit-tests/pkg
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+# -ay
+INCLUDE core/pkg --arg OPTIONS="-ay" --arg JAIL=${JAIL} --arg ARGS="install nginx"
+INCLUDE core/pkg --arg OPTIONS="-ay" --arg JAIL=${JAIL} --arg ARGS="remove nginx"
+
+# -aHy
+INCLUDE core/pkg --arg OPTIONS="-aHy" --arg JAIL=${JAIL} --arg ARGS="install nginx"
+INCLUDE core/pkg --arg OPTIONS="-aHy" --arg JAIL=${JAIL} --arg ARGS="remove nginx"
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}

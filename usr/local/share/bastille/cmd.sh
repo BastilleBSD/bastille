@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille cmd [option(s)] TARGET COMMAND"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -60,12 +60,12 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -84,10 +84,7 @@ bastille_root_check
 
 TARGET="${1}"
 shift 1
-
-# Use mktemp to store exit codes
-export TMP_BASTILLE_EXIT_CODE="$(mktemp)"
-echo 0 > "${TMP_BASTILLE_EXIT_CODE}"
+ERRORS=0
 
 set_target "${TARGET}"
 
@@ -110,9 +107,13 @@ for _jail in ${JAILS}; do
     else
         jexec -l -U root "${_jail}" "$@"
     fi
-	
-    bastille_check_exit_code "${_jail}" "$?"
-	
+
+    if [ "$?" -ne 0 ]; then
+        ERRORS=$((ERRORS + 1))
+    fi
+
 done
 
-bastille_return_exit_code
+if [ "${ERRORS}" -ne 0 ]; then
+    error_exit "[ERROR]: Command failed on ${ERRORS} jails."
+fi

@@ -1,0 +1,4 @@
+ARG OPTIONS
+ARG JAIL
+
+CMD bastille stop ${OPTIONS} ${JAIL}

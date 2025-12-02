@@ -1,14 +1,19 @@
-ARG EPAIR
+ARG EXT_INTERFACE
+ARG INTERFACE
+ARG VNET
 ARG GATEWAY
 ARG GATEWAY6
 ARG IFCONFIG="SYNCDHCP"
 ARG IFCONFIG6
 
-SYSRC ifconfig_${EPAIR}_name=vnet0
-SYSRC ifconfig_vnet0="${IFCONFIG}"
+SYSRC ifconfig_${INTERFACE}_name=${VNET}
+SYSRC ifconfig_${VNET}="${IFCONFIG}"
+
+# Set description if EXT_INTERFACE is set
+CMD if [ -n "${EXT_INTERFACE}" ]; then /usr/sbin/sysrc ifconfig_${VNET}_descr="jail interface for ${EXT_INTERFACE}"; fi
 
 # Apply IFCONFIG6 if set
-CMD if [ -n "${IFCONFIG6}" ]; then /usr/sbin/sysrc ifconfig_vnet0_ipv6="${IFCONFIG6}"; fi
+CMD if [ -n "${IFCONFIG6}" ]; then /usr/sbin/sysrc ifconfig_${VNET}_ipv6="${IFCONFIG6}"; fi
 
 # GATEWAY will be empty for a DHCP config. -- cwells
 CMD if [ -n "${GATEWAY}" ]; then /usr/sbin/sysrc defaultrouter="${GATEWAY}"; fi

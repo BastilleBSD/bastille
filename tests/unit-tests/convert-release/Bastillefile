@@ -1,0 +1,15 @@
+# unit-tests/convert-release
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG NEW_RELEASE
+
+INCLUDE core/create --arg OPTIONS="-T" --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/convert-release --arg OPTIONS="-ay" --arg JAIL=${JAIL} --arg RELEASE=${NEW_RELEASE}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}
+
+INCLUDE core/destroy-release --arg OPTIONS="-fy" --arg RELEASE=${NEW_RELEASE}

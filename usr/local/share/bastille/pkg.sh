@@ -72,14 +72,14 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                    a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
                     y) AUTO_YES=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -96,14 +96,12 @@ fi
 
 TARGET="${1}"
 shift
-# Use mktemp to store exit codes
-export TMP_BASTILLE_EXIT_CODE="$(mktemp)"
-echo 0 > "${TMP_BASTILLE_EXIT_CODE}"
-        
+ERRORS=0
+
 bastille_root_check
 set_target "${TARGET}"
 
-pkg_run_command() {
+for _jail in ${JAILS}; do
 
     # Validate jail state
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
@@ -136,12 +134,12 @@ pkg_run_command() {
         fi
     fi
 
-    bastille_check_exit_code "${_jail}" "$?" 
-}
+    if [ "$?" -ne 0 ]; then
+        ERRORS=$((ERRORS + 1))
+    fi
 
-for _jail in ${JAILS}; do
-    pkg_run_command "$@"
 done
-echo
 
-bastille_return_exit_code
+if [ "${ERRORS}" -ne 0 ]; then
+    error_exit "[ERROR]: Command failed on ${ERRORS} jails."
+fi

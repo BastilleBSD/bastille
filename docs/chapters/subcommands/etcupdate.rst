@@ -25,7 +25,7 @@ Next we can use the ``update`` command to apply the update to the jail.
 The output will show you which files were added, updated, changed, deleted, or
 have conflicts. To automatically resolve the conflicts, run the ``resolve``
 command.
-            
+
 .. code-block:: shell
 
   ishmael ~ # bastille etcupdate ishmael resolve

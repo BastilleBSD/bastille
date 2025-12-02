@@ -1,0 +1,137 @@
+# ufs-tests/master
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG NEW_INTERFACE
+ARG BRIDGE
+
+ARG CLONE_NEW_JAIL
+ARG CLONE_NEW_IP
+
+ARG CONVERT_NEW_RELEASE
+
+ARG CP_HOST_PATH
+ARG CP_JAIL_PATH
+
+ARG RCP_JAIL_PATH
+ARG RCP_HOST_PATH
+
+ARG SETUP_BRIDGE_INTERFACE
+
+ARG JCP_JAIL1
+ARG JCP_JAIL2
+ARG JCP_IP1
+ARG JCP_IP2
+ARG JCP_SOURCE_PATH
+ARG JCP_DESTINATION_PATH
+
+ARG EXPORT_FILE
+ARG EXPORT_PATH
+
+ARG MOUNT_HOST_FILE
+ARG MOUNT_JAIL_FILE
+ARG MOUNT_HOST_PATH
+ARG MOUNT_JAIL_PATH
+
+ARG RENAME_NEW_JAIL
+
+ARG TAGS
+
+ARG TEMPLATE_URL
+ARG TEMPLATE_TEMPLATE
+
+# *****************
+# ***** Setup *****
+# *****************
+
+INCLUDE unit-tests/setup
+INCLUDE unit-tests/setup-bridge --arg ARGS=${SETUP_BRIDGE_INTERFACE}
+
+# *********************
+# ***** Bootstrap *****
+# *********************
+
+INCLUDE unit-tests/bootstrap-releaseLegacy --arg RELEASE=${RELEASE}
+
+# *****************
+# ***** Clone *****
+# *****************
+
+INCLUDE unit-tests/clone-thick --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg NEW_JAIL=${CLONE_NEW_JAIL} --arg NEW_IP=${CLONE_NEW_IP}
+INCLUDE unit-tests/clone-thin --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg NEW_JAIL=${CLONE_NEW_JAIL} --arg NEW_IP=${CLONE_NEW_IP}
+
+# *******************
+# ***** Convert *****
+# *******************
+
+INCLUDE unit-tests/convert-jail --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+INCLUDE unit-tests/convert-release --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg NEW_RELEASE=${CONVERT_NEW_RELEASE}
+
+# **********************
+# ***** cp/rcp/jcp *****
+# **********************
+
+INCLUDE unit-tests/cp --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg HOST_PATH=${CP_HOST_PATH} --arg JAIL_PATH=${CP_JAIL_PATH}
+INCLUDE unit-tests/rcp --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg JAIL_PATH=${RCP_JAIL_PATH} --arg HOST_PATH=${RCP_HOST_PATH}
+INCLUDE unit-tests/jcp --arg JAIL1=${JCP_JAIL1} --arg JAIL2=${JCP_JAIL2} --arg RELEASE=${RELEASE} --arg IP1=${JCP_IP1} --arg IP2=${JCP_IP2} --arg INTERFACE=${INTERFACE} --arg SOURCE_JAIL_PATH=${JCP_SOURCE_PATH} --arg DESTINATION_JAIL_PATH=${JCP_DESTINATION_PATH}
+
+# ******************
+# ***** Create *****
+# ******************
+
+INCLUDE unit-tests/create-thick --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+INCLUDE unit-tests/create-thinBridge --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${BRIDGE}
+INCLUDE unit-tests/create-thinVnet --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+# *************************
+# ***** Export/Import *****
+# *************************
+
+INCLUDE unit-tests/export-import --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg FILE=${EXPORT_FILE} --arg PATH=${EXPORT_PATH}
+
+# ************************
+# ***** Mount/Umount *****
+# ************************
+
+INCLUDE unit-tests/mount-umount --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg HOST_FILE=${MOUNT_HOST_FILE} --arg JAIL_FILE=${MOUNT_JAIL-FILE} --arg HOST_PATH=${MOUNT_HOST_PATH} --arg JAIL_PATH=${MOUNT_JAIL_PATH}
+
+# ***************
+# ***** pkg *****
+# ***************
+
+INCLUDE unit-tests/pkg --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+# ******************
+# ***** Rename *****
+# ******************
+
+INCLUDE unit-tests/rename-standard --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg NEW_JAIL=${RENAME_NEW_JAIL}
+INCLUDE unit-tests/rename-vnet --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg NEW_JAIL=${RENAME_NEW_JAIL}
+
+# ******************************
+# ***** Start/Stop/Restart *****
+# ******************************
+
+INCLUDE unit-tests/start-stop --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+INCLUDE unit-tests/restart --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+# *************************
+# ***** Service/Sysrc *****
+# *************************
+
+INCLUDE unit-tests/service --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+# ****************
+# ***** Tags *****
+# ****************
+
+INCLUDE unit-tests/tags --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg TAGS=${TAGS}
+
+# ********************
+# ***** Template *****
+# ********************
+
+INCLUDE unit-tests/bootstrap-template --arg TEMPLATE_URL=${TEMPLATE_URL}
+INCLUDE unit-tests/template --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg TEMPLATE=${TEMPLATE_TEMPLATE}

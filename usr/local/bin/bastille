@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.0.1.250714
+BASTILLE_VERSION=1.2.0.251201
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -120,7 +120,6 @@ Available Commands:
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
 Use "bastille -c|--config FILE command" to specify a non-default config file.
-Use "bastille -p|--parallel VALUE command" to run bastille in parallel mode.
 
 EOF
     exit 1
@@ -147,8 +146,6 @@ bastille_perms_check
 . /usr/local/share/bastille/common.sh
 
 # Handle options
-bastille_parallel_mode=0
-bastille_process_limit="${bastille_process_limit:-1}"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -168,17 +165,8 @@ while [ "$#" -gt 0 ]; do
                 error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
             fi
             # Load common.sh after setting BASTILLE_CONFIG
-            . /usr/local/share/bastille/common.sh 
+            . /usr/local/share/bastille/common.sh
             shift 2
-            ;;
-        -p|--parallel)
-            bastille_parallel_mode=1
-            bastille_process_limit="${2}"
-            if ! echo "${bastille_process_limit}" | grep -Eq "^[0-9]+$"; then
-                error_exit "Not a valid process limit: ${bastille_process_limit}"
-            else
-                shift 2
-            fi
             ;;
         -*)
             error_exit "Unknown Option: \"${1}\""
@@ -189,9 +177,6 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-# Export parallel and limit
-export bastille_process_limit
-
 if [ "$#" -lt 1 ]; then
     usage
 else
@@ -201,12 +186,14 @@ fi
 
 # Handle sub-commands.
 case "${CMD}" in
-    # Commands that don't allow parallel mode
+    # 38 total commands
     bootstrap| \
     clone| \
     cmd| \
+    config| \
     console| \
     convert| \
+    cp| \
     create| \
     destroy| \
     edit| \
@@ -214,39 +201,31 @@ case "${CMD}" in
     export| \
     htop| \
     import| \
+    jcp| \
     limits| \
     list| \
     migrate| \
     monitor| \
+    mount| \
     network| \
     pkg| \
     rcp| \
     rdr| \
     rename| \
+    restart| \
     service| \
     setup| \
-    top| \
-    update| \
-    upgrade| \
-    verify| \
-    zfs)
-        if [ "${bastille_parallel_mode}" -eq 1 ]; then
-            error_exit "Command does not support parallel mode: ${CMD}"
-        fi
-        ;;
-    # Commands that allow parallel mode
-    config| \
-    cp| \
-    jcp| \
-    limits| \
-    mount| \
-    restart| \
     start| \
     stop| \
     sysrc| \
     tags| \
     template| \
-    umount)
+    top| \
+    umount| \
+    update| \
+    upgrade| \
+    verify| \
+    zfs)
         ;;
     *)
         usage
@@ -263,8 +242,8 @@ if [ -f "${SCRIPTPATH}" ]; then
 
     : "${SH:=sh}"
 
-    exec "${SH}" "${SCRIPTPATH}" "$@"
+    exec ${SH} "${SCRIPTPATH}" "$@"
 
 else
-    error_exit "${SCRIPTPATH} not found."	
+    error_exit "${SCRIPTPATH} not found."
 fi

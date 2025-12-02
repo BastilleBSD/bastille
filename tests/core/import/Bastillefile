@@ -1,0 +1,5 @@
+ARG OPTIONS
+ARG FILE
+ARG RELEASE
+
+CMD bastille import ${OPTIONS} ${FILE} ${RELEASE}

@@ -44,7 +44,7 @@ This file can be edited manually using ``bastille edit TARGET cpuset.conf``.
 
   ishmael ~ # bastille limits help
   Usage: bastille limits [option(s)] TARGET [add|remove|clear|reset|(list|show [active])|stats] OPTION [VALUE]
-  
+
       Example: bastille limits TARGET add memoryuse 1G
       Example: bastille limits TARGET add cpu 0,1,2
 
@@ -52,4 +52,4 @@ This file can be edited manually using ``bastille edit TARGET cpuset.conf``.
 
       -a | --auto           Auto mode. Start/stop jail(s) if required.
       -l | --log            Enable logging for the specified rule (rctl only).
-      -x | --debug          Enable debug mode. 
+      -x | --debug          Enable debug mode.

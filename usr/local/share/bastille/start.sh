@@ -38,7 +38,7 @@ usage() {
 
     Options:
 
-    -b | --boot                 Respect jail boot setting. 
+    -b | --boot                 Respect jail boot setting.
     -d | --delay VALUE          Time (seconds) to wait after starting each jail.
     -v | --verbose              Print every action on jail start.
     -x | --debug                Enable debug mode.
@@ -76,13 +76,13 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     b) BOOT=1 ;;
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -104,8 +104,6 @@ set_target "${TARGET}"
 
 for _jail in ${JAILS}; do
 
-    (
-
     # Continue if '-b|--boot' is set and 'boot=off'
     if [ "${BOOT}" -eq 1 ]; then
         BOOT_ENABLED="$(sysrc -f ${bastille_jailsdir}/${_jail}/settings.conf -n boot)"
@@ -123,14 +121,14 @@ for _jail in ${JAILS}; do
             bastille start ${_depend_jail}
         fi
     done
-	
+
     if check_target_is_running "${_jail}"; then
         info "\n[${_jail}]:"
         error_continue "Jail is already running."
     fi
 
     info "\n[${_jail}]:"
-	
+
     # Validate interfaces and add IPs to firewall table
     if [ "$(bastille config ${_jail} get vnet)" != 'enabled' ]; then
         _ip4_interfaces="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
@@ -183,18 +181,19 @@ for _jail in ${JAILS}; do
         fi
     fi
 
-    # Start jail
-    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
-
-    # Add ZFS jailed datasets
+    # Validate jailed datasets mountpoint
     if [ -s "${bastille_jailsdir}/${_jail}/zfs.conf" ]; then
-        while read _dataset _mount; do
-            zfs set jailed=on "${_dataset}"
-            zfs jail ${_jail} "${_dataset}"
-            jexec -l -U root "${_jail}" zfs set mountpoint="${_mount}" "${_dataset}"
-            jexec -l -U root "${_jail}" zfs mount "${_dataset}" 2>/dev/null
+        while read dataset mount; do
+            if [ "$(zfs get -H -o value mountpoint ${dataset})" != "${mount}" ]; then
+                zfs set jailed=off "${dataset}"
+                zfs set mountpoint="${mount}" "${dataset}"
+                zfs set jailed=on "${dataset}"
+            fi
         done < "${bastille_jailsdir}/${_jail}/zfs.conf"
     fi
+
+    # Start jail
+    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -c "${_jail}"
 
     # Add rctl limits
     if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
@@ -220,9 +219,4 @@ for _jail in ${JAILS}; do
     # Delay between jail action
     sleep "${DELAY_TIME}"
 
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
 done
-wait

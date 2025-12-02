@@ -1,0 +1,12 @@
+# unit-tests/convert-jail
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/convert-jail --arg OPTIONS="-ay" --arg JAIL=${JAIL} 
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}

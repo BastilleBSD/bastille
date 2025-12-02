@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DEST_JAIL JAIL_PATH"
     cat << EOF
-	
+
     Options:
 
     -q | --quiet          Suppress output.
@@ -65,7 +65,7 @@ while [ "$#" -gt 0 ]; do
                 case ${_opt} in
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -84,14 +84,13 @@ SOURCE_TARGET="${1}"
 SOURCE_PATH="${2}"
 DEST_TARGET="${3}"
 DEST_PATH="${4}"
+ERRORS=0
 
 bastille_root_check
 set_target_single "${SOURCE_TARGET}" && SOURCE_TARGET="${TARGET}"
 set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
 
 for _jail in ${DEST_TARGET}; do
-
-    (
 
     if [ "${_jail}" = "${SOURCE_TARGET}" ]; then
         continue
@@ -101,16 +100,16 @@ for _jail in ${DEST_TARGET}; do
 
         source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
         dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
-		
+
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
+            ERRORS=$((ERRORS + 1))
             error_continue "[ERROR]: JCP failed: ${source_path} -> ${dest_path}"
         fi
-		
+
     fi
 
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
 done
-wait
+
+if [ "${ERRORS}" -ne 0 ]; then
+    error_exit "[ERROR]: Command failed on ${ERRORS} jails."
+fi

@@ -1,0 +1,5 @@
+ARG OPTIONS
+ARG JAIL
+ARG HOST
+
+CMD bastille migrate ${OPTIONS} ${JAIL} ${HOST}

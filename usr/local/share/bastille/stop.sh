@@ -60,12 +60,12 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -87,10 +87,8 @@ set_target "${TARGET}" "reverse"
 
 for _jail in ${JAILS}; do
 
-    (
-
     # Validate that all jails that 'depend' on this one are stopped
-    for _depend_jail in $(ls --color=never ${bastille_jailsdir} | sed -e 's/\n//g'); do
+    for _depend_jail in $(ls -v --color=never ${bastille_jailsdir} | sed -e 's/\n//g'); do
     if ! grep -hoqsw "depend=" ${bastille_jailsdir}/${_depend_jail}/settings.conf; then
         sysrc -q -f ${bastille_jailsdir}/${_depend_jail}/settings.conf depend="" >/dev/null
     fi
@@ -105,7 +103,7 @@ for _jail in ${JAILS}; do
         info "\n[${_jail}]:"
         error_continue "Jail is already stopped."
     fi
-	
+
     info "\n[${_jail}]:"
 
     # Remove RDR rules
@@ -114,7 +112,7 @@ for _jail in ${JAILS}; do
         _ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
         if [ "${_ip4}" != "not set" ] || [ "${_ip6}" != "not set" ]; then
             if which -s pfctl; then
-                if [ "$(bastille rdr ${_jail} list)" ]; then
+                if bastille rdr ${_jail} list >/dev/null 2>&1; then
                     bastille rdr "${_jail}" clear
                 fi
             fi
@@ -124,14 +122,6 @@ for _jail in ${JAILS}; do
     # Remove rctl limits
     if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
         bastille limits "${_jail}" clear
-    fi
-
-    # Unmount any jailed ZFS datasets
-    if [ -s "${bastille_jailsdir}/${_jail}/zfs.conf" ]; then
-        while read _dataset _mount; do
-            jexec -l -U root "${_jail}" zfs umount "${_dataset}"
-            zfs unjail "${_jail}" "${_dataset}"
-        done < "${bastille_jailsdir}/${_jail}/zfs.conf"
     fi
 
     # Stop jail
@@ -155,15 +145,10 @@ for _jail in ${JAILS}; do
             else
                 _ip="$(echo ${_ip} | sed -E 's#/[0-9]+$##g')"
             fi
-            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}" 
+            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
         done
     fi
 
     update_jail_syntax_v1 "${_jail}"
 
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
 done
-wait

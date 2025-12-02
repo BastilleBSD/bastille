@@ -1,0 +1,23 @@
+# unit-tests/mount-umount
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG HOST_PATH
+ARG JAIL_PATH
+ARG HOST_FILE
+ARG JAIL_FILE
+ARG ARGS
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/mount --arg JAIL=${JAIL} --arg HOST_PATH=${HOST_PATH} --arg JAIL_PATH=${JAIL_PATH} --arg ARGS="${ARGS}"
+
+INCLUDE core/mount --arg JAIL=${JAIL} --arg HOST_PATH=${HOST_FILE} --arg JAIL_PATH=${JAIL_FILE} --arg ARGS="${ARGS}"
+
+INCLUDE core/umount --arg JAIL=${JAIL} --arg JAIL_PATH=${JAIL_PATH}
+
+INCLUDE core/umount --arg JAIL=${JAIL} --arg JAIL_PATH=${JAIL_FILE}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}

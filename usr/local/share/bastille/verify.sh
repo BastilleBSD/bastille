@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille verify [option(s)] RELEASE|TEMPLATE"
     cat << EOF
-	
+
     Options:
 
     -x | --debug          Enable debug mode.
@@ -49,7 +49,7 @@ verify_release() {
     if [ -f "/bin/midnightbsd-version" ]; then
         error_exit "[ERROR]: Not yet supported on MidnightBSD."
     fi
-    
+
     if freebsd-version | grep -qi HBSD; then
         error_exit "[ERROR]: Not yet supported on HardenedBSD."
     fi
@@ -160,7 +160,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             error_exit "[ERROR]: Unknown Option: \"${1}\""
             ;;
         *)
@@ -195,5 +195,3 @@ case "${1}" in
         usage
         ;;
 esac
-
-echo

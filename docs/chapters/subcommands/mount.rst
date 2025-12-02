@@ -63,7 +63,7 @@ It is possible to do the same for the jail path, but again, not recommemded.
   ishmael ~ # bastille mount azkaban "/storage/my\ directory\ with\ spaces" /media/foo nullfs ro 0 0
   [azkaban]:
   Added: /storage/my\040directory\040with\040spaces /usr/local/bastille/jails/azkaban/root/media/foo nullfs ro 0 0
-  
+
 .. code-block:: shell
 
   ishmael ~ # bastille mount help

@@ -1,0 +1,6 @@
+# unit-tests/bootstrap-template
+
+ARG OPTIONS
+ARG TEMPLATE_URL
+
+INCLUDE core/bootstrap-template --arg OPTIONS=${OPTIONS} --arg TEMPLATE_URL=${TEMPLATE_URL}

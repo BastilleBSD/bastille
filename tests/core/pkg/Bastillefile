@@ -1,0 +1,5 @@
+ARG OPTIONS
+ARG JAIL
+ARG ARGS
+
+CMD bastille pkg ${OPTIONS} ${JAIL} ${ARGS}

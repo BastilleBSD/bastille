@@ -18,8 +18,7 @@ as a list of popular managers and their status on each option.
 |              | Shell       | Shell, C     | Shell,    | Shell     | Shell,    |
 |              |             |              | Rust      |           | Python    |
 +--------------+-------------+--------------+-----------+-----------+-----------+
-| Dep          | None        | C            | Rust      | None      | Python    |
-| endencies    |             |              |           |           |           |
+| Dependencies | None        | C            | Rust      | None      | Python    |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Jail         | vnet,       | clone,       | thick     | basejail  | clone,    |
 | Types        | bridged     | copy,        |           |           | basejail, |
@@ -33,16 +32,15 @@ as a list of popular managers and their status on each option.
 | Jail         | Yes         | Yes          | Yes       | No        | Yes       |
 | Dependency   |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
-| Impo         | Yes         | Yes          | Yes       | Yes       | Yes       |
-| rt/Export    |             |              |           |           |           |
+| Import/      | Yes         | Yes          | Yes       | Yes       | Yes       |
+| Export       |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Boot         | Yes         | Yes          | No        | Yes using | Yes       |
 | Order        |             |              |           | 'rcorder' |           |
 | Priorities   |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Linux        | Yes         | Yes          | No        | No        | Yes       |
-| c            |             |              |           |           |           |
-| ontainers    |             |              |           |           |           |
+| Containers   |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Automation   | Templates   | Makejail,    | Flavours, | Flavours  | Plugins   |
 |              |             | Initscripts, | Images    |           |           |
@@ -89,6 +87,9 @@ as a list of popular managers and their status on each option.
 |              |             | checkers,    |           |           |           |
 |              |             | jails &      |           |           |           |
 |              |             | NAT)         |           |           |           |
++--------------+-------------+--------------+-----------+-----------+-----------+
+| PkgBase      | Yes         | Yes          | No        | No        | No        |
+| Support      |             |              |           |           |           |
 +--------------+-------------+--------------+-----------+-----------+-----------+
 | Multi-target | Yes         | No           | No        | No        | No        |
 | Commands     |             |              |           |           |           |

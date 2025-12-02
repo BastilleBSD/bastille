@@ -1,0 +1,5 @@
+ARG OPTIONS
+ARG JAIL
+ARG JAIL_PATH
+
+CMD bastille umount ${OPTIONS} ${JAIL} ${JAIL_PATH}

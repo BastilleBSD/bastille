@@ -71,7 +71,7 @@ get_jail_list() {
     if [ -n "${TARGET}" ]; then
         JAIL_LIST="${TARGET}"
     else
-        JAIL_LIST="$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")"
+        JAIL_LIST="$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")"
     fi
 }
 
@@ -100,14 +100,17 @@ get_max_lengths() {
 
         # Set max length for VNET jail IPs
         # shellcheck disable=SC2046
-        MAX_LENGTH_JAIL_VNET_IP6="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -Eho '\b(([0-9a-fA-F]{1,4}:){1,7}|:):([0-9a-fA-F]{1,4}:?){0,6}[0-9a-fA-F]{1,4}\b' $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | awk '{print length}' | sort -nr | head -n 1)"
+        MAX_LENGTH_JAIL_VNET_IP6="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet.*=.*inet6" $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | grep -Eho "(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?" | sed "s/\// /g" | awk '{print length}' | sort -nr | head -n 1)"
         MAX_LENGTH_JAIL_VNET_IP6=${MAX_LENGTH_JAIL_VNET_IP6:-10}
         # shellcheck disable=SC2046
-        MAX_LENGTH_JAIL_VNET_IP="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet.*=" $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | sed -n "s/^ifconfig_vnet.*=\"\(.*\)\"$/\1/p"| sed "s/\// /g" | awk '{ if ($1 == "inet ") print length($2); else if ($1 == "inet6") print length($3); else print 15 }' | sort -nr | head -n 1)"
+        MAX_LENGTH_JAIL_VNET_IP="$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -l "vnet;" | grep -h "ifconfig_vnet.*=.*inet " $(sed -n "s/\(.*\)jail.conf$/\1root\/etc\/rc.conf/p") | grep -o "inet .*" | sed -e 's/"//' -e 's#/.*##g' | awk '{print length($2)}' | sort -nr | head -n 1)"
         MAX_LENGTH_JAIL_VNET_IP=${MAX_LENGTH_JAIL_VNET_IP:-10}
-        if [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_VNET_IP6}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_IP}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP}; fi
-        if [ "${MAX_LENGTH_JAIL_VNET_IP6}" -gt "${MAX_LENGTH_JAIL_VNET_IP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP6}" -gt "${MAX_LENGTH_JAIL_IP}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP6}; fi
-
+        # shellcheck disable=SC2046
+        MAX_LENGTH_JAIL_VNET_IP_DHCP="$(find ${bastille_jailsdir}/*/root/etc/rc.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 grep -lE "ifconfig_vnet.*DHCP.*" | sed -E 's|.*/([^/]+)/root/etc/rc.conf|\1|' | xargs -r -P0 -I{} jexec -l {} ifconfig -an 2>&1 | grep "^[[:space:]]*inet " | grep -v "127.0.0.1" | awk '{print $2}' | sed "s/\// /g" | awk '{print length}' | sort -nr | head -n 1)"
+        MAX_LENGTH_JAIL_VNET_IP_DHCP=${MAX_LENGTH_JAIL_VNET_IP_DHCP:-10}
+        if [ "${MAX_LENGTH_JAIL_VNET_IP_DHCP}" -gt "${MAX_LENGTH_JAIL_IP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP_DHCP}" -gt "${MAX_LENGTH_JAIL_VNET_IP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP_DHCP}" -gt "${MAX_LENGTH_JAIL_VNET_IP6}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP_DHCP}
+        elif [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_IP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_VNET_IP_DHCP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP}" -gt "${MAX_LENGTH_JAIL_VNET_IP6}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP}
+        elif [ "${MAX_LENGTH_JAIL_VNET_IP6}" -gt "${MAX_LENGTH_JAIL_IP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP6}" -gt "${MAX_LENGTH_JAIL_VNET_IP}" ] && [ "${MAX_LENGTH_JAIL_VNET_IP6}" -gt "${MAX_LENGTH_JAIL_VNET_IP_DHCP}" ]; then MAX_LENGTH_JAIL_IP=${MAX_LENGTH_JAIL_VNET_IP6}; fi
         if [ "${MAX_LENGTH_JAIL_IP}" -lt 10 ]; then MAX_LENGTH_JAIL_IP=10; fi
 
         # Set max length for jail hostname
@@ -156,17 +159,6 @@ get_jail_info() {
     # Get JID value
     JID="$(jls -j ${JAIL_NAME} jid 2>/dev/null)"
 
-    # Get jail type
-    if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
-        JAIL_TYPE="thin"
-    elif [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
-        JAIL_TYPE="clone"
-    elif [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then
-        JAIL_TYPE="linux"
-    else
-        JAIL_TYPE="thick"
-    fi
-
     # Get jail tags
     JAIL_TAGS=""
     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/tags" ]; then
@@ -182,8 +174,23 @@ get_jail_info() {
     if [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/bin/freebsd-version" ] || [ -f "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille/bin/freebsd-version" ] || [ "$(grep -c "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_FREEBSD_JAIL=1; fi
     IS_FREEBSD_JAIL=${IS_FREEBSD_JAIL:-0}
     IS_LINUX_JAIL=0
-    if [ "$(grep -c "^linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
+    if [ "$(grep -c "^linprocfs.*${bastille_jailsdir}/${JAIL_NAME}/proc.*linprocfs" "${bastille_jailsdir}/${JAIL_NAME}/fstab" 2> /dev/null)" -gt 0 ]; then IS_LINUX_JAIL=1; fi
     IS_LINUX_JAIL=${IS_LINUX_JAIL:-0}
+
+    # Get jail type
+    if grep -qw "${bastille_jailsdir}/${JAIL_NAME}/root/.bastille" "${bastille_jailsdir}/${JAIL_NAME}/fstab"; then
+        JAIL_TYPE="thin"
+    elif [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 0 ]; then
+        JAIL_TYPE="linux"
+    elif checkyesno bastille_zfs_enable; then
+        if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
+            JAIL_TYPE="clone"
+        else
+            JAIL_TYPE="thick"
+        fi
+    else
+        JAIL_TYPE="thick"
+    fi
 
     # Gather variable that depend on jail being UP or DOWN
     if [ "$(/usr/sbin/jls name | awk "/^${JAIL_NAME}$/")" ]; then
@@ -218,20 +225,19 @@ get_jail_info() {
         # Get release (FreeBSD or Linux)
         if [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
             JAIL_RELEASE=$(jexec -l ${JAIL_NAME} freebsd-version -u 2> /dev/null)
-        fi
-        if [ "${IS_LINUX_JAIL}" -eq 1 ]; then
+        elif [ "${IS_LINUX_JAIL}" -eq 1 ]; then
             JAIL_RELEASE=$(grep -hE "^NAME=.*$|^VERSION_ID=.*$|^VERSION_CODENAME=.*$" "${JAIL_PATH}/etc/os-release" 2> /dev/null | sed "s/\"//g" | sed "s/ GNU\/Linux//g" | awk -F'=' '{ a[$1] = $2; o++ } o%3 == 0 { print a["VERSION_CODENAME"] " (" a["NAME"] " " a["VERSION_ID"] ")" }')
         fi
 
     else
 
         # Set state to Down or n/a
-        JAIL_STATE=$(if [ "$(sed -n "/^${JAIL_NAME} {$/,/^}$/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | awk '$0 ~ /^'${JAIL_NAME}' \{|\}/ { printf "%s",$0 }')" = "${JAIL_NAME} {}" ]; then echo "Down"; else echo "n/a"; fi)
+        JAIL_STATE=$(if [ "$(sed -n "/^${JAIL_NAME} {$/,/^}$/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | awk '$0 ~ /^'"${JAIL_NAME}"' \{$/ || $0 ~ /^\}$/ { printf "%s", $0 }')" = "${JAIL_NAME} {}" ]; then echo "Down"; else echo "n/a"; fi)
 
         # Get info if jail is DOWN
         if [ "$(awk '$1 == "vnet;" { print $1 }' "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)" ]; then
-            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
-            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet6.*" | awk '{print $3}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
+            JAIL_IP4=$(grep -E "^ifconfig_vnet.*inet .*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -o "inet .*" | awk '{print $2}' | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
+            JAIL_IP6=$(grep -E "^ifconfig_vnet.*inet6.*" "${bastille_jailsdir}/${JAIL_NAME}/root/etc/rc.conf" 2> /dev/null | grep -Eow "(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?" | sed -E 's#/[0-9]+.*##g' | sed 's/"//g')
         else
             JAIL_IP4=$(sed -n "s/^[ ].*ip4.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
             JAIL_IP6=$(sed -n "s/^[ ].*ip6.addr[ ].*=[ ]\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null | sed -e 's#/.*##g' -e 's#.*|##g')
@@ -271,7 +277,7 @@ get_jail_info() {
     if [ "${OPT_STATE}" != "all" ] && [ "${JAIL_STATE}" != "${OPT_STATE}" ]; then
         # shellcheck disable=SC2104
         continue
-    fi 
+    fi
 
     # Add ... if JAIL_PORTS is too long
     JAIL_PORTS_FULL="${JAIL_PORTS}"
@@ -296,7 +302,7 @@ get_jail_info() {
 list_bastille(){
 
      _tmp_list=
-    
+
     get_max_lengths
     get_jail_list
 
@@ -313,13 +319,13 @@ list_bastille(){
         fi
 
         (
-        
+
         get_jail_info "${_jail}"
 
         # Get JAIL_IP count
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
 
-        # Print JAIL_IP in columns if -gt 1 
+        # Print JAIL_IP in columns if -gt 1
         if [ ${JAIL_IP_COUNT} -gt 1 ]; then
             # vnet0 has more than one IPs assigned.
             # Put each IP in its own line below the jails first address. For instance:
@@ -576,19 +582,20 @@ list_type() {
 
 # TODO: Check the correct usage or arguments here. See SC2120.
 # shellcheck disable=SC2120
-list_release(){
+list_release() {
+
     if [ -d "${bastille_releasesdir}" ]; then
         # TODO: Check if this can be changed to `find` as SC2012 suggests.
         # shellcheck disable=SC2012
-        REL_LIST="$(ls "${bastille_releasesdir}" | sed "s/\n//g")"
-        for _REL in ${REL_LIST}; do
-            if [ -f "${bastille_releasesdir}/${_REL}/root/.profile" ] || [ -d "${bastille_releasesdir}/${_REL}/debootstrap" ]; then
-                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${_REL}/bin/freebsd-version" ]; then
-                    REL_PATCH_LEVEL=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${_REL}/bin/freebsd-version" 2> /dev/null)
-                    REL_PATCH_LEVEL=${REL_PATCH_LEVEL:-${_REL}}
-                    echo "${REL_PATCH_LEVEL}"
+        release_list="$(ls -v --color=never "${bastille_releasesdir}" | sed "s/\n//g")"
+        for release in ${release_list}; do
+            if [ -f "${bastille_releasesdir}/${release}/root/.profile" ] || [ -d "${bastille_releasesdir}/${release}/debootstrap" ]; then
+                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
+                    release_patch=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
+                    release_patch=${release_patch:-${release}}
+                    echo "${release_patch}"
                 else
-                    echo "${_REL}"
+                    echo "${release}"
                 fi
             fi
         done
@@ -599,7 +606,7 @@ list_snapshot(){
     # TODO: Ability to list snapshot data for a single target.
     # List snapshots with its usage data for valid bastille jails only.
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for _JAIL in ${JAIL_LIST}; do
             if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                 info "\n[${_JAIL}]:"
@@ -615,7 +622,7 @@ list_template(){
 
 list_jail(){
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for _JAIL in ${JAIL_LIST}; do
             if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
                 echo "${_JAIL}"
@@ -634,7 +641,7 @@ list_limit(){
 
 list_import(){
     # shellcheck disable=SC2010
-    ls "${bastille_backupsdir}" | grep -v ".sha256$"
+    ls -v "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 
 bastille_root_check

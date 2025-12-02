@@ -34,7 +34,7 @@
 # because all commands load this file
 # shellcheck disable=SC1090
 . ${BASTILLE_CONFIG}
-	
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -56,7 +56,7 @@ enable_debug() {
     # Enable debug mode.
     warn "***DEBUG MODE***"
     set -x
-} 
+}
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.
@@ -64,21 +64,17 @@ if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
     enable_color
 fi
 
-# Notify message on error
-# Do not echo blank line
+# Error messages/functions
+error_notify() {
+    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+}
+
 error_continue() {
     error_notify "$@"
     # shellcheck disable=SC2104
     continue
 }
 
-# Notify message on error, but do not exit
-error_notify() {
-    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
-}
-
-# Notify message on error and exit
-# Echo blank line when exiting
 error_exit() {
     error_notify "$@"
     echo
@@ -91,54 +87,6 @@ info() {
 
 warn() {
     echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
-}
-
-# This function checks and adds any error code
-# that is not "0" to the tmp file
-bastille_check_exit_code() {
-
-    local jail="${1}"
-    local exit_code="${2}"
-    
-    # Set exit code variable
-    if [ -z "${TMP_BASTILLE_EXIT_CODE}" ]; then
-        error_exit "[ERROR]: Exit code status not set."
-    else
-        local old_exit_code="$(cat ${TMP_BASTILLE_EXIT_CODE})"
-    fi
-
-    if [ "${exit_code}" -ne 0 ]; then
-        local new_exit_code="$(( ${old_exit_code} + ${exit_code} ))"
-        echo "${new_exit_code}" > "${TMP_BASTILLE_EXIT_CODE}"
-        error_notify "[ERROR CODE]: ${exit_code}"
-    fi
-}
-
-# This needs to be the last function called
-# if used on any command
-bastille_return_exit_code() {
-
-    local exit_code="$(cat ${TMP_BASTILLE_EXIT_CODE})"
-    
-    rm -f ${TMP_BASTILLE_EXIT_CODE}
-    return "${exit_code}"
-}
-
-# Parallel mode, don't exceed process limit
-bastille_running_jobs() {
-
-  _process_limit="${1}"
-  _running_jobs=$((_running_jobs + 1))
-
-  if [ "${_running_jobs}" -ge "${_process_limit}" ]; then
-
-    # Wait for at least one process to finish
-    wait 2>/dev/null || wait
-
-    _running_jobs=$((_running_jobs - 1))
-
-  fi
-
 }
 
 check_target_exists() {
@@ -167,6 +115,16 @@ check_target_is_stopped() {
     else
         return 0
     fi
+}
+
+get_bastille_epair_count() {
+    for _config in /usr/local/etc/bastille/*.conf; do
+        local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
+        BASTILLE_EPAIR_LIST="$(printf '%s\n%s' "$( (grep -Ehos "bastille[0-9]+" ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair | grep -Eos "e[0-9]+a_bastille[0-9]+$" | grep -Eos 'bastille[0-9]+') | sort -u)" "${_epair_list}")"
+    done
+    BASTILLE_EPAIR_COUNT=$(printf '%s' "${BASTILLE_EPAIR_LIST}" | sort -u | wc -l | awk '{print $1}')
+    export BASTILLE_EPAIR_LIST
+    export BASTILLE_EPAIR_COUNT
 }
 
 get_jail_name() {
@@ -249,11 +207,11 @@ set_target() {
                 if jail_autocomplete "${_jail}" > /dev/null; then
                     _jail="$(jail_autocomplete ${_jail})"
                 elif [ $? -eq 2 ]; then
-	            if grep -Ehoqw ${_jail} ${bastille_jailsdir}/*/tags; then
+                if grep -Ehoqw ${_jail} ${bastille_jailsdir}/*/tags 2>/dev/null; then
                         _jail="$(grep -Eow ${_jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
                     else
                         error_continue "Jail not found \"${_jail}\""
-		    fi
+            fi
                 else
                     echo
                     exit 1
@@ -335,7 +293,7 @@ set_bastille_mountpoints() {
         bastille_logsdir_mountpoint="${bastille_logsdir}"
 
         # Add _altroot to *dir* if set
-        if [ "${_altroot}" != "-" ]; then  
+        if [ "${_altroot}" != "-" ]; then
             # Set *dir* to include ALTROOT
             bastille_prefix="${_altroot}${bastille_prefix}"
             bastille_backupsdir="${_altroot}${bastille_backupsdir}"
@@ -343,7 +301,7 @@ set_bastille_mountpoints() {
             bastille_jailsdir="${_altroot}${bastille_jailsdir}"
             bastille_releasesdir="${_altroot}${bastille_releasesdir}"
             bastille_templatesdir="${_altroot}${bastille_templatesdir}"
-            bastille_logsdir="${_altroot}${bastille_logsdir}" 
+            bastille_logsdir="${_altroot}${bastille_logsdir}"
         fi
     fi
 }
@@ -397,50 +355,54 @@ generate_static_mac() {
 generate_vnet_jail_netblock() {
 
     local jail_name="${1}"
-    local use_unique_bridge="${2}"
+    # interface_type can be "standard" "bridge" or "passthrough"
+    local interface_type="${2}"
     local external_interface="${3}"
     local static_mac="${4}"
 
+    # Set epair/interface values for host/jail
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-        if [ -n "${use_unique_bridge}" ]; then
+        if [ "${interface_type}" = "bridge" ]; then
             if [ "$(echo -n "e0a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                 local host_epair=e0a_${jail_name}
                 local jail_epair=e0b_${jail_name}
             else
-	        name_prefix="$(echo ${jail_name} | cut -c1-7)"
-	        name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-	        local host_epair="e0a_${name_prefix}xx${name_suffix}"
-                local jail_epair="e0b_${name_prefix}xx${name_suffix}"
+                get_bastille_epair_count
+                local epair_num=1
+                while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                    epair_num=$((epair_num + 1))
+                done
+                local host_epair="e0a_bastille${epair_num}"
+                local jail_epair="e0b_bastille${epair_num}"
             fi
-        else
+        elif [ "${interface_type}" = "standard" ]; then
             if [ "$(echo -n "e0a_${jail_name}" | awk '{print length}')" -lt 16 ]; then
                 local host_epair=e0a_${jail_name}
                 local jail_epair=e0b_${jail_name}
-	        local jib_epair=${jail_name}
+                local jib_epair=${jail_name}
             else
-	        name_prefix="$(echo ${jail_name} | cut -c1-7)"
-	        name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-	        local host_epair="e0a_${name_prefix}xx${name_suffix}"
-                local jail_epair="e0b_${name_prefix}xx${name_suffix}"
-                local jib_epair="${name_prefix}xx${name_suffix}"
-	    fi
+                get_bastille_epair_count
+                local epair_num=1
+                while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                    epair_num=$((epair_num + 1))
+                done
+                local host_epair="e0a_bastille${epair_num}"
+                local jail_epair="e0b_bastille${epair_num}"
+                local jib_epair="bastille${epair_num}"
+            fi
+        elif [ "${interface_type}" = "passthrough" ]; then
+            host_epair="${external_interface}"
+            jail_epair="${external_interface}"
         fi
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-        if [ "$(echo -n "ng0_${jail_name}" | awk '{print length}')" -lt 16 ]; then
-            local ng_if=ng0_${jail_name}
-	    local jng_if=${jail_name}
-        else
-	    name_prefix="$(echo ${jail_name} | cut -c1-7)"
-	    name_suffix="$(echo ${jail_name} | rev | cut -c1-2 | rev)"
-	    local ng_if="ng0_${name_prefix}xx${name_suffix}"
-            local jng_if="${name_prefix}xx${name_suffix}"
-        fi
+        local ng_if=ng0_${jail_name}
+        local jng_if=${jail_name}
     fi
 
-    ## If BRIDGE is enabled, generate bridge config, else generate VNET config
-    if [ -n "${use_unique_bridge}" ]; then
-        if [ -n "${static_mac}" ]; then
-            ## Generate bridged VNET config with static MAC address
+    # VNET_JAIL_BRIDGE
+    if [ "${interface_type}" = "bridge" ]; then
+        if [ "${static_mac}" -eq 1 ]; then
+            # Generate BRIDGE config with static MAC address
             generate_static_mac "${jail_name}" "${external_interface}"
             cat <<-EOF
   vnet;
@@ -453,7 +415,7 @@ generate_vnet_jail_netblock() {
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
         else
-            ## Generate bridged VNET config without static MAC address
+            # Generate BRIDGE config without static MAC address
             cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
@@ -463,10 +425,12 @@ EOF
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
         fi
-    else
+
+    # VNET_JAIL_STANDARD
+    elif [ "${interface_type}" = "standard" ]; then
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-            if [ -n "${static_mac}" ]; then
-                ## Generate VNET config with static MAC address
+            if [ "${static_mac}" -eq 1 ]; then
+                # Generate VNET config with static MAC address
                 generate_static_mac "${jail_name}" "${external_interface}"
                 cat <<-EOF
   vnet;
@@ -478,7 +442,7 @@ EOF
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
             else
-                ## Generate VNET config without static MAC address
+                # Generate VNET config without static MAC address
                 cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
@@ -488,8 +452,8 @@ EOF
 EOF
             fi
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-            if [ -n "${static_mac}" ]; then
-                ## Generate VNET config with static MAC address
+            if [ "${static_mac}" -eq 1 ]; then
+                # Generate VNET config with static MAC address
                 generate_static_mac "${jail_name}" "${external_interface}"
                 cat <<-EOF
   vnet;
@@ -499,7 +463,7 @@ EOF
   exec.poststop += "jng shutdown ${jng_if}";
 EOF
             else
-                ## Generate VNET config without static MAC address
+                # Generate VNET config without static MAC address
                 cat <<-EOF
   vnet;
   vnet.interface = ${ng_if};
@@ -508,6 +472,14 @@ EOF
 EOF
             fi
         fi
+
+    # VNET_JAIL_PASSTHROUGH
+    elif [ "${interface_type}" = "passthrough" ]; then
+        cat <<-EOF
+  vnet;
+  vnet.interface = ${external_interface};
+  exec.prestop += "ifconfig ${external_interface} -vnet ${jail_name}";
+EOF
     fi
 }
 
@@ -560,14 +532,22 @@ update_jail_syntax_v1() {
     # Only apply if old syntax is found
     if grep -Eoq "exec.prestart.*ifconfig epair[0-9]+ create.*" "${jail_config}"; then
 
+        warn "\n[WARNING]\n"
+        warn "Updating jail.conf file..."
+        warn "Please review your jail.conf file after completion."
+        warn "VNET jails created without -M will be assigned a new MAC address."
+
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
         else
-	    name_prefix="$(echo ${jail} | cut -c1-7)"
-	    name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
-	    local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
-            local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
+            get_bastille_epair_count
+            local epair_num=1
+            while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                epair_num=$((epair_num + 1))
+            done
+            local new_host_epair="e0a_bastille${epair_num}"
+            local new_jail_epair="e0b_bastille${epair_num}"
         fi
 
         # Delete unneeded lines
@@ -588,6 +568,11 @@ update_jail_syntax_v1() {
 
     elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
 
+        warn "\n[WARNING]\n"
+        warn "Updating jail.conf file..."
+        warn "Please review your jail.conf file after completion."
+        warn "VNET jails created without -M will be assigned a new MAC address."
+
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
 
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
@@ -595,11 +580,14 @@ update_jail_syntax_v1() {
             local new_jail_epair=e0b_${jail}
             local jib_epair="${jail}"
         else
-	    name_prefix="$(echo ${jail} | cut -c1-7)"
-	    name_suffix="$(echo ${jail} | rev | cut -c1-2 | rev)"
-	    local new_host_epair="e0a_${name_prefix}xx${name_suffix}"
-            local new_jail_epair="e0b_${name_prefix}xx${name_suffix}"
-            local jib_epair="${name_prefix}xx${name_suffix}"
+            get_bastille_epair_count
+            local epair_num=1
+            while echo "${BASTILLE_EPAIR_LIST}" | grep -oq "bastille${epair_num}"; do
+                epair_num=$((epair_num + 1))
+            done
+            local new_host_epair="e0a_bastille${epair_num}"
+            local new_jail_epair="e0b_bastille${epair_num}"
+            local jib_epair="bastille${epair_num}"
         fi
 
         # Change jail.conf

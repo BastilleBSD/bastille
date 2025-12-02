@@ -1,42 +1,92 @@
 Networking
 ==========
 
-Host Network Configuration
---------------------------
+Bastille is very flexible with its networking options. Below are the supported
+networking modes, how they work, and some tips on where you might want to use
+each one.
 
-Bastille will automatically add and remove IP addresses to specified interfaces
-as jails are started and stopped. Below is an outline of how Bastille handles
-different types of jail network configurations.
+Bastille also supports VLANs to some extent. See the VLAN section below.
 
-* VNET mode: For VNET jails (``-V``) Bastille will create a bridge
+Jail Network Modes
+------------------
+
+Bastille tries to be flexible in the different network modes it supports. Below
+is a breakdown of each network mode, what each one does, as well as some
+suggestions as to where you might want to use each one.
+
+VNET
+^^^^
+
+* For VNET jails (``-V``) Bastille will create a bridge
   interface and attach your jail to it. It will be called ``em0bridge`` or
   whatever your interface is called. This will be used for the host/jail epairs.
   Bastille will create/destroy these epairs as the jail is started/stopped.
 
-* Bridged VNET mode: For bridged VNET jails (``-B``) you must manually create a
+* This mode works best if you want your jail to be in your local network, acting
+  as a physical device with its own MAC address and IP.
+
+Bridged VNET
+^^^^^^^^^^^^
+
+* For bridged VNET jails (``-B``) you must manually create a
   bridge interface to attach your jail to. Bastille will then create and attach
   the host/jail epairs to this interface when the jail starts, and remove them\
   when it stops.
 
-* Alias mode: For classic/standard jails that use an IP that is accessible
+* This mode is identical to `VNET` above, with one exception. The interface it
+  is attached to is a manually created bridge, as opposed to a regular interface
+  that is used with `VNET` above.
+
+Alias/Shared Interface
+^^^^^^^^^^^^^^^^^^^^^^
+
+* For classic/standard jails that use an IP that is accessible
   within your local subnet (alias mode) Bastille will add the IP to the
   specified interface as an alias.
 
-* NAT mode: For classic/standard jails that use an IP not reachable in your local
+* This mode is best used if you have one interface, and don't want the jail to
+  have its own MAC address. The jail IP will simply be added to the specified
+  interface as an additional IP, and will inherit the rest of the interface.
+
+* Note that this mode does not function as the two `VNET` modes above, but still
+  allows the jail to have an IP address inside your local network.
+
+NAT/Loopback Interface
+^^^^^^^^^^^^^^^^^^^^^^
+
+* For classic/standard jails that use an IP not reachable in your local
   subnet, Bastille will add the IP to the specified interface as an alias, and
   additionally, add it to the pf firewall table (if available) to allow the jail
   outbound access. If you do not specify an interface, Bastille will assume you
   have run the ``bastille setup`` command and will attempt to use ``bastille0``
-  (which is created using the setup command) as its interface. If you have not run
-  ``bastille setup`` and do not specify an interface, Bastille will error.
+  (which is created using the setup command) as its interface. If you have not
+  run ``bastille setup`` and do not specify an interface, Bastille will error.
 
-* Inherit mode: For classic/standard jails that are set to ``inherit`` or
+* This mode works best if you want your jail to be in its own private network.
+  Bastille will dynamically add each jail IP to the firewall table to ensure
+  network connectivity.
+
+* This mode is similar to the Alias/Shared Interface mode, except that it is not
+  limited to IP addresses within your local network.
+
+Inherit
+^^^^^^^
+
+* For classic/standard jails that are set to ``inherit`` or
   ``ip_hostname``, bastille will simply set ``ip4`` to ``inherit`` inside the
   jail config. The jail will then function according the jail(8) documentation.
 
-* ip_hostname mode: For classic/standard jails that are set to ``ip_hostname``,
+* This mode makes the jail inherit the entire network stack of the host.
+
+IP Hostname
+^^^^^^^^^^^
+
+* For classic/standard jails that are set to ``ip_hostname``,
   bastille will simply set ``ip4`` to ``ip_hostname`` inside the jail config.
   The jail will then function according the jail(8) documentation.
+
+* This is an advanced parameter. See the official FreeBSD jail(8) documentation
+  for details.
 
 You cannot use ``-V|--vnet`` with any interface that is already a member of
 another bridge. For example, if you create a bridge, and assign ``vtnet0`` as a
@@ -45,7 +95,10 @@ member, you will not be able to use ``vtnet0`` with ``-V|--vnet``.
 IP Address Options
 ------------------
 
-Bastille includes a number of IP options.
+IPv4 Network
+^^^^^^^^^^^^
+
+Bastille includes a number of IP options for IPv4 networking.
 
 .. code-block:: shell
 
@@ -54,18 +107,18 @@ Bastille includes a number of IP options.
 The IP address specified above can be any of the following options.
 
 * An IP in your local subnet should be chosen if you create your jail using
-  ``-V`` or ``-B`` (VNET jail). It is also preferable to add the subnet mask
-  (/24 or whaterver your subnet is) to the IP.
+  ``-V``, ``-B`` or ``-P`` (VNET jail). It is also preferable to add the
+  subnet mask (/24 or whaterver your subnet is) to the IP.
 
 * DHCP, SYNCDHCP, or 0.0.0.0 will configure your jail to use DHCP to obtain an
-  address from your router. This should only be used with ``-V`` and ``-B``.
+  address from your router. This should only be used with VNET jails.
 
 * Any IP address inside the RFC1918 range if you are not using a VNET jail.
   Bastille will automatically add this IP to the firewall table to allow
   outbound access. It you want traffic to be forwarded into the jail, you can
   use the ``bastille rdr`` command.
 
-* Any IP in your local subnet without the ``-V`` or ``-B`` options will add the
+* Any IP in your local subnet without any VNET options will add the
   IP as an alias to the selected interface, which will simply end up sharing the
   interface. If the IP is in your local subnet, you will not need the ``bastille
   rdr`` command. Traffic will pass in and out just as in a VNET jail.
@@ -81,19 +134,78 @@ Note that jails support specifying an IP without the subnet (/24 or whatever
 yours is) but we highly recommend setting it, especially on VNET jails. Not
 doing so can cause issues in some rare cases.
 
+IPv6 Network
+^^^^^^^^^^^^
+
 Bastille also supports IPv6. Instead of an IPv4 address, you can specify an
-IPv6 address when creating a jail to use IPv6. It is also possible to use both
-by quoting an IPv4 and IPv6 address together as seen in the following example.
+IPv6 address when creating a jail to use IPv6.
 
 .. code-block:: shell
 
-  bastille create alcatraz 13.2-RELEASE "192.168.1.50/24 2001:19f0:6c01:114c:0:100/64" vtnet0
+  bastille create alcatraz 13.2-RELEASE 2001:19f0:6c01:114c:0:100/64 vtnet0
 
-For the ``inherit`` and ``ip_hostname`` options, you can also specify
-``-D|--dual`` to use both IPv4 and IPv6 inside the jail.
+The IP address specified above can be any of the following options.
 
-Shared Interface
-----------------
+* A valid IPv6 address including the subnet.
+
+* SLAAC will configure your jail to use router advertisement to obtain an
+  address from your router. This should only be used with VNET jails.
+
+Dual Stack Network
+^^^^^^^^^^^^^^^^^^
+
+It is also possible to use both IPv4 and IPv6 by quoting an IPv4 and IPv6 addresses together
+as seen in the following examples.
+
+.. code-block:: shell
+
+  bastille create alcatraz 14.3-RELEASE "192.168.1.50/24 2001:19f0:6c01:114c:0:100/64" vtnet0
+
+.. code-block:: shell
+
+  bastille create alcatraz 14.3-RELEASE "DHCP SLAAC" vtnet0
+
+Note: For the ``inherit`` and ``ip_hostname`` options, you can also specify
+``-D|--dual`` to use both IPv4 and IPv6 inside the jail. Otherwise, for dual
+stack networking, simply supply both IPv4 and IPv6 addresses as seen above.
+
+Networking Limitations
+----------------------
+
+VNET Jail Interface Names
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* FreeBSD has certain limitations when it comes to interface names. One
+  of these is that interface names cannot be longer than 15 characters.
+  Because of this, Bastille uses a generic name for any epairs created
+  whose corresponding jail name exceeds the maximum length. See below...
+
+  ``e0a_jailname`` and ``e0b_jailname`` are the default epair interfaces for every
+  jail. The ``e0a`` side is on the host, while the ``e0b`` is in the jail. Due
+  to the above mentioned limitations, Bastille will name any epairs whose
+  jail names exceed the maximum length, to ``e0b_bastilleX`` and ``e0b_bastilleX``
+  with the ``X`` starting at ``1`` and incrementing by 1 for each new epair.
+  So, ``mylongjailname`` will be ``e0a_bastille2`` and ``e0b_bastille2``.
+
+Netgraph and Proxmox VE
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* When running a FreeBSD VM on Proxmox VE, you might encounter crashes when using
+  Netraph. This bug is being tracked at
+  https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=238326
+
+  One workaround is to add the following line to the ``jail.conf`` file of the affected
+  jail(s).
+
+.. code-block:: shell
+
+  exec.prestop += "jng shutdown JAILNAME";
+
+Network Scenarios
+-----------------
+
+SOHO (Small Office/Home Office)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This scenario works best when you have just one computer, or a home or small
 office network that is separated from the rest of the internet by a router. So
@@ -102,7 +214,7 @@ you are free to use
 <https://www.lifewire.com/what-is-a-private-ip-address-2625970>`_.
 
 In this environment, we can create the container, give it a
-unique private ip address within our local subnet, and attach 
+unique private ip address within our local subnet, and attach
 its ip address to our primary interface.
 
 .. code-block:: shell
@@ -159,7 +271,7 @@ Your server was assigned the following six section subnet:
 
 The `vultr ipv6 subnet calculator
 <https://www.vultr.com/resources/subnet-calculator-ipv6/?prefix_length=64&display=long&ipv6_address=2001%3Adb8%3Aacad%3Ae%3A%3A%2F64>`_
-is helpful in making sense of that ipv6 address. 
+is helpful in making sense of that ipv6 address.
 
 We could have also written that IPV6 address as 2001:19f0:6c01:114c:0:0
 
@@ -182,8 +294,8 @@ Just remember you cannot ping out from the container. Instead, install and
 use ``wget/curl/fetch`` to test the connectivity.
 
 
-Virtual Network (VNET)
-----------------------
+VNET (Virtual Network)
+^^^^^^^^^^^^^^^^^^^^^^
 
 (Added in 0.6.x) VNET is supported on FreeBSD 12+ only.
 
@@ -251,8 +363,8 @@ Below is the definition of what these three parameters are used for and mean:
        net.link.bridge.pfil_bridge  Set	to 1 to	enable filtering on the	bridge
 				    interface, set to 0	to disable it.
 
-Bridged Network (VNET bridged)
-------------------------------
+Bridged VNET (Virtual Network)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To create a VNET based container and attach it to an external, already existing
 bridge, use the ``-B`` option, an IP/netmask and external bridge.
@@ -311,21 +423,29 @@ on your system is.
 VLAN Configuration
 ------------------
 
+Jail VLAN Tagging
+^^^^^^^^^^^^^^^^^
+
 Bastille supports VLANs to some extent when creating jails. When creating a jail,
 use the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set
 the proper variables inside the jails `rc.conf` to add the jail to the specified
-VLAN. When using this method, the interface being assigned must carry tagged VLAN
-packets, e.g. you can bridge a VLAN trunk to the jail and in the jail you then can
-access all VLANs. But be careful: This may have security implications.
+VLAN. The jail will then take care of tagging the traffic. Do not use ``-v|--vlan``
+if you have already configured the host interface to tag the traffic. See limitations
+below.
 
-You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
-name, which is the standard way of naming a VLAN interface. This is due to the
-limitations of the JIB script that Bastille uses to manage VNET jails.
+When using this method, the interface being assigned must be a trunk interface.
+This means that it passes all traffic, leaving any VLAN tags as they are.
 
-You can however use ``-B|--bridge`` with VLAN interfaces (even with dots in the
-name). Using this method you create bridge interfaces in ``rc.conf`` and only
-add VLANs that are needed for the jail. The jail only has access to these VLANs
-and not to the whole trunk.
+Host VLAN Tagging
+^^^^^^^^^^^^^^^^^
+
+Another method is to configure a host interface to tag the traffic. This way, the
+jail doesn't have to worry about it.
+
+You can only use ``-B|--bridge`` with host VLAN interfaces, due to the limitation
+mentioned below. With this method we create the bridge interfaces in ``rc.conf``
+and configure them to tag the traffic by VLAD ID.
+
 Below is an ``rc.conf`` snippet that was provided by a user who has such a
 configuration.
 
@@ -355,6 +475,20 @@ configuration.
 
 Notice that the interfaces are bridge interfaces, and can be used with ``-B|--bridge``
 without issue.
+
+VLAN Limitations
+^^^^^^^^^^^^^^^^
+
+* You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
+  name, which is the standard way of naming a VLAN interface. This is due to the
+  limitations of the JIB script that Bastille uses to manage VNET jails.
+
+* Do not attempt to configure both the host and the jail to tag VLAN traffic.
+  If you use the host method, do not use ``-v|--vlan`` when creating the jail.
+  Doing so will prevent the jail from having network access.
+
+Tip: Don't forget to set you gateway and nameserver is applicable
+using ``-g|--gateway`` and ``-n|--nameserver``.
 
 Regarding Routes
 ----------------
@@ -469,7 +603,7 @@ Create the firewall rules:
   block in all
   pass out quick keep state
   antispoof for $ext_if inet
-  pass in inet proto tcp from any to any port ssh flags S/SA modulate state
+  pass in proto tcp from any to any port ssh flags S/SA modulate state
 
 - Make sure to change the ``ext_if`` variable to match your host system
 interface.

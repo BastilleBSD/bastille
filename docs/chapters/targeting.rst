@@ -2,21 +2,20 @@ Targeting
 =========
 
 Bastille uses a ``subcommand TARGET ARGS`` syntax, meaning that each command
-requires a target. Targets are usually containers, but can also be releases.
+requires a target. Targets are usually jails, but can also be releases.
 
-Targeting a container is done by providing the exact jail name, the JID of the
-jail, a tag, or by typing the starting few characters of a jail. If more than one
-matching jail is found, you will see an error saying so.
+Targeting a jail is done by providing the exact jail name, the JID of the
+jail, a tag, or by typing the starting few characters of a jail.
 
-If you use a tag as the TARGET, Bastille will target any and all jail(s) that have
-the tag assigned. If you have a jail with the same name as the tag you are trying to
+If you use a tag as the TARGET, Bastille will target any and all jails that have
+that tag assigned. If you have a jail with the same name as the tag you are trying to
 target, Bastille will target the jail, and not the tag.
 
 Targeting a release is done by providing the exact release name. (Note: do not
 include the ``-pX`` point-release version.)
 
-Bastille includes a pre-defined keyword [ALL|all] to target all running
-containers. It is also possible to target multiple jails by grouping them in
+Bastille includes a pre-defined keyword of [ALL|all] to target all running
+jails. It is also possible to target multiple jails by grouping them in
 quotes, as seen below.
 
 .. code-block:: shell
@@ -27,7 +26,7 @@ Priority
 --------
 
 The priority value determines in what order commands are executed if multiple
-jails are targetted, including the ALL target.
+jails are targetted, including the [ALL|all] target.
 
 It also controls in what order jails are started and stopped on system startup
 and shutdown. This requires Bastille to be enabled with ``sysrc bastille_enable=YES``.
@@ -43,21 +42,8 @@ This value can be changed using ``bastille config TARGET set priority VALUE``.
 
 This value will be shown using ``bastille list all``.
 
-Parallel Mode
--------------
-
-Any command that supports multiple targets, also supports parallel mode. This
-means that Bastille will run the command on multiple jails at a single time,
-depending on the value given.
-
-To use parallel mode, run ``bastille -p 4 pkg ALL update``, for example, to start
-updating packages in all jails, 4 processes at a time.
-
-Note that the ``-p`` option should follow the main ``bastille`` command, and not
-the sub-command.
-
-Examples: Containers
---------------------
+Examples: Jails
+---------------
 
 .. code-block:: shell
 
@@ -66,25 +52,25 @@ Examples: Containers
 +-----------+--------+------------------+-------------------------------------------------------------+
 | command   | target | args             | description                                                 |
 +===========+========+==================+=============================================================+
-| cmd       | ALL    | 'sockstat -4'    | execute `sockstat -4` in ALL containers (ip4 sockets)       |
+| cmd       | ALL    | 'sockstat -4'    | execute `sockstat -4` in ALL jails (ip4 sockets)            |
 +-----------+--------+-----+------------+-------------------------------------------------------------+
 | console   | mariadb02    | ---        | console (shell) access to mariadb02                         |
 +----+------+--------+-----+------------+-------------------------------------------------------------+
-| pkg       | web01  | 'install nginx'  | install nginx package in web01 container                    |
+| pkg       | web01  | 'install nginx'  | install nginx package in web01 jail                         |
 +-----------+--------+------------------+-------------------------------------------------------------+
-| pkg       | ALL    | upgrade          | upgrade packages in ALL containers                          |
+| pkg       | ALL    | upgrade          | upgrade packages in ALL jails                               |
 +-----------+--------+------------------+-------------------------------------------------------------+
-| pkg       | ALL    | audit            | (CVE) audit packages in ALL containers                      |
+| pkg       | ALL    | audit            | (CVE) audit packages in ALL jails                           |
 +-----------+--------+------------------+-------------------------------------------------------------+
-| sysrc     | web01  | nginx_enable=YES | execute `sysrc nginx_enable=YES` in web01 container         |
+| sysrc     | web01  | nginx_enable=YES | execute `sysrc nginx_enable=YES` in web01 jail              |
 +-----------+--------+------------------+-------------------------------------------------------------+
-| template  | ALL    | username/base    | apply `username/base` template to ALL containers            |
+| template  | ALL    | username/base    | apply `username/base` template to ALL jails                 |
 +-----------+--------+------------------+-------------------------------------------------------------+
-| start     | web02  | ---              | start web02 container                                       |
+| start     | web02  | ---              | start web02 jail                                            |
 +----+------+----+---+------------------+--------------+----------------------------------------------+
-| cp | bastion03 | /tmp/resolv.conf-cf etc/resolv.conf | copy host-path to container-path in bastion03|
+| cp | bastion03 | /tmp/resolv.conf-cf etc/resolv.conf | copy host-path to jail-path in bastion03     |
 +----+------+----+---+---------------------------------+----------------------------------------------+
-| create    | folsom | 13.2-RELEASE 10.17.89.10        | create 13.2 container named `folsom` with IP |
+| create    | folsom | 13.2-RELEASE 10.17.89.10        | create 13.2 jail named `folsom` with IP      |
 +-----------+--------+---------------------------------+----------------------------------------------+
 
 

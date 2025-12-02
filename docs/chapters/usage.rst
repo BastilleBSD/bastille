@@ -36,7 +36,7 @@ Usage
     rcp         cp(1) files from a jail to host.
     rdr         Redirect host port to jail port.
     rename      Rename a jail.
-    restart     Restart a running jail.
+    restart     Restart a jail.
     service     Manage services within targeted jail(s).
     setup       Attempt to auto-configure network, firewall and storage and more...
     start       Start a stopped jail.
@@ -54,4 +54,3 @@ Usage
   Use "bastille -v|--version" for version information.
   Use "bastille command -h|--help" for more information about a command.
   Use "bastille -c|--config config.conf command" to specify a non-default config file.
-  Use "bastille -p|--parallel VALUE command" to run bastille in parallel mode.

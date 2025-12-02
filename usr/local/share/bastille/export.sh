@@ -39,18 +39,20 @@ usage() {
     # If no compression option specified, user must redirect standard output
     error_notify "Usage: bastille export [option(s)] TARGET PATH"
     cat << EOF
-	
+
     Options:
 
-    -a | --auto             Auto mode. Start/stop jail(s) if required.
-         --gz               Export a ZFS jail using GZIP(.gz) compressed image.
-    -r | --raw              Export a ZFS jail to an uncompressed RAW image.
-    -s | --safe             Safely stop and start a ZFS jail before the exporting process.
-         --tgz              Export a jail using simple .tgz compressed archive instead.
-         --txz              Export a jail using simple .txz compressed archive instead.
-    -v | --verbose          Be more verbose during the ZFS send operation.
-         --xz               Export a ZFS jail using XZ(.xz) compressed image.
-    -x | --debug            Enable debug mode.
+    -a | --auto        Auto mode. Start/stop jail(s) if required.
+    -l | --live        Export a running jail (ZFS only).
+         --gz          Export to '.gz' compressed image (ZFS only).
+         --xz          Export to a '.xz' compressed image (ZFS only).
+         --zst         Export to a .zst compressed image (ZFS only).
+         --raw         Export to an uncompressed RAW image (ZFS only).
+         --tgz         Export to a '.tgz' compressed archive.
+         --txz         Export to a '.txz' compressed archive.
+         --tzst        Export to a '.tzst' compressed archive.
+    -v | --verbose     Enable verbose mode (ZFS only).
+    -x | --debug       Enable debug mode.
 
 Note: If no export option specified, the jail should be redirected to standard output.
 
@@ -72,17 +74,18 @@ opt_count() {
 
 # Reset export options
 AUTO=0
-GZIP_EXPORT=
-XZ_EXPORT=
-SAFE_EXPORT=
-USER_EXPORT=
-RAW_EXPORT=
-DIR_EXPORT=
-TXZ_EXPORT=
-TGZ_EXPORT=
+LIVE=0
+GZIP_EXPORT=0
+XZ_EXPORT=0
+ZST_EXPORT=0
+RAW_EXPORT=0
 OPT_ZSEND="-R"
-COMP_OPTION="0"
-
+TXZ_EXPORT=0
+TGZ_EXPORT=0
+TZST_EXPORT=0
+USER_EXPORT=0
+DIR_EXPORT=""
+COMP_OPTION=0
 if [ -n "${bastille_export_options}" ]; then
     # Overrides the case options by the user defined option(s) automatically.
     # Add bastille_export_options="--optionA --optionB" to bastille.conf, or simply `export bastille_export_options="--optionA --optionB"` environment variable.
@@ -99,12 +102,23 @@ if [ -n "${bastille_export_options}" ]; then
             -a|--auto)
                 AUTO="1"
                 ;;
+            -l|--live)
+                LIVE="1"
+                ;;
             --gz)
                 GZIP_EXPORT="1"
                 opt_count
                 ;;
             --xz)
                 XZ_EXPORT="1"
+                opt_count
+                ;;
+            --zst)
+                ZST_EXPORT="1"
+                opt_count
+                ;;
+            -r|--raw)
+                RAW_EXPORT="1"
                 opt_count
                 ;;
             --tgz)
@@ -117,21 +131,21 @@ if [ -n "${bastille_export_options}" ]; then
                 opt_count
                 zfs_enable_check
                 ;;
-            -s|--safe)
-                SAFE_EXPORT="1"
-                ;;
-            -r|--raw)
-                RAW_EXPORT="1"
+            --tzst)
+                TZST_EXPORT="1"
                 opt_count
+                zfs_enable_check
                 ;;
             -v|--verbose)
                 OPT_ZSEND="-Rv"
                 ;;
             -x)
-               enable_debug
-               ;;
-            -*) error_notify "[ERROR]: Unknown Option: \"${1}\""
-                usage;;
+                enable_debug
+                ;;
+            -*) 
+                error_notify "[ERROR]: Unknown Option: \"${1}\""
+                usage
+                ;;
         esac
     done
 
@@ -147,6 +161,10 @@ else
                 AUTO=1
                 shift
                 ;;
+            -l|--live)
+                LIVE="1"
+                shift
+                ;;
             --gz)
                 GZIP_EXPORT="1"
                 opt_count
@@ -154,6 +172,16 @@ else
                 ;;
             --xz)
                 XZ_EXPORT="1"
+                opt_count
+                shift
+                ;;
+            --zst)
+                ZST_EXPORT="1"
+                opt_count
+                shift
+                ;;
+            -r|--raw)
+                RAW_EXPORT="1"
                 opt_count
                 shift
                 ;;
@@ -169,13 +197,10 @@ else
                 zfs_enable_check
                 shift
                 ;;
-            -s|--safe)
-                SAFE_EXPORT="1"
-                shift
-                ;;
-            -r|--raw)
-                RAW_EXPORT="1"
+            --tzst)
+                TZST_EXPORT="1"
                 opt_count
+                zfs_enable_check
                 shift
                 ;;
             -v|--verbose)
@@ -183,13 +208,14 @@ else
                 shift
                 ;;
             -x)
-               enable_debug
-               shift
-               ;;
+                enable_debug
+                shift
+                ;;
             -*)
                 for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                     case ${_opt} in
                         a) AUTO=1 ;;
+                        l) LIVE=1 ;;
                         x) enable_debug ;;
                         *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                     esac
@@ -203,12 +229,11 @@ else
     done
 fi
 
-if [ $# -gt 2 ] || [ $# -lt 1 ]; then
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
     usage
 fi
 
 TARGET="${1}"
-
 # Check for directory export
 if echo "${2}" | grep -q "\/"; then
     DIR_EXPORT="${2}"
@@ -217,39 +242,30 @@ fi
 bastille_root_check
 set_target_single "${TARGET}"
 
-# Validate for combined options
+# Only allow a single compression option
 if [ "${COMP_OPTION}" -gt "1" ]; then
     error_exit "[ERROR]: Only one compression format can be used during export."
 fi
 
-if { [ -n "${TXZ_EXPORT}" ] || [ -n "${TGZ_EXPORT}" ]; } && [ -n "${SAFE_EXPORT}" ]; then
-    error_exit "[ERROR]: Simple archive modes with safe ZFS export can't be used together."
+# Validate AUTO and LIVE
+if [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
+    error_exit "[ERROR]: [-a|--auto] cannot be used with [-l|--live]."
 fi
 
+# Don't allow LIVE with T*_EXPORT
+if { [ "${TXZ_EXPORT}" -eq 1 ] || [ "${TGZ_EXPORT}" -eq 1 ] || [ "${TZST_EXPORT}" -eq 1 ]; } && [ "${LIVE}" -eq 1 ]; then
+    error_exit "[ERROR]: [-l|--live] cannot be used with simple archive modes."
+fi
+
+# Don't allow ZFS specific options if not enabled
 if ! checkyesno bastille_zfs_enable; then
-    if [ -n "${XZ_EXPORT}" ] ||
-       [ -n "${GZIP_EXPORT}" ] ||
-       [ -n "${RAW_EXPORT}" ] ||
-       [ -n "${SAFE_EXPORT}" ] ||
+    if [ "${XZ_EXPORT}" -eq 1 ] ||
+       [ "${GZIP_EXPORT}" -eq 1 ] ||
+       [ "${RAW_EXPORT}" -eq 1 ] ||
+       [ "${LIVE}" -eq 1 ] ||
+       [ "${ZST_EXPORT}" -eq 1 ] ||
        [ "${OPT_ZSEND}" = "-Rv" ]; then
-        error_exit "[ERROR]: Options --xz, --gz, --raw, --safe, and --verbose are valid for ZFS configured systems only."
-    fi
-fi
-
-if [ -n "${SAFE_EXPORT}" ]; then
-    # Check if container is running, otherwise just ignore
-    if [ -z "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-        SAFE_EXPORT=
-    fi
-fi
-
-# Export directory check
-if [ -n "${DIR_EXPORT}" ]; then
-    if [ -d "${DIR_EXPORT}" ]; then
-        # Set the user defined export directory
-        bastille_backupsdir="${DIR_EXPORT}"
-    else
-        error_exit "[ERROR]: Path not found."
+        error_exit "[ERROR]: Options --xz, --gz, --raw, -l|--live, --zst and --verbose are only valid for ZFS configured systems."
     fi
 fi
 
@@ -260,10 +276,50 @@ fi
 if [ -z "${bastille_compress_gz_options}" ]; then
     bastille_compress_gz_options="-1 -v"
 fi
+if [ -z "${bastille_compress_zst_options}" ]; then
+    bastille_compress_zst_options="-3 -v"
+fi
+
+# Export directory check
+if [ -n "${DIR_EXPORT}" ]; then
+    if [ -d "${DIR_EXPORT}" ]; then
+        # Set the user defined export directory
+        bastille_backupsdir="${DIR_EXPORT}"
+    else
+        error_exit "[ERROR]: Path not found."
+    fi
+elif [ ! -d "${bastille_backupsdir}" ]; then
+    error_exit "[ERROR]: Backups directory/dataset does not exist. See 'bastille bootstrap'."
+fi
+
+# Validate jail state
+if checkyesno bastille_zfs_enable; then
+    if [ "${LIVE}" -eq 1 ]; then
+        if ! check_target_is_running "${TARGET}"; then
+            error_exit "[ERROR]: [-l|--live] can only be used with a running jail."
+        fi
+    elif check_target_is_running "${TARGET}"; then
+        if [ "${AUTO}" -eq 1 ]; then
+            bastille stop "${TARGET}"
+        else
+            info "\n[${TARGET}]:"
+            error_notify "[ERROR]: Jail is running."
+            error_exit "Use [-a|--auto] to auto-stop the jail, or [-l|--live] (ZFS only) to migrate a running jail."
+        fi
+        fi
+else
+    check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${TARGET}"
+    else
+        info "\n[${TARGET}]:"
+        error_notify "Jail is running."
+        error_exit "Use [-a|--auto] to auto-stop the jail."
+    fi
+fi
 
 create_zfs_snap() {
     # Take a recursive temporary snapshot
-    if [ -z "${USER_EXPORT}" ]; then
+    if [ "${USER_EXPORT}" -eq 0 ]; then
         info "\nCreating temporary ZFS snapshot for export..."
     fi
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"
@@ -275,20 +331,21 @@ clean_zfs_snap() {
     zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"
 }
 
-export_check() { 
+export_check() {
+
     # Inform the user about the exporting method
-    if [ -z "${USER_EXPORT}" ]; then
-        if [ -n "$(/usr/sbin/jls name | awk "/^${TARGET}$/")" ]; then
-            if [ -n "${SAFE_EXPORT}" ]; then
-                EXPORT_AS="Safely exporting"
-            else
+    if [ "${USER_EXPORT}" -eq 0 ]; then
+        if check_target_is_running "${TARGET}" 2>/dev/null; then
+            if [ "${LIVE}" -eq 1 ]; then
                 EXPORT_AS="Hot exporting"
+            else
+                EXPORT_AS="Safely exporting"
             fi
         else
             EXPORT_AS="Exporting"
         fi
 
-        if [ "${FILE_EXT}" = ".xz" ] || [ "${FILE_EXT}" = ".gz" ] || [ "${FILE_EXT}" = "" ]; then
+        if [ "${FILE_EXT}" = ".xz" ] || [ "${FILE_EXT}" = ".gz" ] || [ "${FILE_EXT}" = ".zst" ] || [ "${FILE_EXT}" = "" ]; then
             EXPORT_TYPE="image"
         else
             EXPORT_TYPE="archive"
@@ -303,19 +360,15 @@ export_check() {
         info "\n${EXPORT_AS} '${TARGET}' ${EXPORT_INFO}..."
     fi
 
-    # Safely stop and snapshot the jail
-    if [ -n "${SAFE_EXPORT}" ]; then
-        bastille stop ${TARGET}
-        create_zfs_snap
-        bastille start ${TARGET}
-    else
-        create_zfs_snap
-    fi
-
     if checkyesno bastille_zfs_enable; then
-        if [ -z "${USER_EXPORT}" ]; then
+
+        # Create snapshot
+        create_zfs_snap
+
+        if [ "${USER_EXPORT}" -eq 0 ]; then
             info "\nSending ZFS data stream..."
         fi
+
     fi
 }
 
@@ -331,7 +384,8 @@ jail_export() {
             if [ "$(zfs get -H -o value encryption ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET})" = "on" ]; then
                 error_exit "[ERROR]: Exporting jails in encryoted datasets is not supported."
             fi
-            if [ -n "${RAW_EXPORT}" ]; then
+
+            if [ "${RAW_EXPORT}" -eq 1 ]; then
 
                 FILE_EXT=""
 
@@ -345,7 +399,7 @@ jail_export() {
                     clean_zfs_snap
                 fi
 
-            elif [ -n "${GZIP_EXPORT}" ]; then
+            elif [ "${GZIP_EXPORT}" -eq 1 ]; then
 
                 FILE_EXT=".gz"
 
@@ -359,7 +413,7 @@ jail_export() {
                     clean_zfs_snap
                 fi
 
-            elif [ -n "${XZ_EXPORT}" ]; then
+            elif [ "${XZ_EXPORT}" -eq 1 ]; then
 
                 FILE_EXT=".xz"
 
@@ -367,6 +421,20 @@ jail_export() {
 
                 # Export the container recursively and cleanup temporary snapshots
                 if ! zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+                    clean_zfs_snap
+                    error_exit "[ERROR]: Failed to export jail: ${TARGET}"
+                else
+                    clean_zfs_snap
+                fi
+
+            elif [ "${ZST_EXPORT}" -eq 1 ]; then
+
+                FILE_EXT=".zst"
+
+                export_check
+
+                # Export the container recursively and cleanup temporary snapshots
+                if ! zfs send ${OPT_ZSEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}" | zstd ${bastille_compress_zst_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
                     clean_zfs_snap
                     error_exit "[ERROR]: Failed to export jail: ${TARGET}"
                 else
@@ -390,7 +458,7 @@ jail_export() {
             fi
         fi
     else
-        if [ -n "${TGZ_EXPORT}" ]; then
+        if [ "${TGZ_EXPORT}" -eq 1 ]; then
 
             FILE_EXT=".tgz"
 
@@ -402,7 +470,7 @@ jail_export() {
                 error_exit "[ERROR]: Failed to export jail: ${TARGET}"
             fi
 
-        elif [ -n "${TXZ_EXPORT}" ]; then
+        elif [ "${TXZ_EXPORT}" -eq 1 ]; then
 
             FILE_EXT=".txz"
 
@@ -411,6 +479,18 @@ jail_export() {
 
             cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailssdir}"
             if ! tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
+                error_exit "[ERROR]: Failed to export jail: ${TARGET}"
+            fi
+
+        elif [ "${TZST_EXPORT}" -eq 1 ]; then
+
+            FILE_EXT=".tzst"
+
+            # Create standard txz backup archive
+            info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
+
+            cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailssdir}"
+            if ! tar -cf - "${TARGET}" | zstd ${bastille_compress_zst_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
                 error_exit "[ERROR]: Failed to export jail: ${TARGET}"
             fi
 
@@ -423,7 +503,7 @@ jail_export() {
     if [ "$?" -ne 0 ]; then
         error_exit "[ERROR]: Failed to export jail: ${TARGET}"
     else
-        if [ -z "${USER_EXPORT}" ]; then
+        if [ "${USER_EXPORT}" -eq 0 ]; then
             # Generate container checksum file
             cd "${bastille_backupsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_backupsdir}"
             if ! sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"; then
@@ -435,29 +515,4 @@ jail_export() {
     fi
 }
 
-# Check if backups directory/dataset exist
-if [ ! -d "${bastille_backupsdir}" ]; then
-    error_exit "[ERROR]: Backups directory/dataset does not exist. See 'bastille bootstrap'."
-fi
-
-if [ -n "${TARGET}" ]; then
-
-    # Validate jail existence
-    if [ ! -d "${bastille_jailsdir}/${TARGET}" ]; then
-        error_exit "[ERROR]: Jail not found: ${TARGET}"
-    fi
-
-    # Jail needs to be stopped on non-ZFS systems
-    if ! checkyesno bastille_zfs_enable; then
-        # Validate jail state
-        check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-            bastille stop "${TARGET}"
-        else
-            info "\n[${TARGET}]:"
-            error_notify "Jail is running."
-            error_exit "Use [-a|--auto] to auto-stop the jail."
-        fi
-    fi
-
-    jail_export
-fi
+jail_export

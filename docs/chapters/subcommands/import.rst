@@ -19,9 +19,9 @@ To import to a specified release, specify it as the last argument.
 
       Options:
 
-      -f | --force               Force an archive import regardless if the checksum file does not match or missing.
-      -M | --static-mac          Generate static MAC for jail when importing foreign jails like iocage.
-      -v | --verbose             Be more verbose during the ZFS receive operation.
-      -x | --debug               Enable debug mode.
+      -f | --force          Force an archive import regardless if the checksum file does not match or missing.
+      -M | --static-mac     Generate static MAC for jail when importing foreign jails like iocage.
+      -v | --verbose        Enable verbose mode (ZFS only).
+      -x | --debug          Enable debug mode.
 
-  Tip: If no option specified, container should be imported from standard input.
+      Tip: If no option specified, container should be imported from standard input.

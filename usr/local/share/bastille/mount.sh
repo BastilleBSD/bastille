@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
     cat << EOF
-	
+
     Options:
 
     -a | --auto           Auto mode. Start/stop jail(s) if required.
@@ -144,8 +144,6 @@ fi
 
 for _jail in ${JAILS}; do
 
-    (
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else
@@ -196,16 +194,11 @@ for _jail in ${JAILS}; do
                 continue
             fi
         fi
-    fi   
-    
+    fi
+
     # Add entry to fstab and mount
     echo "${_fstab_entry}" >> "${bastille_jailsdir}/${_jail}/fstab" || error_continue "Failed to create fstab entry: ${_fstab_entry}"
     mount -F "${bastille_jailsdir}/${_jail}/fstab" -a || error_continue "Failed to mount volume: ${_fullpath}"
     echo "Added: ${_fstab_entry}"
 
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
 done
-wait

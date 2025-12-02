@@ -1,0 +1,16 @@
+# unit-tests/clone-thin
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG NEW_JAIL
+ARG NEW_IP
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/clone --arg OPTIONS="-a" --arg JAIL=${JAIL} --arg NEW_JAIL=${NEW_JAIL} --arg NEW_IP=${NEW_IP}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${NEW_JAIL}

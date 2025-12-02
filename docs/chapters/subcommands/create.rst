@@ -4,7 +4,7 @@ create
 Create a jail uning any available bootstrapped release. To create a jail,
 simply provide a name, bootstrapped release, and IP address.
 
-The format is ``bastille create NAME RELEASE IP [INTERFACE]`` 
+The format is ``bastille create NAME RELEASE IP [INTERFACE]``
 
 Note that the ``interface`` is optional. Bastille will use the default interface
 that is configured when running the setup command. See ``bastille setup -l`` or
@@ -56,20 +56,21 @@ options. See the below help output.
   Usage: bastille create [option(s)] NAME RELEASE IP [INTERFACE]"
 
       Options:
-    
-      -B | --bridge                            Enable VNET, and attach to a specified, already existing external bridge.
-      -C | --clone                             Create a clone jail.
-      -D | --dual                              Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
-      -E | --empty                             Create an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
-      -g | --gateway IP                        Specify a default router/gateway for the jail.
-      -L | --linux                             Create a Linux jail (experimental).
-      -M | --static-mac                        Generate a static MAC address for jail (VNET only).
-      -n | --nameserver IP,IP                  Specify nameserver(s) for the jail. Comma separated.
-           --no-validate                       Do not validate the release when creating the jail.
-           --no-boot                           Create jail with boot=off.
-      -p | --priority VALUE                    Set priority value for jail.
-      -T | --thick                             Creates a thick container, they consume more space as they are self contained and independent.
-      -V | --vnet                              Enable VNET, and attach to an existing, physical interface.
-      -v | --vlan VLANID                       Creates the jail with specified VLAN ID (VNET only).
-      -x | --debug                             Enable debug mode.
-      -Z | --zfs-opts zfs,options              Comma separated list of ZFS options to create the jail with. This overrides the defaults.
+
+      -B | --bridge                   Enable VNET, and attach to a specified, already existing external bridge.
+      -C | --clone                    Create a clone jail.
+      -D | --dual                     Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
+      -E | --empty                    Create an empty container, intended for custom jail builds (thin/thick/linux or unsupported).
+      -g | --gateway IP               Specify a default router/gateway for the jail.
+      -L | --linux                    Create a Linux jail (experimental).
+      -M | --static-mac               Generate a static MAC address for jail (VNET only).
+      -n | --nameserver IP,IP         Specify nameserver(s) for the jail. Comma separated.
+           --no-validate              Do not validate the release when creating the jail.
+           --no-boot                  Create jail with boot=off.
+      -P | --passthrough              Enable VNET, and pass the specified interface into the jail.
+      -p | --priority VALUE           Set priority value for jail.
+      -T | --thick                    Creates a thick container, they consume more space as they are self contained and independent.
+      -V | --vnet                     Enable VNET, and attach to an existing, physical interface.
+      -v | --vlan VLANID              Creates the jail with specified VLAN ID (VNET only).
+      -x | --debug                    Enable debug mode.
+      -Z | --zfs-opts zfs,options     Comma separated list of ZFS options to create the jail with. This overrides the defaults.

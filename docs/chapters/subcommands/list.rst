@@ -16,7 +16,7 @@ Use ``-p|--pretty`` to print in columns instead of rows.
   Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [ip(s)] [jail(s)] [limit(s)] [log(s)]
                                                   [path(s)] [port(s)] [prio|priority] [release(s)] [state(s)] [template(s)] [type]
       Options:
-    
+
       -d | --down                List stopped jails only.
       -j | --json                List jails or sub-arg(s) in json format.
       -p | --pretty              Print JSON in columns. Must be used with -j|--json.

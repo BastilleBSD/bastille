@@ -1,0 +1,14 @@
+# unit-tests/rcp
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG JAIL_PATH
+ARG HOST_PATH
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/rcp --arg JAIL=${JAIL} --arg JAIL_PATH=${JAIL_PATH} --arg HOST_PATH=${HOST_PATH}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}

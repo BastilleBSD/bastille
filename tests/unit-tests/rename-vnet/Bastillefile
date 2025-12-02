@@ -1,0 +1,15 @@
+# unit-tests/rename-vnet
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG NEW_JAIL
+
+INCLUDE core/create --arg OPTIONS="-V" --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/rename --arg OPTIONS="-a" --arg JAIL=${JAIL} --arg NEW_JAIL=${NEW_JAIL}
+
+INCLUDE core/start --arg JAIL=${NEW_JAIL}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${NEW_JAIL} 

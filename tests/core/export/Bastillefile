@@ -1,0 +1,5 @@
+ARG OPTIONS
+ARG JAIL
+ARG PATH
+
+CMD bastille export ${OPTIONS} ${JAIL} ${PATH}

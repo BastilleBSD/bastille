@@ -34,17 +34,19 @@
 
 usage() {
     error_notify "Usage: bastille setup [option(s)] [bridge]"
+    error_notify "                                  [linux]"
     error_notify "                                  [loopback]"
+    error_notify "                                  [netgraph]"
     error_notify "                                  [pf|firewall]"
     error_notify "                                  [shared]"
-    error_notify "                                  [vnet]"
     error_notify "                                  [storage]"
+    error_notify "                                  [vnet]"
     cat << EOF
-	
+
     Options:
 
-    -y | --yes             Assume always yes on prompts.
-    -x | --debug           Enable debug mode.
+    -y | --yes       Assume always yes on prompts.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -65,7 +67,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     y) AUTO_YES=1 ;;
@@ -91,31 +93,93 @@ OPT_ARG="${2}"
 
 bastille_root_check
 
+configure_linux() {
+
+    if ! kldstat -qn linux || \
+       ! kldstat -qn linux64 || \
+       ! kldstat -qm fdescfs || \
+       ! kldstat -qm linprocfs || \
+       ! kldstat -qm linsysfs || \
+       ! kldstat -qm tmpfs; then
+
+        local required_mods="fdescfs linprocfs linsysfs tmpfs"
+        local linuxarc_mods="linux linux64"
+
+        # Enable required modules
+        for mod in ${required_mods}; do
+            if ! kldstat -qm ${mod}; then
+                if [ ! "$(sysrc -f /boot/loader.conf -qn ${mod}_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf.local -qn ${mod}_load)" = "YES" ]; then
+                    info "\nLoading kernel module: ${mod}"
+                    kldload ${mod}
+                    info "\nPersisting module: ${mod}"
+                    sysrc -f /boot/loader.conf ${mod}_load=YES
+                else
+                    info "\nLoading kernel module: ${mod}"
+                    kldload ${mod}
+                fi
+            fi
+        done
+
+        # Mandatory Linux modules/rc.
+        for mod in ${linuxarc_mods}; do
+            if ! kldstat -qn ${mod}; then
+                info "\nLoading kernel module: ${mod}"
+                kldload ${mod}
+            fi
+        done
+
+        # Enable linux
+        if [ ! "$(sysrc -qn linux_enable)" = "YES" ] && [ ! "$(sysrc -f /etc/rc.conf.local -qn linux_enable)" = "YES" ]; then
+            sysrc linux_enable=YES
+        fi
+
+        # Install debootstrap package
+        if ! which -s debootstrap; then
+            pkg install -y debootstrap
+        fi
+
+        info "\nLinux has been successfully configured!"
+
+    else
+        info "\nLinux has already been configured!"
+    fi
+}
+
 # Configure netgraph
 configure_netgraph() {
-    if [ ! "$(kldstat -m netgraph)" ]; then
+
+    if ! kldstat -qm netgraph || \
+       ! kldstat -qm ng_netflow || \
+       ! kldstat -qm ng_ksocket || \
+       ! kldstat -qm ng_ether || \
+       ! kldstat -qm ng_bridge || \
+       ! kldstat -qm ng_eiface || \
+       ! kldstat -qm ng_socket; then
+
         # Ensure jib script is in place for VNET jails
         if [ ! "$(command -v jng)" ]; then
-            if [ -f /usr/share/examples/jails/jng ] && [ ! -f /usr/local/bin/jng ]; then
+            if [ -f "/usr/share/examples/jails/jng" ] && [ ! -f "/usr/local/bin/jng" ]; then
                 install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
             fi
         fi
-        sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
+
+        local required_mods="netgraph ng_netflow ng_ksocket ng_ether ng_bridge ng_eiface ng_socket"
+        
         info "\nConfiguring netgraph modules..."
-        kldload netgraph
-        kldload ng_netflow
-        kldload ng_ksocket
-        kldload ng_ether
-        kldload ng_bridge
-        kldload ng_eiface
-        kldload ng_socket
-        sysrc -f /boot/loader.conf netgraph_load="YES"
-        sysrc -f /boot/loader.conf ng_netflow_load="YES"
-        sysrc -f /boot/loader.conf ng_ksocket_load="YES"
-        sysrc -f /boot/loader.conf ng_ether_load="YES"
-        sysrc -f /boot/loader.conf ng_bridge_load="YES"
-        sysrc -f /boot/loader.conf ng_eiface_load="YES"
-        sysrc -f /boot/loader.conf ng_socket_load="YES"
+
+        # Load requried netgraph kernel modules
+        for mod in ${required_mods}; do
+            if ! kldstat -qm ${mod}; then
+                info "\nLoading kernel module: ${mod}"
+                kldload -v ${mod}
+                info "\nPersisting module: ${mod}"
+                sysrc -f /boot/loader.conf ${mod}_load=YES
+            fi
+        done
+
+        # Set bastille_network_vnet_type to netgraph
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
+
         info "\nNetgraph has been successfully configured!"
     else
         info "\nNetgraph has already been configured!"
@@ -212,6 +276,7 @@ configure_bridge() {
         else
             _interface_select="${_auto_if}"
         fi
+
         # Create bridge and persist on reboot
         _bridge_name="${_interface_select}bridge"
         ifconfig bridge0 create
@@ -221,6 +286,17 @@ configure_bridge() {
         sysrc ifconfig_bridge0_name="${_bridge_name}"
         sysrc ifconfig_${_bridge_name}="addm ${_interface_select} up"
 
+        # Set some sysctl values
+        sysctl net.inet.ip.forwarding=1
+        sysctl net.link.bridge.pfil_bridge=0
+        sysctl net.link.bridge.pfil_onlyip=0
+        sysctl net.link.bridge.pfil_member=0
+        echo net.inet.ip.forwarding=1 >> /etc/sysctl.conf
+        echo net.link.bridge.pfil_bridge=0 >> /etc/sysctl.conf
+        echo net.link.bridge.pfil_onlyip=0 >> /etc/sysctl.conf
+        echo net.link.bridge.pfil_member=0 >> /etc/sysctl.conf
+
+
         info "\nBridge interface successfully configured: [${_bridge_name}]"
     else
         info "\nBridge has alread been configured: [${_bridge_name}]"
@@ -228,14 +304,24 @@ configure_bridge() {
 }
 
 configure_vnet() {
-    # Ensure jib script is in place for VNET jails
-    if [ ! "$(command -v jib)" ]; then
-        if [ -f /usr/share/examples/jails/jib ] && [ ! -f /usr/local/bin/jib ]; then
-            install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+
+    # Ensure proper jail helper script
+    if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
+        if [ ! "$(command -v jib)" ]; then
+            if [ -f "/usr/share/examples/jails/jib" ] && [ ! -f "/usr/local/bin/jib" ]; then
+                install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
+            fi
+        fi
+    elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
+        if [ ! "$(command -v jng)" ]; then
+            if [ -f "/usr/share/examples/jails/jng" ] && [ ! -f "/usr/local/bin/jng" ]; then
+                install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
+            fi
         fi
     fi
+
     # Create default VNET ruleset
-    if [ ! -f /etc/devfs.rules ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
+    if [ ! -f "/etc/devfs.rules" ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
         info "\nCreating bastille_vnet devfs.rules"
         cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
@@ -277,7 +363,7 @@ rdr-anchor "rdr/*"
 block in all
 pass out quick keep state
 antispoof for \$ext_if inet
-pass in inet proto tcp from any to any port ssh flags S/SA keep state
+pass in proto tcp from any to any port ssh flags S/SA keep state
 EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
@@ -343,6 +429,27 @@ fi
 case "${OPT_CONFIG}" in
     pf|firewall)
         configure_pf
+        ;;
+    linux)
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            configure_linux
+        else
+            warn "[WARNING]: Running linux jails requires loading additional kernel"
+            warn "modules, as well as installing the 'debootstrap' package."
+            # shellcheck disable=SC3045
+            read -p "Do you want to proceed with setup? [y|n]:" _answer
+            case "${_answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    configure_linux
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "Linux setup cancelled."
+                    ;;
+                *)
+                    error_exit "Invalid selection. Please answer 'y' or 'n'"
+                    ;;
+            esac
+        fi
         ;;
     netgraph)
         if [ "${AUTO_YES}" -eq 1 ]; then

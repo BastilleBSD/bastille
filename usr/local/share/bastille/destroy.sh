@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille destroy [option(s)] JAIL|RELEASE"
     cat << EOF
-	
+
     Options:
 
     -a | --auto              Auto mode. Start/stop jail(s) if required.
@@ -137,7 +137,7 @@ destroy_jail() {
     fi
 }
 
-destroy_rel() {
+destroy_release() {
 
     local OPTIONS
 
@@ -156,7 +156,7 @@ destroy_rel() {
     BASE_HASCHILD="0"
     if [ -d "${bastille_jailsdir}" ]; then
 
-        JAIL_LIST=$(ls "${bastille_jailsdir}" | sed "s/\n//g")
+        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
 
         for _jail in ${JAIL_LIST}; do
 
@@ -256,7 +256,7 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
@@ -288,53 +288,58 @@ case "${TARGET}" in
     *-CURRENT|*-CURRENT-I386|*-CURRENT-i386|*-current)
         ## check for FreeBSD releases name
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-        destroy_rel
+        destroy_release
         ;;
     *-RELEASE|*-RELEASE-I386|*-RELEASE-i386|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
         ## check for FreeBSD releases name
-        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-        destroy_rel
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([0-9]{1,2})\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
+        destroy_release
         ;;
     *-stable-LAST|*-STABLE-last|*-stable-last|*-STABLE-LAST)
         ## check for HardenedBSD releases name
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]{2,2})(-stable-last)$' | sed 's/STABLE/stable/g;s/last/LAST/g')
-        destroy_rel
+        destroy_release
         ;;
     *-stable-build-[0-9]*|*-STABLE-BUILD-[0-9]*)
         ## check for HardenedBSD(specific stable build releases)
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build)-([0-9]{1,3})$' | sed 's/BUILD/build/g;s/STABLE/stable/g')
-        destroy_rel
+        destroy_release
         ;;
     *-stable-build-latest|*-stable-BUILD-LATEST|*-STABLE-BUILD-LATEST)
         ## check for HardenedBSD(latest stable build release)
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '([0-9]{1,2})(-stable-build-latest)$' | sed 's/STABLE/stable/;s/build/BUILD/g;s/latest/LATEST/g')
-        destroy_rel
+        destroy_release
         ;;
     current-build-[0-9]*|CURRENT-BUILD-[0-9]*)
         ## check for HardenedBSD(specific current build releases)
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build)-([0-9]{1,3})' | sed 's/BUILD/build/g;s/CURRENT/current/g')
-        destroy_rel
+        destroy_release
         ;;
     current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
         ## check for HardenedBSD(latest current build release)
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/g;s/latest/LATEST/g')
-        destroy_rel
+        destroy_release
         ;;
     Ubuntu_1804|Ubuntu_2004|Ubuntu_2204|UBUNTU_1804|UBUNTU_2004|UBUNTU_2204)
         ## check for Linux releases
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$|(Ubuntu_2204)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
-        destroy_rel
+        destroy_release
         ;;
     Debian10|Debian11|Debian12|DEBIAN10|DEBIAN11|DEBIAN12)
         ## check for Linux releases
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian10)$|(Debian11)$|(Debian12)$' | sed 's/DEBIAN/Debian/g')
-        destroy_rel
+        destroy_release
         ;;
     *)
-        # Destroy targeted jail(s)
-        set_target "${TARGET}" "reverse"
-        for _jail in ${JAILS}; do
-            destroy_jail "${_jail}"
-        done
+        if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
+            NAME_VERIFY="${TARGET}"
+            destroy_release
+        else
+            # Destroy targeted jail(s)
+            set_target "${TARGET}" "reverse"
+            for _jail in ${JAILS}; do
+                destroy_jail "${_jail}"
+            done
+        fi
         ;;
 esac

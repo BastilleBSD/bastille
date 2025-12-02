@@ -1,0 +1,21 @@
+# unit-tests/export-import
+
+ARG JAIL
+ARG RELEASE
+ARG IP
+ARG INTERFACE
+ARG FILE
+ARG PATH
+
+INCLUDE core/create --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE}
+
+INCLUDE core/export --arg OPTIONS="-a --txz" --arg JAIL=${JAIL} --arg PATH=${PATH}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}
+
+INCLUDE core/import --arg FILE=${FILE}
+
+INCLUDE core/destroy-jail --arg OPTIONS="-afy" --arg JAIL=${JAIL}
+
+CMD rm -rf ${PATH}/*.txz
+CMD rm -rf ${PATH}/*.sha256

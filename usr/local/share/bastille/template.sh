@@ -117,15 +117,18 @@ render() {
 }
 
 line_in_file() {
-    _jailpath="${1}"
-    _filepath="$(echo ${2} | awk '{print $2}')"
-    _line="$(echo ${2} | awk '{print $1}')"
-    if [ -f "${_jailpath}/${_filepath}" ]; then
-        if ! grep -qxF "${_line}" "${_jailpath}/${_filepath}"; then
-            echo "${_line}" >> "${_jailpath}/${_filepath}"
+
+    local jail_path="${1}"
+    eval set -- "${2}"
+    local line="${1}"
+    local file_path="${2}"
+
+    if [ -f "${jail_path}/${file_path}" ]; then
+        if ! grep -qxF "${line}" "${jail_path}/${file_path}"; then
+            echo "${line}" >> "${jail_path}/${file_path}"
 	fi
     else
-        warn "[WARNING]: Path not found for line_in_file: ${_filepath}"
+        warn "[WARNING]: Path not found for line_in_file: ${file_path}"
     fi
 }
 
@@ -144,12 +147,12 @@ while [ "$#" -gt 0 ]; do
             enable_debug
             shift
             ;;
-        -*) 
+        -*)
             for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${_opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;; 
+                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
             shift
@@ -272,8 +275,6 @@ fi
 
 for _jail in ${JAILS}; do
 
-    (
-
     check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${_jail}"
     else
@@ -283,7 +284,7 @@ for _jail in ${JAILS}; do
     fi
 
     info "\n[${_jail}]:"
-    
+
     echo "Applying template: ${TEMPLATE}..."
 
     ## get jail ip4 and ip6 values
@@ -313,7 +314,7 @@ for _jail in ${JAILS}; do
        { [ "${_jail_ip6}" = "not set" ] || [ "${_jail_ip6}" = "disable" ]; } then
         error_notify "Jail IP not found: ${_jail}"
     fi
-    
+
     ## TARGET
     if [ -s "${bastille_template}/TARGET" ]; then
         if grep -qw "${_jail}" "${bastille_template}/TARGET"; then
@@ -473,12 +474,7 @@ for _jail in ${JAILS}; do
             echo
         fi
     done
-    
+
     info "\nTemplate applied: ${TEMPLATE}"
 
-    ) &
-	
-    bastille_running_jobs "${bastille_process_limit}"
-	
 done
-wait
