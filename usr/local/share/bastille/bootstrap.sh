@@ -177,7 +177,8 @@ cleanup_directories() {
                 zfs destroy "${bastille_zfs_zpool:?}/${bastille_zfs_prefix:?}/releases/${RELEASE}"
             fi
         fi
-    elif [ -d "${bastille_cachedir}/${RELEASE}" ]; then
+    fi
+    if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
         if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
             rm -rf "${bastille_cachedir:?}/${RELEASE}"
         fi
