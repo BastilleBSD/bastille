@@ -123,18 +123,18 @@ jail_check() {
         JAIL_PLATFORM_OS="FreeBSD"
     fi
 
-    # Set CURRENT_VERSION
-    CURRENT_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-    if [ -z "${CURRENT_VERSION}" ]; then
+    # Set OLD_RELEASE
+    OLD_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+    if [ -z "${OLD_RELEASE}" ]; then
         error_exit "[ERROR]: Can't determine '${TARGET}' version."
     fi
 
     # Validate method (Legacy/PkgBase)
     if [ "${JAIL_PLATFORM_OS}" = "FreeBSD" ]; then
         # Validate update method
-        MINOR_VERSION=$(echo ${CURRENT_VERSION} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
-        MAJOR_VERSION=$(echo ${CURRENT_VERSION} | grep -Eo '^[0-9]+')
-        if echo "${CURRENT_VERSION}" | grep -oq "\-CURRENT"; then
+        MINOR_VERSION=$(echo ${OLD_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+        MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
+        if echo "${OLD_RELEASE}" | grep -oq "\-CURRENT"; then
             FREEBSD_BRANCH="current"
         else
             FREEBSD_BRANCH="release"
@@ -181,10 +181,10 @@ jail_update() {
     fi
 
     # Update release version (including patch level)
-    NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-    if [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
-        bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null
-        info "\nUpgrade complete: ${CURRENT_VERSION} > ${NEW_VERSION}\n"
+    UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+    if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
+        bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
+        info "\nUpgrade complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
     else
         info "\nNo updates available.\n"
     fi
@@ -233,10 +233,10 @@ jail_update_pkgbase() {
         fi
 
         # Update release version (including patch level)
-        NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-        if [ "${CURRENT_VERSION}" != "${NEW_VERSION}" ]; then
-            bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null
-            info "\nUpgrade complete: ${CURRENT_VERSION} > ${NEW_VERSION}\n"
+        UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+        if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
+            bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
+            info "\nUpgrade complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
         else
             info "\nNo updates available.\n"
         fi
@@ -436,9 +436,9 @@ case "${TARGET}" in
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([1-9]+)\.[0-9](-STABLE)$' | tr '[:lower:]' '[:upper:]')
         UPDATE_TARGET="RELEASE"
         ;;
-    *-release|*-RELEASE)
+	*-release|*-RELEASE|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
         PLATFORM_OS="FreeBSD"
-        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE)$' | tr '[:lower:]' '[:upper:]')
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
         UPDATE_TARGET="RELEASE"
         ;;
     current|CURRENT)

@@ -617,7 +617,7 @@ case "${RELEASE}" in
         UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
         FREEBSD_BRANCH="current"
         ;;
-    *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
+    *-release|*-RELEASE|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
         ### FreeBSD ###
         PLATFORM_OS="FreeBSD"
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')

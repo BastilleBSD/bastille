@@ -137,7 +137,7 @@ thick_jail_check() {
         # Set VERSION
         OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
         OLD_CONFIG_RELEASE="$(bastille config ${TARGET} get osrelease)"
-        if [ -z "${OLD_RELEASE}" ]; then
+        if [ -z "${OLD_RELEASE}" ] || [ -z "${OLD_CONFIG_RELEASE}" ]; then
             error_exit "[ERROR]: Can't determine '${TARGET}' version."
         fi
 
@@ -189,9 +189,9 @@ release_check() {
             PLATFORM_OS="FreeBSD"
             NAME_VERIFY=$(echo "${NEW_RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-STABLE)$' | tr '[:lower:]' '[:upper:]')
             ;;
-        *-release|*-RELEASE)
+        *-release|*-RELEASE|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
             PLATFORM_OS="FreeBSD"
-            NAME_VERIFY=$(echo "${NEW_RELEASE}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE)$' | tr '[:lower:]' '[:upper:]')
+            NAME_VERIFY=$(echo "${NEW_RELEASE}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
             ;;
         current|CURRENT)
             PLATFORM_OS="HardenedBSD"
@@ -321,9 +321,18 @@ jail_upgrade_pkgbase() {
 
         info "\n[${TARGET}]:"
 
-        if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
-            error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}'"
-            error_exit "See 'bastille update TARGET' to update jail."
+        # Verify trusted pkg keys
+        if [ ! -f "${fingerprints}/trusted/awskms-${NEW_MAJOR_VERSION}" ]; then
+            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/awskms-${NEW_MAJOR_VERSION}
+            then
+                error_exit "[ERROR]: Failed to fetch trusted pkg keys."
+            fi
+        fi
+        if [ ! -f "${fingerprints}/trusted/backup-signing-${NEW_MAJOR_VERSION}" ]; then
+            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/backup-signing-${NEW_MAJOR_VERSION}
+            then
+                error_exit "[ERROR]: Failed to fetch trusted backup pkg keys."
+            fi
         fi
 
         # Upgrade jail with pkgbase (thick only)
@@ -356,10 +365,15 @@ jail_upgrade_pkgbase() {
         fi
 
         # Update release version (including patch level)
-        NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-        bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null 2>/dev/null
+        UPGRADED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+        if [ "${OLD_RELEASE}" != "${UPGRADED_RELEASE}" ]; then
+            bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
+            info "\nUpgrade complete: ${OLD_RELEASE} > ${UPGRADED_RELEASE}\n"
+        else
+            info "\nNo updates available.\n"
+        fi
 
-        info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
+        info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}"
     else
         error_exit "[ERROR]: Not implemented for platform: ${PLATFORM_OS}"
     fi
