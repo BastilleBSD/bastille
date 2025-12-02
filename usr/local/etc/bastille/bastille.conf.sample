@@ -2,7 +2,7 @@
 ## [ BastilleBSD ] ##
 #####################
 
-## default paths
+## Default paths
 bastille_prefix="/usr/local/bastille"                                 ## default: "/usr/local/bastille"
 bastille_backupsdir="${bastille_prefix}/backups"                      ## default: "${bastille_prefix}/backups"
 bastille_cachedir="${bastille_prefix}/cache"                          ## default: "${bastille_prefix}/cache"
@@ -14,10 +14,10 @@ bastille_logsdir="/var/log/bastille"                                  ## default
 ## pf configuration path
 bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
 
-## bastille scripts directory (assumed by bastille pkg)
+## Bastille commands directory (assumed by bastille pkg)
 bastille_sharedir="/usr/local/share/bastille"                         ## default: "/usr/local/share/bastille"
 
-## bootstrap archives, which components of the OS to install.
+## Bootstrap archives, which components of the OS to install.
 ## base  - The base OS, kernel + userland
 ## lib32 - Libraries for compatibility with 32 bit binaries
 ## ports - The FreeBSD ports (3rd party applications) tree
@@ -27,7 +27,7 @@ bastille_sharedir="/usr/local/share/bastille"                         ## default
 ## bastille_bootstrap_archives="base lib32 ports src test"
 bastille_bootstrap_archives="base"                                    ## default: "base"
 
-## pkgbase package sets (used for FreeBSD 15+)
+## Pkgbase package sets
 ## Any set with [-dbg] can be installed with debugging
 ## symbols by adding '-dbg' to the package set
 ## base[-dbg]          - Base system
@@ -45,16 +45,16 @@ bastille_bootstrap_archives="base"                                    ## default
 ## bastille_pkgbase_packages="base-jail lib32-dbg src"
 bastille_pkgbase_packages="base-jail"                                 ## default: "base-jail"
 
-## default timezone
+## Default timezone
 bastille_tzdata=""                                                    ## default: empty to use host's time zone
 
-## default jail resolv.conf
+## Default jail resolv.conf
 bastille_resolv_conf="/etc/resolv.conf"                               ## default: "/etc/resolv.conf"
 
-## bootstrap urls
-bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"   ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
-bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/"    ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
-bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"          ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
+## Bootstrap URLs
+bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"                  ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
+bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/"                   ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
+bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"     ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
 ## ZFS options
 bastille_zfs_enable="NO"                                              ## default: "NO"

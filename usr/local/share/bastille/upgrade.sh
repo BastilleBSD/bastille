@@ -104,7 +104,15 @@ thick_jail_check() {
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
 
-    if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
+    # Verify PLATFORM_OS inside jail
+    JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version)"
+    if echo "${JAIL_PLATFORM_OS}" | grep -q "HBSD"; then
+        JAIL_PLATFORM_OS="HardenedBSD"
+    else
+        JAIL_PLATFORM_OS="FreeBSD"
+    fi
+
+    if [ "${JAIL_PLATFORM_OS}" = "FreeBSD" ]; then
 
         # Set OLD_RELEASE
         OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
@@ -117,13 +125,13 @@ thick_jail_check() {
         NEW_MAJOR_VERSION=$(echo ${NEW_RELEASE} | grep -Eo '^[0-9]+')
 
         # Validate PKGBASE or non-PKGBASE
-        if echo "${NEW_RELEASE}" | grep -oq "\-CURRENT"; then
-            FREEBSD_BRANCH="current"
-        else
-            FREEBSD_BRANCH="release"
-        fi
-        if [ "${NEW_MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
+        if pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
             PKGBASE=1
+            if echo "${NEW_RELEASE}" | grep -oq "\-CURRENT"; then
+                FREEBSD_BRANCH="current"
+            else
+                FREEBSD_BRANCH="release"
+            fi
         fi
 
         # Check if jail is already running NEW_RELEASE
@@ -132,12 +140,12 @@ thick_jail_check() {
             error_exit "See 'bastille update TARGET' to update the jail."
         fi
 
-    elif [ "${PLATFORM_OS}" = "HardenedBSD" ]; then
+    elif [ "${JAIL_PLATFORM_OS}" = "HardenedBSD" ]; then
 
         # Set VERSION
         OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
         OLD_CONFIG_RELEASE="$(bastille config ${TARGET} get osrelease)"
-        if [ -z "${OLD_RELEASE}" ]; then
+        if [ -z "${OLD_RELEASE}" ] || [ -z "${OLD_CONFIG_RELEASE}" ]; then
             error_exit "[ERROR]: Can't determine '${TARGET}' version."
         fi
 
@@ -160,7 +168,7 @@ thin_jail_check() {
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
 
-    # Set VERSION
+    # Set OLD_RELEASE
     OLD_RELEASE="$(bastille config ${TARGET} get osrelease)"
     if [ -z "${OLD_RELEASE}" ]; then
         error_exit "[ERROR]: Can't determine '${TARGET}' version."
@@ -189,9 +197,9 @@ release_check() {
             PLATFORM_OS="FreeBSD"
             NAME_VERIFY=$(echo "${NEW_RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-STABLE)$' | tr '[:lower:]' '[:upper:]')
             ;;
-        *-release|*-RELEASE)
+        *-release|*-RELEASE|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
             PLATFORM_OS="FreeBSD"
-            NAME_VERIFY=$(echo "${NEW_RELEASE}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE)$' | tr '[:lower:]' '[:upper:]')
+            NAME_VERIFY=$(echo "${NEW_RELEASE}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
             ;;
         current|CURRENT)
             PLATFORM_OS="HardenedBSD"
@@ -243,31 +251,29 @@ jail_upgrade() {
 
     else
 
-        if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
+        if [ "${JAIL_PLATFORM_OS}" = "FreeBSD" ]; then
 
             local jailpath="${bastille_jailsdir}/${TARGET}/root"
             local work_dir="${jailpath}/var/db/freebsd-update"
             local freebsd_update_conf="${jailpath}/etc/freebsd-update.conf"
 
             # Upgrade a thick jail
-            env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
-            --currently-running "${OLD_RELEASE}" \
-            -j "${TARGET}" \
-            -d "${work_dir}" \
-            -f "${freebsd_update_conf}" \
-            -r "${NEW_RELEASE}" upgrade
+            if env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \
+                --currently-running "${OLD_RELEASE}" \
+                -j "${TARGET}" \
+                -d "${work_dir}" \
+                -f "${freebsd_update_conf}" \
+                -r "${NEW_RELEASE}" upgrade; then
 
-            UPGRADED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
-            if [ "${OLD_RELEASE}" = "${UPGRADED_RELEASE}" ]; then
-                info "\nNo upgrades available.\n"
-            else
                 # Update "osrelease" inside jail.conf using 'bastille config'
                 bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
-                warn "Please run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing updates."
-                echo
+                info "\nUpgraded ${TARGET}: ${OLD_RELEASE} > ${NEW_RELEASE}"
+                warn "\nPlease run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing the upgrade.\n"
+            else
+                info "\nNo upgrades available.\n"
             fi
 
-        elif [ "${PLATFORM_OS}" = "HardenedBSD" ]; then
+        elif [ "${JAIL_PLATFORM_OS}" = "HardenedBSD" ]; then
 
             local jailname="${TARGET}"
             local jailpath="${bastille_jailsdir}/${TARGET}/root"
@@ -296,10 +302,10 @@ jail_upgrade() {
             -c "${hbsd_update_conf}"
 
             UPGRADED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
-            if [ "${OLD_RELEASE}" = "${UPGRADED_RELEASE}" ]; then
-                info "\nNo upgrades available.\n"
-            else
+            if [ "${OLD_RELEASE}" != "${UPGRADED_RELEASE}" ]; then
                 info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}\n"
+            else
+                info "\nNo upgrades available.\n"
             fi
         fi
     fi
@@ -307,7 +313,7 @@ jail_upgrade() {
 
 jail_upgrade_pkgbase() {
 
-    if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
+    if [ "${JAIL_PLATFORM_OS}" = "FreeBSD" ]; then
 
         local jailpath="${bastille_jailsdir}/${TARGET}/root"
         local abi="FreeBSD:${NEW_MAJOR_VERSION}:${HW_MACHINE_ARCH}"
@@ -321,9 +327,18 @@ jail_upgrade_pkgbase() {
 
         info "\n[${TARGET}]:"
 
-        if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
-            error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}'"
-            error_exit "See 'bastille update TARGET' to update jail."
+        # Verify trusted pkg keys
+        if [ ! -f "${fingerprints}/trusted/awskms-${NEW_MAJOR_VERSION}" ]; then
+            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/awskms-${NEW_MAJOR_VERSION}
+            then
+                error_exit "[ERROR]: Failed to fetch trusted pkg keys."
+            fi
+        fi
+        if [ ! -f "${fingerprints}/trusted/backup-signing-${NEW_MAJOR_VERSION}" ]; then
+            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/backup-signing-${NEW_MAJOR_VERSION}
+            then
+                error_exit "[ERROR]: Failed to fetch trusted backup pkg keys."
+            fi
         fi
 
         # Upgrade jail with pkgbase (thick only)
@@ -356,10 +371,15 @@ jail_upgrade_pkgbase() {
         fi
 
         # Update release version (including patch level)
-        NEW_VERSION=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
-        bastille config ${TARGET} set osrelease ${NEW_VERSION} >/dev/null 2>/dev/null
+        UPGRADED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+        if [ "${OLD_RELEASE}" != "${UPGRADED_RELEASE}" ]; then
+            bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
+            info "\nUpgrade complete: ${OLD_RELEASE} > ${UPGRADED_RELEASE}\n"
+        else
+            info "\nNo updates available.\n"
+        fi
 
-        info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
+        info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}"
     else
         error_exit "[ERROR]: Not implemented for platform: ${PLATFORM_OS}"
     fi
@@ -368,7 +388,7 @@ jail_upgrade_pkgbase() {
 
 jail_updates_install() {
 
-    if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
+    if [ "${JAIL_PLATFORM_OS}" = "FreeBSD" ]; then
 
         local jailpath="${bastille_jailsdir}/${TARGET}/root"
         local work_dir="${jailpath}/var/db/freebsd-update"

@@ -177,7 +177,8 @@ cleanup_directories() {
                 zfs destroy "${bastille_zfs_zpool:?}/${bastille_zfs_prefix:?}/releases/${RELEASE}"
             fi
         fi
-    elif [ -d "${bastille_cachedir}/${RELEASE}" ]; then
+    fi
+    if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
         if [ -d "${bastille_cachedir}/${RELEASE}" ]; then
             rm -rf "${bastille_cachedir:?}/${RELEASE}"
         fi
@@ -189,10 +190,10 @@ cleanup_directories() {
 
 validate_release() {
 
-    info "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
-
     # Set release name to sane release
     RELEASE="${NAME_VERIFY}"
+
+    info "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
 
     ### FreeBSD ###
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
@@ -616,7 +617,7 @@ case "${RELEASE}" in
         UPSTREAM_URL=$(echo "${bastille_url_freebsd}${HW_MACHINE}/${HW_MACHINE_ARCH}/${NAME_VERIFY}" | sed 's/releases/snapshots/')
         FREEBSD_BRANCH="current"
         ;;
-    *-RELEASE|*-release|*-RC[1-9]|*-rc[1-9]|*-BETA[1-9])
+    *-release|*-RELEASE|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
         ### FreeBSD ###
         PLATFORM_OS="FreeBSD"
         NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([0-9]+)\.[0-9](-RELEASE|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]')
