@@ -99,12 +99,13 @@ This is the default `bastille.conf` file.
   bastille_template_clone="default/clone"                               ## default: "default/clone"
   bastille_template_thin="default/thin"                                 ## default: "default/thin"
   bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"
+  bastille_template_vnet="default/vlan"                                 ## default: "default/vlan"
 
   ## Monitoring
-  bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"   ## default: "/usr/local/etc/cron.d/bastille-monitor"
-  bastille_monitor_cron="*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"  # default: "*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"
-  bastille_monitor_logfile="${bastille_logsdir}/monitor.log"            ## default: "${bastille_logsdir}/monitor.log"
-  bastille_monitor_healthchecks=""                                      ## default: ""
+  bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"                           ## default: "/usr/local/etc/cron.d/bastille-monitor"
+  bastille_monitor_cron="*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"  ## default: "*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"
+  bastille_monitor_logfile="${bastille_logsdir}/monitor.log"                                    ## default: "${bastille_logsdir}/monitor.log"
+  bastille_monitor_healthchecks=""                                                              ## default: ""
 
 
 Notes
