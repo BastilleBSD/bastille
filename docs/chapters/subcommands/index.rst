@@ -23,6 +23,7 @@ Bastille sub-commands
    limits
    list
    migrate
+   monitor
    mount
    network
    pkg
