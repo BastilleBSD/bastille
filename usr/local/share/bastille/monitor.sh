@@ -142,7 +142,7 @@ for _jail in ${JAILS}; do
     elif [ -n "${ACTION}" ]; then
         case ${ACTION} in
             add)
-	        [ -z "${SERVICE}" ] && usage
+	            [ -z "${SERVICE}" ] && usage
                 for _service in $(echo "${SERVICE}" | tr , ' '); do
                     if ! grep -Eqs "^${_service}\$" "${bastille_jail_monitor}"; then
                         echo "${_service}" >> "${bastille_jail_monitor}"
