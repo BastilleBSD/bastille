@@ -122,7 +122,7 @@ thick_jail_check() {
         else
             FREEBSD_BRANCH="release"
         fi
-        if [ "${NEW_MAJOR_VERSION}" -ge 16 ] || pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
+        if pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
             PKGBASE=1
         fi
 
