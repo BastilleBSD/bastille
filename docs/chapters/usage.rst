@@ -48,7 +48,7 @@ Usage
     update      Update jail base -pX release.
     upgrade     Upgrade jail release to X.Y-RELEASE.
     verify      Compare release against a "known good" index.
-    zfs         Manage (get|set) ZFS attributes on targeted container(s).
+    zfs         Manage (get|set) ZFS attributes on targeted jail(s).
 
   Use "bastille -v|--version" for version information.
   Use "bastille command -h|--help" for more information about a command.
