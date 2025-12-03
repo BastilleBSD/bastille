@@ -507,7 +507,6 @@ bootstrap_template() {
 # Handle options.
 PKGBASE=0
 ERRORS=0
-FETCH_PKG_KEYS=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
