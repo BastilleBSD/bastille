@@ -134,7 +134,7 @@ jail_check() {
         # Validate update method
         MINOR_VERSION=$(echo ${OLD_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
         MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
-        if echo "${OLD_RELEASE}" | grep -oq "\-CURRENT"; then
+        if echo "${OLD_RELEASE}" | grep -Eoq "(\-CURRENT|\-STABLE)"; then
             FREEBSD_BRANCH="current"
         else
             FREEBSD_BRANCH="release"
@@ -272,7 +272,7 @@ release_check() {
         # Validate update method
         MINOR_VERSION=$(echo ${TARGET} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
         MAJOR_VERSION=$(echo ${TARGET} | grep -Eo '^[0-9]+')
-        if echo "${TARGET}" | grep -oq "\-CURRENT"; then
+        if echo "${TARGET}" | grep -Eoq "(\-CURRENT|\-STABLE)"; then
             FREEBSD_BRANCH="current"
         else
             FREEBSD_BRANCH="release"

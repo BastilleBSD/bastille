@@ -127,7 +127,7 @@ thick_jail_check() {
         # Validate PKGBASE or non-PKGBASE
         if pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
             PKGBASE=1
-            if echo "${NEW_RELEASE}" | grep -oq "\-CURRENT"; then
+            if echo "${NEW_RELEASE}" | grep -Eoq "(\-CURRENT|\-STABLE)"; then
                 FREEBSD_BRANCH="current"
             else
                 FREEBSD_BRANCH="release"
