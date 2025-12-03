@@ -317,27 +317,28 @@ jail_upgrade_pkgbase() {
 
         local jailpath="${bastille_jailsdir}/${TARGET}/root"
         local abi="FreeBSD:${NEW_MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+        local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${NEW_MINOR_VERSION}"
+            local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
+            local fingerprints="${jailpath}/usr/share/keys/pkg"
         fi
-        local repo_dir="${bastille_sharedir}/pkgbase"
 
         info "\n[${TARGET}]:"
 
         # Verify trusted pkg keys
-        if [ ! -f "${fingerprints}/trusted/awskms-${NEW_MAJOR_VERSION}" ]; then
-            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/awskms-${NEW_MAJOR_VERSION}
-            then
-                error_exit "[ERROR]: Failed to fetch trusted pkg keys."
+        if [ "${FREEBSD_BRANCH}" = "release" ]; then
+            if [ ! -f "${fingerprints}/trusted/awskms-${NEW_MAJOR_VERSION}" ]; then
+                if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/awskms-${NEW_MAJOR_VERSION}; then
+                    error_exit "[ERROR]: Failed to fetch trusted pkg keys."
+                fi
             fi
-        fi
-        if [ ! -f "${fingerprints}/trusted/backup-signing-${NEW_MAJOR_VERSION}" ]; then
-            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/backup-signing-${NEW_MAJOR_VERSION}
-            then
-                error_exit "[ERROR]: Failed to fetch trusted backup pkg keys."
+            if [ ! -f "${fingerprints}/trusted/backup-signing-${NEW_MAJOR_VERSION}" ]; then
+                if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/backup-signing-${NEW_MAJOR_VERSION}; then
+                    error_exit "[ERROR]: Failed to fetch trusted backup pkg keys."
+                fi
             fi
         fi
 

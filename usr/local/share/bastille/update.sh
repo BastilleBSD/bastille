@@ -196,13 +196,14 @@ jail_update_pkgbase() {
 
         local jailpath="${bastille_jailsdir}/${TARGET}/root"
         local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${jailpath}/usr/share/keys/pkg"
+        local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+            local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
+            local fingerprints="${jailpath}/usr/share/keys/pkg"
         fi
-        local repo_dir="${bastille_sharedir}/pkgbase"
 
         # Update repo (pkgbase)
         if ! pkg --rootdir "${jailpath}" \
@@ -330,21 +331,24 @@ release_update() {
 release_update_pkgbase() {
 
     if [ "${RELEASE_PLATFORM_OS}" = "FreeBSD" ]; then
-
+	
         local release_dir="${bastille_releasesdir}/${TARGET}"
         local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${release_dir}/usr/share/keys/pkg"
+        local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+            local fingerprints="${release_dir}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
+            local fingerprints="${release_dir}/usr/share/keys/pkg"
         fi
-        local repo_dir="${bastille_sharedir}/pkgbase"
 
         # Update repo (pkgbase)
         if ! pkg --rootdir "${release_dir}" \
                  --repo-conf-dir "${repo_dir}" \
                   -o IGNORE_OSVERSION="yes" \
+                  -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                  -o VERSION_MINOR="${MINOR_VERSION}" \
                   -o ABI="${abi}" \
                   -o ASSUME_ALWAYS_YES="yes" \
                   -o FINGERPRINTS="${fingerprints}" \
@@ -357,6 +361,8 @@ release_update_pkgbase() {
         if ! pkg --rootdir "${release_dir}" \
                  --repo-conf-dir "${repo_dir}" \
                   -o IGNORE_OSVERSION="yes" \
+                  -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                  -o VERSION_MINOR="${MINOR_VERSION}" \
                   -o ABI="${abi}" \
                   -o ASSUME_ALWAYS_YES="yes" \
                   -o FINGERPRINTS="${fingerprints}" \

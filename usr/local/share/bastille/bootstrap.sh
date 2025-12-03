@@ -320,31 +320,34 @@ bootstrap_release_pkgbase() {
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
 
         local abi="${PLATFORM_OS}:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
-        local host_fingerprintsdir="/usr/share/keys/pkgbase-${MAJOR_VERSION}"
-        local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
+        local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+            local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
+            local host_fingerprintsdir="/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+            local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
+            local release_fingerprintsdir="${bastille_releasesdir}/${RELEASE}/usr/share/keys"
+            local host_fingerprintsdir="/usr/share/keys/pkg"
+            local fingerprints="${bastille_releasesdir}/${RELEASE}/usr/share/keys/pkg"
         fi
-        local repo_dir="${bastille_sharedir}/pkgbase"
 
         # Verify trusted pkg keys
-        if [ ! -f "${host_fingerprintsdir}/trusted/awskms-${MAJOR_VERSION}" ]; then
-            if ! fetch -o "${host_fingerprintsdir}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${MAJOR_VERSION}/trusted/awskms-${MAJOR_VERSION}
-            then
-                ERRORS=$((ERRORS + 1))
-                error_notify "[ERROR]: Failed to fetch trusted pkg keys."
-                return 1
+        if [ "${FREEBSD_BRANCH}" = "release" ]; then
+            if [ ! -f "${host_fingerprintsdir}/trusted/awskms-${MAJOR_VERSION}" ]; then
+                if ! fetch -o "${host_fingerprintsdir}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${MAJOR_VERSION}/trusted/awskms-${MAJOR_VERSION}; then
+                    ERRORS=$((ERRORS + 1))
+                    error_notify "[ERROR]: Failed to fetch trusted pkg keys."
+                    return 1
+                fi
             fi
-        fi
-        if [ ! -f "${host_fingerprintsdir}/trusted/backup-signing-${MAJOR_VERSION}" ]; then
-            if ! fetch -o "${host_fingerprintsdir}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${MAJOR_VERSION}/trusted/backup-signing-${MAJOR_VERSION}
-            then
-                ERRORS=$((ERRORS + 1))
-                error_notify "[ERROR]: Failed to fetch trusted backup pkg keys."
-                return 1
+            if [ ! -f "${host_fingerprintsdir}/trusted/backup-signing-${MAJOR_VERSION}" ]; then
+                if ! fetch -o "${host_fingerprintsdir}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${MAJOR_VERSION}/trusted/backup-signing-${MAJOR_VERSION}; then
+                    ERRORS=$((ERRORS + 1))
+                    error_notify "[ERROR]: Failed to fetch trusted backup pkg keys."
+                    return 1
+                fi
             fi
         fi
 
@@ -504,6 +507,7 @@ bootstrap_template() {
 # Handle options.
 PKGBASE=0
 ERRORS=0
+FETCH_PKG_KEYS=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
