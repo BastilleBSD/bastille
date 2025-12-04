@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.2.2.251203
+BASTILLE_VERSION=1.2.2.251204
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -73,7 +73,7 @@ Bastille is an open-source system for automating deployment and management of
 containerized applications on FreeBSD.
 
 Usage:
-  bastille command [options(s)] TARGET [option(s)] [args]
+  bastille [option(s)] command [option(s)] TARGET ARGS
 
 Available Commands:
   bootstrap   Bootstrap a release for jail base.
@@ -117,7 +117,7 @@ Available Commands:
 
 Use "bastille -v|--version" for version information.
 Use "bastille command -h|--help" for more information about a command.
-Use "bastille -c|--config config.conf command" to specify a non-default config file.
+Use "bastille -c|--config FILE command" to specify a non-default config file.
 
 EOF
     exit 1
