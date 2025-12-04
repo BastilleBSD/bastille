@@ -7,7 +7,7 @@ author = 'Christer Edwards'
 # The short X.Y version
 version = '1.2.2'
 # The full version, including alpha/beta/rc tags
-release = '1.2.2.251203'
+release = '1.2.2.251204'
 
 # -- General configuration ---------------------------------------------------
 

@@ -8,7 +8,7 @@ Usage
     containerized applications on FreeBSD.
 
   Usage:
-    bastille command [options(s)] TARGET [option(s)] [args]
+    bastille [option(s)] command [option(s)] TARGET ARGS
 
   Available Commands:
     bootstrap   Bootstrap a release for jail base.
@@ -52,4 +52,4 @@ Usage
 
   Use "bastille -v|--version" for version information.
   Use "bastille command -h|--help" for more information about a command.
-  Use "bastille -c|--config config.conf command" to specify a non-default config file.
+  Use "bastille -c|--config FILE command" to specify a non-default config file.

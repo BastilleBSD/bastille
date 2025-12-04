@@ -38,7 +38,7 @@ This is the default `bastille.conf` file.
   ## ports - The FreeBSD ports (3rd party applications) tree
   ## src   - The source code to the kernel + userland
   ## test  - The FreeBSD test suite
-  ## Whitespace separated list:
+  ## Whitespace-separated list:
   ## bastille_bootstrap_archives="base lib32 ports src test"
   bastille_bootstrap_archives="base"                                    ## default: "base"
 
@@ -56,7 +56,7 @@ This is the default `bastille.conf` file.
   ## optional-jail[-dbg] - Optional base system software for jails
   ## src                 - System source code
   ## tests               - System test suite
-  ## Whitespace separated list:
+  ## Whitespace-separated list:
   ## bastille_pkgbase_packages="base-jail lib32-dbg src"
   bastille_pkgbase_packages="base-jail"                                 ## default: "base-jail"
 
