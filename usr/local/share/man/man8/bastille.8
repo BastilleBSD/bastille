@@ -3,78 +3,99 @@
 .Os FreeBSD
 .Sh NAME
 bastille - Bastille is an open-source system for automating deployment
-\ and management of containerized applications on FreeBSD.
+\          and management of containerized applications on FreeBSD.
 .Sh SYNOPSIS
 .Nm bastille
+.Op [option(s)]
 .Ar command
+.Op [option(s)]
 .Ar TARGET
-.Op arg
-.Sh DESCRIPTION
+.Ar ARGS
+.Sh STARTUP
 .Nm To start all containers during boot use:
 .Pp
 sysrc bastille_enable=YES
 .Pp
-.Nm The following modules are available:
+.Sh SUBCOMMANDS
+.Nm The following commands are available:
 .Pp
 .Bl -tag -width -indent
 .It bootstrap
-Bootstrap a FreeBSD release for container base.
+Bootstrap a FreeBSD release for jail base.
 .It clone
-Clone an existing container.
+Clone an existing jail.
 .It cmd
-Execute arbitrary command on targeted container(s).
+Execute arbitrary command on targeted jail(s).
+.It config
+Get, set or remove a config value for the targeted jail(s).
 .It console
-Console into a running container.
+Console into a jail.
 .It convert
-Convert a thin container into a thick container.
+Convert thin jail to thick jail, or convert a jail to a custom release.
 .It cp
-cp(1) files from host to targeted container(s).
+cp(1) files from host to targeted jail(s).
 .It create
-Create a new thin container or a thick container if -T|--thick option specified.
+Create a jail.
 .It destroy
-Destroy a stopped container or a FreeBSD release.
+Destroy a jail or release
 .It edit
-Edit container configuration files (advanced).
+Edit jail configuration files (advanced).
 .It export
-Exports a container archive or image.
+Exports a jail.
 .It help
-Help about any command
+Help about any command.
 .It htop
 Interactive process viewer (requires htop).
 .It import
-Import a container archive or image.
-.It list
-List containers, releases, templates, logs, limits or backups.
+Import a jail.
+.It jcp
+cp(1) files from a jail to jail(s).
 .It limits
 Apply resources limits to targeted container(s). See rctl(8).
+.It list
+List jails, releases, templates and more...
+.It migrate
+Migrate targeted jail(s) to a remote system.
+.It mount
+Mount a volume inside targeted jail(s).
+.It network
+Add or remove interfaces from targeted jail(s).
 .It pkg
 Manipulate binary packages within targeted container(s). See pkg(8).
-.It restart
-Restart a running container.
+.It rcp
+cp(1) files from a jail to host.
 .It rdr
 Redirect host port to container port.
+.It rename
+Rename a jail.
+.It restart
+Restart a running container.
 .It service
-Manage services within targeted container(s).
+Manage services within targeted jail(s).
+.It setup
+Attempt to auto-configure network, firewall and storage and more...
 .It start
-Start a stopped container.
+Start stopped jail(s).
 .It stop
-Stop a running container.
+Stop running jail(s).
 .It sysrc
-Safely edit rc files within targeted container(s).
+Safely edit rc files within targeted jail(s).
 .It tags
-Add tags to targeted container(s).
+Add or remove tags to targeted jail(s).
 .It template
-Apply file templates to targeted container(s).
+Apply file templates to targeted jail(s).
 .It top
 Display and update information about the top(1) cpu processes.
+.It umount
+Unmount a volume from targeted jail(s).
 .It update
-Update container base -pX release.
+Update a jail or release.
 .It upgrade
-Upgrade container release to X.Y-RELEASE.
+Upgrade a jail to new X.Y-RELEASE.
 .It verify
 Compare release against a "known good" index.
 .It zfs
-Manage (get|set) zfs attributes on targeted container(s).
+Manage (get|set) zfs attributes on targeted jail(s).
 .El
 .Pp
 .Sh FILES
@@ -95,26 +116,3 @@ bastille create myjail 12.1-RELEASE 10.0.0.1 em0
 .Nm To create a container with VNET and DHCP use
 .Pp
 bastille create -V myjail 12.1-RELEASE 0.0.0.0 em0
-.Sh HISTORY
-.Nm Features added in 0.6.20200412:
-.Pp
-.Bl -tag -width -indent
-.It clone
-Clone an existing container.
-.It import (updated)
-Support for iocage and ezjail import
-.Pp
-.El
-.Nm Features added in 0.6.20200202:
-.Pp
-.Bl -tag -width -indent
-.It convert
-Convert a thin container into a thick container.
-.It export
-Exports a container archive or image.
-.It import
-Import a container archive or image.
-.It limits
-Apply resources limits to targeted container(s). See rctl(8).
-.It rdr
-Redirect host port to container port.
