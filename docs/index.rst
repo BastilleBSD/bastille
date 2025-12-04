@@ -4,6 +4,12 @@ Bastille
 Welcome to the official Bastille documentation. This collection of documents
 will outline installation and usage of Bastille.
 
+While reading the documentation and using Bastille, you will find that
+sometimes "container" is used, and sometimes "jail" is used.
+These are completely interchangeable, but there is some debate as to
+which one is more correct. Be that as it may, anytime you read "container"
+or "jail", it means a FreeBSD jail.
+
 The latest version of this documentation can always be found at
 https://docs.bastillebsd.org.
 
