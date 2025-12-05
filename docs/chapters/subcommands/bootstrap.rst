@@ -1,6 +1,8 @@
 bootstrap
 =========
 
+Bootstrap a release or template(s).
+
 The bootstrap sub-command is used to download and extract releases and templates
 for use with Bastille containers. A valid release is needed before containers
 can be created. Templates are optional but are managed in the same manner.

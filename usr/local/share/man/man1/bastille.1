@@ -1,14 +1,14 @@
-.Dd 2025/08/27
+.Dd 2025/12/04
 .Dt bastille 1
 .Os
 .Sh NAME
 .Nm bastille
-.Nd Open-source jail automation and management tool
+.Nd open-source jail automation and management tool
 .Sh SYNOPSIS
-.Nm bastille
+.Nm
 .Op Fl vh
 .Op Fl c Ar file
-.Ar command
+.Ar COMMAND
 .Op option(s)
 .Ar TARGET
 .Ar ARGS
@@ -17,100 +17,95 @@ Bastille is an open-source system for automating deployment
 and management of containerized applications on FreeBSD
 using the jail framework.
 .Sh OPTIONS
-The following options are supported by
-.Nm :
 .Bl -tag -width Ds
 .It Fl c Ar file , Fl -config Ar file
 Specify a non-default config file to use. Must be placed
 inside the Bastille config directory.
 .It Fl h , Fl -help
-Display usage information.
+Display usage information. This option is also available for each
+sub-command, though they are not listed in the man pages.
 .It Fl v , Fl -version
 Print version information.
-.El
 .Sh SUBCOMMANDS
-The following commands are supported by
-.Nm :
 .Bl -tag -width Ds
-.It Nm bootstrap
-Bootstrap a FreeBSD release for jail base.
-.It Nm clone
+.It Sy bootstrap
+Bootstrap a release or template(s).
+.It Sy clone
 Clone an existing jail.
-.It Nm cmd
+.It Sy cmd
 Execute arbitrary command on targeted jail(s).
-.It Nm config
-Get, set or remove a config value for the targeted jail(s).
-.It Nm console
+.It Sy config
+Get, set, add or remove properties from targeted jail(s).
+.It Sy console
 Console into a jail.
-.It Nm convert
+.It Sy convert
 Convert thin jail to thick jail, or convert a jail to a custom release.
-.It Nm cp
+.It Sy cp
 cp(1) files from host to targeted jail(s).
-.It Nm create
+.It Sy create
 Create a jail.
-.It Nm destroy
+.It Sy destroy
 Destroy a jail or release
-.It Nm edit
+.It Sy edit
 Edit jail configuration files (advanced).
-.It Nm export
+.It Sy export
 Exports a jail.
-.It Nm help
+.It Sy help
 Help about any command.
-.It Nm htop
+.It Sy htop
 Interactive process viewer (requires htop).
-.It Nm import
+.It Sy import
 Import a jail.
-.It Nm jcp
+.It Sy jcp
 cp(1) files from a jail to jail(s).
-.It Nm limits
+.It Sy limits
 Apply resources limits to targeted container(s). See rctl(8).
-.It Nm list
+.It Sy list
 List jails, releases, templates and more...
-.It Nm migrate
+.It Sy migrate
 Migrate targeted jail(s) to a remote system.
-.It Nm mount
+.It Sy mount
 Mount a volume inside targeted jail(s).
-.It Nm network
+.It Sy network
 Add or remove interfaces from targeted jail(s).
-.It Nm pkg
+.It Sy pkg
 Manipulate binary packages within targeted container(s). See pkg(8).
-.It Nm rcp
+.It Sy rcp
 cp(1) files from a jail to host.
-.It Nm rdr
+.It Sy rdr
 Redirect host port to container port.
-.It Nm rename
+.It Sy rename
 Rename a jail.
-.It Nm restart
+.It Sy restart
 Restart a running container.
-.It Nm service
+.It Sy service
 Manage services within targeted jail(s).
-.It Nm setup
+.It Sy setup
 Attempt to auto-configure network, firewall and storage and more...
-.It Nm start
+.It Sy start
 Start stopped jail(s).
-.It Nm stop
+.It Sy stop
 Stop running jail(s).
-.It Nm sysrc
+.It Sy sysrc
 Safely edit rc files within targeted jail(s).
-.It Nm tags
+.It Sy tags
 Add or remove tags to targeted jail(s).
-.It Nm template
+.It Sy template
 Apply file templates to targeted jail(s).
-.It Nm top
+.It Sy top
 Display and update information about the top(1) cpu processes.
-.It Nm umount
+.It Sy umount
 Unmount a volume from targeted jail(s).
-.It Nm update
+.It Sy update
 Update a jail or release.
-.It Nm upgrade
+.It Sy upgrade
 Upgrade a jail to new X.Y-RELEASE.
-.It Nm verify
+.It Sy verify
 Compare release against a "known good" index.
-.It Nm zfs
+.It Sy zfs
 Manage (get|set) zfs attributes on targeted jail(s).
-.El
 .Sh SEE ALSO
-.Xr bastille.conf 1
+.Xr bastille.conf 5
 .Xr bastille-bootstrap 1
 .Xr bastille-clone 1
 .Xr bastille-cmd 1

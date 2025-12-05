@@ -1,7 +1,7 @@
 clone
 =====
 
-Clone/duplicate an existing jail to a new jail.
+Clone an existing jail.
 
 Limitations
 -----------
@@ -19,6 +19,6 @@ Limitations
 
       Options:
 
-      -a | --auto           Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
-      -l | --live           Clone a running jail (ZFS only). Cannot be used with [-a|--auto].
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
+      -l | --live      Clone a running jail (ZFS only). Cannot be used with [-a|--auto].
+      -x | --debug     Enable debug mode.

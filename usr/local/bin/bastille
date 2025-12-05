@@ -76,10 +76,10 @@ Usage:
   bastille [option(s)] command [option(s)] TARGET ARGS
 
 Available Commands:
-  bootstrap   Bootstrap a release for jail base.
+  bootstrap   Bootstrap a release or template(s).
   clone       Clone an existing jail.
-  cmd         Execute arbitrary command on targeted jail(s).
-  config      Get, set or remove a config value for the targeted jail(s).
+  cmd         Execute command inside targeted jail(s).
+  config      Get, set, add or remove properties from targeted jail(s).
   console     Console into a jail.
   convert     Convert thin jail to thick jail, or convert a jail to a custom release.
   cp          cp(1) files from host to targeted jail(s).
