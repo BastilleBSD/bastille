@@ -1,0 +1,153 @@
+.Dd 2025/08/27
+.Dt bastille 1
+.Os
+.Sh NAME
+.Nm bastille
+.Nd Open-source jail automation and management tool
+.Sh SYNOPSIS
+.Nm bastille
+.Op Fl vh
+.Op Fl c Ar file
+.Ar command
+.Op option(s)
+.Ar TARGET
+.Ar ARGS
+.Sh DESCRIPTION
+Bastille is an open-source system for automating deployment
+and management of containerized applications on FreeBSD
+using the jail framework.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width Ds
+.It Fl c Ar file , Fl -config Ar file
+Specify a non-default config file to use. Must be placed
+inside the Bastille config directory.
+.It Fl h , Fl -help
+Display usage information.
+.It Fl v , Fl -version
+Print version information.
+.El
+.Sh SUBCOMMANDS
+The following commands are supported by
+.Nm :
+.Bl -tag -width Ds
+.It Nm bootstrap
+Bootstrap a FreeBSD release for jail base.
+.It Nm clone
+Clone an existing jail.
+.It Nm cmd
+Execute arbitrary command on targeted jail(s).
+.It Nm config
+Get, set or remove a config value for the targeted jail(s).
+.It Nm console
+Console into a jail.
+.It Nm convert
+Convert thin jail to thick jail, or convert a jail to a custom release.
+.It Nm cp
+cp(1) files from host to targeted jail(s).
+.It Nm create
+Create a jail.
+.It Nm destroy
+Destroy a jail or release
+.It Nm edit
+Edit jail configuration files (advanced).
+.It Nm export
+Exports a jail.
+.It Nm help
+Help about any command.
+.It Nm htop
+Interactive process viewer (requires htop).
+.It Nm import
+Import a jail.
+.It Nm jcp
+cp(1) files from a jail to jail(s).
+.It Nm limits
+Apply resources limits to targeted container(s). See rctl(8).
+.It Nm list
+List jails, releases, templates and more...
+.It Nm migrate
+Migrate targeted jail(s) to a remote system.
+.It Nm mount
+Mount a volume inside targeted jail(s).
+.It Nm network
+Add or remove interfaces from targeted jail(s).
+.It Nm pkg
+Manipulate binary packages within targeted container(s). See pkg(8).
+.It Nm rcp
+cp(1) files from a jail to host.
+.It Nm rdr
+Redirect host port to container port.
+.It Nm rename
+Rename a jail.
+.It Nm restart
+Restart a running container.
+.It Nm service
+Manage services within targeted jail(s).
+.It Nm setup
+Attempt to auto-configure network, firewall and storage and more...
+.It Nm start
+Start stopped jail(s).
+.It Nm stop
+Stop running jail(s).
+.It Nm sysrc
+Safely edit rc files within targeted jail(s).
+.It Nm tags
+Add or remove tags to targeted jail(s).
+.It Nm template
+Apply file templates to targeted jail(s).
+.It Nm top
+Display and update information about the top(1) cpu processes.
+.It Nm umount
+Unmount a volume from targeted jail(s).
+.It Nm update
+Update a jail or release.
+.It Nm upgrade
+Upgrade a jail to new X.Y-RELEASE.
+.It Nm verify
+Compare release against a "known good" index.
+.It Nm zfs
+Manage (get|set) zfs attributes on targeted jail(s).
+.El
+.Sh SEE ALSO
+.Xr bastille.conf 1
+.Xr bastille-bootstrap 1
+.Xr bastille-clone 1
+.Xr bastille-cmd 1
+.Xr bastille-config 1
+.Xr bastille-console 1
+.Xr bastille-convert 1
+.Xr bastille-cp 1
+.Xr bastille-create 1
+.Xr bastille-destroy 1
+.Xr bastille-edit 1
+.Xr bastille-etcupdate 1
+.Xr bastille-export 1
+.Xr bastille-htop 1
+.Xr bastille-import 1
+.Xr bastille-jcp 1
+.Xr bastille-limits 1
+.Xr bastille-list 1
+.Xr bastille-migrate 1
+.Xr bastille-mount 1
+.Xr bastille-network 1
+.Xr bastille-pkg 1
+.Xr bastille-rcp 1
+.Xr bastille-rdr 1
+.Xr bastille-rename 1
+.Xr bastille-restart 1
+.Xr bastille-service 1
+.Xr bastille-setup 1
+.Xr bastille-start 1
+.Xr bastille-stop 1
+.Xr bastille-sysrc 1
+.Xr bastille-tags 1
+.Xr bastille-top 1
+.Xr bastille-umount 1
+.Xr bastille-update 1
+.Xr bastille-upgrade 
+.Xr bastille-verify 1
+.Xr bastille-zfs 1
+.Sh BUGS
+Please report any bugs on Github
+.Nm https://github.com/BastilleBSD/bastille/issues

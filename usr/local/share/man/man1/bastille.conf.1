@@ -1,0 +1,133 @@
+.Dd 2025/12/04
+.Dt bastille.conf 1
+.Os
+.Sh NAME
+.Nm bastille.conf
+.Nd configuration file for Bastille
+.SH SYNOPSIS
+.Nm /usr/local/etc/bastille/bastille.conf
+.Sh DESCRIPTION
+Bastille has most options preconfigured with sane defaults. These
+can be adjusted to fit your environment.
+.Sh DEFAULT PATH CONFIGURATION
+.Bl -tag -width Ds
+.It Nm bastille_prefix
+This is the main Bastille prefix. All Bastille directories, excluding
+.Nm bastille_logsdir
+will start with this prefix.
+.Pp
+If zfs is enabled, this will become the mount point of the zfs dataset.
+.Pp
+The following directories, excluding
+.Nm bastille_logsdir
+will be prefixed by
+.Nm basatille_prefix .
+If zfs is enabled, they will inherit the mount point of
+.Nm bastille_prefix .
+.It Nm bastille_backupsdir
+Bastille will store backups and exports here.
+.It Nm bastille_cachedir
+Bastille will store cache here.
+.It Nm bastille_jailsdir
+Bastille will store jails here.
+.It Nm bastille_releasesdir
+Bastille will store releases here.
+.It Nm bastille_templatesdir
+Bastille will store templates here.
+.It Nm bastille_logsdir
+Bastille will store jail console logs here.
+.El
+.Sh FIREWALL CONFIGURATION
+.Bl -tag -width Ds
+.It Nm bastille_pf_conf
+Path to the pf firewall configuration file.
+.El
+.Sh SHARE DIRECTORY CONFIGURATION
+.Bl -tag -width Ds
+.It Nm bastille_sharedir
+This is the path where Bastille expects sub-commands to live at.
+.El
+.Sh BOOTSTRAP CONFIGURATION
+.Bl -tag -width Ds
+.It Nm bastille_bootstrap_archives
+This is a whitespace-separated list of distribution sets to fetch
+when bootstrapping a legacy (non-pkgbase) release.
+.It Nm bastille_pkgbase_packages
+This is a whitespace-separated list of package sets to install
+when bootstrapping a release using PkgBase.
+.It Nm bastille_url_freebsd
+Url from which to fetch legacy distributions sets when bootstrapping
+a FreeBSD release.
+.It Nm bastille_url_hardenedbsd
+Url from which to fetch legacy distributions sets when bootstrapping
+a HardenedBSD release.
+.It Nm bastille_url_midnightbsd
+Url from which to fetch legacy distributions sets when bootstrapping
+a MidnightBSD release.
+.El
+.Sh TIMEZONE CONFIGURATION
+.Bl -tag -width Ds
+.It Nm bastille_tzdata
+Set the timezone to apply to newly created jails.
+.El
+.Sh RESOLV.CONF CONFIGURATION
+.Bl -tag -width Ds
+.It Nm bastille_resolv_conf
+This file is copied into newly created jails to allow them
+to reach DNS.
+.El
+.Sh ZFS CONFIGURATION
+.Bl -tag -width Ds
+.It Nm bastille_zfs_enable
+Whether to enable or disable zfs support.
+.It Nm bastille_zfs_zpool
+Which zpool to use when zfs is enabled.
+.It Nm bastille_zfs_prefix
+Which dataset to use when zfs is enabled. Do not include the zpool
+here.
+.It Nm bastille_zfs_options
+Zfs options to use when creating any and all datasets for any and all
+supported actions.
+
+
+
+
+.Sh SEE ALSO
+.Xr bastille.conf 1
+.Xr bastille-bootstrap 1
+.Xr bastille-clone 1
+.Xr bastille-cmd 1
+.Xr bastille-config 1
+.Xr bastille-console 1
+.Xr bastille-convert 1
+.Xr bastille-cp 1
+.Xr bastille-create 1
+.Xr bastille-destroy 1
+.Xr bastille-edit 1
+.Xr bastille-etcupdate 1
+.Xr bastille-export 1
+.Xr bastille-htop 1
+.Xr bastille-import 1
+.Xr bastille-jcp 1
+.Xr bastille-limits 1
+.Xr bastille-list 1
+.Xr bastille-migrate 1
+.Xr bastille-mount 1
+.Xr bastille-network 1
+.Xr bastille-pkg 1
+.Xr bastille-rcp 1
+.Xr bastille-rdr 1
+.Xr bastille-rename 1
+.Xr bastille-restart 1
+.Xr bastille-service 1
+.Xr bastille-setup 1
+.Xr bastille-start 1
+.Xr bastille-stop 1
+.Xr bastille-sysrc 1
+.Xr bastille-tags 1
+.Xr bastille-top 1
+.Xr bastille-umount 1
+.Xr bastille-update 1
+.Xr bastille-upgrade 
+.Xr bastille-verify 1
+.Xr bastille-zfs 1
