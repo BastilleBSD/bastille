@@ -4,8 +4,6 @@ limits
 rctl
 ----
 
-Set resourse limits for targeted jail(s).
-
 To add a limit, use ``bastille limits TARGET add OPTION VALUE``.
 
 To clear the limits from the system, use ``bastille limits TARGET clear``.
@@ -43,13 +41,16 @@ This file can be edited manually using ``bastille edit TARGET cpuset.conf``.
 .. code-block:: shell
 
   ishmael ~ # bastille limits help
-  Usage: bastille limits [option(s)] TARGET [add|remove|clear|reset|(list|show [active])|stats] OPTION [VALUE]
+  Usage: bastille limits [option(s)] TARGET add OPTION VALUE
+                                     TARGET remove OPTION"
+                                     TARGET clear|reset|stats"
+                                     TARGET list|show [active]"
 
       Example: bastille limits TARGET add memoryuse 1G
       Example: bastille limits TARGET add cpu 0,1,2
 
       Options:
 
-      -a | --auto           Auto mode. Start/stop jail(s) if required.
-      -l | --log            Enable logging for the specified rule (rctl only).
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -l | --log       Enable logging for the specified rule (RCTL only).
+      -x | --debug     Enable debug mode.

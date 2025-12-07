@@ -1,8 +1,6 @@
 clone
 =====
 
-Clone an existing jail.
-
 Limitations
 -----------
 

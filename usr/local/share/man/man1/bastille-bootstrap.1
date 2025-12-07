@@ -1,51 +1,59 @@
-.Dd 2025/12/04
+.Dd 2025/12/06
 .Dt bastille-bootstrap 1
 .Os
 .Sh NAME
 .Nm bastille bootstrap
-.Nd bootstrap a release or template(s) 
+.Nd Bootstrap a release or template(s). 
 .Sh SYNOPSIS
 .Nm
-.Op Fl px
+.Op Fl pux
 .Ar RELEASE
-.Op Cm update|arch
+.Op ARCH
 .Nm
 .Op Fl x
 .Ar TEMPLATE
 .Sh DESCRIPTION
+The
 .Nm
-will bootstrap a release to use when creating jails. It will
+sub-command will bootstrap a release to use when creating jails. It will
 also fetch and verify templates if a url is given as an arguement.
 .Bl -tag -width Ds
-.It bootstrap Oo Fl px Oc Ar RELEASE Op Cm update|ARCH
+.It Sy bastille bootstrap Oo Fl pux Oc Ar RELEASE Op ARCH
 .Bl -tag -width Ds
 .It Fl p , Fl -pkgbase
-Bootstrap a release using PkgBase package sets. By default Bastille
-will use legacy distribution sets to bootstrap a release. For FreeBSD
-version 16.x and above, PkgBase is the default.
+Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above). Bastille uses
+distribution sets by default, but this option enables the use of
+package sets when bootstrapping FreeBSD release.
+.It Fl u , Fl -update
+Update the release after bootstrap.
 .It Fl x , Fl -debug
 Enable debug mode.
-.It update
-This will update the release using
-.Nm bastille update RELEASE
-after bootstrapping it.
-.It ARCH
-Specify an architecture when bootstrapping a release. This is usually
-not needed, as Bastille detects this automatically for most
-use cases.
+.Pp
+If
+.Ar ARCH
+is specified, it will be used to bootstrap, as
+opposed to using the hosts arch.
 .El
-.It bootstrap Oo Fl x Oc Ar TEMPLATE
+.It Sy bastille bootstrap Oo Fl x Oc Ar TEMPLATE
 .Bl -tag -width Ds
 .It Fl x , Fl -debug
 Enable debug mode.
+.Pp
+.Ar TEMPLATE
+should be a url containing either a single template, or multiple
+templates.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Bootstrap 15.0-RELEASE:
-.Nm bastille bootstrap 15.0-RELEASE
+.Sy bastille bootstrap 15.0-RELEASE
 .It Bootstrap official BastilleBSD templates:
-.Nm bastille bootstrap https://github.com/BastilleBSD/templates
+.Sy bastille bootstrap https://github.com/BastilleBSD/templates
 .It Bootstrap 15.0-RELEASE using PkgBase:
-.Nm bastille bootstrap -p 15.0-RELEASE
+.Sy bastille bootstrap -p 15.0-RELEASE
+.It Bootstrap 15.0-RELEASE using i386 as the arch:
+.Sy bastille bootstrap 15.0-RELEASE --i386
+.It Bootstrap the official BastilleBSD template collection:
+.Sy bastille bootstrap https://github.com/BastilleBSD/templates
 .Sh SEE ALSO
 .Xr bastille.conf 5 ,
 .Xr bastille-clone 1 ,
@@ -78,9 +86,10 @@ Enable debug mode.
 .Xr bastille-stop 1 ,
 .Xr bastille-sysrc 1 ,
 .Xr bastille-tags 1 ,
+.Xr bastille-template 1 ,
 .Xr bastille-top 1 ,
 .Xr bastille-umount 1 ,
 .Xr bastille-update 1 ,
 .Xr bastille-upgrade 1 ,
 .Xr bastille-verify 1 ,
-.Xr bastille-zfs 1 ,
+.Xr bastille-zfs 1

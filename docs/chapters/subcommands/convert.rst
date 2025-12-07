@@ -1,10 +1,6 @@
 convert
 =======
 
-Convert a thin jail to a thick jail.
-
-Convert a thick jail to a custom release.
-
 Converting a thin jail to a thick jail requires only the TARGET arg.
 
 .. code-block:: shell
@@ -28,10 +24,11 @@ flag.
 .. code-block:: shell
 
   ishmael ~ # bastille convert help
-  Usage: bastille convert [option(s)] TARGET [RELEASE]
+  Usage: bastille convert [option(s)] TARGET
+                                      TARGET RELEASE
 
       Options:
 	
-      -a | --auto           Auto mode. Start/stop jail(s) if required.
-      -y | --yes            Do not prompt. Just convert.
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -y | --yes       Do not prompt. Assume always yes.
+      -x | --debug     Enable debug mode.

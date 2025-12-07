@@ -1,9 +1,9 @@
-.Dd 2025/12/04
+.Dd 2025/12/06
 .Dt bastille-config 1
 .Os
 .Sh NAME
 .Nm bastille config
-.Nd get, set, add or remove properties from targeted jail(s)
+.Nd Get, set, add or remove properties from jail(s).
 .Sh SYNOPSIS
 .Nm
 .Op Fl x
@@ -15,25 +15,40 @@
 .Cm get|remove
 .Ar PROPERTY
 .Sh DESCRIPTION
+The
 .Nm
-can modify targeted jail(s) configuration and
+sub-command will modify targeted jail(s) configuration and
 get, set, add or remove properties.
-.Ss ACTIONS
+.Bl -tag -width Ds
+.It Sy bastille config Oo Fl x Oc Sy set|add Ar PROPERTY Op VALUE
 .Bl -tag -width Ds
 .It Sy set
 Set the value of the specified property from the jail configuration.
-If the property is not set, it will be added and set. The VALUE part
-is optional for some values. For example, allow.mlock does not need
-a VALUE, but it won't do any harm to set it as 1 (enable).
+If the property is not set, it will be added and set.
 .It Sy add
-Same as
-.Sy set .
-.It Sy get
-Get the value of the specified property from the jail configuration.
-.It Sy remove
-Remove the specified property from the jail configuration.
-.Ss OPTIONS
+Same as set.
+.It Fl x , Fl -debug
+Enable debug mode.
+.El
+.Pp
+It is not always necesary to set a
+.Ar VALUE
+for a
+.Ar PROPERTY .
+For example, 'allow.mlock=1' is the same as 'allow.mlock'.
+.It Sy bastille config Oo Fl x Oc Sy get|remove Ar PROPERTY
 .Bl -tag -width Ds
+.It Sy get
+Get the value of the specified
+.Ar PROPERTY
+from the jail configuration. If a property is not present, 'not
+enabled' will be shown. If the property has no value, but
+is present, 'enabled' will be returned. Otherwise you will be
+shown the value.
+.It Sy remove
+Remove the specified
+.Ar PROPERTY
+from the jail configuration.
 .It Fl x , -debug
 Enable debug mode.
 .Sh EXAMPLES
@@ -76,9 +91,10 @@ Enable debug mode.
 .Xr bastille-stop 1 ,
 .Xr bastille-sysrc 1 ,
 .Xr bastille-tags 1 ,
+.Xr bastille-template 1 ,
 .Xr bastille-top 1 ,
 .Xr bastille-umount 1 ,
 .Xr bastille-update 1 ,
 .Xr bastille-upgrade 1 ,
 .Xr bastille-verify 1 ,
-.Xr bastille-zfs 1 ,
+.Xr bastille-zfs 1

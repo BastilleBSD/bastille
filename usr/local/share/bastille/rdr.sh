@@ -33,15 +33,16 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille rdr [option(s)] TARGET [clear|reset|list|(tcp|udp)] HOST_PORT JAIL_PORT [log ['(' logopts ')'] ]"
+    error_notify "Usage: bastille rdr [option(s)] TARGET tcp|udp HOST_PORT JAIL_PORT [log LOG_OPTIONS]"
+    error_notify "                                TARGET clear|reset|list"
     cat << EOF
 
     Options:
 
-    -d | --destination IP            Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-    -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comman separated.
-    -s | --source      IP|table      Limit rdr to a source IP or table.
-    -t | --type        ipv4|ipv6     Specify IP type. Must be used if -s or -d are used. Defaults to both.
+    -d | --destination IP            Limit rdr to a destination IP.
+    -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comma-separated.
+    -s | --source      IP|TABLE      Limit rdr to a source IP or table.
+    -t | --type        ipv4|ipv6     Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.
     -x | --debug                     Enable debug mode.
 
 EOF

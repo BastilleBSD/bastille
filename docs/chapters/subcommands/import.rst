@@ -1,8 +1,6 @@
 import
 ======
 
-Import a jail backup image or archive.
-
 .. code-block:: shell
 
   ishmael ~ # bastille import /path/to/archive.file
@@ -19,8 +17,8 @@ To import to a specified release, specify it as the last argument.
 
       Options:
 
-      -f | --force          Force an archive import regardless if the checksum file does not match or missing.
-      -M | --static-mac     Generate static MAC for jail when importing foreign jails like iocage.
+      -f | --force          Force an archive import without validating checksum.
+      -M | --static-mac     Use a static/persistent MAC address (VNET only) when importing foreign jails.
       -v | --verbose        Enable verbose mode (ZFS only).
       -x | --debug          Enable debug mode.
 

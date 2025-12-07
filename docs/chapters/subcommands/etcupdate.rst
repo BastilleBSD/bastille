@@ -39,10 +39,12 @@ To show only the differences between the releases, use the ``diff`` command.
 .. code-block:: shell
 
   ishmael ~ # bastille etcupdate help
-  Usage: bastille etcupdate [option(s)] [bootstrap|TARGET] [diff|resolve|update RELEASE]
+  Usage: bastille etcupdate [option(s)] bootstrap RELEASE
+                                        TARGET update RELEASE
+                                        TARGET diff|resolve
 
       Options:
 
-      -d | --dry-run          Show output, but do not apply.
-      -f | --force            Force a re-bootstrap of a RELEASE.
-      -x | --debug            Enable debug mode.
+      -d | --dry-run     Show output, but do not apply.
+      -f | --force       Force a re-bootstrap of a RELEASE.
+      -x | --debug       Enable debug mode.

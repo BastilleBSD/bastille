@@ -34,18 +34,19 @@
 . /usr/local/etc/bastille/bastille.conf
 
 usage() {
-    error_notify "Usage: bastille network [option(s)] TARGET remove|add INTERFACE [IP]"
+    error_notify "Usage: bastille network [option(s)] TARGET add INTERFACE [IP]"
+    error_notify "                                    TARGET remove INTERFACE"
     cat << EOF
 
     Options:
 
     -a | --auto            Start/stop jail(s) if required.
-    -B | --bridge          Add a bridge VNET interface.
-    -M | --static-mac      Generate a static MAC address for the interface (VNET only).
+    -B | --bridge          Add a bridge interface.
+    -M | --static-mac      Use a static/persistent MAC address (VNET only).
     -n | --no-ip           Create interface without an IP (VNET only).
     -P | --passthrough     Add a raw interface.
-    -V | --vnet            Add a VNET interface.
-    -v | --vlan VLANID     Assign VLAN ID to interface (VNET only).
+    -V | --vnet            Add a physical interface.
+    -v | --vlan VLANID     Assign VLANID to interface (VNET only).
     -x | --debug           Enable debug mode.
 
 EOF

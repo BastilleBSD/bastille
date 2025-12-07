@@ -40,23 +40,23 @@ usage() {
 
     Options:
 
-    -B | --bridge                   Enable VNET, and attach to a specified, already existing bridge.
-    -C | --clone                    Create a clone jail.
-    -D | --dual                     Create jail with both IPv4 and IPv6 networking ('inherit' and 'ip_hostname' only).
-    -E | --empty                    Create an empty jail, intended for custom jail builds (thin/thick/linux or unsupported).
-    -g | --gateway IP               Specify a default router/gateway for the jail.
+    -B | --bridge                   Enable VNET. INTERFACE must be a bridge.
+    -C | --clone                    Create a clone jail (ZFS only).
+    -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
+    -E | --empty                    Create an empty jail.
+    -g | --gateway IP               Specify a default router/gateway.
     -L | --linux                    Create a Linux jail (experimental).
-    -M | --static-mac               Generate a static MAC address for jail (VNET only).
-    -n | --nameserver IP,IP         Specify nameserver(s) for the jail. Comma separated.
-         --no-validate              Do not validate the release when creating the jail.
-         --no-boot                  Create jail with boot=off.
-    -P | --passthrough              Enable VNET, and pass the specified interface into the jail.
-    -p | --priority VALUE           Set priority value for the jail.
-    -T | --thick                    Create a thick jail. This is an entirely self contained and independant jail.
-    -V | --vnet                     Enable VNET, and attach to an existing, physical interface.
-    -v | --vlan VLANID              Creates the jail with specified VLAN ID (VNET only).
+    -M | --static-mac               Use a static/persistent MAC address (VNET only).
+    -n | --nameserver IP            Specify nameserver(s) for the jail. Comma-separated.
+         --no-validate              Do not validate the release name.
+         --no-boot                  Set boot=off.
+    -P | --passthrough              Enable VNET. INTERFACE is used as-is.
+    -p | --priority VALUE           Set priority value.
+    -T | --thick                    Create a thick jail.
+    -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
+    -v | --vlan VLANID              Set VLAN ID (VNET only).
     -x | --debug                    Enable debug mode.
-    -Z | --zfs-opts zfs,options     Comma separated list of ZFS options to create the jail with. This overrides the defaults.
+    -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.
 
 EOF
     exit 1

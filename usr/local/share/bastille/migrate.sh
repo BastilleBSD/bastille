@@ -36,19 +36,13 @@ usage() {
     error_notify "Usage: bastille migrate [option(s)] TARGET USER@HOST[:PORT]"
     cat << EOF
 
-    Examples:
-
-    bastille migrate attica migrate@192.168.10.100
-    bastille migrate attica migrate@192.168.1.10:20022
-    bastille migrate --keyfile id_rsa attica migrate@192.168.1.10
-
     Options:
 
     -a | --auto         Auto mode. Start/stop jail(s) if required.
-    -b | --backup       Retain archives on remote system.
+    -b | --backup       Keep archives on remote system.
     -d | --destroy      Destroy local jail after migration.
        | --doas         Use 'doas' instead of 'sudo'.
-    -k | --keyfile      Specify an alternative private keyfile name. Must be in '~/.ssh'
+    -k | --keyfile      Specify an alternative private keyfile name. Must be in '~/.ssh'.
     -l | --live         Migrate a running jail (ZFS only).
     -p | --password     Use password based authentication.
     -x | --debug        Enable debug mode.

@@ -40,4 +40,4 @@ release or template .
 
       Options:
 
-      -x | --debug          Enable debug mode.
+      -x | --debug     Enable debug mode.

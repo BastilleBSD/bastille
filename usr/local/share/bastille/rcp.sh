@@ -38,8 +38,8 @@ usage() {
 
     Options:
 
-    -q | --quiet          Suppress output.
-    -x | --debug          Enable debug mode.
+    -q | --quiet     Suppress output.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

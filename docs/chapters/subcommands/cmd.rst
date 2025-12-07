@@ -1,8 +1,6 @@
 cmd
 ===
 
-Execute command inside targeted jail(s).
-
 .. code-block:: shell
 
   ishmael ~ # bastille cmd folsom ps -auxw

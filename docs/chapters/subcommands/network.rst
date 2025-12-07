@@ -1,8 +1,6 @@
 network
 =======
 
-Add or remove interfaces to existing jails.
-
 You can only add an interface once to a jail, with two exceptions.
 
 1. For classic jails, you can add an interface as many times as you want, but
@@ -36,15 +34,16 @@ network TARGET remove INTERFACE`` while both jails are stopped.
 .. code-block:: shell
 
   ishmael ~ # bastille network help
-  Usage: bastille network [option(s)] TARGET [remove|add] INTERFACE [IP]
+  Usage: bastille network [option(s)] TARGET add INTERFACE [IP]
+                                      TARGET remove INTERFACE
 
       Options:
 
       -a | --auto            Start/stop jail(s) if required.
-      -B | --bridge          Add a bridge VNET interface.
-      -M | --static-mac      Generate a static MAC address for the interface (VNET only).
+      -B | --bridge          Add a bridge interface.
+      -M | --static-mac      Use a static/persistent MAC address (VNET only).
       -n | --no-ip           Create interface without an IP (VNET only).
       -P | --passthrough     Add a raw interface.
-      -V | --vnet            Add a VNET interface.
-      -v | --vlan VLANID     Assign VLAN ID to interface (VNET only).
+      -V | --vnet            Add a physical interface.
+      -v | --vlan VLANID     Assign VLANID to interface (VNET only).
       -x | --debug           Enable debug mode.

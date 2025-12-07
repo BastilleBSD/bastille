@@ -40,7 +40,7 @@ usage() {
 
     Options:
 
-    -x | --debug          Enable debug mode.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

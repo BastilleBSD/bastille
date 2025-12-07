@@ -34,12 +34,13 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille tags [option(s)] TARGET [add|delete|list] [tag1,tag2]"
+    error_notify "Usage: bastille tags [option(s)] TARGET add|delete TAG1,TAG2"
+    error_notify "                                 TARGET list [TAG]"
     cat << EOF
 
     Options:
 
-    -x | --debug          Enable debug mode.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

@@ -1,8 +1,6 @@
 config
 ======
 
-Get, set, add or remove properties from targeted jail(s).
-
 Getting a property that *is* defined in jail.conf:
 
 .. code-block:: shell
@@ -43,4 +41,4 @@ The restart message will appear every time a property is removed.
 
       Options:
 
-      -x | --debug          Enable debug mode.
+      -x | --debug     Enable debug mode.

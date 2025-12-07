@@ -1,8 +1,6 @@
 mount
 =====
 
-To mount storage within the container use ``bastille mount``.
-
 Syntax follows standard ``/etc/fstab`` format:
 
 .. code-block:: shell
@@ -67,8 +65,8 @@ It is possible to do the same for the jail path, but again, not recommemded.
 .. code-block:: shell
 
   ishmael ~ # bastille mount help
-  Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]
+  Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [FS_TYPE OPTIONS DUMP PASS_NUMBER]
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -x | --debug     Enable debug mode.

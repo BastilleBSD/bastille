@@ -1,8 +1,6 @@
 bootstrap
 =========
 
-Bootstrap a release or template(s).
-
 The bootstrap sub-command is used to download and extract releases and templates
 for use with Bastille containers. A valid release is needed before containers
 can be created. Templates are optional but are managed in the same manner.
@@ -126,9 +124,11 @@ begin applying your template.
 .. code-block:: shell
 
   ishmael ~ # bastille bootstrap help
-  Usage: bastille bootstrap [option(s)] RELEASE|TEMPLATE [update|arch]
+  Usage: bastille bootstrap [option(s)] RELEASE [update|ARCH]
+                                        TEMPLATE
 
       Options:
 
-      -p | --pkgbase     Bootstrap using pkgbase (15.0-RELEASE and above).
+      -p | --pkgbase     Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above).
+      -u | --update      Update the release after bootstrap.
       -x | --debug       Enable debug mode.

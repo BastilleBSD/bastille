@@ -1,30 +1,27 @@
-.Dd 2025/12/04
+.Dd 2025/12/06
 .Dt bastille-clone 1
 .Os
 .Sh NAME
 .Nm bastille clone
-.Nd clone an existing jail
+.Nd Clone an existing jail.
 .Sh SYNOPSIS
 .Nm
 .Op Fl alx
 .Ar TARGET NEW_NAME IP
 .Sh DESCRIPTION
+The
 .Nm
-will create an exact duplicate of the targeted jail, giving it
+sub-command will create an exact duplicate of the targeted jail, giving it
 the specified
 .Ar NEW_NAME
 and
-.Ar IP address .
-.Ss OPTIONS
+.Ar IP
+address.
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
-Instead of printing an error stating that the jail needs to be
-stopped, this option will simply stop the jail (if running) before
-proceeding to clone it. Cannot be used with
-.Sy -l|--live .
+Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
 .It Fl l , Fl -live
-Attempt to clone a running jail (ZFS only). Cannot be used with
-.Sy -a|--auto .
+Clone a running jail (ZFS only). Cannot be used with [-a|--auto].
 .It Fl x , Fl -debug
 Enable debug mode.
 .Sh EXAMPLES
@@ -67,9 +64,10 @@ Enable debug mode.
 .Xr bastille-stop 1 ,
 .Xr bastille-sysrc 1 ,
 .Xr bastille-tags 1 ,
+.Xr bastille-template 1 ,
 .Xr bastille-top 1 ,
 .Xr bastille-umount 1 ,
 .Xr bastille-update 1 ,
 .Xr bastille-upgrade 1 ,
 .Xr bastille-verify 1 ,
-.Xr bastille-zfs 1 ,
+.Xr bastille-zfs 1

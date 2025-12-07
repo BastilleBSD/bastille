@@ -33,19 +33,12 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille setup [option(s)] [bridge]"
-    error_notify "                                  [linux]"
-    error_notify "                                  [loopback]"
-    error_notify "                                  [netgraph]"
-    error_notify "                                  [pf|firewall]"
-    error_notify "                                  [shared]"
-    error_notify "                                  [storage]"
-    error_notify "                                  [vnet]"
+    error_notify "Usage: bastille setup [option(s)] [bridge|linux|loopback|netgraph|firewall|shared|storage|vnet]"
     cat << EOF
 
     Options:
 
-    -y | --yes       Assume always yes on prompts.
+    -y | --yes       Do not prompt. Assume always yes.
     -x | --debug     Enable debug mode.
 
 EOF
