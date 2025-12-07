@@ -221,7 +221,7 @@ validate_release() {
     if [ -n "${OPT_ARCH}" ]; then
         # Alternate RELEASE/ARCH fetch support
         if [ "${OPT_ARCH}" = "--i386" ] || [ "${OPT_ARCH}" = "--32bit" ]; then
-            ARCH="i386"
+            OPT_ARCH="i386"
             RELEASE="${RELEASE}-${OPT_ARCH}"
         fi
     fi
