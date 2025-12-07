@@ -14,7 +14,7 @@ install:
 	@sed -i '' "s|BASTILLE_VERSION=.*|BASTILLE_VERSION=${BASTILLE_DEV_VERSION}|" usr/local/bin/bastille
 	@cp -Rv usr /
 	@gzip -f -n /usr/local/share/man/man1/bastille*.1
-    @gzip -f -n /usr/local/share/man/man5/bastille*.5
+	@gzip -f -n /usr/local/share/man/man5/bastille*.5
 	@echo
 	@echo "This method is for testing & development."
 	@echo "Please report any issues to https://github.com/BastilleBSD/bastille/issues"
