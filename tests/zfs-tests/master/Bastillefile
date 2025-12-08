@@ -97,7 +97,7 @@ INCLUDE unit-tests/export-import --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --a
 # ***** Mount/Umount *****
 # ************************
 
-INCLUDE unit-tests/mount-umount --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg HOST_FILE=${MOUNT_HOST_FILE} --arg JAIL_FILE=${MOUNT_JAIL-FILE} --arg HOST_PATH=${MOUNT_HOST_PATH} --arg JAIL_PATH=${MOUNT_JAIL_PATH}
+INCLUDE unit-tests/mount-umount --arg JAIL=${JAIL} --arg RELEASE=${RELEASE} --arg IP=${IP} --arg INTERFACE=${INTERFACE} --arg HOST_FILE=${MOUNT_HOST_FILE} --arg JAIL_FILE=${MOUNT_JAIL_FILE} --arg HOST_PATH=${MOUNT_HOST_PATH} --arg JAIL_PATH=${MOUNT_JAIL_PATH}
 
 # ***************
 # ***** pkg *****
