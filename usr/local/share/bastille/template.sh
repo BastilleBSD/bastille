@@ -387,8 +387,8 @@ for jail in ${JAILS}; do
                     args="install -y ${args}"
                     ;;
                 tag|tags)
-                    # shellcheck disable=SC2090
                     cmd='tags'
+                    # shellcheck disable=SC2090
                     args="add $(echo ${args} | tr ' ' ,)"
                     ;;
                 render) # This is a path to one or more files needing arguments replaced by values. -- cwells
