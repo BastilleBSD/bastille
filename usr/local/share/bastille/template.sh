@@ -365,6 +365,7 @@ for jail in ${JAILS}; do
                     # Escape single-quotes in the command being executed. -- cwells
                     args=$(echo "${args}" | sed "s/'/'\\\\''/g")
                     # Allow redirection within the jail. -- cwells
+                    # shellcheck disable=SC2089
                     args="sh -c '${args}'"
                     ;;
                 cp|copy)
@@ -386,6 +387,7 @@ for jail in ${JAILS}; do
                     args="install -y ${args}"
                     ;;
                 tag|tags)
+                    # shellcheck disable=SC2090
                     cmd='tags'
                     args="add $(echo ${args} | tr ' ' ,)"
                     ;;
