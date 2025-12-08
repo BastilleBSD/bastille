@@ -1,19 +1,17 @@
-Template
-========
+Templates
+=========
+
 Looking for ready made CI/CD validated `Bastille Templates`_?
 
 Bastille supports a templating system allowing you to apply files, pkgs and
 execute commands inside the containers automatically.
-
-Currently supported template hooks are: ``ARG``, ``CMD``, ``CONFIG``, ``CP``,
-``INCLUDE``, ``LIMITS``, ``MOUNT``, ``OVERLAY``, ``PKG``, ``RDR``, ``RENDER``,
-``RESTART``, ``SERVICE``, ``SYSRC``.
 
 Templates are created in ``${bastille_prefix}/templates`` and can leverage any
 of the template hooks.
 
 Bastille 0.7.x+
 ---------------
+
 Bastille 0.7.x introduces a template syntax that is more flexible and allows
 any-order scripting. Previous versions had a hard template execution order and
 instructions were spread across multiple files. The new syntax is done in a
@@ -22,6 +20,9 @@ template hook commands.
 
 Template Automation Hooks
 -------------------------
+
+The following table shows a list of supported template hooks, their format, and
+one example of how you might use each one.
 
 +---------------+---------------------+-----------------------------------------+
 | HOOK          | format              | example                                 |
@@ -32,29 +33,29 @@ Template Automation Hooks
 +---------------+---------------------+-----------------------------------------+
 | CONFIG        | set property value  | set allow.mlock 1                       |
 +---------------+---------------------+-----------------------------------------+
-| CP/OVERLAY    | path(s)             | etc root usr (one per line)             |
+| CP            | path(s)             | etc root usr                            |
 +---------------+---------------------+-----------------------------------------+
 | INCLUDE       | template path/URL   | http?://TEMPLATE_URL or project/path    |
 +---------------+---------------------+-----------------------------------------+
 | LIMITS        | resource value      | memoryuse 1G                            |
 +---------------+---------------------+-----------------------------------------+
-| LINE_IN_FILE  | line file_path      | word /usr/local/word/word.conf          |
+| LINE_IN_FILE  | line path           | word /usr/local/word/word.conf          |
 +---------------+---------------------+-----------------------------------------+
-| MOUNT         | fstab syntax        | /host/path container/path nullfs ro 0 0 |
-+---------------+---------------------+-----------------------------------------+
-| OVERLAY       | path(s)             | etc root usr (one per line)             |
+| MOUNT         | fstab syntax        | /host/path /jail/path nullfs ro 0 0     |
 +---------------+---------------------+-----------------------------------------+
 | PKG           | port/pkg name(s)    | vim-console zsh git-lite tree htop      |
 +---------------+---------------------+-----------------------------------------+
-| RDR           | tcp port port       | tcp 2200 22 (hostport jailport)         |
+| RDR           | tcp port port       | tcp 2200 22 (proto hostport jailport)   |
 +---------------+---------------------+-----------------------------------------+
 | RENDER        | /path/file.txt      | /usr/local/etc/gitea/conf/app.ini       |
 +---------------+---------------------+-----------------------------------------+
-| RESTART       |                     | (restart jail)                          |
+| RESTART       |                     |                                         |
 +---------------+---------------------+-----------------------------------------+
 | SERVICE       | service command     | 'nginx start' OR 'postfix reload'       |
 +---------------+---------------------+-----------------------------------------+
 | SYSRC         | sysrc command(s)    | nginx_enable=YES                        |
++---------------+---------------------+-----------------------------------------+
+| TAGS          | tag1 tag2 tag3      | prod web                                |
 +---------------+---------------------+-----------------------------------------+
 
 Template Hook Descriptions
@@ -96,7 +97,23 @@ The values are automatically retrieved from the targeted jails configuration.
 
 ``CONFIG``        - set the specified property and value
 
-``CP/OVERLAY``    - copy specified files from template directory to specified path inside jail
+``CP``            - copy specified files from template directory to specified path inside jail
+
+The ``CP`` hook will recursively copy all of the specified directories from the
+``project/template`` directory into the jail. If you have ``CP usr etc`` for
+example, it will recursively copy ``project/template/usr`` and ``project/template/etc``
+into ``/usr`` and ``/etc`` of the jail directory.
+
+So, if you have ``project/template/usr/local/share/myapp.conf``, it will be copied into the
+jail, and placed at ``/usr/local/share/myapp.conf``.
+
+Note: due to the way FreeBSD segregates user-space, the majority of your
+overlayed template files will be in ``/usr/local``. The few general exceptions
+are the ``/etc/hosts``, ``/etc/resolv.conf``, and ``/etc/rc.conf.local``.
+
+The above example of ``usr`` and ``etc`` will include anything under ``usr`` and
+``etc`` inside the template. You do not need to list individual files. Just
+include the top-level directory name. List these top-level directories one per line.
 
 ``INCLUDE``       - specify a template to include. Make sure the template is
 bootstrapped, or you are using the template url
@@ -111,14 +128,19 @@ bootstrapped, or you are using the template url
 
 ``RDR``           - redirect specified ports to the jail
 
-``RENDER``        - replace ARG values inside specified files inside the jail. If a
-directory is specified, ARGS will be replaced in all files underneath
+``RENDER``        - replace ARG values inside specified files inside the jail
+
+If a directory is specified here, ARGS will be replaced in all files underneath, or
+recursively.
 
 ``RESTART``       - restart the jail
 
 ``SERVICE``       - run `service` command inside the jail with specified arguments
 
 ``SYSRC``         - run `sysrc` inside the jail with specified arguments
+
+``TAGS``          - adds specified tags to the jail
+
 
 Special Hook Cases
 ------------------
@@ -156,36 +178,10 @@ Templates can be created and placed inside the templates directory in the
 ``project/template`` format. Alternatively you can run the ``bastille template``
 command from a relative path, making sure it is still in the above format.
 
-Template Examples
------------------
+Simply place these uppercase template hook commands into a ``Bastillefile`` in any
+order to automate container setup as needed.
 
-Place these uppercase template hook commands into a ``Bastillefile`` in any
-order and automate container setup as needed.
-
-In addition to supporting template hooks, Bastille supports overlaying files
-into the container. This is done by placing the files in their full path, using
-the template directory as "/".
-
-An example here may help. Think of ``bastille/templates/username/template``, our
-example template, as the root of our filesystem overlay. If you create an
-``/etc/hosts`` or ``/etc/resolv.conf`` *inside* the template directory, these
-can be overlayed into your container.
-
-Note: due to the way FreeBSD segregates user-space, the majority of your
-overlayed template files will be in ``/usr/local``. The few general exceptions
-are the ``/etc/hosts``, ``/etc/resolv.conf``, and ``/etc/rc.conf.local``.
-
-After populating ``/usr/local`` with custom config files that your container
-will use, be sure to include ``/usr`` in the template OVERLAY definition. eg;
-
-.. code-block:: shell
-
-  echo "CP /usr /" >> /usr/local/bastille/templates/username/template/Bastillefile
-
-The above example ``/usr`` will include anything under ``/usr`` inside the
-template.
-You do not need to list individual files. Just include the top-level directory
-name. List these top-level directories one per line.
+See `Bastille Templates`_ for examples to get started on writing your own templates.
 
 Applying Templates
 ------------------
