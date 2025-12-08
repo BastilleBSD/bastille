@@ -1148,7 +1148,7 @@ if [ -z ${bastille_template_vnet+x} ]; then
     bastille_template_vnet='default/vnet'
 fi
 if [ -z ${bastille_template_vlan+x} ]; then
-    bastille_template_vnet='default/vlan'
+    bastille_template_vlan='default/vlan'
 fi
 
 create_jail "${NAME}" "${RELEASE}" "${IP}" "${INTERFACE}"
