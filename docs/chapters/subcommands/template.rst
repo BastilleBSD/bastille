@@ -15,7 +15,7 @@ The TEMPLATE arg should be called with the ``project/template`` format.
 .. code-block:: shell
 
   ishmael ~ # bastille template help
-  Usage: bastille template [option(s)] TARGET|--convert TEMPLATE
+  Usage: bastille template [option(s)] TARGET|convert TEMPLATE
 
       Options:
 
