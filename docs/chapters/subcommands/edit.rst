@@ -1,8 +1,6 @@
 edit
 ====
 
-Edit jail config files.
-
 .. code-block:: shell
 
   ishmael ~ # bastille edit azkaban [FILE]

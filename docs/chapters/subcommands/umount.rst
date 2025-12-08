@@ -1,8 +1,6 @@
 umount
 ======
 
-Unmount storage from jail(s).
-
 .. code-block:: shell
 
   ishmael ~ # bastille umount azkaban /media/foo
@@ -34,5 +32,5 @@ backslash \, and enclose the mount point in quotes "".
 
       Options:
 
-      -a | --auto           Auto mode. Start/stop jail(s) if required.
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -x | --debug     Enable debug mode.

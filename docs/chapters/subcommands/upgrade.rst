@@ -8,10 +8,11 @@ upgraded normally.
 .. code-block:: shell
 
   ishmael ~ # bastille upgrade help
-  Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE|install
+  Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE
+                                      TARGET install
 
       Options:
 
-      -a | --auto             Auto mode. Start/stop jail(s) if required.
-      -f | --force            Force upgrade a jail.
-      -x | --debug            Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -f | --force     Force upgrade a release (FreeBSD legacy releases).
+      -x | --debug     Enable debug mode.

@@ -33,14 +33,15 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE|install"
+    error_notify "Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE"
+    error_notify "                                    TARGET install"
     cat << EOF
 
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -f | --force          Force upgrade a release.
-    -x | --debug          Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -f | --force     Force upgrade a release (FreeBSD legacy releases).
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

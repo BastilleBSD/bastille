@@ -24,14 +24,14 @@ To destroy a snaphot however, you must supply a TAG. To destroy a snapshot, run
 .. code-block:: shell
 
   ishmael ~ # bastille zfs help
-  Usage: bastille zfs [option(s)] TARGET destroy|rollback|snapshot TAG"
+  Usage: bastille zfs [option(s)] TARGET snapshot|destroy|rollback [TAG]"
                                          df|usage"
-                                         get|set key=value"
+                                         get|set KEY=VALUE"
                                          jail pool/dataset /jail/path"
                                          unjail pool/dataset"
 
       Options:
 
-      -a | --auto             Auto mode. Start/stop jail(s) if required.
-      -v | --verbose          Enable verbose mode.
-      -x | --debug            Enable debug mode.
+      -a | --auto        Auto mode. Start/stop jail(s) if required.
+      -v | --verbose     Enable verbose mode.
+      -x | --debug       Enable debug mode.

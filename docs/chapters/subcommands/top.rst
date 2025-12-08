@@ -1,9 +1,6 @@
 top
 ===
 
-This command runs ``top`` in the targeted jail.
-
-
 .. image:: ../../images/top.png
     :align: center
     :alt: bastille top container
@@ -15,5 +12,5 @@ This command runs ``top`` in the targeted jail.
 
       Options:
 
-      -a | --auto           Auto mode. Start/stop jail(s) if required.
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -x | --debug     Enable debug mode.

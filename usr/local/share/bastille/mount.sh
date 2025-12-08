@@ -33,13 +33,13 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [filesystem_type options dump pass_number]"
+    error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [FS_TYPE OPTIONS DUMP PASS_NUMBER]"
     cat << EOF
 
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

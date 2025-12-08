@@ -34,18 +34,17 @@
 
 usage() {
 
-    error_notify "Usage: bastille zfs [option(s)] TARGET destroy|rollback [TAG]|snapshot [TAG]"
+    error_notify "Usage: bastille zfs [option(s)] TARGET snapshot|destroy|rollback [TAG]"
     error_notify "                                       df|usage"
-    error_notify "                                       get|set key=value"
+    error_notify "                                       get|set KEY=VALUE"
     error_notify "                                       jail pool/dataset /jail/path"
     error_notify "                                       unjail pool/dataset"
-
     cat << EOF
     Options:
 
-    -a | --auto             Auto mode. Start/stop jail(s) if required.
-    -v | --verbose          Enable verbose mode.
-    -x | --debug            Enable debug mode.
+    -a | --auto        Auto mode. Start/stop jail(s) if required.
+    -v | --verbose     Enable verbose mode.
+    -x | --debug       Enable debug mode.
 
 EOF
     exit 1

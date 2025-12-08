@@ -1,0 +1,106 @@
+.Dd 2025/12/06
+.Dt bastille-network 1
+.Os
+.Sh NAME
+.Nm bastille network
+.Nd Add or remove interface(s) from jail(s).
+.Sh SYNOPSIS
+.Nm
+.Op Fl aBMnPVvx
+.Ar TARGET Sy add Ar INTERFACE Op IP
+.Nm
+.Op Fl ax
+.Ar TARGET Sy remove Ar INTERFACE
+.Sh DESCRIPTION
+The
+.Nm
+sub-command can add or remove interfaces, as
+well as set a VLAN ID for jails. Setting the VLAN
+ID must be done during the 'add' phase.
+.Bl -tag -width Ds
+.It Sy bastille network Oo Fl aBMnPVvx Oc Ar TARGET Sy add Ar INTERFACE Op IP
+.Bl -tag -width Ds
+.It Sy add
+Add the
+.Ar INTERFACE
+to the jail.
+.It Fl a , Fl -auto
+Auto mode. Start/stop jail(s) if required.
+.It Fl B , Fl -bridge
+Add a bridge interface.
+.It Fl M , Fl -static-mac
+Use a static/persistent MAC address (VNET only).
+.It Fl n , Fl -no-ip
+Create interface without an IP (VNET only).
+.It Fl P , Fl -passthrough
+Add a raw interface.
+.It Fl V , Fl -vnet
+Add a physical interface.
+.It Fl v Ar VLANID , Fl -vlan Ar VLANID
+Assign
+.Ar VLANID
+to interface (VNET only).
+.It Fl x , Fl -debug
+Enable debug mode.
+.El
+.Pp
+The
+.Ar IP
+is only optional when the '-n|--no-ip' is set.
+.It Sy bastille network Oo Fl ax Oc Ar TARGET Sy remove Ar INTERFACE
+.Bl -tag -width Ds
+.It Sy remove
+Remove the specifed
+.Ar INTERFACE
+from the jail.
+.It Fl a , Fl -auto
+Auto mode. Start/stop jail(s) if required.
+.It Fl x , Fl -debug
+Enable debug mode.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Add vtnet0 to myjail:
+.Sy bastille network -aV myjail add vtnet0 DHCP
+.It Add bridge0 to myjail with a static MAC:
+.Sy bastille network -aBM myjail add bridge0 10.23.23.23/24
+.It Remove em0 from myjail:
+.Sy bastille network -a myjail remove em0
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 1 ,
+.Xr bastille-clone 1 ,
+.Xr bastille-cmd 1 ,
+.Xr bastille-config 1 ,
+.Xr bastille-console 1 ,
+.Xr bastille-convert 1 ,
+.Xr bastille-cp 1 ,
+.Xr bastille-create 1 ,
+.Xr bastille-destroy 1 ,
+.Xr bastille-edit 1 ,
+.Xr bastille-etcupdate 1 ,
+.Xr bastille-export 1 ,
+.Xr bastille-htop 1 ,
+.Xr bastille-import 1 ,
+.Xr bastille-jcp 1 ,
+.Xr bastille-limits 1 ,
+.Xr bastille-list 1 ,
+.Xr bastille-migrate 1 ,
+.Xr bastille-mount 1 ,
+.Xr bastille-pkg 1 ,
+.Xr bastille-rcp 1 ,
+.Xr bastille-rdr 1 ,
+.Xr bastille-rename 1 ,
+.Xr bastille-restart 1 ,
+.Xr bastille-service 1 ,
+.Xr bastille-setup 1 ,
+.Xr bastille-start 1 ,
+.Xr bastille-stop 1 ,
+.Xr bastille-sysrc 1 ,
+.Xr bastille-tags 1 ,
+.Xr bastille-template 1 ,
+.Xr bastille-top 1 ,
+.Xr bastille-umount 1 ,
+.Xr bastille-update 1 ,
+.Xr bastille-upgrade 1 ,
+.Xr bastille-verify 1 ,
+.Xr bastille-zfs 1

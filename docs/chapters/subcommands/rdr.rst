@@ -75,12 +75,13 @@ Simply use the table name instead of an IP address or subnet.
 .. code-block:: shell
 
   # bastille rdr --help
-  Usage: bastille rdr TARGET [option(s)] [clear|reset|list|(tcp|udp host_port jail_port [log ['(' logopts ')'] ] )]
+  Usage: bastille rdr [option(s)] TARGET tcp|udp HOST_PORT JAIL_PORT [log LOG_OPTIONS]
+                                  TARGET clear|reset|list
 
       Options:
 
-      -d | --destination IP            Limit rdr to a destination IP. Useful if you have multiple IPs on one interface.
-      -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comman separated.
-      -s | --source      IP|table      Limit rdr to a source IP or table.
-      -t | --type        ipv4|ipv6     Specify IP type. Must be used if -s or -d are used. Defaults to both.
+      -d | --destination IP            Limit rdr to a destination IP.
+      -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comma-separated.
+      -s | --source      IP|TABLE      Limit rdr to a source IP or table.
+      -t | --type        ipv4|ipv6     Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.
       -x | --debug                     Enable debug mode.

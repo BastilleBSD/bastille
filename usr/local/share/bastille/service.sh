@@ -33,13 +33,13 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille service [option(s)] TARGET SERVICE_NAME ARGS"
+    error_notify "Usage: bastille service [option(s)] TARGET SERVICE ARGS"
     cat << EOF
 
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -x | --debug          Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

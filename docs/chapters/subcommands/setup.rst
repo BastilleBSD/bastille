@@ -58,16 +58,9 @@ Running ``bastille setup`` without any options will attempt to auto-configure th
 .. code-block:: shell
 
   ishmael ~ # bastille setup -h
-  Usage: bastille setup [option(s)] [bridge]
-                                    [linux]
-                                    [loopback]
-                                    [netgraph]
-                                    [pf|firewall]
-                                    [shared]
-                                    [storage]
-                                    [vnet]
+  Usage: bastille setup [option(s)] [bridge|linux|loopback|netgraph|firewall|shared|storage|vnet]
 	
-    Options:
+      Options:
 
-    -y | --yes       Assume always yes on prompts.
-    -x | --debug     Enable debug mode.
+      -y | --yes       Do not prompt. Assume always yes.
+      -x | --debug     Enable debug mode.

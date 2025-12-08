@@ -33,13 +33,13 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DEST_JAIL JAIL_PATH"
+    error_notify "Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DESTINATION_JAIL JAIL_PATH"
     cat << EOF
 
     Options:
 
-    -q | --quiet          Suppress output.
-    -x | --debug          Enable debug mode.
+    -q | --quiet     Suppress output.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

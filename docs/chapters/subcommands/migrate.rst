@@ -14,16 +14,10 @@ port by supplying it as in ``user@host:port``.
   ishmael ~ # bastille migrate help
   Usage: bastille migrate [option(s)] TARGET USER@HOST[:PORT]
 
-      Examples:
-
-      bastille migrate attica migrate@192.168.10.100
-      bastille migrate attica migrate@192.168.1.10:20022
-      bastille migrate --keyfile id_rsa attica migrate@192.168.1.10
-
       Options:
 
       -a | --auto         Auto mode. Start/stop jail(s) if required.
-      -b | --backup       Retain archives on remote system.
+      -b | --backup       Keep archives on remote system.
       -d | --destroy      Destroy local jail after migration.
          | --doas         Use 'doas' instead of 'sudo'.
       -k | --keyfile      Specify an alternative private keyfile name. Must be in '~/.ssh'
