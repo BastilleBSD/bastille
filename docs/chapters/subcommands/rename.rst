@@ -1,8 +1,6 @@
 rename
 ======
 
-Rename a jail.
-
 .. code-block:: shell
 
   ishmael ~ # bastille rename azkaban arkham
@@ -14,5 +12,5 @@ Rename a jail.
 
       Options:
 
-      -a | --auto           Auto mode. Start/stop jail(s) if required.
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -x | --debug     Enable debug mode.

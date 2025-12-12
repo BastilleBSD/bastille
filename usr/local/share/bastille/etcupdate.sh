@@ -30,14 +30,16 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille etcupdate [option(s)] [bootstrap|TARGET] [diff|resolve|update RELEASE]"
+    error_notify "Usage: bastille etcupdate [option(s)] bootstrap RELEASE"
+    error_notify "                                      TARGET update RELEASE"
+    error_notify "                                      TARGET diff|resolve"
     cat << EOF
 
     Options:
 
-    -d | --dry-run          Show output, but do not apply.
-    -f | --force            Force a re-bootstrap of a RELEASE.
-    -x | --debug            Enable debug mode.
+    -d | --dry-run     Show output, but do not apply.
+    -f | --force       Force a re-bootstrap of a RELEASE.
+    -x | --debug       Enable debug mode.
 
 EOF
     exit 1

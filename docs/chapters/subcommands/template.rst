@@ -1,8 +1,6 @@
 template
 ========
 
-Run preconfigured template files inside targeted jail(s).
-
 .. code-block:: shell
 
   ishmael ~ # bastille template azkaban project/template
@@ -17,9 +15,9 @@ The TEMPLATE arg should be called with the ``project/template`` format.
 .. code-block:: shell
 
   ishmael ~ # bastille template help
-  Usage: bastille template [option(s)] TARGET [--convert] TEMPLATE
+  Usage: bastille template [option(s)] TARGET|convert TEMPLATE
 
       Options:
 
-      -a | --auto           Auto mode. Start/stop jail(s) if required.
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -x | --debug     Enable debug mode.

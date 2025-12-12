@@ -1,8 +1,6 @@
 start
 =====
 
-Start jail(s).
-
 .. code-block:: shell
 
   ishmael ~ # bastille start folsom
@@ -16,7 +14,7 @@ Start jail(s).
 
       Options:
 
-      -b | --boot                 Respect jail boot setting.
-      -d | --delay VALUE          Time (seconds) to wait after starting each jail.
-      -v | --verbose              Print every action on jail start.
-      -x | --debug                Enable debug mode.
+      -b | --boot            Respect jail boot setting.
+      -d | --delay VALUE     Time (seconds) to wait after starting each jail.
+      -v | --verbose         Enable verbose mode.
+      -x | --debug           Enable debug mode.

@@ -1,8 +1,6 @@
 cmd
 ===
 
-Execute commands inside targeted jail(s).
-
 .. code-block:: shell
 
   ishmael ~ # bastille cmd folsom ps -auxw
@@ -19,5 +17,5 @@ Execute commands inside targeted jail(s).
 
       Options:
 
-      -a | --auto           Auto mode. Start/stop jail(s) if required.
-      -x | --debug          Enable debug mode.
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+      -x | --debug     Enable debug mode.

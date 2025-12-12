@@ -34,7 +34,10 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille limits [option(s)] TARGET [add|remove|clear|reset|(list|show [active])|stats] OPTION [VALUE]"
+    error_notify "Usage: bastille limits [option(s)] TARGET add OPTION VALUE"
+    error_notify "                                   TARGET remove OPTION"
+    error_notify "                                   TARGET clear|reset|stats"
+    error_notify "                                   TARGET list|show [active]"
     cat << EOF
 
 	Example: bastille limits TARGET add memoryuse 1G
@@ -42,9 +45,9 @@ usage() {
 
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -l | --log            Enable logging for the specified rule (rctl only).
-    -x | --debug          Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -l | --log       Enable logging for the specified rule (RCTL only).
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1

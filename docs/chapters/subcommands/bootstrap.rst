@@ -124,9 +124,11 @@ begin applying your template.
 .. code-block:: shell
 
   ishmael ~ # bastille bootstrap help
-  Usage: bastille bootstrap [option(s)] RELEASE|TEMPLATE [update|arch]
+  Usage: bastille bootstrap [option(s)] RELEASE [update|ARCH]
+                                        TEMPLATE
 
       Options:
 
-      -p | --pkgbase     Bootstrap using pkgbase (15.0-RELEASE and above).
+      -p | --pkgbase     Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above).
+      -u | --update      Update the release after bootstrap.
       -x | --debug       Enable debug mode.

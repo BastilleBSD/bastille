@@ -37,9 +37,9 @@ usage() {
     cat << EOF
     Options:
 
-    -a | --auto             Auto mode. Start/stop jail(s) if required.
-    -f | --force            Force update a release.
-    -x | --debug            Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -f | --force     Force update a release (FreeBSD legacy releases).
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -134,7 +134,7 @@ jail_check() {
         # Validate update method
         MINOR_VERSION=$(echo ${OLD_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
         MAJOR_VERSION=$(echo ${OLD_RELEASE} | grep -Eo '^[0-9]+')
-        if echo "${OLD_RELEASE}" | grep -oq "\-CURRENT"; then
+        if echo "${OLD_RELEASE}" | grep -Eoq "(\-CURRENT|\-STABLE)"; then
             FREEBSD_BRANCH="current"
         else
             FREEBSD_BRANCH="release"
@@ -196,13 +196,14 @@ jail_update_pkgbase() {
 
         local jailpath="${bastille_jailsdir}/${TARGET}/root"
         local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${jailpath}/usr/share/keys/pkg"
+        local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+            local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
+            local fingerprints="${jailpath}/usr/share/keys/pkg"
         fi
-        local repo_dir="${bastille_sharedir}/pkgbase"
 
         # Update repo (pkgbase)
         if ! pkg --rootdir "${jailpath}" \
@@ -271,7 +272,7 @@ release_check() {
         # Validate update method
         MINOR_VERSION=$(echo ${TARGET} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
         MAJOR_VERSION=$(echo ${TARGET} | grep -Eo '^[0-9]+')
-        if echo "${TARGET}" | grep -oq "\-CURRENT"; then
+        if echo "${TARGET}" | grep -Eoq "(\-CURRENT|\-STABLE)"; then
             FREEBSD_BRANCH="current"
         else
             FREEBSD_BRANCH="release"
@@ -330,21 +331,24 @@ release_update() {
 release_update_pkgbase() {
 
     if [ "${RELEASE_PLATFORM_OS}" = "FreeBSD" ]; then
-
+	
         local release_dir="${bastille_releasesdir}/${TARGET}"
         local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${release_dir}/usr/share/keys/pkg"
+        local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+            local fingerprints="${release_dir}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
+            local fingerprints="${release_dir}/usr/share/keys/pkg"
         fi
-        local repo_dir="${bastille_sharedir}/pkgbase"
 
         # Update repo (pkgbase)
         if ! pkg --rootdir "${release_dir}" \
                  --repo-conf-dir "${repo_dir}" \
                   -o IGNORE_OSVERSION="yes" \
+                  -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                  -o VERSION_MINOR="${MINOR_VERSION}" \
                   -o ABI="${abi}" \
                   -o ASSUME_ALWAYS_YES="yes" \
                   -o FINGERPRINTS="${fingerprints}" \
@@ -357,6 +361,8 @@ release_update_pkgbase() {
         if ! pkg --rootdir "${release_dir}" \
                  --repo-conf-dir "${repo_dir}" \
                   -o IGNORE_OSVERSION="yes" \
+                  -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                  -o VERSION_MINOR="${MINOR_VERSION}" \
                   -o ABI="${abi}" \
                   -o ASSUME_ALWAYS_YES="yes" \
                   -o FINGERPRINTS="${fingerprints}" \

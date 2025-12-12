@@ -12,6 +12,10 @@ To bootstrap a release using pkgbase, run ``bastille bootstrap --pkgbase RELEASE
 For version 14, it is not supported. For version 15 it is optional, but
 for version 16 and above, it is the default method of bootstrapping a release.
 
+To customize the 'pkgbase package set' used for bootstrapping, change the 'bastille_pkgbase_packages'
+setting located in ``/usr/local/etc/bastille/bastille.conf``. See also 
+:doc:`/chapters/configuration`.
+
 Update
 ------
 
@@ -49,7 +53,7 @@ before attempting to upgrade to 16.0-RELEASE. This can be done in two ways.
      ./pkgbasify.lua
 
 2. Fetch the ``pkgbasify`` script and run it from the host using ``--rootdir``.
-   This requires using PR 34 in the ``pkgbasify`` repo.
+   This requires using `PR 34 <https://github.com/FreeBSDFoundation/pkgbasify/pull/34>`_ in the ``pkgbasify`` repo.
 
 .. code-block:: shell
 

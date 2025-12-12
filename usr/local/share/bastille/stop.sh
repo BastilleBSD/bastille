@@ -38,8 +38,8 @@ usage() {
 
     Options:
 
-    -v | --verbose              Print every action on jail stop.
-    -x | --debug                Enable debug mode.
+    -v | --verbose     Enable verbose mode.
+    -x | --debug       Enable debug mode.
 
 EOF
     exit 1

@@ -1,8 +1,6 @@
 cp
 ==
 
-Copy files from host to jail(s).
-
 .. code-block:: shell
 
   ishmael ~ # bastille cp ALL /tmp/resolv.conf-cf /etc/resolv.conf
@@ -28,5 +26,5 @@ Unless you see errors reported in the output the ``cp`` was successful.
 
       Options:
 
-      -q | --quiet          Suppress output.
-      -x | --debug          Enable debug mode.
+      -q | --quiet     Suppress output.
+      -x | --debug     Enable debug mode.

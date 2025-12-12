@@ -8,49 +8,50 @@ Usage
     containerized applications on FreeBSD.
 
   Usage:
-    bastille command [options(s)] TARGET [option(s)] [args]
+    bastille [option(s)] command [option(s)] TARGET ARGS
 
   Available Commands:
-    bootstrap   Bootstrap a release for jail base.
+    bootstrap   Bootstrap a release or template(s).
     clone       Clone an existing jail.
-    cmd         Execute arbitrary command on targeted jail(s).
-    config      Get, set or remove a config value for the targeted jail(s).
+    cmd         Execute command(s) inside jail(s).
+    config      Get, set, add or remove properties from jail(s).
     console     Console into a jail.
-    convert     Convert thin jail to thick jail, or convert a jail to a custom release.
-    cp          cp(1) files from host to targeted jail(s).
+    convert     Convert a jail from thin to thick; convert a jail to a custom release.
+    cp          Copy file(s)/directorie(s) from host to jail(s).
     create      Create a jail.
-    destroy     Destroy a jail or release.
+    destroy     Destroy jail(s) or release(s).
     edit        Edit jail configuration files (advanced).
+    etcupdate   Update /etc for jail(s).
     export      Export a jail.
-    help        Help about any command.
+    help        Help for any command.
     htop        Interactive process viewer (requires htop).
     import      Import a jail.
-    jcp         cp(1) files from a jail to jail(s).
-    limits      Apply resources limits to targeted jail(s). See rctl(8) and cpuset(1).
+    jcp         Copy file(s)/directorie(s) from jail to jail(s).
+    limits      Apply resources limits to jail(s). See rctl(8) and cpuset(1).
     list        List jails, releases, templates and more...
-    migrate     Migrate targeted jail(s) to a remote system.
-    monitor     Monitor and attempt to restart container service(s). Manual and cron execution.
-    mount       Mount a volume inside targeted jail(s).
-    network     Add or remove interfaces from targeted jail(s).
-    pkg         Manipulate binary packages within targeted jail(s). See pkg(8).
-    rcp         cp(1) files from a jail to host.
+    migrate     Migrate jail(s) to a remote system.
+    monitor     Monitor and attempt to restart jail service(s).
+    mount       Mount file(s)/directorie(s) inside jail(s).
+    network     Add or remove interface(s) from jail(s).
+    pkg         Manage packages inside jail(s). See pkg(8).
+    rcp         Copy file(s)/directorie(s) from jail to host.
     rdr         Redirect host port to jail port.
     rename      Rename a jail.
     restart     Restart a jail.
-    service     Manage services within targeted jail(s).
-    setup       Attempt to auto-configure network, firewall and storage and more...
-    start       Start a stopped jail.
-    stop        Stop a running jail.
-    sysrc       Safely edit rc files within targeted jail(s).
-    tags        Add or remove tags to targeted jail(s).
-    template    Apply file templates to targeted jail(s).
-    top         Display and update information about the top(1) cpu processes.
-    umount      Unmount a volume from targeted jail(s).
-    update      Update jail base -pX release.
-    upgrade     Upgrade jail release to X.Y-RELEASE.
+    service     Manage services within jail(s).
+    setup       Auto-configure network, firewall, storage and more...
+    start       Start stopped jail(s).
+    stop        Stop running jail(s).
+    sysrc       Edit rc files inside jail(s).
+    tags        Add or remove tags to jail(s).
+    template    Apply templates to jail(s).
+    top         Process viewer. See top(1).
+    umount      Unmount file(s)/directorie(s) from jail(s).
+    update      Update a jail or release.
+    upgrade     Upgrade a jail to new release.
     verify      Compare release against a "known good" index.
-    zfs         Manage (get|set) ZFS attributes on targeted container(s).
+    zfs         Manage ZFS options/attributes for jail(s).
 
   Use "bastille -v|--version" for version information.
   Use "bastille command -h|--help" for more information about a command.
-  Use "bastille -c|--config config.conf command" to specify a non-default config file.
+  Use "bastille -c|--config FILE command" to specify a non-default config file.

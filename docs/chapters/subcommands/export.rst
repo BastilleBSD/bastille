@@ -22,15 +22,15 @@ Available options are:
 .. code-block:: shell
 
   ishmael ~ # bastille export help
-  Usage: bastille export [option(s)] TARGET PATH
+  Usage: bastille export [option(s)] TARGET [PATH]
 
       Options:
 
       -a | --auto        Auto mode. Start/stop jail(s) if required.
       -l | --live        Export a running jail (ZFS only).
-           --gz          Export to '.gz' compressed image (ZFS only).
+           --gz          Export to a '.gz' compressed image (ZFS only).
            --xz          Export to a '.xz' compressed image (ZFS only).
-           --zst         Export to a .zst compressed image (ZFS only).
+           --zst         Export to a '.zst' compressed image (ZFS only).
            --raw         Export to an uncompressed RAW image (ZFS only).
            --tgz         Export to a '.tgz' compressed archive.
            --txz         Export to a '.txz' compressed archive.

@@ -1,8 +1,6 @@
 stop
 ====
 
-Stop jail(s).
-
 .. code-block:: shell
 
   ishmael ~ # bastille stop folsom
@@ -16,5 +14,5 @@ Stop jail(s).
 
       Options:
 
-      -v | --verbose              Print every action on jail stop.
-      -x | --debug                Enable debug mode.
+      -v | --verbose     Enable verbose mode.
+      -x | --debug       Enable debug mode.

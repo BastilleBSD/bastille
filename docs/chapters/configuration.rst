@@ -17,7 +17,7 @@ This is the default `bastille.conf` file.
   ## [ BastilleBSD ] ##
   #####################
 
-  ## default paths
+  ## Default paths
   bastille_prefix="/usr/local/bastille"                                 ## default: "/usr/local/bastille"
   bastille_backupsdir="${bastille_prefix}/backups"                      ## default: "${bastille_prefix}/backups"
   bastille_cachedir="${bastille_prefix}/cache"                          ## default: "${bastille_prefix}/cache"
@@ -29,20 +29,20 @@ This is the default `bastille.conf` file.
   ## pf configuration path
   bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
 
-  ## bastille scripts directory (assumed by bastille pkg)
+  ## Bastille commands directory (assumed by bastille pkg)
   bastille_sharedir="/usr/local/share/bastille"                         ## default: "/usr/local/share/bastille"
 
-  ## bootstrap archives, which components of the OS to install.
+  ## Bootstrap archives, which components of the OS to install.
   ## base  - The base OS, kernel + userland
   ## lib32 - Libraries for compatibility with 32 bit binaries
   ## ports - The FreeBSD ports (3rd party applications) tree
   ## src   - The source code to the kernel + userland
   ## test  - The FreeBSD test suite
-  ## this is a whitespace separated list:
+  ## Whitespace-separated list:
   ## bastille_bootstrap_archives="base lib32 ports src test"
   bastille_bootstrap_archives="base"                                    ## default: "base"
 
-  ## pkgbase package sets (used for FreeBSD 15+)
+  ## Pkgbase package sets
   ## Any set with [-dbg] can be installed with debugging
   ## symbols by adding '-dbg' to the package set
   ## base[-dbg]          - Base system
@@ -56,35 +56,38 @@ This is the default `bastille.conf` file.
   ## optional-jail[-dbg] - Optional base system software for jails
   ## src                 - System source code
   ## tests               - System test suite
-  ## Whitespace separated list:
+  ## Whitespace-separated list:
   ## bastille_pkgbase_packages="base-jail lib32-dbg src"
   bastille_pkgbase_packages="base-jail"                                 ## default: "base-jail"
 
-  ## default timezone
+  ## Default timezone
   bastille_tzdata=""                                                    ## default: empty to use host's time zone
 
-  ## default jail resolv.conf
+  ## Default jail resolv.conf
   bastille_resolv_conf="/etc/resolv.conf"                               ## default: "/etc/resolv.conf"
 
-  ## bootstrap urls
-  bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"          ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
-  bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/" ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
-  bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"          ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
+  ## Bootstrap URLs
+  bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"                  ## default: "http://ftp.freebsd.org/pub/FreeBSD/releases/"
+  bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/"                   ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
+  bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"     ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
   ## ZFS options
   bastille_zfs_enable="NO"                                              ## default: "NO"
   bastille_zfs_zpool=""                                                 ## default: ""
   bastille_zfs_prefix="bastille"                                        ## default: "bastille"
-  bastille_zfs_options="-o compress=lz4 -o atime=off"                   ## default: "-o compress=lz4 -o atime=off"
+  bastille_zfs_options="-o compress=on -o atime=off"                    ## default: "-o compress=on -o atime=off"
 
   ## Export/Import options
   bastille_compress_xz_options="-0 -v"                                  ## default "-0 -v"
   bastille_decompress_xz_options="-c -d -v"                             ## default "-c -d -v"
   bastille_compress_gz_options="-1 -v"                                  ## default "-1 -v"
   bastille_decompress_gz_options="-k -d -c -v"                          ## default "-k -d -c -v"
-  bastille_export_options=""                                            ## default "" predefined export options, e.g. "--safe --gz"
+  bastille_compress_zst_options="-3 -v"                                 ## default "-3 -v"
+  bastille_decompress_zst_options="-k -d -c -v"                         ## default "-k -d -c -v"
+  bastille_export_options=""                                            ## default "" predefined export options, e.g. "--live --gz"
 
   ## Networking
+  bastille_network_vnet_type="if_bridge"                                ## default: "if_bridge"
   bastille_network_loopback="bastille0"                                 ## default: "bastille0"
   bastille_network_pf_ext_if="ext_if"                                   ## default: "ext_if"
   bastille_network_pf_table="jails"                                     ## default: "jails"

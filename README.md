@@ -56,7 +56,7 @@ sysrc bastille_enable=YES
 ### Upgrading
 
 When upgrading from a previous version of bastille (e.g. 0.10.20230714 to
-1.1.3.251130) you will need to update your bastille.conf
+1.2.1.251203) you will need to update your bastille.conf
 
 Be sure to read the [Breaking Changes](#breaking-changes) below.
 

@@ -1,0 +1,169 @@
+.Dd 2025/12/06
+.Dt bastille.conf 5
+.Os
+.Sh NAME
+.Nm bastille.conf
+.Nd Configuration file for Bastille
+.Sh DESCRIPTION
+Bastille has most options preconfigured with sane defaults. These
+can be adjusted to fit your environment. The config file also has
+the default options documented, but the following will outline what
+the purpose is of each one.
+.Ss DEFAULT PATHS
+.Bl -tag -width Ds
+.It bastille_prefix
+This is the main Bastille prefix. All Bastille directories,
+excluding 'bastille_logsdir' will start with this prefix.
+.Pp
+If zfs is enabled, this will become the mount point of the zfs dataset.
+.Pp
+The following directories, excluding 'bastille_logsdir'
+will be prefixed by 'bastille_prefix'.
+If zfs is enabled, they will inherit the mount point
+of 'bastille_prefix'.
+.It bastille_backupsdir
+Bastille will store backups and exports here.
+.It bastille_cachedir
+Bastille will store cache here.
+.It bastille_jailsdir
+Bastille will store jails here.
+.It bastille_releasesdir
+Bastille will store releases here.
+.It bastille_templatesdir
+Bastille will store templates here.
+.It bastille_logsdir
+Bastille will store jail console logs here.
+.Ss FIREWALL
+.Bl -tag -width Ds
+.It bastille_pf_conf
+Path to the pf firewall configuration file.
+.Ss SUB-COMMANDS PATH
+.Bl -tag -width Ds
+.It bastille_sharedir
+This is the path where Bastille expects sub-commands to live at.
+.Ss BOOTSTRAP
+.Bl -tag -width Ds
+.It bastille_bootstrap_archives
+This is a whitespace-separated list of distribution sets to fetch
+when bootstrapping a legacy (non-pkgbase) release.
+.It bastille_pkgbase_packages
+This is a whitespace-separated list of package sets to install
+when bootstrapping a release using PkgBase.
+.It bastille_url_freebsd
+Url from which to fetch legacy distributions sets when bootstrapping
+a FreeBSD release.
+.It bastille_url_hardenedbsd
+Url from which to fetch legacy distributions sets when bootstrapping
+a HardenedBSD release.
+.It bastille_url_midnightbsd
+Url from which to fetch legacy distributions sets when bootstrapping
+a MidnightBSD release.
+.Ss TIMEZONE
+.Bl -tag -width Ds
+.It bastille_tzdata
+Set the timezone to apply to newly created jails.
+.Ss RESOLV.CONF
+.It bastille_resolv_conf
+This file is copied into newly created jails to allow them
+to reach DNS.
+.Ss ZFS
+.Bl -tag -width Ds
+.It bastille_zfs_enable
+Whether to enable or disable zfs support.
+.It bastille_zfs_zpool
+Which zpool to use when zfs is enabled.
+.It bastille_zfs_prefix
+Which dataset to use when zfs is enabled. Do not include the zpool
+here.
+.It bastille_zfs_options
+Zfs options to use when creating any and all datasets for any and all
+supported actions.
+.Ss EXPORT/IMPORT
+.Bl -tag -width Ds
+.It bastille_compress_xz_options
+xz specific compress options.
+.It bastille_decompress_xz_options
+xz specific de-compress options.
+.It bastille_compress_gz_options
+gz specific compress options.
+.It bastille_decompress_gz_options
+gz specific de-compress options.
+.It bastille_compress_zst_options
+zst specific compress options.
+.It bastille_decompress_zst_options
+zst specific de-compress options. 
+.It bastille_export_options
+Any flags supported by the 'export' command can be defined here
+to make it slightly more convenient.
+.Ss NETWORKING
+.Bl -tag -width Ds
+.It bastille_network_vnet_type
+Control whether to use the default 'if_bridge' mode
+or Netgraph.
+.It bastille_network_loopback
+Set the loopback interface name.
+.It bastille_network_shared
+Set the shared interface name.
+.It bastille_network_pf_ext_if
+Set the external interface for the 'pf' firewall rules.
+.It bastille_network_pf_table
+Set the name of the default table used for NAT jails.
+.It bastille_network_gateway
+Specify a default gateway.
+.It bastille_network_gateway6
+Specify a defalut Ipv6 gateway.
+.Ss TEMPLATES
+.Bl -tag -width Ds
+.It bastille_template_base
+The default template that is applied to all jails.
+.It bastille_template_empty
+The default template that is applied to empty jails.
+.It bastille_template_thick
+The default template that is appled to thick jails.
+.It bastille_template_clone
+The default template that is appled to clone jails.
+.It bastille_template_thin
+The default template that is appled to thin jails.
+.It bastille_template_vnet
+The default template that is appled to vnet jails.
+.It bastille_template_vlan
+The default template that is appled to vnet+vlan jails.
+.Sh SEE ALSO
+.Xr bastille-bootstrap 1 ,
+.Xr bastille-clone 1 ,
+.Xr bastille-cmd 1 ,
+.Xr bastille-config 1 ,
+.Xr bastille-console 1 ,
+.Xr bastille-convert 1 ,
+.Xr bastille-cp 1 ,
+.Xr bastille-create 1 ,
+.Xr bastille-destroy 1 ,
+.Xr bastille-edit 1 ,
+.Xr bastille-etcupdate 1 ,
+.Xr bastille-export 1 ,
+.Xr bastille-htop 1 ,
+.Xr bastille-import 1 ,
+.Xr bastille-jcp 1 ,
+.Xr bastille-limits 1 ,
+.Xr bastille-list 1 ,
+.Xr bastille-migrate 1 ,
+.Xr bastille-mount 1 ,
+.Xr bastille-network 1 ,
+.Xr bastille-pkg 1 ,
+.Xr bastille-rcp 1 ,
+.Xr bastille-rdr 1 ,
+.Xr bastille-rename 1 ,
+.Xr bastille-restart 1 ,
+.Xr bastille-service 1 ,
+.Xr bastille-setup 1 ,
+.Xr bastille-start 1 ,
+.Xr bastille-stop 1 ,
+.Xr bastille-sysrc 1 ,
+.Xr bastille-tags 1 ,
+.Xr bastille-template 1 ,
+.Xr bastille-top 1 ,
+.Xr bastille-umount 1 ,
+.Xr bastille-update 1 ,
+.Xr bastille-upgrade 1 ,
+.Xr bastille-verify 1 ,
+.Xr bastille-zfs 1

@@ -33,14 +33,15 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE|install"
+    error_notify "Usage: bastille upgrade [option(s)] TARGET NEW_RELEASE"
+    error_notify "                                    TARGET install"
     cat << EOF
 
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -f | --force          Force upgrade a release.
-    -x | --debug          Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -f | --force     Force upgrade a release (FreeBSD legacy releases).
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -127,7 +128,7 @@ thick_jail_check() {
         # Validate PKGBASE or non-PKGBASE
         if pkg -r "${bastille_jailsdir}/${TARGET}/root" which /usr/bin/uname > /dev/null 2>&1; then
             PKGBASE=1
-            if echo "${NEW_RELEASE}" | grep -oq "\-CURRENT"; then
+            if echo "${NEW_RELEASE}" | grep -Eoq "(\-CURRENT|\-STABLE)"; then
                 FREEBSD_BRANCH="current"
             else
                 FREEBSD_BRANCH="release"
@@ -317,27 +318,28 @@ jail_upgrade_pkgbase() {
 
         local jailpath="${bastille_jailsdir}/${TARGET}/root"
         local abi="FreeBSD:${NEW_MAJOR_VERSION}:${HW_MACHINE_ARCH}"
-        local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+        local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${NEW_MINOR_VERSION}"
+            local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
+            local fingerprints="${jailpath}/usr/share/keys/pkg"
         fi
-        local repo_dir="${bastille_sharedir}/pkgbase"
 
         info "\n[${TARGET}]:"
 
         # Verify trusted pkg keys
-        if [ ! -f "${fingerprints}/trusted/awskms-${NEW_MAJOR_VERSION}" ]; then
-            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/awskms-${NEW_MAJOR_VERSION}
-            then
-                error_exit "[ERROR]: Failed to fetch trusted pkg keys."
+        if [ "${FREEBSD_BRANCH}" = "release" ]; then
+            if [ ! -f "${fingerprints}/trusted/awskms-${NEW_MAJOR_VERSION}" ]; then
+                if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/awskms-${NEW_MAJOR_VERSION}; then
+                    error_exit "[ERROR]: Failed to fetch trusted pkg keys."
+                fi
             fi
-        fi
-        if [ ! -f "${fingerprints}/trusted/backup-signing-${NEW_MAJOR_VERSION}" ]; then
-            if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/backup-signing-${NEW_MAJOR_VERSION}
-            then
-                error_exit "[ERROR]: Failed to fetch trusted backup pkg keys."
+            if [ ! -f "${fingerprints}/trusted/backup-signing-${NEW_MAJOR_VERSION}" ]; then
+                if ! fetch -o "${fingerprints}/trusted" https://cgit.freebsd.org/src/tree/share/keys/pkgbase-${NEW_MAJOR_VERSION}/trusted/backup-signing-${NEW_MAJOR_VERSION}; then
+                    error_exit "[ERROR]: Failed to fetch trusted backup pkg keys."
+                fi
             fi
         fi
 

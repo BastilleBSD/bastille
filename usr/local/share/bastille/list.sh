@@ -33,16 +33,16 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille list [option(s)] [RELEASE (-p)] [all] [backup(s)] [export(s)] [import(s)] [ip(s)] [jail(s)] [limit(s)] [log(s)]"
-    error_notify "                                                [path(s)] [port(s)] [prio|priority] [release(s)] [state(s)] [template(s)] [type]"
+    error_notify "Usage: bastille list [option(s)] [all|backup|export|import|ip|jail|limit]"
+    error_notify "                                 [log|path|port|priority|release|snapshot|state|template|type]"
     cat << EOF
     Options:
 
-    -d | --down                List stopped jails only.
-    -j | --json                List jails or sub-arg(s) in json format.
-    -p | --pretty              Print JSON in columns.
-    -u | --up                  List running jails only.
-    -x | --debug               Enable debug mode.
+    -d | --down       List stopped jails only.
+    -j | --json       List jails or sub-arg(s) in json format.
+    -p | --pretty     Print JSON in columns.
+    -u | --up         List running jails only.
+    -x | --debug      Enable debug mode.
 
 EOF
     exit 1
@@ -786,7 +786,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         release|releases)
-            list_release "${2}"
+            list_release "-p"
             ;;
         snap|snapshot|snapshots)
             list_snapshot

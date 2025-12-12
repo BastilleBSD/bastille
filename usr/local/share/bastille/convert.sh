@@ -33,14 +33,15 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille convert [option(s)] TARGET [RELEASE]"
+    error_notify "Usage: bastille convert [option(s)] TARGET"
+    error_notify "                                    TARGET RELEASE"
     cat << EOF
 
     Options:
 
-    -a | --auto           Auto mode. Start/stop jail(s) if required.
-    -y | --yes            Do not prompt. Just convert.
-    -x | --debug          Enable debug mode.
+    -a | --auto      Auto mode. Start/stop jail(s) if required.
+    -y | --yes       Do not prompt. Assume always yes.
+    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
