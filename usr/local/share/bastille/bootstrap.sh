@@ -432,7 +432,7 @@ bootstrap_release_linux() {
 
     if [ "${PLATFORM_OS}" = "Linux/Debian" ] || [ "${PLATFORM_OS}" = "Linux/Ubuntu" ]; then
         # Fetch the Linux flavor
-        if ! debootstrap --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${RELEASE}; then
+        if ! debootstrap ${DEBOOTSTRAP_OPTIONS} --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${RELEASE}; then
             ERRORS=$((ERRORS + 1))
             error_notify "[ERROR]: Failed to fetch Linux release: ${LINUX_FLAVOR}"
             return 1
@@ -547,6 +547,7 @@ OPT_ARCH="${2}"
 NOCACHEDIR=""
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
+DEBOOTSTRAP_OPTIONS=""
 
 bastille_root_check
 
@@ -678,12 +679,14 @@ case "${RELEASE}" in
         NAME_VERIFY="Ubuntu_2204"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
         ;;
+    # Not working 2025-12-12
     ubuntu_noble|noble|ubuntu-noble)
         PLATFORM_OS="Linux/Ubuntu"
         LINUX_FLAVOR="noble"
         NAME_VERIFY="Ubuntu_2404"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
         ;;
+    # Not working 2025-12-12
     debian_buster|buster|debian-buster|debian10|Debian10)
         PLATFORM_OS="Linux/Debian"
         LINUX_FLAVOR="buster"
@@ -701,6 +704,14 @@ case "${RELEASE}" in
         LINUX_FLAVOR="bookworm"
         NAME_VERIFY="Debian12"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        DEBOOTSTRAP_OPTIONS="--exclude usr-is-merged"
+        ;;
+    debian_trixie|trixie|debian-trixie|debian13|Debian13)
+        PLATFORM_OS="Linux/Debian"
+        LINUX_FLAVOR="trixie"
+        NAME_VERIFY="Debian13"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        DEBOOTSTRAP_OPTIONS="--exclude usr-is-merged"
         ;;
     *)
         usage
