@@ -355,7 +355,7 @@ rdr-anchor "rdr/*"
 
 block in all
 pass out quick keep state
-antispoof for \$ext_if inet
+antispoof for \$ext_if
 pass in proto tcp from any to any port ssh flags S/SA keep state
 EOF
     sysrc pf_enable=YES
