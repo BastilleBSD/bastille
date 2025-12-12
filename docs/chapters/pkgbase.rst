@@ -12,6 +12,10 @@ To bootstrap a release using pkgbase, run ``bastille bootstrap --pkgbase RELEASE
 For version 14, it is not supported. For version 15 it is optional, but
 for version 16 and above, it is the default method of bootstrapping a release.
 
+To customize the 'pkgbase package set' used for bootstrapping, change the 'bastille_pkgbase_packages'
+setting located in ``/usr/local/etc/bastille/bastille.conf``. See also 
+:doc:`/chapters/configuration`.
+
 Update
 ------
 
