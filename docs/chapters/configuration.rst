@@ -116,13 +116,6 @@ Notes
 
 The options here are fairly self-explanitory, but there are some things to note.
 
-* If you use ZFS, DO NOT create the bastille dataset. You must only create the
-  parent. Bastille must be allowed to create the ``bastille`` child dataset, or
-  you will have issues. So, if you want bastille to live at
-  ``zroot/data/bastille`` you should set ``bastille_zfs_zpool`` to ``zroot`` and
-  ``bastille_zfs_prefix`` to ``data/bastille`` but you should only create
-  ``zroot/data`` before running bastille for the first time.
-
 * Bastille will mount the dataset it creates at ``bastille_prefix`` which
   defaults to ``/usr/local/bastille``. So if you want to navigate to your jails,
   you will use the ``bastille_prefix`` as the location because this is where the
