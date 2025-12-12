@@ -128,6 +128,16 @@ The default template that is appled to thin jails.
 The default template that is appled to vnet jails.
 .It bastille_template_vlan
 The default template that is appled to vnet+vlan jails.
+.Ss MONITORING
+.It bastille_monitor_cron_path
+Cron file for automatic monitoring entry.
+.It bastille_monitor_cron
+Actual cron entry. The default is to check every 5 minutes.
+.It bastille_monitor_logfile
+Log storage.
+.It bastille_monitor_healthchecks
+This is the FQDN for optional alert services.
+Currently only supports 'healthchecks.io'.
 .Sh SEE ALSO
 .Xr bastille-bootstrap 1 ,
 .Xr bastille-clone 1 ,
