@@ -104,6 +104,23 @@ This is the default `bastille.conf` file.
   bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"
   bastille_template_vlan="default/vlan"                                 ## default: "default/vlan"
 
+  ## Monitoring
+  bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"                           ## default: "/usr/local/etc/cron.d/bastille-monitor"
+  bastille_monitor_cron="*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"  ## default: "*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"
+  bastille_monitor_logfile="${bastille_logsdir}/monitor.log"                                    ## default: "${bastille_logsdir}/monitor.log"
+  bastille_monitor_healthchecks=""                                                              ## default: ""
+
+
+Notes
+-----
+
+The options here are fairly self-explanitory, but there are some things to note.
+
+* Bastille will mount the dataset it creates at ``bastille_prefix`` which
+  defaults to ``/usr/local/bastille``. So if you want to navigate to your jails,
+  you will use the ``bastille_prefix`` as the location because this is where the
+  will be mounted.
+
 Custom Configuration
 --------------------
 

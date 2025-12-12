@@ -30,6 +30,7 @@ Usage
     limits      Apply resources limits to jail(s). See rctl(8) and cpuset(1).
     list        List jails, releases, templates and more...
     migrate     Migrate jail(s) to a remote system.
+    monitor     Monitor and attempt to restart jail service(s).
     mount       Mount file(s)/directorie(s) inside jail(s).
     network     Add or remove interface(s) from jail(s).
     pkg         Manage packages inside jail(s). See pkg(8).
