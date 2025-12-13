@@ -37,7 +37,7 @@ pkg install bastille
 
 **ports**
 ```shell
-git clone https://git.freebsd.org/ports.git /usr/ports
+git clone https://git.freebsd.org/ports.git --depth 1 /usr/ports
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
