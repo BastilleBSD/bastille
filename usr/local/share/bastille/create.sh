@@ -666,10 +666,10 @@ create_jail() {
 
             # Retrieve epair name from jail.conf
             uniq_epair=$(grep vnet.interface "${bastille_jailsdir}/${NAME}/jail.conf" | awk '{print $3}' | sed 's/;//; s/-/_/g')
-            gateway=''
-            gateway6=''
-            ifconfig_inet=''
-            ifconfig_inet6=''
+            gateway="NO"
+            gateway6="NO"
+            ifconfig_inet=""
+            ifconfig_inet6=""
 
             # Check for DHCP
             if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
@@ -692,7 +692,7 @@ create_jail() {
 
             # Enable IPv6 if used
             if [ -n "${IP6_ADDR}" ]; then
-                ifconfig_inet6='inet6 -ifdisabled'
+                ifconfig_inet6="inet6 -ifdisabled"
                 if echo "${IP}" | grep -qE 'SLAAC'; then
                     # Enable SLAAC if requested
                     ifconfig_inet6="${ifconfig_inet6} accept_rtadv"
@@ -720,7 +720,7 @@ create_jail() {
                 # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
                 # Use default "vnet0" otherwise
                 if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 else
                     bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 fi
@@ -728,9 +728,9 @@ create_jail() {
                 # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
                 # Use default "vnet0" otherwise
                 if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 else
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 fi
             fi
 
