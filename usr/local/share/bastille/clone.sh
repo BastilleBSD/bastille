@@ -49,6 +49,7 @@ EOF
 # Handle options.
 AUTO=0
 LIVE=0
+VNET_JAIL=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -111,34 +112,56 @@ clone_validate_jail_name() {
 
 validate_ip() {
 
-    local _ip="${1}"
-    local _ip6="$(echo ${_ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    local ip="${1}"
+    local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
+    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
 
-    if [ -n "${_ip6}" ]; then
-    	if [ "${_ip6}" = "SLAAC" ] && [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
-            error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip6})."
+    if [ -n "${ip6}" ]; then
+    	if [ "${ip6}" = "SLAAC" ] && [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
+            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip6})."
         fi
-        info "\nValid: (${_ip6})."
-        IP6_ADDR="${_ip6}"
-    elif [ "${_ip}" = "inherit" ] || [ "${_ip}" = "ip_hostname" ]; then
+        if [ "${VNET_JAIL}" -eq 1 ]; then
+            if [ -z "${subnet}" ]; then
+                subnet="64"
+                ip6="${ip6}/${subnet}"
+            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            fi
+        fi
+        info "\nValid: (${ip6})."
+        IP6_ADDR="${ip6}"
+    elif [ "${ip4}" = "inherit" ] || [ "${ip4}" = "ip_hostname" ]; then
 	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${_ip})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip4})."
 	        else
-                info "\nValid: (${_ip})."
-                IP4_ADDR="${_ip}"
-                IP6_ADDR="${_ip}"
+                info "\nValid: (${ip4})."
+                IP4_ADDR="${ip4}"
+                IP6_ADDR="${ip4}"
 	        fi
-    elif [ "${_ip}" = "0.0.0.0" ] || [ "${_ip}" = "DHCP" ] || [ "${_ip}" = "SYNCDHCP" ]; then
+    elif [ "${ip4}" = "0.0.0.0" ] || [ "${ip4}" = "DHCP" ] || [ "${ip4}" = "SYNCDHCP" ]; then
         if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-            info "\nValid: (${_ip})."
-            IP4_ADDR="${_ip}"
+            info "\nValid: (${ip4})."
+            IP4_ADDR="${ip4}"
         else
-            error_exit "[ERROR]: Unsupported IP option for standard jail: (${_ip})."
+            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip4})."
         fi
     else
+        if [ "${VNET_JAIL}" -eq 1 ]; then
+            if [ -z "${subnet}" ]; then
+                subnet="24"
+                ip4="${ip4}/${subnet}"
+            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            fi
+        fi
         local IFS
-        if echo "${_ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${_ip}" | cut -d / -f1)
+        if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+            TEST_IP=$(echo "${ip4}" | cut -d / -f1)
             IFS=.
             set ${TEST_IP}
             for quad in 1 2 3 4; do
@@ -149,14 +172,14 @@ validate_ip() {
 
             if ifconfig | grep -qwF "${TEST_IP}"; then
                 warn "\nWarning: IP address already in use (${TEST_IP})."
-                IP4_ADDR="${_ip}"
+                IP4_ADDR="${ip4}"
             else
-                info "\nValid: (${_ip})."
-                IP4_ADDR="${_ip}"
+                info "\nValid: (${ip4})."
+                IP4_ADDR="${ip4}"
             fi
 
         else
-            error_continue "Invalid: (${_ip})."
+            error_continue "Invalid: (${ip4})."
         fi
     fi
 }
@@ -173,58 +196,63 @@ validate_ips() {
 
 update_jailconf() {
 
-    # Update jail.conf
-    JAIL_CONFIG="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    local jail_config="${bastille_jailsdir}/${NEWNAME}/jail.conf"
 
-    if [ -f "${JAIL_CONFIG}" ]; then
-        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${JAIL_CONFIG}"; then
-            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${JAIL_CONFIG}"
-            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${JAIL_CONFIG}"
-            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${JAIL_CONFIG}"
-            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${JAIL_CONFIG}"
-            sed -i '' "s|^${TARGET}.*{$|${NEWNAME} {|" "${JAIL_CONFIG}"
+    if grep -qw "vnet;" "${jail_config}"; then
+        VNET_JAIL=1
+    else
+        VNET_JAIL=0
+    fi
+
+    if [ -f "${jail_config}" ]; then
+        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${jail_config}"; then
+            sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${jail_config}"
+            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${jail_config}"
+            sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${jail_config}"
+            sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${jail_config}"
+            sed -i '' "s|^${TARGET}.*{$|${NEWNAME} {|" "${jail_config}"
         fi
     fi
 
-    if grep -qw "vnet;" "${JAIL_CONFIG}"; then
+    if [ "${VNET_JAIL}" -eq 1 ]; then
         validate_netconf
         update_jailconf_vnet
     else
-        _ip4="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
-        _ip6="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
-        _interface="$(bastille config ${TARGET} get interface)"
+        ip4="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
+        ip6="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
+        interface="$(bastille config ${TARGET} get interface)"
         # Remove old style interface naming in place of new if|ip style
-        if [ "${_interface}" != "not set" ]; then
-            sed -i '' "/.*interface = .*/d" "${JAIL_CONFIG}"
+        if [ "${interface}" != "not set" ]; then
+            sed -i '' "/.*interface = .*/d" "${jail_config}"
         fi
 
         # IP4
-        if [ "${_ip4}" != "not set" ]; then
-            for _ip in ${_ip4}; do
-                if echo ${_ip} | grep -q "|"; then
-                    _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
+        if [ "${ip4}" != "not set" ]; then
+            for ip in ${ip4}; do
+                if echo ${ip} | grep -q "|"; then
+                    ip="$(echo ${ip} | awk -F"|" '{print $2}')"
                 fi
-                if [ "${_interface}" != "not set" ]; then
-                    sed -i '' "s#.*ip4.addr = .*#  ip4.addr = ${_interface}|${IP4_ADDR};#" "${JAIL_CONFIG}"
+                if [ "${interface}" != "not set" ]; then
+                    sed -i '' "s#.*ip4.addr = .*#  ip4.addr = ${interface}|${IP4_ADDR};#" "${jail_config}"
                 else
-                    sed -i '' "\#ip4.addr = .*# s#${_ip}#${IP4_ADDR}#" "${JAIL_CONFIG}"
+                    sed -i '' "\#ip4.addr = .*# s#${ip}#${IP4_ADDR}#" "${jail_config}"
                 fi
-                sed -i '' "\#ip4.addr += .*# s#${_ip}#127.0.0.1#" "${JAIL_CONFIG}"
+                sed -i '' "\#ip4.addr += .*# s#${ip}#127.0.0.1#" "${jail_config}"
             done
         fi
 
         # IP6
-        if [ "${_ip6}" != "not set" ]; then
-            for _ip in ${_ip6}; do
-                if echo ${_ip} | grep -q "|"; then
-                    _ip="$(echo ${_ip} | awk -F"|" '{print $2}')"
+        if [ "${ip6}" != "not set" ]; then
+            for ip in ${ip6}; do
+                if echo ${ip} | grep -q "|"; then
+                    ip="$(echo ${ip} | awk -F"|" '{print $2}')"
                 fi
-                if [ "${_interface}" != "not set" ]; then
-                    sed -i '' "s#.*${_interface} = .*#  ip6.addr = ${_interface}|${IP6_ADDR};/" "${JAIL_CONFIG}"
+                if [ "${interface}" != "not set" ]; then
+                    sed -i '' "s#.*${interface} = .*#  ip6.addr = ${interface}|${IP6_ADDR};/" "${jail_config}"
                 else
-                    sed -i '' "\#ip6.addr = .*# s#${_ip}#${IP6_ADDR}#" "${JAIL_CONFIG}"
+                    sed -i '' "\#ip6.addr = .*# s#${ip}#${IP6_ADDR}#" "${jail_config}"
                 fi
-                sed -i '' "\#ip6.addr += .*# s#${_ip}#::1#" "${JAIL_CONFIG}"
+                sed -i '' "\#ip6.addr += .*# s#${ip}#::1#" "${jail_config}"
             done
         fi
     fi

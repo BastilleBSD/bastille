@@ -178,15 +178,37 @@ fi
 validate_ip() {
 
     local ip="${1}"
+    local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
     local ip6="$( echo "${ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
+    local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
 
     if [ -n "${ip6}" ]; then
+        if [ "${STANDARD}" -eq 0 ]; then
+            if [ -z "${subnet}" ]; then
+                subnet="64"
+                ip6="${ip6}/${subnet}"
+            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            fi
+        fi
         info "\nValid: (${ip6})."
         IP6_ADDR="${ip6}"
     elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
         info "\nValid: (${ip})."
         IP4_ADDR="${ip}"
     else
+        if [ "${STANDARD}" -eq 0 ]; then
+            if [ -z "${subnet}" ]; then
+                subnet="24"
+                ip4="${ip4}/${subnet}"
+            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            fi
+        fi
         local IFS
         if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
             TEST_IP=$(echo "${ip}" | cut -d / -f1)

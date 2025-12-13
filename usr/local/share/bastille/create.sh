@@ -114,29 +114,50 @@ validate_release() {
 validate_ip() {
 
     local ip="${1}"
+    local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
     local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
 
     if [ -n "${ip6}" ]; then
+        if [ "${VNET_JAIL}" -eq 1 ]; then
+            if [ -z "${subnet}" ]; then
+                subnet="64"
+                ip6="${ip6}/${subnet}"
+            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            fi
+        fi
         info "\nValid: (${ip6})."
-        # This is only used in this function to set IPX_DEFINITION
         local ipx_addr="ip6.addr"
     else
-        if [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
+        if [ "${ip4}" = "inherit" ] || [ "${ip4}" = "ip_hostname" ]; then
 	        if [ "${VNET_JAIL}" -eq 1 ]; then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip4})."
 	        else
-                info "\nValid: (${ip})."
+                info "\nValid: (${ip4})."
 	        fi
-        elif [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ] || [ "${ip}" = "0.0.0.0" ]; then
+        elif [ "${ip4}" = "DHCP" ] || [ "${ip4}" = "SYNCDHCP" ] || [ "${ip4}" = "0.0.0.0" ]; then
 	        if [ "${VNET_JAIL}" -eq 0 ]; then
-                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${ip})."
+                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${ip4})."
 	        else
-                info "\nValid: (${ip})."
+                info "\nValid: (${ip4})."
 	        fi
         else
+            if [ "${VNET_JAIL}" -eq 1 ]; then
+                if [ -z "${subnet}" ]; then
+                    subnet="24"
+                    ip4="${ip4}/${subnet}"
+                elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                    error_exit "[ERROR]: Invalid subnet: /${subnet}"
+                elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
+                    error_exit "[ERROR]: Invalid subnet: /${subnet}"
+                fi
+            fi
             local IFS
-            if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-                TEST_IP=$(echo "${ip}" | cut -d / -f1)
+            if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+                TEST_IP=$(echo "${ip4}" | cut -d / -f1)
                 IFS=.
                 set ${TEST_IP}
                 for quad in 1 2 3 4; do
@@ -145,9 +166,9 @@ validate_ip() {
                     fi
                 done
                 ipx_addr="ip4.addr"
-                info "\nValid: (${ip})."
+                info "\nValid: (${ip4})."
             else
-                error_continue "Invalid: (${ip})."
+                error_continue "Invalid: (${ip4})."
             fi
         fi
     fi
@@ -201,7 +222,7 @@ validate_ip() {
                 IP6_ADDR="${ip}"
             fi
         else
-	    error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
+            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
         fi
     else
         if [ "${ipx_addr}" = "ip4.addr" ]; then
@@ -966,10 +987,10 @@ elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
     VNET_INTERFACE_TYPE="passthrough"
 fi
 
-NAME="$1"
-RELEASE="$2"
-IP="$3"
-INTERFACE="$4"
+NAME="${1}"
+RELEASE="${2}"
+IP="${3}"
+INTERFACE="${4}"
 
 info "\nAttempting to create jail: ${NAME}"
 
