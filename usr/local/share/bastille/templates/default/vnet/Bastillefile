@@ -1,14 +1,14 @@
 ARG EXT_INTERFACE
 ARG INTERFACE
 ARG VNET
-ARG GATEWAY="NO"
-ARG GATEWAY6="NO"
-ARG IFCONFIG="SYNCDHCP"
+ARG GATEWAY
+ARG GATEWAY6
+ARG IFCONFIG
 ARG IFCONFIG6
 
 SYSRC ifconfig_${INTERFACE}_name=${VNET}
-SYSRC ifconfig_${VNET}="${IFCONFIG}"
+SYSRC ifconfig_${VNET}=${IFCONFIG}
 SYSRC ifconfig_${VNET}_descr="jail interface for ${EXT_INTERFACE}"
-SYSRC ifconfig_${VNET}_ipv6="${IFCONFIG6}"
-SYSRC defaultrouter="${GATEWAY}"
-SYSRC ipv6_defaultrouter="${GATEWAY6}"
+SYSRC ifconfig_${VNET}_ipv6=${IFCONFIG6}
+SYSRC defaultrouter=${GATEWAY}
+SYSRC ipv6_defaultrouter=${GATEWAY6}
