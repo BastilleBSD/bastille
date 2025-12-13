@@ -370,12 +370,14 @@ update_jailconf_vnet() {
                     if [ -n "${jail_vnet_vlan}" ]; then
                         if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
                             sysrc -f "${jail_rc_config}" ifconfig_vnet0_${jail_vnet_vlan}="SYNCDHCP"
+                            sysrc -f "${jail_rc_config}" defaultrouter="NO"
                         else
                             sysrc -f "${jail_rc_config}" ifconfig_vnet0_${jail_vnet_vlan}="inet ${IP4_ADDR}"
                         fi
                     else
                         if [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
                             sysrc -f "${jail_rc_config}" ifconfig_vnet0="SYNCDHCP"
+                            sysrc -f "${jail_rc_config}" defaultrouter="NO"
                         else
                             sysrc -f "${jail_rc_config}" ifconfig_vnet0="inet ${IP4_ADDR}"
                         fi
@@ -394,13 +396,16 @@ update_jailconf_vnet() {
                 if grep "vnet0" "${jail_rc_config}" | grep -q "${new_jail_epair}_name"; then
                     if [ "${IP6_ADDR}" = "SLAAC" ]; then
                         sysrc -f "${jail_rc_config}" ifconfig_vnet0_ipv6="inet6 -ifdisabled accept_rtadv"
+                        sysrc -f "${jail_rc_config}" ipv6_defaultrouter="NO"
                     else
                         sysrc -f "${jail_rc_config}" ifconfig_vnet0_ipv6="inet6 -ifdisabled ${IP6_ADDR}"
                     fi
                 else
                     if [ "${IP6_ADDR}" = "SLAAC" ]; then
                         sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_ipv6="inet6 -ifdisabled accept_rtadv"
-                    fi
+                    else
+                        sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}_ipv6="inet6 -ifdisabled"
+                     fi
                 fi
             fi
 
