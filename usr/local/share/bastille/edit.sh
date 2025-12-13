@@ -69,17 +69,28 @@ if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
 fi
 
 TARGET="${1}"
-if [ "$#" -eq 2 ]; then
-    TARGET_FILENAME="${2}"
-else
-    TARGET_FILENAME="jail.conf"
-fi
+FILE="${2}"
 
 bastille_root_check
 set_target_single "${TARGET}"
+
+if [ -z "${FILE}" ]; then
+    FILE="jail.conf"
+else
+    case "${FILE}" in
+        rc|rc.conf)
+            FILE="/root/etc/rc.conf"
+            ;;
+        *)
+            if [ ! -f "${bastille_jailsdir}/${TARGET}/${FILE}" ]; then
+                error_exit "[ERROR]: File not found: ${FILE}"
+            fi
+            ;;
+    esac
+fi
 
 if [ -z "${EDITOR}" ]; then
     EDITOR=edit
 fi
 
-"${EDITOR}" "${bastille_jailsdir}/${TARGET}/${TARGET_FILENAME}"
+"${EDITOR}" "${bastille_jailsdir}/${TARGET}/${FILE}"
