@@ -145,9 +145,6 @@ recursively.
 Special Hook Cases
 ------------------
 
-SYSRC requires that NO quotes be used or that quotes (``"``) be escaped ie;
-(``\\"``)
-
 ARG will always treat an ampersand "\``&``" literally, without the need to
 escape it. Escaping it will cause errors.
 

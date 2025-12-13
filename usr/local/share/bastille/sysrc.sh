@@ -100,7 +100,11 @@ for _jail in ${JAILS}; do
 
     info "\n[${_jail}]:"
 
-    jexec -l "${_jail}" /usr/sbin/sysrc "$@"
+    if [ -f "${bastille_jailsdir}/${_jail}/root/usr/sbin/sysrc" ]; then
+        jexec -l "${_jail}" /usr/sbin/sysrc "$@"
+    else
+        sysrc -j "${_jail}" "$@"
+    fi
 
     if [ "$?" -ne 0 ]; then
         ERRORS=$((ERRORS + 1))
