@@ -225,13 +225,19 @@ validate_ip() {
             error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
         fi
     else
-        if [ "${ipx_addr}" = "ip4.addr" ]; then
-            IP4_ADDR="${ip}"
-            IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
-        elif [ "${ipx_addr}" = "ip6.addr" ]; then
-            IP6_ADDR="${ip}"
-            IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
-            IP6_MODE="new"
+        if [ "${VNET_JAIL}" -eq 1 ]; then
+            if [ "${ipx_addr}" = "ip4.addr" ]; then
+                IP4_ADDR="${ip4}"
+            elif [ "${ipx_addr}" = "ip6.addr" ]; then
+                IP6_ADDR="${ip6}"
+            fi
+        else
+            if [ "${ipx_addr}" = "ip4.addr" ]; then
+                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
+            elif [ "${ipx_addr}" = "ip6.addr" ]; then
+                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
+                IP6_MODE="new"
+            fi
         fi
     fi
 }
@@ -692,44 +698,39 @@ create_jail() {
             ifconfig_inet=""
             ifconfig_inet6=""
 
-            # Check for DHCP
-            if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
-                ifconfig_inet="SYNCDHCP"
-            else
-                # Set Gateway
-                if [ -n "${OPT_GATEWAY}" ]; then
-                    gateway="${OPT_GATEWAY}"
-                elif [ -n "${bastille_network_gateway}" ]; then
-                    gateway="${bastille_network_gateway}"
+            # Enable IPv4 if set
+            if [ -n "${IP4_ADDR}" ]; then
+                if echo "${IP4_ADDR}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
+                    ifconfig_inet="SYNCDHCP"
                 else
-                    gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    # Set IP and Gateway
+                    ifconfig_inet="inet ${IP4_ADDR}"
+                    if [ -n "${OPT_GATEWAY}" ]; then
+                        gateway="${OPT_GATEWAY}"
+                    elif [ -n "${bastille_network_gateway}" ]; then
+                        gateway="${bastille_network_gateway}"
+                    else
+                        gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    fi
+
                 fi
             fi
 
-            # Add IPv4 address (this is empty if DHCP is used)
-            if [ -n "${IP4_ADDR}" ]; then
-                ifconfig_inet="inet ${IP4_ADDR}"
-            fi
-
-            # Enable IPv6 if used
+            # Enable IPv6 if set
             if [ -n "${IP6_ADDR}" ]; then
                 ifconfig_inet6="inet6 -ifdisabled"
-                if echo "${IP}" | grep -qE 'SLAAC'; then
+                if echo "${IP6_ADDR}" | grep -qE 'SLAAC'; then
                     # Enable SLAAC if requested
                     ifconfig_inet6="${ifconfig_inet6} accept_rtadv"
                 else
-                    # Set Gateway
+                    # Set IP and Gateway
+                    ifconfig_inet6="${ifconfig_inet6} ${IP6_ADDR}"
                     if [ -n "${bastille_network_gateway6}" ]; then
                         gateway6="${bastille_network_gateway6}"
                     else
                         gateway6="$(netstat -6rn | awk '/default/ {print $2}')"
                     fi
                 fi
-            fi
-
-            # Add IPv6 address (this is empty if SLAAC is used)
-            if [ -n "${IP6_ADDR}" ]; then
-                ifconfig_inet6="${ifconfig_inet6} ${IP6_ADDR}"
             fi
 
             # We need to pass IP4 and IP6 separately
