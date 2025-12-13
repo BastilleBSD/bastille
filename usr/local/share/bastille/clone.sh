@@ -133,20 +133,20 @@ validate_ip() {
         fi
         info "\nValid: (${ip6})."
         IP6_ADDR="${ip6}"
-    elif [ "${ip4}" = "inherit" ] || [ "${ip4}" = "ip_hostname" ]; then
+    elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
 	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip4})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip})."
 	        else
-                info "\nValid: (${ip4})."
-                IP4_ADDR="${ip4}"
-                IP6_ADDR="${ip4}"
+                info "\nValid: (${ip})."
+                IP4_ADDR="${ip}"
+                IP6_ADDR="${ip}"
 	        fi
-    elif [ "${ip4}" = "0.0.0.0" ] || [ "${ip4}" = "DHCP" ] || [ "${ip4}" = "SYNCDHCP" ]; then
+    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
         if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-            info "\nValid: (${ip4})."
-            IP4_ADDR="${ip4}"
+            info "\nValid: (${ip})."
+            IP4_ADDR="${ip}"
         else
-            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip4})."
+            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
         fi
     else
         if [ "${VNET_JAIL}" -eq 1 ]; then
@@ -495,12 +495,12 @@ clone_jail() {
         # Validate proper IP settings
         if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
             # VNET
-            if grep -Eoqx 'ifconfig_vnet0=".*"' "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+            if grep -Eoqx 'ifconfig_vnet0="[^"]"' "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
                 if [ -z "${IP4_ADDR}" ]; then
                     error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
                 fi
             fi
-            if grep -Eoqx 'ifconfig_vnet0_ipv6=".*"' "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+            if grep -Eoqx 'ifconfig_vnet0_ipv6="[^"]"' "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
                 if [ -z "${IP6_ADDR}" ]; then
                     error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
                 fi
