@@ -198,12 +198,6 @@ update_jailconf() {
 
     local jail_config="${bastille_jailsdir}/${NEWNAME}/jail.conf"
 
-    if grep -qw "vnet;" "${jail_config}"; then
-        VNET_JAIL=1
-    else
-        VNET_JAIL=0
-    fi
-
     if [ -f "${jail_config}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${jail_config}"; then
             sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${jail_config}"
@@ -486,6 +480,15 @@ clone_jail() {
 
     if ! [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
 
+        local jail_config="${bastille_jailsdir}/${TARGET}/jail.conf"
+        local jail_rc_config="${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"
+
+        if grep -qw "vnet;" "${jail_config}"; then
+            VNET_JAIL=1
+        else
+            VNET_JAIL=0
+        fi
+
         if [ -n "${IP}" ]; then
             validate_ips
         else
@@ -495,12 +498,12 @@ clone_jail() {
         # Validate proper IP settings
         if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
             # VNET
-            if grep -Eoqx 'ifconfig_vnet0="[^"]"' "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+            if grep -Eoqx 'ifconfig_vnet0="[^"]"' "${jail_rc_config}"; then
                 if [ -z "${IP4_ADDR}" ]; then
                     error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
                 fi
             fi
-            if grep -Eoqx 'ifconfig_vnet0_ipv6="[^"]"' "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+            if grep -Eoqx 'ifconfig_vnet0_ipv6="[^"]"' "${jail_rc_config}"; then
                 if [ -z "${IP6_ADDR}" ]; then
                     error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
                 fi
