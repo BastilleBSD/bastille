@@ -498,12 +498,12 @@ clone_jail() {
         # Validate proper IP settings
         if [ "$(bastille config ${TARGET} get vnet)" != "not set" ]; then
             # VNET
-            if grep -Eoqx 'ifconfig_vnet0="[^"]"' "${jail_rc_config}"; then
+            if grep -Eoqx 'ifconfig_vnet0="[^"]+"' "${jail_rc_config}"; then
                 if [ -z "${IP4_ADDR}" ]; then
                     error_exit "[ERROR]: IPv4 not set. Retry with a proper IPv4 address."
                 fi
             fi
-            if grep -Eoqx 'ifconfig_vnet0_ipv6="[^"]"' "${jail_rc_config}"; then
+            if grep -Eoqx 'ifconfig_vnet0_ipv6="[^"]+"' "${jail_rc_config}"; then
                 if [ -z "${IP6_ADDR}" ]; then
                     error_exit "[ERROR]: IPv6 not set. Retry with a proper IPv6 address."
                 fi
