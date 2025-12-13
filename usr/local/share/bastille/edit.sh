@@ -82,7 +82,7 @@ else
             FILE="/root/etc/rc.conf"
             ;;
         *)
-            if [ ! -f "${bastille_jailsdir}/${TARGET}/${FILE}" ];
+            if [ ! -f "${bastille_jailsdir}/${TARGET}/${FILE}" ]; then
                 error_exit "[ERROR]: File not found: ${FILE}"
             fi
             ;;
