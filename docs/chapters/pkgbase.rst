@@ -52,14 +52,14 @@ before attempting to upgrade to 16.0-RELEASE. This can be done in two ways.
      chmod +x pkgbasify.lua
      ./pkgbasify.lua
 
-2. Fetch the ``pkgbasify`` script and run it from the host using ``--rootdir``.
-   This requires using `PR 34 <https://github.com/FreeBSDFoundation/pkgbasify/pull/34>`_ in the ``pkgbasify`` repo.
+2. Fetch the ``pkgbasify`` script and run it from the host using the ``--jail TARGET``
+   option.
 
 .. code-block:: shell
 
      fetch https://github.com/FreeBSDFoundation/pkgbasify/raw/refs/heads/main/pkgbasify.lua
      chmod +x pkgbasify.lua
-     ./pkgbasify.lua --rootdir /usr/local/bastille/jails/TARGET/root
+     ./pkgbasify.lua --jail TARGET
 
 Converting a release to pkgbase can be done the same way, but we recommend simply destroying
 and re-bootstrapping it using pkgbase. This will not work if you are running thin jails
