@@ -147,6 +147,19 @@ define_ips() {
         local ipx_addr="ip6.addr"
     fi
 
+    # Set interface value
+    if [ ! -f "${bastille_jail_conf}" ]; then
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
+        fi
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
+        fi
+        if [ -n "${INTERFACE}" ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
+    fi
+
     # Determine IP/Interface mode
     if [ "${IP4_ADDR}" = "inherit" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
@@ -188,19 +201,6 @@ define_ips() {
                 IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${IP6_ADDR};"
                 IP6_MODE="new"
             fi
-        fi
-    fi
-
-    # Set interface value
-    if [ ! -f "${bastille_jail_conf}" ]; then
-        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_shared}
-        fi
-        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_loopback}
-        fi
-        if [ -n "${INTERFACE}" ]; then
-            local bastille_jail_conf_interface=${INTERFACE}
         fi
     fi
 }
