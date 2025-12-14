@@ -394,7 +394,7 @@ configure_storage() {
                     if ! echo "${zpool_choice}" | grep -Eq "^[0-9]+$"; then
                         error_exit "Invalid input number, aborting!"
                     else
-                        zpool_select=$(echo "${zpool_num}" | grep -wo "\[${zpool_choice}\][^ ]*" | sed 's/\[.*\]//g')
+                        bastille_zpool=$(echo "${zpool_num}" | grep -wo "\[${zpool_choice}\][^ ]*" | sed 's/\[.*\]//g')
                     fi
                 fi
             else
