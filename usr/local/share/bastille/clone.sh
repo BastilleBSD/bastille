@@ -131,22 +131,22 @@ validate_ip() {
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             fi
         fi
-        info "\nValid: (${ip6})."
+        info "\nValid IP: ${ip6}"
         IP6_ADDR="${ip6}"
     elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
 	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${ip}"
 	        else
-                info "\nValid: (${ip})."
+                info "\nValid IP: ${ip}"
                 IP4_ADDR="${ip}"
                 IP6_ADDR="${ip}"
 	        fi
     elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
         if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-            info "\nValid: (${ip})."
+            info "\nValid IP: ${ip}"
             IP4_ADDR="${ip}"
         else
-            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
+            error_exit "[ERROR]: Unsupported IP option for standard jail: ${ip}"
         fi
     else
         if [ "${VNET_JAIL}" -eq 1 ]; then
@@ -166,20 +166,20 @@ validate_ip() {
             set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    error_exit "Invalid: (${TEST_IP})"
+                    error_exit "[ERROR]: Invalid IP: ${TEST_IP}"
                 fi
             done
 
             if ifconfig | grep -qwF "${TEST_IP}"; then
-                warn "\nWarning: IP address already in use (${TEST_IP})."
+                warn "\n[WARNING]: IP address already in use: ${TEST_IP}"
                 IP4_ADDR="${ip4}"
             else
-                info "\nValid: (${ip4})."
+                info "\nValid IP: ${ip4}"
                 IP4_ADDR="${ip4}"
             fi
 
         else
-            error_exit "Invalid: (${ip4})."
+            error_exit "[ERROR]: Invalid IP: ${ip4}"
         fi
     fi
 }

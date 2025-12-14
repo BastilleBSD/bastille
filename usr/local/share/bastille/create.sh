@@ -129,20 +129,20 @@ validate_ip() {
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             fi
         fi
-        info "\nValid: (${ip6})."
+        info "\nValid IP: ${ip6}"
         local ipx_addr="ip6.addr"
     else
         if [ "${ip4}" = "inherit" ] || [ "${ip4}" = "ip_hostname" ]; then
 	        if [ "${VNET_JAIL}" -eq 1 ]; then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip4})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${ip4}"
 	        else
-                info "\nValid: (${ip4})."
+                info "\nValid IP: ${ip4}"
 	        fi
         elif [ "${ip4}" = "DHCP" ] || [ "${ip4}" = "SYNCDHCP" ] || [ "${ip4}" = "0.0.0.0" ]; then
 	        if [ "${VNET_JAIL}" -eq 0 ]; then
-                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${ip4})."
+                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: ${ip4}"
 	        else
-                info "\nValid: (${ip4})."
+                info "\nValid IP: ${ip4}"
 	        fi
         else
             if [ "${VNET_JAIL}" -eq 1 ]; then
@@ -162,20 +162,20 @@ validate_ip() {
                 set ${TEST_IP}
                 for quad in 1 2 3 4; do
                     if eval [ \$$quad -gt 255 ]; then
-                        error_exit "Invalid: (${TEST_IP})"
+                        error_exit "Invalid IP: ${TEST_IP}"
                     fi
                 done
                 ipx_addr="ip4.addr"
-                info "\nValid: (${ip4})."
+                info "\nValid IP: ${ip4}"
             else
-                error_exit "Invalid: (${ip4})."
+                error_exit "Invalid IP: ${ip4}"
             fi
         fi
     fi
 
     # Warn if IP is in use
     if ifconfig | grep -qwF "${TEST_IP}"; then
-        warn "[WARNING]: IP address in use (${TEST_IP})."
+        warn "[WARNING]: IP address in use: ${TEST_IP}"
     fi
 
     # Set interface value
@@ -222,7 +222,7 @@ validate_ip() {
                 IP6_ADDR="${ip}"
             fi
         else
-            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
+            error_exit "[ERROR]: Unsupported IP option for standard jail: ${ip}"
         fi
     else
         if [ "${VNET_JAIL}" -eq 1 ]; then
@@ -261,21 +261,21 @@ validate_netif() {
     local LIST_INTERFACES="$(ifconfig -l)"
 
     if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
-        error_exit "[ERROR]: Invalid: (${INTERFACE})."
+        error_exit "[ERROR]: Invalid interface: ${INTERFACE}"
     elif [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
         for _bridge in $(ifconfig -g bridge | grep -vw "${INTERFACE}bridge"); do
             if ifconfig ${_bridge} | grep "member" | grep -owq "${INTERFACE}"; then
-                error_exit "[ERROR]: Interface (${INTERFACE}) is already a member of bridge: ${_bridge}"
+                error_exit "[ERROR]: Interface '${INTERFACE}' is already a member of bridge: ${_bridge}"
             fi
         done
     else
-        info "\nValid: (${INTERFACE})."
+        info "\nValid interface: ${INTERFACE}"
     fi
 
     # Don't allow dots in INTERFACE for -V|--vnet jails
     if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
         if echo "${INTERFACE}" | grep -q "\."; then
-	    error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
+            error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
         fi
     fi
 }

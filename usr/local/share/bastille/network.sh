@@ -179,7 +179,7 @@ validate_ip() {
 
     local ip="${1}"
     local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
-    local ip6="$( echo "${ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
+    local ip6="$( echo "${ip}" | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
     local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
 
     if [ -n "${ip6}" ]; then
@@ -193,10 +193,10 @@ validate_ip() {
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             fi
         fi
-        info "\nValid: (${ip6})."
+        info "\nValid IP: ${ip6}"
         IP6_ADDR="${ip6}"
     elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
-        info "\nValid: (${ip})."
+        info "\nValid IP: ${ip}"
         IP4_ADDR="${ip}"
     else
         if [ "${STANDARD}" -eq 0 ]; then
@@ -210,19 +210,19 @@ validate_ip() {
             fi
         fi
         local IFS
-        if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${ip}" | cut -d / -f1)
+        if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+            TEST_IP=$(echo "${ip4}" | cut -d / -f1)
             IFS=.
             set ${TEST_IP}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    error_exit "Invalid: (${TEST_IP})"
+                    error_exit "[ERROR]: Invalid IP: ${TEST_IP}"
                 fi
             done
-            info "\nValid: (${ip})."
-            IP4_ADDR="${ip}"
+            info "\nValid IP: ${ip4}"
+            IP4_ADDR="${ip4}"
         else
-            error_exit "Invalid: (${ip})."
+            error_exit "[ERROR]: Invalid IP: ${ip4}"
         fi
     fi
 }
@@ -234,7 +234,7 @@ validate_netif() {
     if ifconfig -l | grep -qwo ${interface}; then
         info "\nValid: (${interface})."
     else
-        error_exit "Invalid: (${interface})."
+        error_exit "[ERROR]: Invalid interface: ${interface}"
     fi
 
     # Don't allow dots in INTERFACE if -V
