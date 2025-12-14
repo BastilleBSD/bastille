@@ -451,7 +451,7 @@ EOF
 }
 EOF
         # Add config to /etc/rc.conf
-	if [ -n "${IP6_ADDR}" ]; then
+        if [ -n "${IP6_ADDR}" ]; then
             if [ "${IP6_ADDR}" = "SLAAC" ]; then
                 sysrc -f "${jail_rc_config}" ifconfig_${if}_ipv6="inet6 -ifdisabled accept_rtadv"
             else
@@ -469,9 +469,9 @@ EOF
 
     elif [ "${STANDARD}" -eq 1 ]; then
         if [ -n "${IP6_ADDR}" ]; then
-            sed -i '' "s/ip4.addr = .*/&\n  ip6.addr += ${if}|${ip};/" ${jail_config}
+            sed -i '' "s/ip6.addr = .*/&\n  ip6.addr += ${if}|${ip};/" ${jail_config}
         else
-            sed -i '' "s/ip6.addr = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
+            sed -i '' "s/ip4.addr = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
         fi
     fi
 }
