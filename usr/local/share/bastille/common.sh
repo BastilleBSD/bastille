@@ -593,8 +593,8 @@ checkyesno() {
     ## now used for all bastille_zfs_enable=YES|NO tests
     ## example: if checkyesno bastille_zfs_enable; then ...
     ## returns 0 for enabled; returns 1 for disabled
-    eval _value=\$${1}
-    case $_value in
+    eval value=\$${1}
+    case $value in
     [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
         return 0
         ;;
