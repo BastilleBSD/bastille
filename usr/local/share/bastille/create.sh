@@ -111,105 +111,61 @@ validate_release() {
     OS_RELEASE="$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )"
 }
 
-validate_ip() {
+define_ips() {
 
-    local ip="${1}"
-    local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
-    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
-    local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
+    IP6_MODE="disable"
+    IP4_DEFINITION=""
+    IP6_DEFINITION=""
+    IP4_ADDR=""
+    IP6_ADDR=""
+    IP_HOSTNAME=""
 
-    if [ -n "${ip6}" ]; then
-        if [ "${VNET_JAIL}" -eq 1 ]; then
-            if [ -z "${subnet}" ]; then
-                subnet="64"
-                ip6="${ip6}/${subnet}"
-            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            fi
-        fi
-        info "\nValid IP: ${ip6}"
-        local ipx_addr="ip6.addr"
-    else
-        if [ "${ip4}" = "inherit" ] || [ "${ip4}" = "ip_hostname" ]; then
+    for ip in ${IP}; do
+        validate_ip "${ip}"
+    done
+
+    if [ -n "${IP4_ADDR}" ]; then
+        if [ "${IP4_ADDR}" = "inherit" ] || [ "${IP4_ADDR}" = "ip_hostname" ]; then
 	        if [ "${VNET_JAIL}" -eq 1 ]; then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${ip4}"
-	        else
-                info "\nValid IP: ${ip4}"
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${IP4_ADDR}"
 	        fi
-        elif [ "${ip4}" = "DHCP" ] || [ "${ip4}" = "SYNCDHCP" ] || [ "${ip4}" = "0.0.0.0" ]; then
+        elif [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ] || [ "${IP4_ADDR}" = "0.0.0.0" ]; then
 	        if [ "${VNET_JAIL}" -eq 0 ]; then
-                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: ${ip4}"
-	        else
-                info "\nValid IP: ${ip4}"
+                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: ${IP4_ADDR}"
 	        fi
-        else
-            if [ "${VNET_JAIL}" -eq 1 ]; then
-                if [ -z "${subnet}" ]; then
-                    subnet="24"
-                    ip4="${ip4}/${subnet}"
-                elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
-                    error_exit "[ERROR]: Invalid subnet: /${subnet}"
-                elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
-                    error_exit "[ERROR]: Invalid subnet: /${subnet}"
-                fi
-            fi
-            local IFS
-            if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-                TEST_IP=$(echo "${ip4}" | cut -d / -f1)
-                IFS=.
-                set ${TEST_IP}
-                for quad in 1 2 3 4; do
-                    if eval [ \$$quad -gt 255 ]; then
-                        error_exit "Invalid IP: ${TEST_IP}"
-                    fi
-                done
-                ipx_addr="ip4.addr"
-                info "\nValid IP: ${ip4}"
-            else
-                error_exit "Invalid IP: ${ip4}"
-            fi
+        # Warn if IP is in use
+        elif ifconfig | grep -qwF "${IP4_ADDR}"; then
+            warn "[WARNING]: IP address in use: ${IP4_ADDR}"
         fi
+        local ipx_addr="ip4.addr"
     fi
 
-    # Warn if IP is in use
-    if ifconfig | grep -qwF "${TEST_IP}"; then
-        warn "[WARNING]: IP address in use: ${TEST_IP}"
-    fi
-
-    # Set interface value
-    if [ ! -f "${bastille_jail_conf}" ]; then
-        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_shared}
+    if [ -n "${IP6_ADDR}" ]; then
+        if [ "${IP6_ADDR}" = "SLAAC" ] && [ "${VNET_JAIL}" -eq 0 ]; then
+            error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
         fi
-        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_loopback}
-        fi
-        if [ -n "${INTERFACE}" ]; then
-            local bastille_jail_conf_interface=${INTERFACE}
-        fi
+        local ipx_addr="ip6.addr"
     fi
 
     # Determine IP/Interface mode
-    if [ "${ip}" = "inherit" ]; then
+    if [ "${IP4_ADDR}" = "inherit" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
-            IP4_DEFINITION="ip4 = ${ip};"
-            IP6_DEFINITION="ip6 = ${ip};"
+            IP4_DEFINITION="ip4 = ${IP4_ADDR};"
+            IP6_DEFINITION="ip6 = ${IP6_ADDR};"
             IP6_MODE="new"
         else
-            IP4_DEFINITION="ip4 = ${ip};"
+            IP4_DEFINITION="ip4 = ${IP4_ADDR};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
         fi
-    elif [ "${ip}" = "ip_hostname" ]; then
+    elif [ "${IP4_ADDR}" = "ip_hostname" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
-            IP_HOSTNAME="${ip}"
+            IP_HOSTNAME="${IP4_ADDR}"
             IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION="${IP_HOSTNAME};"
             IP6_MODE="new"
         else
-            IP_HOSTNAME="${ip}"
+            IP_HOSTNAME="${IP4_ADDR}"
             IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
@@ -225,35 +181,28 @@ validate_ip() {
             error_exit "[ERROR]: Unsupported IP option for standard jail: ${ip}"
         fi
     else
-        if [ "${VNET_JAIL}" -eq 1 ]; then
+        if [ "${VNET_JAIL}" -eq 0 ]; then
             if [ "${ipx_addr}" = "ip4.addr" ]; then
-                IP4_ADDR="${ip4}"
+                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${IP4_ADDR};"
             elif [ "${ipx_addr}" = "ip6.addr" ]; then
-                IP6_ADDR="${ip6}"
-            fi
-        else
-            if [ "${ipx_addr}" = "ip4.addr" ]; then
-                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
-            elif [ "${ipx_addr}" = "ip6.addr" ]; then
-                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
+                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${IP6_ADDR};"
                 IP6_MODE="new"
             fi
         fi
     fi
-}
 
-validate_ips() {
-
-    IP6_MODE="disable"
-    IP4_DEFINITION=""
-    IP6_DEFINITION=""
-    IP4_ADDR=""
-    IP6_ADDR=""
-    IP_HOSTNAME=""
-
-    for ip in ${IP}; do
-        validate_ip "${ip}"
-    done
+    # Set interface value
+    if [ ! -f "${bastille_jail_conf}" ]; then
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
+        fi
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
+        fi
+        if [ -n "${INTERFACE}" ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
+    fi
 }
 
 validate_netif() {

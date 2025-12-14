@@ -110,88 +110,33 @@ clone_validate_jail_name() {
     fi
 }
 
-validate_ip() {
-
-    local ip="${1}"
-    local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
-    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
-    local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
-
-    if [ -n "${ip6}" ]; then
-    	if [ "${ip6}" = "SLAAC" ] && [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
-            error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip6})."
-        fi
-        if [ "${VNET_JAIL}" -eq 1 ]; then
-            if [ -z "${subnet}" ]; then
-                subnet="64"
-                ip6="${ip6}/${subnet}"
-            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            fi
-        fi
-        info "\nValid IP: ${ip6}"
-        IP6_ADDR="${ip6}"
-    elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
-	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${ip}"
-	        else
-                info "\nValid IP: ${ip}"
-                IP4_ADDR="${ip}"
-                IP6_ADDR="${ip}"
-	        fi
-    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
-        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
-            info "\nValid IP: ${ip}"
-            IP4_ADDR="${ip}"
-        else
-            error_exit "[ERROR]: Unsupported IP option for standard jail: ${ip}"
-        fi
-    else
-        if [ "${VNET_JAIL}" -eq 1 ]; then
-            if [ -z "${subnet}" ]; then
-                subnet="24"
-                ip4="${ip4}/${subnet}"
-            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            fi
-        fi
-        local IFS
-        if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${ip4}" | cut -d / -f1)
-            IFS=.
-            set ${TEST_IP}
-            for quad in 1 2 3 4; do
-                if eval [ \$$quad -gt 255 ]; then
-                    error_exit "[ERROR]: Invalid IP: ${TEST_IP}"
-                fi
-            done
-
-            if ifconfig | grep -qwF "${TEST_IP}"; then
-                warn "\n[WARNING]: IP address already in use: ${TEST_IP}"
-                IP4_ADDR="${ip4}"
-            else
-                info "\nValid IP: ${ip4}"
-                IP4_ADDR="${ip4}"
-            fi
-
-        else
-            error_exit "[ERROR]: Invalid IP: ${ip4}"
-        fi
-    fi
-}
-
-validate_ips() {
+define_ips() {
 
     IP4_ADDR=""
     IP6_ADDR=""
 
     for ip in ${IP}; do
-        validate_ip "${ip}"
+        validate_ip "${ip}" "${VNET_JAIL}"
     done
+
+    if [ -n "${IP4_ADDR}" ]; then
+        if [ "${IP4_ADDR}" = "inherit" ] || [ "${IP4_ADDR}" = "ip_hostname" ]; then
+	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${IP4_ADDR}"
+        elif [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+            if [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
+                error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
+            fi
+        elif ifconfig | grep -qwF "${IP4_ADDR}"; then
+            warn "\n[WARNING]: IP address already in use: ${TEST_IP}"
+        fi
+    fi
+
+    if [ -n "${IP6_ADDR}" ]; then
+        if [ "${IP6_ADDR}" = "SLAAC" ] && [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
+            error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
+        fi
+    fi
 }
 
 update_jailconf() {
@@ -495,7 +440,7 @@ clone_jail() {
         fi
 
         if [ -n "${IP}" ]; then
-            validate_ips
+            define_ips
         else
             usage
         fi
