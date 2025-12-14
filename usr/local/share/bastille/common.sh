@@ -353,7 +353,7 @@ validate_ip() {
             if [ -z "${subnet}" ]; then
                 subnet="64"
                 ip6="${ip6}/${subnet}"
-            elif echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+            elif ! echo "${subnet}" | grep -Eq '^[0-9]+$'; then
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
