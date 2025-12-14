@@ -121,7 +121,7 @@ define_ips() {
     IP_HOSTNAME=""
 
     for ip in ${IP}; do
-        validate_ip "${ip}"
+        validate_ip "${ip}" "${VNET_JAIL}"
     done
 
     if [ -n "${IP4_ADDR}" ]; then
@@ -1065,7 +1065,7 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
 
     # Validate IP address
     if [ -n "${IP}" ]; then
-        validate_ips
+        define_ips
     else
         usage
     fi
