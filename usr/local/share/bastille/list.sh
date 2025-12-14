@@ -51,9 +51,9 @@ EOF
 print_info() {
 
     # Print jails in given order
-    for _file in $(echo ${_tmp_list} | sort); do
-        cat ${_file}
-        rm -f ${_file}
+    for file in $(echo ${tmp_list} | sort); do
+        cat ${file}
+        rm -f ${file}
     done
 }
 
@@ -301,7 +301,7 @@ get_jail_info() {
 
 list_bastille(){
 
-     _tmp_list=
+    tmp_list=
 
     get_max_lengths
     get_jail_list
@@ -309,18 +309,18 @@ list_bastille(){
     # Print header
     printf " JID%*sName%*sBoot%*sPrio%*sState%*sType%*sIP Address%*sPublished Ports%*sRelease%*sTags\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} + ${SPACER} - 4))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
 
-    for _jail in ${JAIL_LIST}; do
+    for jail in ${JAIL_LIST}; do
 
         # Validate jail.conf existence
-        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
         else
             continue
         fi
 
         (
 
-        get_jail_info "${_jail}"
+        get_jail_info "${jail}"
 
         # Get JAIL_IP count
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
@@ -342,9 +342,9 @@ list_bastille(){
             printf " ${JID}%*s${JAIL_NAME}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
         fi
 
-        ) > "${_tmp_jail}" &
+        ) > "${tmp_jail}" &
 
-        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+        tmp_list="$(printf "%s\n%s" "${tmp_list}" "${tmp_jail}")"
 
     done
     wait
@@ -354,7 +354,7 @@ list_bastille(){
 
 list_all(){
 
-     _tmp_list=
+    tmp_list=
 
     get_max_lengths
     get_jail_list
@@ -362,18 +362,18 @@ list_all(){
     # Print header
     printf " JID%*sBoot%*sPrio%*sState%*sIP Address%*sPublished Ports%*sHostname%*sRelease%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} + ${SPACER} - 8))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
 
-    for _jail in ${JAIL_LIST}; do
+    for jail in ${JAIL_LIST}; do
 
         # Validate jail.conf existence
-        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
         else
             continue
         fi
 
         (
 
-        get_jail_info "${_jail}"
+        get_jail_info "${jail}"
 
         # Get jail IP count
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
@@ -395,9 +395,9 @@ list_all(){
             printf " ${JID}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_HOSTNAME}%*s${JAIL_RELEASE}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_HOSTNAME} - ${#JAIL_HOSTNAME} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
         fi
 
-        ) > "${_tmp_jail}" &
+        ) > "${tmp_jail}" &
 
-        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+        tmp_list="$(printf "%s\n%s" "${tmp_list}" "${tmp_jail}")"
 
     done
     wait
@@ -407,7 +407,7 @@ list_all(){
 
 list_ips() {
 
-     _tmp_list=
+    tmp_list=
 
     get_max_lengths
     get_jail_list
@@ -415,24 +415,24 @@ list_ips() {
     # Print header
     printf " JID%*sName%*sIP Address\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
 
-    for _jail in ${JAIL_LIST}; do
+    for jail in ${JAIL_LIST}; do
 
         # Validate jail.conf existence
-        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
         else
             continue
         fi
 
         (
 
-        get_jail_info "${_jail}"
+        get_jail_info "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_IP_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
-        ) > "${_tmp_jail}" &
+        ) > "${tmp_jail}" &
 
-        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+        tmp_list="$(printf "%s\n%s" "${tmp_list}" "${tmp_jail}")"
 
     done
     wait
@@ -442,7 +442,7 @@ list_ips() {
 
 list_paths() {
 
-     _tmp_list=
+    tmp_list=
 
     get_max_lengths
     get_jail_list
@@ -450,24 +450,24 @@ list_paths() {
     # Print header
     printf " JID%*sName%*sPath\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
 
-    for _jail in ${JAIL_LIST}; do
+    for jail in ${JAIL_LIST}; do
 
         # Validate jail.conf existence
-        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
         else
             continue
         fi
 
         (
 
-        get_jail_info "${_jail}"
+        get_jail_info "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
-        ) > "${_tmp_jail}" &
+        ) > "${tmp_jail}" &
 
-        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+        tmp_list="$(printf "%s\n%s" "${tmp_list}" "${tmp_jail}")"
 
     done
     wait
@@ -477,7 +477,7 @@ list_paths() {
 
 list_ports() {
 
-     _tmp_list=
+    tmp_list=
 
     get_max_lengths
     get_jail_list
@@ -485,24 +485,24 @@ list_ports() {
     # Print header
     printf " JID%*sName%*sPublished Ports\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
 
-    for _jail in ${JAIL_LIST}; do
+    for jail in ${JAIL_LIST}; do
 
         # Validate jail.conf existence
-        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
         else
             continue
         fi
 
         (
 
-        get_jail_info "${_jail}"
+        get_jail_info "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PORTS_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
-        ) > "${_tmp_jail}" &
+        ) > "${tmp_jail}" &
 
-        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+        tmp_list="$(printf "%s\n%s" "${tmp_list}" "${tmp_jail}")"
 
     done
     wait
@@ -512,7 +512,7 @@ list_ports() {
 
 list_state() {
 
-     _tmp_list=
+    tmp_list=
 
     get_max_lengths
     get_jail_list
@@ -520,24 +520,24 @@ list_state() {
     # Print header
     printf " JID%*sName%*sState\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
 
-    for _jail in ${JAIL_LIST}; do
+    for jail in ${JAIL_LIST}; do
 
         # Validate jail.conf existence
-        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
         else
             continue
         fi
 
         (
 
-        get_jail_info "${_jail}"
+        get_jail_info "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_STATE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
-        ) > "${_tmp_jail}" &
+        ) > "${tmp_jail}" &
 
-        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+        tmp_list="$(printf "%s\n%s" "${tmp_list}" "${tmp_jail}")"
 
     done
     wait
@@ -547,7 +547,7 @@ list_state() {
 
 list_type() {
 
-     _tmp_list=
+    tmp_list=
 
     get_max_lengths
     get_jail_list
@@ -555,24 +555,24 @@ list_type() {
     # Print header
     printf " JID%*sName%*sType\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" ""
 
-    for _jail in ${JAIL_LIST}; do
+    for jail in ${JAIL_LIST}; do
 
         # Validate jail.conf existence
-        if [ -f "${bastille_jailsdir}/${_jail}/jail.conf" ]; then
-            _tmp_jail=$(mktemp /tmp/bastille-list-${_jail})
+        if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
         else
             continue
         fi
 
         (
 
-        get_jail_info "${_jail}"
+        get_jail_info "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_TYPE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
-        ) > "${_tmp_jail}" &
+        ) > "${tmp_jail}" &
 
-        _tmp_list="$(printf "%s\n%s" "${_tmp_list}" "${_tmp_jail}")"
+        tmp_list="$(printf "%s\n%s" "${tmp_list}" "${tmp_jail}")"
 
     done
     wait
@@ -606,11 +606,11 @@ list_snapshot(){
     # TODO: Ability to list snapshot data for a single target.
     # List snapshots with its usage data for valid bastille jails only.
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-        for _JAIL in ${JAIL_LIST}; do
-            if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
-                info "\n[${_JAIL}]:"
-                zfs list -r -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_JAIL}"
+        jail_list=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+        for jail in ${jail_list}; do
+            if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+                info "\n[${jail}]:"
+                zfs list -r -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"
             fi
         done
     fi
@@ -622,10 +622,10 @@ list_template(){
 
 list_jail(){
     if [ -d "${bastille_jailsdir}" ]; then
-        JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
-        for _JAIL in ${JAIL_LIST}; do
-            if [ -f "${bastille_jailsdir}/${_JAIL}/jail.conf" ]; then
-                echo "${_JAIL}"
+        jail_list=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
+        for jail in ${jail_list}; do
+            if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+                echo "${jail}"
             fi
         done
     fi
@@ -678,8 +678,8 @@ while [ "$#" -gt 0 ]; do
 	    shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) error_exit "[ERROR]: \"-a\" is deprecated. Use \"all\" instead." ;;
                     d) OPT_STATE="Down" ;;
                     j) OPT_JSON=1 ;;

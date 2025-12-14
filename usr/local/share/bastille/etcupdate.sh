@@ -187,8 +187,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     d) DRY_RUN=1 ;;
                     f) FORCE=1 ;;
                     x) enable_debug ;;

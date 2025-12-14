@@ -61,8 +61,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -85,70 +85,70 @@ TARGET="${1}"
 bastille_root_check
 set_target "${TARGET}" "reverse"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Validate that all jails that 'depend' on this one are stopped
-    for _depend_jail in $(ls -v --color=never ${bastille_jailsdir} | sed -e 's/\n//g'); do
-    if ! grep -hoqsw "depend=" ${bastille_jailsdir}/${_depend_jail}/settings.conf; then
-        sysrc -q -f ${bastille_jailsdir}/${_depend_jail}/settings.conf depend="" >/dev/null
+    for depend_jail in $(ls -v --color=never ${bastille_jailsdir} | sed -e 's/\n//g'); do
+    if ! grep -hoqsw "depend=" ${bastille_jailsdir}/${depend_jail}/settings.conf; then
+        sysrc -q -f ${bastille_jailsdir}/${depend_jail}/settings.conf depend="" >/dev/null
     fi
-        if [ "${_jail}" = "${_depend_jail}" ]; then
+        if [ "${jail}" = "${depend_jail}" ]; then
             continue
-        elif grep -hoqsw "${_jail}" "${bastille_jailsdir}/${_depend_jail}/settings.conf"; then
-            bastille stop ${_depend_jail}
+        elif grep -hoqsw "${jail}" "${bastille_jailsdir}/${depend_jail}/settings.conf"; then
+            bastille stop ${depend_jail}
         fi
     done
 
-    if check_target_is_stopped "${_jail}"; then
-        info "\n[${_jail}]:"
+    if check_target_is_stopped "${jail}"; then
+        info "\n[${jail}]:"
         error_continue "Jail is already stopped."
     fi
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
     # Remove RDR rules
-    if [ "$(bastille config ${_jail} get vnet)" != "enabled" ] && [ -f "${bastille_pf_conf}" ]; then
-        _ip4="$(bastille config ${_jail} get ip4.addr | sed 's/,/ /g')"
-        _ip6="$(bastille config ${_jail} get ip6.addr | sed 's/,/ /g')"
-        if [ "${_ip4}" != "not set" ] || [ "${_ip6}" != "not set" ]; then
+    if [ "$(bastille config ${jail} get vnet)" != "enabled" ] && [ -f "${bastille_pf_conf}" ]; then
+        ip4="$(bastille config ${jail} get ip4.addr | sed 's/,/ /g')"
+        ip6="$(bastille config ${jail} get ip6.addr | sed 's/,/ /g')"
+        if [ "${ip4}" != "not set" ] || [ "${ip6}" != "not set" ]; then
             if which -s pfctl; then
-                if bastille rdr ${_jail} list >/dev/null 2>&1; then
-                    bastille rdr "${_jail}" clear
+                if bastille rdr ${jail} list >/dev/null 2>&1; then
+                    bastille rdr "${jail}" clear
                 fi
             fi
         fi
     fi
 
     # Remove rctl limits
-    if [ -s "${bastille_jailsdir}/${_jail}/rctl.conf" ]; then
-        bastille limits "${_jail}" clear
+    if [ -s "${bastille_jailsdir}/${jail}/rctl.conf" ]; then
+        bastille limits "${jail}" clear
     fi
 
     # Stop jail
-    jail ${OPTION} -f "${bastille_jailsdir}/${_jail}/jail.conf" -r "${_jail}"
+    jail ${OPTION} -f "${bastille_jailsdir}/${jail}/jail.conf" -r "${jail}"
 
     # Remove (captured above) IPs from firewall table
-    if [ "${_ip4}" != "not set" ] && [ -f "${bastille_pf_conf}" ]; then
-        for _ip in ${_ip4}; do
-            if echo "${_ip}" | grep -q "|"; then
-                _ip="$(echo ${_ip} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    if [ "${ip4}" != "not set" ] && [ -f "${bastille_pf_conf}" ]; then
+        for ip in ${ip4}; do
+            if echo "${ip}" | grep -q "|"; then
+                ip="$(echo ${ip} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
-                _ip="$(echo ${_ip} | sed -E 's#/[0-9]+$##g')"
+                ip="$(echo ${ip} | sed -E 's#/[0-9]+$##g')"
             fi
-            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
+            pfctl -q -t "${bastille_network_pf_table}" -T delete "${ip}"
         done
     fi
-    if [ "${_ip6}" != "not set" ] && [ -f "${bastille_pf_conf}" ]; then
-        for _ip in ${_ip6}; do
-            if echo "${_ip}" | grep -q "|"; then
-                _ip="$(echo ${_ip} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+    if [ "${ip6}" != "not set" ] && [ -f "${bastille_pf_conf}" ]; then
+        for ip in ${ip6}; do
+            if echo "${ip}" | grep -q "|"; then
+                ip="$(echo ${ip} | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
-                _ip="$(echo ${_ip} | sed -E 's#/[0-9]+$##g')"
+                ip="$(echo ${ip} | sed -E 's#/[0-9]+$##g')"
             fi
-            pfctl -q -t "${bastille_network_pf_table}" -T delete "${_ip}"
+            pfctl -q -t "${bastille_network_pf_table}" -T delete "${ip}"
         done
     fi
 
-    update_jail_syntax_v1 "${_jail}"
+    update_jail_syntax_v1 "${jail}"
 
 done

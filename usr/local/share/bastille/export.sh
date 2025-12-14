@@ -212,8 +212,8 @@ else
                 shift
                 ;;
             -*)
-                for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                    case ${_opt} in
+                for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                    case ${opt} in
                         a) AUTO=1 ;;
                         l) LIVE=1 ;;
                         x) enable_debug ;;

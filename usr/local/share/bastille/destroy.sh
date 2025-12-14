@@ -51,30 +51,30 @@ EOF
 
 destroy_jail() {
 
-    local _jail="${1}"
+    local jail="${1}"
     local OPTIONS=""
 
-    bastille_jail_base="${bastille_jailsdir}/${_jail}"
-    bastille_jail_log="${bastille_logsdir}/${_jail}_console.log"
+    bastille_jail_base="${bastille_jailsdir}/${jail}"
+    bastille_jail_log="${bastille_logsdir}/${jail}_console.log"
 
     # Validate jail state before continuing
-    check_target_is_stopped "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${_jail}"
+    check_target_is_stopped "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${jail}"
     else
-        info "\n[${_jail}]:"
+        info "\n[${jail}]:"
         error_notify "Jail is running."
         error_continue "Use [-a|--auto] to auto-stop the jail."
     fi
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
     # Ask if user is sure they want to destroy the jail
     # but only if AUTO_YES=0
     if [ "${AUTO_YES}" -ne 1 ]; then
-        warn "\nAttempting to destroy jail: ${_jail}\n"
+        warn "\nAttempting to destroy jail: ${jail}\n"
         # shellcheck disable=SC3045
-        read -p "Are you sure you want to continue? [y|n]:" _answer
-        case "${_answer}" in
+        read -p "Are you sure you want to continue? [y|n]:" answer
+        case "${answer}" in
             [Yy]|[Yy][Ee][Ss])
                 ;;
             [Nn]|[Nn][Oo])
@@ -92,7 +92,7 @@ destroy_jail() {
         mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
 
         if [ -n "${mount_points}" ]; then
-            error_notify "[ERROR]: Failed to destroy jail: ${_jail}"
+            error_notify "[ERROR]: Failed to destroy jail: ${jail}"
             error_continue "Jail has mounted filesystems:\n$mount_points"
         fi
 
@@ -100,7 +100,7 @@ destroy_jail() {
 
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
-                if [ -n "${_jail}" ]; then
+                if [ -n "${jail}" ]; then
                     OPTIONS="-r"
                     if [ "${FORCE}" = "1" ]; then
                         OPTIONS="-rf"
@@ -108,7 +108,7 @@ destroy_jail() {
                     # Remove jail zfs dataset recursively, or abort if error thus precerving jail content.
                     # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
                     # unless the force option is defined by the user, otherwise will have a partially deleted jail.
-                    if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}"; then
+                    if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"; then
                         error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
                     fi
                 fi
@@ -131,9 +131,9 @@ destroy_jail() {
         fi
 
         # Clear any active rdr rules
-        if [ ! -z "$(pfctl -a "rdr/${_jail}" -Psn 2>/dev/null)" ]; then
+        if [ ! -z "$(pfctl -a "rdr/${jail}" -Psn 2>/dev/null)" ]; then
             echo "Clearing RDR rules..."
-            pfctl -a "rdr/${_jail}" -Fn
+            pfctl -a "rdr/${jail}" -Fn
         fi
     fi
 }
@@ -159,22 +159,22 @@ destroy_release() {
 
         JAIL_LIST=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
 
-        for _jail in ${JAIL_LIST}; do
+        for jail in ${JAIL_LIST}; do
 
-            if grep -qwo "${TARGET}" "${bastille_jailsdir}/${_jail}/fstab" 2>/dev/null; then
-                error_notify "[ERROR]: (${_jail}) depends on ${TARGET} base."
+            if grep -qwo "${TARGET}" "${bastille_jailsdir}/${jail}/fstab" 2>/dev/null; then
+                error_notify "[ERROR]: (${jail}) depends on ${TARGET} base."
                 BASE_HASCHILD="1"
             elif checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     ## check if this release have child clones
                     if zfs list -H -t snapshot -r "${bastille_rel_base}" > /dev/null 2>&1; then
                         SNAP_CLONE=$(zfs list -H -t snapshot -r "${bastille_rel_base}" 2> /dev/null | awk '{print $1}')
-                        for _snap_clone in ${SNAP_CLONE}; do
-                            if zfs list -H -o clones "${_snap_clone}" > /dev/null 2>&1; then
-                                CLONE_JAIL=$(zfs list -H -o clones "${_snap_clone}" | tr ',' '\n')
-                                CLONE_CHECK="${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jail}/root"
+                        for snap_clone in ${SNAP_CLONE}; do
+                            if zfs list -H -o clones "${snap_clone}" > /dev/null 2>&1; then
+                                CLONE_JAIL=$(zfs list -H -o clones "${snap_clone}" | tr ',' '\n')
+                                CLONE_CHECK="${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}/root"
                                 if echo "${CLONE_JAIL}" | grep -qw "${CLONE_CHECK}"; then
-                                    error_notify "[ERROR]: (${_jail}) depends on ${TARGET} base."
+                                    error_notify "[ERROR]: (${jail}) depends on ${TARGET} base."
                                     BASE_HASCHILD="1"
                                 fi
                             fi
@@ -258,8 +258,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) AUTO=1 ;;
                     c) NO_CACHE=1 ;;
                     f) FORCE=1 ;;
@@ -338,8 +338,8 @@ case "${TARGET}" in
         else
             # Destroy targeted jail(s)
             set_target "${TARGET}" "reverse"
-            for _jail in ${JAILS}; do
-                destroy_jail "${_jail}"
+            for jail in ${JAILS}; do
+                destroy_jail "${jail}"
             done
         fi
         ;;

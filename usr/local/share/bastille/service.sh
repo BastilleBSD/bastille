@@ -61,8 +61,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -87,20 +87,20 @@ ERRORS=0
 bastille_root_check
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Validate jail state
-    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${_jail}"
+    check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${jail}"
     else
-        info "\n[${_jail}]:"
+        info "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
-    jexec -l "${_jail}" /usr/sbin/service "$@"
+    jexec -l "${jail}" /usr/sbin/service "$@"
 
     if [ "$?" -ne 0 ]; then
         ERRORS=$((ERRORS + 1))

@@ -54,8 +54,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\""
@@ -105,18 +105,18 @@ validate_name() {
 update_jailconf() {
 
     # Update jail.conf
-    local jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    local jail_config="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local jail_rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
 
-    if [ -f "${jail_conf}" ]; then
-        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${jail_conf}"; then
-            sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${jail_conf}"
-            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${jail_conf}"
-            sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${jail_conf}"
-            sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${jail_conf}"
-            sed -i '' "s|^${TARGET}.*{$|${NEWNAME} {|" "${jail_conf}"
+    if [ -f "${jail_config}" ]; then
+        if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${jail_config}"; then
+            sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${jail_config}"
+            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${jail_config}"
+            sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${jail_config}"
+            sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${jail_config}"
+            sed -i '' "s|^${TARGET}.*{$|${NEWNAME} {|" "${jail_config}"
         fi
-        if grep -qo "vnet;" "${jail_conf}"; then
+        if grep -qo "vnet;" "${jail_config}"; then
             update_jailconf_vnet
         fi
     fi
@@ -124,13 +124,13 @@ update_jailconf() {
 
 update_jailconf_vnet() {
 
-    local jail_conf="${bastille_jailsdir}/${NEWNAME}/jail.conf"
+    local jail_config="${bastille_jailsdir}/${NEWNAME}/jail.conf"
     local jail_rc_conf="${bastille_jailsdir}/${NEWNAME}/root/etc/rc.conf"
 
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-        local if_list="$(grep -Eo 'e[0-9]+a_[^;" ]+' ${jail_conf} | sort -u)"
+        local if_list="$(grep -Eo 'e[0-9]+a_[^;" ]+' ${jail_config} | sort -u)"
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-        local if_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${jail_conf} | sort -u)"
+        local if_list="$(grep -Eo 'ng[0-9]+_[^;" ]+' ${jail_config} | sort -u)"
     fi
 
     for if in ${if_list}; do
@@ -167,39 +167,39 @@ update_jailconf_vnet() {
             local new_if_prefix="$(echo ${new_host_epair} | awk -F'_' '{print $1}')"
             local new_if_suffix="$(echo ${new_host_epair} | awk -F'_' '{print $2}')"
 
-            if grep "${old_if_suffix}" "${jail_conf}" | grep -oq "jib addm"; then
+            if grep "${old_if_suffix}" "${jail_config}" | grep -oq "jib addm"; then
                 # For -V jails
                 # Replace host epair name in jail.conf
-                sed -i '' "s|jib addm ${old_if_suffix}\>|jib addm ${new_if_suffix}|g" "${jail_conf}"
-                sed -i '' "s|\<${old_host_epair} ether|${new_host_epair} ether|g" "${jail_conf}"
-                sed -i '' "s|\<${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_conf}"
-                sed -i '' "s|\<${old_host_epair} description|${new_host_epair} description|g" "${jail_conf}"
+                sed -i '' "s|jib addm ${old_if_suffix}\>|jib addm ${new_if_suffix}|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} ether|${new_host_epair} ether|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} description|${new_host_epair} description|g" "${jail_config}"
 
                 # Replace jail epair name in jail.conf
-                sed -i '' "s|= ${old_jail_epair};|= ${new_jail_epair};|g" "${jail_conf}"
-                sed -i '' "s|\<${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_conf}"
+                sed -i '' "s|= ${old_jail_epair};|= ${new_jail_epair};|g" "${jail_config}"
+                sed -i '' "s|\<${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_config}"
 
                 # Replace epair description
-                sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_conf}"
+                sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
 
                 # Replace epair name in /etc/rc.conf
                 sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_conf}"
             else
                 # For -B jails
                 # Replace host epair name in jail.conf
-                sed -i '' "s|up name ${old_host_epair}\>|up name ${new_host_epair}|g" "${jail_conf}"
-                sed -i '' "s|addm ${old_host_epair}\>|addm ${new_host_epair}|g" "${jail_conf}"
-                sed -i '' "s|\<${old_host_epair} ether|${new_host_epair} ether|g" "${jail_conf}"
-                sed -i '' "s|\<${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_conf}"
-                sed -i '' "s|\<${old_host_epair} description|${new_host_epair} description|g" "${jail_conf}"
+                sed -i '' "s|up name ${old_host_epair}\>|up name ${new_host_epair}|g" "${jail_config}"
+                sed -i '' "s|addm ${old_host_epair}\>|addm ${new_host_epair}|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} ether|${new_host_epair} ether|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} destroy|${new_host_epair} destroy|g" "${jail_config}"
+                sed -i '' "s|\<${old_host_epair} description|${new_host_epair} description|g" "${jail_config}"
 
                 # Replace jail epair name in jail.conf
-                sed -i '' "s|= ${old_jail_epair};|= ${new_jail_epair};|g" "${jail_conf}"
-                sed -i '' "s|up name ${old_jail_epair}\>|up name ${new_jail_epair}|g" "${jail_conf}"
-                sed -i '' "s|\<${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_conf}"
+                sed -i '' "s|= ${old_jail_epair};|= ${new_jail_epair};|g" "${jail_config}"
+                sed -i '' "s|up name ${old_jail_epair}\>|up name ${new_jail_epair}|g" "${jail_config}"
+                sed -i '' "s|\<${old_jail_epair} ether|${new_jail_epair} ether|g" "${jail_config}"
 
                 # Replace epair description
-                sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_conf}"
+                sed -i '' "s|host interface for Bastille jail ${TARGET}\>|host interface for Bastille jail ${NEWNAME}|g" "${jail_config}"
 
                 # Replace epair name in /etc/rc.conf
                 sed -i '' "s|ifconfig_${old_jail_epair}_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_conf}"
@@ -216,12 +216,12 @@ update_jailconf_vnet() {
             local new_if_suffix="$(echo ${new_ngif} | awk -F'_' '{print $2}')"
 
             # Replace netgraph interface name
-            sed -i '' "s|jng bridge ${old_if_suffix}\>|jng bridge ${new_if_suffix}|g" "${jail_conf}"
-            sed -i '' "s|\<${old_ngif} ether|${new_ngif} ether|g" "${jail_conf}"
-            sed -i '' "s|jng shutdown ${old_if_suffix}\>|jng shutdown ${new_if_suffix}|g" "${jail_conf}"
+            sed -i '' "s|jng bridge ${old_if_suffix}\>|jng bridge ${new_if_suffix}|g" "${jail_config}"
+            sed -i '' "s|\<${old_ngif} ether|${new_ngif} ether|g" "${jail_config}"
+            sed -i '' "s|jng shutdown ${old_if_suffix}\>|jng shutdown ${new_if_suffix}|g" "${jail_config}"
 
             # Replace jail epair name in jail.conf
-            sed -i '' "s|= ${old_ngif};|= ${new_ngif};|g" "${jail_conf}"
+            sed -i '' "s|= ${old_ngif};|= ${new_ngif};|g" "${jail_config}"
 
             # Replace epair name in /etc/rc.conf
             sed -i '' "s|ifconfig_${old_ngif}_name|ifconfig_${new_ngif}_name|g" "${jail_rc_conf}"

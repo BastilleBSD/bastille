@@ -88,24 +88,24 @@ ERRORS=0
 
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Validate jail state
-    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${_jail}"
+    check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${jail}"
     else
-        info "\n[${_jail}]:"
+        info "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
     # Allow executing commands on linux jails
-    if grep -qw "linsysfs" "${bastille_jailsdir}/${_jail}/fstab"; then
-        jexec -l -u root "${_jail}" "$@"
+    if grep -qw "linsysfs" "${bastille_jailsdir}/${jail}/fstab"; then
+        jexec -l -u root "${jail}" "$@"
     else
-        jexec -l -U root "${_jail}" "$@"
+        jexec -l -U root "${jail}" "$@"
     fi
 
     if [ "$?" -ne 0 ]; then

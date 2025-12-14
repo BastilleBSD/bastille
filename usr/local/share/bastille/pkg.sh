@@ -73,8 +73,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                    a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
                     y) AUTO_YES=1 ;;
@@ -101,36 +101,36 @@ ERRORS=0
 bastille_root_check
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Validate jail state
-    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${_jail}"
+    check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${jail}"
     else
-        info "\n[${_jail}]:"
+        info "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
-    bastille_jail_path="${bastille_jailsdir}/${_jail}/root"
+    bastille_jail_path="${bastille_jailsdir}/${jail}/root"
 
     if [ -f "/usr/sbin/mport" ]; then
-        jexec -l -U root "${_jail}" /usr/sbin/mport "$@"
+        jexec -l -U root "${jail}" /usr/sbin/mport "$@"
     elif [ -f "${bastille_jail_path}/usr/bin/apt" ]; then
-        jexec -l "${_jail}" /usr/bin/apt "$@"
+        jexec -l "${jail}" /usr/bin/apt "$@"
     elif [ "${USE_HOST_PKG}" -eq 1 ]; then
         if [ "${AUTO_YES}" -eq 1 ]; then
-            env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${_jail} "$@"
+            env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${jail} "$@"
         else
-            /usr/sbin/pkg -j ${_jail} "$@"
+            /usr/sbin/pkg -j ${jail} "$@"
         fi
     else
         if [ "${AUTO_YES}" -eq 1 ]; then
-            jexec -l -U root ${_jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@"
+            jexec -l -U root ${jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@"
         else
-            jexec -l -U root ${_jail} /usr/sbin/pkg "$@"
+            jexec -l -U root ${jail} /usr/sbin/pkg "$@"
         fi
     fi
 

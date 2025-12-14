@@ -61,8 +61,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\""
@@ -86,46 +86,46 @@ MOUNT_PATH="${2}"
 bastille_root_check
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Validate jail state
-    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${_jail}"
+    check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${jail}"
     else
-        info "\n[${TARGET}]:"
+        info "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
-    _jailpath="$( echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"
-    _mount="$( mount | grep -Eo "[[:blank:]]${_jailpath}[[:blank:]]" )"
-    _jailpath_fstab="$(echo "${bastille_jailsdir}/${_jail}/root/${MOUNT_PATH}" | sed 's#//#/#g' | sed 's# #\\#g' | sed 's#\\#\\\\040#g')"
-    _fstab_entry="$(grep -Eo "[[:blank:]]${_jailpath_fstab}[[:blank:]]" ${bastille_jailsdir}/${_jail}/fstab)"
+    jailpath="$( echo "${bastille_jailsdir}/${jail}/root/${MOUNT_PATH}" 2>/dev/null | sed 's#//#/#' | sed 's#\\##g')"
+    mount="$( mount | grep -Eo "[[:blank:]]${jailpath}[[:blank:]]" )"
+    jailpath_fstab="$(echo "${bastille_jailsdir}/${jail}/root/${MOUNT_PATH}" | sed 's#//#/#g' | sed 's# #\\#g' | sed 's#\\#\\\\040#g')"
+    fstab_entry="$(grep -Eo "[[:blank:]]${jailpath_fstab}[[:blank:]]" ${bastille_jailsdir}/${jail}/fstab)"
 
     # Exit if mount point non-existent
-    if [ -z "${_mount}" ] && [ -z "${_fstab_entry}" ]; then
+    if [ -z "${mount}" ] && [ -z "${fstab_entry}" ]; then
         error_continue "[ERROR]: The specified mount point does not exist."
     fi
 
     # Unmount
-    if [ -n "${_mount}" ]; then
-        umount "${_jailpath}" || error_continue "[ERROR]: Failed to unmount volume: ${MOUNT_PATH}"
+    if [ -n "${mount}" ]; then
+        umount "${jailpath}" || error_continue "[ERROR]: Failed to unmount volume: ${MOUNT_PATH}"
     fi
 
     # Remove entry from fstab
-    if [ -n "${_fstab_entry}" ]; then
-        if ! sed -E -i '' "\, +${_jailpath_fstab} +,d" "${bastille_jailsdir}/${_jail}/fstab"; then
+    if [ -n "${fstab_entry}" ]; then
+        if ! sed -E -i '' "\, +${jailpath_fstab} +,d" "${bastille_jailsdir}/${jail}/fstab"; then
             error_continue "[ERROR]: Failed to delete fstab entry: ${MOUNT_PATH}"
         fi
     fi
 
     # Delete if mount point was a file
-    if [ -f "${_jailpath}" ]; then
-        rm -f "${_jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
+    if [ -f "${jailpath}" ]; then
+        rm -f "${jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
     fi
 
-    echo "Unmounted: ${_jailpath}"
+    echo "Unmounted: ${jailpath}"
 
 done

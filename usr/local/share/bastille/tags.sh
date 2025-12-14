@@ -76,23 +76,23 @@ TAGS="${3}"
 bastille_root_check
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
-    bastille_jail_tags="${bastille_jailsdir}/${_jail}/tags"
+    bastille_jail_tags="${bastille_jailsdir}/${jail}/tags"
     case ${ACTION} in
         add)
-        for _tag in $(echo ${TAGS} | tr , ' '); do
-            echo ${_tag} >> "${bastille_jail_tags}"
+        for tag in $(echo ${TAGS} | tr , ' '); do
+            echo ${tag} >> "${bastille_jail_tags}"
             tmpfile="$(mktemp)"
             sort "${bastille_jail_tags}" | uniq > "${tmpfile}"
             mv "${tmpfile}" "${bastille_jail_tags}"
         done
         ;;
         del*)
-        for _tag in $(echo ${TAGS} | tr , ' '); do
+        for tag in $(echo ${TAGS} | tr , ' '); do
             [ ! -f "${bastille_jail_tags}" ] && break # skip if no tags file
             tmpfile="$(mktemp)"
-            grep -Ev "^${_tag}\$" "${bastille_jail_tags}" > "${tmpfile}"
+            grep -Ev "^${tag}\$" "${bastille_jail_tags}" > "${tmpfile}"
             mv "${tmpfile}" "${bastille_jail_tags}"
             # delete tags file if empty
             [ ! -s "${bastille_jail_tags}" ] && rm "${bastille_jail_tags}"
