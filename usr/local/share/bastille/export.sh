@@ -74,6 +74,7 @@ opt_count() {
 
 # Reset export options
 AUTO=0
+AUTO_RESTART=0
 LIVE=0
 GZIP_EXPORT=0
 XZ_EXPORT=0
@@ -301,6 +302,7 @@ if checkyesno bastille_zfs_enable; then
     elif check_target_is_running "${TARGET}"; then
         if [ "${AUTO}" -eq 1 ]; then
             bastille stop "${TARGET}"
+            AUTO_RESTART=1
         else
             info "\n[${TARGET}]:"
             error_notify "[ERROR]: Jail is running."
@@ -310,6 +312,7 @@ if checkyesno bastille_zfs_enable; then
 else
     check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${TARGET}"
+        AUTO_RESTART=1
     else
         info "\n[${TARGET}]:"
         error_notify "Jail is running."
@@ -511,7 +514,11 @@ jail_export() {
 	    fi
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
         fi
-        exit 0
+    fi
+
+    # Restart if AUTO_RESTART=1
+    if [ "${AUTO_RESTART}" -eq 1 ]; then
+        bastille start "${TARGET}"
     fi
 }
 
