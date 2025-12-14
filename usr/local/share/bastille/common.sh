@@ -382,7 +382,7 @@ validate_ip() {
             set ${test_ip}
             for quad in 1 2 3 4; do
                 if eval [ \$$quad -gt 255 ]; then
-                    error_exit "[ERROR]: Invalid IP: ${test_ip}"
+                    error_exit "[ERROR]: Invalid IP: ${ip4}"
                 fi
             done
 
