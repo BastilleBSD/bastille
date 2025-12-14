@@ -312,6 +312,7 @@ if checkyesno bastille_zfs_enable; then
 else
     check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${TARGET}"
+        AUTO_RESTART=1
     else
         info "\n[${TARGET}]:"
         error_notify "Jail is running."
