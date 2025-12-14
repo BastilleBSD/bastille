@@ -118,7 +118,6 @@ define_ips() {
     IP6_DEFINITION=""
     IP4_ADDR=""
     IP6_ADDR=""
-    IP_HOSTNAME=""
 
     for ip in ${IP}; do
         validate_ip "${ip}" "${VNET_JAIL}"
