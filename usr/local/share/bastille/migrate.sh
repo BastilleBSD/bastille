@@ -218,8 +218,8 @@ migrate_jail() {
     local port="${4}"
 
     local_bastille_migratedir="$(mktemp -d /tmp/bastille-migrate-${jail})"
-    remote_bastille_zfs_enable="$(${sshpass_cmd} ssh -p ${port} ${opt_ssh_key} ${user}@${host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
     # shellcheck disable=SC2034
+    remote_bastille_zfs_enable="$(${sshpass_cmd} ssh -p ${port} ${opt_ssh_key} ${user}@${host} sysrc -f /usr/local/etc/bastille/bastille.conf -n bastille_zfs_enable)"
     remote_bastille_migratedir="$(${sshpass_cmd} ssh -p ${port} ${opt_ssh_key} ${user}@${host} mktemp -d /tmp/bastille-migrate-${jail})"
     remote_jail_list="$(${sshpass_cmd} ssh -p ${port} ${opt_ssh_key} ${user}@${host} ${OPT_SU} bastille list jails)"
 
