@@ -361,10 +361,13 @@ validate_ip() {
         fi
         info "\nValid IP: ${ip6}"
         export IP6_ADDR="${ip6}"
-    elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ] || [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
+    elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
             info "\nValid IP: ${ip}"
             export IP4_ADDR="${ip}"
             export IP6_ADDR="${ip}"
+    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
+            info "\nValid IP: ${ip}"
+            export IP4_ADDR="${ip}"
     elif [ -n "${ip4}" ]; then
         if [ "${vnet_jail}" -eq 1 ]; then
             if [ -z "${subnet}" ]; then
