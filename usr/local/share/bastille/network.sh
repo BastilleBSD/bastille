@@ -232,7 +232,7 @@ validate_netif() {
     local interface="${1}"
 
     if ifconfig -l | grep -qwo ${interface}; then
-        info "\nValid: (${interface})."
+        info "\nValid interface: ${interface}"
     else
         error_exit "[ERROR]: Invalid interface: ${interface}"
     fi
@@ -657,7 +657,8 @@ case "${ACTION}" in
         validate_netif "${INTERFACE}"
 
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
-            error_exit "Interface is already added: \"${INTERFACE}\""
+            info "\nInterface already added: ${INTERFACE}"
+            exit 0
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
             add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             echo
@@ -702,7 +703,7 @@ case "${ACTION}" in
         elif [ "${PASSTHROUGH}" -eq 1 ]; then
             if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
                 error_exit "[ERROR]: ${TARGET} is not a VNET jail."
-	    else
+            else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
             fi
             if [ -n "${VLAN_ID}" ]; then
@@ -726,10 +727,10 @@ case "${ACTION}" in
 
     remove|delete)
 
-        check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\""
+        check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: ${INTERFACE}"
         validate_netif "${INTERFACE}"
         if ! grep -q "${INTERFACE}" ${bastille_jailsdir}/${TARGET}/jail.conf; then
-            error_exit "[ERROR]: Interface not found in jail.conf: \"${INTERFACE}\""
+            error_exit "[ERROR]: Interface not found in jail.conf: ${INTERFACE}"
         else
             remove_interface "${TARGET}" "${INTERFACE}"
             if [ "${AUTO}" -eq 1 ]; then
