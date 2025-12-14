@@ -137,14 +137,12 @@ define_ips() {
         elif ifconfig | grep -qwF "${IP4_ADDR}"; then
             warn "[WARNING]: IP address in use: ${IP4_ADDR}"
         fi
-        local ipx_addr="ip4.addr"
     fi
 
     if [ -n "${IP6_ADDR}" ]; then
         if [ "${IP6_ADDR}" = "SLAAC" ] && [ "${VNET_JAIL}" -eq 0 ]; then
             error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
         fi
-        local ipx_addr="ip6.addr"
     fi
 
     # Set interface value
@@ -170,37 +168,26 @@ define_ips() {
             IP4_DEFINITION="ip4 = ${IP4_ADDR};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
+            IP6_ADDR=""
         fi
     elif [ "${IP4_ADDR}" = "ip_hostname" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
-            IP_HOSTNAME="${IP4_ADDR}"
-            IP4_DEFINITION="${IP_HOSTNAME};"
-            IP6_DEFINITION="${IP_HOSTNAME};"
+            IP4_DEFINITION="${IP4_ADDR};"
+            IP6_DEFINITION="${IP6_ADDR};"
             IP6_MODE="new"
         else
-            IP_HOSTNAME="${IP4_ADDR}"
-            IP4_DEFINITION="${IP_HOSTNAME};"
+            IP4_DEFINITION="${IP4_ADDR};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
+            IP6_ADDR=""
         fi
-    elif [ "${ip}" = "DHCP" ] || [ "${ip}" = "SLAAC" ] || [ "${ip}" = "0.0.0.0" ]; then
-        if [ "${VNET_JAIL}" -eq 1 ]; then
-            if [ "${ipx_addr}" = "ip4.addr" ]; then
-                IP4_ADDR="${ip}"
-            elif [ "${ipx_addr}" = "ip6.addr" ]; then
-                IP6_ADDR="${ip}"
-            fi
-        else
-            error_exit "[ERROR]: Unsupported IP option for standard jail: ${ip}"
+    elif [ "${VNET_JAIL}" -eq 0 ]; then
+        if [ -n "${IP4_ADDR}" ]; then
+            IP4_DEFINITION="ip4.addr = ${bastille_jail_conf_interface}|${IP4_ADDR};"
         fi
-    else
-        if [ "${VNET_JAIL}" -eq 0 ]; then
-            if [ "${ipx_addr}" = "ip4.addr" ]; then
-                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${IP4_ADDR};"
-            elif [ "${ipx_addr}" = "ip6.addr" ]; then
-                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${IP6_ADDR};"
-                IP6_MODE="new"
-            fi
+        if [ -n "${IP6_ADDR}" ]; then
+            IP6_DEFINITION="ip6.addr = ${bastille_jail_conf_interface}|${IP6_ADDR};"
+            IP6_MODE="new"
         fi
     fi
 }
