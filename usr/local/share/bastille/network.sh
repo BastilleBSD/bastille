@@ -191,6 +191,7 @@ define_ips() {
         if [ "${IP4_ADDR}" = "inherit" ] || [ "${IP4_ADDR}" = "ip_hostname" ]; then
 	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
                 error_exit "[ERROR]: Unsupported IP option for VNET jail: ${IP4_ADDR}"
+            fi
         elif [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
             if [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
                 error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
@@ -468,9 +469,9 @@ EOF
 
     elif [ "${STANDARD}" -eq 1 ]; then
         if [ -n "${IP6_ADDR}" ]; then
-            sed -i '' "s/interface = .*/&\n  ip6.addr += ${if}|${ip};/" ${jail_config}
+            sed -i '' "s/ip4.addr = .*/&\n  ip6.addr += ${if}|${ip};/" ${jail_config}
         else
-            sed -i '' "s/interface = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
+            sed -i '' "s/ip6.addr = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
         fi
     fi
 }

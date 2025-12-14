@@ -123,6 +123,7 @@ define_ips() {
         if [ "${IP4_ADDR}" = "inherit" ] || [ "${IP4_ADDR}" = "ip_hostname" ]; then
 	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
                 error_exit "[ERROR]: Unsupported IP option for VNET jail: ${IP4_ADDR}"
+            fi
         elif [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
             if [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
                 error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
