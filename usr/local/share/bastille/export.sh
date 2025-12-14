@@ -513,7 +513,6 @@ jail_export() {
 	    fi
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
         fi
-        exit 0
     fi
 
     # Restart if AUTO_RESTART=1
