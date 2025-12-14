@@ -105,12 +105,12 @@ fi
 
 validate_release_name() {
 
-    local _name=${1}
-    local _sanity="$(echo "${_name}" | tr -c -d 'a-zA-Z0-9-_')"
+    local name=${1}
+    local sanity="$(echo "${name}" | tr -c -d 'a-zA-Z0-9-_')"
 
-    if [ -n "$(echo "${_sanity}" | awk "/^[-_].*$/" )" ]; then
+    if [ -n "$(echo "${sanity}" | awk "/^[-_].*$/" )" ]; then
         error_exit "[ERROR]: Release names may not begin with (-|_) characters!"
-    elif [ "${_name}" != "${_sanity}" ]; then
+    elif [ "${name}" != "${sanity}" ]; then
         error_exit "[ERROR]: Release names may not contain special characters!"
     fi
 
@@ -118,10 +118,10 @@ validate_release_name() {
 
 convert_jail_to_release() {
 
-    _jailname="${1}"
-    _release="${2}"
+    jail_name="${1}"
+    release="${2}"
 
-    info "\nAttempting to create '${_release}' from '${_jailname}'..."
+    info "\nAttempting to create '${release}' from '${jail_name}'..."
 
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ]; then
@@ -136,35 +136,35 @@ convert_jail_to_release() {
             ## take a temp snapshot of the jail
             SNAP_NAME="bastille-$(date +%Y-%m-%d-%H%M%S)"
 	    # shellcheck disable=SC2140
-            zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jailname}/root"@"${SNAP_NAME}"
+            zfs snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail_name}/root"@"${SNAP_NAME}"
             ## replicate the release base to the new thickjail and set the default mountpoint
             # shellcheck disable=SC2140
-            zfs send ${OPT_SEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jailname}/root"@"${SNAP_NAME}" | \
-            zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
-            zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
-            zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
+            zfs send ${OPT_SEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail_name}/root"@"${SNAP_NAME}" | \
+            zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${release}"
+            zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${release}"
+            zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${release}"
             ## cleanup temp snapshots initially
             # shellcheck disable=SC2140
-            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${_jailname}/root"@"${SNAP_NAME}"
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail_name}/root"@"${SNAP_NAME}"
             # shellcheck disable=SC2140
-            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"@"${SNAP_NAME}"
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${release}"@"${SNAP_NAME}"
         fi
         if [ "$?" -ne 0 ]; then
             ## notify and clean stale files/directories
-            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${_release}"
+            zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${release}"
             error_exit "Failed to create release. Please retry!"
         else
-            info "\nCreated '${_release}' from '${_jailname}'\n"
+            info "\nCreated '${release}' from '${jail_name}'\n"
         fi
     else
         ## copy all files for thick jails
-        cp -a "${bastille_jailsdir}/${_jailname}/root" "${bastille_releasesdir}/${_release}"
+        cp -a "${bastille_jailsdir}/${jail_name}/root" "${bastille_releasesdir}/${release}"
         if [ "$?" -ne 0 ]; then
             ## notify and clean stale files/directories
             bastille destroy -af "${NAME}"
             error_exit "[ERROR]: Failed to create release. Please retry!"
         else
-            info "\nCreated '${_release}' from '${_jailname}'\n"
+            info "\nCreated '${release}' from '${jail_name}'\n"
         fi
     fi
 }

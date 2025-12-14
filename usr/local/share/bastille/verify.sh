@@ -80,72 +80,72 @@ handle_template_include() {
 
 verify_template() {
 
-    _template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
-    _hook_validate=0
+    template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
+    hook_validate=0
 
-    for _hook in TARGET INCLUDE PRE OVERLAY FSTAB PF PKG SYSRC SERVICE CMD Bastillefile; do
-        _path=${_template_path}/${_hook}
-        if [ -s "${_path}" ]; then
-            _hook_validate=$((_hook_validate+1))
-            info "\nDetected ${_hook} hook."
+    for hook in TARGET INCLUDE PRE OVERLAY FSTAB PF PKG SYSRC SERVICE CMD Bastillefile; do
+        path=${template_path}/${hook}
+        if [ -s "${path}" ]; then
+            hook_validate=$((_hook_validate+1))
+            info "\nDetected ${hook} hook."
 
             ## line count must match newline count
             # shellcheck disable=SC2046
             # shellcheck disable=SC3003
-            if [ $(wc -l "${_path}" | awk '{print $1}') -ne "$(tr -d -c '\n' < "${_path}" | wc -c)" ]; then
-                info "[${_hook}]:"
-                error_notify "[ERROR]: ${BASTILLE_TEMPLATE}:${_hook} [failed]."
+            if [ $(wc -l "${path}" | awk '{print $1}') -ne "$(tr -d -c '\n' < "${path}" | wc -c)" ]; then
+                info "[${hook}]:"
+                error_notify "[ERROR]: ${BASTILLE_TEMPLATE}:${hook} [failed]."
                 error_notify "Line numbers don't match line breaks."
                 error_exit "Template validation failed."
             ## if INCLUDE; recursive verify
-            elif [ "${_hook}" = 'INCLUDE' ]; then
-                info "[${_hook}]:"
-                cat "${_path}"
-                while read _include; do
-                    info "[${_hook}]:[${_include}]:"
-                    TEMPLATE_INCLUDE="${_include}"
+            elif [ "${hook}" = 'INCLUDE' ]; then
+                info "[${hook}]:"
+                cat "${path}"
+                while read include; do
+                    info "[${hook}]:[${include}]:"
+                    TEMPLATE_INCLUDE="${include}"
                     handle_template_include
-                done < "${_path}"
+                done < "${path}"
 
             ## if tree; tree -a bastille_template/_dir
-            elif [ "${_hook}" = 'OVERLAY' ]; then
-                info "[${_hook}]:"
-                cat "${_path}"
-                while read _dir; do
-                    info "[${_hook}]:[${_dir}]:"
+            elif [ "${hook}" = 'OVERLAY' ]; then
+                info "[${hook}]:"
+                cat "${path}"
+                while read dir; do
+                    info "[${hook}]:[${dir}]:"
                         if [ -x "/usr/local/bin/tree" ]; then
-                            /usr/local/bin/tree -a "${_template_path}/${_dir}"
+                            /usr/local/bin/tree -a "${template_path}/${dir}"
                         else
-                           find "${_template_path}/${_dir}" -print | sed -e 's;[^/]*/;|___;g;s;___|; |;g'
+                           find "${template_path}/${dir}" -print | sed -e 's;[^/]*/;|___;g;s;___|; |;g'
                         fi
-                done < "${_path}"
-            elif [ "${_hook}" = 'Bastillefile' ]; then
-                info "[${_hook}]:"
-                cat "${_path}"
-                while read _line; do
-                    _cmd=$(echo "${_line}" | awk '{print tolower($1);}')
+                done < "${path}"
+            elif [ "${hook}" = 'Bastillefile' ]; then
+                info "[${hook}]:"
+                cat "${path}"
+                while read line; do
+                    cmd=$(echo "${line}" | awk '{print tolower($1);}')
                     ## if include; recursive verify
-                    if [ "${_cmd}" = 'include' ]; then
-                        TEMPLATE_INCLUDE=$(echo "${_line}" | awk '{print $2;}')
+                    if [ "${cmd}" = 'include' ]; then
+                        TEMPLATE_INCLUDE=$(echo "${line}" | awk '{print $2;}')
                         handle_template_include
                     fi
-                done < "${_path}"
+                done < "${path}"
             else
-                info "[${_hook}]:"
-                cat "${_path}"
+                info "[${hook}]:"
+                cat "${path}"
             fi
         fi
     done
 
     # Remove bad templates
-    if [ "${_hook_validate}" -lt 1 ]; then
-        rm -rf "${_template_path}"
+    if [ "${hook_validate}" -lt 1 ]; then
+        rm -rf "${template_path}"
         error_notify "[ERROR]: No valid template hooks found."
         error_exit "Template discarded."
     fi
 
     ## if validated; ready to use
-    if [ "${_hook_validate}" -gt 0 ]; then
+    if [ "${hook_validate}" -gt 0 ]; then
         info "\nTemplate ready to use."
     fi
 }

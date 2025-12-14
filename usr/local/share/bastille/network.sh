@@ -104,8 +104,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _o in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
-                case ${_o} in
+            for opt in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) AUTO=1 ;;
                     B) BRIDGE=1 ;;
                     M) STATIC_MAC=1 ;;
@@ -615,7 +615,7 @@ add_vlan() {
         local jail_epair="$(grep 'e[0-9]+b_[^;" ]+' ${jail_config})"
 	local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
-        local _jail_vnet="${interface}"
+        local jail_vnet="${interface}"
     fi
     if grep -Eq "ifconfig_${jail_vnet}_${vlan_id}" "${bastille_jailsdir}/${jailname}/root/etc/rc.conf"; then
         error_exit "[ERROR]: VLAN has already been added: VLAN ${vlan_id}"

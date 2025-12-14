@@ -116,25 +116,25 @@ SERVICE_FAILED=0
 bastille_root_check
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
-    bastille_jail_monitor="${bastille_jailsdir}/${_jail}/monitor"
+    bastille_jail_monitor="${bastille_jailsdir}/${jail}/monitor"
 
     # Skip if jail is not running or no monitor file
-    if ! check_target_is_running "${_jail}" || [ ! -f "${bastille_jail_monitor}" ]; then
+    if ! check_target_is_running "${jail}" || [ ! -f "${bastille_jail_monitor}" ]; then
         continue
     fi
 
     ## iterate service(s) and check service status; restart on failure
     if [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
-        for _service in $(xargs < "${bastille_jail_monitor}"); do
+        for service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
-            if ! jexec -l -U root "${_jail}" service "${_service}" status >/dev/null 2>/dev/null; then
-                echo "$(date '+%Y-%m-%d %H:%M:%S'): ${_service} service not running in ${_jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
+            if ! jexec -l -U root "${jail}" service "${service}" status >/dev/null 2>/dev/null; then
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): ${service} service not running in ${jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
 
                 ## attempt to restart the service if needed; update logs if unable
-                if ! jexec -l -U root "${_jail}" service "${_service}" restart; then
-                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${_service} service in ${_jail}." | tee -a "${bastille_monitor_logfile}"
+                if ! jexec -l -U root "${jail}" service "${service}" restart; then
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${service} service in ${jail}." | tee -a "${bastille_monitor_logfile}"
                     SERVICE_FAILED=1
                 fi
             fi
@@ -143,20 +143,20 @@ for _jail in ${JAILS}; do
         case ${ACTION} in
             add)
 	            [ -z "${SERVICE}" ] && usage
-                for _service in $(echo "${SERVICE}" | tr , ' '); do
-                    if ! grep -Eqs "^${_service}\$" "${bastille_jail_monitor}"; then
-                        echo "${_service}" >> "${bastille_jail_monitor}"
-                        echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
+                for service in $(echo "${SERVICE}" | tr , ' '); do
+                    if ! grep -Eqs "^${service}\$" "${bastille_jail_monitor}"; then
+                        echo "${service}" >> "${bastille_jail_monitor}"
+                        echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${service} on ${jail}" >> "${bastille_monitor_logfile}"
                     fi
                 done
                 ;;
             del*)
 	            [ -z "${SERVICE}" ] && usage
-                for _service in $(echo "${SERVICE}" | tr , ' '); do
+                for service in $(echo "${SERVICE}" | tr , ' '); do
                     [ ! -f "${bastille_jail_monitor}" ] && break # skip if no monitor file
-                    if grep -Eqs "^${_service}\$" "${bastille_jail_monitor}"; then
-                        sed -i '' "/^${_service}\$/d" "${bastille_jail_monitor}"
-	                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${_service} on ${_jail}" >> "${bastille_monitor_logfile}"
+                    if grep -Eqs "^${service}\$" "${bastille_jail_monitor}"; then
+                        sed -i '' "/^${service}\$/d" "${bastille_jail_monitor}"
+	                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${service} on ${jail}" >> "${bastille_monitor_logfile}"
 		            fi
                     # delete monitor file if empty
                     [ ! -s "${bastille_jail_monitor}" ] && rm "${bastille_jail_monitor}"
@@ -169,12 +169,12 @@ for _jail in ${JAILS}; do
                     fi
                     [ ! -f "${bastille_jail_monitor}" ] && continue # skip if there is no monitor file
                     if grep -Eqs "^${SERVICE}\$" "${bastille_jail_monitor}"; then
-                        echo "${_jail}"
+                        echo "${jail}"
 			            continue
                     fi
                 else
                     if [ -f "${bastille_jail_monitor}" ]; then
-                        info "\n[${_jail}]:"
+                        info "\n[${jail}]:"
                         xargs < "${bastille_jail_monitor}"
                     fi
                 fi

@@ -78,8 +78,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     f) OPT_FORCE=1 ;;
                     M) OPT_STATIC_MAC=1 ;;
                     v) OPT_ZRECV="-u -v" ;;
@@ -501,15 +501,15 @@ update_symlinks() {
 
     # Update old symlinks
     info "\nUpdating symlinks..."
-    for _link in ${SYMLINKS}; do
-        if [ -L "${_link}" ]; then
-            ln -sf /.bastille/${_link} ${_link}
-        elif [ "${ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED:-0}" = "1" ] && [ -d "${_link}" ]; then
+    for link in ${SYMLINKS}; do
+        if [ -L "${link}" ]; then
+            ln -sf /.bastille/${link} ${link}
+        elif [ "${ALLOW_EMPTY_DIRS_TO_BE_SYMLINKED:-0}" = "1" ] && [ -d "${link}" ]; then
             # -F will enforce that the directory is empty and replaced by the symlink
-            ln -sfF /.bastille/${_link} ${_link} || EXIT_CODE=$?
+            ln -sfF /.bastille/${link} ${link} || EXIT_CODE=$?
             if [ "${EXIT_CODE:-0}" != "0" ]; then
                 # Assume that the failure was due to the directory not being empty and explain the problem in friendlier terms
-                warn "[WARNING]: directory ${_link} on imported jail was not empty and will not be updated by Bastille"
+                warn "[WARNING]: directory ${link} on imported jail was not empty and will not be updated by Bastille"
             fi
         fi
     done

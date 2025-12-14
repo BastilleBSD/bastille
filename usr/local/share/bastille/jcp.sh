@@ -61,8 +61,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -90,16 +90,16 @@ bastille_root_check
 set_target_single "${SOURCE_TARGET}" && SOURCE_TARGET="${TARGET}"
 set_target "${DEST_TARGET}" && DEST_TARGET="${JAILS}"
 
-for _jail in ${DEST_TARGET}; do
+for jail in ${DEST_TARGET}; do
 
-    if [ "${_jail}" = "${SOURCE_TARGET}" ]; then
+    if [ "${jail}" = "${SOURCE_TARGET}" ]; then
         continue
     else
 
-	info "\n[${_jail}]:"
+	info "\n[${jail}]:"
 
         source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
-        dest_path="$(echo ${bastille_jailsdir}/${_jail}/root/${DEST_PATH} | sed 's#//#/#g')"
+        dest_path="$(echo ${bastille_jailsdir}/${jail}/root/${DEST_PATH} | sed 's#//#/#g')"
 
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
             ERRORS=$((ERRORS + 1))

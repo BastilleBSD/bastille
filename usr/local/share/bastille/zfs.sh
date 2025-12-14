@@ -52,7 +52,7 @@ EOF
 
 zfs_jail_dataset() {
 
-    local jail_config="${bastille_jailsdir}/${JAIL}/jail.conf"
+    local jail_config="${bastille_jailsdir}/${jail}/jail.conf"
 
     # Exit if MOUNT or DATASET is empty
     if [ -z "${MOUNT}" ] || [ -z "${DATASET}" ]; then
@@ -68,45 +68,45 @@ zfs_jail_dataset() {
     fi
 
     # Validate jail state
-    check_target_is_stopped "${JAIL}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${JAIL}"
+    check_target_is_stopped "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${jail}"
     else
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
 
     # Add necessary config variables to jail
-    bastille config ${JAIL} set enforce_statfs 1 >/dev/null
-    bastille config ${JAIL} set allow.mount >/dev/null
-    bastille config ${JAIL} set allow.mount.devfs >/dev/null
-    bastille config ${JAIL} set allow.mount.zfs >/dev/null
+    bastille config ${jail} set enforce_statfs 1 >/dev/null
+    bastille config ${jail} set allow.mount >/dev/null
+    bastille config ${jail} set allow.mount.devfs >/dev/null
+    bastille config ${jail} set allow.mount.zfs >/dev/null
 
     # Enable ZFS inside jail
-    sysrc -f "${bastille_jailsdir}/${JAIL}/root/etc/rc.conf" zfs_enable="YES"
+    sysrc -f "${bastille_jailsdir}/${jail}/root/etc/rc.conf" zfs_enable="YES"
 
     # Jail the dataset
     zfs set mountpoint="${MOUNT}" "${DATASET}"
     zfs set jailed=on "${DATASET}"
 
     # Add dataset to zfs.conf
-    echo "${DATASET} ${MOUNT}" >> "${bastille_jailsdir}/${JAIL}/zfs.conf"
+    echo "${DATASET} ${MOUNT}" >> "${bastille_jailsdir}/${jail}/zfs.conf"
 
     # Add config to jail.conf
     sed -i '' '/^}$/d' "${jail_config}"
     cat << EOF >> "${jail_config}"
   # Jailed dataset: ${DATASET}
-  exec.created += "zfs jail ${JAIL} ${DATASET}";
+  exec.created += "zfs jail ${jail} ${DATASET}";
 }
 EOF
 
     if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${JAIL}"
+        bastille start "${jail}"
     fi
 }
 
 zfs_unjail_dataset() {
 
-    local jail_config="${bastille_jailsdir}/${JAIL}/jail.conf"
+    local jail_config="${bastille_jailsdir}/${jail}/jail.conf"
 
     # Exit if DATASET is empty
     if [ -z "${DATASET}" ]; then
@@ -117,8 +117,8 @@ zfs_unjail_dataset() {
     fi
 
     # Validate jail state
-    check_target_is_stopped "${JAIL}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${JAIL}"
+    check_target_is_stopped "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${jail}"
     else
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
@@ -129,54 +129,54 @@ zfs_unjail_dataset() {
     zfs umount "${DATASET}"
 
     # Remove dataset from zfs.conf
-    if ! grep -hoqsw "${DATASET}" ${bastille_jailsdir}/${JAIL}/zfs.conf; then
+    if ! grep -hoqsw "${DATASET}" ${bastille_jailsdir}/${jail}/zfs.conf; then
         error_exit "[ERROR]: Dataset not present in zfs.conf."
     else
-        sed -i '' "\#.*${DATASET}.*#d" "${bastille_jailsdir}/${JAIL}/zfs.conf"
+        sed -i '' "\#.*${DATASET}.*#d" "${bastille_jailsdir}/${jail}/zfs.conf"
     fi
 
     # Remove config from jail.conf
     sed -i '' "\#.*Jailed dataset: ${DATASET}.*#d" "${jail_config}"
-    sed -i '' "\#.*zfs jail ${JAIL} ${DATASET}.*#d" "${jail_config}"
+    sed -i '' "\#.*zfs jail ${jail} ${DATASET}.*#d" "${jail_config}"
 
     if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${JAIL}"
+        bastille start "${jail}"
     fi
 }
 
 zfs_snapshot() {
     # shellcheck disable=SC2140
-    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL}"@"${TAG}"
-    _return=$?
+    zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"@"${TAG}"
+    return=$?
 }
 
 zfs_rollback() {
     # shellcheck disable=SC2140
-    zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL}"@"${TAG}"
+    zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"@"${TAG}"
     # shellcheck disable=SC2140
-    zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL}/root"@"${TAG}"
-    _return=$?
+    zfs rollback -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}/root"@"${TAG}"
+    return=$?
 }
 
 zfs_destroy_snapshot() {
     # shellcheck disable=SC2140
-    zfs destroy ${OPT_DESTROY} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL}"@"${TAG}"
-    _return=$?
+    zfs destroy ${OPT_DESTROY} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"@"${TAG}"
+    return=$?
 }
 
 zfs_set_value() {
-    zfs set "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL}"
-    _return=$?
+    zfs set "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"
+    return=$?
 }
 
 zfs_get_value() {
-    zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL}"
-    _return=$?
+    zfs get "${ATTRIBUTE}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"
+    return=$?
 }
 
 zfs_disk_usage() {
-    zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL}"
-    _return=$?
+    zfs list -t all -o name,used,avail,refer,mountpoint,compress,ratio -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"
+    return=$?
 }
 
 snapshot_checks() {
@@ -189,10 +189,10 @@ snapshot_checks() {
     # Verify rollback snapshots
     if [ "${SNAP_ROLLBACK}" -eq 1 ]; then
         if [ -n "${TAG}" ]; then
-            SNAP_TAG_CHECK="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL} | grep -o "${TAG}$" | tail -n 1)"
+            SNAP_TAG_CHECK="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail} | grep -o "${TAG}$" | tail -n 1)"
         else
-            TAG="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL} | grep -o "bastille_${JAIL}_.*$" | tail -n 1)"
-            SNAP_TAG_CHECK=$(echo ${TAG} | grep -wo "bastille_${JAIL}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+            TAG="$(zfs list -H -t snapshot -o name ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail} | grep -o "bastille_${jail}_.*$" | tail -n 1)"
+            SNAP_TAG_CHECK=$(echo ${TAG} | grep -wo "bastille_${jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
         fi
         if [ -z "${SNAP_TAG_CHECK}" ]; then
             error_continue "[ERROR]: Snapshot not found: ${TAG}"
@@ -204,10 +204,10 @@ snapshot_checks() {
     # Generate a relatively short but unique name for the snapshots based on the current date/jail name.
     elif [ "${AUTO_TAG}" -eq 1 ]; then
         DATE=$(date +%F-%H%M%S)
-        TAG="bastille_${JAIL}_${DATE}"
+        TAG="bastille_${jail}_${DATE}"
         # Check for the generated snapshot name.
         SNAP_GEN_CHECK=""
-        SNAP_GEN_CHECK=$(echo ${TAG} | grep -wo "bastille_${JAIL}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
+        SNAP_GEN_CHECK=$(echo ${TAG} | grep -wo "bastille_${jail}_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}-[0-9]\{6\}")
         if [ -z "${SNAP_GEN_CHECK}" ]; then
             error_notify "[ERROR]: Failed to validate snapshot name."
         fi
@@ -220,7 +220,7 @@ snapshot_create() {
     zfs_snapshot
 
     # Check for exit status and notify only for user reference.
-    if [ "${_return}" -ne 0 ]; then
+    if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to create snapshot."
     else
         echo "Snapshot created: ${TAG}"
@@ -235,7 +235,7 @@ snapshot_rollback() {
     zfs_rollback
 
     # Check for exit status and just notify.
-    if [ "${_return}" -ne 0 ]; then
+    if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to restore snapshot: ${TAG}."
     else
         echo "Snapshot restored: ${TAG}"
@@ -257,7 +257,7 @@ snapshot_destroy() {
     zfs_destroy_snapshot
 
     # Check for exit status and just notify.
-    if [ "${_return}" -ne 0 ]; then
+    if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to destroy snapshot: ${TAG}"
     else
         echo "Snapshot destroyed: ${TAG}"
@@ -288,8 +288,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) AUTO=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -323,9 +323,9 @@ if [ -z "${bastille_zfs_zpool}" ]; then
     error_exit "[ERROR]: ZFS zpool not defined."
 fi
 
-for JAIL in ${JAILS}; do
+for jail in ${JAILS}; do
 
-    info "\n[${JAIL}]:"
+    info "\n[${jail}]:"
 
     case "${ACTION}" in
         destroy|destroy_snap|destroy_snapshot)
@@ -366,5 +366,4 @@ for JAIL in ${JAILS}; do
             usage
             ;;
     esac
-
 done

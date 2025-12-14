@@ -61,8 +61,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     q) OPTION="-a" ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -88,12 +88,12 @@ ERRORS=0
 bastille_root_check
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
     host_path="${HOST_PATH}"
-    jail_path="$(echo ${bastille_jailsdir}/${_jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
+    jail_path="$(echo ${bastille_jailsdir}/${jail}/root/${JAIL_PATH} | sed 's#//#/#g')"
 
     # Workaround to properly copy host resolv.conf to jail if the host file is a symlink.
     if [ "${host_path}" = "${bastille_resolv_conf}" ] && [ -L "${host_path}" ]; then

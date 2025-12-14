@@ -124,16 +124,16 @@ print_jail_conf() {
 '
 }
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Backwards compatibility for specifying only an IP with ip[4|6].addr
     if [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip4.addr" ]; then
         if ! echo "${VALUE}" | grep -q "|"; then
-            VALUE="$(bastille config ${_jail} get ip4.addr | awk -F"|" '{print $1}')|${VALUE}"
+            VALUE="$(bastille config ${jail} get ip4.addr | awk -F"|" '{print $1}')|${VALUE}"
         fi
     elif [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip6.addr" ]; then
         if ! echo "${VALUE}" | grep -q "|"; then
-            VALUE="$(bastille config ${_jail} get ip6.addr | awk -F"|" '{print $1}')|${VALUE}"
+            VALUE="$(bastille config ${jail} get ip6.addr | awk -F"|" '{print $1}')|${VALUE}"
         fi
     fi
 
@@ -142,7 +142,7 @@ for _jail in ${JAILS}; do
     if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
 
         PROPERTY="priority"
-        FILE="${bastille_jailsdir}/${_jail}/settings.conf"
+        FILE="${bastille_jailsdir}/${jail}/settings.conf"
 
         if [ "${ACTION}" = "set" ]; then
             if echo "${VALUE}" | grep -Eq '^[0-9]+$'; then
@@ -159,7 +159,7 @@ for _jail in ${JAILS}; do
     # Boot property
     elif [ "${PROPERTY}" = "boot" ]; then
 
-        FILE="${bastille_jailsdir}/${_jail}/settings.conf"
+        FILE="${bastille_jailsdir}/${jail}/settings.conf"
 
         if [ "${ACTION}" = "set" ]; then
             if [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; then
@@ -177,7 +177,7 @@ for _jail in ${JAILS}; do
     elif [ "${PROPERTY}" = "depend" ] || [ "${PROPERTY}" = "depends" ]; then
 
         PROPERTY="depend"
-        FILE="${bastille_jailsdir}/${_jail}/settings.conf"
+        FILE="${bastille_jailsdir}/${jail}/settings.conf"
 
         if [ "${ACTION}" = "set" ]; then
 
@@ -187,7 +187,7 @@ for _jail in ${JAILS}; do
                 set_target "${VALUE}"
             fi
 
-            info "\n[${_jail}]:"
+            info "\n[${jail}]:"
 
             sysrc -f "${FILE}" "${PROPERTY}+=${JAILS}"
 
@@ -199,7 +199,7 @@ for _jail in ${JAILS}; do
                 set_target "${VALUE}"
             fi
 
-            info "\n[${_jail}]:"
+            info "\n[${jail}]:"
 
             sysrc -f "${FILE}" "${PROPERTY}-=${JAILS}"
 
@@ -209,9 +209,9 @@ for _jail in ${JAILS}; do
 
         fi
     else
-        FILE="${bastille_jailsdir}/${_jail}/jail.conf"
+        FILE="${bastille_jailsdir}/${jail}/jail.conf"
         if [ ! -f "${FILE}" ]; then
-            error_notify "jail.conf does not exist for jail: ${_jail}"
+            error_notify "jail.conf does not exist for jail: ${jail}"
             continue
         fi
         if [ "${ACTION}" = 'get' ]; then
@@ -250,9 +250,9 @@ for _jail in ${JAILS}; do
                 echo "${_output}"
             fi
         elif [ "${ACTION}" = "remove" ]; then
-            if [ "$(bastille config ${_jail} get ${PROPERTY})" != "not set" ]; then
+            if [ "$(bastille config ${jail} get ${PROPERTY})" != "not set" ]; then
 
-                info "\n[${_jail}]:"
+                info "\n[${jail}]:"
 
                 sed -i '' "/.*${PROPERTY}.*/d" "${FILE}"
 
@@ -276,8 +276,8 @@ for _jail in ${JAILS}; do
             # there is none, at the end
             #
             # awk doesn't have "inplace" editing so we use a temp file
-            _tmpfile=$(mktemp) || error_exit "unable to set because mktemp failed"
-            cp "${FILE}" "${_tmpfile}" && \
+            tmpfile=$(mktemp) || error_exit "unable to set because mktemp failed"
+            cp "${FILE}" "${tmpfile}" && \
             awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
                 BEGIN {
                     # build RE as string as we can not expand vars in RE literals
@@ -304,8 +304,8 @@ for _jail in ${JAILS}; do
                     # print each uninteresting line unchanged
                     print;
                 }
-            ' "${_tmpfile}" > "${FILE}"
-            rm "${_tmpfile}"
+            ' "${tmpfile}" > "${FILE}"
+            rm "${tmpfile}"
         fi
     fi
 

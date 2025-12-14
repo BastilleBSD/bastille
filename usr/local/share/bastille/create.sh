@@ -198,9 +198,9 @@ validate_netif() {
     if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         error_exit "[ERROR]: Invalid interface: ${INTERFACE}"
     elif [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
-        for _bridge in $(ifconfig -g bridge | grep -vw "${INTERFACE}bridge"); do
-            if ifconfig ${_bridge} | grep "member" | grep -owq "${INTERFACE}"; then
-                error_exit "[ERROR]: Interface '${INTERFACE}' is already a member of bridge: ${_bridge}"
+        for bridge in $(ifconfig -g bridge | grep -vw "${INTERFACE}bridge"); do
+            if ifconfig ${bridge} | grep "member" | grep -owq "${INTERFACE}"; then
+                error_exit "[ERROR]: Interface '${INTERFACE}' is already a member of bridge: ${bridge}"
             fi
         done
     else
@@ -452,8 +452,8 @@ create_jail() {
         if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
             info "\nCreating a thinjail..."
-            for _link in ${LINK_LIST}; do
-                ln -sf /.bastille/${_link} ${_link}
+            for link in ${LINK_LIST}; do
+                ln -sf /.bastille/${link} ${link}
             done
 
             # Properly link shared ports on thin jails in read-write.
@@ -809,8 +809,8 @@ while [ $# -gt 0 ]; do
             OPT_NAMESERVER="${2}"
             # Validate nameserver
             if [ -n "${OPT_NAMESERVER}" ]; then
-                for _nameserver in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
-                    if ! validate_ip "${_nameserver}" >/dev/null 2>/dev/null; then
+                for nameserver in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
+                    if ! validate_ip "${nameserver}" >/dev/null 2>/dev/null; then
                         error_exit "[ERROR]: Invalid nameserver(s): ${OPT_NAMESERVER}"
                     fi
                 done
@@ -864,8 +864,8 @@ while [ $# -gt 0 ]; do
             shift 2
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     B) VNET_JAIL=1 VNET_JAIL_BRIDGE=1 ;;
                     C) CLONE_JAIL=1 ;;
                     D) DUAL_STACK=1 ;;

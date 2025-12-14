@@ -90,9 +90,11 @@ warn() {
 }
 
 check_target_exists() {
-    local _TARGET="${1}"
-    local _jaillist="$(bastille list jails)"
-    if ! echo "${_jaillist}" | grep -Eq "^${_TARGET}$"; then
+
+    local target="${1}"
+    local jail_list="$(bastille list jails)"
+
+    if ! echo "${jail_list}" | grep -Eq "^${target}$"; then
         return 1
     else
         return 0
@@ -100,8 +102,10 @@ check_target_exists() {
 }
 
 check_target_is_running() {
-    _TARGET="${1}"
-    if ! jls name | grep -Eq "^${_TARGET}$"; then
+
+    local target="${1}"
+
+    if ! jls name | grep -Eq "^${target}$"; then
         return 1
     else
         return 0
@@ -109,8 +113,10 @@ check_target_is_running() {
 }
 
 check_target_is_stopped() {
-    _TARGET="${1}"
-    if jls name | grep -Eq "^${_TARGET}$"; then
+
+    local target="${1}"
+
+    if jls name | grep -Eq "^${target}$"; then
         return 1
     else
         return 0
@@ -118,8 +124,9 @@ check_target_is_stopped() {
 }
 
 get_bastille_epair_count() {
-    for _config in /usr/local/etc/bastille/*.conf; do
-        local bastille_jailsdir="$(sysrc -f "${_config}" -n bastille_jailsdir)"
+
+    for config in /usr/local/etc/bastille/*.conf; do
+        local bastille_jailsdir="$(sysrc -f "${config}" -n bastille_jailsdir)"
         BASTILLE_EPAIR_LIST="$(printf '%s\n%s' "$( (grep -Ehos "bastille[0-9]+" ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair | grep -Eos "e[0-9]+a_bastille[0-9]+$" | grep -Eos 'bastille[0-9]+') | sort -u)" "${BASTILLE_EPAIR_LIST}")"
     done
     BASTILLE_EPAIR_COUNT=$(printf '%s' "${BASTILLE_EPAIR_LIST}" | sort -u | wc -l | awk '{print $1}')
@@ -128,24 +135,28 @@ get_bastille_epair_count() {
 }
 
 get_jail_name() {
-    local _JID="${1}"
-    local _jailname="$(jls -j ${_JID} name 2>/dev/null)"
-    if [ -z "${_jailname}" ]; then
+
+    local jid="${1}"
+    local jail_name="$(jls -j ${jid} name 2>/dev/null)"
+
+    if [ -z "${jail_name}" ]; then
         return 1
     else
-        echo "${_jailname}"
+        echo "${jail_name}"
     fi
 }
 
 jail_autocomplete() {
-    local _TARGET="${1}"
-    local _jaillist="$(bastille list jails)"
-    local _AUTOTARGET="$(echo "${_jaillist}" | grep -E "^${_TARGET}")"
-    if [ -n "${_AUTOTARGET}" ]; then
-        if [ "$(echo "${_AUTOTARGET}" | wc -l)" -eq 1 ]; then
-            echo "${_AUTOTARGET}"
+
+    local target="${1}"
+    local jail_list="$(bastille list jails)"
+    local auto_target="$(echo "${jail_list}" | grep -E "^${target}")"
+
+    if [ -n "${auto_target}" ]; then
+        if [ "$(echo "${auto_target}" | wc -l)" -eq 1 ]; then
+            echo "${auto_target}"
         else
-            error_continue "Multiple jails found for ${_TARGET}:\n${_AUTOTARGET}"
+            error_continue "Multiple jails found for ${target}:\n${auto_target}"
             return 1
         fi
     else
@@ -154,80 +165,84 @@ jail_autocomplete() {
 }
 
 list_jail_priority() {
-    local _jail_list="${1}"
+
+    local jail_list="${1}"
+
     if [ -d "${bastille_jailsdir}" ]; then
-        for _jail in ${_jail_list}; do
+        for jail in ${jail_list}; do
             # Remove boot.conf in favor of settings.conf
-            if [ -f ${bastille_jailsdir}/${_jail}/boot.conf ]; then
-                rm -f ${bastille_jailsdir}/${_jail}/boot.conf >/dev/null 2>&1
+            if [ -f ${bastille_jailsdir}/${jail}/boot.conf ]; then
+                rm -f ${bastille_jailsdir}/${jail}/boot.conf >/dev/null 2>&1
             fi
-            local _settings_file=${bastille_jailsdir}/${_jail}/settings.conf
+            local settings_file=${bastille_jailsdir}/${jail}/settings.conf
             # Set defaults if settings file does not exist
-            if [ ! -f ${_settings_file} ]; then
-                sysrc -f ${_settings_file} boot=on >/dev/null 2>&1
-                sysrc -f ${_settings_file} depend="" >/dev/null 2>&1
-                sysrc -f ${_settings_file} priority=99 >/dev/null 2>&1
+            if [ ! -f ${settings_file} ]; then
+                sysrc -f ${settings_file} boot=on >/dev/null 2>&1
+                sysrc -f ${settings_file} depend="" >/dev/null 2>&1
+                sysrc -f ${settings_file} priority=99 >/dev/null 2>&1
             fi
             # Add defaults if they dont exist
-            if ! grep -oq "boot=" ${_settings_file}; then
-                sysrc -f ${_settings_file} boot=on >/dev/null 2>&1
+            if ! grep -oq "boot=" ${settings_file}; then
+                sysrc -f ${settings_file} boot=on >/dev/null 2>&1
             fi
-            if ! grep -oq "depend=" ${_settings_file}; then
-                sysrc -f ${_settings_file} depend="" >/dev/null 2>&1
+            if ! grep -oq "depend=" ${settings_file}; then
+                sysrc -f ${settings_file} depend="" >/dev/null 2>&1
             fi
-            if ! grep -oq "priority=" ${_settings_file}; then
-                sysrc -f ${_settings_file} priority=99 >/dev/null 2>&1
+            if ! grep -oq "priority=" ${settings_file}; then
+                sysrc -f ${settings_file} priority=99 >/dev/null 2>&1
             fi
-            _priority="$(sysrc -f ${_settings_file} -n priority)"
-            echo "${_jail} ${_priority}"
+            priority="$(sysrc -f ${settings_file} -n priority)"
+            echo "${jail} ${priority}"
         done
     fi
 }
 
 set_target() {
-    local _TARGET=${1}
+
+    local target=${1}
     if [ "${2}" = "reverse" ]; then
-        local _order="${2}"
+        local order="${2}"
     else
-        local _order="forward"
+        local order="forward"
     fi
     JAILS=""
     TARGET=""
-    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+
+    if [ "${target}" = ALL ] || [ "${target}" = all ]; then
         target_all_jails
     else
-        for _jail in ${_TARGET}; do
-            if [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_jail}" | grep -Eq '^[0-9]+$'; then
-                if get_jail_name "${_jail}" > /dev/null; then
-                    _jail="$(get_jail_name ${_jail})"
+        for jail in ${target}; do
+            if [ ! -d "${bastille_jailsdir}/${target}" ] && echo "${jail}" | grep -Eq '^[0-9]+$'; then
+                if get_jail_name "${jail}" > /dev/null; then
+                    jail="$(get_jail_name ${jail})"
                 else
-                    error_continue "Error: JID \"${_jail}\" not found. Is jail running?"
+                    error_continue "Error: JID \"${jail}\" not found. Is jail running?"
                 fi
-            elif ! check_target_exists "${_jail}"; then
-                if jail_autocomplete "${_jail}" > /dev/null; then
-                    _jail="$(jail_autocomplete ${_jail})"
+            elif ! check_target_exists "${jail}"; then
+                if jail_autocomplete "${jail}" > /dev/null; then
+                    jail="$(jail_autocomplete ${jail})"
                 elif [ $? -eq 2 ]; then
-                if grep -Ehoqw ${_jail} ${bastille_jailsdir}/*/tags 2>/dev/null; then
-                        _jail="$(grep -Eow ${_jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
+                    if grep -Ehoqw ${jail} ${bastille_jailsdir}/*/tags 2>/dev/null; then
+                        jail="$(grep -Eow ${jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
                     else
-                        error_continue "Jail not found \"${_jail}\""
-            fi
+                        error_continue "Jail not found \"${jail}\""
+                    fi
                 else
                     echo
                     exit 1
                 fi
             fi
-            TARGET="${TARGET} ${_jail}"
-            JAILS="${JAILS} ${_jail}"
+            TARGET="${TARGET} ${jail}"
+            JAILS="${JAILS} ${jail}"
         done
         # Exit if no jails
         if [ -z "${TARGET}" ] && [ -z "${JAILS}" ]; then
             exit 1
         fi
-        if [ "${_order}" = "forward" ]; then
+        if [ "${order}" = "forward" ]; then
             TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
             JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
-        elif [ "${_order}" = "reverse" ]; then
+        elif [ "${order}" = "reverse" ]; then
             TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
             JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
         fi
@@ -237,33 +252,37 @@ set_target() {
 }
 
 set_target_single() {
-    local _TARGET="${1}"
-    if [ "${_TARGET}" = ALL ] || [ "${_TARGET}" = all ]; then
+
+    local target="${1}"
+    JAILS=""
+    TARGET=""
+
+    if [ "${target}" = ALL ] || [ "${target}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
-    elif [ "$(echo ${_TARGET} | wc -w)" -gt 1 ]; then
+    elif [ "$(echo ${target} | wc -w)" -gt 1 ]; then
         error_exit "Error: Command only supports a single TARGET."
-    elif [ ! -d "${bastille_jailsdir}/${_TARGET}" ] && echo "${_TARGET}" | grep -Eq '^[0-9]+$'; then
-        if get_jail_name "${_TARGET}" > /dev/null; then
-            _TARGET="$(get_jail_name ${_TARGET})"
+    elif [ ! -d "${bastille_jailsdir}/${target}" ] && echo "${target}" | grep -Eq '^[0-9]+$'; then
+        if get_jail_name "${target}" > /dev/null; then
+            target="$(get_jail_name ${target})"
         else
-            error_exit "Error: JID \"${_TARGET}\" not found. Is jail running?"
+            error_exit "Error: JID \"${target}\" not found. Is jail running?"
         fi
-    elif ! check_target_exists "${_TARGET}"; then
-            if jail_autocomplete "${_TARGET}" > /dev/null; then
-                _TARGET="$(jail_autocomplete ${_TARGET})"
+    elif ! check_target_exists "${target}"; then
+            if jail_autocomplete "${target}" > /dev/null; then
+                target="$(jail_autocomplete ${target})"
             elif [ $? -eq 2 ]; then
-                error_exit "Jail not found \"${_TARGET}\""
+                error_exit "Jail not found \"${target}\""
             else
                 echo
                 exit 1
             fi
     fi
+    TARGET="${target}"
+    JAILS="${target}"
     # Exit if no jails
-    if [ -z "${_TARGET}" ] && [ -z "${_JAILS}" ]; then
+    if [ -z "${target}" ] && [ -z "${jails}" ]; then
         exit 1
     fi
-    TARGET="${_TARGET}"
-    JAILS="${_TARGET}"
     export TARGET
     export JAILS
 }
@@ -274,7 +293,7 @@ set_bastille_mountpoints() {
     if checkyesno bastille_zfs_enable; then
 
         # We have to do this if ALTROOT is enabled/present
-        local _altroot="$(zpool get -Ho value altroot ${bastille_zfs_zpool})"
+        local altroot="$(zpool get -Ho value altroot ${bastille_zfs_zpool})"
 
         # Set mountpoints to *bastille*dir*
         # shellcheck disable=SC2034
@@ -293,34 +312,36 @@ set_bastille_mountpoints() {
         bastille_logsdir_mountpoint="${bastille_logsdir}"
 
         # Add _altroot to *dir* if set
-        if [ "${_altroot}" != "-" ]; then
+        if [ "${altroot}" != "-" ]; then
             # Set *dir* to include ALTROOT
-            bastille_prefix="${_altroot}${bastille_prefix}"
-            bastille_backupsdir="${_altroot}${bastille_backupsdir}"
-            bastille_cachedir="${_altroot}${bastille_cachedir}"
-            bastille_jailsdir="${_altroot}${bastille_jailsdir}"
-            bastille_releasesdir="${_altroot}${bastille_releasesdir}"
-            bastille_templatesdir="${_altroot}${bastille_templatesdir}"
-            bastille_logsdir="${_altroot}${bastille_logsdir}"
+            bastille_prefix="${altroot}${bastille_prefix}"
+            bastille_backupsdir="${altroot}${bastille_backupsdir}"
+            bastille_cachedir="${altroot}${bastille_cachedir}"
+            bastille_jailsdir="${altroot}${bastille_jailsdir}"
+            bastille_releasesdir="${altroot}${bastille_releasesdir}"
+            bastille_templatesdir="${altroot}${bastille_templatesdir}"
+            bastille_logsdir="${altroot}${bastille_logsdir}"
         fi
     fi
 }
 
 target_all_jails() {
-    local _JAILS="$(bastille list jails)"
+
+    local jails="$(bastille list jails)"
     JAILS=""
-    for _jail in ${_JAILS}; do
-        if [ -d "${bastille_jailsdir}/${_jail}" ]; then
-            JAILS="${JAILS} ${_jail}"
+
+    for jail in ${jails}; do
+        if [ -d "${bastille_jailsdir}/${jail}" ]; then
+            JAILS="${JAILS} ${jail}"
         fi
     done
     # Exit if no jails
     if [ -z "${JAILS}" ]; then
         exit 1
     fi
-    if [ "${_order}" = "forward" ]; then
+    if [ "${order}" = "forward" ]; then
         JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -n | awk '{print $1}')"
-    elif [ "${_order}" = "reverse" ]; then
+    elif [ "${order}" = "reverse" ]; then
         JAILS="$(list_jail_priority "${JAILS}" | sort -k2 -nr | awk '{print $1}')"
     fi
     export JAILS
@@ -400,6 +421,7 @@ validate_ip() {
 }
 
 generate_static_mac() {
+
     local jail_name="${1}"
     local external_interface="${2}"
     local external_interface_mac="$(ifconfig ${external_interface} | grep ether | awk '{print $2}')"
@@ -407,6 +429,7 @@ generate_static_mac() {
     local macaddr_prefix="58:9c:fc"
     # Use hash of interface+jailname for jail MAC suffix
     local macaddr_suffix="$(echo -n "${external_interface_mac}${jail_name}" | sed 's#:##g' | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+
     if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
         error_notify "Failed to generate MAC address."
     fi

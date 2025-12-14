@@ -49,7 +49,6 @@ EOF
 # Handle options.
 AUTO=0
 LIVE=0
-VNET_JAIL=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -99,6 +98,7 @@ fi
 TARGET="${1}"
 NEWNAME="${2}"
 IP="${3}"
+VNET_JAIL=0
 CLONE_INTERFACE_COUNT=0
 
 bastille_root_check

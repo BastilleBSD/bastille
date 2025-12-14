@@ -61,8 +61,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     x) enable_debug ;;
                     a) AUTO=1 ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -88,59 +88,59 @@ set_target "${TARGET}"
 
 validate_user() {
 
-    local _jail="${1}"
-    local _user="${2}"
+    local jail="${1}"
+    local user="${2}"
 
-    if jexec -l "${_jail}" id "${_user}" >/dev/null 2>&1; then
-        USER_SHELL="$(jexec -l "${_jail}" getent passwd "${_user}" | cut -d: -f7)"
+    if jexec -l "${jail}" id "${user}" >/dev/null 2>&1; then
+        USER_SHELL="$(jexec -l "${jail}" getent passwd "${user}" | cut -d: -f7)"
         if [ -n "${USER_SHELL}" ]; then
-            if jexec -l "${_jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l "${_jail}" $LOGIN -f "${_user}"
+            if jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                jexec -l "${jail}" $LOGIN -f "${user}"
             else
-                echo "Invalid shell for user ${_user}"
+                echo "Invalid shell for user ${user}"
             fi
         else
-            echo "User ${_user} has no shell"
+            echo "User ${user} has no shell"
         fi
     else
-        echo "Unknown user ${_user}"
+        echo "Unknown user ${user}"
     fi
 }
 
 check_fib() {
 
-    local _jail="${1}"
+    local jail="${1}"
 
-    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${_jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
 
     if [ -n "${fib}" ]; then
-        _setfib="setfib -F ${fib}"
+        setfib="setfib -F ${fib}"
     else
-        _setfib=""
+        setfib=""
     fi
 }
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Validate jail state
-    check_target_is_running "${_jail}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${_jail}"
+    check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${jail}"
     else
-        info "\n[${_jail}]:"
+        info "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${_jail}]:"
+    info "\n[${jail}]:"
 
-    LOGIN="$(jexec -l "${_jail}" which login)"
+    LOGIN="$(jexec -l "${jail}" which login)"
 
     if [ -n "${USER}" ]; then
-        validate_user "${_jail}" "${USER}"
+        validate_user "${jail}" "${USER}"
     else
-        check_fib "${_jail}"
-        LOGIN="$(jexec -l "${_jail}" which login)"
-        ${_setfib} jexec -l "${_jail}" ${LOGIN} -f root
+        check_fib "${jail}"
+        LOGIN="$(jexec -l "${jail}" which login)"
+        ${setfib} jexec -l "${jail}" ${LOGIN} -f root
     fi
 
 done

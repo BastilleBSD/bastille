@@ -50,8 +50,8 @@ EOF
 
 # Handle options.
 # We pass these to start and stop.
-_start_options=""
-_stop_options=""
+start_options=""
+stop_options=""
 IGNORE=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -59,11 +59,11 @@ while [ "$#" -gt 0 ]; do
             usage
             ;;
         -b|--boot)
-            _start_options="${_start_options} -b"
+            start_options="${start_options} -b"
             shift
             ;;
         -d|--delay)
-            _start_options="${_start_options} -d ${2}"
+            start_options="${start_options} -d ${2}"
             shift 2
             ;;
         -i|--ignore)
@@ -71,22 +71,22 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -v|--verbose)
-            _start_options="${_start_options} -v"
-            _stop_options="${_stop_options} -v"
+            start_options="${start_options} -v"
+            stop_options="${stop_options} -v"
             shift
             ;;
         -x|--debug)
-            _start_options="${_start_options} -x"
-            _stop_options="${_stop_options} -x"
+            start_options="${start_options} -x"
+            stop_options="${stop_options} -x"
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
-                    b) _start_options="${_start_options} -b" ;;
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
+                    b) start_options="${start_options} -b" ;;
                     i) IGNORE=1 ;;
-                    v) _start_options="${_start_options} -v" _stop_options="${_stop_options} -v" ;;
-                    x) _start_options="${_start_options} -x" _stop_options="${_stop_options} -x" ;;
+                    v) start_options="${start_options} -v" stop_options="${stop_options} -v" ;;
+                    x) start_options="${start_options} -x" stop_options="${stop_options} -x" ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
@@ -107,15 +107,15 @@ TARGET="${1}"
 bastille_root_check
 set_target "${TARGET}"
 
-for _jail in ${JAILS}; do
+for jail in ${JAILS}; do
 
     # Restart all jails except if --ignore
     if [ "${IGNORE}" -eq 0 ]; then
-        bastille stop ${_stop_options} ${_jail}
-        bastille start ${_start_options} ${_jail}
+        bastille stop ${stop_options} ${jail}
+        bastille start ${start_options} ${jail}
     elif [ "${IGNORE}" -eq 1 ]; then
-        if check_target_is_stopped "${_jail}"; then
-            info "\n[${_jail}]:"
+        if check_target_is_stopped "${jail}"; then
+            info "\n[${jail}]:"
             error_continue "Jail is stopped."
         fi
     fi

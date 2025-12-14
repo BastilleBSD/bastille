@@ -54,24 +54,24 @@ check_jail_validity() {
     # Validate jail network type and set IP4/6
     if [ "$( bastille config ${TARGET} get vnet )" != 'enabled' ]; then
 
-        _ip4_interfaces="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
-        _ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
+        ip4_interfaces="$(bastille config ${TARGET} get ip4.addr | sed 's/,/ /g')"
+        ip6_interfaces="$(bastille config ${TARGET} get ip6.addr | sed 's/,/ /g')"
 
         # Check if jail ip4.addr is valid (non-VNET only)
-        if [ "${_ip4_interfaces}" != "not set" ] && [ "${_ip4_interfaces}" != "disable" ]; then
-            if echo "${_ip4_interfaces}" | grep -q "|"; then
-                JAIL_IP="$(echo ${_ip4_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+        if [ "${ip4_interfaces}" != "not set" ] && [ "${ip4_interfaces}" != "disable" ]; then
+            if echo "${ip4_interfaces}" | grep -q "|"; then
+                JAIL_IP="$(echo ${ip4_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
-                JAIL_IP="$(echo ${_ip4_interfaces} | sed -E 's#/[0-9]+$##g')"
+                JAIL_IP="$(echo ${ip4_interfaces} | sed -E 's#/[0-9]+$##g')"
             fi
         fi
 
         # Check if jail ip6.addr is valid (non-VNET only)
-        if [ "${_ip6_interfaces}" != "not set" ] && [ "${_ip6_interfaces}" != "disable" ]; then
-            if echo "${_ip6_interfaces}" | grep -q "|"; then
-                JAIL_IP6="$(echo ${_ip6_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
+        if [ "${ip6_interfaces}" != "not set" ] && [ "${ip6_interfaces}" != "disable" ]; then
+            if echo "${ip6_interfaces}" | grep -q "|"; then
+                JAIL_IP6="$(echo ${ip6_interfaces} | awk '{print $1}' | awk -F"|" '{print $2}' | sed -E 's#/[0-9]+$##g')"
             else
-                JAIL_IP6="$(echo ${_ip6_interfaces} | sed -E 's#/[0-9]+$##g')"
+                JAIL_IP6="$(echo ${ip6_interfaces} | sed -E 's#/[0-9]+$##g')"
             fi
         fi
     else
