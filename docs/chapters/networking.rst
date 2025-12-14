@@ -107,8 +107,10 @@ Bastille includes a number of IP options for IPv4 networking.
 The IP address specified above can be any of the following options.
 
 * An IP in your local subnet should be chosen if you create your jail using
-  ``-V``, ``-B`` or ``-P`` (VNET jail). It is also preferable to add the
-  subnet mask (/24 or whaterver your subnet is) to the IP.
+  ``-V``, ``-B`` or ``-P`` (VNET jail).
+
+  Note: It is mandatory to add the subnet mask (/24 or whaterver your subnet is)
+  to the IP for any types of VNET jail. See below...
 
 * DHCP, SYNCDHCP, or 0.0.0.0 will configure your jail to use DHCP to obtain an
   address from your router. This should only be used with VNET jails.
@@ -130,9 +132,10 @@ The IP address specified above can be any of the following options.
   resolves to. This is an advanced option and should only be used if you know
   what you are doing.
 
-Note that jails support specifying an IP without the subnet (/24 or whatever
-yours is) but we highly recommend setting it, especially on VNET jails. Not
-doing so can cause issues in some rare cases.
+Standard (non-VNET) jails support specifying an IP without the subnet (/24 or whatever
+yours is), but for VNET jails it is mandatory. If none is supplied, it will
+default to /24. This is because FreeBSD does not support adding an IP to an interface
+without a subnet.
 
 IPv6 Network
 ^^^^^^^^^^^^
@@ -146,7 +149,8 @@ IPv6 address when creating a jail to use IPv6.
 
 The IP address specified above can be any of the following options.
 
-* A valid IPv6 address including the subnet.
+* A valid IPv6 address including the subnet. If not subnet is given, it
+  will defalut to /64.
 
 * SLAAC will configure your jail to use router advertisement to obtain an
   address from your router. This should only be used with VNET jails.

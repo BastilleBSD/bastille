@@ -140,6 +140,9 @@ fi
 # Default is standard interface
 if [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then
     STANDARD=1
+    VNET_JAIL=0
+else
+    VNET_JAIL=1
 fi
 
 if [ "${ACTION}" = "add" ]; then
@@ -175,32 +178,32 @@ else
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
-validate_ip() {
+define_ips() {
 
-    local ip="${1}"
-    local ip6="$( echo "${ip}" 2>/dev/null | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' )"
+    IP4_ADDR=""
+    IP6_ADDR=""
 
-    if [ -n "${ip6}" ]; then
-        info "\nValid: (${ip6})."
-        IP6_ADDR="${ip6}"
-    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
-        info "\nValid: (${ip})."
-        IP4_ADDR="${ip}"
-    else
-        local IFS
-        if echo "${ip}" 2>/dev/null | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            TEST_IP=$(echo "${ip}" | cut -d / -f1)
-            IFS=.
-            set ${TEST_IP}
-            for quad in 1 2 3 4; do
-                if eval [ \$$quad -gt 255 ]; then
-                    error_exit "Invalid: (${TEST_IP})"
-                fi
-            done
-            info "\nValid: (${ip})."
-            IP4_ADDR="${ip}"
-        else
-            error_exit "Invalid: (${ip})."
+    for ip in ${IP}; do
+        validate_ip "${ip}" "${VNET_JAIL}"
+    done
+
+    if [ -n "${IP4_ADDR}" ]; then
+        if [ "${IP4_ADDR}" = "inherit" ] || [ "${IP4_ADDR}" = "ip_hostname" ]; then
+	        if [ "$(bastille config ${TARGET} get vnet)" = "enabled" ];  then
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${IP4_ADDR}"
+            fi
+        elif [ "${IP4_ADDR}" = "0.0.0.0" ] || [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ]; then
+            if [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
+                error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
+            fi
+        elif ifconfig | grep -qwF "${IP4_ADDR}"; then
+            warn "\n[WARNING]: IP address already in use: ${TEST_IP}"
+        fi
+    fi
+
+    if [ -n "${IP6_ADDR}" ]; then
+        if [ "${IP6_ADDR}" = "SLAAC" ] && [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
+            error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
         fi
     fi
 }
@@ -210,9 +213,9 @@ validate_netif() {
     local interface="${1}"
 
     if ifconfig -l | grep -qwo ${interface}; then
-        info "\nValid: (${interface})."
+        info "\nValid interface: ${interface}"
     else
-        error_exit "Invalid: (${interface})."
+        error_exit "[ERROR]: Invalid interface: ${interface}"
     fi
 
     # Don't allow dots in INTERFACE if -V
@@ -448,7 +451,7 @@ EOF
 }
 EOF
         # Add config to /etc/rc.conf
-	if [ -n "${IP6_ADDR}" ]; then
+        if [ -n "${IP6_ADDR}" ]; then
             if [ "${IP6_ADDR}" = "SLAAC" ]; then
                 sysrc -f "${jail_rc_config}" ifconfig_${if}_ipv6="inet6 -ifdisabled accept_rtadv"
             else
@@ -466,9 +469,9 @@ EOF
 
     elif [ "${STANDARD}" -eq 1 ]; then
         if [ -n "${IP6_ADDR}" ]; then
-            sed -i '' "s/interface = .*/&\n  ip6.addr += ${if}|${ip};/" ${jail_config}
+            sed -i '' "s/ip6.addr = .*/&\n  ip6.addr += ${if}|${ip};/" ${jail_config}
         else
-            sed -i '' "s/interface = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
+            sed -i '' "s/ip4.addr = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
         fi
     fi
 }
@@ -635,7 +638,8 @@ case "${ACTION}" in
         validate_netif "${INTERFACE}"
 
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
-            error_exit "Interface is already added: \"${INTERFACE}\""
+            info "\nInterface already added: ${INTERFACE}"
+            exit 0
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
             add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             echo
@@ -644,7 +648,7 @@ case "${ACTION}" in
 
         ## validate IP if not empty
         if [ -n "${IP}" ]; then
-            validate_ip "${IP}"
+            define_ips "${IP}"
         fi
 
         if [ "${VNET}" -eq 1 ]; then
@@ -680,7 +684,7 @@ case "${ACTION}" in
         elif [ "${PASSTHROUGH}" -eq 1 ]; then
             if [ "$(bastille config ${TARGET} get vnet)" = "not set" ]; then
                 error_exit "[ERROR]: ${TARGET} is not a VNET jail."
-	    else
+            else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
             fi
             if [ -n "${VLAN_ID}" ]; then
@@ -704,10 +708,10 @@ case "${ACTION}" in
 
     remove|delete)
 
-        check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: \"${INTERFACE}\""
+        check_interface_added "${TARGET}" "${INTERFACE}" || error_exit "Interface not found in jail.conf: ${INTERFACE}"
         validate_netif "${INTERFACE}"
         if ! grep -q "${INTERFACE}" ${bastille_jailsdir}/${TARGET}/jail.conf; then
-            error_exit "[ERROR]: Interface not found in jail.conf: \"${INTERFACE}\""
+            error_exit "[ERROR]: Interface not found in jail.conf: ${INTERFACE}"
         else
             remove_interface "${TARGET}" "${INTERFACE}"
             if [ "${AUTO}" -eq 1 ]; then

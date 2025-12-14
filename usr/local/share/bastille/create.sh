@@ -111,50 +111,40 @@ validate_release() {
     OS_RELEASE="$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )"
 }
 
-validate_ip() {
+define_ips() {
 
-    local ip="${1}"
-    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    IP6_MODE="disable"
+    IP4_DEFINITION=""
+    IP6_DEFINITION=""
+    IP4_ADDR=""
+    IP6_ADDR=""
+    IP_HOSTNAME=""
 
-    if [ -n "${ip6}" ]; then
-        info "\nValid: (${ip6})."
-        # This is only used in this function to set IPX_DEFINITION
-        local ipx_addr="ip6.addr"
-    else
-        if [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
+    for ip in ${IP}; do
+        validate_ip "${ip}" "${VNET_JAIL}"
+    done
+
+    if [ -n "${IP4_ADDR}" ]; then
+        if [ "${IP4_ADDR}" = "inherit" ] || [ "${IP4_ADDR}" = "ip_hostname" ]; then
 	        if [ "${VNET_JAIL}" -eq 1 ]; then
-                error_exit "[ERROR]: Unsupported IP option for VNET jail: (${ip})."
-	        else
-                info "\nValid: (${ip})."
+                error_exit "[ERROR]: Unsupported IP option for VNET jail: ${IP4_ADDR}"
 	        fi
-        elif [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ] || [ "${ip}" = "0.0.0.0" ]; then
+        elif [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ] || [ "${IP4_ADDR}" = "0.0.0.0" ]; then
 	        if [ "${VNET_JAIL}" -eq 0 ]; then
-                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: (${ip})."
-	        else
-                info "\nValid: (${ip})."
+                error_exit "[ERROR]: Unsupported IP option for non-VNET jail: ${IP4_ADDR}"
 	        fi
-        else
-            local IFS
-            if echo "${ip}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-                TEST_IP=$(echo "${ip}" | cut -d / -f1)
-                IFS=.
-                set ${TEST_IP}
-                for quad in 1 2 3 4; do
-                    if eval [ \$$quad -gt 255 ]; then
-                        error_continue "Invalid: (${TEST_IP})"
-                    fi
-                done
-                ipx_addr="ip4.addr"
-                info "\nValid: (${ip})."
-            else
-                error_continue "Invalid: (${ip})."
-            fi
+        # Warn if IP is in use
+        elif ifconfig | grep -qwF "${IP4_ADDR}"; then
+            warn "[WARNING]: IP address in use: ${IP4_ADDR}"
         fi
+        local ipx_addr="ip4.addr"
     fi
 
-    # Warn if IP is in use
-    if ifconfig | grep -qwF "${TEST_IP}"; then
-        warn "[WARNING]: IP address in use (${TEST_IP})."
+    if [ -n "${IP6_ADDR}" ]; then
+        if [ "${IP6_ADDR}" = "SLAAC" ] && [ "${VNET_JAIL}" -eq 0 ]; then
+            error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
+        fi
+        local ipx_addr="ip6.addr"
     fi
 
     # Set interface value
@@ -171,24 +161,24 @@ validate_ip() {
     fi
 
     # Determine IP/Interface mode
-    if [ "${ip}" = "inherit" ]; then
+    if [ "${IP4_ADDR}" = "inherit" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
-            IP4_DEFINITION="ip4 = ${ip};"
-            IP6_DEFINITION="ip6 = ${ip};"
+            IP4_DEFINITION="ip4 = ${IP4_ADDR};"
+            IP6_DEFINITION="ip6 = ${IP6_ADDR};"
             IP6_MODE="new"
         else
-            IP4_DEFINITION="ip4 = ${ip};"
+            IP4_DEFINITION="ip4 = ${IP4_ADDR};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
         fi
-    elif [ "${ip}" = "ip_hostname" ]; then
+    elif [ "${IP4_ADDR}" = "ip_hostname" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
-            IP_HOSTNAME="${ip}"
+            IP_HOSTNAME="${IP4_ADDR}"
             IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION="${IP_HOSTNAME};"
             IP6_MODE="new"
         else
-            IP_HOSTNAME="${ip}"
+            IP_HOSTNAME="${IP4_ADDR}"
             IP4_DEFINITION="${IP_HOSTNAME};"
             IP6_DEFINITION=""
             IP6_MODE="disable"
@@ -201,32 +191,18 @@ validate_ip() {
                 IP6_ADDR="${ip}"
             fi
         else
-	    error_exit "[ERROR]: Unsupported IP option for standard jail: (${ip})."
+            error_exit "[ERROR]: Unsupported IP option for standard jail: ${ip}"
         fi
     else
-        if [ "${ipx_addr}" = "ip4.addr" ]; then
-            IP4_ADDR="${ip}"
-            IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
-        elif [ "${ipx_addr}" = "ip6.addr" ]; then
-            IP6_ADDR="${ip}"
-            IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${ip};"
-            IP6_MODE="new"
+        if [ "${VNET_JAIL}" -eq 0 ]; then
+            if [ "${ipx_addr}" = "ip4.addr" ]; then
+                IP4_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${IP4_ADDR};"
+            elif [ "${ipx_addr}" = "ip6.addr" ]; then
+                IP6_DEFINITION="${ipx_addr} = ${bastille_jail_conf_interface}|${IP6_ADDR};"
+                IP6_MODE="new"
+            fi
         fi
     fi
-}
-
-validate_ips() {
-
-    IP6_MODE="disable"
-    IP4_DEFINITION=""
-    IP6_DEFINITION=""
-    IP4_ADDR=""
-    IP6_ADDR=""
-    IP_HOSTNAME=""
-
-    for ip in ${IP}; do
-        validate_ip "${ip}"
-    done
 }
 
 validate_netif() {
@@ -234,21 +210,21 @@ validate_netif() {
     local LIST_INTERFACES="$(ifconfig -l)"
 
     if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
-        error_exit "[ERROR]: Invalid: (${INTERFACE})."
+        error_exit "[ERROR]: Invalid interface: ${INTERFACE}"
     elif [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
         for _bridge in $(ifconfig -g bridge | grep -vw "${INTERFACE}bridge"); do
             if ifconfig ${_bridge} | grep "member" | grep -owq "${INTERFACE}"; then
-                error_exit "[ERROR]: Interface (${INTERFACE}) is already a member of bridge: ${_bridge}"
+                error_exit "[ERROR]: Interface '${INTERFACE}' is already a member of bridge: ${_bridge}"
             fi
         done
     else
-        info "\nValid: (${INTERFACE})."
+        info "\nValid interface: ${INTERFACE}"
     fi
 
     # Don't allow dots in INTERFACE for -V|--vnet jails
     if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
         if echo "${INTERFACE}" | grep -q "\."; then
-	    error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
+            error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
         fi
     fi
 }
@@ -671,44 +647,39 @@ create_jail() {
             ifconfig_inet=""
             ifconfig_inet6=""
 
-            # Check for DHCP
-            if echo "${IP}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
-                ifconfig_inet="SYNCDHCP"
-            else
-                # Set Gateway
-                if [ -n "${OPT_GATEWAY}" ]; then
-                    gateway="${OPT_GATEWAY}"
-                elif [ -n "${bastille_network_gateway}" ]; then
-                    gateway="${bastille_network_gateway}"
+            # Enable IPv4 if set
+            if [ -n "${IP4_ADDR}" ]; then
+                if echo "${IP4_ADDR}" | grep -qE '(0[.]0[.]0[.]0|DHCP|SYNCDHCP)'; then
+                    ifconfig_inet="SYNCDHCP"
                 else
-                    gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    # Set IP and Gateway
+                    ifconfig_inet="inet ${IP4_ADDR}"
+                    if [ -n "${OPT_GATEWAY}" ]; then
+                        gateway="${OPT_GATEWAY}"
+                    elif [ -n "${bastille_network_gateway}" ]; then
+                        gateway="${bastille_network_gateway}"
+                    else
+                        gateway="$(netstat -4rn | awk '/default/ {print $2}')"
+                    fi
+
                 fi
             fi
 
-            # Add IPv4 address (this is empty if DHCP is used)
-            if [ -n "${IP4_ADDR}" ]; then
-                ifconfig_inet="inet ${IP4_ADDR}"
-            fi
-
-            # Enable IPv6 if used
+            # Enable IPv6 if set
             if [ -n "${IP6_ADDR}" ]; then
                 ifconfig_inet6="inet6 -ifdisabled"
-                if echo "${IP}" | grep -qE 'SLAAC'; then
+                if echo "${IP6_ADDR}" | grep -qE 'SLAAC'; then
                     # Enable SLAAC if requested
                     ifconfig_inet6="${ifconfig_inet6} accept_rtadv"
                 else
-                    # Set Gateway
+                    # Set IP and Gateway
+                    ifconfig_inet6="${ifconfig_inet6} ${IP6_ADDR}"
                     if [ -n "${bastille_network_gateway6}" ]; then
                         gateway6="${bastille_network_gateway6}"
                     else
                         gateway6="$(netstat -6rn | awk '/default/ {print $2}')"
                     fi
                 fi
-            fi
-
-            # Add IPv6 address (this is empty if SLAAC is used)
-            if [ -n "${IP6_ADDR}" ]; then
-                ifconfig_inet6="${ifconfig_inet6} ${IP6_ADDR}"
             fi
 
             # We need to pass IP4 and IP6 separately
@@ -966,10 +937,10 @@ elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
     VNET_INTERFACE_TYPE="passthrough"
 fi
 
-NAME="$1"
-RELEASE="$2"
-IP="$3"
-INTERFACE="$4"
+NAME="${1}"
+RELEASE="${2}"
+IP="${3}"
+INTERFACE="${4}"
 
 info "\nAttempting to create jail: ${NAME}"
 
@@ -1094,7 +1065,7 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
 
     # Validate IP address
     if [ -n "${IP}" ]; then
-        validate_ips
+        define_ips
     else
         usage
     fi
