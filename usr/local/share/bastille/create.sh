@@ -162,13 +162,13 @@ validate_ip() {
                 set ${TEST_IP}
                 for quad in 1 2 3 4; do
                     if eval [ \$$quad -gt 255 ]; then
-                        error_continue "Invalid: (${TEST_IP})"
+                        error_exit "Invalid: (${TEST_IP})"
                     fi
                 done
                 ipx_addr="ip4.addr"
                 info "\nValid: (${ip4})."
             else
-                error_continue "Invalid: (${ip4})."
+                error_exit "Invalid: (${ip4})."
             fi
         fi
     fi
