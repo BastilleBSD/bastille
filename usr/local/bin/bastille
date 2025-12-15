@@ -233,7 +233,7 @@ case "${CMD}" in
     update) ;;
     upgrade) ;;
     verify) ;;
-    zfs) ;:
+    zfs) ;;
     *)
         usage
         ;;
