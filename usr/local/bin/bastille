@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.2.2.251204
+BASTILLE_VERSION=1.3.0.251214
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -186,47 +186,54 @@ fi
 
 # Handle sub-commands.
 case "${CMD}" in
-    # 38 total commands
-    bootstrap| \
-    clone| \
-    cmd| \
-    config| \
-    console| \
-    convert| \
-    cp| \
-    create| \
-    destroy| \
-    edit| \
-    etcupdate| \
-    export| \
-    htop| \
-    import| \
-    jcp| \
-    limits| \
-    list| \
-    migrate| \
-    monitor| \
-    mount| \
-    network| \
-    pkg| \
-    rcp| \
-    rdr| \
-    rename| \
-    restart| \
-    service| \
-    setup| \
-    start| \
-    stop| \
-    sysrc| \
-    tags| \
-    template| \
-    top| \
-    umount| \
-    update| \
-    upgrade| \
-    verify| \
-    zfs)
+    # 39 total commands
+    bootstrap) ;;
+    clone) ;;
+    cmd) ;;
+    config) ;;
+    console) ;;
+    convert) ;;
+    cp) ;;
+    create) ;;
+    destroy|destory)
+        CMD="destroy"
         ;;
+    edit) ;;
+    etcupdate) ;;
+    export) ;;
+    htop) ;;
+    import) ;;
+    jcp) ;;
+    limit|limits)
+        CMD="limits"
+        ;;
+    list) ;;
+    migrate) ;;
+    monitor) ;;
+    mount) ;;
+    net|network)
+        CMD="network"
+        ;;
+    pkg) ;;
+    rcp) ;;
+    rdr) ;;
+    rename) ;;
+    restart) ;;
+    service) ;;
+    setup) ;;
+    start) ;;
+    stop) ;;
+    sysrc) ;;
+    tags) ;;
+    template) ;;
+    top) ;;
+    umount|unmount)
+        CMD="umount"
+        ;;
+    update) ;;
+    upgrade) ;;
+    verify) ;;
+    zfs) ;:
     *)
         usage
         ;;
