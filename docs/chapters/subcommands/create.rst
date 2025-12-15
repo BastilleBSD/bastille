@@ -60,7 +60,7 @@ options. See the below help output.
       -B | --bridge                   Enable VNET. INTERFACE must be a bridge.
       -C | --clone                    Create a clone jail (ZFS only).
       -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
-      -E | --empty                    Create an empty jail.
+      -E | --empty                    Create an empty jail (NAME only).
       -g | --gateway IP               Specify a default router/gateway.
       -L | --linux                    Create a Linux jail (experimental).
       -M | --static-mac               Use a static/persistent MAC address (VNET only).
