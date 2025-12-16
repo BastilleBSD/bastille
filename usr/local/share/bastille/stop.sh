@@ -124,6 +124,9 @@ for jail in ${JAILS}; do
         bastille limits "${jail}" clear
     fi
 
+    # Remove unbound rules (if set)
+    unbound_clear "${jail}"
+
     # Stop jail
     jail ${OPTION} -f "${bastille_jailsdir}/${jail}/jail.conf" -r "${jail}"
 

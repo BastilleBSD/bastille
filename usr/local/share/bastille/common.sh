@@ -587,6 +587,83 @@ validate_netconf() {
     fi
 }
 
+unbound_enabled(){
+    if checkyesno bastille_network_use_unbound; then
+        # Check unbound-control executable presence
+        if command -v unbound-control >/dev/null 2>&1; then
+            # Check unbound status
+            if unbound-control status >/dev/null 2>&1; then
+                # Check/add bastille local unbound zone
+                if [ -n "${bastille_network_unbound_zone}" ]; then
+                    if ! unbound-control list_local_zones | grep -qE "^${bastille_network_unbound_zone}. static$"; then
+                        unbound-control local_zone "${bastille_network_unbound_zone}" static >/dev/null 2>&1
+                    fi
+                fi
+                return 0
+            else
+                warn "bastille_network_use_unbound is set, but unbound is not enabled in system"
+            fi
+        else
+            warn "bastille_network_use_unbound is set, but couldn't find the 'unbound-control' executable"
+        fi
+    fi
+    return 1
+}
+
+local_unbound_enabled(){
+    if checkyesno bastille_network_use_local_unbound; then
+        # Check local-unbound-control executable presence
+        if command -v local-unbound-control >/dev/null 2>&1; then
+            # Check local unbound status
+            if local-unbound-control status >/dev/null 2>&1; then
+                # Check/add bastille local unbound zone
+                if [ -n "${bastille_network_unbound_zone}" ]; then
+                    if ! local-unbound-control list_local_zones | grep -qE "^${bastille_network_unbound_zone}. static$"; then
+                        local-unbound-control local_zone "${bastille_network_unbound_zone}" static >/dev/null 2>&1
+                    fi
+                fi
+                return 0
+            else
+                warn "bastille_network_use_local_unbound is set, but unbound is not enabled in system"
+            fi
+        else
+            warn "bastille_network_use_local_unbound is set, but couldn't find the 'local-unbound-control' executable"
+        fi
+    fi
+    return 1
+}
+
+unbound_update() {
+    local name="${1}"
+    local entry="${2}"
+
+    if [ -n "${bastille_network_unbound_zone}" ]; then
+        name="${name}.${bastille_network_unbound_zone}."
+    fi
+
+    if unbound_enabled; then
+        unbound-control "local_data" "${name}" "${entry}" >/dev/null 2>&1
+    fi
+    if local_unbound_enabled; then
+        local-unbound-control "local_data" "${name}" "${entry}" >/dev/null 2>&1
+    fi
+}
+
+unbound_clear() {
+    local name="${1}"
+
+    if [ -n "${bastille_network_unbound_zone}" ]; then
+        name="${name}.${bastille_network_unbound_zone}."
+    fi
+
+    if unbound_enabled; then
+        unbound-control "local_data_remove" "${name}" >/dev/null 2>&1
+    fi
+    if local_unbound_enabled; then
+        local-unbound-control "local_data_remove" "${name}" >/dev/null 2>&1
+    fi
+}
+
 checkyesno() {
     ## copied from /etc/rc.subr -- cedwards (20231125)
     ## issue #368 (lowercase values should be parsed)
