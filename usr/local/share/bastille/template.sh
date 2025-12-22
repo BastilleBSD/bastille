@@ -296,11 +296,15 @@ for jail in ${JAILS}; do
 
     echo "Applying template: ${TEMPLATE}..."
 
-    ## get jail ip4 and ip6 values
+    # Get non-VNET IP
     bastille_jail_path=$(/usr/sbin/jls -j "${jail}" path)
     if [ "$(bastille config ${jail} get vnet)" != 'enabled' ]; then
         jail_ip4="$(bastille config ${jail} get ip4.addr | sed 's/,/ /g' | awk '{print $1}')"
         jail_ip6="$(bastille config ${jail} get ip6.addr | sed 's/,/ /g' | awk '{print $1}')"
+    # Get VNET IP
+	else
+        jail_ip4="$(jexec -l ${jail} ifconfig -an | grep "^[[:space:]]*inet " | grep -v "127.0.0.1" | awk '{print $2}')"
+        jail_ip6="$(jexec -l ${jail} ifconfig -an | grep "^[[:space:]]*inet6" | grep -Ev 'lo[0-9]+| ::1 | fe80::' | awk '{print $2}' | sed 's/%.*//g')"
     fi
 
     ## remove value if ip4 was not set or disabled, otherwise get value
