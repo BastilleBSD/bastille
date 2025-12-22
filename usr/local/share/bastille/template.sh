@@ -70,7 +70,7 @@ parse_arg_value() {
     local arg="${1}"
 
     # Parses the value after = and then escapes back/forward slashes and single quotes in it. -- cwells
-    echo "${arg}" | sed -E 's/[^=]+=?//' | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/'\''/'\''\\'\'\''/g' -e 's/&/\\&/g' -e 's/"//g'
+    eval echo "${arg}" | sed -E 's/[^=]+=?//' | sed -e 's/\\/\\\\/g' -e 's/\//\\\//g' -e 's/'\''/'\''\\'\'\''/g' -e 's/&/\\&/g' -e 's/"//g'
 }
 
 get_arg_value() {
