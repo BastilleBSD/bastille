@@ -1,0 +1,101 @@
+.Dd 2025/12/06
+.Dt bastille-config 1
+.Os
+.Sh NAME
+.Nm bastille config
+.Nd Get, set, add or remove properties from jail(s).
+.Sh SYNOPSIS
+.Nm
+.Op Fl x
+.Cm set|add
+.Ar PROPERTY
+.Op VALUE
+.Nm
+.Op Fl x
+.Cm get|remove
+.Ar PROPERTY
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will modify targeted jail(s) configuration and
+get, set, add or remove properties.
+.Bl -tag -width Ds
+.It Sy bastille config Oo Fl x Oc Sy set|add Ar PROPERTY Op VALUE
+.Bl -tag -width Ds
+.It Sy set
+Set the value of the specified property from the jail configuration.
+If the property is not set, it will be added and set.
+.It Sy add
+Same as set.
+.It Fl x , Fl -debug
+Enable debug mode.
+.El
+.Pp
+It is not always necesary to set a
+.Ar VALUE
+for a
+.Ar PROPERTY .
+For example, 'allow.mlock=1' is the same as 'allow.mlock'.
+.It Sy bastille config Oo Fl x Oc Sy get|remove Ar PROPERTY
+.Bl -tag -width Ds
+.It Sy get
+Get the value of the specified
+.Ar PROPERTY
+from the jail configuration. If a property is not present, 'not
+enabled' will be shown. If the property has no value, but
+is present, 'enabled' will be returned. Otherwise you will be
+shown the value.
+.It Sy remove
+Remove the specified
+.Ar PROPERTY
+from the jail configuration.
+.It Fl x , -debug
+Enable debug mode.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Set allow.mlock inside myjail:
+.Sy bastille config myjail set allow.mlock 1
+.It Set to priority value of myjail:
+.Sy bastille config myjail set priority 10
+.It Set the boot value:
+.Sy bastille config myjail set boot off
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

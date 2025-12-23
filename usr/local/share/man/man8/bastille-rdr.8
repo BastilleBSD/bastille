@@ -1,0 +1,104 @@
+.Dd 2025/12/06
+.Dt bastille-rdr 1
+.Os
+.Sh NAME
+.Nm bastille rdr
+.Nd Redirect host port to jail port.
+.Sh SYNOPSIS
+.Nm
+.Op Fl x
+.Op Fl d Ar IP
+.Op Fl i Ar INTERFACE
+.Op Fl s Ar IP|TABLE
+.Op Fl t Ar ipv4|ipv6
+.Ar TARGET Sy tcp|udp Ar HOST_PORT JAIL_PORT Op log LOG_OPTIONS
+.Nm
+.Op Fl x
+.Ar TARGET Sy clear|reset|list
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will redirect
+.Ar HOST_PORT
+to
+.Ar JAIL_PORT .
+.Bl -tag -width Ds
+.It Sy bastille rdr Oo Fl x Oc Oo Fl d Ar IP Oc Oo Fl i Ar INTERFACE Oc Oo Fl s Ar IP|TABLE Oc Oo Fl t Ar ipv4|ipv6 Oc Sy add Ar tcp|udp HOST_PORT JAIL_PORT Op log LOG_OPTIONS
+.Bl -tag -width Ds
+.It Sy add
+Add the rdr rule to the jail.
+.It Fl d Ar IP , Fl -destination Ar IP
+Limit rdr to a destination IP.
+.It Fl i Ar INTERFACE , Fl -interface Ar INTERFACE
+Specify interface(s) to apply rule to. Comma-separated.
+.It Fl s Ar IP|TABLE , Fl -source Ar IP|TABLE
+Limit rdr to a source IP or table.
+.Pp
+The table should exist in your 'pf.conf'.
+.It Fl t Ar ipv4|ipv6 , Fl -type Ar ipv4|ipv6
+Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.
+.It Fl x , Fl -debug
+Enable debug mode.
+.El
+.It Sy bastille rdr Oo Fl x Oc Sy clear|reset|list 
+.Bl -tag -width Ds
+.It Sy clear
+Clear the rules from the system, but don't remove from the jail
+configuration.
+.It Sy reset
+Clear the rules from the system, and remove from the jail
+configuration.
+.It Sy list
+List active rules.
+.Ar INTERFACE
+from the jail.
+.It Fl x , Fl -debug
+Enable debug mode.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Forward port 80 from host to myjail:
+.Sy bastille rdr myjail tcp 80 80
+.It Forward port 80 from host to myjail on vtnet0:
+.Sy bastille rdr -i vtnet0 myjail tcp 80 80
+.It Forward port 80 from host to myjail, limiting to 200.200.200.200:
+.Sy bastille rdr -s 200.200.200.200 myjail tcp 80 80
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

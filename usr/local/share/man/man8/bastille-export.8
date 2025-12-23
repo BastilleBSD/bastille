@@ -1,0 +1,104 @@
+.Dd 2025/12/06
+.Dt bastille-export 1
+.Os
+.Sh NAME
+.Nm bastille export
+.Nd Export a jail. 
+.Sh SYNOPSIS
+.Nm
+.Op Fl alvx
+.Op Fl -gz
+.Op Fl -xz
+.Op Fl -zst
+.Op Fl -raw
+.Op Fl -tgz
+.Op Fl -txz
+.Op Fl -tzst
+.Ar TARGET Op PATH
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will export
+.Ar TARGET
+to an image (ZFS) or archive.
+.Bl -tag -width Ds
+.It Fl a , Fl -auto
+Auto mode. Start/stop jail(s) if required.
+.It Fl l , Fl -live
+Export a running jail (ZFS only).
+.Pp
+Normally jails must be stopped to export them. Set this option
+to allow exporting a hot/running jail.
+.It Fl -gz
+Export to a '.gz' compressed image (ZFS only).
+.It Fl -xz
+Export to a '.xz' compressed image (ZFS only).
+.It Fl -zst
+Export to a '.zst' compressed image (ZFS only).
+.It Fl -raw
+Export a an uncompressed RAW image (ZFS only).
+.It Fl -tgz
+Export to a '.tgz' compressed archive.
+.It Fl -txz
+Export to a '.txz' compressed archive.
+.It Fl -tzst
+Export to a '.tzst' compressed archive.
+.It Fl v , Fl -verbose
+Enable verbose mode (ZFS only).
+.It Fl x , Fl -debug
+Enable debug mode.
+.El
+.Pp
+If no
+.Ar PATH
+is specified, the jail will be exported to the backups directory.
+See
+.Xr bastille.conf 5 .
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Export my jail as a '.tzst' archive:
+.Sy bastille export --tzst myjail
+.It Export myjail to $PWD as a '.gz' image:
+.Sy bastille export --gz myjail $PWD
+.It Export myjail (while running) as a '.xz' image:
+.Sy bastille export -l --xz myjail
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

@@ -1,0 +1,90 @@
+.Dd 2025/12/06
+.Dt bastille-destroy 1
+.Os
+.Sh NAME
+.Nm bastille destroy
+.Nd Destroy jail(s) or release(s). 
+.Sh SYNOPSIS
+.Nm
+.Op Fl ayx
+.Ar JAIL
+.Nm
+.Op Fl cfx
+.Ar RELEASE
+.Sh DESCRIPTION
+The
+.Nm
+sub-command is used to destroy jails or releases.
+.Bl -tag -width Ds
+.It Sy destroy Oo Fl ayx Oc Ar JAIL
+.Bl -tag -width Ds
+.It Fl a , Fl -auto
+Auto mode. Start/stop jail(s) if required.
+.It Fl y , Fl -yes
+Do no prompt. Assume always yes.
+.Pp
+By default Bastille will ask
+if you are sure you want to destroy the jail. Set this option
+to bypass these prompts.
+.It Fl x , -debug
+Enable debug mode.
+.El
+.It Sy destroy Oo Fl cfx Oc Ar RELEASE
+.Bl -tag -width Ds
+.It Fl c , Fl -no-cache
+Do not destroy cache when destroying release (legacy releases).
+.Pp
+This does not apply
+to PkgBase releases. Cache are the '.txz' dist files downloaded
+during the 'bootstrap' phase.
+.It Fl f , Fl -force
+Force unmount any mounted datasets when destroying a jail or
+release (ZFS only).
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Destroy 15.0-RELEASE:
+.Sy bastille destroy 15.0-RELEASE
+.It Destroy myjail forcibly, without prompts, and auto mode:
+.Sy bastille destroy -afy myjail
+.It Destroy myjail and yourjail:
+.Sy bastille destroy 'myjail yourjail'
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8
