@@ -13,7 +13,7 @@ install:
 	@echo "BASTILLE_VERSION: ${BASTILLE_DEV_VERSION}"
 	@sed -i '' "s|BASTILLE_VERSION=.*|BASTILLE_VERSION=${BASTILLE_DEV_VERSION}|" usr/local/bin/bastille
 	@cp -Rv usr /
-	@gzip -f -n /usr/local/share/man/man1/bastille*.8
+	@gzip -f -n /usr/local/share/man/man8/bastille*.8
 	@gzip -f -n /usr/local/share/man/man5/bastille*.5
 	@echo
 	@echo "This method is for testing & development."
