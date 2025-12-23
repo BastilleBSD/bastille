@@ -1,0 +1,69 @@
+.Dd 2025/12/06
+.Dt bastille-console 1
+.Os
+.Sh NAME
+.Nm bastille console
+.Nd Console into a jail.
+.Sh SYNOPSIS
+.Nm
+.Op Fl ax
+.Ar TARGET
+.Op USER
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will enter a jails shell. If a user is given, it
+will enter as that user.
+.Bl -tag -width Ds
+.It Fl a , -auto
+Auto mode. Start/stop jail(s) if required.
+.It Fl x , -debug
+Enable debug mode.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Console into myjail:
+.Sy bastille console myjail
+.It Console into myjail as bob:
+.Sy bastille console myjail bob
+.It Console into a stopped jail as bob:
+.Sy bastille console -a myjail bob
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

@@ -1,0 +1,97 @@
+.Dd 2025/12/06
+.Dt bastille-convert 1
+.Os
+.Sh NAME
+.Nm bastille convert
+.Nd Convert a jail from thin to thick; convert a jail to a custom release.
+.Sh SYNOPSIS
+.Nm
+.Op Fl ayx
+.Ar TARGET
+.Nm
+.Op Fl ax
+.Ar TARGET RELEASE
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will convert a thin jail to a thick jail if only the
+.Ar TARGET
+argument is given. If a
+.Ar TARGET
+and
+.Ar RELEASE
+is specified, it will convert the jail
+(must be a thick jail) into a custom release. The jail will remain intact,
+and you will have a duplicate of it to use a a release base for
+any new jails.
+.Bl -tag -width Ds
+.It Sy bastille convert Oo Fl ayx Oc Ar TARGET
+.Bl -tag -width Ds
+.It Fl a , -auto
+Auto mode. Start/stop jail(s) if required.
+.It Fl y , -yes
+Do not prompt. Assume always yes.
+.It Fl x , -debug
+Enable debug mode.
+.Pp
+Converting a thin jail to a thick jail is not reversible. You will
+be be prompted to accept this action if [-y|--yes] is not specified.
+.El
+.It Sy bastille convert Oo Fl ayx Oc Ar TARGET RELEASE
+.Bl -tag -width Ds
+.It Fl a , -auto
+Auto mode. Start/stop jail(s) if requried.
+.It Fl x , -debug
+Enable debug mode.
+.Pp
+A release created by this method is stored in the releases directory, and
+can be used to create jails with the '--no-validate' flag. See
+.Xr bastille-create 8 .
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Convert myjail from thin to thick:
+.Sy bastille convert myjail
+.It Convert myjail from thin to thick (no prompts):
+.Sy bastille convert -ay myjail
+.It Create myrelease from myjail:
+.Sy bastille convert myjail myrelease
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

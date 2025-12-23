@@ -1,0 +1,132 @@
+.Dd 2025/12/06
+.Dt bastille-etcupdate 1
+.Os
+.Sh NAME
+.Nm bastille etcupdate
+.Nd Update /etc for jail(s). 
+.Sh SYNOPSIS
+.Nm
+.Op Fl fx
+.Sy bootstrap
+.Ar RELEASE
+.Nm
+.Op Fl dx
+.Ar TARGET
+.Sy update
+.Ar RELEASE
+.Nm
+.Op Fl x
+.Ar TARGET
+.Sy diff|resolve
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will bootstrap a tarball from
+.Ar RELEASE
+which can then be used to update the contents of
+.Pa /etc
+inside jails after performing an upgrade.
+.Bl -tag -width Ds
+.It Sy bastille etcupdate Oo Fl fx Oc Sy bootstrap Ar RELEASE
+.Bl -tag -width Ds
+.It Sy bootstrap
+Bootstrap the 'src' archives for
+.Ar RELEASE ,
+then create a tarball from it. The tarball makes it
+much easier and faster to apply to jails.
+.It Fl f , Fl -force
+Force a re-bootstrap of a release.
+.It Fl x , Fl -debug
+Enable debug mode.
+.El
+.It Sy bastille etcupdate Oo Fl dx Oc Ar TARGET Sy update Ar RELEASE
+.Bl -tag -width Ds
+.It Sy update
+Update the contents of
+.Pa /etc
+inside
+.Ar TARGET ,
+using
+.Ar RELEASE
+as the base.
+.Ar RELEASE
+must first be bootstrapped.
+.It Fl d , Fl -dry-run
+Show output, but do not apply.
+.It Fl x , Fl -debug
+Enable debug mode.
+.El
+.Pp
+The
+.Ar RELEASE
+specified here is the release you want to use as the base of
+your
+.Ar TARGET
+/etc contents.
+.It Sy bastille etcupdate Oo Fl x Oc Ar TARGET Sy diff|resolve
+.Bl -tag -width Ds
+.It Sy diff
+Compare and show changes to
+.Pa /etc
+inside the
+.Ar TARGET .
+.It Sy resolve
+Resolve any conflicts for
+.Pa /etc
+inside
+.Ar TARGET .
+Sometimes when performing the
+.Nm
+sub-command, it leaves
+some conflicts between the old and new files. Use this option
+to resolve these conflicts.
+.It Fl x , Fl -debug
+Enable debug mode.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Bootstrap 15.0-RELEASE for use with etcupdate:
+.Sy bastille etcupdate bootstrap 15.0-RELEASE
+.It Update /etc for myjail to 15.0-RELEASE:
+.Sy bastille etcupdate myjail 15.0-RELEASE
+.It Resolve any conflicts left over for myjail:
+.Sy bastille etcupdate myjail resolve
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

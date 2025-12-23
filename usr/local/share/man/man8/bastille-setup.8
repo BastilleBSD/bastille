@@ -1,0 +1,101 @@
+.Dd 2025/12/06
+.Dt bastille-setup 1
+.Os
+.Sh NAME
+.Nm bastille setup
+.Nd Auto-configure network, firewall, storage and more...
+.Sh SYNOPSIS
+.Nm
+.Op Fl ax
+.Nm
+.Op Fl ax
+.Ar bridge|linux|loopback|netgraph|firewall|shared|storage|vnet
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will attempt to configure different options
+for your environment.
+.Bl -tag -width Ds
+.It Sy bridge
+Configure a bride interface for use with the '-B|--bridge' create
+option.
+.It Sy linux
+Configure linux compatability. This involves loading and persisting
+some necessary modules, as well as enabling Linux support
+with 'linux_enable=YES'.
+.It Sy loopback
+This will configure an interface to use as a loopback. This is for
+NAT jails.
+.It Sy netgraph
+Configure netgraph for your host. This requires loading and
+persisting certain 'netgraph_*' modules.
+.It Sy firewall
+Configure the 'pf' firewall for use with NAT jails, as well
+as the 'rdr' sub-command. See
+.Xr bastille-rdr 8 .
+.It Sy shared
+Configure a 'shared' interface. This is essentially an interface
+where jails will 'share' with the host, while still having
+their own locally reachable IP.
+.It Sy storage
+Configure storage (ZFS or UFS).
+.It Sy vnet
+Configure your host to be able to use VNET jails.
+.It Fl y , -yes
+Do not prompt. Assume always yes.
+.It Fl x , -debug
+Enable debug mode.
+.El
+.Pp
+The 'loopback' and 'shared' options will de-configure each other when
+they are configured. The INTERFACE these options configure are
+only ever used when the INTERFACE argument is not specified
+during jail creation.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Setup Bastille for the first time:
+.Sy bastille setup
+.It Setup Linux support:
+.Sy bastille setup linux
+.It Setup a bridge:
+.Sy bastille setup bridge
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

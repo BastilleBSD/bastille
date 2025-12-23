@@ -1,0 +1,75 @@
+.Dd 2025/12/06
+.Dt bastille-update 1
+.Os
+.Sh NAME
+.Nm bastille update
+.Nd Update a jail or release.
+.Sh SYNOPSIS
+.Nm
+.Op Fl afx
+.Ar TARGET
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will update
+.Ar TARGET
+with the latest patches and security updates.
+The
+.Ar TARGET
+can be either a jail or a release.
+.Bl -tag -width Ds
+.It Fl a , Fl -auto
+Auto mode. Start/stop jail(s) if required.
+.It Fl f , Fl -force
+Force update a release (FreeBSD legacy releases).
+.Pp
+This will force the 'fetch' command to proceed in the
+event of a previous failed upgrade.
+.It Fl x , -debug
+Enable debug mode.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Update 15.0-RELEASE:
+.Sy bastille update 15.0-RELEASE
+.It Update myjail:
+.Sy bastille update myjail
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

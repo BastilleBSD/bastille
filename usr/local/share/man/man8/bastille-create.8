@@ -1,0 +1,165 @@
+.Dd 2025/12/06
+.Dt bastille-create 1
+.Os
+.Sh NAME
+.Nm bastille create
+.Nd Create a jail.
+.Sh SYNOPSIS
+.Nm
+.Op Fl BCDELMPTVvx
+.Op Fl g Ar IP
+.Op Fl n Ar IP,IP
+.Op Fl p Ar VALUE
+.Op Fl v Ar VALUE
+.Op Fl Z Ar VALUE
+.Op Fl -no-validate
+.Op Fl -no-boot
+.Ar NAME RELEASE IP Op INTERFACE
+.Sh DESCRIPTION
+The
+.Nm
+sub-command is used to create a jail with any of the given options. The
+.Ar INTERFACE
+value is only optional for classic/standard jails. For any type of VNET
+jail, it is mandatory.
+.Bl -tag -width Ds
+.It Fl B , -bridge
+Enable VNET.
+.Ar INTERFACE
+must be a bridge.
+.Pp
+This option is for use with manually created bridges.
+.It Fl C , -clone
+Create a clone jail (ZFS only).
+.Pp
+These are simply zfs clones of the release.
+.It Fl D , -dual
+Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
+.Pp
+This option is only supported for non-VNET jails.
+.It Fl E , -empty
+Create an empty jail (NAME only).
+.Pp
+This option will only create the jail structure and config, but the root will be empty.
+.It Fl g Ar IP , Fl -gateway Ar IP
+Specify a default router/gateway.
+.PP
+Bastille normally detects your gateway from your host. Set
+this option to override it.
+.It Fl L , -linux
+Create a Linux jail (experimental).
+.It Fl M , -static-mac
+Use a static/persistent MAC address (VNET only).
+.It Fl n Ar IP,IP Fl -nameserver Ar IP,IP
+Specify nameserver(s) for the jail. Comma-separated.
+.It Fl -no-validate
+Do not validate the release name.
+.Pp
+By default, Bastille will attempt to validate the release name against
+a known index of official release names. Set this option to bypass that.
+Useful in the case of an unknown release, or releases create using 'bastille
+convert'. See
+.Xr bastille-convert 8 .
+.It Fl -no-boot
+Set boot=off.
+.Pp
+By default, jails are created with 'boot=on' so as to start on system
+startup.
+.It Fl P , -passthrough
+Enable VNET.
+.Ar INTERFACE
+is used as-is.
+.Pp
+This will pass the entire
+.Ar INTERFACE
+into the jail, which will make it unusable to the host until the jail
+is stopped.
+.It Fl p Ar VALUE , Fl -priority Ar VALUE
+Set priority value.
+.Pp
+This controls the order in which jails
+start and stop on system startup and shutdown. It also controls the
+order in which any sub-command is executed when multiple jails are
+tarteted.
+.It Fl T , -thick
+Create a thick jail.
+.Pp
+Thick jails are complete copies of the release.
+.It Fl V , -vnet
+Enable VNET.
+.Ar INTERFACE
+must be a physical interface.
+.Pp
+This option is for use with a physical interface. Bridging and epairs
+are handled by the 'jib' script.
+.It Fl v Ar VALUE , Fl -vlan Ar VALUE
+Set VLAN ID (VNET only).
+.Pp
+This will configure the jail to use the specified
+.Ar VALUE
+as the VLAN ID.
+.It Fl x , -debug
+Enable debug mode.
+.It Fl Z Ar VALUE , Fl -zfs-opts Ar VALUE,VALUE
+Custom zfs options. Comma-separated.
+.Pp
+Comma separated list of ZFS options to create the jail with.
+This overrides the defaults. See
+.Xr bastille.conf 5 .
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Create a thick jail, with static MAC and priority 10:
+.Sy bastille create -TM -p 10 myjail 15.0-RELEASE 10.23.23.1
+.It Create a VNET jail attached to a manual bridge:
+.Sy bastille create -B myjail 15.0-RELEASE DHCP mycustombridge
+.It Create a Linux jail:
+.Sy bastille create -L myjail bookworm 10.2.4.5
+.It Create a VNET jail with boot=off and custom gateway:
+.Sy bastille create -V --no-boot -g 10.1.1.1 myjail 15.0-RELEASE 10.1.1.4/24 vtnet0
+.Pp
+In the above examples, sometimes an
+.Ar INTERFACE
+is specified, and sometimes it is not.
+It is ONLY optional for classic/standard jails. See the 'Networking' section
+in
+.Xr bastille.conf 5 .
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-bootstrap 8 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8

@@ -1,0 +1,96 @@
+.Dd 2025/12/06
+.Dt bastille-bootstrap 1
+.Os
+.Sh NAME
+.Nm bastille bootstrap
+.Nd Bootstrap a release or template(s). 
+.Sh SYNOPSIS
+.Nm
+.Op Fl pux
+.Ar RELEASE
+.Op ARCH
+.Nm
+.Op Fl x
+.Ar TEMPLATE
+.Sh DESCRIPTION
+The
+.Nm
+sub-command will bootstrap a release to use when creating jails. It will
+also fetch and verify templates if a url is given as an arguement.
+.Bl -tag -width Ds
+.It Sy bastille bootstrap Oo Fl pux Oc Ar RELEASE Op ARCH
+.Bl -tag -width Ds
+.It Fl p , Fl -pkgbase
+Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above). Bastille uses
+distribution sets by default, but this option enables the use of
+package sets when bootstrapping FreeBSD release.
+.It Fl u , Fl -update
+Update the release after bootstrap.
+.It Fl x , Fl -debug
+Enable debug mode.
+.Pp
+If
+.Ar ARCH
+is specified, it will be used to bootstrap, as
+opposed to using the hosts arch.
+.El
+.It Sy bastille bootstrap Oo Fl x Oc Ar TEMPLATE
+.Bl -tag -width Ds
+.It Fl x , Fl -debug
+Enable debug mode.
+.Pp
+.Ar TEMPLATE
+should be a url containing either a single template, or multiple
+templates.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It Bootstrap 15.0-RELEASE:
+.Sy bastille bootstrap 15.0-RELEASE
+.It Bootstrap official BastilleBSD templates:
+.Sy bastille bootstrap https://github.com/BastilleBSD/templates
+.It Bootstrap 15.0-RELEASE using PkgBase:
+.Sy bastille bootstrap -p 15.0-RELEASE
+.It Bootstrap 15.0-RELEASE using i386 as the arch:
+.Sy bastille bootstrap 15.0-RELEASE --i386
+.It Bootstrap the official BastilleBSD template collection:
+.Sy bastille bootstrap https://github.com/BastilleBSD/templates
+.Sh SEE ALSO
+.Xr bastille.conf 5 ,
+.Xr bastille-clone 8 ,
+.Xr bastille-cmd 8 ,
+.Xr bastille-config 8 ,
+.Xr bastille-console 8 ,
+.Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
+.Xr bastille-create 8 ,
+.Xr bastille-destroy 8 ,
+.Xr bastille-edit 8 ,
+.Xr bastille-etcupdate 8 ,
+.Xr bastille-export 8 ,
+.Xr bastille-htop 8 ,
+.Xr bastille-import 8 ,
+.Xr bastille-jcp 8 ,
+.Xr bastille-limits 8 ,
+.Xr bastille-list 8 ,
+.Xr bastille-migrate 8 ,
+.Xr bastille-monitor 8 ,
+.Xr bastille-mount 8 ,
+.Xr bastille-network 8 ,
+.Xr bastille-pkg 8 ,
+.Xr bastille-rcp 8 ,
+.Xr bastille-rdr 8 ,
+.Xr bastille-rename 8 ,
+.Xr bastille-restart 8 ,
+.Xr bastille-service 8 ,
+.Xr bastille-setup 8 ,
+.Xr bastille-start 8 ,
+.Xr bastille-stop 8 ,
+.Xr bastille-sysrc 8 ,
+.Xr bastille-tags 8 ,
+.Xr bastille-template 8 ,
+.Xr bastille-top 8 ,
+.Xr bastille-umount 8 ,
+.Xr bastille-update 8 ,
+.Xr bastille-upgrade 8 ,
+.Xr bastille-verify 8 ,
+.Xr bastille-zfs 8
