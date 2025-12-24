@@ -121,7 +121,7 @@ for jail in ${JAILS}; do
     bastille_jail_monitor="${bastille_jailsdir}/${jail}/monitor"
 
     ## iterate service(s) and check service status; restart on failure
-    if ! check_target_is_running "${jail}" && [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
+    if check_target_is_running "${jail}" && [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
         for service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
             if ! jexec -l -U root "${jail}" service "${service}" status >/dev/null 2>/dev/null; then
