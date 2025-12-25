@@ -81,6 +81,9 @@ else
         rc|rc.conf)
             FILE="/root/etc/rc.conf"
             ;;
+        resolv|resolv.conf)
+            FILE="/root/etc/resolv.conf"
+            ;;
         *)
             if [ ! -f "${bastille_jailsdir}/${TARGET}/${FILE}" ]; then
                 error_exit "[ERROR]: File not found: ${FILE}"
