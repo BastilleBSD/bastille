@@ -111,7 +111,7 @@ fi
 TARGET="${1}"
 ACTION="${2}"
 SERVICE="${3}"
-SERVICE_FAILED=0
+ERRORS=0
 
 bastille_root_check
 set_target "${TARGET}"
@@ -131,7 +131,7 @@ for jail in ${JAILS}; do
                 ## attempt to restart the service if needed; update logs if unable
                 if ! jexec -l -U root "${jail}" service "${service}" restart; then
                     echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${service} service in ${jail}." | tee -a "${bastille_monitor_logfile}"
-                    SERVICE_FAILED=1
+                    ERRORS=$((ERRORS +1))
                 fi
             fi
         done
@@ -183,7 +183,7 @@ for jail in ${JAILS}; do
 done
 
 # Final ping to healthcheck URL
-if [ "$SERVICE_FAILED" -eq 0 ]; then
+if [ "${ERRORS}" -ne 0 ]; then
     if [ -n "${bastille_monitor_healthchecks}" ]; then
         curl -fsS --retry 3 "${bastille_monitor_healthchecks}" > /dev/null 2>&1
     else
