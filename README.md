@@ -130,11 +130,11 @@ the number by 1.
 ### Important Limitations
 
 Due to the JIB script that gets used when creating VNET jails, you
-will face changes with the MAC address if these jails.
+will face changes with the MAC addresses of these jails.
 
 If you have any VNET jails (created with -V), the MAC addresses
 will change if you did not also use -M when creating them. This
-is due to the JIB script generating a MAC based on the jail interface
+is due to the JIB script generating a MAC address based on the jail interface
 name.
 
 If you did use -M when creating them, the MAC should stay the same.
