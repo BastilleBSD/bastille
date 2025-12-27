@@ -143,7 +143,7 @@ if [ -n "${bastille_export_options}" ]; then
             -x)
                 enable_debug
                 ;;
-            -*) 
+            -*)
                 error_notify "[ERROR]: Unknown Option: \"${1}\""
                 usage
                 ;;
@@ -354,7 +354,7 @@ export_check() {
             EXPORT_TYPE="archive"
         fi
 
-        if [ -n "${RAW_EXPORT}" ]; then
+        if [ "${RAW_EXPORT}" -eq 1 ]; then
             EXPORT_INFO="to a raw ${EXPORT_TYPE}"
         else
             EXPORT_INFO="to a compressed ${FILE_EXT} ${EXPORT_TYPE}"
@@ -510,8 +510,8 @@ jail_export() {
             # Generate container checksum file
             cd "${bastille_backupsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_backupsdir}"
             if ! sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"; then
-	        error_exit "[ERROR]: Failed to generate sha256 file."
-	    fi
+            error_exit "[ERROR]: Failed to generate sha256 file."
+        fi
             info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
         fi
     fi
