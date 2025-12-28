@@ -373,12 +373,12 @@ validate_ip() {
         if [ "${vnet_jail}" -eq 1 ]; then
             if [ -z "${subnet}" ]; then
                 subnet="64"
-                ip6="${ip6}/${subnet}"
             elif ! echo "${subnet}" | grep -Eq '^[0-9]+$'; then
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             fi
+            ip6="${ip6}/${subnet}"
         fi
         info "\nValid IP: ${ip6}"
         export IP6_ADDR="${ip6}"
@@ -393,12 +393,12 @@ validate_ip() {
         if [ "${vnet_jail}" -eq 1 ]; then
             if [ -z "${subnet}" ]; then
                 subnet="24"
-                ip4="${ip4}/${subnet}"
             elif ! echo "${subnet}" | grep -Eq '^[0-9]+$'; then
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
                 error_exit "[ERROR]: Invalid subnet: /${subnet}"
             fi
+            ip4="${ip4}/${subnet}"
         fi
         if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
             test_ip=$(echo "${ip4}" | cut -d / -f1)
