@@ -125,13 +125,13 @@ define_ips() {
 
     if [ -n "${IP4_ADDR}" ]; then
         if [ "${IP4_ADDR}" = "inherit" ] || [ "${IP4_ADDR}" = "ip_hostname" ]; then
-	        if [ "${VNET_JAIL}" -eq 1 ]; then
+            if [ "${VNET_JAIL}" -eq 1 ]; then
                 error_exit "[ERROR]: Unsupported IP option for VNET jail: ${IP4_ADDR}"
-	        fi
+            fi
         elif [ "${IP4_ADDR}" = "DHCP" ] || [ "${IP4_ADDR}" = "SYNCDHCP" ] || [ "${IP4_ADDR}" = "0.0.0.0" ]; then
-	        if [ "${VNET_JAIL}" -eq 0 ]; then
+            if [ "${VNET_JAIL}" -eq 0 ]; then
                 error_exit "[ERROR]: Unsupported IP option for non-VNET jail: ${IP4_ADDR}"
-	        fi
+            fi
         # Warn if IP is in use
         elif ifconfig | grep -qwF "${IP4_ADDR}"; then
             warn "[WARNING]: IP address in use: ${IP4_ADDR}"
@@ -516,8 +516,15 @@ create_jail() {
                         # shellcheck disable=SC2140
                         zfs send ${OPT_SEND} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${RELEASE}"@"${SNAP_NAME}" | \
                         zfs receive "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                        zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
-                        zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+
+                        # Do not attempt to set/inherit mountpoint if 'bastille_prefix' and 'bastille_zfs_zpool/bastille_zfs_prefix' are the same
+                        if [ "$(zfs get -H -o value mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root")" = "/${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root" ]; then
+                            # Just set the zfs options to the jail dataset
+                            zfs set ${ZFS_OPTIONS} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        else
+                            zfs set ${ZFS_OPTIONS} mountpoint=none "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                            zfs inherit mountpoint "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NAME}/root"
+                        fi
 
                         ## cleanup temp snapshots initially
                         # shellcheck disable=SC2140
