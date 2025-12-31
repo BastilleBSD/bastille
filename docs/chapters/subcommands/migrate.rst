@@ -16,11 +16,11 @@ port by supplying it as in ``user@host:port``.
 
       Options:
 
-      -a | --auto         Auto mode. Start/stop jail(s) if required.
-      -b | --backup       Keep archives on remote system.
-      -d | --destroy      Destroy local jail after migration.
-         | --doas         Use 'doas' instead of 'sudo'.
-      -k | --keyfile      Specify an alternative private keyfile name. Must be in '~/.ssh'
-      -l | --live         Migrate a running jail (ZFS only).
-      -p | --password     Use password based authentication.
-      -x | --debug        Enable debug mode.
+      -a | --auto             Auto mode. Start/stop jail(s) if required.
+      -b | --backup           Keep archives on remote system.
+      -d | --destroy          Destroy local jail after migration.
+         | --doas             Use 'doas' instead of 'sudo'.
+      -k | --keyfile FILE     Specify an alternative private keyfile name. Must be in '~/.ssh'
+      -l | --live             Migrate a running jail (ZFS only).
+      -p | --password         Use password based authentication.
+      -x | --debug            Enable debug mode.
