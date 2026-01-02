@@ -667,6 +667,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         -p|--pretty)
             OPT_PRETTY=1
+            OPT_JSON=1
             shift
             ;;
         -u|--up)
