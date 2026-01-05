@@ -6,8 +6,9 @@
 .Nd Migrate jail(s) to a remote system.
 .Sh SYNOPSIS
 .Nm
-.Op Fl abdklpx
+.Op Fl abdlpx
 .Op Fl -doas
+.Op Fl k Ar FILE
 .Ar TARGET USER@HOST Ns Op :PORT
 .Sh DESCRIPTION
 The
@@ -27,7 +28,7 @@ Destroy local jail after migration.
 Use 'doas' instead of 'sudo'.
 .Pp
 The default is sudo.
-.It Fl k , Fl -keyfile
+.It Fl k Ar FILE , Fl -keyfile Ar FILE
 Specify an alternative private keyfile name. Must be
 in '~/.ssh'.
 .It Fl l , Fl -live
