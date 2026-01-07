@@ -128,6 +128,20 @@ bootstrapped, or you are using the template url
 
 ``RDR``           - redirect specified ports to the jail
 
+There are two versions of the ``RDR`` hook:
+
+* Simple: proto hostport jailport, as shown in the table above
+* Advanced: [ipv4 ip46 dual] interface source-ip dest-ip proto hostport jailport
+
+An example of the advanced ``RDR``:
+
+``RDR ipv4 vtnet0 192.168.0.1 any tcp 2022 22``
+
+This forwards port 22 in the jail to port 2022 on the host, allowing only connections from 
+192.168.0.1, an IP address external to the host, all other IPs will be denied.
+
+Note that ``dual`` can only be used if both source-ip and dest-ip are ``any``.
+
 ``RENDER``        - replace ARG values inside specified files inside the jail
 
 If a directory is specified here, ARGS will be replaced in all files underneath, or
