@@ -137,13 +137,16 @@ line_in_file() {
     eval set -- "${2}"
     local line="${1}"
     local file_path="${2}"
+    local file_in_jail_path="${jail_path}/${file_path}"
+    local file_in_jail_dir="$(dirname "${file_in_jail_path}")"
 
-    if [ -f "${jail_path}/${file_path}" ]; then
-        if ! grep -qxF "${line}" "${jail_path}/${file_path}"; then
-            echo "${line}" >> "${jail_path}/${file_path}"
+    if [ -f "${file_in_jail_path}" ]; then
+        if ! grep -qxF "${line}" "${file_in_jail_path}"; then
+            echo "${line}" >> "${file_in_jail_path}"
 	fi
     else
-        warn "[WARNING]: Path not found for line_in_file: ${file_path}"
+        mkdir -p "${file_in_jail_dir}"
+        echo "${line}" > "${file_in_jail_path}"
     fi
 }
 
