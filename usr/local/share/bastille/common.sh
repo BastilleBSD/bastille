@@ -360,66 +360,6 @@ update_fstab() {
     fi
 }
 
-validate_ip() {
-
-    local ip="${1}"
-    local vnet_jail="${2}"
-    local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
-    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
-    local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
-    local IFS
-
-    if [ -n "${ip6}" ]; then
-        if [ "${vnet_jail}" -eq 1 ]; then
-            if [ -z "${subnet}" ]; then
-                subnet="64"
-            elif ! echo "${subnet}" | grep -Eq '^[0-9]+$'; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            fi
-            ip6="${ip6}/${subnet}"
-        fi
-        info "\nValid IP: ${ip6}"
-        export IP6_ADDR="${ip6}"
-    elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
-            info "\nValid IP: ${ip}"
-            export IP4_ADDR="${ip}"
-            export IP6_ADDR="${ip}"
-    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
-            info "\nValid IP: ${ip}"
-            export IP4_ADDR="${ip}"
-    elif [ -n "${ip4}" ]; then
-        if [ "${vnet_jail}" -eq 1 ]; then
-            if [ -z "${subnet}" ]; then
-                subnet="24"
-            elif ! echo "${subnet}" | grep -Eq '^[0-9]+$'; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
-                error_exit "[ERROR]: Invalid subnet: /${subnet}"
-            fi
-            ip4="${ip4}/${subnet}"
-        fi
-        if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
-            test_ip=$(echo "${ip4}" | cut -d / -f1)
-            IFS=.
-            set ${test_ip}
-            for quad in 1 2 3 4; do
-                if eval [ \$$quad -gt 255 ]; then
-                    error_exit "[ERROR]: Invalid IP: ${ip4}"
-                fi
-            done
-
-            info "\nValid IP: ${ip4}"
-            export IP4_ADDR="${ip4}"
-        else
-            error_exit "[ERROR]: Invalid IP: ${ip4}"
-        fi
-    else
-        error_exit "[ERROR]: IP incorrectly formatted: ${ip}"
-    fi
-}
-
 generate_static_mac() {
 
     local jail_name="${1}"
@@ -428,7 +368,7 @@ generate_static_mac() {
     # Use FreeBSD vendor MAC prefix (58:9c:fc) for jail MAC prefix
     local macaddr_prefix="58:9c:fc"
     # Use hash of interface+jailname for jail MAC suffix
-    local macaddr_suffix="$(echo -n "${external_interface_mac}${jail_name}" | sed 's#:##g' | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    local macaddr_suffix="$(echo -n "${external_interface_mac}${external_interface}${jail_name}" | sed 's#:##g' | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
 
     if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
         error_notify "Failed to generate MAC address."
@@ -565,6 +505,66 @@ EOF
   vnet.interface = ${external_interface};
   exec.prestop += "ifconfig ${external_interface} -vnet ${jail_name}";
 EOF
+    fi
+}
+
+validate_ip() {
+
+    local ip="${1}"
+    local vnet_jail="${2}"
+    local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
+    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
+    local IFS
+
+    if [ -n "${ip6}" ]; then
+        if [ "${vnet_jail}" -eq 1 ]; then
+            if [ -z "${subnet}" ]; then
+                subnet="64"
+            elif ! echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 128 ]; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            fi
+            ip6="${ip6}/${subnet}"
+        fi
+        info "\nValid IP: ${ip6}"
+        export IP6_ADDR="${ip6}"
+    elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
+            info "\nValid IP: ${ip}"
+            export IP4_ADDR="${ip}"
+            export IP6_ADDR="${ip}"
+    elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
+            info "\nValid IP: ${ip}"
+            export IP4_ADDR="${ip}"
+    elif [ -n "${ip4}" ]; then
+        if [ "${vnet_jail}" -eq 1 ]; then
+            if [ -z "${subnet}" ]; then
+                subnet="24"
+            elif ! echo "${subnet}" | grep -Eq '^[0-9]+$'; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            elif [ "${subnet}" -lt 1 ] || [ "${subnet}" -gt 32 ]; then
+                error_exit "[ERROR]: Invalid subnet: /${subnet}"
+            fi
+            ip4="${ip4}/${subnet}"
+        fi
+        if echo "${ip4}" | grep -Eq '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'; then
+            test_ip=$(echo "${ip4}" | cut -d / -f1)
+            IFS=.
+            set ${test_ip}
+            for quad in 1 2 3 4; do
+                if eval [ \$$quad -gt 255 ]; then
+                    error_exit "[ERROR]: Invalid IP: ${ip4}"
+                fi
+            done
+
+            info "\nValid IP: ${ip4}"
+            export IP4_ADDR="${ip4}"
+        else
+            error_exit "[ERROR]: Invalid IP: ${ip4}"
+        fi
+    else
+        error_exit "[ERROR]: IP incorrectly formatted: ${ip}"
     fi
 }
 
