@@ -360,14 +360,25 @@ for jail in ${JAILS}; do
 
             # Apply overrides for commands/aliases and arguments. -- cwells
             case $cmd in
-                arg) # This is a template argument definition. -- cwells
+                arg+)
+                    arg_name=$(get_arg_name "${args}")
+                    arg_value=$(get_arg_value "${args}" "$@")
+                    if [ -z "${arg_value}" ]; then
+                        error_exit "[ERROR]: No value provided for mandatory arg: ${arg_name}"
+                    else
+                        ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${arg_name}}/${arg_value}/g'"
+                    fi
+                    continue
+                    ;;
+                arg)
                     arg_name=$(get_arg_name "${args}")
                     arg_value=$(get_arg_value "${args}" "$@")
                     if [ -z "${arg_value}" ]; then
                         warn "[WARNING]: No value provided for arg: ${arg_name}"
+                        SCRIPT=$(printf '%s\n' "${SCRIPT}" | grep -Fv "\${${arg_name}}")
+                    else
+                        ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${arg_name}}/${arg_value}/g'"
                     fi
-                    # Build a list of sed commands like this: -e 's/${username}/root/g' -e 's/${domain}/example.com/g'
-                    ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${arg_name}}/${arg_value}/g'"
                     continue
                     ;;
                 cmd)

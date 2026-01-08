@@ -27,7 +27,7 @@ one example of how you might use each one.
 +---------------+---------------------+-----------------------------------------+
 | HOOK          | format              | example                                 |
 +===============+=====================+=========================================+
-| ARG           | ARG=VALUE           | MINECRAFT_MEMX="1024M"                  |
+| ARG[+]        | ARG=VALUE           | MINECRAFT_MEMX="1024M"                  |
 +---------------+---------------------+-----------------------------------------+
 | CMD           | /bin/sh command     | /usr/bin/chsh -s /usr/local/bin/zsh     |
 +---------------+---------------------+-----------------------------------------+
@@ -92,6 +92,8 @@ The ARG hook has three values that are built in, and will differ for every jail.
 The values are ``JAIL_NAME``, ``JAIL_IP``, and ``JAIL_IP6``. These can be used
 inside any template without setting the values at the top of the Bastillefile.
 The values are automatically retrieved from the targeted jails configuration.
+
+``ARG+``          - the ``+`` makes the ``ARG`` mandatory
 
 ``CMD``           - run the specified command
 
