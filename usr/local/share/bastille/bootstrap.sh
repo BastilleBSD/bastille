@@ -168,6 +168,11 @@ bootstrap_directories() {
 
 cleanup_directories() {
 
+    # Don't cleanup if FIRST_RUN=0
+    if [ "${FIRST_RUN}" -eq 0 ]; then
+        return
+    fi
+
     # Cleanup on failed bootstrap
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ]; then
@@ -224,6 +229,11 @@ validate_release() {
             OPT_ARCH="i386"
             RELEASE="${RELEASE}-${OPT_ARCH}"
         fi
+    fi
+
+    # Verify release existence (needed for cleanup)
+    if [ ! -d "${bastille_releasesdir}/${RELEASE}" ]; then
+        FIRST_RUN=1
     fi
 }
 
@@ -505,7 +515,6 @@ bootstrap_template() {
 # Handle options.
 PKGBASE=0
 OPT_UPDATE=0
-ERRORS=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -524,8 +533,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     p) PKGBASE=1 ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -545,6 +554,8 @@ NOCACHEDIR=""
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 DEBOOTSTRAP_OPTIONS=""
+ERRORS=0
+FIRST_RUN=0
 
 bastille_root_check
 
