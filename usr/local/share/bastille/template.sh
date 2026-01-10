@@ -348,6 +348,7 @@ for jail in ${JAILS}; do
 
         # Ignore blank lines and comments. -- cwells
         SCRIPT=$(awk '{ if (substr($0, length, 1) == "\\") { printf "%s", substr($0, 1, length-1); } else { print $0; } }' "${bastille_template}/Bastillefile" | grep -v '^[[:blank:]]*$' | grep -v '^[[:blank:]]*#')
+        SKIP_ARGS=""
 
         # Use a newline as the separator. -- cwells
         IFS='
@@ -360,6 +361,17 @@ for jail in ${JAILS}; do
 
             # Rest of the line with "arg" variables replaced will be the arguments. -- cwells
             args=$(echo "${line}" | awk -F '[ ]' '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
+
+			# Skip any args that don't have a value
+            SKIP_ARG=0
+            for arg in ${SKIP_ARGS}; do
+                if echo "${line}" | grep -qo "\${${arg}}"; then
+                    SKIP_ARG=1
+                fi
+            done
+            if [ "${SKIP_ARG}" -eq 1 ]; then
+                continue
+            fi
 
             # Apply overrides for commands/aliases and arguments. -- cwells
             case $cmd in
@@ -378,7 +390,7 @@ for jail in ${JAILS}; do
                     arg_value=$(get_arg_value "${args}" "$@")
                     if [ -z "${arg_value}" ]; then
                         warn "[WARNING]: No value provided for arg: ${arg_name}"
-                        SCRIPT=$(printf '%s\n' "${SCRIPT}" | grep -Fv "\${${arg_name}}")
+                        SKIP_ARGS=$(printf '%s\n%s' "${SKIP_ARGS}" "${arg_name}")
                     else
                         ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${arg_name}}/${arg_value}/g'"
                     fi
