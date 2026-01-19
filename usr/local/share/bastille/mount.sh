@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [FS_TYPE OPTIONS DUMP PASS_NUMBER]"
+    error_notify "Usage: bastille mount [option(s)] TARGET HOST_PATH JAIL_PATH [FS_TYPE FS_OPTIONS DUMP PASS_NUMBER]"
     cat << EOF
 
     Options:
