@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille jcp [option(s)] SOURCE_JAIL JAIL_PATH DESTINATION_JAIL JAIL_PATH"
+    error_notify "Usage: bastille jcp [option(s)] SOURCE_JAIL SOURCE_PATH DESTINATION_JAIL DESTINATION_PATH"
     cat << EOF
 
     Options:
