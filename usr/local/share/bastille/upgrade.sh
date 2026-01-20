@@ -100,7 +100,7 @@ thick_jail_check() {
     check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${TARGET}"
     else
-        info "\n[${TARGET}]:"
+        info 1 "\n[${TARGET}]:"
         error_notify "Jail is not running."
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
@@ -164,7 +164,7 @@ thin_jail_check() {
     check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${TARGET}"
     else
-        info "\n[${TARGET}]:"
+        info 1 "\n[${TARGET}]:"
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
@@ -228,7 +228,7 @@ release_check() {
 
 jail_upgrade() {
 
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
 
     # Upgrade a thin jail
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
@@ -246,7 +246,7 @@ jail_upgrade() {
             bastille start "${TARGET}"
         fi
 
-        info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
+        info 1 "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
         info 2 "See 'bastille etcupdate TARGET' to update /etc\n"
 
     else
@@ -267,10 +267,10 @@ jail_upgrade() {
 
                 # Update "osrelease" inside jail.conf using 'bastille config'
                 bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
-                info "\nUpgraded ${TARGET}: ${OLD_RELEASE} > ${NEW_RELEASE}"
+                info 1 "\nUpgraded ${TARGET}: ${OLD_RELEASE} > ${NEW_RELEASE}"
                 warn "\nPlease run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing the upgrade.\n"
             else
-                info "\nNo upgrades available.\n"
+                info 1 "\nNo upgrades available.\n"
             fi
 
         elif [ "${JAIL_PLATFORM_OS}" = "HardenedBSD" ]; then
@@ -303,9 +303,9 @@ jail_upgrade() {
 
             UPGRADED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
             if [ "${OLD_RELEASE}" != "${UPGRADED_RELEASE}" ]; then
-                info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}\n"
+                info 1 "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}\n"
             else
-                info "\nNo upgrades available.\n"
+                info 1 "\nNo upgrades available.\n"
             fi
         fi
     fi
@@ -326,7 +326,7 @@ jail_upgrade_pkgbase() {
             local fingerprints="${jailpath}/usr/share/keys/pkg"
         fi
 
-        info "\n[${TARGET}]:"
+        info 1 "\n[${TARGET}]:"
 
         # Verify trusted pkg keys
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
@@ -375,12 +375,12 @@ jail_upgrade_pkgbase() {
         UPGRADED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
         if [ "${OLD_RELEASE}" != "${UPGRADED_RELEASE}" ]; then
             bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
-            info "\nUpgrade complete: ${OLD_RELEASE} > ${UPGRADED_RELEASE}\n"
+            info 1 "\nUpgrade complete: ${OLD_RELEASE} > ${UPGRADED_RELEASE}\n"
         else
-            info "\nNo updates available.\n"
+            info 1 "\nNo updates available.\n"
         fi
 
-        info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}"
+        info 1 "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${UPGRADED_RELEASE}"
     else
         error_exit "[ERROR]: Not implemented for platform: ${PLATFORM_OS}"
     fi
@@ -395,7 +395,7 @@ jail_updates_install() {
         local work_dir="${jailpath}/var/db/freebsd-update"
         local freebsd_update_conf="${jailpath}/etc/freebsd-update.conf"
 
-        info "\n[${TARGET}]:"
+        info 1 "\n[${TARGET}]:"
 
         # Finish installing upgrade on a thick container
         env PAGER="/bin/cat" freebsd-update ${OPTION} --not-running-from-cron \

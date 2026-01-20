@@ -96,7 +96,7 @@ for jail in ${DEST_TARGET}; do
         continue
     else
 
-	info "\n[${jail}]:"
+	info 1 "\n[${jail}]:"
 
         source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
         dest_path="$(echo ${bastille_jailsdir}/${jail}/root/${DEST_PATH} | sed 's#//#/#g')"

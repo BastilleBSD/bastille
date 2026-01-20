@@ -173,7 +173,7 @@ set_target_single "${TARGET}"
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
@@ -213,7 +213,7 @@ validate_netif() {
     local interface="${1}"
 
     if ifconfig -l | grep -qwo ${interface}; then
-        info "\nValid interface: ${interface}"
+        info 1 "\nValid interface: ${interface}"
     else
         error_exit "[ERROR]: Invalid interface: ${interface}"
     fi
@@ -628,7 +628,7 @@ add_vlan() {
     info 2 "Added VLAN ${vlan_id} to interface: \"${jail_vnet}\""
 }
 
-info "\n[${TARGET}]:"
+info 1 "\n[${TARGET}]:"
 
 case "${ACTION}" in
 
@@ -638,7 +638,7 @@ case "${ACTION}" in
         validate_netif "${INTERFACE}"
 
         if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
-            info "\nInterface already added: ${INTERFACE}"
+            info 1 "\nInterface already added: ${INTERFACE}"
             exit 0
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
             add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"

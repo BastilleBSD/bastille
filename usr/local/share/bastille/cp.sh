@@ -90,7 +90,7 @@ set_target "${TARGET}"
 
 for jail in ${JAILS}; do
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     host_path="${HOST_PATH}"
     jail_path="$(echo ${bastille_jailsdir}/${jail}/root/${JAIL_PATH} | sed 's#//#/#g')"

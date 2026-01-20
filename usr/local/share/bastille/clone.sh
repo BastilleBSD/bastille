@@ -482,7 +482,7 @@ clone_jail() {
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille stop "${TARGET}"
                 else
-                    info "\n[${TARGET}]:"
+                    info 1 "\n[${TARGET}]:"
                     error_notify "Jail is running."
                     error_exit "Use [-a|--auto] to force stop the jail, or [-l|--live] (ZFS only) to clone a running jail."
                 fi
@@ -508,7 +508,7 @@ clone_jail() {
             check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
                 bastille stop "${TARGET}"
             else
-                info "\n[${TARGET}]:"
+                info 1 "\n[${TARGET}]:"
                 error_notify "Jail is running."
                 error_exit "Use [-a|--auto] to force stop the jail."
             fi
@@ -529,9 +529,9 @@ clone_jail() {
     if [ "$?" -ne 0 ]; then
         error_exit "[ERROR]: An error has occurred while attempting to clone '${TARGET}'."
     else
-        info "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
+        info 1 "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
         if [ "${CLONE_INTERFACE_COUNT}" -gt 1 ]; then
-            info "\nEdit 'rc.conf' to manually set network info for non-default interfaces."
+            info 1 "\nEdit 'rc.conf' to manually set network info for non-default interfaces."
         fi
     fi
 
@@ -544,7 +544,7 @@ clone_jail() {
     fi
 }
 
-info "\nAttempting to clone '${TARGET}' to '${NEWNAME}'..."
+info 1 "\nAttempting to clone '${TARGET}' to '${NEWNAME}'..."
 
 clone_validate_jail_name
 

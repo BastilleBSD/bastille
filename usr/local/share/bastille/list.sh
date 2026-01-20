@@ -320,7 +320,7 @@ list_bastille(){
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info 1 "${jail}"
 
         # Get JAIL_IP count
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
@@ -373,7 +373,7 @@ list_all(){
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info 1 "${jail}"
 
         # Get jail IP count
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
@@ -426,7 +426,7 @@ list_ips() {
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info 1 "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_IP_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
@@ -461,7 +461,7 @@ list_paths() {
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info 1 "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PATH}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
@@ -496,7 +496,7 @@ list_ports() {
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info 1 "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_PORTS_FULL}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
@@ -531,7 +531,7 @@ list_state() {
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info 1 "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_STATE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
@@ -566,7 +566,7 @@ list_type() {
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info 1 "${jail}"
 
         printf " ${JID}%*s${JAIL_NAME}%*s${JAIL_TYPE}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#JAIL_NAME} + ${SPACER}))" ""
 
@@ -609,7 +609,7 @@ list_snapshot(){
         jail_list=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for jail in ${jail_list}; do
             if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-                info "\n[${jail}]:"
+                info 1 "\n[${jail}]:"
                 zfs list -r -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"
             fi
         done

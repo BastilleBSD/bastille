@@ -187,7 +187,7 @@ for jail in ${JAILS}; do
                 set_target "${VALUE}"
             fi
 
-            info "\n[${jail}]:"
+            info 1 "\n[${jail}]:"
 
             sysrc -f "${FILE}" "${PROPERTY}+=${JAILS}"
 
@@ -199,7 +199,7 @@ for jail in ${JAILS}; do
                 set_target "${VALUE}"
             fi
 
-            info "\n[${jail}]:"
+            info 1 "\n[${jail}]:"
 
             sysrc -f "${FILE}" "${PROPERTY}-=${JAILS}"
 
@@ -252,7 +252,7 @@ for jail in ${JAILS}; do
         elif [ "${ACTION}" = "remove" ]; then
             if [ "$(bastille config ${jail} get ${PROPERTY})" != "not set" ]; then
 
-                info "\n[${jail}]:"
+                info 1 "\n[${jail}]:"
 
                 sed -i '' "/.*${PROPERTY}.*/d" "${FILE}"
 
@@ -313,7 +313,7 @@ done
 
 # Only display this message once at the end (not for every jail). -- cwells
 if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ "${BASTILLE_PROPERTY}" -eq 0 ]; then
-    info "A restart is required for the changes to be applied. See 'bastille restart'."
+    info 1 "A restart is required for the changes to be applied. See 'bastille restart'."
 fi
 
 exit 0

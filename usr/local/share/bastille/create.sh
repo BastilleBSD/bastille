@@ -204,7 +204,7 @@ validate_netif() {
             fi
         done
     else
-        info "\nValid interface: ${INTERFACE}"
+        info 1 "\nValid interface: ${INTERFACE}"
     fi
 
     # Don't allow dots in INTERFACE for -V|--vnet jails
@@ -389,7 +389,7 @@ create_jail() {
 
     ## PoC for Linux jails @hackacad
     if [ "${LINUX_JAIL}" -eq 1 ]; then
-        info "\nCreating a linuxjail. This may take a while...\n"
+        info 1 "\nCreating a linuxjail. This may take a while...\n"
         if [ ! -d "${bastille_jail_base}" ]; then
             mkdir -p "${bastille_jail_base}"
         fi
@@ -451,7 +451,7 @@ create_jail() {
 
         if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             LINK_LIST="bin boot lib libexec rescue sbin usr/bin usr/include usr/lib usr/lib32 usr/libdata usr/libexec usr/sbin usr/share usr/src"
-            info "\nCreating a thinjail..."
+            info 1 "\nCreating a thinjail..."
             for link in ${LINK_LIST}; do
                 ln -sf /.bastille/${link} ${link}
             done
@@ -482,7 +482,7 @@ create_jail() {
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ "${CLONE_JAIL}" -eq 1 ]; then
-                        info "\nCreating a clonejail...\n"
+                        info 1 "\nCreating a clonejail...\n"
                         ## clone the release base to the new basejail
                         SNAP_NAME="bastille-clone-$(date +%Y-%m-%d-%H%M%S)"
                         # shellcheck disable=SC2140
@@ -495,7 +495,7 @@ create_jail() {
                         post_create_jail
                     elif [ "${THICK_JAIL}" -eq 1 ]; then
 
-                        info "\nCreating a thickjail. This may take a while..."
+                        info 1 "\nCreating a thickjail. This may take a while..."
 
                         ## perform release base replication
                         ## sane bastille zfs options
@@ -721,7 +721,7 @@ create_jail() {
         fi
     ## Using templating function to fetch necessary packges @hackacad
     elif [ "${LINUX_JAIL}" -eq 1 ]; then
-        info "\nFetching packages..."
+        info 1 "\nFetching packages..."
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
         jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
@@ -935,7 +935,7 @@ RELEASE="${2}"
 IP="${3}"
 INTERFACE="${4}"
 
-info "\nAttempting to create jail: ${NAME}"
+info 1 "\nAttempting to create jail: ${NAME}"
 
 if [ "${EMPTY_JAIL}" -eq 1 ]; then
     if [ $# -ne 1 ]; then
@@ -1080,7 +1080,7 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
         validate_netconf
     fi
 else
-    info "\nCreating empty jail: ${NAME}."
+    info 1 "\nCreating empty jail: ${NAME}."
 fi
 
 # May not exist on deployments created before Bastille 0.7.20200714, so creating it. -- cwells

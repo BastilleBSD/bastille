@@ -102,12 +102,12 @@ configure_linux() {
         for mod in ${required_mods}; do
             if ! kldstat -qm ${mod}; then
                 if [ ! "$(sysrc -f /boot/loader.conf -qn ${mod}_load)" = "YES" ] && [ ! "$(sysrc -f /boot/loader.conf.local -qn ${mod}_load)" = "YES" ]; then
-                    info "\nLoading kernel module: ${mod}"
+                    info 1 "\nLoading kernel module: ${mod}"
                     kldload ${mod}
-                    info "\nPersisting module: ${mod}"
+                    info 1 "\nPersisting module: ${mod}"
                     sysrc -f /boot/loader.conf ${mod}_load=YES
                 else
-                    info "\nLoading kernel module: ${mod}"
+                    info 1 "\nLoading kernel module: ${mod}"
                     kldload ${mod}
                 fi
             fi
@@ -116,7 +116,7 @@ configure_linux() {
         # Mandatory Linux modules/rc.
         for mod in ${linuxarc_mods}; do
             if ! kldstat -qn ${mod}; then
-                info "\nLoading kernel module: ${mod}"
+                info 1 "\nLoading kernel module: ${mod}"
                 kldload ${mod}
             fi
         done
@@ -131,10 +131,10 @@ configure_linux() {
             pkg install -y debootstrap
         fi
 
-        info "\nLinux has been successfully configured!"
+        info 1 "\nLinux has been successfully configured!"
 
     else
-        info "\nLinux has already been configured!"
+        info 1 "\nLinux has already been configured!"
     fi
 }
 
@@ -158,14 +158,14 @@ configure_netgraph() {
 
         local required_mods="netgraph ng_netflow ng_ksocket ng_ether ng_bridge ng_eiface ng_socket"
         
-        info "\nConfiguring netgraph modules..."
+        info 1 "\nConfiguring netgraph modules..."
 
         # Load requried netgraph kernel modules
         for mod in ${required_mods}; do
             if ! kldstat -qm ${mod}; then
-                info "\nLoading kernel module: ${mod}"
+                info 1 "\nLoading kernel module: ${mod}"
                 kldload -v ${mod}
-                info "\nPersisting module: ${mod}"
+                info 1 "\nPersisting module: ${mod}"
                 sysrc -f /boot/loader.conf ${mod}_load=YES
             fi
         done
@@ -173,25 +173,25 @@ configure_netgraph() {
         # Set bastille_network_vnet_type to netgraph
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_vnet_type="netgraph"
 
-        info "\nNetgraph has been successfully configured!"
+        info 1 "\nNetgraph has been successfully configured!"
     else
-        info "\nNetgraph has already been configured!"
+        info 1 "\nNetgraph has already been configured!"
     fi
 }
 
 # Configure bastille loopback network interface
 configure_loopback_interface() {
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_loopback)" ] || ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
-        info "\nConfiguring bastille0 loopback interface"
+        info 1 "\nConfiguring bastille0 loopback interface"
         sysrc cloned_interfaces+=lo1
         sysrc ifconfig_lo1_name="bastille0"
-        info "\nBringing up new interface: [bastille0]"
+        info 1 "\nBringing up new interface: [bastille0]"
         service netif cloneup
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback="bastille0"
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared=""
-        info "\nLoopback interface successfully configured: [bastille0]"
+        info 1 "\nLoopback interface successfully configured: [bastille0]"
     else
-        info "\nLoopback interface has already been configured: [bastille0]"
+        info 1 "\nLoopback interface has already been configured: [bastille0]"
     fi
 }
 
@@ -205,8 +205,8 @@ configure_shared_interface() {
         error_exit "Unable to detect interfaces, exiting."
     fi
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)" ]; then
-        info "\nAttempting to configure shared interface for bastille..."
-        info "\nListing available interfaces..."
+        info 1 "\nAttempting to configure shared interface for bastille..."
+        info 1 "\nListing available interfaces..."
         if [ -z "${auto_if}" ]; then
             for if in ${interface_list}; do
                 info 2 "[${interface_count}] ${if}"
@@ -229,9 +229,9 @@ configure_shared_interface() {
         sysrc cloned_interfaces-="lo1"
         ifconfig bastille0 destroy 2>/dev/null
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${interface_select}"
-        info "\nShared interface successfully configured: [${interface_select}]"
+        info 1 "\nShared interface successfully configured: [${interface_select}]"
     else
-        info "\nShared interface has already been configured: [$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)]"
+        info 1 "\nShared interface has already been configured: [$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_shared)]"
     fi
 
 }
@@ -246,10 +246,10 @@ configure_bridge() {
         error_exit "Unable to detect interfaces, exiting."
     fi
     if ! ifconfig -g bridge | grep -oqw "${bridge_name}"; then
-        info "\nConfiguring ${bridge_name} bridge interface..."
+        info 1 "\nConfiguring ${bridge_name} bridge interface..."
 
         if [ -z "${auto_if}" ]; then
-            info "\nListing available interfaces..."
+            info 1 "\nListing available interfaces..."
             for if in ${interface_list}; do
                 if ifconfig -g bridge | grep -oqw "${if}" || ifconfig -g lo | grep -oqw "${if}"; then
                     continue
@@ -290,9 +290,9 @@ configure_bridge() {
         echo net.link.bridge.pfil_member=0 >> /etc/sysctl.conf
 
 
-        info "\nBridge interface successfully configured: [${bridge_name}]"
+        info 1 "\nBridge interface successfully configured: [${bridge_name}]"
     else
-        info "\nBridge has alread been configured: [${bridge_name}]"
+        info 1 "\nBridge has alread been configured: [${bridge_name}]"
     fi
 }
 
@@ -315,7 +315,7 @@ configure_vnet() {
 
     # Create default VNET ruleset
     if [ ! -f "/etc/devfs.rules" ] || ! grep -oq "bastille_vnet=13" /etc/devfs.rules; then
-        info "\nCreating bastille_vnet devfs.rules"
+        info 1 "\nCreating bastille_vnet devfs.rules"
         cat << EOF > /etc/devfs.rules
 [bastille_vnet=13]
 add include \$devfsrules_hide_all
@@ -326,7 +326,7 @@ add include \$devfsrules_jail_vnet
 add path 'bpf*' unhide
 EOF
     else
-        info "\nVNET has already been configured!"
+        info 1 "\nVNET has already been configured!"
     fi
 }
 
@@ -337,7 +337,7 @@ if [ ! -f "${bastille_pf_conf}" ]; then
     # shellcheck disable=SC3043
     local ext_if
     ext_if=$(netstat -rn | awk '/default/ {print $4}' | head -n1)
-    info "\nDetermined default network interface: ($ext_if)"
+    info 1 "\nDetermined default network interface: ($ext_if)"
     info 2 "${bastille_pf_conf} does not exist: creating..."
 
     ## creating pf.conf
@@ -361,7 +361,7 @@ EOF
     sysrc pf_enable=YES
     warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
-    info "\nFirewall (pf) has already been configured!"
+    info 1 "\nFirewall (pf) has already been configured!"
 fi
 }
 
@@ -373,9 +373,9 @@ configure_storage() {
         auto_zpool="${1}"
 
         if [ ! "$(kldstat -m zfs)" ]; then
-            info "\nZFS module not loaded; skipping..."
+            info 1 "\nZFS module not loaded; skipping..."
         elif sysrc -f ${BASTILLE_CONFIG} -n bastille_zfs_enable | grep -Eoq "([Y|y][E|e][S|s])"; then
-            info "\nZFS has already been configured!"
+            info 1 "\nZFS has already been configured!"
         else
             if [ -z "${auto_zpool}" ]; then
                 zpool_list=$(zpool list | grep -v NAME | awk '{print $1}')
@@ -383,7 +383,7 @@ configure_storage() {
                 if [ "$(zpool list | grep -v NAME | awk '{print $1}' | wc -l)" -eq 1 ]; then
                     bastille_zpool="${zpool_list}"
                 else
-                    info "\nMultiple zpools detected:"
+                    info 1 "\nMultiple zpools detected:"
                     for zpool in ${zpool_list}; do
                         echo "[${zpool_count}] ${zpool}"
                         zpool_num="${zpool_num} [${zpool_count}]${zpool}"
@@ -402,10 +402,10 @@ configure_storage() {
             fi
             sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_enable=YES
             sysrc -f "${BASTILLE_CONFIG}" bastille_zfs_zpool="${bastille_zpool}"
-            info "\nUsing ZFS filesystem."
+            info 1 "\nUsing ZFS filesystem."
         fi
     elif mount | grep "ufs" >/dev/null 2>/dev/null; then
-        info "\nUsing UFS filesystem."
+        info 1 "\nUsing UFS filesystem."
     fi
 }
 
@@ -415,7 +415,7 @@ if [ $# -eq 0 ]; then
     configure_storage
     configure_loopback_interface
     configure_pf
-    info "\nBastille has successfully been configured.\n"
+    info 1 "\nBastille has successfully been configured.\n"
     exit 0
 fi
 

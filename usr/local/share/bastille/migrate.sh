@@ -146,7 +146,7 @@ validate_host_status() {
     local host="${2}"
     local port="${3}"
 
-    info "\nChecking remote host status..."
+    info 1 "\nChecking remote host status..."
 
     # Host uptime
     if ! nc -w 1 -z ${host} ${port} >/dev/null 2>/dev/null; then
@@ -196,7 +196,7 @@ migrate_create_export() {
     local host="${3}"
     local port="${4}"
 
-    info "\nPreparing jail for migration..."
+    info 1 "\nPreparing jail for migration..."
 
     # Ensure /tmp/bastille-migrate has 777 perms
     chmod 777 ${local_bastille_migratedir}
@@ -244,7 +244,7 @@ migrate_jail() {
 
             migrate_create_export "${jail}" "${user}" "${host}" "${port}"
 
-            info "\nAttempting to migrate jail to remote system..."
+            info 1 "\nAttempting to migrate jail to remote system..."
 
             file="$(find "${local_bastille_migratedir}" -maxdepth 1 -type f | grep -Eo "${jail}_.*\.xz$" | head -n1)"
             file_sha256="$(echo ${file} | sed 's/\..*/.sha256/')"
@@ -267,7 +267,7 @@ migrate_jail() {
             error_exit "Enable ZFS locally to continue."
         else
 
-            info "\nAttempting to migrate jail to remote system..."
+            info 1 "\nAttempting to migrate jail to remote system..."
 
             migrate_create_export "${jail}" "${user}" "${host}" "${port}"
 
@@ -374,16 +374,16 @@ for jail in ${JAILS}; do
         if [ "${AUTO}" -eq 1 ]; then
             bastille stop "${jail}"
         else
-            info "\n[${jail}]:"
+            info 1 "\n[${jail}]:"
             error_notify "[ERROR]: Jail is running."
             error_exit "Use [-a|--auto] to auto-stop the jail, or [-l|--live] (ZFS only) to migrate a running jail."
         fi
     fi
 
-    info "\nAttempting to migrate '${jail}' to '${HOST}'..."
+    info 1 "\nAttempting to migrate '${jail}' to '${HOST}'..."
 
     migrate_jail "${jail}" "${USER}" "${HOST}" "${PORT}"
 
-    info "\nSuccessfully migrated '${jail}' to '${HOST}'.\n"
+    info 1 "\nSuccessfully migrated '${jail}' to '${HOST}'.\n"
 
 done

@@ -75,7 +75,7 @@ case "${1}" in
             mkdir -p /usr/local/etc/cron.d
             echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
             info 2 "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-            info "\nBastille Monitor: Enabled\n"
+            info 1 "\nBastille Monitor: Enabled\n"
 	        exit 0
 	    else
             error_exit "\nBastille Monitor is already enabled."
@@ -86,7 +86,7 @@ case "${1}" in
         if [ -f "${bastille_monitor_cron_path}" ]; then
             rm -f "${bastille_monitor_cron_path}"
             info 2 "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
-            info "\nBastille Monitor: Disabled\n"
+            info 1 "\nBastille Monitor: Disabled\n"
 	        exit 0
 	    else
             error_exit "\nBastille Monitor is not enabled."
@@ -95,10 +95,10 @@ case "${1}" in
     status)
         [ "$#" -eq 1 ] || usage
         if [ -f "${bastille_monitor_cron_path}" ]; then
-            info "\nBastille Monitor Status: Active\n"
+            info 1 "\nBastille Monitor Status: Active\n"
 	        exit 0
         else
-            info "\nBastille Monitor Status: Inactive\n"
+            info 1 "\nBastille Monitor Status: Inactive\n"
 	        exit 1
         fi
         ;;
@@ -170,7 +170,7 @@ for jail in ${JAILS}; do
                     fi
                 else
                     if [ -f "${bastille_jail_monitor}" ]; then
-                        info "\n[${jail}]:"
+                        info 1 "\n[${jail}]:"
                         xargs < "${bastille_jail_monitor}"
                     fi
                 fi

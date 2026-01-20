@@ -61,12 +61,12 @@ destroy_jail() {
     check_target_is_stopped "${jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${jail}"
     else
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_notify "Jail is running."
         error_continue "Use [-a|--auto] to auto-stop the jail."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     # Ask if user is sure they want to destroy the jail
     # but only if AUTO_YES=0
@@ -151,7 +151,7 @@ destroy_release() {
 
     bastille_rel_base="${bastille_releasesdir}/${TARGET}"  ## dir
 
-    info "\nAttempting to destroy release: ${TARGET}"
+    info 1 "\nAttempting to destroy release: ${TARGET}"
 
     ## check if this release have containers child
     BASE_HASCHILD="0"

@@ -123,11 +123,11 @@ for jail in ${JAILS}; do
     done
 
     if check_target_is_running "${jail}"; then
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_continue "Jail is already running."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     # Validate interfaces and add IPs to firewall table
     if [ "$(bastille config ${jail} get vnet)" != 'enabled' ]; then

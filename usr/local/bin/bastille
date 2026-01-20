@@ -152,14 +152,14 @@ while [ "$#" -gt 0 ]; do
             usage
             ;;
         version|-v|--version)
-            info "${BASTILLE_VERSION}"
+            info 1 "${BASTILLE_VERSION}"
             exit 0
             ;;
         -c|--config)
             BASTILLE_CONFIG="${2}"
             if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
                 BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-                info "Using custom config: ${BASTILLE_CONFIG}"
+                info 1 "Using custom config: ${BASTILLE_CONFIG}"
                 export BASTILLE_CONFIG
             else
                 error_exit "Not a valid config file: ${BASTILLE_CONFIG}"

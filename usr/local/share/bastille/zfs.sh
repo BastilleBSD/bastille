@@ -325,7 +325,7 @@ fi
 
 for jail in ${JAILS}; do
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     case "${ACTION}" in
         destroy|destroy_snap|destroy_snapshot)

@@ -94,12 +94,12 @@ for jail in ${JAILS}; do
     check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${jail}"
     else
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     # Allow executing commands on linux jails
     if grep -qw "linsysfs" "${bastille_jailsdir}/${jail}/fstab"; then
