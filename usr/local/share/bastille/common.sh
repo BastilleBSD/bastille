@@ -82,13 +82,19 @@ error_exit() {
 }
 
 info() {
-    if [ "${1}" -eq 2 ]; then
-        shift 1
+
+    level="${1}"
+    shift
+
+    if [ "${level}" -eq 1 ]; then
+        printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
+    elif [ "${level}" -eq 2 ]; then
         printf "%b\n" "$*" 1>&2
     else
-        printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
+        printf "%b\n" "$*"
     fi
 }
+
 
 warn() {
     printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2

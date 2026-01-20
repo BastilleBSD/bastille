@@ -74,7 +74,7 @@ case "${1}" in
         if [ ! -f "${bastille_monitor_cron_path}" ]; then
             mkdir -p /usr/local/etc/cron.d
             echo "${bastille_monitor_cron}" >> "${bastille_monitor_cron_path}"
-            info 2 "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
+            echo "$(date '+%Y-%m-%d %H:%M:%S'): Added cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
             info 1 "\nBastille Monitor: Enabled\n"
 	        exit 0
 	    else
@@ -85,7 +85,7 @@ case "${1}" in
         [ "$#" -eq 1 ] || usage
         if [ -f "${bastille_monitor_cron_path}" ]; then
             rm -f "${bastille_monitor_cron_path}"
-            info 2 "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
+            echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed cron entry at ${bastille_monitor_cron_path}" >> "${bastille_monitor_logfile}"
             info 1 "\nBastille Monitor: Disabled\n"
 	        exit 0
 	    else
@@ -126,11 +126,11 @@ for jail in ${JAILS}; do
         for service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
             if ! jexec -l -U root "${jail}" service "${service}" status >/dev/null 2>/dev/null; then
-                info 2 "$(date '+%Y-%m-%d %H:%M:%S'): ${service} service not running in ${jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
+                echo "$(date '+%Y-%m-%d %H:%M:%S'): ${service} service not running in ${jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
 
                 ## attempt to restart the service if needed; update logs if unable
                 if ! jexec -l -U root "${jail}" service "${service}" restart; then
-                    info 2 "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${service} service in ${jail}." | tee -a "${bastille_monitor_logfile}"
+                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${service} service in ${jail}." | tee -a "${bastille_monitor_logfile}"
                     ERRORS=$((ERRORS +1))
                 fi
             fi
@@ -142,7 +142,7 @@ for jail in ${JAILS}; do
                 for service in $(echo "${SERVICE}" | tr , ' '); do
                     if ! grep -Eqs "^${service}\$" "${bastille_jail_monitor}"; then
                         echo "${service}" >> "${bastille_jail_monitor}"
-                        info 2 "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${service} on ${jail}" >> "${bastille_monitor_logfile}"
+                        echo "$(date '+%Y-%m-%d %H:%M:%S'): Added monitor for ${service} on ${jail}" >> "${bastille_monitor_logfile}"
                     fi
                 done
                 ;;
@@ -152,7 +152,7 @@ for jail in ${JAILS}; do
                     [ ! -f "${bastille_jail_monitor}" ] && break # skip if no monitor file
                     if grep -Eqs "^${service}\$" "${bastille_jail_monitor}"; then
                         sed -i '' "/^${service}\$/d" "${bastille_jail_monitor}"
-	                    info 2 "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${service} on ${jail}" >> "${bastille_monitor_logfile}"
+	                    echo "$(date '+%Y-%m-%d %H:%M:%S'): Removed monitor for ${service} on ${jail}" >> "${bastille_monitor_logfile}"
 		            fi
                     # delete monitor file if empty
                     [ ! -s "${bastille_jail_monitor}" ] && rm "${bastille_jail_monitor}"
@@ -165,7 +165,7 @@ for jail in ${JAILS}; do
                     fi
                     [ ! -f "${bastille_jail_monitor}" ] && continue # skip if there is no monitor file
                     if grep -Eqs "^${SERVICE}\$" "${bastille_jail_monitor}"; then
-                        info 2 "${jail}"
+                        info 3 "${jail}"
 			            continue
                     fi
                 else

@@ -54,7 +54,7 @@ post_command_hook() {
 
     case $cmd in
         rdr)
-            info 2 ${args}
+            info 3 ${args}
     esac
 }
 
@@ -238,7 +238,7 @@ if [ "${TARGET}" = "convert" ]; then
         fi
     done
 
-    info 1 "\nTemplate converted: ${TEMPLATE}"
+    info "\nTemplate converted: ${TEMPLATE}"
     exit 0
 else
     set_target "${TARGET}"
@@ -248,7 +248,7 @@ case ${TEMPLATE} in
     http?://*/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
-            info 1 "Bootstrapping ${TEMPLATE}..."
+            info "Bootstrapping ${TEMPLATE}..."
             if ! bastille bootstrap "${TEMPLATE}"; then
                 error_exit "[ERROR]: Failed to bootstrap template: ${TEMPLATE}"
             fi
@@ -295,12 +295,12 @@ for jail in ${JAILS}; do
     check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${jail}"
     else
-        info 1 "\n[${jail}]:"
+        info "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info 1 "\n[${jail}]:"
+    info "\n[${jail}]:"
 
     info 2 "Applying template: ${TEMPLATE}..."
 
@@ -448,5 +448,5 @@ for jail in ${JAILS}; do
         unset IFS
     fi
 
-    info 1 "\nTemplate applied: ${TEMPLATE}"
+    info "\nTemplate applied: ${TEMPLATE}"
 done

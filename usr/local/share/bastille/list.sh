@@ -593,9 +593,9 @@ list_release() {
                 if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
                     release_patch=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
                     release_patch=${release_patch:-${release}}
-                    info 2 "${release_patch}"
+                    info 3 "${release_patch}"
                 else
-                    info 2 "${release}"
+                    info 3 "${release}"
                 fi
             fi
         done
@@ -625,7 +625,7 @@ list_jail(){
         jail_list=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for jail in ${jail_list}; do
             if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-                info 2 "${jail}"
+                info 3 "${jail}"
             fi
         done
     fi
