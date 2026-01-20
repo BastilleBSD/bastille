@@ -84,7 +84,7 @@ error_exit() {
 info() {
 
     level="${1}"
-    shift
+    shift 1
 
     if [ "${level}" -eq 1 ]; then
         printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
