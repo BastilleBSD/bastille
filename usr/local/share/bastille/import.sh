@@ -364,7 +364,7 @@ generate_config() {
 	    IP4_DEFINITION="ip4.addr = lo1|-;"
             IP6_DEFINITION=""
             IP6_MODE="disable"
-            warn 1 "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
+            warn 1 "[WARNING]: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
         fi
 
         NETBLOCK=$(cat <<-EOF
