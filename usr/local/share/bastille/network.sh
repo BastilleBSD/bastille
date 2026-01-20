@@ -137,6 +137,11 @@ else
     IP=""
 fi
 
+# Validate interface var
+if [ -z "${INTERFACE}" ]; then
+    usage
+fi
+
 # Default is standard interface
 if [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then
     STANDARD=1
