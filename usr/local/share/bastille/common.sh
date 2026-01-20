@@ -621,7 +621,7 @@ checkyesno() {
         return 1
         ;;
     *)
-        warn 1\$${1} is not set properly - see rc.conf(5)."
+        warn 1 "\$${1} is not set properly - see rc.conf(5)."
         return 1
         ;;
     esac
