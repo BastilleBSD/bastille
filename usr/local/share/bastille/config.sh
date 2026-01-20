@@ -247,7 +247,7 @@ for jail in ${JAILS}; do
             if [ $? -eq 120 ]; then
                 warn "${_output}"
             else
-                echo "${_output}"
+                info 2 "${_output}"
             fi
         elif [ "${ACTION}" = "remove" ]; then
             if [ "$(bastille config ${jail} get ${PROPERTY})" != "not set" ]; then
@@ -256,7 +256,7 @@ for jail in ${JAILS}; do
 
                 sed -i '' "/.*${PROPERTY}.*/d" "${FILE}"
 
-                echo "Property removed: ${PROPERTY}"
+                info 2 "Property removed: ${PROPERTY}"
 
             else
                 error_exit "[ERROR]: Value not present in jail.conf: ${PROPERTY}"

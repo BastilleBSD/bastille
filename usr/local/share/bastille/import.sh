@@ -519,7 +519,7 @@ create_zfs_datasets() {
 
     # Prepare the ZFS environment and restore from file
     info "\nImporting '${TARGET_TRIM}' from compressed ${FILE_EXT} archive."
-    echo "Preparing ZFS environment..."
+    info 2 "Preparing ZFS environment..."
 
     # Create required ZFS datasets, mountpoint inherited from system
     zfs create ${bastille_zfs_options} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
@@ -546,7 +546,7 @@ jail_import() {
                     validate_archive
                     # Import from compressed xz on ZFS systems
                     info "\nImporting '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
-                    echo "Receiving ZFS data stream..."
+                    info 2 "Receiving ZFS data stream..."
                     xz ${bastille_decompress_xz_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     # Update ZFS mountpoint property if required
@@ -556,7 +556,7 @@ jail_import() {
                     validate_archive
                     # Import from compressed xz on ZFS systems
                     info "\nImporting '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
-                    echo "Receiving ZFS data stream..."
+                    info 2 "Receiving ZFS data stream..."
                     gzip ${bastille_decompress_gz_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     # Update ZFS mountpoint property if required
@@ -566,7 +566,7 @@ jail_import() {
                     validate_archive
                     # Import from compressed zst on ZFS systems
                     info "\nImporting '${TARGET_TRIM}' from compressed ${FILE_EXT} image."
-                    echo "Receiving ZFS data stream..."
+                    info 2 "Receiving ZFS data stream..."
                     zstd ${bastille_decompress_zst_options} "${bastille_backupsdir}/${TARGET}" | \
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     # Update ZFS mountpoint property if required
@@ -622,7 +622,7 @@ jail_import() {
                         error_exit "Failed to extract files from '${TARGET}' archive."
                         rm -f "${FILE_TRIM}" "${FILE_TRIM}_root"
                     fi
-                    echo "Receiving ZFS data stream..."
+                    info 2 "Receiving ZFS data stream..."
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${FILE_TRIM}"
                     zfs set ${ZFS_OPTIONS} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}"
                     zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}/root" < "${FILE_TRIM}_root"
@@ -684,7 +684,7 @@ jail_import() {
                         # Based on the file name, looks like we are importing a raw bastille image
                         # Import from uncompressed image file
                         info "\nImporting '${TARGET_TRIM}' from uncompressed image archive."
-                        echo "Receiving ZFS data stream..."
+                        info 2 "Receiving ZFS data stream..."
                         zfs receive ${OPT_ZRECV} "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET_TRIM}" < "${bastille_backupsdir}/${TARGET}"
 
                         # Update ZFS mountpoint property if required

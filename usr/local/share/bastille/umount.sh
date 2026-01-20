@@ -126,6 +126,6 @@ for jail in ${JAILS}; do
         rm -f "${jailpath}" || error_continue "Failed to unmount volume: ${MOUNT_PATH}"
     fi
 
-    echo "Unmounted: ${jailpath}"
+    info 2 "Unmounted: ${jailpath}"
 
 done

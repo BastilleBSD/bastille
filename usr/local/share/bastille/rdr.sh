@@ -187,7 +187,7 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
+            info 2 "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
     # Create IPv6 rdr rule (if ip6.addr is enabled)
@@ -198,7 +198,7 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
+            info 2 "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
 }
@@ -225,7 +225,7 @@ load_rdr_log_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create logged IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
+            info 2 "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
 
@@ -237,7 +237,7 @@ load_rdr_log_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create logged IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         else
-            echo "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
+            info 2 "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
     fi
 }
@@ -361,7 +361,7 @@ while [ "$#" -gt 0 ]; do
                 check_jail_validity
                 pfctl -a "rdr/${TARGET}" -Fn
                 if rm -f "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
-                    echo "rdr.conf removed"
+                    info 2 "rdr.conf removed"
                 fi
             fi
             shift

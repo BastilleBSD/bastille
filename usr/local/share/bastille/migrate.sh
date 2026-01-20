@@ -166,7 +166,7 @@ validate_host_status() {
         error_exit "or use '-p|--password' for password based authentication."
     fi
 
-    echo "Host check successful."
+    info 2 "Host check successful."
 }
 
 migrate_cleanup() {

@@ -209,7 +209,7 @@ configure_shared_interface() {
         info "\nListing available interfaces..."
         if [ -z "${auto_if}" ]; then
             for if in ${interface_list}; do
-                echo "[${interface_count}] ${if}"
+                info 2 "[${interface_count}] ${if}"
                 if_num="${if_num} [${interface_count}]${if}"
                 interface_count=$(expr ${interface_count} + 1)
             done
@@ -254,7 +254,7 @@ configure_bridge() {
                 if ifconfig -g bridge | grep -oqw "${if}" || ifconfig -g lo | grep -oqw "${if}"; then
                     continue
                 else
-                    echo "[${interface_count}] ${if}"
+                    info 2 "[${interface_count}] ${if}"
                     if_num="${if_num} [${interface_count}]${if}"
                     interface_count=$(expr ${interface_count} + 1)
                 fi
@@ -338,7 +338,7 @@ if [ ! -f "${bastille_pf_conf}" ]; then
     local ext_if
     ext_if=$(netstat -rn | awk '/default/ {print $4}' | head -n1)
     info "\nDetermined default network interface: ($ext_if)"
-    echo "${bastille_pf_conf} does not exist: creating..."
+    info 2 "${bastille_pf_conf} does not exist: creating..."
 
     ## creating pf.conf
     cat << EOF > "${bastille_pf_conf}"

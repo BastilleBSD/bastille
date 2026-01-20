@@ -296,8 +296,8 @@ bootstrap_release_legacy() {
                     ERRORS=$((ERRORS + 1))
                     error_continue "[ERROR]: Failed to validate checksum for archive: ${archive}.txz"
                 else
-                    echo "MANIFEST: ${SHA256_DIST}"
-                    echo "DOWNLOAD: ${SHA256_FILE}"
+                    info 2 "MANIFEST: ${SHA256_DIST}"
+                    info 2 "DOWNLOAD: ${SHA256_FILE}"
                     info "\nChecksum validated."
                 fi
             fi
@@ -452,7 +452,7 @@ bootstrap_release_linux() {
         case "${LINUX_FLAVOR}" in
             bionic|focal|jammy|buster|bullseye|bookworm|noble)
             info "Increasing APT::Cache-Start"
-            echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
+            iffo 2 "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
             ;;
         esac
     fi
@@ -757,8 +757,7 @@ if [ "${ERRORS}" -eq 0 ]; then
 
     # Success
     info "\nBootstrap successful."
-    echo "See 'bastille --help' for available commands."
-    echo
+    info 2 "See 'bastille --help' for available commands.\n"
 else
     error_exit "[ERROR]: Bootstrap failed!"
 fi

@@ -54,7 +54,7 @@ post_command_hook() {
 
     case $cmd in
         rdr)
-            echo -e ${args}
+            info 2 ${args}
     esac
 }
 
@@ -121,10 +121,10 @@ render() {
     local file_path="${1}/${2}"
 
     if [ -d "${file_path}" ]; then # Recursively render every file in this directory. -- cwells
-        echo "Rendering Directory: ${file_path}"
+        info 2 "Rendering Directory: ${file_path}"
         find "${file_path}" \( -type d -name .git -prune \) -o -type f -print0 | eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}"
     elif [ -f "${file_path}" ]; then
-        echo "Rendering File: ${file_path}"
+        info 2 "Rendering File: ${file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${file_path}'"
     else
         warn "[WARNING]: Path not found for render: ${2}"
@@ -202,7 +202,7 @@ if [ "${TARGET}" = "convert" ]; then
         error_exit "[ERROR]: Template not found: ${TEMPLATE}"
     fi
 
-    echo "Converting template: ${TEMPLATE}"
+    info 2 "Converting template: ${TEMPLATE}"
 
     # Convert legacy template to Bastillefile
     HOOKS='ARG LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
@@ -302,7 +302,7 @@ for jail in ${JAILS}; do
 
     info "\n[${jail}]:"
 
-    echo "Applying template: ${TEMPLATE}..."
+    info 2 "Applying template: ${TEMPLATE}..."
 
     # Get non-VNET IP
     bastille_jail_path=$(/usr/sbin/jls -j "${jail}" path)

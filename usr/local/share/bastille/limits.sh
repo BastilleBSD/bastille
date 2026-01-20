@@ -133,7 +133,7 @@ add_cpuset() {
 
     # Persist cpuset value
     echo "${cpuset_rule}" >> "${bastille_jailsdir}/${jail}/cpuset.conf"
-    echo -e "[CPU LIMITS]: ${OPTION} ${VALUE}"
+    info 2 "[CPU LIMITS]: ${OPTION} ${VALUE}"
 
     # Restart jail to apply cpuset
     bastille restart ${jail}
@@ -183,10 +183,10 @@ for jail in ${JAILS}; do
                     fi
                 fi
                 if [ "${OPT_LOG}" -eq 1 ]; then
-                    echo -e "[LOGGING]: ${OPTION} ${VALUE}"
+                    info 2 "[LOGGING]: ${OPTION} ${VALUE}"
                     rctl -a "${rctl_rule}" "${rctl_rule_log}"
                 else
-                    echo -e "${OPTION} ${VALUE}"
+                    info 2 "${OPTION} ${VALUE}"
                     rctl -a "${rctl_rule}"
                 fi
             fi
@@ -201,7 +201,7 @@ for jail in ${JAILS}; do
                 # Remove cpuset.conf
                 if [ -s "${bastille_jailsdir}/${jail}/cpuset.conf" ]; then
                     rm -f "${bastille_jailsdir}/${jail}/cpuset.conf"
-                    echo "cpuset.conf removed."
+                    info 2 "cpuset.conf removed."
                 else
                     error_continue "[ERROR]: cpuset.conf not found."
                 fi
@@ -230,7 +230,7 @@ for jail in ${JAILS}; do
                 while read limits; do
                     rctl -r "${limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${jail}/rctl.conf"
-                echo "RCTL limits cleared."
+                info 2 "RCTL limits cleared."
             fi
 	        ;;
 
@@ -239,8 +239,8 @@ for jail in ${JAILS}; do
             # Show rctl limits
             if [ -s "${bastille_jailsdir}/${jail}/rctl.conf" ]; then
 
-                echo "-------------"
-                echo "[RCTL Limits]"
+                info 2 "-------------"
+                info 2 "[RCTL Limits]"
 
 	        if [ "${1}" = "active" ]; then
 	            rctl jail:${jail} 2>/dev/null
@@ -252,8 +252,8 @@ for jail in ${JAILS}; do
             # Show cpuset limits
             if [ -s "${bastille_jailsdir}/${jail}/cpuset.conf" ]; then
 
-                echo "-------------"
-                echo "[CPU Limits]"
+                info 2 "-------------"
+                info 2 "[CPU Limits]"
 
 	        if [ "${1}" = "active" ]; then
 	            cpuset -g -j ${jail} | head -1 2>/dev/null
@@ -278,13 +278,13 @@ for jail in ${JAILS}; do
                 while read limits; do
                     rctl -r "${limits}" 2>/dev/null
                 done < "${bastille_jailsdir}/${jail}/rctl.conf"
-	            echo "RCTL limits cleared."
+	            info 2 "RCTL limits cleared."
             fi
 
             # Remove rctl.conf
             if [ -s "${bastille_jailsdir}/${jail}/rctl.conf" ]; then
                 rm -f "${bastille_jailsdir}/${jail}/rctl.conf"
-                echo "rctl.conf removed."
+                info 2 "rctl.conf removed."
             else
                 error_continue "[ERROR]: rctl.conf not found."
             fi
@@ -292,7 +292,7 @@ for jail in ${JAILS}; do
             # Remove cpuset.conf
             if [ -s "${bastille_jailsdir}/${jail}/cpuset.conf" ]; then
                 rm -f "${bastille_jailsdir}/${jail}/cpuset.conf"
-                echo "cpuset.conf removed."
+                info 2 "cpuset.conf removed."
             else
                 error_continue "[ERROR]: cpuset.conf not found."
             fi

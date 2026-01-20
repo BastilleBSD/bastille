@@ -223,7 +223,7 @@ snapshot_create() {
     if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to create snapshot."
     else
-        echo "Snapshot created: ${TAG}"
+        info 2 "Snapshot created: ${TAG}"
     fi
 }
 
@@ -238,7 +238,7 @@ snapshot_rollback() {
     if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to restore snapshot: ${TAG}."
     else
-        echo "Snapshot restored: ${TAG}"
+        info 2 "Snapshot restored: ${TAG}"
     fi
 }
 
@@ -260,7 +260,7 @@ snapshot_destroy() {
     if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to destroy snapshot: ${TAG}"
     else
-        echo "Snapshot destroyed: ${TAG}"
+        info 2 "Snapshot destroyed: ${TAG}"
     fi
 }
 

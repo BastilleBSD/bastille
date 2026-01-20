@@ -247,8 +247,7 @@ jail_upgrade() {
         fi
 
         info "\nUpgraded ${TARGET}: ${OLD_RELEASE} -> ${NEW_RELEASE}"
-        echo "See 'bastille etcupdate TARGET' to update /etc"
-        echo
+        info 2 "See 'bastille etcupdate TARGET' to update /etc\n"
 
     else
 

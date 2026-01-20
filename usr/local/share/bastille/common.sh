@@ -82,11 +82,16 @@ error_exit() {
 }
 
 info() {
-    echo -e "${COLOR_GREEN}$*${COLOR_RESET}"
+    if [ "${1}" -eq 2 ]; then
+        shift 1
+        echo -e "$*" 1>&2
+    else
+        echo -e "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
+    fi
 }
 
 warn() {
-    echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+    echo -e "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2
 }
 
 check_target_exists() {

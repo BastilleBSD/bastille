@@ -133,7 +133,7 @@ diff_review() {
         error_exit "[ERROR]: diff mode does not support [-d|--dryrun]"
     fi
 
-    echo "Running: etcupdate --diff mode"
+    info 2 "Running: etcupdate --diff mode"
     etcupdate diff -D "${bastille_jailsdir}/${jail}/root"
 }
 
@@ -145,7 +145,7 @@ resolve_conflicts() {
         error_exit "[ERROR]: resolve mode does not support [-d|--dryrun]"
     fi
 
-    echo "Running: etcupdate resolve"
+    info 2 "Running: etcupdate resolve"
     etcupdate resolve -D "${bastille_jailsdir}/${jail}/root"
 }
 
@@ -158,10 +158,10 @@ update_jail_etc() {
         error_exit "[ERROR]: Please run 'bastille etcupdate bootstrap RELEASE' first."
     fi
     if [ "${DRY_RUN}" -eq 1 ]; then
-        echo "Running: etcupdate update --dry-run"
+        info 2 "Running: etcupdate update --dry-run"
         etcupdate -n -D "${bastille_jailsdir}/${jail}/root" -t ${bastille_cachedir}/${release}.tbz2
     else
-        echo "Running: etcupdate update"
+        info 2 "Running: etcupdate update"
         etcupdate -D "${bastille_jailsdir}/${jail}/root" -t ${bastille_cachedir}/${release}.tbz2
     fi
 }

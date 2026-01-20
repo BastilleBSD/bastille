@@ -274,7 +274,7 @@ change_name() {
     if [ "$?" -ne 0 ]; then
         error_exit "[ERROR]: An error has occurred while attempting to rename '${TARGET}'."
     else
-        echo "Renamed '${TARGET}' to '${NEWNAME}' successfully."
+        info 2 "Renamed '${TARGET}' to '${NEWNAME}' successfully."
         if [ "${AUTO}" -eq 1 ]; then
             bastille start "${NEWNAME}"
         fi

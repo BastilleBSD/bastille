@@ -97,13 +97,13 @@ validate_user() {
             if jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
                 jexec -l "${jail}" $LOGIN -f "${user}"
             else
-                echo "Invalid shell for user ${user}"
+                info 2 "Invalid shell for user ${user}"
             fi
         else
-            echo "User ${user} has no shell"
+            info 2 "User ${user} has no shell"
         fi
     else
-        echo "Unknown user ${user}"
+        info 2 "Unknown user ${user}"
     fi
 }
 

@@ -331,7 +331,7 @@ EOF
                 sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="inet ${IP4_ADDR}"
             fi
         fi
-        echo "Added bridge interface: \"${if}\""
+        info 2 "Added bridge interface: \"${if}\""
 
     # VNET interface
     elif [ "${VNET}" -eq 1 ]; then
@@ -389,7 +389,7 @@ EOF
                     sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="inet ${IP4_ADDR}"
                 fi
             fi
-            echo "Added VNET interface: \"${if}\""
+            info 2 "Added VNET interface: \"${if}\""
 
         # netgraph
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
@@ -433,7 +433,7 @@ EOF
                     sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="inet ${ip}"
                 fi
             fi
-            echo "Added VNET interface: \"${if}\""
+            info 2 "Added VNET interface: \"${if}\""
 
         fi
 
@@ -465,7 +465,7 @@ EOF
                 sysrc -f "${jail_rc_config}" ifconfig_${if}="inet ${IP4_ADDR}"
             fi
         fi
-        echo "Added Passthrough interface: \"${if}\""
+        info 2 "Added Passthrough interface: \"${if}\""
 
     elif [ "${STANDARD}" -eq 1 ]; then
         if [ -n "${IP6_ADDR}" ]; then
@@ -595,7 +595,7 @@ remove_interface() {
             error_exit "[ERROR]: Failed to remove interface from jail.conf"
         fi
     fi
-    echo "Removed interface: \"${if}\""
+    info 2 "Removed interface: \"${if}\""
 }
 
 add_vlan() {
@@ -625,7 +625,7 @@ add_vlan() {
         bastille restart "${jailname}"
     fi
 
-    echo "Added VLAN ${vlan_id} to interface: \"${jail_vnet}\""
+    info 2 "Added VLAN ${vlan_id} to interface: \"${jail_vnet}\""
 }
 
 info "\n[${TARGET}]:"
@@ -642,7 +642,6 @@ case "${ACTION}" in
             exit 0
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
             add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
-            echo
             exit 0
         fi
 

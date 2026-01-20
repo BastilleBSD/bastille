@@ -199,6 +199,6 @@ for jail in ${JAILS}; do
     # Add entry to fstab and mount
     echo "${fstab_entry}" >> "${bastille_jailsdir}/${jail}/fstab" || error_continue "Failed to create fstab entry: ${fstab_entry}"
     mount -F "${bastille_jailsdir}/${jail}/fstab" -a || error_continue "Failed to mount volume: ${fullpath}"
-    echo "Added: ${fstab_entry}"
+    info 2 "Added: ${fstab_entry}"
 
 done
