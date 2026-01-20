@@ -127,7 +127,7 @@ render() {
         info 2 "Rendering File: ${file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${file_path}'"
     else
-        warn "[WARNING]: Path not found for render: ${2}"
+        warn 1 "[WARNING]: Path not found for render: ${2}"
     fi
 }
 
@@ -389,7 +389,7 @@ for jail in ${JAILS}; do
                     arg_name=$(get_arg_name "${args}")
                     arg_value=$(get_arg_value "${args}" "$@")
                     if [ -z "${arg_value}" ]; then
-                        warn "[WARNING]: No value provided for arg: ${arg_name}"
+                        warn 1 "[WARNING]: No value provided for arg: ${arg_name}"
                         SKIP_ARGS=$(printf '%s\n%s' "${SKIP_ARGS}" "${arg_name}")
                     else
                         ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${arg_name}}/${arg_value}/g'"

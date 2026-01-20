@@ -268,7 +268,7 @@ jail_upgrade() {
                 # Update "osrelease" inside jail.conf using 'bastille config'
                 bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
                 info 1 "\nUpgraded ${TARGET}: ${OLD_RELEASE} > ${NEW_RELEASE}"
-                warn "\nPlease run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing the upgrade.\n"
+                warn 1 "\nPlease run 'bastille upgrade ${TARGET} install', restart the jail, then run 'bastille upgrade ${TARGET} install' again to finish installing the upgrade.\n"
             else
                 info 1 "\nNo upgrades available.\n"
             fi

@@ -113,7 +113,7 @@ zfs_unjail_dataset() {
         usage
     # Warn if datset does not exist
     elif ! zfs list "${DATASET}" >/dev/null 2>/dev/null; then
-        warn "[WARNING]: Dataset does not exist: ${DATASET}"
+        warn 1 "[WARNING]: Dataset does not exist: ${DATASET}"
     fi
 
     # Validate jail state

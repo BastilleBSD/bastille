@@ -132,7 +132,7 @@ validate_archive() {
         else
             # Check if user opt to force import
             if [ "${OPT_FORCE}" -eq 1 ]; then
-                warn "[WARNING]: Skipping archive validation!"
+                warn 1 "[WARNING]: Skipping archive validation!"
             else
                 error_exit "[ERROR]: Checksum file not found. See 'bastille import [option(s)] FILE'."
             fi
@@ -364,7 +364,7 @@ generate_config() {
 	    IP4_DEFINITION="ip4.addr = lo1|-;"
             IP6_DEFINITION=""
             IP6_MODE="disable"
-            warn "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
+            warn 1 "Warning: See 'bastille edit ${TARGET_TRIM} jail.conf' for manual network configuration."
         fi
 
         NETBLOCK=$(cat <<-EOF
@@ -379,7 +379,7 @@ EOF
         if [ -z "${CONFIG_RELEASE}" ]; then
             # Fallback to host version
             CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
-            warn "[WARNING]: ${CONFIG_RELEASE} was set by default!"
+            warn 1 "[WARNING]: ${CONFIG_RELEASE} was set by default!"
         fi
         mkdir "${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille"
         echo "${bastille_releasesdir}/${CONFIG_RELEASE} ${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille nullfs ro 0 0" \
@@ -429,7 +429,7 @@ update_config() {
     if [ -z "${CONFIG_RELEASE}" ]; then
         # Fallback to host version
         CONFIG_RELEASE=$(freebsd-version | sed 's/\-[pP].*//')
-        warn "[WARNING]: ${CONFIG_RELEASE} was set by default!"
+        warn 1 "[WARNING]: ${CONFIG_RELEASE} was set by default!"
     fi
 
     mkdir "${bastille_jailsdir}/${TARGET_TRIM}/root/.bastille"
@@ -463,7 +463,7 @@ vnet_requirements() {
             if [ -f "/usr/share/examples/jails/jib" ] && [ ! -f "/usr/local/bin/jib" ]; then
                 install -m 0544 /usr/share/examples/jails/jib /usr/local/bin/jib
             else
-                warn "[WARNING]: Unable to locate/install jib script required by VNET jails."
+                warn 1 "[WARNING]: Unable to locate/install jib script required by VNET jails."
             fi
         fi
     elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
@@ -471,7 +471,7 @@ vnet_requirements() {
             if [ -f "/usr/share/examples/jails/jng" ] && [ ! -f "/usr/local/bin/jng" ]; then
                 install -m 0544 /usr/share/examples/jails/jng /usr/local/bin/jng
             else
-                warn "[WARNING]: Unable to locate/install jng script required by VNET jails."
+                warn 1 "[WARNING]: Unable to locate/install jng script required by VNET jails."
             fi
         fi
     fi
@@ -496,7 +496,7 @@ update_symlinks() {
 
     # Just warn user to bootstrap the release if missing
     if [ ! -d "${bastille_releasesdir}/${CONFIG_RELEASE}" ]; then
-        warn "[WARNING]: ${CONFIG_RELEASE} must be bootstrapped. See 'bastille bootstrap'."
+        warn 1 "[WARNING]: ${CONFIG_RELEASE} must be bootstrapped. See 'bastille bootstrap'."
     fi
 
     # Update old symlinks
@@ -509,7 +509,7 @@ update_symlinks() {
             ln -sfF /.bastille/${link} ${link} || EXIT_CODE=$?
             if [ "${EXIT_CODE:-0}" != "0" ]; then
                 # Assume that the failure was due to the directory not being empty and explain the problem in friendlier terms
-                warn "[WARNING]: directory ${link} on imported jail was not empty and will not be updated by Bastille"
+                warn 1 "[WARNING]: directory ${link} on imported jail was not empty and will not be updated by Bastille"
             fi
         fi
     done

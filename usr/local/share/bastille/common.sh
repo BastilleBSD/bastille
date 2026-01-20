@@ -54,7 +54,7 @@ enable_color() {
 
 enable_debug() {
     # Enable debug mode.
-    warn "***DEBUG MODE***"
+    warn 1 "***DEBUG MODE***"
     set -x
 }
 
@@ -97,7 +97,15 @@ info() {
 
 
 warn() {
-    printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2
+
+    level="${1}"
+    shift 1
+
+    if [ "${level}" -eq 1 ]; then
+        printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2
+    elif [ "${level}" -eq 3 ]; then
+        printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}"
+    fi
 }
 
 check_target_exists() {
@@ -613,7 +621,7 @@ checkyesno() {
         return 1
         ;;
     *)
-        warn "\$${1} is not set properly - see rc.conf(5)."
+        warn 1\$${1} is not set properly - see rc.conf(5)."
         return 1
         ;;
     esac
@@ -628,8 +636,8 @@ update_jail_syntax_v1() {
     # Only apply if old syntax is found
     if grep -Eoq "exec.prestart.*ifconfig epair[0-9]+ create.*" "${jail_config}"; then
 
-        warn "\n[WARNING]\n"
-        warn "Updating jail.conf file..."
+        warn 1\n[WARNING]\n"
+        warn 1Updating jail.conf file..."
         warn "Please review your jail.conf file after completion."
         warn "VNET jails created without -M will be assigned a new MAC address."
 

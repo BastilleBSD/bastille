@@ -316,7 +316,7 @@ if [ "${OPT_PASSWORD}" -eq 1 ]; then
     if ! which sshpass >/dev/null 2>/dev/null; then
         error_exit "[ERROR]: Please install 'sshpass' to use password based authentication."
     else
-        warn "[WARNING]: Password based authentication can be insecure."
+        warn 1 "[WARNING]: Password based authentication can be insecure."
         printf "Please enter your password: "
         # We disable terminal output for the password
         stty -echo

@@ -145,7 +145,7 @@ for jail in ${JAILS}; do
                 fi
                 if ifconfig | grep "^${if}:" >/dev/null; then
                     if ifconfig | grep -qwF "${ip}"; then
-                        warn "[WARNING]: IP address (${ip}) already in use, continuing..."
+                        warn 1 "[WARNING]: IP address (${ip}) already in use, continuing..."
                     fi
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
                     if route -n get ${ip} | grep "gateway" >/dev/null; then
@@ -168,7 +168,7 @@ for jail in ${JAILS}; do
                 fi
                 if ifconfig | grep "^${if}:" >/dev/null; then
                     if ifconfig | grep -qwF "${ip}"; then
-                        warn "[WARNING]: IP address (${ip}) already in use, continuing..."
+                        warn 1 "[WARNING]: IP address (${ip}) already in use, continuing..."
                     fi
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
                     if route -6 -n get ${ip} | grep "gateway" >/dev/null; then

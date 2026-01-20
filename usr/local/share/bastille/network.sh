@@ -197,7 +197,7 @@ define_ips() {
                 error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
             fi
         elif ifconfig | grep -qwF "${IP4_ADDR}"; then
-            warn "\n[WARNING]: IP address already in use: ${TEST_IP}"
+            warn 1 "\n[WARNING]: IP address already in use: ${TEST_IP}"
         fi
     fi
 

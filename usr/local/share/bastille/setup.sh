@@ -359,7 +359,7 @@ antispoof for \$ext_if
 pass in proto tcp from any to any port ssh flags S/SA keep state
 EOF
     sysrc pf_enable=YES
-    warn "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
+    warn 1 "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
 else
     info 1 "\nFirewall (pf) has already been configured!"
 fi
@@ -427,8 +427,8 @@ case "${OPT_CONFIG}" in
         if [ "${AUTO_YES}" -eq 1 ]; then
             configure_linux
         else
-            warn "[WARNING]: Running linux jails requires loading additional kernel"
-            warn "modules, as well as installing the 'debootstrap' package."
+            warn 1 "[WARNING]: Running linux jails requires loading additional kernel"
+            warn 1 "modules, as well as installing the 'debootstrap' package."
             # shellcheck disable=SC3045
             read -p "Do you want to proceed with setup? [y|n]:" answer
             case "${answer}" in
@@ -449,9 +449,9 @@ case "${OPT_CONFIG}" in
             configure_vnet
             configure_netgraph
         else
-            warn "[WARNING]: Bastille only allows using either 'if_bridge' or 'netgraph'"
-            warn "as VNET network options. You CANNOT use both on the same system. If you have"
-            warn "already started using bastille with 'if_bridge' do not continue."
+            warn 1 "[WARNING]: Bastille only allows using either 'if_bridge' or 'netgraph'"
+            warn 1 "as VNET network options. You CANNOT use both on the same system. If you have"
+            warn 1 "already started using bastille with 'if_bridge' do not continue."
             # shellcheck disable=SC3045
             read -p "Do you really want to continue setting up netgraph for Bastille? [y|n]:" answer
             case "${answer}" in
@@ -472,9 +472,9 @@ case "${OPT_CONFIG}" in
         if [ "${AUTO_YES}" -eq 1 ]; then
             configure_loopback_interface
         else
-            warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-            warn "interface to be configured ant one time. If you continue, the 'shared'"
-            warn "interface will be disabled, and the 'loopback' interface will be used as default."
+            warn 1 "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
+            warn 1 "interface to be configured ant one time. If you continue, the 'shared'"
+            warn 1 "interface will be disabled, and the 'loopback' interface will be used as default."
             # shellcheck disable=SC3045
             read -p "Do you really want to continue setting up the loopback interface? [y|n]:" answer
             case "${answer}" in
@@ -494,9 +494,9 @@ case "${OPT_CONFIG}" in
         if [ "${AUTO_YES}" -eq 1 ]; then
             error_exit "[ERROR]: 'shared' does not support [-y|--yes]."
         else
-            warn "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-            warn "interface to be configured at one time. If you continue, the 'loopback'"
-            warn "interface will be disabled, and the shared interface will be used as default."
+            warn 1 "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
+            warn 1 "interface to be configured at one time. If you continue, the 'loopback'"
+            warn 1 "interface will be disabled, and the shared interface will be used as default."
             # shellcheck disable=SC3045
             read -p "Do you really want to continue setting up the shared interface? [y|n]:" answer
             case "${answer}" in

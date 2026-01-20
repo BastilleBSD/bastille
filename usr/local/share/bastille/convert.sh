@@ -277,7 +277,7 @@ if [ "$#" -eq 1 ]; then
     # Ask if user is sure they want to convert the jail
     # but only if AUTO_YES=0
     if [ "${AUTO_YES}" -ne 1 ]; then
-        warn "\n[WARNING]: Jail conversion from thin to thick can't be undone!\n"
+        warn 1 "\n[WARNING]: Jail conversion from thin to thick can't be undone!\n"
         # shellcheck disable=SC3045
         read -p "Are you sure you want to continue? [y|n]:" _answer
         case "${_answer}" in

@@ -245,9 +245,9 @@ for jail in ${JAILS}; do
                 )
             # check if our output is a warning or regular
             if [ $? -eq 120 ]; then
-                warn "${_output}"
+                warn 3 "${_output}"
             else
-                info 2 "${_output}"
+                info 3 "${_output}"
             fi
         elif [ "${ACTION}" = "remove" ]; then
             if [ "$(bastille config ${jail} get ${PROPERTY})" != "not set" ]; then

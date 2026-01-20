@@ -71,7 +71,7 @@ destroy_jail() {
     # Ask if user is sure they want to destroy the jail
     # but only if AUTO_YES=0
     if [ "${AUTO_YES}" -ne 1 ]; then
-        warn "\nAttempting to destroy jail: ${jail}\n"
+        warn 1 "\nAttempting to destroy jail: ${jail}\n"
         # shellcheck disable=SC3045
         read -p "Are you sure you want to continue? [y|n]:" answer
         case "${answer}" in

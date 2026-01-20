@@ -134,7 +134,7 @@ define_ips() {
             fi
         # Warn if IP is in use
         elif ifconfig | grep -qwF "${IP4_ADDR}"; then
-            warn "[WARNING]: IP address in use: ${IP4_ADDR}"
+            warn 1 "[WARNING]: IP address in use: ${IP4_ADDR}"
         fi
     fi
 
