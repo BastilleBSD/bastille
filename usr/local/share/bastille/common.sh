@@ -84,9 +84,9 @@ error_exit() {
 info() {
     if [ "${1}" -eq 2 ]; then
         shift 1
-        echo -e "$*" 1>&2
+        printf "%b\n" "$*"
     else
-        echo -e "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
+        printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}" >&2
     fi
 }
 
@@ -147,7 +147,7 @@ get_jail_name() {
     if [ -z "${jail_name}" ]; then
         return 1
     else
-        echo "${jail_name}"
+        info "${jail_name}"
     fi
 }
 
