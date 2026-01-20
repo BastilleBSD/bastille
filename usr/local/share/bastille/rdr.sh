@@ -258,7 +258,7 @@ while [ "$#" -gt 0 ]; do
             usage
             ;;
         -d|--destination)
-            if ifconfig | grep -owq "inet ${2}"; then
+            if ifconfig | grep -owq "inet6\? ${2}"; then
                 OPTION_DST=1
                 RDR_DST="${2}"
                 shift 2
