@@ -608,11 +608,11 @@ add_vlan() {
     local jail_rc_config="${bastille_jailsdir}/${jailname}/root/etc/rc.conf"
 
     if [ "${VNET}" -eq 1 ]; then
-        local jib_epair="$(grep "jib addm.*${if}" ${jail_config} | awk '{print $3}')"
+        local jib_epair="$(grep "jib addm.*${interface}" ${jail_config} | awk '{print $3}')"
         local jail_epair="$(grep "e[0-9]+b_${jib_epair}" ${jail_config})"
         local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${BRIDGE}" -eq 1 ]; then
-        local jail_epair="$(grep 'e[0-9]+b_[^;" ]+' ${jail_config})"
+        local jail_epair="$(grep -o "ifconfig.*${interface}.*addm.*" ${jail_config} | grep -Eo 'e[0-9]+b_[^;" ]+')"
         local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
         local jail_vnet="${interface}"
