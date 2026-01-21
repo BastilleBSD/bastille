@@ -79,6 +79,9 @@ bastille_network_pf_table="jails"                                     ## default
 bastille_network_shared=""                                            ## default: ""
 bastille_network_gateway=""                                           ## default: ""
 bastille_network_gateway6=""                                          ## default: ""
+bastille_network_use_local_unbound="NO"                               ## default: "NO"
+bastille_network_use_unbound="NO"                                     ## default: "NO"
+bastille_network_unbound_zone="bastille"                              ## default: "bastille"
 
 ## Default Templates
 bastille_template_base="default/base"                                 ## default: "default/base"
