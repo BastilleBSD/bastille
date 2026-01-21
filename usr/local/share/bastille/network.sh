@@ -251,7 +251,7 @@ add_interface() {
     local ip="${3}"
     local jail_config="${bastille_jailsdir}/${jailname}/jail.conf"
     local jail_rc_config="${bastille_jailsdir}/${jailname}/root/etc/rc.conf"
-    local jail_vnet_list="$(grep -Eo "^[^#].*vnet[0-9]+" ${jail_rc_config} | grep -Eo 'vnet[0-9]+')"
+    local jail_vnet_list="$(sed 's/[[:space:]]*#.*//' ${jail_rc_config} | grep -Eo 'vnet[0-9]+')"
     # Set vnetX number
     local jail_vnet_num="0"
     while echo "${jail_vnet_list}" | grep -Eosq "vnet${jail_vnet_num}"; do
