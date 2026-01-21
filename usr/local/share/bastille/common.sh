@@ -66,7 +66,7 @@ fi
 
 # Error messages/functions
 error_notify() {
-    printf "%b\n" "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+    printf "%s\n" "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
 error_continue() {
@@ -87,11 +87,11 @@ info() {
     shift 1
 
     if [ "${level}" -eq 1 ]; then
-        printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
+        printf "%s\n" "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
     elif [ "${level}" -eq 2 ]; then
-        printf "%b\n" "$*" 1>&2
+        printf "%s\n" "$*" 1>&2
     else
-        printf "%b\n" "$*"
+        printf "%s\n" "$*"
     fi
 }
 
@@ -102,9 +102,9 @@ warn() {
     shift 1
 
     if [ "${level}" -eq 1 ]; then
-        printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2
+        printf "%s\n" "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2
     elif [ "${level}" -eq 3 ]; then
-        printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}"
+        printf "%s\n" "${COLOR_YELLOW}$*${COLOR_RESET}"
     fi
 }
 
