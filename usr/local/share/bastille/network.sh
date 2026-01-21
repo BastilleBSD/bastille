@@ -610,10 +610,10 @@ add_vlan() {
     if [ "${VNET}" -eq 1 ]; then
         local jib_epair="$(grep "jib addm.*${if}" ${jail_config} | awk '{print $3}')"
         local jail_epair="$(grep "e[0-9]+b_${jib_epair}" ${jail_config})"
-	local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
+        local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${BRIDGE}" -eq 1 ]; then
         local jail_epair="$(grep 'e[0-9]+b_[^;" ]+' ${jail_config})"
-	local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
+        local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
         local jail_vnet="${interface}"
     fi
@@ -637,13 +637,17 @@ case "${ACTION}" in
         validate_netconf
         validate_netif "${INTERFACE}"
 
-        if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
-            info "\nInterface already added: ${INTERFACE}"
-            exit 0
-        elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
-            add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
-            echo
-            exit 0
+        if check_interface_added "${TARGET}" "${INTERFACE}"; then
+		    if [ -z "${VLAN_ID}" ]; then
+                info "\nInterface already added: ${INTERFACE}"
+                exit 0
+			elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
+                add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+                echo
+                exit 0
+            else
+		        usage
+			fi
         fi
 
         ## validate IP if not empty
