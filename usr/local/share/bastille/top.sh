@@ -88,11 +88,11 @@ set_target_single "${TARGET}"
 check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille start "${TARGET}"
 else
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
     error_notify "Jail is not running."
     error_exit "Use [-a|--auto] to auto-start the jail."
 fi
 
-info "\n[${TARGET}]:"
+info 1 "\n[${TARGET}]:"
 
 jexec -l "${TARGET}" /usr/bin/top

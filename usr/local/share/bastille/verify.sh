@@ -87,32 +87,32 @@ verify_template() {
         path=${template_path}/${hook}
         if [ -s "${path}" ]; then
             hook_validate=$((_hook_validate+1))
-            info "\nDetected ${hook} hook."
+            info 1 "\nDetected ${hook} hook."
 
             ## line count must match newline count
             # shellcheck disable=SC2046
             # shellcheck disable=SC3003
             if [ $(wc -l "${path}" | awk '{print $1}') -ne "$(tr -d -c '\n' < "${path}" | wc -c)" ]; then
-                info "[${hook}]:"
+                info 1 "[${hook}]:"
                 error_notify "[ERROR]: ${BASTILLE_TEMPLATE}:${hook} [failed]."
                 error_notify "Line numbers don't match line breaks."
                 error_exit "Template validation failed."
             ## if INCLUDE; recursive verify
             elif [ "${hook}" = 'INCLUDE' ]; then
-                info "[${hook}]:"
+                info 1 "[${hook}]:"
                 cat "${path}"
                 while read include; do
-                    info "[${hook}]:[${include}]:"
+                    info 1 "[${hook}]:[${include}]:"
                     TEMPLATE_INCLUDE="${include}"
                     handle_template_include
                 done < "${path}"
 
             ## if tree; tree -a bastille_template/_dir
             elif [ "${hook}" = 'OVERLAY' ]; then
-                info "[${hook}]:"
+                info 1 "[${hook}]:"
                 cat "${path}"
                 while read dir; do
-                    info "[${hook}]:[${dir}]:"
+                    info 1 "[${hook}]:[${dir}]:"
                         if [ -x "/usr/local/bin/tree" ]; then
                             /usr/local/bin/tree -a "${template_path}/${dir}"
                         else
@@ -120,7 +120,7 @@ verify_template() {
                         fi
                 done < "${path}"
             elif [ "${hook}" = 'Bastillefile' ]; then
-                info "[${hook}]:"
+                info 1 "[${hook}]:"
                 cat "${path}"
                 while read line; do
                     cmd=$(echo "${line}" | awk '{print tolower($1);}')
@@ -131,7 +131,7 @@ verify_template() {
                     fi
                 done < "${path}"
             else
-                info "[${hook}]:"
+                info 1 "[${hook}]:"
                 cat "${path}"
             fi
         fi
@@ -146,7 +146,7 @@ verify_template() {
 
     ## if validated; ready to use
     if [ "${hook_validate}" -gt 0 ]; then
-        info "\nTemplate ready to use."
+        info 1 "\nTemplate ready to use."
     fi
 }
 

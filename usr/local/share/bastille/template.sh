@@ -54,7 +54,7 @@ post_command_hook() {
 
     case $cmd in
         rdr)
-            echo -e ${args}
+            info 3 ${args}
     esac
 }
 
@@ -121,13 +121,13 @@ render() {
     local file_path="${1}/${2}"
 
     if [ -d "${file_path}" ]; then # Recursively render every file in this directory. -- cwells
-        echo "Rendering Directory: ${file_path}"
+        info 2 "Rendering Directory: ${file_path}"
         find "${file_path}" \( -type d -name .git -prune \) -o -type f -print0 | eval "xargs -0 sed -i '' ${ARG_REPLACEMENTS}"
     elif [ -f "${file_path}" ]; then
-        echo "Rendering File: ${file_path}"
+        info 2 "Rendering File: ${file_path}"
         eval "sed -i '' ${ARG_REPLACEMENTS} '${file_path}'"
     else
-        warn "[WARNING]: Path not found for render: ${2}"
+        warn 1 "[WARNING]: Path not found for render: ${2}"
     fi
 }
 
@@ -202,7 +202,7 @@ if [ "${TARGET}" = "convert" ]; then
         error_exit "[ERROR]: Template not found: ${TEMPLATE}"
     fi
 
-    echo "Converting template: ${TEMPLATE}"
+    info 2 "Converting template: ${TEMPLATE}"
 
     # Convert legacy template to Bastillefile
     HOOKS='ARG LIMITS INCLUDE PRE FSTAB PF PKG OVERLAY CONFIG SYSRC SERVICE CMD RENDER'
@@ -238,7 +238,7 @@ if [ "${TARGET}" = "convert" ]; then
         fi
     done
 
-    info "\nTemplate converted: ${TEMPLATE}"
+    info 1 "\nTemplate converted: ${TEMPLATE}"
     exit 0
 else
     set_target "${TARGET}"
@@ -248,7 +248,7 @@ case ${TEMPLATE} in
     http?://*/*/*)
         TEMPLATE_DIR=$(echo "${TEMPLATE}" | awk -F / '{ print $4 "/" $5 }')
         if [ ! -d "${bastille_templatesdir}/${TEMPLATE_DIR}" ]; then
-            info "Bootstrapping ${TEMPLATE}..."
+            info 1 "Bootstrapping ${TEMPLATE}..."
             if ! bastille bootstrap "${TEMPLATE}"; then
                 error_exit "[ERROR]: Failed to bootstrap template: ${TEMPLATE}"
             fi
@@ -295,14 +295,14 @@ for jail in ${JAILS}; do
     check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${jail}"
     else
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
-    echo "Applying template: ${TEMPLATE}..."
+    info 2 "Applying template: ${TEMPLATE}..."
 
     # Get non-VNET IP
     bastille_jail_path=$(/usr/sbin/jls -j "${jail}" path)
@@ -385,7 +385,7 @@ for jail in ${JAILS}; do
                     arg_name=$(get_arg_name "${args}")
                     arg_value=$(get_arg_value "${args}" "$@")
                     if [ -z "${arg_value}" ]; then
-                        warn "[WARNING]: No value provided for arg: ${arg_name}"
+                        warn 1 "[WARNING]: No value provided for arg: ${arg_name}"
                         SKIP_ARGS=$(printf '%s\n%s' "${SKIP_ARGS}" "${arg_name}")
                     else
                         ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${arg_name}}/${arg_value}/g'"
@@ -444,5 +444,5 @@ for jail in ${JAILS}; do
         unset IFS
     fi
 
-    info "\nTemplate applied: ${TEMPLATE}"
+    info 1 "\nTemplate applied: ${TEMPLATE}"
 done

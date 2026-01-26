@@ -88,12 +88,12 @@ set_target_single "${TARGET}"
 check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille start "${TARGET}"
 else
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
     error_notify "Jail is not running."
     error_continue "Use [-a|--auto] to auto-start the jail."
 fi
 
-info "\n[${TARGET}]:"
+info 1 "\n[${TARGET}]:"
 
 if [ ! -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
     error_exit "[ERROR]: htop not found on ${TARGET}."

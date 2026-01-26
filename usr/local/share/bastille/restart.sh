@@ -115,7 +115,7 @@ for jail in ${JAILS}; do
         bastille start ${start_options} ${jail}
     elif [ "${IGNORE}" -eq 1 ]; then
         if check_target_is_stopped "${jail}"; then
-            info "\n[${jail}]:"
+            info 1 "\n[${jail}]:"
             error_continue "Jail is stopped."
         fi
     fi
