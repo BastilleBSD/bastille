@@ -108,9 +108,11 @@ validate_property() {
     case "${property}" in
         jid|name|path|interface|ip_hostname) ;;
         ip4.addr|ip4.saddrsel|ip4|ip6.addr|ip6.saddrsel|ip6) ;;
-        vnet|vnet|vnet.interface) ;;
+        vnet|vnet.interface) ;;
+        novnet) ;;
         host.hostname|host.domainname|host.hostuuid|host.hostid|host) ;;
-        securelevel|devfs_ruleset|children.max|children.cur|enforce_statfs|persist|nopersist|cpuset.id|parent) ;;
+        securelevel|devfs_ruleset|children.max|children.cur|enforce_statfs|persist|cpuset.id|parent) ;;
+        nopersist) ;;
         osrelease|osreldate|meta|env) ;;
         allow.set_hostname|allow.sysvipc|allow.raw_sockets|allow.chflags) ;;
         allow.noset_hostname|allow.nosysvipc|allow.noraw_sockets|allow.nochflags) ;;
