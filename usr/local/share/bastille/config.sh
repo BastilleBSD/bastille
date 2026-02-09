@@ -46,15 +46,6 @@ EOF
     exit 1
 }
 
-# we need jail(8) to parse the config file so it can expand variables etc
-print_jail_conf() {
-
-    # we need to pass a literal \n to jail to get each parameter on its own
-    # line
-    jail -f "$1" -e '
-'
-}
-
 # Handle options.
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -75,7 +66,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 4 ]; then
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
     usage
 fi
 
@@ -109,9 +100,52 @@ PROPERTY="${1}"
 shift
 VALUE="$@"
 
+# This is a list of all supported jail.conf property names
+validate_property() {
+
+    local property="${1}"
+
+    case "${property}" in
+        jid|name|path|interface|ip_hostname) ;;
+        ip4.addr|ip4.saddrsel|ip4|ip6.addr|ip6.saddrsel|ip6) ;;
+        vnet|vnet.interface) ;;
+        novnet) ;;
+        host.hostname|host.domainname|host.hostuuid|host.hostid|host) ;;
+        securelevel|devfs_ruleset|children.max|children.cur|enforce_statfs|persist|cpuset.id|parent) ;;
+        nopersist) ;;
+        osrelease|osreldate|meta|env) ;;
+        allow.set_hostname|allow.sysvipc|allow.raw_sockets|allow.chflags) ;;
+        allow.noset_hostname|allow.nosysvipc|allow.noraw_sockets|allow.nochflags) ;;
+        allow.mount|allow.mount.devfs|allow.quotas|allow.read_msgbuf) ;;
+        allow.nomount|allow.nomount.devfs|allow.noquotas|allow.noread_msgbuf) ;;
+        allow.socket_af|allow.mlock|allow.nfsd|allow.reserved_ports) ;;
+        allow.nosocket_af|allow.nomlock|allow.nonfsd|allow.noreserved_ports) ;;
+        allow.unprivileged_parent_tampering|allow.unprivileged_proc_debug) ;;
+        allow.nounprivileged_parent_tampering|allow.nounprivileged_proc_debug) ;;
+        allow.suser|allow.extattr|allow.adjtime|allow.settime|allow.routing|allow.setaudit) ;;
+        allow.nosuser|allow.noextattr|allow.noadjtime|allow.nosettime|allow.norouting|allow.nosetaudit) ;;
+        allow.mount.fdescfs|allow.mount.fusefs|allow.mount.nullfs|allow.mount.procfs|allow.mount.linprocfs) ;;
+        allow.nomount.fdescfs|allow.nomount.fusefs|allow.nomount.nullfs|allow.nomount.procfs|allow.nomount.linprocfs) ;;
+        allow.mount.linsysfs|allow.mount.tmpfs|allow.mount.zfs|allow.vmm) ;;
+        allow.nomount.linsysfs|allow.nomount.tmpfs|allow.nomount.zfs|allow.novmm) ;;
+        linux|linux.osname|linux.osrelease|linux.oss_version) ;;
+        sysvmsg|sysvsem|sysvshm|zfs.mount_snapshot) ;;
+        exec.prepare|exec.prestart|exec.created|exec.start|command|exec.poststart) ;;
+        exec.prestop|exec.stop|exec.poststop|exec.release|exec.clean) ;;
+        exec.jail_user|exec.system_jail_user|exec.system_user|exec.timeout) ;;
+        exec.consolelog|exec.fib|stop.timeout) ;;
+        zfs.dataset|mount|mount.fstab|mount.devfs|mount.fdescfs|mount.procfs) ;;
+        dying|allow.dying);;
+        *) error_exit "[ERROR]: Unsupported property: ${property}" ;;
+    esac
+}
+
 case "${PROPERTY}" in
     boot|depend|depends|prio|priority)
         BASTILLE_PROPERTY=1
+        ;;
+    *)
+        validate_property "${PROPERTY}"
         ;;
 esac
 
@@ -261,8 +295,13 @@ for jail in ${JAILS}; do
             else
                 error_exit "[ERROR]: Value not present in jail.conf: ${PROPERTY}"
             fi
+
         else # Setting the value. -- cwells
+
             if [ -n "${VALUE}" ]; then
+                if ! echo "${VALUE}" | grep -E '^([a-zA-Z0-9._/ :-]|\\\$|\\!|\\&)+$' > /dev/null 2>&1; then
+                    error_exit "[ERROR]: VALUE contains unsupported characters."
+                fi
                 VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
                 if echo "${VALUE}" | grep ' ' > /dev/null 2>&1; then # Contains a space, so wrap in quotes. -- cwells
                     VALUE="'${VALUE}'"
@@ -276,9 +315,8 @@ for jail in ${JAILS}; do
             # there is none, at the end
             #
             # awk doesn't have "inplace" editing so we use a temp file
-            tmpfile=$(mktemp) || error_exit "unable to set because mktemp failed"
-            cp "${FILE}" "${tmpfile}" && \
-            awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
+            tmpfile=$(mktemp) || error_exit "[ERROR]: Failed to create tmpfile."
+            if awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
                 BEGIN {
                     # build RE as string as we can not expand vars in RE literals
                     prop_re = "^[[:space:]]*" property "[[:space:]]*;?$";
@@ -304,8 +342,12 @@ for jail in ${JAILS}; do
                     # print each uninteresting line unchanged
                     print;
                 }
-            ' "${tmpfile}" > "${FILE}"
-            rm "${tmpfile}"
+            ' "${FILE}" > "${tmpfile}"; then
+                mv "${tmpfile}" "${FILE}"
+            else
+                rm "${tmpfile}"
+                error_exit "[ERROR]: Failed to update jail.conf"
+            fi
         fi
     fi
 
