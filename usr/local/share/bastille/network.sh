@@ -246,7 +246,7 @@ add_interface() {
     local ip="${3}"
     local jail_config="${bastille_jailsdir}/${jailname}/jail.conf"
     local jail_rc_config="${bastille_jailsdir}/${jailname}/root/etc/rc.conf"
-    local jail_vnet_list="$(grep -Eo 'vnet[0-9]+' ${jail_rc_config})"
+    local jail_vnet_list="$(sed 's/[[:space:]]*#.*//' ${jail_rc_config} | grep -Eo 'vnet[0-9]+')"
     # Set vnetX number
     local jail_vnet_num="0"
     while echo "${jail_vnet_list}" | grep -Eosq "vnet${jail_vnet_num}"; do
@@ -608,12 +608,12 @@ add_vlan() {
     local jail_rc_config="${bastille_jailsdir}/${jailname}/root/etc/rc.conf"
 
     if [ "${VNET}" -eq 1 ]; then
-        local jib_epair="$(grep "jib addm.*${if}" ${jail_config} | awk '{print $3}')"
+        local jib_epair="$(grep "jib addm.*${interface}" ${jail_config} | awk '{print $3}')"
         local jail_epair="$(grep "e[0-9]+b_${jib_epair}" ${jail_config})"
-	local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
+        local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${BRIDGE}" -eq 1 ]; then
-        local jail_epair="$(grep 'e[0-9]+b_[^;" ]+' ${jail_config})"
-	local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
+        local jail_epair="$(grep -o "ifconfig.*${interface}.*addm.*" ${jail_config} | grep -Eo 'e[0-9]+a_[^;" ]+' | sed 's/a_/b_/')"
+        local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${PASSTHROUGH}" -eq 1 ]; then
         local jail_vnet="${interface}"
     fi

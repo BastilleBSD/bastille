@@ -100,6 +100,11 @@ for jail in ${JAILS}; do
         OPTION="${OPTION}L"
     fi
 
+    if [ ! -d "${jail_path}" ]; then
+        mkdir -p "$(dirname ${jail_path})" || \
+            error_continue "[ERROR]: Failed to create directory: $(dirname ${jail_path})"
+    fi
+
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
         ERRORS=$((ERRORS + 1))
         error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"

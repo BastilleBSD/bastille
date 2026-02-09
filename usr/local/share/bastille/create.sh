@@ -990,16 +990,16 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
                 NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-CURRENT|-CURRENT-i386)$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
                 validate_release
                 ;;
-            *-release|*-RELEASE|*-release-I386|*-RELEASE-i386|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
-                ### FreeBSD ###
-                PLATFORM_OS="FreeBSD"
-                NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
-                validate_release
-                ;;
             *\.*-stable|*\.*-STABLE)
                 ### FreeBSD ###
                 PLATFORM_OS="FreeBSD"
                 NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-STABLE)$' | tr '[:lower:]' '[:upper:]')
+                validate_release
+                ;;
+            *-release|*-RELEASE|*-release-I386|*-RELEASE-i386|*-rc[1-9]|*-RC[1-9]|*-beta[1-9]|*-BETA[1-9])
+                ### FreeBSD ###
+                PLATFORM_OS="FreeBSD"
+                NAME_VERIFY=$(echo "${RELEASE}" | grep -iwE '^([1-9]+)\.[0-9](-RELEASE|-RELEASE-i386|-RC[1-9]|-BETA[1-9])$' | tr '[:lower:]' '[:upper:]' | sed 's/I/i/g')
                 validate_release
                 ;;
             current|CURRENT)
@@ -1034,19 +1034,24 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
                 NAME_VERIFY=Ubuntu_2404
                 validate_release
                 ;;
-            debian_buster|buster|debian-buster)
+            debian_buster|buster|debian-buster|debian10|Debian10)
                 PLATFORM_OS="Debian"
                 NAME_VERIFY=Debian10
                 validate_release
                 ;;
-            debian_bullseye|bullseye|debian-bullseye)
+            debian_bullseye|bullseye|debian-bullseye|debian11|Debian11)
                 PLATFORM_OS="Debian"
                 NAME_VERIFY=Debian11
                 validate_release
                 ;;
-            debian_bookworm|bookworm|debian-bookworm)
+            debian_bookworm|bookworm|debian-bookworm|debian12|Debian12)
                 PLATFORM_OS="Debian"
                 NAME_VERIFY=Debian12
+                validate_release
+                ;;
+            debian_trixie|trixie|debian-trixie|debian23|Debian13)
+                PLATFORM_OS="Debian"
+                NAME_VERIFY=Debian13
                 validate_release
                 ;;
             *)
