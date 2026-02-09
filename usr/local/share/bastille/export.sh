@@ -95,7 +95,7 @@ if [ -n "${bastille_export_options}" ]; then
 
     DEFAULT_EXPORT_OPTS="${bastille_export_options}"
 
-    info "Default export option(s): '${DEFAULT_EXPORT_OPTS}'"
+    info 1 "Default export option(s): '${DEFAULT_EXPORT_OPTS}'"
 
     # Don't shift here when default export options are explicitly denoted in the config file, hence TARGET will always be $1.
     for opt in ${DEFAULT_EXPORT_OPTS}; do
@@ -304,7 +304,7 @@ if checkyesno bastille_zfs_enable; then
             bastille stop "${TARGET}"
             AUTO_RESTART=1
         else
-            info "\n[${TARGET}]:"
+            info 1 "\n[${TARGET}]:"
             error_notify "[ERROR]: Jail is running."
             error_exit "Use [-a|--auto] to auto-stop the jail, or [-l|--live] (ZFS only) to migrate a running jail."
         fi
@@ -314,7 +314,7 @@ else
         bastille stop "${TARGET}"
         AUTO_RESTART=1
     else
-        info "\n[${TARGET}]:"
+        info 1 "\n[${TARGET}]:"
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
@@ -323,7 +323,7 @@ fi
 create_zfs_snap() {
     # Take a recursive temporary snapshot
     if [ "${USER_EXPORT}" -eq 0 ]; then
-        info "\nCreating temporary ZFS snapshot for export..."
+        info 1 "\nCreating temporary ZFS snapshot for export..."
     fi
     zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_${TARGET}_${DATE}"
 }
@@ -360,7 +360,7 @@ export_check() {
             EXPORT_INFO="to a compressed ${FILE_EXT} ${EXPORT_TYPE}"
         fi
 
-        info "\n${EXPORT_AS} '${TARGET}' ${EXPORT_INFO}..."
+        info 1 "\n${EXPORT_AS} '${TARGET}' ${EXPORT_INFO}..."
     fi
 
     if checkyesno bastille_zfs_enable; then
@@ -369,7 +369,7 @@ export_check() {
         create_zfs_snap
 
         if [ "${USER_EXPORT}" -eq 0 ]; then
-            info "\nSending ZFS data stream..."
+            info 1 "\nSending ZFS data stream..."
         fi
 
     fi
@@ -466,7 +466,7 @@ jail_export() {
             FILE_EXT=".tgz"
 
             # Create standard tgz backup archive
-            info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
+            info 1 "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
             cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailsdir}"
             if ! tar -cf - "${TARGET}" | gzip ${bastille_compress_gz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
@@ -478,7 +478,7 @@ jail_export() {
             FILE_EXT=".txz"
 
             # Create standard txz backup archive
-            info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
+            info 1 "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
             cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailssdir}"
             if ! tar -cf - "${TARGET}" | xz ${bastille_compress_xz_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
@@ -490,7 +490,7 @@ jail_export() {
             FILE_EXT=".tzst"
 
             # Create standard txz backup archive
-            info "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
+            info 1 "\nExporting '${TARGET}' to a compressed ${FILE_EXT} archive..."
 
             cd "${bastille_jailsdir}" || error_exit "[ERROR]: Failed to change to directory: ${bastille_jailssdir}"
             if ! tar -cf - "${TARGET}" | zstd ${bastille_compress_zst_options} > "${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}"; then
@@ -512,7 +512,7 @@ jail_export() {
             if ! sha256 -q "${TARGET}_${DATE}${FILE_EXT}" > "${TARGET}_${DATE}.sha256"; then
             error_exit "[ERROR]: Failed to generate sha256 file."
         fi
-            info "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
+            info 1 "\nExported '${bastille_backupsdir}/${TARGET}_${DATE}${FILE_EXT}' successfully."
         fi
     fi
 

@@ -373,7 +373,7 @@ list_all(){
 
         (
 
-        get_jail_info "${jail}"
+        get_jail_info  "${jail}"
 
         # Get jail IP count
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
@@ -593,9 +593,9 @@ list_release() {
                 if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
                     release_patch=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
                     release_patch=${release_patch:-${release}}
-                    echo "${release_patch}"
+                    info 3 "${release_patch}"
                 else
-                    echo "${release}"
+                    info 3 "${release}"
                 fi
             fi
         done
@@ -609,7 +609,7 @@ list_snapshot(){
         jail_list=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for jail in ${jail_list}; do
             if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-                info "\n[${jail}]:"
+                info 1 "\n[${jail}]:"
                 zfs list -r -t snapshot "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"
             fi
         done
@@ -625,7 +625,7 @@ list_jail(){
         jail_list=$(ls -v --color=never "${bastille_jailsdir}" | sed "s/\n//g")
         for jail in ${jail_list}; do
             if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-                echo "${jail}"
+                info 3 "${jail}"
             fi
         done
     fi

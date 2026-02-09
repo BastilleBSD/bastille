@@ -97,13 +97,13 @@ validate_user() {
             if jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
                 jexec -l "${jail}" $LOGIN -f "${user}"
             else
-                echo "Invalid shell for user ${user}"
+                info 2 "Invalid shell for user ${user}"
             fi
         else
-            echo "User ${user} has no shell"
+            info 2 "User ${user} has no shell"
         fi
     else
-        echo "Unknown user ${user}"
+        info 2 "Unknown user ${user}"
     fi
 }
 
@@ -126,12 +126,12 @@ for jail in ${JAILS}; do
     check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${jail}"
     else
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     LOGIN="$(jexec -l "${jail}" which login)"
 

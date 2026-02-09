@@ -199,7 +199,7 @@ validate_release() {
     # Set release name to sane release
     RELEASE="${NAME_VERIFY}"
 
-    info "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
+    info 1 "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
 
     ### FreeBSD ###
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
@@ -212,7 +212,7 @@ validate_release() {
         fi
     ### Linux ###
     elif [ "${PLATFORM_OS}" = "Linux/Debian" ] || [ "${PLATFORM_OS}" = "Linux/Ubuntu" ]; then
-        info "\nEnsuring Linux compatability..."
+        info 1 "\nEnsuring Linux compatability..."
         if ! bastille setup -y linux >/dev/null 2>/dev/null; then
             error_notify "[ERROR]: Failed to configure linux."
             error_exit "See 'bastille setup linux' for more details."
@@ -255,7 +255,7 @@ bootstrap_release_legacy() {
             bastille_bootstrap_archives=$(echo "${bastille_bootstrap_archives}" | sed "s/${distfile}//")
         done
         if [ -z "${bastille_bootstrap_archives}" ]; then
-            info "\nBootstrap appears complete!\n"
+            info 1 "\nBootstrap appears complete!\n"
             exit 0
         fi
     fi
@@ -263,7 +263,7 @@ bootstrap_release_legacy() {
     # Bootstrap archives
     for archive in ${bastille_bootstrap_archives}; do
         if [ -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
-            info "\nExtracting ${PLATFORM_OS} archive: ${archive}.txz"
+            info 1 "\nExtracting ${PLATFORM_OS} archive: ${archive}.txz"
             if ! /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${archive}.txz"; then
                 ERRORS=$((ERRORS + 1))
                 error_continue "[ERROR]: Failed to extract archive: ${archive}.txz."
@@ -271,7 +271,7 @@ bootstrap_release_legacy() {
         else
             # Fetch MANIFEST
             if [ ! -f "${bastille_cachedir}/${RELEASE}/MANIFEST" ]; then
-                info "\nFetching MANIFEST..."
+                info 1 "\nFetching MANIFEST..."
                 if ! fetch "${UPSTREAM_URL}/MANIFEST" -o "${bastille_cachedir}/${RELEASE}/MANIFEST"; then
                     ERRORS=$((ERRORS + 1))
                     error_continue "[ERROR]: Failed to fetch MANIFEST."
@@ -280,7 +280,7 @@ bootstrap_release_legacy() {
 
             # Fetch distfile
             if [ ! -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
-                info "\nFetching distfile: ${archive}.txz"
+                info 1 "\nFetching distfile: ${archive}.txz"
                 if ! fetch "${UPSTREAM_URL}/${archive}.txz" -o "${bastille_cachedir}/${RELEASE}/${archive}.txz"; then
                     ERRORS=$((ERRORS + 1))
                     error_continue "[ERROR]: Failed to fetch archive: ${archive}.txz"
@@ -288,7 +288,7 @@ bootstrap_release_legacy() {
             fi
 
             # Validate checksums
-            info "\nValidating checksum for archive: ${archive}.txz"
+            info 1 "\nValidating checksum for archive: ${archive}.txz"
             if [ -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
                 SHA256_DIST=$(grep -w "${archive}.txz" "${bastille_cachedir}/${RELEASE}/MANIFEST" | awk '{print $2}')
                 SHA256_FILE=$(sha256 -q "${bastille_cachedir}/${RELEASE}/${archive}.txz")
@@ -296,14 +296,14 @@ bootstrap_release_legacy() {
                     ERRORS=$((ERRORS + 1))
                     error_continue "[ERROR]: Failed to validate checksum for archive: ${archive}.txz"
                 else
-                    echo "MANIFEST: ${SHA256_DIST}"
-                    echo "DOWNLOAD: ${SHA256_FILE}"
-                    info "\nChecksum validated."
+                    info 2 "MANIFEST: ${SHA256_DIST}"
+                    info 2 "DOWNLOAD: ${SHA256_FILE}"
+                    info 1 "\nChecksum validated."
                 fi
             fi
 
             # Extract distfile
-            info "\nExtracting archive: ${archive}.txz"
+            info 1 "\nExtracting archive: ${archive}.txz"
             if [ -f "${bastille_cachedir}/${RELEASE}/${archive}.txz" ]; then
                 if ! /usr/bin/tar -C "${bastille_releasesdir}/${RELEASE}" -xf "${bastille_cachedir}/${RELEASE}/${archive}.txz"; then
                     ERRORS=$((ERRORS + 1))
@@ -325,7 +325,7 @@ bootstrap_release_legacy() {
 
 bootstrap_release_pkgbase() {
 
-    info "\nUsing PkgBase..."
+    info 1 "\nUsing PkgBase..."
 
     ### FreeBSD ###
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
@@ -367,7 +367,7 @@ bootstrap_release_pkgbase() {
             # Verify package sets
             bastille_pkgbase_packages=$(echo "${bastille_pkgbase_packages}" | sed "s/base-jail//")
             if [ -z "${bastille_pkgbase_packages}" ]; then
-                info "\nBootstrap appears complete!"
+                info 1 "\nBootstrap appears complete!"
                 exit 0
             fi
         fi
@@ -384,7 +384,7 @@ bootstrap_release_pkgbase() {
             return 1
         fi
 
-        info "\nUpdating ${repo_name} repository..."
+        info 1 "\nUpdating ${repo_name} repository..."
 
         # Update PkgBase repo
         if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
@@ -401,12 +401,12 @@ bootstrap_release_pkgbase() {
             error_notify "[ERROR]: Failed to update repository: ${repo_name}"
         fi
 
-        info "\nInstalling packages..."
+        info 1 "\nInstalling packages..."
 
         for package in ${bastille_pkgbase_packages}; do	
 
             # Check if package set is already installed
-            if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" info "FreeBSD-set-${package}" 2>/dev/null; then
+            if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" info 1 "FreeBSD-set-${package}" 2>/dev/null; then
                 # Install package set
                 if ! pkg --rootdir "${bastille_releasesdir}/${RELEASE}" \
                          --repo-conf-dir="${repo_dir}" \
@@ -423,7 +423,7 @@ bootstrap_release_pkgbase() {
                     error_continue "[ERROR]: Failed to install package set: ${package}"
                 fi
             else
-                info "\nPackage set already installed: ${package}"
+                info 1 "\nPackage set already installed: ${package}"
             fi
         done
 
@@ -451,8 +451,8 @@ bootstrap_release_linux() {
         # Set necessary settings
         case "${LINUX_FLAVOR}" in
             bionic|focal|jammy|buster|bullseye|bookworm|noble)
-            info "Increasing APT::Cache-Start"
-            echo "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
+            info 1 "Increasing APT::Cache-Start"
+            iffo 2 "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
             ;;
         esac
     fi
@@ -561,7 +561,7 @@ bastille_root_check
 
 # Validate if ZFS is enabled in rc.conf and bastille.conf.
 if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; then
-    warn "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
+    warn 1 "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
     read answer
     case $answer in
         no|No|n|N|"")
@@ -756,9 +756,8 @@ if [ "${ERRORS}" -eq 0 ]; then
     fi
 
     # Success
-    info "\nBootstrap successful."
-    echo "See 'bastille --help' for available commands."
-    echo
+    info 1 "\nBootstrap successful."
+    info 2 "See 'bastille --help' for available commands.\n"
 else
     error_exit "[ERROR]: Bootstrap failed!"
 fi

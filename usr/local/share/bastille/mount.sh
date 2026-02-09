@@ -104,8 +104,8 @@ checks=$(echo "${fstab}" | awk '{print $5" "$6}')
 # Exit if any variables are empty
 if [ -z "${hostpath}" ] || [ -z "${jailpath}" ] || [ -z "${type}" ] || [ -z "${perms}" ] || [ -z "${checks}" ]; then
     error_notify "FSTAB format not recognized."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
-    warn "Read: ${fstab}"
+    warn 1 "Format: /host/path /jail/path nullfs ro 0 0"
+    warn 1 "Read: ${fstab}"
 fi
 
 # Warn on advanced mount option  "tmpfs,linprocfs,linsysfs,fdescfs,procfs,zfs"
@@ -116,29 +116,29 @@ if { [ "${hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
    { [ "${hostpath}" = "proc" ] && [ "${type}" = "procfs" ]; } || \
    { [ "${hostpath}" = "fdesc" ] && [ "${type}" = "fdescfs" ]; } || \
    { [ "${type}" = "zfs" ] && zfs list ${hostpath} >/dev/null 2>/dev/null; } then
-    warn "\n[WARNING]: Detected advanced mount type: \"${type}\""
+    warn 1 "\n[WARNING]: Detected advanced mount type: \"${type}\""
 elif [ ! -e "${hostpath}" ] && [ "${type}" = "nullfs" ]; then
     mkdir -p "${hostpath}"
 elif [ ! -e "${hostpath}" ] || [ "${type}" != "nullfs" ]; then
     error_notify "[ERROR]: Invalid host path or incorrect mount type in FSTAB."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
-    warn "Read: ${fstab}"
+    warn 1 "Format: /host/path /jail/path nullfs ro 0 0"
+    warn 1 "Read: ${fstab}"
     exit 1
 fi
 
 # Mount permissions,options must include one of "ro, rw, rq, sw, xx"
 if ! echo "${perms}" | grep -Eq '(ro|rw|rq|sw|xx)(,.*)?$'; then
     error_notify "Detected invalid mount permissions in FSTAB."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
-    warn "Read: ${fstab}"
+    warn 1 "Format: /host/path /jail/path nullfs ro 0 0"
+    warn 1 "Read: ${fstab}"
     exit 1
 fi
 
 # Dump and pass need to be "0 0 - 1 1"
 if [ "${checks}" != "0 0" ] && [ "${checks}" != "1 0" ] && [ "${checks}" != "0 1" ] && [ "${checks}" != "1 1" ]; then
     error_notify "Detected invalid fstab options in FSTAB."
-    warn "Format: /host/path /jail/path nullfs ro 0 0"
-    warn "Read: ${fstab}"
+    warn 1 "Format: /host/path /jail/path nullfs ro 0 0"
+    warn 1 "Read: ${fstab}"
     exit 1
 fi
 
@@ -147,12 +147,12 @@ for jail in ${JAILS}; do
     check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${jail}"
     else
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_notify "Jail is not running."
         error_continue "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     fullpath_fstab="$( echo "${bastille_jailsdir}/${jail}/root/${jailpath_fstab}" 2>/dev/null | sed 's#//#/#' )"
     fullpath="$( echo "${bastille_jailsdir}/${jail}/root/${jailpath}" 2>/dev/null | sed 's#//#/#' )"
@@ -161,7 +161,7 @@ for jail in ${JAILS}; do
     # Check if mount point has already been added
     existing_mount="$(echo ${fullpath_fstab} 2>/dev/null | sed 's#\\#\\\\#g')"
     if grep -Eq "[[:blank:]]${existing_mount}[[:blank:]]" "${bastille_jailsdir}/${jail}/fstab"; then
-        warn "Mountpoint already present in ${bastille_jailsdir}/${jail}/fstab"
+        warn 1 "Mountpoint already present in ${bastille_jailsdir}/${jail}/fstab"
         grep -E "[[:blank:]]${existing_mount}" "${bastille_jailsdir}/${jail}/fstab"
         continue
     fi
@@ -178,7 +178,7 @@ for jail in ${JAILS}; do
                 touch "${fullpath}" || error_continue "Failed to create mount point."
             else
                 error_notify "Failed. File exists at mount point."
-                warn "${fullpath}"
+                warn 1 "${fullpath}"
                 continue
             fi
         else
@@ -190,7 +190,7 @@ for jail in ${JAILS}; do
                 touch "${fullpath}" || error_continue "Failed to create mount point."
             else
                 error_notify "Failed. File exists at mount point."
-                warn "${fullpath}"
+                warn 1 "${fullpath}"
                 continue
             fi
         fi
@@ -199,6 +199,6 @@ for jail in ${JAILS}; do
     # Add entry to fstab and mount
     echo "${fstab_entry}" >> "${bastille_jailsdir}/${jail}/fstab" || error_continue "Failed to create fstab entry: ${fstab_entry}"
     mount -F "${bastille_jailsdir}/${jail}/fstab" -a || error_continue "Failed to mount volume: ${fullpath}"
-    echo "Added: ${fstab_entry}"
+    info 2 "Added: ${fstab_entry}"
 
 done

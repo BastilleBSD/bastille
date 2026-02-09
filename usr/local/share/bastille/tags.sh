@@ -104,12 +104,12 @@ for jail in ${JAILS}; do
             [ ! -f "${bastille_jail_tags}" ] && continue # skip if there is no tags file
             grep -qE "^${TAGS}\$" "${bastille_jail_tags}"
             if [ $? -eq 0 ]; then
-              echo "${_jail}"
+              info 3 "${_jail}"
               continue
             fi
         else
             if [ -f "${bastille_jail_tags}" ]; then
-                echo -n "${_jail}: "
+                info 3 "${_jail}: "
                 xargs < "${bastille_jail_tags}"
             fi
         fi

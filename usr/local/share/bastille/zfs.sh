@@ -113,7 +113,7 @@ zfs_unjail_dataset() {
         usage
     # Warn if datset does not exist
     elif ! zfs list "${DATASET}" >/dev/null 2>/dev/null; then
-        warn "[WARNING]: Dataset does not exist: ${DATASET}"
+        warn 1 "[WARNING]: Dataset does not exist: ${DATASET}"
     fi
 
     # Validate jail state
@@ -223,7 +223,7 @@ snapshot_create() {
     if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to create snapshot."
     else
-        echo "Snapshot created: ${TAG}"
+        info 2 "Snapshot created: ${TAG}"
     fi
 }
 
@@ -238,7 +238,7 @@ snapshot_rollback() {
     if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to restore snapshot: ${TAG}."
     else
-        echo "Snapshot restored: ${TAG}"
+        info 2 "Snapshot restored: ${TAG}"
     fi
 }
 
@@ -260,7 +260,7 @@ snapshot_destroy() {
     if [ "${return}" -ne 0 ]; then
         error_notify "[ERROR]: Failed to destroy snapshot: ${TAG}"
     else
-        echo "Snapshot destroyed: ${TAG}"
+        info 2 "Snapshot destroyed: ${TAG}"
     fi
 }
 
@@ -325,7 +325,7 @@ fi
 
 for jail in ${JAILS}; do
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     case "${ACTION}" in
         destroy|destroy_snap|destroy_snapshot)

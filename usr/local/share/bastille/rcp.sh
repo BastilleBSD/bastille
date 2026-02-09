@@ -87,7 +87,7 @@ HOST_PATH="${3}"
 bastille_root_check
 set_target_single "${TARGET}"
 
-info "\n[${TARGET}]:"
+info 1 "\n[${TARGET}]:"
 
 host_path="${HOST_PATH}"
 jail_path="$(echo ${bastille_jailsdir}/${TARGET}/root/${JAIL_PATH} | sed 's#//#/#g')"

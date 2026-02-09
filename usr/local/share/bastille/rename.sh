@@ -83,7 +83,7 @@ set_target_single "${TARGET}"
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
@@ -274,7 +274,7 @@ change_name() {
     if [ "$?" -ne 0 ]; then
         error_exit "[ERROR]: An error has occurred while attempting to rename '${TARGET}'."
     else
-        echo "Renamed '${TARGET}' to '${NEWNAME}' successfully."
+        info 2 "Renamed '${TARGET}' to '${NEWNAME}' successfully."
         if [ "${AUTO}" -eq 1 ]; then
             bastille start "${NEWNAME}"
         fi
@@ -291,8 +291,8 @@ if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
     error_exit "[ERROR]: Jail: ${NEWNAME} already exists."
 fi
 
-info "\nAttempting to rename '${TARGET}' to ${NEWNAME}..."
+info 1 "\nAttempting to rename '${TARGET}' to ${NEWNAME}..."
 
 change_name
 
-info "\nRenamed '${TARGET}' to '${NEWNAME}' successfully.\n"
+info 1 "\nRenamed '${TARGET}' to '${NEWNAME}' successfully.\n"

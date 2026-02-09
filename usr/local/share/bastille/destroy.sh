@@ -61,17 +61,17 @@ destroy_jail() {
     check_target_is_stopped "${jail}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${jail}"
     else
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_notify "Jail is running."
         error_continue "Use [-a|--auto] to auto-stop the jail."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     # Ask if user is sure they want to destroy the jail
     # but only if AUTO_YES=0
     if [ "${AUTO_YES}" -ne 1 ]; then
-        warn "\nAttempting to destroy jail: ${jail}\n"
+        warn 1 "\nAttempting to destroy jail: ${jail}\n"
         # shellcheck disable=SC3045
         read -p "Are you sure you want to continue? [y|n]:" answer
         case "${answer}" in
@@ -96,7 +96,7 @@ destroy_jail() {
             error_continue "Jail has mounted filesystems:\n$mount_points"
         fi
 
-        echo "Destroying jail..."
+        info 2 "Destroying jail..."
 
         if checkyesno bastille_zfs_enable; then
             if [ -n "${bastille_zfs_zpool}" ]; then
@@ -126,13 +126,13 @@ destroy_jail() {
         # Archive jail log
         if [ -f "${bastille_jail_log}" ]; then
             mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
-            echo "Note: jail console logs archived."
-            echo "${bastille_jail_log}-$(date +%F)"
+            info 2 "Note: jail console logs archived."
+            info 2 "${bastille_jail_log}-$(date +%F)"
         fi
 
         # Clear any active rdr rules
         if [ ! -z "$(pfctl -a "rdr/${jail}" -Psn 2>/dev/null)" ]; then
-            echo "Clearing RDR rules..."
+            info 2 "Clearing RDR rules..."
             pfctl -a "rdr/${jail}" -Fn
         fi
     fi
@@ -151,7 +151,7 @@ destroy_release() {
 
     bastille_rel_base="${bastille_releasesdir}/${TARGET}"  ## dir
 
-    info "\nAttempting to destroy release: ${TARGET}"
+    info 1 "\nAttempting to destroy release: ${TARGET}"
 
     ## check if this release have containers child
     BASE_HASCHILD="0"
@@ -189,7 +189,7 @@ destroy_release() {
         error_exit "[ERROR]: Release base not found."
     else
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
-            echo "Deleting release base..."
+            info 2 "Deleting release base..."
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${TARGET}" ]; then

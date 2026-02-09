@@ -98,7 +98,7 @@ set_target_single "${TARGET}"
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
@@ -121,7 +121,7 @@ convert_jail_to_release() {
     jail_name="${1}"
     release="${2}"
 
-    info "\nAttempting to create '${release}' from '${jail_name}'..."
+    info 1 "\nAttempting to create '${release}' from '${jail_name}'..."
 
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ]; then
@@ -154,7 +154,7 @@ convert_jail_to_release() {
             zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/releases/${release}"
             error_exit "Failed to create release. Please retry!"
         else
-            info "\nCreated '${release}' from '${jail_name}'\n"
+            info 1 "\nCreated '${release}' from '${jail_name}'\n"
         fi
     else
         ## copy all files for thick jails
@@ -164,7 +164,7 @@ convert_jail_to_release() {
             bastille destroy -af "${NAME}"
             error_exit "[ERROR]: Failed to create release. Please retry!"
         else
-            info "\nCreated '${release}' from '${jail_name}'\n"
+            info 1 "\nCreated '${release}' from '${jail_name}'\n"
         fi
     fi
 }
@@ -181,7 +181,7 @@ convert_symlinks() {
         done
 
         # Copy new files to destination jail
-        info "\nCopying required base files to container..."
+        info 1 "\nCopying required base files to container..."
         for _link in ${SYMLINKS}; do
             if [ ! -d "${_link}" ]; then
                 if [ -d "${bastille_releasesdir}/${RELEASE}/${_link}" ]; then
@@ -230,7 +230,7 @@ start_convert() {
 
     if [ -d "${bastille_jailsdir}/${TARGET}" ]; then
 
-        info "\nConverting '${TARGET}' into a thickjail. This may take a while..."
+        info 1 "\nConverting '${TARGET}' into a thickjail. This may take a while..."
 
         # Set some variables
         RELEASE=$(grep -w "${bastille_releasesdir}/.* ${bastille_jailsdir}/${TARGET}/root/.bastille" ${bastille_jailsdir}/${TARGET}/fstab | sed "s|${bastille_releasesdir}/||;s| .*||")
@@ -248,12 +248,12 @@ start_convert() {
             sed -i '' -E "s|${FSTABMOD}|# Converted from thin to thick container on ${DATE}|g" "${bastille_jailsdir}/${TARGET}/fstab"
             if [ -n "${HASPORTS}" ]; then
                 sed -i '' -E "s|${HASPORTS}|# Ports copied from base to container on ${DATE}|g" "${bastille_jailsdir}/${TARGET}/fstab"
-                info "\nCopying ports to container..."
+                info 1 "\nCopying ports to container..."
                 cp -a "${bastille_releasesdir}/${RELEASE}/usr/ports" "${bastille_jailsdir}/${TARGET}/root/usr"
             fi
             mv "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/root/.bastille.old"
 
-            info "\nConversion of '${TARGET}' completed successfully!\n"
+            info 1 "\nConversion of '${TARGET}' completed successfully!\n"
             exit 0
         else
             error_exit "[ERROR]: Can't determine release version. See 'bastille bootstrap'."
@@ -277,7 +277,7 @@ if [ "$#" -eq 1 ]; then
     # Ask if user is sure they want to convert the jail
     # but only if AUTO_YES=0
     if [ "${AUTO_YES}" -ne 1 ]; then
-        warn "\n[WARNING]: Jail conversion from thin to thick can't be undone!\n"
+        warn 1 "\n[WARNING]: Jail conversion from thin to thick can't be undone!\n"
         # shellcheck disable=SC3045
         read -p "Are you sure you want to continue? [y|n]:" _answer
         case "${_answer}" in

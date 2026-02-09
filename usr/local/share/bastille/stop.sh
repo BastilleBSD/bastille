@@ -100,11 +100,11 @@ for jail in ${JAILS}; do
     done
 
     if check_target_is_stopped "${jail}"; then
-        info "\n[${jail}]:"
+        info 1 "\n[${jail}]:"
         error_continue "Jail is already stopped."
     fi
 
-    info "\n[${jail}]:"
+    info 1 "\n[${jail}]:"
 
     # Remove RDR rules
     if [ "$(bastille config ${jail} get vnet)" != "enabled" ] && [ -f "${bastille_pf_conf}" ]; then

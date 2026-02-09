@@ -54,7 +54,7 @@ enable_color() {
 
 enable_debug() {
     # Enable debug mode.
-    warn "***DEBUG MODE***"
+    warn 1 "***DEBUG MODE***"
     set -x
 }
 
@@ -66,7 +66,7 @@ fi
 
 # Error messages/functions
 error_notify() {
-    echo -e "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+    printf "%b\n" "${COLOR_RED}$*${COLOR_RESET}" 1>&2
 }
 
 error_continue() {
@@ -82,11 +82,30 @@ error_exit() {
 }
 
 info() {
-    echo -e "${COLOR_GREEN}$*${COLOR_RESET}"
+
+    level="${1}"
+    shift 1
+
+    if [ "${level}" -eq 1 ]; then
+        printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
+    elif [ "${level}" -eq 2 ]; then
+        printf "%b\n" "$*" 1>&2
+    else
+        printf "%b\n" "$*"
+    fi
 }
 
+
 warn() {
-    echo -e "${COLOR_YELLOW}$*${COLOR_RESET}"
+
+    level="${1}"
+    shift 1
+
+    if [ "${level}" -eq 1 ]; then
+        printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2
+    elif [ "${level}" -eq 3 ]; then
+        printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}"
+    fi
 }
 
 check_target_exists() {
@@ -142,7 +161,7 @@ get_jail_name() {
     if [ -z "${jail_name}" ]; then
         return 1
     else
-        echo "${jail_name}"
+        info 1 "${jail_name}"
     fi
 }
 
@@ -528,14 +547,14 @@ validate_ip() {
             fi
             ip6="${ip6}/${subnet}"
         fi
-        info "\nValid IP: ${ip6}"
+        info 1 "\nValid IP: ${ip6}"
         export IP6_ADDR="${ip6}"
     elif [ "${ip}" = "inherit" ] || [ "${ip}" = "ip_hostname" ]; then
-            info "\nValid IP: ${ip}"
+            info 1 "\nValid IP: ${ip}"
             export IP4_ADDR="${ip}"
             export IP6_ADDR="${ip}"
     elif [ "${ip}" = "0.0.0.0" ] || [ "${ip}" = "DHCP" ] || [ "${ip}" = "SYNCDHCP" ]; then
-            info "\nValid IP: ${ip}"
+            info 1 "\nValid IP: ${ip}"
             export IP4_ADDR="${ip}"
     elif [ -n "${ip4}" ]; then
         if [ "${vnet_jail}" -eq 1 ]; then
@@ -558,7 +577,7 @@ validate_ip() {
                 fi
             done
 
-            info "\nValid IP: ${ip4}"
+            info 1 "\nValid IP: ${ip4}"
             export IP4_ADDR="${ip4}"
         else
             error_exit "[ERROR]: Invalid IP: ${ip4}"
@@ -602,7 +621,7 @@ checkyesno() {
         return 1
         ;;
     *)
-        warn "\$${1} is not set properly - see rc.conf(5)."
+        warn 1 "\$${1} is not set properly - see rc.conf(5)."
         return 1
         ;;
     esac
@@ -617,10 +636,10 @@ update_jail_syntax_v1() {
     # Only apply if old syntax is found
     if grep -Eoq "exec.prestart.*ifconfig epair[0-9]+ create.*" "${jail_config}"; then
 
-        warn "\n[WARNING]\n"
-        warn "Updating jail.conf file..."
-        warn "Please review your jail.conf file after completion."
-        warn "VNET jails created without -M will be assigned a new MAC address."
+        warn 1 "\n[WARNING]\n"
+        warn 1 "Updating jail.conf file..."
+        warn 1 "Please review your jail.conf file after completion."
+        warn 1 "VNET jails created without -M will be assigned a new MAC address."
 
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
@@ -653,10 +672,10 @@ update_jail_syntax_v1() {
 
     elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
 
-        warn "\n[WARNING]\n"
-        warn "Updating jail.conf file..."
-        warn "Please review your jail.conf file after completion."
-        warn "VNET jails created without -M will be assigned a new MAC address."
+        warn 1 "\n[WARNING]\n"
+        warn 1 "Updating jail.conf file..."
+        warn 1 "Please review your jail.conf file after completion."
+        warn 1 "VNET jails created without -M will be assigned a new MAC address."
 
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
 

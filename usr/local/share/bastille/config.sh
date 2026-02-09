@@ -221,7 +221,7 @@ for jail in ${JAILS}; do
                 set_target "${VALUE}"
             fi
 
-            info "\n[${jail}]:"
+            info 1 "\n[${jail}]:"
 
             sysrc -f "${FILE}" "${PROPERTY}+=${JAILS}"
 
@@ -233,7 +233,7 @@ for jail in ${JAILS}; do
                 set_target "${VALUE}"
             fi
 
-            info "\n[${jail}]:"
+            info 1 "\n[${jail}]:"
 
             sysrc -f "${FILE}" "${PROPERTY}-=${JAILS}"
 
@@ -279,18 +279,18 @@ for jail in ${JAILS}; do
                 )
             # check if our output is a warning or regular
             if [ $? -eq 120 ]; then
-                warn "${_output}"
+                warn 3 "${_output}"
             else
-                echo "${_output}"
+                info 3 "${_output}"
             fi
         elif [ "${ACTION}" = "remove" ]; then
             if [ "$(bastille config ${jail} get ${PROPERTY})" != "not set" ]; then
 
-                info "\n[${jail}]:"
+                info 1 "\n[${jail}]:"
 
                 sed -i '' "/.*${PROPERTY}.*/d" "${FILE}"
 
-                echo "Property removed: ${PROPERTY}"
+                info 2 "Property removed: ${PROPERTY}"
 
             else
                 error_exit "[ERROR]: Value not present in jail.conf: ${PROPERTY}"
@@ -355,7 +355,7 @@ done
 
 # Only display this message once at the end (not for every jail). -- cwells
 if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ "${BASTILLE_PROPERTY}" -eq 0 ]; then
-    info "A restart is required for the changes to be applied. See 'bastille restart'."
+    info 1 "A restart is required for the changes to be applied. See 'bastille restart'."
 fi
 
 exit 0

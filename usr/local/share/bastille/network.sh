@@ -173,7 +173,7 @@ set_target_single "${TARGET}"
 check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
     bastille stop "${TARGET}"
 else
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
     error_notify "Jail is running."
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
@@ -197,7 +197,7 @@ define_ips() {
                 error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
             fi
         elif ifconfig | grep -qwF "${IP4_ADDR}"; then
-            warn "\n[WARNING]: IP address already in use: ${TEST_IP}"
+            warn 1 "\n[WARNING]: IP address already in use: ${TEST_IP}"
         fi
     fi
 
@@ -213,7 +213,7 @@ validate_netif() {
     local interface="${1}"
 
     if ifconfig -l | grep -qwo ${interface}; then
-        info "\nValid interface: ${interface}"
+        info 1 "\nValid interface: ${interface}"
     else
         error_exit "[ERROR]: Invalid interface: ${interface}"
     fi
@@ -331,7 +331,7 @@ EOF
                 sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="inet ${IP4_ADDR}"
             fi
         fi
-        echo "Added bridge interface: \"${if}\""
+        info 2 "Added bridge interface: \"${if}\""
 
     # VNET interface
     elif [ "${VNET}" -eq 1 ]; then
@@ -389,7 +389,7 @@ EOF
                     sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="inet ${IP4_ADDR}"
                 fi
             fi
-            echo "Added VNET interface: \"${if}\""
+            info 2 "Added VNET interface: \"${if}\""
 
         # netgraph
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
@@ -433,7 +433,7 @@ EOF
                     sysrc -f "${jail_rc_config}" ifconfig_${jail_vnet}="inet ${ip}"
                 fi
             fi
-            echo "Added VNET interface: \"${if}\""
+            info 2 "Added VNET interface: \"${if}\""
 
         fi
 
@@ -465,7 +465,7 @@ EOF
                 sysrc -f "${jail_rc_config}" ifconfig_${if}="inet ${IP4_ADDR}"
             fi
         fi
-        echo "Added Passthrough interface: \"${if}\""
+        info 2 "Added Passthrough interface: \"${if}\""
 
     elif [ "${STANDARD}" -eq 1 ]; then
         if [ -n "${IP6_ADDR}" ]; then
@@ -595,7 +595,7 @@ remove_interface() {
             error_exit "[ERROR]: Failed to remove interface from jail.conf"
         fi
     fi
-    echo "Removed interface: \"${if}\""
+    info 2 "Removed interface: \"${if}\""
 }
 
 add_vlan() {
@@ -625,10 +625,10 @@ add_vlan() {
         bastille restart "${jailname}"
     fi
 
-    echo "Added VLAN ${vlan_id} to interface: \"${jail_vnet}\""
+    info 2 "Added VLAN ${vlan_id} to interface: \"${jail_vnet}\""
 }
 
-info "\n[${TARGET}]:"
+info 1 "\n[${TARGET}]:"
 
 case "${ACTION}" in
 
@@ -637,17 +637,12 @@ case "${ACTION}" in
         validate_netconf
         validate_netif "${INTERFACE}"
 
-        if check_interface_added "${TARGET}" "${INTERFACE}"; then
-		    if [ -z "${VLAN_ID}" ]; then
-                info "\nInterface already added: ${INTERFACE}"
-                exit 0
-			elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
-                add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
-                echo
-                exit 0
-            else
-		        usage
-			fi
+        if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
+            info 1 "\nInterface already added: ${INTERFACE}"
+            exit 0
+        elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
+            add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
+            exit 0
         fi
 
         ## validate IP if not empty

@@ -102,12 +102,12 @@ jail_check() {
     check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${TARGET}"
     else
-        info "\n[${TARGET}]:"
+        info 1 "\n[${TARGET}]:"
         error_notify "Jail is not running."
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
 
-    info "\n[${TARGET}]:"
+    info 1 "\n[${TARGET}]:"
 
     # Check for thin jail
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
@@ -184,9 +184,9 @@ jail_update() {
     UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
     if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
         bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
-        info "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
+        info 1 "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
     else
-        info "\nNo updates available.\n"
+        info 1 "\nNo updates available.\n"
     fi
 }
 
@@ -237,9 +237,9 @@ jail_update_pkgbase() {
         UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
         if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
             bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
-            info "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
+            info 1 "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
         else
-            info "\nNo updates available.\n"
+            info 1 "\nNo updates available.\n"
         fi
     else
         error_exit "[ERROR]: Jail not found: ${TARGET}"
@@ -379,7 +379,7 @@ template_update() {
     template_path=${bastille_templatesdir}/${BASTILLE_TEMPLATE}
 
     if [ -d ${template_path} ]; then
-        info "\n[${BASTILLE_TEMPLATE}]:"
+        info 1 "\n[${BASTILLE_TEMPLATE}]:"
         if ! git -C $_template_path pull; then
             error_exit "[ERROR]: ${BASTILLE_TEMPLATE} update unsuccessful."
         fi
@@ -407,7 +407,7 @@ templates_update() {
 
     # Verify template updates
     if [ "$updated_templates" -ne "0" ]; then
-        info "\n$updated_templates templates updated."
+        info 1 "\n$updated_templates templates updated."
     else
         error_exit "[ERROR]: No templates found. See 'bastille bootstrap'."
     fi
@@ -477,7 +477,7 @@ case ${UPDATE_TARGET} in
         ;;
     RELEASE)
         release_check
-        info "\nAttempting to update release: ${TARGET}"
+        info 1 "\nAttempting to update release: ${TARGET}"
         if [ "${PKGBASE}" -eq 1 ]; then
             release_update_pkgbase
         else
