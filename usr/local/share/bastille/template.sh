@@ -363,11 +363,16 @@ for jail in ${JAILS}; do
             args=$(echo "${line}" | awk -F '[ ]' '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
 
 			# Skip any args that don't have a value
+            SKIP_ARG=0
             for arg in ${SKIP_ARGS}; do
                 if echo "${line}" | grep -qo "\${${arg}}"; then
+                    SKIP_ARG=1
                     continue
                 fi
             done
+            if [ "${SKIP_ARG}" -eq 1 ]; then
+                continue
+            fi
 
             # Apply overrides for commands/aliases and arguments. -- cwells
             case $cmd in
