@@ -48,8 +48,9 @@ usage() {
     -L | --linux                    Create a Linux jail (experimental).
     -M | --static-mac               Use a static/persistent MAC address (VNET only).
     -n | --nameserver IP            Specify nameserver(s) for the jail. Comma-separated.
-         --no-validate              Do not validate the release name.
          --no-boot                  Set boot=off.
+         --no-validate              Do not validate the release name.
+         --no-ip                    Create jail without an ip (VNET only).
     -P | --passthrough              Enable VNET. INTERFACE is used as-is.
     -p | --priority VALUE           Set priority value.
     -T | --thick                    Create a thick jail.
@@ -764,6 +765,7 @@ VNET_JAIL=0
 VNET_JAIL_STANDARD=0
 VNET_JAIL_BRIDGE=0
 VNET_JAIL_PASSTHROUGH=0
+NO_IP=0
 VLAN_ID=""
 LINUX_JAIL=0
 STATIC_MAC=0
@@ -826,6 +828,10 @@ while [ $# -gt 0 ]; do
             ;;
         --no-boot)
             BOOT="off"
+            shift
+            ;;
+        --no-ip)
+            NO_IP=1
             shift
             ;;
         --no-validate|no-validate)
@@ -911,6 +917,8 @@ elif [ "${CLONE_JAIL}" -eq 1 ] && [ "${THICK_JAIL}" -eq 1 ]; then
 # VLAN_ID can only be used with VNET jails
 elif [ "${VNET_JAIL}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
     error_exit "[ERROR]: VLANs can only be used with VNET jails."
+elif [ "${VNET_JAIL}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
+    error_exit "[ERROR]: [--no-ip] can only be used with VNET jails."
 # Don't allow multiple VNET jail types
 elif { [ "${VNET_JAIL_STANDARD}" -eq 1 ] && [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; } || \
      { [ "${VNET_JAIL_STANDARD}" -eq 1 ] && [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; } || \
@@ -932,8 +940,13 @@ fi
 
 NAME="${1}"
 RELEASE="${2}"
-IP="${3}"
-INTERFACE="${4}"
+if [ "${NO_IP}" -eq 1 ]; then
+    IP=""
+    INTERFACE="${3}"
+else
+    IP="${3}"
+    INTERFACE="${4}"
+fi
 
 info 1 "\nAttempting to create jail: ${NAME}"
 
@@ -1064,8 +1077,6 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
     # Validate IP address
     if [ -n "${IP}" ]; then
         define_ips
-    else
-        usage
     fi
 
     # Validate interface

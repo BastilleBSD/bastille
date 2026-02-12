@@ -65,8 +65,9 @@ options. See the below help output.
       -L | --linux                    Create a Linux jail (experimental).
       -M | --static-mac               Use a static/persistent MAC address (VNET only).
       -n | --nameserver IP            Specify nameserver(s) for the jail. Comma-separated.
-           --no-validate              Do not validate the release name.
            --no-boot                  Set boot=off.
+           --no-validate              Do not validate the release name.
+           --no-ip                    Create jail without an ip (VNET only).
       -P | --passthrough              Enable VNET. INTERFACE is used as-is.
       -p | --priority VALUE           Set priority value.
       -T | --thick                    Create a thick jail.
