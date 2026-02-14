@@ -532,7 +532,7 @@ validate_ip() {
     local ip="${1}"
     local vnet_jail="${2}"
     local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
-    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)')"
+    local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' | awk -F"/" '{print $1}')"
     local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
     local IFS
 
