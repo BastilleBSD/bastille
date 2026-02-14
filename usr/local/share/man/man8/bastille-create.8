@@ -12,8 +12,9 @@
 .Op Fl p Ar VALUE
 .Op Fl v Ar VALUE
 .Op Fl Z Ar VALUE
-.Op Fl -no-validate
 .Op Fl -no-boot
+.Op Fl -no-ip
+.Op Fl -no-validate
 .Ar NAME RELEASE IP Op INTERFACE
 .Sh DESCRIPTION
 The
@@ -52,6 +53,14 @@ Create a Linux jail (experimental).
 Use a static/persistent MAC address (VNET only).
 .It Fl n Ar IP,IP Fl -nameserver Ar IP,IP
 Specify nameserver(s) for the jail. Comma-separated.
+.It Fl -no-boot
+Set boot=off.
+.Pp
+By default, jails are created with 'boot=on' so as to start on system
+startup.
+.It Fl -no-ip.
+Create jail without an ip (VNET only).
+.Pp
 .It Fl -no-validate
 Do not validate the release name.
 .Pp
@@ -60,11 +69,6 @@ a known index of official release names. Set this option to bypass that.
 Useful in the case of an unknown release, or releases create using 'bastille
 convert'. See
 .Xr bastille-convert 8 .
-.It Fl -no-boot
-Set boot=off.
-.Pp
-By default, jails are created with 'boot=on' so as to start on system
-startup.
 .It Fl P , -passthrough
 Enable VNET.
 .Ar INTERFACE
