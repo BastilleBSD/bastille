@@ -40,7 +40,7 @@ usage() {
     error_notify "                                   TARGET list|show [active]"
     cat << EOF
 
-	Example: bastille limits TARGET add memoryuse 1G
+    Example: bastille limits TARGET add memoryuse 1G
     Example: bastille limits TARGET add cpu 0,1,2
 
     Options:
