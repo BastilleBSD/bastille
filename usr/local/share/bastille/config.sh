@@ -299,8 +299,8 @@ for jail in ${JAILS}; do
         else # Setting the value. -- cwells
 
             if [ -n "${VALUE}" ]; then
-                if ! echo "${VALUE}" | grep -E '^([a-zA-Z0-9._/ :-]|\\\$|\\!|\\&)+$' > /dev/null 2>&1; then
-                    error_exit "[ERROR]: VALUE contains unsupported characters."
+                if ! echo "${VALUE}" | grep -E '^([a-zA-Z0-9._/ :-|]|\\\$|\\!|\\&)+$' > /dev/null 2>&1; then
+                    error_exit "[ERROR]: ${VALUE} contains unsupported characters."
                 fi
                 VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
                 if echo "${VALUE}" | grep ' ' > /dev/null 2>&1; then # Contains a space, so wrap in quotes. -- cwells
