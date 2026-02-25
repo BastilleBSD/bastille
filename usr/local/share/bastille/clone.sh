@@ -49,6 +49,7 @@ EOF
 # Handle options.
 AUTO=0
 LIVE=0
+ERRORS=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -492,7 +493,13 @@ clone_jail() {
                 # Replicate the existing container
                 DATE=$(date +%F-%H%M%S)
                 zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
-                zfs send -R "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}"
+                if [ "$(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}")" = "off" ]; then
+                    OPT_SEND=""
+                else
+                    OPT_SEND="--raw"
+                fi
+                zfs send "${OPT_SEND}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}" || ERRORS=$((ERRORS + 1))
+                zfs send "${OPT_SEND}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root" || ERRORS=$((ERRORS + 1))
 
                 # Cleanup source temporary snapshots
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}"
@@ -501,6 +508,10 @@ clone_jail() {
                 # Cleanup target temporary snapshots
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
+
+                if [ "${ERRORS}" -ne 0 ]; then
+                    error_exit "[ERROR]: Failed to clone jail: ${TARGET}"
+                fi
             fi
 
         else
