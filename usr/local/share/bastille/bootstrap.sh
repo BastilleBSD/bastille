@@ -452,7 +452,7 @@ bootstrap_release_linux() {
         case "${LINUX_FLAVOR}" in
             bionic|focal|jammy|buster|bullseye|bookworm|noble)
             info 1 "Increasing APT::Cache-Start"
-            iffo 2 "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
+            info 2 "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
             ;;
         esac
     fi
