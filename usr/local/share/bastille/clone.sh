@@ -493,13 +493,10 @@ clone_jail() {
                 # Replicate the existing container
                 DATE=$(date +%F-%H%M%S)
                 zfs snapshot -r "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}"
-                if [ "$(zfs get -H -o value encryption "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}")" = "off" ]; then
-                    OPT_SEND=""
-                else
-                    OPT_SEND="--raw"
-                fi
-                zfs send "${OPT_SEND}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}" || ERRORS=$((ERRORS + 1))
-                zfs send "${OPT_SEND}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root" || ERRORS=$((ERRORS + 1))
+
+                #  Do not use --replicate for zfs send, it does not work for encrypted datasets
+                zfs send "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}" || ERRORS=$((ERRORS + 1))
+                zfs send "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}" | zfs recv "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root" || ERRORS=$((ERRORS + 1))
 
                 # Cleanup source temporary snapshots
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${TARGET}/root@bastille_clone_${DATE}"
