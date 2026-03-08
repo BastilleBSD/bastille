@@ -298,7 +298,6 @@ bootstrap_release_legacy() {
                 else
                     info 2 "MANIFEST: ${SHA256_DIST}"
                     info 2 "DOWNLOAD: ${SHA256_FILE}"
-                    info 1 "\nChecksum validated."
                 fi
             fi
 
