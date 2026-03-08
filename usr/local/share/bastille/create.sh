@@ -569,7 +569,7 @@ create_jail() {
                 # Note that if host has no time zone, FreeBSD assumes UTC anyway
                 elif [ -e /etc/localtime ]; then
                     # uses cp as a way to prevent issues with symlinks if the host happens to use that for tz configuration
-                    cp /etc/localtime etc/localtime
+                    cp -P /etc/localtime etc/localtime
                 fi
             else
                 ln -s "/usr/share/zoneinfo/${bastille_tzdata}" etc/localtime
