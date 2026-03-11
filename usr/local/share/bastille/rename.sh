@@ -227,6 +227,11 @@ update_jailconf_vnet() {
             sed -i '' "s|ifconfig_${old_ngif}_name|ifconfig_${new_ngif}_name|g" "${jail_rc_conf}"
         fi
     done
+
+    # For passthrough interfaces
+    if grep -oq "ifconfig.*-vnet ${TARGET}" "${jail_config}"; then
+        sed -i '' "s|-vnet ${TARGET}|-vnet ${NEWNAME}|g" "${jail_rc_conf}"
+    fi
 }
 
 change_name() {
