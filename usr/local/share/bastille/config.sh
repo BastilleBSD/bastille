@@ -299,7 +299,7 @@ for jail in ${JAILS}; do
         else # Setting the value. -- cwells
 
             if [ -n "${VALUE}" ]; then
-                if ! echo "${VALUE}" | grep -E '^[a-zA-Z0-9.-_/:| \\\$\\!\\&]+$' > /dev/null 2>&1; then
+                if ! echo "${VALUE}" | grep -E '^[A-Za-z0-9._/:| $!&-]+$' > /dev/null 2>&1; then
                     error_exit "[ERROR]: Value contains unsupported characters: ${VALUE}"
                 fi
                 VALUE=$(echo "${VALUE}" | sed 's/\//\\\//g')
