@@ -230,7 +230,7 @@ update_jailconf_vnet() {
 
     # For passthrough interfaces
     if grep -oq "ifconfig.*-vnet ${TARGET}" "${jail_config}"; then
-        sed -i '' "s|-vnet ${TARGET}|-vnet ${NEWNAME}|g" "${jail_rc_conf}"
+        sed -i '' "s|-vnet ${TARGET}|-vnet ${NEWNAME}|g" "${jail_config}"
     fi
 }
 
