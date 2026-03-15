@@ -259,11 +259,11 @@ set_target() {
             exit 1
         fi
         if [ "${order}" = "forward" ]; then
-            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
-            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
+            TARGET="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -n | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -n | awk '{print $1}')"
         elif [ "${order}" = "reverse" ]; then
-            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
-            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
+            TARGET="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -nr | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -nr | awk '{print $1}')"
         fi
         export TARGET
         export JAILS
