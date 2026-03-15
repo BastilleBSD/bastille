@@ -81,42 +81,42 @@ for jail in ${JAILS}; do
     bastille_jail_tags="${bastille_jailsdir}/${jail}/tags"
     case ${ACTION} in
         add)
-        for tag in $(echo ${TAGS} | tr , ' '); do
-            echo ${tag} >> "${bastille_jail_tags}"
-            tmpfile="$(mktemp)"
-            sort "${bastille_jail_tags}" | uniq > "${tmpfile}"
-            mv "${tmpfile}" "${bastille_jail_tags}"
-        done
-        ;;
+            for tag in $(echo ${TAGS} | tr , ' '); do
+                echo ${tag} >> "${bastille_jail_tags}"
+                tmpfile="$(mktemp)"
+                sort "${bastille_jail_tags}" | uniq > "${tmpfile}"
+                mv "${tmpfile}" "${bastille_jail_tags}"
+            done
+            ;;
         del*)
-        for tag in $(echo ${TAGS} | tr , ' '); do
-            [ ! -f "${bastille_jail_tags}" ] && break # skip if no tags file
-            tmpfile="$(mktemp)"
-            grep -Ev "^${tag}\$" "${bastille_jail_tags}" > "${tmpfile}"
-            mv "${tmpfile}" "${bastille_jail_tags}"
-            # delete tags file if empty
-            [ ! -s "${bastille_jail_tags}" ] && rm "${bastille_jail_tags}"
-        done
-        ;;
+            for tag in $(echo ${TAGS} | tr , ' '); do
+                [ ! -f "${bastille_jail_tags}" ] && break # skip if no tags file
+                tmpfile="$(mktemp)"
+                grep -Ev "^${tag}\$" "${bastille_jail_tags}" > "${tmpfile}"
+                mv "${tmpfile}" "${bastille_jail_tags}"
+                # delete tags file if empty
+                [ ! -s "${bastille_jail_tags}" ] && rm "${bastille_jail_tags}"
+            done
+            ;;
         list)
-        if [ -n "${TAGS}" ]; then
-            [ -n "$(echo ${TAGS} | grep ,)" ] && usage # Only one tag per query
-            [ ! -f "${bastille_jail_tags}" ] && continue # skip if there is no tags file
-            grep -qE "^${TAGS}\$" "${bastille_jail_tags}"
-            if [ $? -eq 0 ]; then
-              info 3 "${_jail}"
-              continue
+            if [ -n "${TAGS}" ]; then
+                [ -n "$(echo ${TAGS} | grep ,)" ] && usage # Only one tag per query
+                [ ! -f "${bastille_jail_tags}" ] && continue # skip if there is no tags file
+                grep -qE "^${TAGS}\$" "${bastille_jail_tags}"
+                if [ $? -eq 0 ]; then
+                    info 3 "${jail}"
+                    continue
+                fi
+            else
+                if [ -f "${bastille_jail_tags}" ]; then
+                    info 1 "\n[${jail}]:"
+                    xargs < "${bastille_jail_tags}"
+                fi
             fi
-        else
-            if [ -f "${bastille_jail_tags}" ]; then
-                info 3 "${_jail}: "
-                xargs < "${bastille_jail_tags}"
-            fi
-        fi
-        ;;
+            ;;
         *)
-        usage
-        ;;
+            usage
+            ;;
     esac
 	
 done

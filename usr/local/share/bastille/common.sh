@@ -242,7 +242,7 @@ set_target() {
                     jail="$(jail_autocomplete ${jail})"
                 elif [ $? -eq 2 ]; then
                     if grep -Ehoqw ${jail} ${bastille_jailsdir}/*/tags 2>/dev/null; then
-                        jail="$(grep -Eow ${jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
+                        jail="$(grep -Elw ${jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
                     else
                         error_continue "Jail not found \"${jail}\""
                     fi
@@ -259,11 +259,11 @@ set_target() {
             exit 1
         fi
         if [ "${order}" = "forward" ]; then
-            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
-            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -n | awk '{print $1}')"
+            TARGET="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -n | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -n | awk '{print $1}')"
         elif [ "${order}" = "reverse" ]; then
-            TARGET="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
-            JAILS="$(list_jail_priority "${TARGET}" | sort -k2 -nr | awk '{print $1}')"
+            TARGET="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -nr | awk '{print $1}')"
+            JAILS="$(list_jail_priority "${TARGET}" | sort -u | sort -k2 -nr | awk '{print $1}')"
         fi
         export TARGET
         export JAILS
