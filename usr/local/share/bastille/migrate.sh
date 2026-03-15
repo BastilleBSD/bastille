@@ -56,6 +56,7 @@ AUTO=0
 LIVE=0
 OPT_BACKUP=0
 OPT_DESTROY=0
+OPT_EXPORT=""
 OPT_KEYFILE=""
 OPT_PASSWORD=0
 OPT_SU="sudo"
@@ -117,9 +118,16 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Validate options
+if checkyesno bastille_zfs_enable; then
+    OPT_EXPORT="--xz"
+else
+    OPT_EXPORT="--txz"
+fi
 if [ "${LIVE}" -eq 1 ]; then
     if ! checkyesno bastille_zfs_enable; then
         error_exit "[ERROR]: [-l|--live] can only be used with ZFS systems."
+    else
+        OPT_EXPORT="${OPT_EXPORT} --live"
     fi
 fi
 
@@ -202,12 +210,7 @@ migrate_create_export() {
     chmod 777 ${local_bastille_migratedir}
     ${sshpass_cmd} ssh -p ${port} ${opt_ssh_key} ${user}@${host} ${OPT_SU} chmod 777 ${remote_bastille_migratedir}
 
-    # --xz for ZFS, otherwise --txz
-    if checkyesno bastille_zfs_enable; then
-        bastille export --xz ${jail} ${local_bastille_migratedir}
-    else
-        bastille export --txz ${jail} ${local_bastille_migratedir}
-    fi
+    bastille export ${OPT_EXPORT} ${jail} ${local_bastille_migratedir}
 }
 
 migrate_jail() {
