@@ -109,7 +109,7 @@ for jail in ${JAILS}; do
                 fi
             else
                 if [ -f "${bastille_jail_tags}" ]; then
-                    info 1 "[${jail}]:"
+                    info 1 "\n[${jail}]:"
                     xargs < "${bastille_jail_tags}"
                 fi
             fi
