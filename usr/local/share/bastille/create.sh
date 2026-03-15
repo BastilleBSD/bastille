@@ -54,6 +54,7 @@ usage() {
     -P | --passthrough              Enable VNET. INTERFACE is used as-is.
     -p | --priority VALUE           Set priority value.
     -T | --thick                    Create a thick jail.
+         --tags TAG1,TAG2           Apply specified tag(s) to jail. Comma-separated.
     -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
     -v | --vlan VLANID              Set VLAN ID (VNET only).
     -x | --debug                    Enable debug mode.
@@ -746,6 +747,11 @@ create_jail() {
         done
     fi
 
+    # Apply tags (if set)
+    if [ -n "${OPT_TAGS}" ]; then
+        bastille tags "${NAME}" add "${OPT_TAGS}"
+    fi
+
     # Apply values changed by the template. -- cwells
     if [ "${EMPTY_JAIL}" -eq 0 ] && [ "${LINUX_JAIL}" -eq 0 ]; then
         bastille restart "${NAME}"
@@ -777,6 +783,7 @@ VALIDATE_RELEASE=1
 PRIORITY="99"
 OPT_GATEWAY=""
 OPT_NAMESERVER=""
+OPT_TAGS=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -853,6 +860,10 @@ while [ $# -gt 0 ]; do
             else
                 error_exit "Not a valid priority value: \"${2}\""
             fi
+            ;;
+        --tag|--tags)
+            OPT_TAGS="${2}"
+            shift 2
             ;;
         -T|--thick)
             THICK_JAIL=1
