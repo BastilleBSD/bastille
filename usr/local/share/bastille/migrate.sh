@@ -297,11 +297,6 @@ migrate_jail() {
         error_exit "[ERROR]: Failed to import jail on remote system."
     fi
 
-    # Destroy old jail if OPT_DESTROY=1
-    if [ "${OPT_DESTROY}" -eq 1 ]; then
-        bastille destroy -afy "${jail}"
-    fi
-
     # Remove archives
     migrate_cleanup "${jail}" "${user}" "${host}" "${port}"
 
@@ -311,6 +306,11 @@ migrate_jail() {
     elif [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
         bastille stop "${jail}"
         ${sshpass_cmd} ssh -p ${port} ${opt_ssh_key} ${user}@${host} ${OPT_SU} bastille start "${jail}"
+    fi
+
+    # Destroy old jail if OPT_DESTROY=1
+    if [ "${OPT_DESTROY}" -eq 1 ]; then
+        bastille destroy -afy "${jail}"
     fi
 }
 
