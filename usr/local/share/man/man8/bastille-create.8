@@ -85,7 +85,8 @@ This controls the order in which jails
 start and stop on system startup and shutdown. It also controls the
 order in which any sub-command is executed when multiple jails are
 tarteted.
-.It Fl -tags
+.Pp
+.It Fl -tags Ar TAG1,TAG2
 Apply specified tag(s) to jail. Comma-separated.
 .Pp
 .It Fl T , -thick
@@ -107,7 +108,7 @@ This will configure the jail to use the specified
 as the VLAN ID.
 .It Fl x , -debug
 Enable debug mode.
-.It Fl Z Ar VALUE , Fl -zfs-opts Ar VALUE,VALUE
+.It Fl Z Ar VALUE,VALUE , Fl -zfs-opts Ar VALUE,VALUE
 Custom zfs options. Comma-separated.
 .Pp
 Comma separated list of ZFS options to create the jail with.
