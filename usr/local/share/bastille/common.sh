@@ -242,7 +242,7 @@ set_target() {
                     jail="$(jail_autocomplete ${jail})"
                 elif [ $? -eq 2 ]; then
                     if grep -Ehoqw ${jail} ${bastille_jailsdir}/*/tags 2>/dev/null; then
-                        jail="$(grep -Eow ${jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
+                        jail="$(grep -Elw ${jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
                     else
                         error_continue "Jail not found \"${jail}\""
                     fi
