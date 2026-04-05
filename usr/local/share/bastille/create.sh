@@ -553,13 +553,9 @@ create_jail() {
         fi
 
         if [ "${LINUX_JAIL}" -eq 0 ]; then
-            ## create home directory if missing
-            if [ ! -d "${bastille_jail_path}/usr/home" ]; then
-                mkdir -p "${bastille_jail_path}/usr/home"
-            fi
-            ## link home properly
-            if [ ! -L "home" ]; then
-                ln -s usr/home home
+            # Create home directory if missing
+            if [ ! -d "${bastille_jail_path}/home" ]; then
+                mkdir -p "${bastille_jail_path}/home"
             fi
 
             ## TZ: configurable (default: empty to use host's time zone)
