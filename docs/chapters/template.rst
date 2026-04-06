@@ -155,6 +155,7 @@ listed hooks are tested and supported officially. It is also possible to formula
 regular Bastille command to be run by the template. The following example will clarify...
 
 .. code-block:: shell
+
   RDR reset
   NETWORK add vtnet1 DHCP
 
@@ -201,10 +202,11 @@ order to automate jail setup as needed.
 
 Any files included in the ``project/template`` directory can be copied into the jail
 using the ``CP`` hook. For example, if I have ``project/template/usr/local/etc/custom.conf``
-I can use the follwoing template to copy the entire contents of ``usr`` into my jail.
+I can use the following template to copy the entire contents of ``usr`` into my jail.
 Bastille will not overwrite ``/usr`` inside the jail. It only copies the files in.
 
 .. code-block:: shell
+
   CP usr /
 
 See `Bastille Templates`_ for examples to get started on writing your own templates.
