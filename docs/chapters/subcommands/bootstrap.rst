@@ -2,16 +2,13 @@ bootstrap
 =========
 
 The bootstrap sub-command is used to download and extract releases and templates
-for use with Bastille containers. A valid release is needed before containers
+for use with Bastille jail. A valid release is needed before jails
 can be created. Templates are optional but are managed in the same manner.
 
-Note: your mileage may vary with unsupported releases and releases newer than
+Note: your mileage may vary with unsupported releases, and releases newer than
 the host system likely will NOT work at all. Bastille tries to filter for valid
-release names. If you find it will not bootstrap a valid release, please let us
+release names, bu if you find it will not bootstrap a valid release, please let us
 know.
-
-In this document we will describe using the ``bootstrap`` sub-command with both
-releases and templates. We begin with releases.
 
 Releases
 --------
@@ -24,15 +21,15 @@ release version as the argument.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille bootstrap 14.0-RELEASE [update]
-  ishmael ~ # bastille bootstrap 13.2-RELEASE [update]
+  ishmael ~ # bastille bootstrap 15.0-RELEASE
+  ishmael ~ # bastille bootstrap 14.4-RELEASE
 
 To ``bootstrap`` a HardenedBSD release, run the bootstrap sub-command with the
 build version as the argument.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille bootstrap 13-stable-build-latest
+  ishmael ~ # bastille bootstrap 15-stable
 
 
 This command will ensure the required directory structures are in place and
