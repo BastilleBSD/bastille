@@ -3,23 +3,16 @@ Templates
 
 Looking for ready made CI/CD validated `Bastille Templates`_?
 
-Bastille supports a templating system allowing you to apply files, pkgs and
-execute commands inside the containers automatically.
+Bastille features a template system, allowing you to automate just about anything
+from executing arbitrary commands to copying files all with a simple file called a
+Bastillefile. A template is applied by running ``bastille template TARGET project/template``
+and can also be applied to multiple targets in one go.
 
-Templates are created in ``${bastille_prefix}/templates`` and can leverage any
-of the template hooks.
+Before we dive into creating templates, lets take a look at the supported hooks, as
+well as a brief overview of what each one is capable of.
 
-Bastille 0.7.x+
----------------
-
-Bastille 0.7.x introduces a template syntax that is more flexible and allows
-any-order scripting. Previous versions had a hard template execution order and
-instructions were spread across multiple files. The new syntax is done in a
-``Bastillefile`` and the template hook (see below) files are replaced with
-template hook commands.
-
-Template Automation Hooks
--------------------------
+Template Hooks
+--------------
 
 The following table shows a list of supported template hooks, their format, and
 one example of how you might use each one.
@@ -157,11 +150,22 @@ recursively.
 
 ``TAGS``          - adds specified tags to the jail
 
+Pro Tip: Most Bastille commands can be placed inside the Bastillefile. But only the above
+listed hooks are tested and supported officially. It is also possible to formulate any
+regular Bastille command to be run by the template. The following example will clarify...
+
+.. code-block:: shell
+  RDR reset
+  NETWORK add vtnet1 DHCP
+
+The above snippet, when included in a template will essentially run ``bastille rdr TARGET reset``
+and ``bastille network TARGET add vtnet1 DHCP`` inside the jail respectively. Although not fully
+tested and documented, they should still work as expected.
 
 Special Hook Cases
 ------------------
 
-ARG will always treat an ampersand "\``&``" literally, without the need to
+``ARG`` will always treat an ampersand "\``&``" literally, without the need to
 escape it. Escaping it will cause errors.
 
 Bootstrapping Templates
@@ -169,14 +173,14 @@ Bootstrapping Templates
 
 The official templates for Bastille are all on Gthub, and mirror the directory
 structure of the ports tree.  So, ``nginx`` is in the ``www`` directory in the
-templates, just like it is in the FreeBSD ports tree.  To bootstrap the
-entire set of official predefined templates run the following command:
+templates repo, just like it is in the FreeBSD ports tree.  To bootstrap the
+entire set of official templates, run the following command:
 
 .. code-block:: shell
 
    bastille bootstrap https://github.com/bastillebsd/templates
 
-This will install all official templates into the templates directory at
+This will bootstrap all official templates into the templates directory at
 ``/usr/local/bastille/templates``. You can then use the ``bastille template``
 command to apply any of the templates.
 
@@ -187,27 +191,32 @@ command to apply any of the templates.
 Creating Templates
 ------------------
 
-Templates can be created and placed inside the templates directory in the
+Templates should be created and placed inside the templates directory in the
 ``project/template`` format. Alternatively you can run the ``bastille template``
-command from a relative path, making sure it is still in the above format.
+command from a relative path, making sure it is still in the above ``project/template``
+format.
 
-Simply place these uppercase template hook commands into a ``Bastillefile`` in any
-order to automate container setup as needed.
+Place any uppercase template hook into ``project/template/Bastillefile`` in any
+order to automate jail setup as needed.
+
+Any files included in the ``project/template`` directory can be copied into the jail
+using the ``CP`` hook. For example, if I have ``project/template/usr/local/etc/custom.conf``
+I can use the follwoing template to copy the entire contents of ``usr`` into my jail.
+Bastille will not overwrite ``/usr`` inside the jail. It only copies the files in.
+
+.. code-block:: shell
+  CP usr /
 
 See `Bastille Templates`_ for examples to get started on writing your own templates.
 
 Applying Templates
 ------------------
 
-Containers must be running to apply templates.
-
-Bastille includes a ``template`` command. This command requires a target and a
-template name. As covered in the previous section, template names correspond to
-directory names in the ``bastille/templates`` directory.
+To apply a template to a jail, run the following command.
 
 .. code-block:: shell
 
-  ishmael ~ # bastille template ALL username/template
+  ishmael ~ # bastille template ALL project/template
   [proxy01]:
   Copying files...
   Copy complete.
@@ -259,18 +268,19 @@ directory names in the ``bastille/templates`` directory.
   chsh: user information updated
   Template Complete.
 
-.. _Bastille Templates: https://github.com/BastilleBSD/templates
+Notice that if we choose ``ALL`` as the target, the template is applied to all jails.
+See :doc:`/chapters/targeting` for more details on targeting jails.
 
 Using Ports in Templates
 ------------------------
 
-Sometimes when you make a template you need special options for a package, or
-you need a newer version than what is in the pkgs.  The solution for these
-cases, or a case like minecraft server that has NO compiled option, is to use
-the ports.  A working example of this is the minecraft server template in the
+Sometimes when creating a template, we need special options for a package, or
+a newer version than pkg offers. The solution for such
+cases, or a case like ``minecraft-server`` which has NO compiled option, is to use
+ports. A working example of this is the ``minecraft-server`` template in the
 template repo.  The main lines needed to use this is first to mount the ports
-directory, then compile the port.  Below is an example of the minecraft template
-where this was used.
+directory, then compile the port.  Below is an example of the ``minecraft-server``
+template where this was used.
 
 .. code-block:: shell
 
@@ -294,5 +304,5 @@ where this was used.
   SERVICE minecraft restart
   RDR tcp 25565 25565
 
-The MOUNT line mounts the ports directory, then the CMD make line makes the
-port.  This can be modified to use any port in the port tree.
+The ``MOUNT`` line mounts the ports directory, then the ``CMD`` make line makes the
+port. This can be modified to use any port in the ports tree.
