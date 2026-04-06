@@ -7,7 +7,7 @@ can be created. Templates are optional but are managed in the same manner.
 
 Note: your mileage may vary with unsupported releases, and releases newer than
 the host system likely will NOT work at all. Bastille tries to filter for valid
-release names, bu if you find it will not bootstrap a valid release, please let us
+release names, but if you find it will not bootstrap a valid release, please let us
 know.
 
 Releases
