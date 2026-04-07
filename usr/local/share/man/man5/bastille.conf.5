@@ -9,7 +9,7 @@ Bastille has most options preconfigured with sane defaults. These
 can be adjusted to fit your environment. The config file also has
 the default options documented, but the following will outline what
 the purpose is of each one.
-.Ss DEFAULT PATHS
+.Sh DEFAULT PATHS
 .Bl -tag -width Ds
 .It bastille_prefix
 This is the main Bastille prefix. All Bastille directories,
@@ -33,15 +33,15 @@ Bastille will store releases here.
 Bastille will store templates here.
 .It bastille_logsdir
 Bastille will store jail console logs here.
-.Ss FIREWALL
+.Sh FIREWALL
 .Bl -tag -width Ds
 .It bastille_pf_conf
 Path to the pf firewall configuration file.
-.Ss SUB-COMMANDS PATH
+.Sh SUB-COMMANDS PATH
 .Bl -tag -width Ds
 .It bastille_sharedir
 This is the path where Bastille expects sub-commands to live at.
-.Ss BOOTSTRAP
+.Sh BOOTSTRAP
 .Bl -tag -width Ds
 .It bastille_bootstrap_archives
 This is a whitespace-separated list of distribution sets to fetch
@@ -58,15 +58,15 @@ a HardenedBSD release.
 .It bastille_url_midnightbsd
 Url from which to fetch legacy distributions sets when bootstrapping
 a MidnightBSD release.
-.Ss TIMEZONE
+.Sh TIMEZONE
 .Bl -tag -width Ds
 .It bastille_tzdata
 Set the timezone to apply to newly created jails.
-.Ss RESOLV.CONF
+.Sh RESOLV.CONF
 .It bastille_resolv_conf
 This file is copied into newly created jails to allow them
 to reach DNS.
-.Ss ZFS
+.Sh ZFS
 .Bl -tag -width Ds
 .It bastille_zfs_enable
 Whether to enable or disable zfs support.
@@ -78,7 +78,7 @@ here.
 .It bastille_zfs_options
 Zfs options to use when creating any and all datasets for any and all
 supported actions.
-.Ss EXPORT/IMPORT
+.Sh EXPORT/IMPORT
 .Bl -tag -width Ds
 .It bastille_compress_xz_options
 xz specific compress options.
@@ -95,7 +95,7 @@ zst specific de-compress options.
 .It bastille_export_options
 Any flags supported by the 'export' command can be defined here
 to make it slightly more convenient.
-.Ss NETWORKING
+.Sh NETWORKING
 .Bl -tag -width Ds
 .It bastille_network_vnet_type
 Control whether to use the default 'if_bridge' mode
@@ -112,7 +112,7 @@ Set the name of the default table used for NAT jails.
 Specify a default gateway.
 .It bastille_network_gateway6
 Specify a defalut Ipv6 gateway.
-.Ss TEMPLATES
+.Sh TEMPLATES
 .Bl -tag -width Ds
 .It bastille_template_base
 The default template that is applied to all jails.

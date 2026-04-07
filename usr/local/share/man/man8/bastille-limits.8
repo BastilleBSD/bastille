@@ -32,7 +32,7 @@ The
 .Nm
 sub-command allows adding and setting limits to jail(s).
 .Bl -tag -width Ds
-.It Sy bastille limits Oo Fl alx Oc Sy add Ar OPTION VALUE
+.It Sy bastille limits Oo Fl alx Oc Ar TARGET Sy add Ar OPTION VALUE
 .Bl -tag -width Ds
 .It Sy add
 Add the specified
@@ -53,7 +53,7 @@ and
 .Ar VALUE
 shoud conform to RCTL specs. See
 .Xr rctl 8 .
-.It Sy bastille limits Oo Fl ax Oc Sy remove Ar OPTION
+.It Sy bastille limits Oo Fl ax Oc Ar TARGET Sy remove Ar OPTION
 .Bl -tag -width Ds
 .It Sy remove
 Remove the specified
@@ -64,7 +64,7 @@ Auto mode. Start/stop jail(s) if required.
 .It Fl x , Fl -debug
 Enable debug mode.
 .El
-.It Sy bastille limits Oo Fl ax Oc Sy clear|reset|stats
+.It Sy bastille limits Oo Fl ax Oc Ar TARGET Sy clear|reset|stats
 .Bl -tag -width Ds
 .It Sy clear
 Clear limits from the system, but don't remove from jail configuration.
@@ -75,7 +75,7 @@ Show limit stats (RCTL only).
 .It Fl x , Fl -debug
 Enable debug mode.
 .El
-.It Sy bastille limits Oo Fl ax Oc Sy list|show Op active
+.It Sy bastille limits Oo Fl ax Oc Ar TARGET Sy list|show Op active
 .Bl -tag -width Ds
 .It Sy list
 Show all configured limits on the system, active or not.
