@@ -23,10 +23,10 @@ sub-command will redirect
 to
 .Ar JAIL_PORT .
 .Bl -tag -width Ds
-.It Sy bastille rdr Oo Fl x Oc Oo Fl d Ar IP Oc Oo Fl i Ar INTERFACE Oc Oo Fl s Ar IP|TABLE Oc Oo Fl t Ar ipv4|ipv6 Oc Sy add Ar tcp|udp HOST_PORT JAIL_PORT Op log LOG_OPTIONS
+.It Sy bastille rdr Oo Fl x Oc Oo Fl d Ar IP Oc Oo Fl i Ar INTERFACE Oc Oo Fl s Ar IP|TABLE Oc Oo Fl t Ar ipv4|ipv6 Oc Ar TARGET Sy tcp|udp HOST_PORT JAIL_PORT Op log LOG_OPTIONS
 .Bl -tag -width Ds
-.It Sy add
-Add the rdr rule to the jail.
+.It Sy tcp|udp
+Specify protocol to use for the given rule.
 .It Fl d Ar IP , Fl -destination Ar IP
 Limit rdr to a destination IP.
 .It Fl i Ar INTERFACE , Fl -interface Ar INTERFACE
@@ -40,7 +40,7 @@ Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.
 .It Fl x , Fl -debug
 Enable debug mode.
 .El
-.It Sy bastille rdr Oo Fl x Oc Sy clear|reset|list 
+.It Sy bastille rdr Oo Fl x Oc Ar TARGET Sy clear|reset|list 
 .Bl -tag -width Ds
 .It Sy clear
 Clear the rules from the system, but don't remove from the jail
