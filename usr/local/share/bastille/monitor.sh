@@ -183,8 +183,8 @@ for jail in ${JAILS}; do
 done
 
 # Final ping to healthcheck URL
-if [ "${ERRORS}" -ne 0 ]; then
-    if [ -n "${bastille_monitor_healthchecks}" ]; then
+if [ -n "${bastille_monitor_healthchecks}" ]; then
+    if [ "${ERRORS}" -eq 0 ]; then
         curl -fsS --retry 3 "${bastille_monitor_healthchecks}" > /dev/null 2>&1
     else
         curl -fsS --retry 3 "${bastille_monitor_healthchecks}/fail" > /dev/null 2>&1
