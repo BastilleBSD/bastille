@@ -151,6 +151,8 @@ for jail in ${JAILS}; do
                     if route -n get ${ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
+                    # Add DNS (if set)
+                    bastille_dns "add" "ipv4" "${jail}" "${ip}"
                 else
                     error_continue "[ERROR]: ${if} interface does not exist."
                 fi
@@ -174,6 +176,8 @@ for jail in ${JAILS}; do
                     if route -6 -n get ${ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
+                    # Add DNS (if set)
+                    bastille_dns "add" "ipv6" "${jail}" "${ip}"
                 else
                     error_continue "[ERROR]: ${if} interface does not exist."
                 fi
