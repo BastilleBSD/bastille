@@ -617,7 +617,7 @@ list_snapshot(){
 }
 
 list_template(){
-    find "${bastille_templatesdir}" -type d -maxdepth 2 | sed "s#${bastille_templatesdir}/##g"
+    find -L "${bastille_templatesdir}" -type d -mindepth 2 -maxdepth 2 | sed "s#${bastille_templatesdir}/##g"
 }
 
 list_jail(){
