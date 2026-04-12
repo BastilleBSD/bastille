@@ -57,11 +57,11 @@ bastille_dns() {
 
     # Validate DNS config
     if [ -s "${bastille_jailsdir}/${jail}/dns.conf" ]; then
-        resolvers="$(sysrc -f ${bastille_jailsdir}/${jail}/dns.conf -n resolvers >/dev/null 2>&1)"
+        resolvers="$(sysrc -f ${bastille_jailsdir}/${jail}/dns.conf -n resolvers 2>/dev/null)"
         for resolver in ${resolvers}; do
             case ${resolver} in
                 unbound)
-                    unbound_zone="$(sysrc -f ${bastille_jailsdir}/${jail}/dns.conf -n unbound_zone >/dev/null 2>&1)"
+                    unbound_zone="$(sysrc -f ${bastille_jailsdir}/${jail}/dns.conf -n unbound_zone 2>/dev/null)"
                     if ! command -v unbound-control >/dev/null 2>&1; then
                         error_continue "[ERROR]: DNS resolver not found: unbound"
                     elif ! unbound-control status >/dev/null 2>&1; then
@@ -86,7 +86,7 @@ bastille_dns() {
                     fi
                     ;;
                 local-unbound)
-                    unbound_zone="$(sysrc -f ${bastille_jailsdir}/${jail}/dns.conf -n unbound_zone >/dev/null 2>&1)"
+                    unbound_zone="$(sysrc -f ${bastille_jailsdir}/${jail}/dns.conf -n unbound_zone 2>/dev/null)"
                     if ! command -v local-unbound-control >/dev/null 2>&1; then
                         error_continue "[ERROR]: DNS resolver not found: local-unbound"
                     elif ! local-unbound-control status >/dev/null 2>&1; then
