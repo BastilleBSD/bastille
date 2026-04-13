@@ -186,9 +186,9 @@ done
 case "${bastille_monitor_module}" in
     uptimekuma)
         if [ "${ERRORS}" -eq 0 ]; then
-            curl -fsS --retry 3 "${bastille_monitor_url}" >/dev/null 2>&1
+            curl -fsS --retry 3 "${bastille_monitor_url}?status=up" >/dev/null 2>&1
         else
-            curl -fsS --retry 3 "${bastille_monitor_url}?msg=Services+Down:+${ERRORS}" >/dev/null 2>&1
+            curl -fsS --retry 3 "${bastille_monitor_url}?status=down&msg=Services+Down:+${ERRORS}" >/dev/null 2>&1
         fi
         ;;
     healthchecks.io)
