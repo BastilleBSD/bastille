@@ -335,8 +335,7 @@ configure_pf() {
 # shellcheck disable=SC2154
 if [ ! -f "${bastille_pf_conf}" ]; then
     # shellcheck disable=SC3043
-    local ext_if
-    ext_if=$(netstat -rn | awk '/default/ {print $4}' | head -n1)
+    local ext_if=$(netstat -rn | awk '/default/ {print $4}' | head -n1)
     info 1 "\nDetermined default network interface: ($ext_if)"
     info 2 "${bastille_pf_conf} does not exist: creating..."
 
@@ -358,8 +357,11 @@ pass out quick keep state
 antispoof for \$ext_if
 pass in proto tcp from any to any port ssh flags S/SA keep state
 EOF
+    if ! grep -qo "include \"${bastille_pf_conf}\""; then
+        sed -i '' '1s/^/include \"${bastille_pf_conf}\"\n/' "/etc/pf.conf"
+    fi
     sysrc pf_enable=YES
-    warn 1 "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."
+    warn 1 "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."        
 else
     info 1 "\nFirewall (pf) has already been configured!"
 fi
