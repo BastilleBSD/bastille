@@ -357,11 +357,15 @@ pass out quick keep state
 antispoof for \$ext_if
 pass in proto tcp from any to any port ssh flags S/SA keep state
 EOF
-    if ! grep -qo "include \"${bastille_pf_conf}\"" "/etc/pf.conf"; then
-        sed -i '' "1s/^/include \"${bastille_pf_conf}\"\n/" "/etc/pf.conf"
+    if [ -f "/etc/pf.conf" ]; then
+        if ! grep -qo "include \"${bastille_pf_conf}\"" "/etc/pf.conf"; then
+            sed -i '' "1s/^/include \"${bastille_pf_conf}\"\n/" "/etc/pf.conf"
+        fi
+    else
+        echo "include \"${bastille_pf_conf}\"" > "/etc/pf.conf"
     fi
     sysrc pf_enable=YES
-    warn 1 "pf ruleset created, please review ${bastille_pf_conf} and enable it using 'service pf start'."        
+    warn 1 "Bastille pf ruleset created. Please review '${bastille_pf_conf}' and enable pf using 'service pf start'."        
 else
     info 1 "\nFirewall (pf) has already been configured!"
 fi
