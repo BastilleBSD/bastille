@@ -335,7 +335,7 @@ configure_pf() {
 # shellcheck disable=SC2154
 if [ ! -f "${bastille_pf_conf}" ]; then
     # shellcheck disable=SC3043
-    local ext_if=$(netstat -rn | awk '/default/ {print $4}' | head -n1)
+    local ext_if="$(netstat -rn | awk '/default/ {print $4}' | head -n1)"
     info 1 "\nDetermined default network interface: ($ext_if)"
     info 2 "${bastille_pf_conf} does not exist: creating..."
 
