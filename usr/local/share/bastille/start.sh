@@ -148,7 +148,7 @@ for jail in ${JAILS}; do
                         warn 1 "[WARNING]: IP address (${ip}) already in use, continuing..."
                     fi
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
-                    if route -n get ${ip} | grep "gateway" >/dev/null && [ -f "${bastille_pf_conf}" ]; then
+                    if route -n get ${ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
                 else
@@ -171,7 +171,7 @@ for jail in ${JAILS}; do
                         warn 1 "[WARNING]: IP address (${ip}) already in use, continuing..."
                     fi
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
-                    if route -6 -n get ${ip} | grep "gateway" >/dev/null && [ -f "${bastille_pf_conf}" ]; then
+                    if route -6 -n get ${ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
                 else
