@@ -100,7 +100,9 @@ for jail in ${JAILS}; do
 
     info 1 "\n[${jail}]:"
 
-    jexec -l "${jail}" /usr/sbin/service "$@"
+    check_fib "${jail}"
+
+    ${SETFIB} jexec -l "${jail}" /usr/sbin/service "$@"
 
     if [ "$?" -ne 0 ]; then
         ERRORS=$((ERRORS + 1))
