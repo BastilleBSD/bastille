@@ -86,40 +86,6 @@ USER="${2}"
 bastille_root_check
 set_target "${TARGET}"
 
-validate_user() {
-
-    local jail="${1}"
-    local user="${2}"
-
-    if jexec -l "${jail}" id "${user}" >/dev/null 2>&1; then
-        USER_SHELL="$(jexec -l "${jail}" getent passwd "${user}" | cut -d: -f7)"
-        if [ -n "${USER_SHELL}" ]; then
-            if jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
-                jexec -l "${jail}" $LOGIN -f "${user}"
-            else
-                info 2 "Invalid shell for user ${user}"
-            fi
-        else
-            info 2 "User ${user} has no shell"
-        fi
-    else
-        info 2 "Unknown user ${user}"
-    fi
-}
-
-check_fib() {
-
-    local jail="${1}"
-
-    fib=$(grep 'exec.fib' "${bastille_jailsdir}/${jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
-
-    if [ -n "${fib}" ]; then
-        setfib="setfib -F ${fib}"
-    else
-        setfib=""
-    fi
-}
-
 for jail in ${JAILS}; do
 
     # Validate jail state
@@ -134,13 +100,25 @@ for jail in ${JAILS}; do
     info 1 "\n[${jail}]:"
 
     LOGIN="$(jexec -l "${jail}" which login)"
+    check_fib "${jail}"
 
     if [ -n "${USER}" ]; then
-        validate_user "${jail}" "${USER}"
+        if jexec -l "${jail}" id "${USER}" >/dev/null 2>&1; then
+            USER_SHELL="$(jexec -l "${jail}" getent passwd "${USER}" | cut -d: -f7)"
+            if [ -n "${USER_SHELL}" ]; then
+                if jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                    ${SETFIB} jexec -l "${jail}" ${LOGIN} -f "${USER}"
+                else
+                    error_exit "[ERROR]: Invalid shell for user: ${USER}"
+                fi
+            else
+                error_exit "[ERROR]: User has no shell: ${USER}"
+            fi
+        else
+            error_exit "[ERROR]: Unknown user: ${user}"
+        fi
     else
-        check_fib "${jail}"
-        LOGIN="$(jexec -l "${jail}" which login)"
-        ${setfib} jexec -l "${jail}" ${LOGIN} -f root
+        ${SETFIB} jexec -l "${jail}" ${LOGIN} -f root
     fi
 
 done

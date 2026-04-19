@@ -606,6 +606,17 @@ validate_netconf() {
     fi
 }
 
+check_fib() {
+    local jail="${1}"
+    local fib=$(grep 'exec.fib' "${bastille_jailsdir}/${jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+    if [ -n "${fib}" ]; then
+        SETFIB="setfib -F ${fib}"
+    else
+        SETFIB=""
+    fi
+    export SETFIB
+}
+
 checkyesno() {
     ## copied from /etc/rc.subr -- cedwards (20231125)
     ## issue #368 (lowercase values should be parsed)
