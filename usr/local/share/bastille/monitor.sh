@@ -183,10 +183,22 @@ for jail in ${JAILS}; do
 done
 
 # Final ping to healthcheck URL
-if [ -n "${bastille_monitor_healthchecks}" ]; then
-    if [ "${ERRORS}" -eq 0 ]; then
-        curl -fsS --retry 3 "${bastille_monitor_healthchecks}" > /dev/null 2>&1
-    else
-        curl -fsS --retry 3 "${bastille_monitor_healthchecks}/fail" > /dev/null 2>&1
-    fi
-fi
+case "${bastille_monitor_module}" in
+    uptimekuma)
+        if [ "${ERRORS}" -eq 0 ]; then
+            curl -fsS --retry 3 "${bastille_monitor_url}?status=up" >/dev/null 2>&1
+        else
+            curl -fsS --retry 3 "${bastille_monitor_url}?status=down&msg=Services+Down:+${ERRORS}" >/dev/null 2>&1
+        fi
+        ;;
+    healthchecks.io)
+        if [ "${ERRORS}" -eq 0 ]; then
+            curl -fsS --retry 3 "${bastille_monitor_url}" >/dev/null 2>&1
+        else
+            curl -fsS --retry 3 "${bastille_monitor_url}/fail" >/dev/null 2>&1
+        fi
+        ;;
+    *)
+        error_notify "[ERROR]: Healthcheck module not implemented: ${bastille_monitor_module}"
+        ;;
+esac

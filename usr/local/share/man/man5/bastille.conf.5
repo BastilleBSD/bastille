@@ -135,9 +135,12 @@ Cron file for automatic monitoring entry.
 Actual cron entry. The default is to check every 5 minutes.
 .It bastille_monitor_logfile
 Log storage.
-.It bastille_monitor_healthchecks
-This is the FQDN for optional alert services.
-Currently only supports 'healthchecks.io'.
+.It bastille_monitor_module
+This is the monitoring module option.
+Set to 'healthchecks.io' or 'uptimekuma'.
+.It bastille_monitor_url
+This is the FQDN for optional alerting services.
+Currently supports 'healthchecks.io' and 'uptimekuma'.
 .Sh SEE ALSO
 .Xr bastille-bootstrap 8 ,
 .Xr bastille-clone 8 ,

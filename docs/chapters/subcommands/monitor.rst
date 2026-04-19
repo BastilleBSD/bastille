@@ -51,18 +51,23 @@ for configuration defaults:
   bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"
   bastille_monitor_cron="*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2&>1"
   bastille_monitor_logfile="${bastille_logsdir}/monitor.log"
-  bastille_monitor_healthchecks=""
-
+  bastille_monitor_module=""
+  bastille_monitor_url=""
 
 Alerting modules
 ----------------
 
+Bastille currently supports two healthcheck modules. The ``bastille_monitor_module`` should be
+either ``uptimekuma`` or ``healthchecks.io``.
+
 The first alerting module to be supported is Health Checks
 (https://healthchecks.io), which is both a free SaaS service (up to 20 checks)
-and provides a self-hosted option (see ``sysutils/py-healthchecks``).
+and provides a self-hosted option (see ``sysutils/py-healthchecks``). Just add the healthcheck url to
+the ``bastille_monitor_url`` variable.
 
-Simply configure the ``${bastille_monitor_healthchecks}`` variable with your Ping
-URL and you're done!
+The second is Uptime-Kuma, a self-hosted monitoring application. Add a new monitor of type "Push", then
+copy and paste the given url into the ``bastille_monitor_url`` variable. Do not include the optional
+parameters following the ``?`` character. Only the url including the api key should be included.
 
 
 Help
