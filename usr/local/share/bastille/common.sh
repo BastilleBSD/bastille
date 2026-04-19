@@ -608,7 +608,7 @@ validate_netconf() {
 
 check_fib() {
     local jail="${1}"
-    local fib=$(grep 'exec.fib' "${bastille_jailsdir}/${jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')
+    local fib="$(grep 'exec.fib' "${bastille_jailsdir}/${jail}/jail.conf" | awk '{print $3}' | sed 's/\;//g')"
     if [ -n "${fib}" ]; then
         SETFIB="setfib -F ${fib}"
     else
