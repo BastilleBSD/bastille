@@ -110,7 +110,7 @@ fi
 
 # Warn on advanced mount option  "tmpfs,linprocfs,linsysfs,fdescfs,procfs,zfs"
 # Create host path if non-existent
-if { [ "${hostpath}" = "tmpfs" ] && [ "$_type" = "tmpfs" ]; } || \
+if { [ "${hostpath}" = "tmpfs" ] && [ "${type}" = "tmpfs" ]; } || \
    { [ "${hostpath}" = "linprocfs" ] && [ "${type}" = "linprocfs" ]; } || \
    { [ "${hostpath}" = "linsysfs" ] && [ "${type}" = "linsysfs" ]; } || \
    { [ "${hostpath}" = "proc" ] && [ "${type}" = "procfs" ]; } || \
