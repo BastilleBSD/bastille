@@ -311,7 +311,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Verify parameter count
-f [ $# -lt 2 ]; then
+if [ $# -lt 2 ]; then
     usage
 fi
 
