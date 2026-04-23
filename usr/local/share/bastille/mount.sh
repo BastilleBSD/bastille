@@ -45,7 +45,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -76,21 +76,22 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 3 ] || [ "$#" -gt 7 ]; then
+# Verify parameter count
+if [ $# -lt 3 ] || [ $# -gt 7 ]; then
     usage
 fi
 
 TARGET="${1}"
 shift
 
+bastille_root_check
+set_target "${TARGET}"
+
 if [ "$#" -eq 2 ]; then
     fstab="$(echo "$* nullfs ro 0 0" | sed 's#\\ #\\040#g')"
 else
     fstab="$(echo "$*" | sed 's#\\ #\\040#g')"
 fi
-
-bastille_root_check
-set_target "${TARGET}"
 
 # Assign variables
 hostpath_fstab=$(echo "${fstab}" | awk '{print $1}')

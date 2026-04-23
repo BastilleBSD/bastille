@@ -45,7 +45,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO_YES=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -76,8 +76,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-# Check for too many args
-if [ "$#" -gt 2 ]; then
+# Verify parameter count
+if [ $# -gt 2 ]; then
     usage
 fi
 

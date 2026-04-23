@@ -761,7 +761,7 @@ create_jail() {
 
 bastille_root_check
 
-# Handle options.
+# Handle options
 BOOT="on"
 EMPTY_JAIL=0
 THICK_JAIL=0
@@ -958,7 +958,7 @@ else
     INTERFACE="${4}"
 fi
 
-info 1 "\nAttempting to create jail: ${NAME}"
+info 1 "\nCreating jail: ${NAME}..."
 
 if [ "${EMPTY_JAIL}" -eq 1 ]; then
     if [ $# -ne 1 ]; then
@@ -1106,7 +1106,7 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
         validate_netconf
     fi
 else
-    info 1 "\nCreating empty jail: ${NAME}."
+    info 1 "\nCreating empty jail: ${NAME}"
 fi
 
 # May not exist on deployments created before Bastille 0.7.20200714, so creating it. -- cwells

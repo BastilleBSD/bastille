@@ -644,11 +644,9 @@ list_import(){
     ls -v "${bastille_backupsdir}" | grep -v ".sha256$"
 }
 
-bastille_root_check
-
 TARGET=""
 
-# Handle options.
+# Handle options
 OPT_JSON=0
 OPT_PRETTY=0
 OPT_STATE="all"
@@ -697,6 +695,8 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+bastille_root_check
 
 # Clear tmp directory
 rm -rf /tmp/bastille-list-*

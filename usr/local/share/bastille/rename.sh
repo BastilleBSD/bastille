@@ -42,7 +42,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -69,7 +69,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 2 ]; then
+# Verify parameter count
+if [ $# -ne 2 ]; then
     usage
 fi
 
@@ -296,7 +297,7 @@ if [ -d "${bastille_jailsdir}/${NEWNAME}" ]; then
     error_exit "[ERROR]: Jail: ${NEWNAME} already exists."
 fi
 
-info 1 "\nAttempting to rename '${TARGET}' to ${NEWNAME}..."
+info 1 "\nRenaming '${TARGET}' to '${NEWNAME}'..."
 
 change_name
 

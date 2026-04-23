@@ -47,7 +47,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 OPTION=""
 while [ "$#" -gt 0 ]; do
@@ -84,6 +84,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Verify parameter count
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi

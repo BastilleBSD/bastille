@@ -51,7 +51,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 LIVE=0
 OPT_BACKUP=0
@@ -131,7 +131,8 @@ if [ "${LIVE}" -eq 1 ]; then
     fi
 fi
 
-if [ "$#" -ne 2 ]; then
+# Verify parameter count
+if [ $# -ne 2 ]; then
     usage
 fi
 
@@ -383,10 +384,10 @@ for jail in ${JAILS}; do
         fi
     fi
 
-    info 1 "\nAttempting to migrate '${jail}' to '${HOST}'..."
+    info 1 "\nMigrating '${jail}' to '${HOST}'..."
 
     migrate_jail "${jail}" "${USER}" "${HOST}" "${PORT}"
 
-    info 1 "\nSuccessfully migrated '${jail}' to '${HOST}'.\n"
+    info 1 "\nMigrated '${jail}' to '${HOST}' successfully.\n"
 
 done

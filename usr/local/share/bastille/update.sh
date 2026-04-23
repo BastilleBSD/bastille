@@ -49,7 +49,7 @@ if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi
 
-# Handle options.
+# Handle options
 OPTION=""
 AUTO=0
 PKGBASE=0
