@@ -46,7 +46,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 LIVE=0
 while [ "$#" -gt 0 ]; do
@@ -71,8 +71,8 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            for _opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${_opt} in
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
                     a) AUTO=1 ;;
                     l) LIVE=1 ;;
                     x) enable_debug ;;
@@ -87,10 +87,12 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Verify options
 if [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
     error_exit "[-a|--auto] cannot be used with [-l|--live]"
 fi
 
+# Verify parameter count
 if [ $# -ne 3 ]; then
     usage
 fi
@@ -527,7 +529,7 @@ clone_jail() {
 
     # Display exit status
     if [ "$?" -ne 0 ]; then
-        error_exit "[ERROR]: An error has occurred while attempting to clone '${TARGET}'."
+        error_exit "[ERROR]: An error has occurred while cloning '${TARGET}'."
     else
         info 1 "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
         if [ "${CLONE_INTERFACE_COUNT}" -gt 1 ]; then
@@ -544,7 +546,7 @@ clone_jail() {
     fi
 }
 
-info 1 "\nAttempting to clone '${TARGET}' to '${NEWNAME}'..."
+info 1 "\nCloning '${TARGET}' to '${NEWNAME}'..."
 
 clone_validate_jail_name
 

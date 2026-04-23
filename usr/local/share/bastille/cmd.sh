@@ -45,7 +45,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -76,16 +76,16 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -eq 0 ]; then
+# Verify parameter count
+if [ $# -eq 0 ]; then
     usage
 fi
-
-bastille_root_check
 
 TARGET="${1}"
 shift 1
 ERRORS=0
 
+bastille_root_check
 set_target "${TARGET}"
 
 for jail in ${JAILS}; do

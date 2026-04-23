@@ -150,7 +150,7 @@ line_in_file() {
     fi
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -181,7 +181,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 2 ]; then
+# Verify parameter count
+if [ $# -lt 2 ]; then
     usage
 fi
 

@@ -150,7 +150,7 @@ verify_template() {
     fi
 }
 
-# Handle options.
+# Handle options
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -169,6 +169,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Verify parameter count
 if [ "$#" -ne 1 ]; then
     usage
 fi

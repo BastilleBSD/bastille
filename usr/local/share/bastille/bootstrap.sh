@@ -511,7 +511,7 @@ bootstrap_template() {
     fi
 }
 
-# Handle options.
+# Handle options
 PKGBASE=0
 OPT_UPDATE=0
 while [ "$#" -gt 0 ]; do

@@ -47,7 +47,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 AUTO_YES=0
 USE_HOST_PKG=0
@@ -90,6 +90,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Verify parameter count
 if [ $# -lt 2 ]; then
     usage
 fi

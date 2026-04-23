@@ -48,7 +48,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -67,7 +67,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-# Handle global actions.
+# Handle global actions
 case "${1}" in
     enable)
         [ "$#" -eq 1 ] || usage
@@ -104,7 +104,8 @@ case "${1}" in
         ;;
 esac
 
-if [ "$#" -eq 0 ]; then
+# Verify parameter count
+if [ $# -eq 0 ]; then
     usage
 fi
 

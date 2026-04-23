@@ -51,7 +51,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 OPT_FORCE=0
 OPT_ZRECV="-u"
 OPT_STATIC_MAC=""
@@ -95,6 +95,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Verify parameter count
 if [ $# -gt 2 ] || [ $# -lt 1 ]; then
     usage
 fi

@@ -227,7 +227,7 @@ destroy_release() {
     fi
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 AUTO_YES=0
 FORCE=0
@@ -276,7 +276,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 1 ]; then
+# Verify parameter count
+if [ $# -ne 1 ]; then
     usage
 fi
 

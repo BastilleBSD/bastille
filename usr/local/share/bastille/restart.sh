@@ -48,8 +48,7 @@ EOF
     exit 1
 }
 
-# Handle options.
-# We pass these to start and stop.
+# Handle options
 start_options=""
 stop_options=""
 IGNORE=0
@@ -98,7 +97,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 1 ]; then
+# Verify parameter count
+if [ $# -ne 1 ]; then
     usage
 fi
 
