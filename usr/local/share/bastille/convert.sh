@@ -122,7 +122,7 @@ convert_jail_to_release() {
     jail_name="${1}"
     release="${2}"
 
-    info 1 "\nAttempting to create '${release}' from '${jail_name}'..."
+    info 1 "\nCreating release '${release}' from '${jail_name}'..."
 
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ]; then

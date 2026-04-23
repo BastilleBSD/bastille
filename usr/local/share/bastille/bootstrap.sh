@@ -199,7 +199,7 @@ validate_release() {
     # Set release name to sane release
     RELEASE="${NAME_VERIFY}"
 
-    info 1 "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
+    info 1 "\nBootstrapping ${PLATFORM_OS} release: ${RELEASE}"
 
     ### FreeBSD ###
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
@@ -755,7 +755,7 @@ if [ "${ERRORS}" -eq 0 ]; then
     fi
 
     # Success
-    info 1 "\nBootstrap successful."
+    info 1 "\nBootstrap successful!"
     info 2 "See 'bastille --help' for available commands.\n"
 else
     error_exit "[ERROR]: Bootstrap failed!"
