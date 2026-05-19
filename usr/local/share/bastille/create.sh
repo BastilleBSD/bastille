@@ -109,8 +109,8 @@ validate_release() {
         error_exit "[ERROR]: Unable to validate Platform OS."
     fi
 
-    # Set OS_RELEASE
-    OS_RELEASE="$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )"
+    # Set OS_RELEASE_DEFINITION
+    OS_RELEASE_DEFINITION="osrelease = \"$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )\";"
 }
 
 define_ips() {
@@ -249,7 +249,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
-  osrelease = ${OS_RELEASE};
+  ${OS_RELEASE_DEFINITION}
 
   ${IP4_DEFINITION}
   ${IP6_DEFINITION}
@@ -305,7 +305,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
-  osrelease = ${OS_RELEASE};
+  ${OS_RELEASE_DEFINITION}
 
 ${NETBLOCK}
 }
