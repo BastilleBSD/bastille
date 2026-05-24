@@ -312,14 +312,18 @@ bootstrap_release_legacy() {
         fi
     done
 
+    # Silence motd at container login
+    if ! touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"; then
+        ERRORS=$((ERRORS + 1))
+    fi
+    if ! touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"; then
+        ERRORS=$((ERRORS + 1))
+    fi
+
     # Cleanup on error
     if [ "${ERRORS}" -ne 0 ]; then
         return 1
     fi
-
-    # Silence motd at container login
-    touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-    touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
 }
 
 bootstrap_release_pkgbase() {
@@ -426,14 +430,18 @@ bootstrap_release_pkgbase() {
             fi
         done
 
+        # Silence motd at container login
+        if ! touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"; then
+            ERRORS=$((ERRORS + 1))
+        fi
+        if ! touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"; then
+            ERRORS=$((ERRORS + 1))
+        fi
+
         # Cleanup on error
         if [ "${ERRORS}" -ne 0 ]; then
             return 1
         fi
-
-        # Silence motd at login
-        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
     fi
 }
 
