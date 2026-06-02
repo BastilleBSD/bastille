@@ -171,6 +171,74 @@ Special Hook Cases
 ``ARG`` will always treat an ampersand "\``&``" literally, without the need to
 escape it. Escaping it will cause errors.
 
+Passing ARG Values From a File
+------------------------------
+
+When a template declares a lot of ``ARG`` values, listing them all on the
+command line with repeated ``--arg NAME=VALUE`` flags becomes unwieldy. The
+``template`` sub-command accepts a ``--arg-file`` option that points at a
+plain-text file containing the values.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille template TARGET project/template --arg-file /path/to/args.env
+
+The file must already exist; Bastille will exit with
+``[ERROR]: File not found: <path>`` otherwise.
+
+File Format
+^^^^^^^^^^^
+
+Each line in the file is a ``NAME=VALUE`` pair, one ``ARG`` per line. The
+``NAME`` portion must start at the beginning of the line (Bastille looks up
+each ``ARG`` with an anchored match on ``^NAME=``), and ``VALUE`` is
+everything that follows the first ``=``.
+
+.. code-block:: shell
+
+  # /path/to/args.env
+  MINECRAFT_MEMX=2048M
+  MINECRAFT_MEMS=2048M
+
+Lines that do not begin with ``NAME=`` (for example blank lines or shell-style
+comments) are ignored because they cannot match the anchored lookup, so they
+are safe to include for readability. An ``ARG`` whose name does not appear in
+the file simply falls through to its default.
+
+Precedence
+^^^^^^^^^^
+
+For any given ``ARG NAME`` referenced inside the Bastillefile, the value is
+resolved in this order:
+
+1. ``--arg NAME=VALUE`` passed on the command line (highest priority).
+2. A ``^NAME=`` line found in the ``--arg-file``.
+3. The default value supplied next to the ``ARG`` declaration in the
+   Bastillefile (lowest priority).
+
+This means you can keep a baseline of values in a file and selectively
+override any of them on the command line without editing the file:
+
+.. code-block:: shell
+
+  ishmael ~ # bastille template azkaban games/minecraft-server \
+      --arg-file /etc/bastille/minecraft.env \
+      --arg MINECRAFT_MEMX=4096M
+
+In the example above every ``ARG`` is sourced from ``minecraft.env`` except
+``MINECRAFT_MEMX``, which is taken from the explicit ``--arg`` flag.
+
+Notes
+^^^^^
+
+* Only the first ``--arg-file`` on the command line is honored; subsequent
+  occurrences are ignored.
+* The path is read on each ``ARG`` lookup, so the file must remain readable
+  for the duration of the template run.
+* Values are passed through the same escaping logic as ``--arg``, so the
+  rule from `Special Hook Cases`_ applies — an ampersand "\``&``" in a value
+  is treated literally and must not be escaped.
+
 Bootstrapping Templates
 -----------------------
 
