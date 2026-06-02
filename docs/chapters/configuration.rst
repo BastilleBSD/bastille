@@ -26,7 +26,7 @@ This is the default `bastille.conf` file.
   bastille_templatesdir="${bastille_prefix}/templates"                  ## default: "${bastille_prefix}/templates"
   bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
 
-  ## pf configuration path
+  ## PF firewall configuration path
   bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
 
   ## Bastille commands directory (assumed by bastille pkg)

@@ -46,7 +46,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -66,17 +66,17 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
+# Verify parameter count
+if [ $# -lt 3 ] || [ $# -gt 4 ]; then
     usage
 fi
-
-bastille_root_check
 
 TARGET="${1}"
 ACTION="${2}"
 BASTILLE_PROPERTY=0
 shift 2
 
+bastille_root_check
 set_target "${TARGET}"
 
 case "${ACTION}" in

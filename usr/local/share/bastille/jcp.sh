@@ -45,7 +45,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 OPTION="-av"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -76,7 +76,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 4 ]; then
+# Verify parameter count
+if [ $# -ne 4 ]; then
     usage
 fi
 

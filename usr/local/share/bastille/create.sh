@@ -109,8 +109,8 @@ validate_release() {
         error_exit "[ERROR]: Unable to validate Platform OS."
     fi
 
-    # Set OS_RELEASE
-    OS_RELEASE="$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )"
+    # Set OS_RELEASE_DEFINITION
+    OS_RELEASE_DEFINITION="osrelease = \"$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )\";"
 }
 
 define_ips() {
@@ -249,7 +249,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
-  osrelease = ${OS_RELEASE};
+  ${OS_RELEASE_DEFINITION}
 
   ${IP4_DEFINITION}
   ${IP6_DEFINITION}
@@ -305,7 +305,7 @@ ${NAME} {
   mount.fstab = ${bastille_jail_fstab};
   path = ${bastille_jail_path};
   securelevel = 2;
-  osrelease = ${OS_RELEASE};
+  ${OS_RELEASE_DEFINITION}
 
 ${NETBLOCK}
 }
@@ -761,7 +761,7 @@ create_jail() {
 
 bastille_root_check
 
-# Handle options.
+# Handle options
 BOOT="on"
 EMPTY_JAIL=0
 THICK_JAIL=0
@@ -958,7 +958,7 @@ else
     INTERFACE="${4}"
 fi
 
-info 1 "\nAttempting to create jail: ${NAME}"
+info 1 "\nCreating jail: ${NAME}..."
 
 if [ "${EMPTY_JAIL}" -eq 1 ]; then
     if [ $# -ne 1 ]; then
@@ -1106,7 +1106,7 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
         validate_netconf
     fi
 else
-    info 1 "\nCreating empty jail: ${NAME}."
+    info 1 "\nCreating empty jail: ${NAME}"
 fi
 
 # May not exist on deployments created before Bastille 0.7.20200714, so creating it. -- cwells

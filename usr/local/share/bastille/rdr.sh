@@ -242,7 +242,7 @@ load_rdr_log_rule() {
     fi
 }
 
-# Handle options.
+# Handle options
 RDR_IF="$(grep "^[[:space:]]*${bastille_network_pf_ext_if}[[:space:]]*=" ${bastille_pf_conf} | awk -F'"' '{print $2}' | sed -e 's/{ //' -e 's/ }//')"
 RDR_SRC="any"
 RDR_DST="any"
@@ -310,7 +310,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 2 ]; then
+# Verify parameter count
+if [ $# -lt 2 ]; then
     usage
 fi
 

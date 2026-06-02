@@ -166,7 +166,7 @@ update_jail_etc() {
     fi
 }
 
-# Handle options.
+# Handle options
 DRY_RUN=0
 FORCE=0
 while [ "$#" -gt 0 ]; do
@@ -203,7 +203,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+# Verify parameter count
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
 

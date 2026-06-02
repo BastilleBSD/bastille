@@ -46,7 +46,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -65,6 +65,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Verify parameter count
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
@@ -81,14 +82,17 @@ for jail in ${JAILS}; do
     bastille_jail_tags="${bastille_jailsdir}/${jail}/tags"
     case ${ACTION} in
         add)
+            info 1 "\n[${jail}]:"
             for tag in $(echo ${TAGS} | tr , ' '); do
                 echo ${tag} >> "${bastille_jail_tags}"
                 tmpfile="$(mktemp)"
                 sort "${bastille_jail_tags}" | uniq > "${tmpfile}"
                 mv "${tmpfile}" "${bastille_jail_tags}"
             done
+            info 2 "Tags added: ${TAGS}"
             ;;
         del*)
+            info 1 "\n[${jail}]:"
             for tag in $(echo ${TAGS} | tr , ' '); do
                 [ ! -f "${bastille_jail_tags}" ] && break # skip if no tags file
                 tmpfile="$(mktemp)"
@@ -97,6 +101,7 @@ for jail in ${JAILS}; do
                 # delete tags file if empty
                 [ ! -s "${bastille_jail_tags}" ] && rm "${bastille_jail_tags}"
             done
+            info 2 "Tags removed: ${TAGS}"
             ;;
         list)
             if [ -n "${TAGS}" ]; then
@@ -110,7 +115,7 @@ for jail in ${JAILS}; do
             else
                 if [ -f "${bastille_jail_tags}" ]; then
                     info 1 "\n[${jail}]:"
-                    xargs < "${bastille_jail_tags}"
+                    info 2 "$(cat ${bastille_jail_tags})"
                 fi
             fi
             ;;

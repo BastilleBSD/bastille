@@ -45,7 +45,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -76,7 +76,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 3 ]; then
+# Verify parameter count
+if [ $# -ne 3 ]; then
     usage
 fi
 
@@ -100,7 +101,9 @@ for jail in ${JAILS}; do
 
     info 1 "\n[${jail}]:"
 
-    jexec -l "${jail}" /usr/sbin/service "$@"
+    check_fib "${jail}"
+
+    ${SETFIB} jexec -l "${jail}" /usr/sbin/service "$@"
 
     if [ "$?" -ne 0 ]; then
         ERRORS=$((ERRORS + 1))

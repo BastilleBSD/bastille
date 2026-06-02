@@ -47,7 +47,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 AUTO_YES=0
 USE_HOST_PKG=0
@@ -90,6 +90,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Verify parameter count
 if [ $# -lt 2 ]; then
     usage
 fi
@@ -115,11 +116,12 @@ for jail in ${JAILS}; do
     info 1 "\n[${jail}]:"
 
     bastille_jail_path="${bastille_jailsdir}/${jail}/root"
+    check_fib "${jail}"
 
     if [ -f "/usr/sbin/mport" ]; then
-        jexec -l -U root "${jail}" /usr/sbin/mport "$@"
+        ${SETFIB} jexec -l -U root "${jail}" /usr/sbin/mport "$@"
     elif [ -f "${bastille_jail_path}/usr/bin/apt" ]; then
-        jexec -l "${jail}" /usr/bin/apt "$@"
+        ${SETFIB} jexec -l "${jail}" /usr/bin/apt "$@"
     elif [ "${USE_HOST_PKG}" -eq 1 ]; then
         if [ "${AUTO_YES}" -eq 1 ]; then
             env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg -j ${jail} "$@"
@@ -128,9 +130,9 @@ for jail in ${JAILS}; do
         fi
     else
         if [ "${AUTO_YES}" -eq 1 ]; then
-            jexec -l -U root ${jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@"
+            ${SETFIB} jexec -l -U root ${jail} env ASSUME_ALWAYS_YES=yes /usr/sbin/pkg "$@"
         else
-            jexec -l -U root ${jail} /usr/sbin/pkg "$@"
+            ${SETFIB} jexec -l -U root ${jail} /usr/sbin/pkg "$@"
         fi
     fi
 

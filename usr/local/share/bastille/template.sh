@@ -150,7 +150,7 @@ line_in_file() {
     fi
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -181,7 +181,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 2 ]; then
+# Verify parameter count
+if [ $# -lt 2 ]; then
     usage
 fi
 
@@ -398,15 +399,22 @@ for jail in ${JAILS}; do
                     fi
                     ;;
                 fstab|mount)
-                    cmd='mount' ;;
+                    cmd='mount'
+                    ;;
                 include)
-                    cmd='template' ;;
+                    cmd='template'
+                    ;;
                 overlay)
                     cmd='cp'
                     args="${bastille_template}/${args} /"
                     ;;
                 pkg)
-                    args="install -y ${args}"
+                    cmd='pkg -y'
+                    args="install ${args}"
+                    ;;
+                hpkg)
+                    cmd='pkg -Hy'
+                    args="install ${args}"
                     ;;
                 tag|tags)
                     cmd='tags'

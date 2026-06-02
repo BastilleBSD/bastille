@@ -45,7 +45,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -76,16 +76,16 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -eq 0 ]; then
+# Verify parameter count
+if [ $# -eq 0 ]; then
     usage
 fi
-
-bastille_root_check
 
 TARGET="${1}"
 shift 1
 ERRORS=0
 
+bastille_root_check
 set_target "${TARGET}"
 
 for jail in ${JAILS}; do
@@ -101,11 +101,13 @@ for jail in ${JAILS}; do
 
     info 1 "\n[${jail}]:"
 
+    check_fib "${jail}"
+
     # Allow executing commands on linux jails
     if grep -qw "linsysfs" "${bastille_jailsdir}/${jail}/fstab"; then
-        jexec -l -u root "${jail}" "$@"
+        ${SETFIB} jexec -l -u root "${jail}" "$@"
     else
-        jexec -l -U root "${jail}" "$@"
+        ${SETFIB} jexec -l -U root "${jail}" "$@"
     fi
 
     if [ "$?" -ne 0 ]; then

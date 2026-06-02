@@ -36,7 +36,7 @@ one example of how you might use each one.
 +---------------+---------------------+-----------------------------------------+
 | MOUNT         | fstab syntax        | /host/path /jail/path nullfs ro 0 0     |
 +---------------+---------------------+-----------------------------------------+
-| PKG           | port/pkg name(s)    | vim-console zsh git-lite tree htop      |
+| [H]PKG        | port/pkg name(s)    | vim-console zsh git-lite tree htop      |
 +---------------+---------------------+-----------------------------------------+
 | RDR           | tcp port port       | tcp 2200 22 (proto hostport jailport)   |
 +---------------+---------------------+-----------------------------------------+
@@ -120,6 +120,8 @@ bootstrapped, or you are using the template url
 ``MOUNT``         - mount specified files/directories inside the jail
 
 ``PKG``           - install specified packages inside jail
+
+``HPKG``           - install specified packages inside jail using the host pkg
 
 ``RDR``           - redirect specified ports to the jail
 

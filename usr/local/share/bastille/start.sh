@@ -47,7 +47,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 BOOT=0
 DELAY_TIME=0
 OPTION=""
@@ -93,7 +93,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -ne 1 ]; then
+# Verify parameter count
+if [ $# -ne 1 ]; then
     usage
 fi
 

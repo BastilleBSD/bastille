@@ -23,9 +23,9 @@ Thick Jails
 
 1. Use ``bastille upgrade TARGET 13.2-RELEASE`` to upgrade the jail to
    13.2-RELEASE
-2. Use ``bastille upgrade TARGET 13.2-RELEASE install`` to apply the updates
+2. Use ``bastille upgrade TARGET install`` to apply the updates
 3. Reboot the jail ``bastille restart TARGET``
-4. Use ``bastille upgrade TARGET 13.2-RELEASE install`` to finish applying the
+4. Use ``bastille upgrade TARGET install`` to finish applying the
    upgrade
 5. Upgrade complete!
 
@@ -50,9 +50,9 @@ Thick Jails
 
 1. Use ``bastille upgrade TARGET 13.2-RELEASE`` to upgrade the jail to
    13.2-RELEASE
-2. Use ``bastille upgrade TARGET 13.2-RELEASE install`` to apply the updates
+2. Use ``bastille upgrade TARGET install`` to apply the updates
 3. Reboot the jail ``bastille restart TARGET``
-4. Use ``bastille upgrade TARGET 13.2-RELEASE install`` to finish applying the
+4. Use ``bastille upgrade TARGET install`` to finish applying the
    upgrade
 5. Force the reinstallation or upgrade of all installed packages (ABI change):
    ``pkg upgrade -f`` within each jail (or ``bastille pkg ALL upgrade -f``)

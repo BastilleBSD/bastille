@@ -264,7 +264,7 @@ snapshot_destroy() {
     fi
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 AUTO_TAG=0
 SNAP_ROLLBACK=0
@@ -303,7 +303,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
+# Verify parameter count
+if [ $# -lt 2 ] || [ $# -gt 4 ]; then
     usage
 fi
 

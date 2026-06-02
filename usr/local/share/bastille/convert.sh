@@ -47,7 +47,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 AUTO_YES=0
 while [ "$#" -gt 0 ]; do
@@ -84,7 +84,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+# Verify parameter count
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
     usage
 fi
 
@@ -121,7 +122,7 @@ convert_jail_to_release() {
     jail_name="${1}"
     release="${2}"
 
-    info 1 "\nAttempting to create '${release}' from '${jail_name}'..."
+    info 1 "\nCreating release '${release}' from '${jail_name}'..."
 
     if checkyesno bastille_zfs_enable; then
         if [ -n "${bastille_zfs_zpool}" ]; then

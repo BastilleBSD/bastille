@@ -10,4 +10,4 @@ MOUNT /tmp            tmp      nullfs          rw                      0       0
 MOUNT /home           home     nullfs          rw                      0       0
 
 CMD mkdir etc/apt/apt.conf.d/00aptitude
-CMD echo "APT::Cache-Start 251658240;" > etc/apt/apt.conf.d/00aptitude
+CMD echo "APT::Cache-Start 536870912;" > etc/apt/apt.conf.d/00aptitude

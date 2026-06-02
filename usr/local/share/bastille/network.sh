@@ -53,7 +53,7 @@ EOF
     exit 1
 }
 
-# Handle options.
+# Handle options
 AUTO=0
 BRIDGE=0
 STATIC_MAC=0
@@ -136,7 +136,6 @@ elif [ "${NO_IP}" -eq 1 ] && [ -n "${4}" ]; then
 else
     IP=""
 fi
-
 # Default is standard interface
 if [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; then
     STANDARD=1
@@ -144,7 +143,6 @@ if [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ]; t
 else
     VNET_JAIL=1
 fi
-
 if [ "${ACTION}" = "add" ]; then
     if { [ "${VNET}" -eq 1 ] && [ "${BRIDGE}" -eq 1 ]; } || \
        { [ "${VNET}" -eq 1 ] && [ "${STANDARD}" -eq 1 ]; } || \
@@ -162,6 +160,7 @@ if [ "${ACTION}" = "add" ]; then
     fi
 fi
 
+# Verify parameter count
 if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
     usage
 fi

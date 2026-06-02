@@ -199,7 +199,7 @@ validate_release() {
     # Set release name to sane release
     RELEASE="${NAME_VERIFY}"
 
-    info 1 "\nAttempting to bootstrap ${PLATFORM_OS} release: ${RELEASE}"
+    info 1 "\nBootstrapping ${PLATFORM_OS} release: ${RELEASE}"
 
     ### FreeBSD ###
     if [ "${PLATFORM_OS}" = "FreeBSD" ]; then
@@ -312,14 +312,18 @@ bootstrap_release_legacy() {
         fi
     done
 
+    # Silence motd at container login
+    if ! touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"; then
+        ERRORS=$((ERRORS + 1))
+    fi
+    if ! touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"; then
+        ERRORS=$((ERRORS + 1))
+    fi
+
     # Cleanup on error
     if [ "${ERRORS}" -ne 0 ]; then
         return 1
     fi
-
-    # Silence motd at container login
-    touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-    touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
 }
 
 bootstrap_release_pkgbase() {
@@ -426,14 +430,18 @@ bootstrap_release_pkgbase() {
             fi
         done
 
+        # Silence motd at container login
+        if ! touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"; then
+            ERRORS=$((ERRORS + 1))
+        fi
+        if ! touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"; then
+            ERRORS=$((ERRORS + 1))
+        fi
+
         # Cleanup on error
         if [ "${ERRORS}" -ne 0 ]; then
             return 1
         fi
-
-        # Silence motd at login
-        touch "${bastille_releasesdir}/${RELEASE}/root/.hushlogin"
-        touch "${bastille_releasesdir}/${RELEASE}/usr/share/skel/dot.hushlogin"
     fi
 }
 
@@ -451,7 +459,7 @@ bootstrap_release_linux() {
         case "${LINUX_FLAVOR}" in
             bionic|focal|jammy|buster|bullseye|bookworm|noble)
             info 1 "Increasing APT::Cache-Start"
-            info 2 "APT::Cache-Start 251658240;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
+            info 2 "APT::Cache-Start 536870912;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
             ;;
         esac
     fi
@@ -511,7 +519,7 @@ bootstrap_template() {
     fi
 }
 
-# Handle options.
+# Handle options
 PKGBASE=0
 OPT_UPDATE=0
 while [ "$#" -gt 0 ]; do
@@ -755,7 +763,7 @@ if [ "${ERRORS}" -eq 0 ]; then
     fi
 
     # Success
-    info 1 "\nBootstrap successful."
+    info 1 "\nBootstrap successful!"
     info 2 "See 'bastille --help' for available commands.\n"
 else
     error_exit "[ERROR]: Bootstrap failed!"
