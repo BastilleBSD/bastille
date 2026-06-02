@@ -50,29 +50,26 @@ bastille_root_check() {
 
 bastille_dns() {
 
-    local bastille_dns_config="/usr/local/etc/bastille/dns.conf"
     local action="${1}"
     local type="${2}"
     local jail="${3}"
     local ip="${4}"
 
     # Validate DNS config
-    if [ -s "${bastille_dns_config}" ]; then
-        resolvers="$(sysrc -f ${bastille_dns_config} -n resolvers 2>/dev/null)"
-        for resolver in ${resolvers}; do
+    if [ "${bastille_dns_resolvers}" != "" ]; then
+        for resolver in ${bastille_dns_resolvers}; do
             case ${resolver} in
                 unbound)
-                    unbound_zone="$(sysrc -f ${bastille_dns_config} -n unbound_zone 2>/dev/null)"
                     if ! command -v unbound-control >/dev/null 2>&1; then
                         error_continue "[ERROR]: DNS resolver not found: unbound"
                     elif ! unbound-control status >/dev/null 2>&1; then
                         error_continue "[ERROR]: DNS option not enabled: unbound"
                     fi
-                    if [ -z "${unbound_zone}" ]; then
-                        error_continue "[ERROR]: DNS option not configured: unbound_zone"
+                    if [ -z "${bastille_dns_zone}" ]; then
+                        error_continue "[ERROR]: DNS option not configured: bastille_dns_zone"
                     else
-                        if ! unbound-control list_local_zones | grep -qE "^${unbound_zone}. static$"; then
-                            unbound-control local_zone "${unbound_zone}" static >/dev/null 2>&1
+                        if ! unbound-control list_local_zones | grep -qE "^${bastille_dns_zone}. static$"; then
+                            unbound-control local_zone "${bastille_dns_zone}" static >/dev/null 2>&1
                         fi
                     fi
                     if [ "${type}" = "ipv4" ]; then
@@ -81,23 +78,22 @@ bastille_dns() {
                         type="AAAA"
                     fi
                     if [ "${action}" = "add" ]; then
-                        unbound-control "local_data" "${name}.${unbound_zone}." "${type} ${ip}" >/dev/null 2>&1
+                        unbound-control "local_data" "${jail}.${bastille_dns_zone}." "${type} ${ip}" >/dev/null 2>&1
                     elif [ "${action}" = "remove" ]; then
-                        unbound-control "local_data_remove" "${name}.${unbound_zone}." >/dev/null 2>&1
+                        unbound-control "local_data_remove" "${jail}.${bastille_dns_zone}." >/dev/null 2>&1
                     fi
                     ;;
                 local-unbound)
-                    unbound_zone="$(sysrc -f ${bastille_dns_config} -n unbound_zone 2>/dev/null)"
                     if ! command -v local-unbound-control >/dev/null 2>&1; then
                         error_continue "[ERROR]: DNS resolver not found: local-unbound"
                     elif ! local-unbound-control status >/dev/null 2>&1; then
                         error_continue "[ERROR]: DNS option not enabled: local-unbound"
                     fi
-                    if [ -z "${unbound_zone}" ]; then
-                        error_continue "[ERROR]: DNS option not configured: unbound_zone"
+                    if [ -z "${bastille_dns_zone}" ]; then
+                        error_continue "[ERROR]: DNS option not configured: bastille_dns_zone"
                     else
-                        if ! local-unbound-control list_local_zones | grep -qE "^${unbound_zone}. static$"; then
-                            local-unbound-control local_zone "${unbound_zone}" static >/dev/null 2>&1
+                        if ! local-unbound-control list_local_zones | grep -qE "^${bastille_dns_zone}. static$"; then
+                            local-unbound-control local_zone "${bastille_dns_zone}" static >/dev/null 2>&1
                         fi
                     fi
                     if [ "${type}" = "ipv4" ]; then
@@ -106,9 +102,9 @@ bastille_dns() {
                         type="AAAA"
                     fi
                     if [ "${action}" = "add" ]; then
-                        local-unbound-control "local_data" "${name}.${unbound_zone}." "${type} ${ip}" >/dev/null 2>&1
+                        local-unbound-control "local_data" "${jail}.${bastille_dns_zone}." "${type} ${ip}" >/dev/null 2>&1
                     elif [ "${action}" = "remove" ]; then
-                        local-unbound-control "local_data_remove" "${name}.${unbound_zone}." >/dev/null 2>&1
+                        local-unbound-control "local_data_remove" "${jail}.${bastille_dns_zone}." >/dev/null 2>&1
                     fi
                     ;;
                 *)
