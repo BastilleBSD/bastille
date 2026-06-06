@@ -14,7 +14,7 @@ Use the ``-y|--yes`` option to bypass this prompt.
   /var/log/bastille/folsom_console.log-YYYY-MM-DD
 
 Release can be destroyed provided there are no child jails. The ``-c|--no-cache``
-option will retain the release cache (*.txz file), if you choose to keep it.
+option will retain the release cache (``*.txz`` file), if you choose to keep it.
 
 .. code-block:: shell
 
