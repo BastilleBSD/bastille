@@ -1,3 +1,5 @@
+import os
+
 # -- Project information -----------------------------------------------------
 
 project = 'Bastille'
@@ -15,7 +17,10 @@ extensions = ['sphinx_rtd_theme','sphinx_rtd_dark_mode']
 
 templates_path = ['_templates']
 
-source_suffix = ['.rst', '.md']
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'restructuredtext',
+}
 
 #from recommonmark.parser import CommonMarkParser
 #source_parsers = {
@@ -29,7 +34,7 @@ pygments_style = None
 # -- Options for HTML output -------------------------------------------------
 html_logo = 'images/bastille.jpeg'
 html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_static_path = ['_static'] if os.path.isdir('_static') else []
 
 html_theme_options = {
     'collapse_navigation': True,
@@ -58,6 +63,8 @@ htmlhelp_basename = 'Bastilledoc'
 
 latex_elements = {
 }
+
+latex_logo = 'images/bastille.jpeg'
 
 latex_documents = [
     (master_doc, 'Bastille.tex', 'Bastille Documentation',

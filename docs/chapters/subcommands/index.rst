@@ -37,6 +37,7 @@ Bastille sub-commands
    stop
    sysrc
    tags
+   template
    top
    umount
    update
