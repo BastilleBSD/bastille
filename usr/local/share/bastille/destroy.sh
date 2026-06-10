@@ -332,6 +332,21 @@ case "${TARGET}" in
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Debian10)$|(Debian11)$|(Debian12)$' | sed 's/DEBIAN/Debian/g')
         destroy_release
         ;;
+    Devuan4|DEVUAN4|devuan4)
+        ## check for Linux releases
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Devuan4)$' | sed 's/DEVUAN/Devuan/g;s/devuan/Devuan/g')
+        destroy_release
+        ;;
+    Devuan5|DEVUAN5|devuan5)
+        ## check for Linux releases
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Devuan5)$' | sed 's/DEVUAN/Devuan/g;s/devuan/Devuan/g')
+        destroy_release
+        ;;
+    Devuan6|DEVUAN6|devuan6)
+        ## check for Linux releases
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Devuan6)$' | sed 's/DEVUAN/Devuan/g;s/devuan/Devuan/g')
+        destroy_release
+        ;;
     *)
         if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
             NAME_VERIFY="${TARGET}"

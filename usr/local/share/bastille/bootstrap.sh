@@ -164,6 +164,11 @@ bootstrap_directories() {
            mkdir -p "${bastille_releasesdir}/${RELEASE}"
        fi
     fi
+
+    ## ${bastille_releasesdir}/scripts
+    if [ ! -d "${bastille_releasesdir}/scripts" ]; then
+        mkdir -p "${bastille_releasesdir}/scripts"
+    fi
 }
 
 cleanup_directories() {
@@ -447,9 +452,22 @@ bootstrap_release_pkgbase() {
 
 bootstrap_release_linux() {
 
+    DEBOOTSTRAP_SCRIPT=""
+    if [ -n "${DEBOOTSTRAP_CUSTOM_SCRIPT_URL}" ]; then
+        DEBOOTSTRAP_SCRIPT="${bastille_releasesdir}/scripts/${LINUX_FLAVOR}"
+        if [ ! -f "${DEBOOTSTRAP_SCRIPT}" ]; then
+            info 1 "\nFetching custom debootstrap script for ${LINUX_FLAVOR}"
+            if ! fetch -o "${DEBOOTSTRAP_SCRIPT}" "${DEBOOTSTRAP_CUSTOM_SCRIPT_URL}"; then
+                ERRORS=$((ERRORS + 1))
+                error_notify "[ERROR]: Failed to fetch custom debootstrap script"
+                return 1
+            fi
+        fi
+    fi
+
     if [ "${PLATFORM_OS}" = "Linux/Debian" ] || [ "${PLATFORM_OS}" = "Linux/Ubuntu" ]; then
         # Fetch the Linux flavor
-        if ! debootstrap ${DEBOOTSTRAP_OPTIONS} --foreign --arch=${ARCH_BOOTSTRAP} --no-check-gpg ${LINUX_FLAVOR} "${bastille_releasesdir}"/${RELEASE}; then
+        if ! debootstrap ${DEBOOTSTRAP_OPTIONS} --foreign --arch="${ARCH_BOOTSTRAP}" --no-check-gpg "${LINUX_FLAVOR}" "${bastille_releasesdir}/${RELEASE}" '' "${DEBOOTSTRAP_SCRIPT}"; then
             ERRORS=$((ERRORS + 1))
             error_notify "[ERROR]: Failed to fetch Linux release: ${LINUX_FLAVOR}"
             return 1
@@ -457,9 +475,9 @@ bootstrap_release_linux() {
 
         # Set necessary settings
         case "${LINUX_FLAVOR}" in
-            bionic|focal|jammy|buster|bullseye|bookworm|noble)
+            bionic|focal|jammy|buster|bullseye|bookworm|noble|chimaera|daedalus|excalibur)
             info 1 "Increasing APT::Cache-Start"
-            info 2 "APT::Cache-Start 536870912;" > "${bastille_releasesdir}"/${RELEASE}/etc/apt/apt.conf.d/00aptitude
+            echo "APT::Cache-Start 536870912;" > "${bastille_releasesdir}/${RELEASE}/etc/apt/apt.conf.d/00aptitude"
             ;;
         esac
     fi
@@ -561,6 +579,7 @@ NOCACHEDIR=""
 HW_MACHINE=$(sysctl hw.machine | awk '{ print $2 }')
 HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
 DEBOOTSTRAP_OPTIONS=""
+DEBOOTSTRAP_CUSTOM_SCRIPT_URL=""
 ERRORS=0
 FIRST_RUN=0
 
@@ -727,6 +746,31 @@ case "${RELEASE}" in
         NAME_VERIFY="Debian13"
         ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
         DEBOOTSTRAP_OPTIONS="--exclude usr-is-merged"
+        ;;
+    devuan_chimaera|chimaera|devuan-chimaera|devuan4|Devuan4)
+        PLATFORM_OS="Linux/Debian"
+        LINUX_FLAVOR="chimaera"
+        NAME_VERIFY="Devuan4"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        # 'ceres' is the main recipe for all Devuan versions
+        DEBOOTSTRAP_CUSTOM_SCRIPT_URL="https://git.devuan.org/devuan/debootstrap/raw/tag/devuan/1.0.144devuan1/scripts/ceres"
+        ;;
+    devuan_daedalus|daedalus|devuan-daedalus|devuan5|Devuan5)
+        PLATFORM_OS="Linux/Debian"
+        LINUX_FLAVOR="daedalus"
+        NAME_VERIFY="Devuan5"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        # 'ceres' is the main recipe for all Devuan versions
+        DEBOOTSTRAP_CUSTOM_SCRIPT_URL="https://git.devuan.org/devuan/debootstrap/raw/tag/devuan/1.0.144devuan1/scripts/ceres"
+        ;;
+    # Not working 2026-06-11
+    devuan_excalibur|excalibur|devuan-excalibur|devuan6|Devuan6)
+        PLATFORM_OS="Linux/Debian"
+        LINUX_FLAVOR="excalibur"
+        NAME_VERIFY="Devuan6"
+        ARCH_BOOTSTRAP=${HW_MACHINE_ARCH_LINUX}
+        # 'ceres' is the main recipe for all Devuan versions
+        DEBOOTSTRAP_CUSTOM_SCRIPT_URL="https://git.devuan.org/devuan/debootstrap/raw/tag/devuan/1.0.144devuan1/scripts/ceres"
         ;;
     *)
         usage

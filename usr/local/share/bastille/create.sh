@@ -105,12 +105,12 @@ validate_release() {
             error_notify "[ERROR]: Release must be bootstrapped first."
             error_exit "See 'bastille bootstrap'."
         fi
+
+        # Set OS_RELEASE_DEFINITION
+        OS_RELEASE_DEFINITION="osrelease = \"$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )\";"
     else
         error_exit "[ERROR]: Unable to validate Platform OS."
     fi
-
-    # Set OS_RELEASE_DEFINITION
-    OS_RELEASE_DEFINITION="osrelease = \"$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )\";"
 }
 
 define_ips() {
@@ -1075,6 +1075,21 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
             debian_trixie|trixie|debian-trixie|debian23|Debian13)
                 PLATFORM_OS="Debian"
                 NAME_VERIFY=Debian13
+                validate_release
+                ;;
+            devuan_chimaera|chimaera|devuan-chimaera|devuan4|Devuan4)
+                PLATFORM_OS="Debian"
+                NAME_VERIFY=Devuan4
+                validate_release
+                ;;
+            devuan_daedalus|daedalus|devuan-daedalus|devuan5|Devuan5)
+                PLATFORM_OS="Debian"
+                NAME_VERIFY=Devuan5
+                validate_release
+                ;;
+            devuan_excalibur|excalibur|devuan-excalibur|devuan6|Devuan6)
+                PLATFORM_OS="Debian"
+                NAME_VERIFY=Devuan6
                 validate_release
                 ;;
             *)
