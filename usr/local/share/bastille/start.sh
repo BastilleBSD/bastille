@@ -151,6 +151,8 @@ for jail in ${JAILS}; do
                     ## add ip to firewall table if it is not reachable through local interface (assumes NAT/rdr is needed)
                     if route -n get ${ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
+                    else
+                        warn 1 "[WARNING]: IP address (${ip}) is in the same subnet as ${if}. Need manual configuration for NAT/rdr."
                     fi
                 else
                     error_continue "[ERROR]: ${if} interface does not exist."
