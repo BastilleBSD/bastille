@@ -321,7 +321,7 @@ jail_upgrade_pkgbase() {
         local repo_dir="${bastille_sharedir}/pkgbase"
         if [ "${FREEBSD_BRANCH}" = "release" ]; then
             local repo_name="FreeBSD-base-release-${NEW_MINOR_VERSION}"
-            local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+            local fingerprints="${jailpath}/usr/share/keys/pkgbase-${NEW_MAJOR_VERSION}"
         elif [ "${FREEBSD_BRANCH}" = "current" ]; then
             local repo_name="FreeBSD-base-latest"
             local fingerprints="${jailpath}/usr/share/keys/pkg"
