@@ -161,7 +161,7 @@ get_jail_name() {
     if [ -z "${jail_name}" ]; then
         return 1
     else
-        info 1 "${jail_name}"
+        echo "${jail_name}"
     fi
 }
 
