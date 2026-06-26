@@ -169,13 +169,10 @@ thin_jail_check() {
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
 
-    # Get release base
-    FSTAB_RELEASE="$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/]+)/.*|\1|')"
+    # Get release base using fstab for thin jails
+    OLD_RELEASE="$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/]+)/.*|\1|')"
 
-    # Set OLD_RELEASE
-    OLD_RELEASE="$(bastille config ${TARGET} get osrelease | awk -F"-p" '{print $1}')"
-
-    if [ -z "${OLD_RELEASE}" ]; then
+    if [ -z "${OLD_RELEASE}" ] || [ -z "${FSTAB_RELEASE}" ]; then
         error_exit "[ERROR]: Can't determine '${TARGET}' version."
     fi
 
