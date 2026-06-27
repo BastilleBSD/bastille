@@ -267,7 +267,7 @@ set_target() {
         fi
         export TARGET
         export JAILS
-    done
+    fi
 }
 
 set_target_single() {
