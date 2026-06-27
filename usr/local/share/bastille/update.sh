@@ -111,7 +111,7 @@ jail_check() {
 
     # Check for thin jail
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-        error_notify "[ERROR]: ${TARGET} is not a thick container."
+        error_notify "[ERROR]: ${TARGET} is a thin jail."
         error_exit "See 'bastille update RELEASE' to update thin jails."
     fi
 
@@ -181,9 +181,9 @@ jail_update() {
     fi
 
     # Update release version (including patch level)
-    UPDATED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version | awk -F"-p" '{print $1}' 2>/dev/null)"
+    UPDATED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
     if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
-        bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
+        bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
         info 1 "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
     else
         info 1 "\nNo updates available.\n"
@@ -234,9 +234,9 @@ jail_update_pkgbase() {
         fi
 
         # Update release version (including patch level)
-        UPDATED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version | awk -F"-p" '{print $1}' 2>/dev/null)"
+        UPDATED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
         if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
-            bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
+            bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
             info 1 "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
         else
             info 1 "\nNo updates available.\n"

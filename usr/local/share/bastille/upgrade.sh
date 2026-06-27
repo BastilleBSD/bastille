@@ -117,7 +117,8 @@ thick_jail_check() {
     if [ "${JAIL_PLATFORM_OS}" = "FreeBSD" ]; then
 
         # Set OLD_RELEASE (excluding patch version)
-        OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version | awk -F"-p" '{print $1}' 2>/dev/null)"
+        OLD_RELEASE_PATCH="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version | awk -F"-p" '{print $1}' 2>/dev/null)"
+        OLD_RELEASE="$(echo "${OLD_RELEASE_PATCH}" | awk -F"-p" '{print $1}')"
         if [ -z "${OLD_RELEASE}" ]; then
             error_exit "[ERROR]: Can't determine '${TARGET}' version."
         fi
@@ -145,7 +146,8 @@ thick_jail_check() {
     elif [ "${JAIL_PLATFORM_OS}" = "HardenedBSD" ]; then
 
         # Set VERSION
-        OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version | awk -F"-p" '{print $1}' 2>/dev/null)"
+        OLD_RELEASE_PATCH="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version | awk -F"-p" '{print $1}' 2>/dev/null)"
+        OLD_RELEASE="$(echo "${OLD_RELEASE_PATCH}" | awk -F"-p" '{print $1}')"
         if [ -z "${OLD_RELEASE}" ]; then
             error_exit "[ERROR]: Can't determine '${TARGET}' version."
         fi
@@ -172,7 +174,7 @@ thin_jail_check() {
     # Get release base using fstab for thin jails
     OLD_RELEASE="$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/]+)/.*|\1|')"
 
-    if [ -z "${OLD_RELEASE}" ] || [ -z "${FSTAB_RELEASE}" ]; then
+    if [ -z "${OLD_RELEASE}" ]; then
         error_exit "[ERROR]: Can't determine '${TARGET}' version."
     fi
 
