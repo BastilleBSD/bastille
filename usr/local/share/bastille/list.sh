@@ -220,10 +220,12 @@ get_jail_info() {
         JAIL_HOSTNAME=$(/usr/sbin/jls -j ${JAIL_NAME} host.hostname 2> /dev/null)
 
         # Get jail ports (active)
-        JAIL_PROTO=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2> /dev/null | grep -Eo 'proto.*' | awk '{print $2}')
-        JAIL_HOST_PORT=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2> /dev/null | grep -Eo 'port = [0-9]+' | awk '{print $3}')
-        JAIL_PORT=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2> /dev/null | grep -Eo 'port [0-9]+$' | awk '{print $2}')
-        JAIL_PORTS=$(printf "%s/%s:%s"",",${JAIL_PROTO},${JAIL_HOST_PORT},${JAIL_PORT} | sed "s/,$//")
+        JAIL_PROTO=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null | grep -Eo 'proto.*' | awk '{print $2}')
+        JAIL_HOST_PORT=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null | grep -Eo 'port = [0-9]+' | awk '{print $3}')
+        JAIL_PORT=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2>/dev/null | grep -Eo 'port [0-9]+$' | awk '{print $2}')
+        if [ -n "${JAIL_PROTO}" ] && [ -n "${JAIL_HOST_PORT}" ] && [ -n "${JAIL_PORT}" ]; then
+            JAIL_PORTS=$(printf "%s/%s:%s"",",${JAIL_PROTO},${JAIL_HOST_PORT},${JAIL_PORT} | sed "s/,$//")
+        fi
 
         # Get release (FreeBSD or Linux)
         if [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
