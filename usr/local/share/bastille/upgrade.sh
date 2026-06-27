@@ -97,6 +97,8 @@ set_target_single "${TARGET}"
 
 thick_jail_check() {
 
+    info 1 "\n[${TARGET}]:"
+
     # Verify PLATFORM_OS inside jail
     JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version)"
     if echo "${JAIL_PLATFORM_OS}" | grep -q "HBSD"; then
@@ -154,13 +156,14 @@ thick_jail_check() {
     check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille start "${TARGET}"
     else
-        info 1 "\n[${TARGET}]:"
         error_notify "Jail is not running."
         error_exit "Use [-a|--auto] to auto-start the jail."
     fi
 }
 
 thin_jail_check() {
+    
+    info 1 "\n[${TARGET}]:"
 
     # Get release base using fstab for thin jails
     OLD_RELEASE=$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/[:space:]]+).*|\1|')
@@ -179,7 +182,6 @@ thin_jail_check() {
     check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${TARGET}"
     else
-        info 1 "\n[${TARGET}]:"
         error_notify "Jail is running."
         error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
