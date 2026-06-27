@@ -229,7 +229,7 @@ set_target() {
 
     if echo "${target}" | grep -Eq '^[aA][lL][lL]$'; then
         target_all_jails
-    then
+    else
         for jail in ${target}; do
             if [ ! -d "${bastille_jailsdir}/${target}" ] && echo "${jail}" | grep -Eq '^[0-9]+$'; then
                 if get_jail_name "${jail}" > /dev/null; then
