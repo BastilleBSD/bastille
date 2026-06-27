@@ -131,7 +131,7 @@ thick_jail_check() {
         # Check if jail is already running NEW_RELEASE
         if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
             info 1 "\n[${TARGET}]:"
-            error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
+            error_notify "[ERROR]: Jail is already running release: ${NEW_RELEASE}"
             error_exit "See 'bastille update TARGET' to update the jail."
         fi
 
@@ -141,13 +141,13 @@ thick_jail_check() {
         OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version | awk -F"-p" '{print $1}' 2>/dev/null)"
         if [ -z "${OLD_RELEASE}" ]; then
             info 1 "\n[${TARGET}]:"
-            error_exit "[ERROR]: Can't determine '${TARGET}' version."
+            error_exit "[ERROR]: Can't determine version for jail: ${TARGET}"
         fi
 
         # Check if jail is already running NEW_RELEASE
         if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
             info 1 "\n[${TARGET}]:"
-            error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
+            error_notify "[ERROR]: Jail is already running release: ${NEW_RELEASE}"
             error_exit "See 'bastille update TARGET' to update the jail."
         fi
     fi
@@ -165,17 +165,16 @@ thick_jail_check() {
 thin_jail_check() {
 
     # Get release base using fstab for thin
-    OLD_RELEASE="$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/]+)/.*|\1|')"
-
-    if [ -z "${OLD_RELEASE}" ] || [ -z "${FSTAB_RELEASE}" ]; then
+    OLD_RELEASE=$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/[:space:]]+).*|\1|')
+    if [ -z "${OLD_RELEASE}" ]; then
         info 1 "\n[${TARGET}]:"
-        error_exit "[ERROR]: Can't determine '${TARGET}' version."
+        error_exit "[ERROR]: Can't determine version for jail: ${TARGET}."
     fi
 
     # Check if jail is already running NEW_RELEASE
-    if [ "${FSTAB_RELEASE}" = "${NEW_RELEASE}" ]; then
+    if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
         info 1 "\n[${TARGET}]:"
-        error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
+        error_notify "[ERROR]: Jail is already running release: ${NEW_RELEASE}"
         error_exit "See 'bastille update RELEASE' to update the release."
     fi
 
