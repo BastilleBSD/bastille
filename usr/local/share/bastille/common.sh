@@ -227,7 +227,7 @@ set_target() {
     JAILS=""
     TARGET=""
 
-    if [ "${target}" = ALL ] || [ "${target}" = all ]; then
+    if echo "${target}" | grep -Eq '^[aA][lL][lL]$'; then
         target_all_jails
     else
         for jail in ${target}; do

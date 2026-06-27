@@ -110,7 +110,7 @@ validate_release() {
     fi
 
     # Set OS_RELEASE_DEFINITION
-    OS_RELEASE_DEFINITION="osrelease = \"$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )\";"
+    OS_RELEASE_DEFINITION="osrelease = \"$(${bastille_releasesdir}/${RELEASE}/bin/freebsd-version)\";"
 }
 
 define_ips() {
