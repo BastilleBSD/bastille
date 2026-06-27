@@ -227,9 +227,9 @@ set_target() {
     JAILS=""
     TARGET=""
 
-    if [ "${target}" = ALL ] || [ "${target}" = all ]; then
+    if echo "${target}" | grep -Eq '^[aA][lL][lL]$'; then
         target_all_jails
-    else
+    then
         for jail in ${target}; do
             if [ ! -d "${bastille_jailsdir}/${target}" ] && echo "${jail}" | grep -Eq '^[0-9]+$'; then
                 if get_jail_name "${jail}" > /dev/null; then
@@ -267,7 +267,7 @@ set_target() {
         fi
         export TARGET
         export JAILS
-    fi
+    done
 }
 
 set_target_single() {

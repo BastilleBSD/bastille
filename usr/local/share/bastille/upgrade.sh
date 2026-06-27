@@ -97,15 +97,6 @@ set_target_single "${TARGET}"
 
 thick_jail_check() {
 
-    # Validate jail state
-    check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille start "${TARGET}"
-    else
-        info 1 "\n[${TARGET}]:"
-        error_notify "Jail is not running."
-        error_exit "Use [-a|--auto] to auto-start the jail."
-    fi
-
     # Verify PLATFORM_OS inside jail
     JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version)"
     if echo "${JAIL_PLATFORM_OS}" | grep -q "HBSD"; then
@@ -158,21 +149,21 @@ thick_jail_check() {
             error_exit "See 'bastille update TARGET' to update the jail."
         fi
     fi
+
+    # Validate jail state
+    check_target_is_running "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille start "${TARGET}"
+    else
+        info 1 "\n[${TARGET}]:"
+        error_notify "Jail is not running."
+        error_exit "Use [-a|--auto] to auto-start the jail."
+    fi
 }
 
 thin_jail_check() {
 
-    # Validate jail state
-    check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
-        bastille stop "${TARGET}"
-    else
-        info 1 "\n[${TARGET}]:"
-        error_notify "Jail is running."
-        error_exit "Use [-a|--auto] to auto-stop the jail."
-    fi
-
     # Get release base using fstab for thin jails
-    OLD_RELEASE="$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/]+)/.*|\1|')"
+    OLD_RELEASE=$(grep -hs "/releases/.*/root/.bastille.*nullfs" "${bastille_jailsdir}/${TARGET}/fstab" 2>/dev/null | sed -E 's|.*/releases/([^/[:space:]]+).*|\1|')
 
     if [ -z "${OLD_RELEASE}" ]; then
         error_exit "[ERROR]: Can't determine '${TARGET}' version."
@@ -182,6 +173,15 @@ thin_jail_check() {
     if [ "${OLD_RELEASE}" = "${NEW_RELEASE}" ]; then
         error_notify "[ERROR]: Jail is already running '${NEW_RELEASE}' release."
         error_exit "See 'bastille update RELEASE' to update the release."
+    fi
+
+    # Validate jail state
+    check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
+        bastille stop "${TARGET}"
+    else
+        info 1 "\n[${TARGET}]:"
+        error_notify "Jail is running."
+        error_exit "Use [-a|--auto] to auto-stop the jail."
     fi
 }
 
