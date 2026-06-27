@@ -183,23 +183,31 @@ load_rdr_rule() {
     # shellcheck disable=SC2193
     if { [ "${inet}" = "ipv4" ] || [ "${inet}" = "dual" ]; } then
         if ! ( pfctl -a "rdr/${TARGET}" -Psn 2>/dev/null;
-            printf '%s\nrdr pass on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
+            printf '%s\nrdr on $%s inet proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP" "$jail_port" ) \
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
-        else
-            info 2 "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
+        if ! ( pfctl -a "bastille/${TARGET}" -Psn 2>/dev/null;
+            printf '%s\npass in on $%s inet proto %s from %s to %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$JAIL_IP" "$jail_port" ) \
+            | pfctl -a "bastille/${TARGET}" -f-; then
+            error_exit "[ERROR]: Failed to create IPv4 filter rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+        fi
+        info 2 "IPv4 ${proto}/${host_port}:${jail_port} on ${if_raw}"
     fi
     # Create IPv6 rdr rule (if ip6.addr is enabled)
     # shellcheck disable=SC2193
     if [ -n "${JAIL_IP6}" ] && { [ "${inet}" = "ipv6" ] || [ "${inet}" = "dual" ]; } then
-        if ! ( pfctl -a "rdr/${TARGET}" -Psn;
-            printf '%s\nrdr pass on $%s inet6 proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
-            | pfctl -a "rdr/${TARGET}" -f-; then
+        if ! ( pfctl -a "rdr/${TARGET}" -Psn 2>/dev/null;
+            printf '%s\nrdr on $%s inet6 proto %s from %s to %s port %s -> %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$dst" "$host_port" "$JAIL_IP6" "$jail_port" ) \
+            | pfctl -a "bastille/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
-        else
-            info 2 "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
         fi
+        if ! ( pfctl -a "bastille/${TARGET}" -Psn 2>/dev/null;
+            printf '%s\npass in on $%s inet6 proto %s from %s to %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$JAIL_IP6" "$jail_port" ) \
+            | pfctl -a "bastille/${TARGET}" -f-; then
+            error_exit "[ERROR]: Failed to create IPv6 filter rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
+        fi
+        info 2 "IPv6 ${proto}/${host_port}:${jail_port} on ${if_raw}"
     fi
 }
 
@@ -277,14 +285,14 @@ while [ "$#" -gt 0 ]; do
             shift 2
             ;;
         -s|--source)
-	    if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*)"; then
-            check_rdr_ip_validity "${2}"
-            RDR_SRC="${2}"
-	    else
-            check_rdr_table_validity "${2}"
-            OPT_SRC_TABLE=1
-            RDR_SRC="$(echo "${2}" | sed -e 's/^/</' -e 's/$/>/')"
-	    fi
+            if echo "${2}" | grep -Eoq "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|.*:.*)"; then
+                check_rdr_ip_validity "${2}"
+                RDR_SRC="${2}"
+            else
+                check_rdr_table_validity "${2}"
+                OPT_SRC_TABLE=1
+                RDR_SRC="$(echo "${2}" | sed -e 's/^/</' -e 's/$/>/')"
+            fi
             OPTION_SRC=1
             shift 2
             ;;
@@ -325,9 +333,7 @@ set_target_single "${TARGET}"
 
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-
         list)
-
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "[ERROR]: Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
@@ -338,9 +344,7 @@ while [ "$#" -gt 0 ]; do
             fi
             shift
             ;;
-
         clear)
-
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "[ERROR]: Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
@@ -351,9 +355,7 @@ while [ "$#" -gt 0 ]; do
             fi
             shift
             ;;
-
         reset)
-
             if [ "${OPTION_IF}" -eq 1 ] || [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] || [ "${OPTION_INET_TYPE}" -eq 1 ];then
                 error_exit "[ERROR]: Command \"${1}\" cannot be used with options."
 	        elif [ -n "${2}" ]; then
@@ -367,9 +369,7 @@ while [ "$#" -gt 0 ]; do
             fi
             shift
             ;;
-
         tcp|udp)
-
             if [ "$#" -lt 3 ]; then
                 usage
             elif [ "${OPTION_SRC}" -eq 1 ] || [ "${OPTION_DST}" -eq 1 ] && [ "${OPTION_INET_TYPE}" -ne 1 ] && [ "${OPT_SRC_TABLE}" -eq 0 ];then
@@ -422,9 +422,7 @@ while [ "$#" -gt 0 ]; do
                 esac
             fi
             ;;
-
         *)
-
             if [ "${1}" = "dual" ] || [ "${1}" = "ipv4" ] || [ "${1}" = "ipv6" ]; then
                 RDR_INET="${1}"
             else
