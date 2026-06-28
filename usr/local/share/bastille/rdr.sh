@@ -81,7 +81,7 @@ check_jail_validity() {
     # Check if rdr-anchor is defined in pf.conf
     if ! (pfctl -sn | grep rdr-anchor | grep 'rdr/\*' >/dev/null); then
         error_exit "[ERROR]: rdr-anchor not found in pf.conf"
-    elif ! (pfctl -sn | grep anchor | grep 'bastille/\*' >/dev/null); then
+    elif ! (pfctl -sr | grep anchor | grep 'bastille/\*' >/dev/null); then
         error_exit "[ERROR]: bastille filtering achor not found in pf.conf"
     fi
 }
