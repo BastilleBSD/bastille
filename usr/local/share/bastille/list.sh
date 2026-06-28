@@ -254,7 +254,7 @@ get_jail_info() {
         JAIL_HOSTNAME=$(sed -n "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
 
         # Get jail ports (inactive)
-        if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '$1 ~ /^[tcp|udp]/ { printf "%s/%s:%s,",$1,$2,$3 }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
+        if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '{ for(i=1; i<=NF; i++) if($i == "tcp" || $i == "udp") printf "%s/%s:%s ", $i, $(i+1), $(i+2) }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
 
         # Get jail release (FreeBSD or Linux)
         if [ -n "${JAIL_PATH}" ]; then
