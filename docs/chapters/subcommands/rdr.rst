@@ -3,7 +3,8 @@ rdr
 
 ``bastille rdr`` allows you to configure dynamic rdr rules for your containers
 without modifying pf.conf (assuming you are using the ``bastille0`` interface
-for a private network and have enabled ``rdr-anchor 'rdr/*'`` in /etc/pf.conf as
+for a private network and have enabled ``rdr-anchor 'rdr/*'`` as well
+as ``anchor 'bastille/*'`` in /etc/pf.conf as
 described in the Networking section).
 
 Note: you need to be careful if host services are configured to run on all
@@ -24,11 +25,14 @@ interface they run on in rc.conf (or other config files)
     IPv4 udp/2053:53 on em0
 
     # bastille rdr dev1 list
-    rdr pass on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
-    rdr pass on em0 inet proto udp from any to any port = 2053 -> 10.17.89.1 port 53
+    rdr on em0 inet proto tcp from any to any port = 2001 -> 10.17.89.1 port 22
+    pass in on bge0 inet proto tcp from any to 10.17.89.1 port = 22 flags S/SA keep state
+    rdr on em0 inet proto tcp from any to any port = 2053 -> 10.17.89.1 port 53
+    pass in on bge0 inet proto tcp from any to 10.17.89.1 port = 53 flags S/SA keep state
 
     # bastille rdr dev1 clear
     nat cleared
+    rules cleared
 
 The ``rdr`` command includes 4 additional options:
 
@@ -59,10 +63,14 @@ The ``rdr`` command includes 4 additional options:
     IPv4 tcp/9000:9000 on vtnet0
 
     # bastille rdr dev1 list
-    rdr pass on vtnet0 inet proto udp from any to any port = 2001 -> 10.17.89.1 port 22
-    rdr pass on em0 inet proto tcp from 192.168.0.1 to any port = 8080 -> 10.17.89.1 port 81
-    rdr pass on em0 inet proto tcp from any to 192.168.0.84 port = 8082 -> 10.17.89.1 port 82
-    rdr pass on vtnet0 inet proto tcp from any to 192.168.0.45 port = 9000 -> 10.17.89.1 port 9000
+    rdr on vtnet0 inet proto udp from any to any port = 2001 -> 10.17.89.1 port 22
+    pass in on bge0 inet proto tcp from any to 10.17.89.1 port = 22 flags S/SA keep state
+    rdr on em0 inet proto tcp from 192.168.0.1 to any port = 8080 -> 10.17.89.1 port 81
+    pass in on bge0 inet proto tcp from 192.168.0.1 to 10.17.89.1 port = 81 flags S/SA keep state
+    rdr on em0 inet proto tcp from any to 192.168.0.84 port = 8082 -> 10.17.89.1 port 82
+    pass in on bge0 inet proto tcp from any to 10.17.89.1 port = 82 flags S/SA keep state
+    rdr on vtnet0 inet proto tcp from any to 192.168.0.45 port = 9000 -> 10.17.89.1 port 9000
+    pass in on bge0 inet proto tcp from any to 10.17.89.1 port = 9000 flags S/SA keep state
 
 The options can be used together, as seen above.
 
@@ -75,7 +83,7 @@ Simply use the table name instead of an IP address or subnet.
 .. code-block:: shell
 
   # bastille rdr --help
-  Usage: bastille rdr [option(s)] TARGET tcp|udp HOST_PORT JAIL_PORT [log LOG_OPTIONS]
+  Usage: bastille rdr [option(s)] TARGET tcp|udp HOST_PORT JAIL_PORT [log LOG,OPTIONS]
                                   TARGET clear|reset|list
 
       Options:
