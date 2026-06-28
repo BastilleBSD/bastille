@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille rdr [option(s)] TARGET tcp|udp HOST_PORT JAIL_PORT [log LOG_OPTIONS]"
+    error_notify "Usage: bastille rdr [option(s)] TARGET tcp|udp HOST_PORT JAIL_PORT [log LOG,OPTIONS]"
     error_notify "                                TARGET clear|reset|list"
     cat << EOF
 
@@ -353,6 +353,7 @@ while [ "$#" -gt 0 ]; do
             else
                 check_jail_validity
                 pfctl -a "rdr/${TARGET}" -Psn 2>/dev/null
+                pfctl -a "bastille/${TARGET}" -Psr 2>/dev/null
             fi
             shift
             ;;
@@ -364,6 +365,7 @@ while [ "$#" -gt 0 ]; do
             else
                 check_jail_validity
                 pfctl -a "rdr/${TARGET}" -Fn
+                pfctl -a "bastille/${TARGET}" -Fr
             fi
             shift
             ;;
@@ -375,6 +377,7 @@ while [ "$#" -gt 0 ]; do
             else
                 check_jail_validity
                 pfctl -a "rdr/${TARGET}" -Fn
+                pfctl -a "bastille/${TARGET}" -Fr
                 if rm -f "${bastille_jailsdir}/${TARGET}/rdr.conf"; then
                     info 2 "rdr.conf removed"
                 fi
