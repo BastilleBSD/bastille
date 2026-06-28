@@ -341,8 +341,6 @@ shift
 bastille_root_check
 set_target_single "${TARGET}"
 
-info 1 "[${TARGET}]:"
-
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         list)
