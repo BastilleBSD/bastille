@@ -472,6 +472,7 @@ EOF
         else
             sed -i '' "s/ip4.addr = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
         fi
+        info 2 "Added Standard interface: \"${if}\""
     fi
 }
 
@@ -636,7 +637,8 @@ case "${ACTION}" in
         validate_netconf
         validate_netif "${INTERFACE}"
 
-        if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
+        # Check if interface has already been added (except for standard/classic jails)
+        if [ "${STANDARD}" -eq 0 ] && check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             info 1 "\nInterface already added: ${INTERFACE}"
             exit 0
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
