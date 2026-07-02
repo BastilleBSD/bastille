@@ -240,7 +240,7 @@ jail_upgrade() {
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then        
 
         # Update "release" entry inside fstab
-        if ! sed -i '' "/.bastille/ s|${OLD_RELEASE}|${NEW_RELEASE}|g" "${bastille_jailsdir}/${TARGET}/fstab"; then
+        if ! sed -i '' "s|^${bastille_releasesdir}/${OLD_RELEASE}/|${bastille_releasesdir}/${NEW_RELEASE}/|g" "${bastille_jailsdir}/${TARGET}/fstab"; then
             error_exit "[ERROR]: Failed to update fstab."
         fi
 
