@@ -506,6 +506,10 @@ clone_jail() {
                 # Cleanup target temporary snapshots
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
+
+                if [ "${ERRORS}" -ne 0 ]; then
+                    error_exit "[ERROR]: Failed to clone jail: ${TARGET}"
+                fi
             fi
 
         else
@@ -531,7 +535,7 @@ clone_jail() {
     update_fstab "${TARGET}" "${NEWNAME}"
 
     # Display exit status
-    if [ "${ERRORS}" -ne 0 ]; then
+    if [ "$?" -ne 0 ]; then
         error_exit "[ERROR]: An error has occurred while cloning '${TARGET}'."
     else
         info 1 "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
