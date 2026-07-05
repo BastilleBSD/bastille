@@ -189,7 +189,7 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv4 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         fi
-        if ! ( pfctl -a "bastille/${TARGET}" -Psn 2>/dev/null;
+        if ! ( pfctl -a "bastille/${TARGET}" -Psr 2>/dev/null;
             printf '%s\npass in on $%s inet proto %s from %s to %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$JAIL_IP" "$jail_port" ) \
             | pfctl -a "bastille/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv4 filter rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
@@ -204,7 +204,7 @@ load_rdr_rule() {
             | pfctl -a "rdr/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv6 rdr rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
         fi
-        if ! ( pfctl -a "bastille/${TARGET}" -Psn 2>/dev/null;
+        if ! ( pfctl -a "bastille/${TARGET}" -Psr 2>/dev/null;
             printf '%s\npass in on $%s inet6 proto %s from %s to %s port %s\n' "$if" "${bastille_network_pf_ext_if}" "$proto" "$src" "$JAIL_IP6" "$jail_port" ) \
             | pfctl -a "bastille/${TARGET}" -f-; then
             error_exit "[ERROR]: Failed to create IPv6 filter rule \"${if_name} ${src} ${dst} ${proto} ${host_port} ${jail_port}\""
