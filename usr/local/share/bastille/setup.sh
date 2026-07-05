@@ -356,6 +356,8 @@ rdr-anchor "rdr/*"
 block in all
 pass out quick keep state
 antispoof for \$ext_if
+
+anchor "bastille/*"
 pass in proto tcp from any to any port ssh flags S/SA keep state
 ## Bastille firewall configuration - end
 EOF
@@ -384,6 +386,8 @@ rdr-anchor \"rdr/*\"\\
 block in all\\
 pass out quick keep state\\
 antispoof for \$ext_if\\
+\\
+anchor \"bastille/*\"\\
 pass in proto tcp from any to any port ssh flags S/SA keep state\\
 ## Bastille firewall configuration - end\\
 \\
