@@ -38,6 +38,7 @@ usage() {
 
     Options:
 
+    -f | --force       Force stop jail(s).
     -v | --verbose     Enable verbose mode.
     -x | --debug       Enable debug mode.
 
@@ -46,11 +47,16 @@ EOF
 }
 
 # Handle options
+FORCE=0
 OPTION=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
             ;;
         -v|--verbose)
             OPTION="-v"
@@ -63,6 +69,7 @@ while [ "$#" -gt 0 ]; do
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
+                    f) FORCE=1 ;;
                     v) OPTION="-v" ;;
                     x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
@@ -126,7 +133,24 @@ for jail in ${JAILS}; do
     fi
 
     # Stop jail
-    jail ${OPTION} -f "${bastille_jailsdir}/${jail}/jail.conf" -r "${jail}"
+    if [ "${FORCE}" -eq 1 ]; then
+        prestop_cmds="$(grep 'exec.prestop' "${bastille_jailsdir}/${jail}/jail.conf" 2>/dev/null | sed -E 's%^.*= "(.*)";$%\1%')"
+        poststop_cmds="$(grep 'exec.poststop' "${bastille_jailsdir}/${jail}/jail.conf" 2>/dev/null | sed -E 's%^.*= "(.*)";$%\1%')"
+        release_cmds="$(grep 'exec.release' "${bastille_jailsdir}/${jail}/jail.conf" 2>/dev/null | sed -E 's%^.*= "(.*)";$%\1%')"
+        jail ${OPTION} -f "${bastille_jailsdir}/${jail}/jail.conf" -R "${jail}"
+		printf '%s\n' "${prestop_cmds}" | while read -r cmd; do
+            [ -n "${cmd}" ] && eval "${cmd}"
+        done
+		printf '%s\n' "${poststop_cmds}" | while read -r cmd; do
+            [ -n "${cmd}" ] && eval "${cmd}"
+        done
+		printf '%s\n' "${release_cmds}" | while read -r cmd; do
+            [ -n "${cmd}" ] && eval "${cmd}"
+        done
+		umount -a -F "${bastille_jailsdir}/${jail}/fstab"
+    else
+        jail ${OPTION} -f "${bastille_jailsdir}/${jail}/jail.conf" -r "${jail}"
+    fi
 
     # Remove (captured above) IPs from firewall table
     if [ "${ip4}" != "not set" ] && [ -f "${bastille_pf_conf}" ]; then

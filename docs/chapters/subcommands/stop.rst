@@ -14,5 +14,6 @@ stop
 
       Options:
 
+      -f | --force       Force stop jail(s).
       -v | --verbose     Enable verbose mode.
       -x | --debug       Enable debug mode.
