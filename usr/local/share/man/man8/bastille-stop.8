@@ -6,7 +6,7 @@
 .Nd Stop running jail(s).
 .Sh SYNOPSIS
 .Nm
-.Op Fl vx
+.Op Fl fvx
 .Ar TARGET
 .Sh DESCRIPTION
 The
@@ -14,6 +14,8 @@ The
 sub-command will stop
 .Ar TARGET .
 .Bl -tag -width Ds
+.It Fl f , -force
+Force stop jail(s).
 .It Fl v , Fl -verbose
 Enable verbose mode.
 .It Fl x , -debug
