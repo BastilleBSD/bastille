@@ -322,6 +322,11 @@ case "${TARGET}" in
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/g;s/latest/LATEST/g')
         destroy_release
         ;;
+    [2-4].[0-9]*)
+        # MightnightBSD
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^[0-9.]+$')
+        destroy_release
+        ;;
     Ubuntu_1804|Ubuntu_2004|Ubuntu_2204|UBUNTU_1804|UBUNTU_2004|UBUNTU_2204)
         ## check for Linux releases
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(Ubuntu_1804)$|(Ubuntu_2004)$|(Ubuntu_2204)$' | sed 's/UBUNTU/Ubuntu/g;s/ubuntu/Ubuntu/g')
