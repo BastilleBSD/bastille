@@ -32,7 +32,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = None
 
 # -- Options for HTML output -------------------------------------------------
-html_logo = 'images/bastille.jpeg'
+html_logo = 'images/bastille.svg'
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static'] if os.path.isdir('_static') else []
 
@@ -64,7 +64,7 @@ htmlhelp_basename = 'Bastilledoc'
 latex_elements = {
 }
 
-latex_logo = 'images/bastille.jpeg'
+latex_logo = 'images/bastille.svg'
 
 latex_documents = [
     (master_doc, 'Bastille.tex', 'Bastille Documentation',

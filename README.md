@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="docs/images/bastille.jpeg" width="60%" height="auto" />
+    <img src="docs/images/bastille.svg" width="60%" height="auto" />
 </p>
 
 ----
