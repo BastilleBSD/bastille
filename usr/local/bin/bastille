@@ -251,7 +251,7 @@ if [ -f "${SCRIPTPATH}" ]; then
     : "${UMASK:=022}"
     umask "${UMASK}"
     : "${SH:=sh}"
-    exec ${SH} "${SCRIPTPATH}" "$@"
+    exec ${SH} ${BASTILLE_DEBUG} "${SCRIPTPATH}" "$@"
 else
     error_exit "${SCRIPTPATH} not found."
 fi
