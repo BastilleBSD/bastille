@@ -286,7 +286,7 @@ while [ "$#" -gt 0 ]; do
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     a) AUTO=1 ;;
-                    v) OPT-VERBOSE=1 ;;
+                    v) OPT_VERBOSE=1 ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
