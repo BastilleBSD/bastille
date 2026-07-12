@@ -5,14 +5,14 @@
 .Nm bastille setup
 .Nd Auto-configure network, firewall, storage and more...
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
-.Nm
-.Op Fl ax
+.Nm bastille setup
+.Op Fl a
+.Nm bastille setup
+.Op Fl a
 .Ar bridge|linux|loopback|netgraph|firewall|shared|storage|vnet
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille setup
 sub-command will attempt to configure different options
 for your environment.
 .Bl -tag -width Ds
@@ -43,8 +43,6 @@ Configure storage (ZFS or UFS).
 Configure your host to be able to use VNET jails.
 .It Fl y , -yes
 Do not prompt. Assume always yes.
-.It Fl x , -debug
-Enable debug mode.
 .El
 .Pp
 The 'loopback' and 'shared' options will de-configure each other when

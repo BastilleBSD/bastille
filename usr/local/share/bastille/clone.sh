@@ -40,7 +40,6 @@ usage() {
 
     -a | --auto      Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
     -l | --live      Clone a running jail (ZFS only). Cannot be used with [-a|--auto].
-    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -66,16 +65,11 @@ while [ "$#" -gt 0 ]; do
                 shift
             fi
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     a) AUTO=1 ;;
                     l) LIVE=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done

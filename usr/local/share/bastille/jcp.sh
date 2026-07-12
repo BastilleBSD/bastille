@@ -39,7 +39,6 @@ usage() {
     Options:
 
     -q | --quiet     Suppress output.
-    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -56,19 +55,8 @@ while [ "$#" -gt 0 ]; do
             OPTION="-a"
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
-            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${opt} in
-                    q) OPTION="-a" ;;
-                    x) enable_debug ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
-                esac
-            done
-            shift
+            error_exit "[ERROR]: Unknown Option: \"${1}\""
             ;;
         *)
             break

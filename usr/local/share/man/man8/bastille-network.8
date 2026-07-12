@@ -5,20 +5,20 @@
 .Nm bastille network
 .Nd Add or remove interface(s) from jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl aBMnPVvx
+.Nm bastille network
+.Op Fl aBMnPVv
 .Ar TARGET Sy add Ar INTERFACE Op IP
-.Nm
-.Op Fl ax
+.Nm bastille network
+.Op Fl a
 .Ar TARGET Sy remove Ar INTERFACE
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille network
 sub-command can add or remove interfaces, as
 well as set a VLAN ID for jails. Setting the VLAN
 ID must be done during the 'add' phase.
 .Bl -tag -width Ds
-.It Sy bastille network Oo Fl aBMnPVvx Oc Ar TARGET Sy add Ar INTERFACE Op IP
+.It Sy bastille network Oo Fl aBMnPVv Oc Ar TARGET Sy add Ar INTERFACE Op IP
 .Bl -tag -width Ds
 .It Sy add
 Add the
@@ -40,14 +40,12 @@ Add a physical interface.
 Assign
 .Ar VLANID
 to interface (VNET only).
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 The
 .Ar IP
 is only optional when the '-n|--no-ip' is set.
-.It Sy bastille network Oo Fl ax Oc Ar TARGET Sy remove Ar INTERFACE
+.It Sy bastille network Oo Fl a Oc Ar TARGET Sy remove Ar INTERFACE
 .Bl -tag -width Ds
 .It Sy remove
 Remove the specifed
@@ -55,8 +53,6 @@ Remove the specifed
 from the jail.
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , Fl -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Add vtnet0 to myjail:

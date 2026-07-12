@@ -43,7 +43,6 @@ usage() {
     -c | --no-cache     Do not destroy cache when destroying a release (legacy releases).
     -f | --force        Force unmount any mounted datasets when destroying a jail or release (ZFS only).
     -y | --yes          Do not prompt. Assume always yes.
-    -x | --debug        Enable debug mode.
 
 EOF
     exit 1
@@ -253,10 +252,6 @@ while [ "$#" -gt 0 ]; do
             AUTO_YES=1
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
@@ -264,7 +259,6 @@ while [ "$#" -gt 0 ]; do
                     c) NO_CACHE=1 ;;
                     f) FORCE=1 ;;
                     y) AUTO_YES=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

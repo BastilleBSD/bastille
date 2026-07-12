@@ -47,4 +47,3 @@ To show only the differences between the releases, use the ``diff`` command.
 
       -d | --dry-run     Show output, but do not apply.
       -f | --force       Force a re-bootstrap of a RELEASE.
-      -x | --debug       Enable debug mode.

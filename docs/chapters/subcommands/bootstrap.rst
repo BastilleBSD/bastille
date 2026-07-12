@@ -128,4 +128,3 @@ begin applying your template.
 
       -p | --pkgbase     Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above).
       -u | --update      Update the release after bootstrap.
-      -x | --debug       Enable debug mode.

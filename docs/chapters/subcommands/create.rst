@@ -74,5 +74,4 @@ options. See the below help output.
       -T | --thick                    Create a thick jail.
       -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
       -v | --vlan VLANID              Set VLAN ID (VNET only).
-      -x | --debug                    Enable debug mode.
       -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.

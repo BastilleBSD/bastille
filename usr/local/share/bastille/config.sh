@@ -36,13 +36,6 @@
 usage() {
     error_notify "Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]"
     error_notify "                                          get|remove PROPERTY"
-    cat << EOF
-
-    Options:
-
-    -x | --debug     Enable debug mode.
-
-EOF
     exit 1
 }
 
@@ -52,13 +45,8 @@ while [ "$#" -gt 0 ]; do
         -h|--help|help)
             usage
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
-            error_notify "[ERROR]: Unknown Option: \"${1}\""
-            usage
+            error_exit "[ERROR]: Unknown Option: \"${1}\""
             ;;
         *)
             break

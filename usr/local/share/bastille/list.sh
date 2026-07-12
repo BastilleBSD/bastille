@@ -42,7 +42,6 @@ usage() {
     -j | --json       List jails or sub-arg(s) in json format.
     -p | --pretty     Print JSON in columns.
     -u | --up         List running jails only.
-    -x | --debug      Enable debug mode.
 
 EOF
     exit 1
@@ -672,10 +671,6 @@ while [ "$#" -gt 0 ]; do
             OPT_STATE="Up"
             shift
             ;;
-        -x|--debug)
-            enable_debug
-	    shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
@@ -684,7 +679,6 @@ while [ "$#" -gt 0 ]; do
                     j) OPT_JSON=1 ;;
                     p) OPT_PRETTY=1 ;;
                     u) OPT_STATE="Up" ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                 esac
             done

@@ -57,7 +57,6 @@ usage() {
          --tags TAG1,TAG2           Apply specified tag(s) to jail. Comma-separated.
     -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
     -v | --vlan VLANID              Set VLAN ID (VNET only).
-    -x | --debug                    Enable debug mode.
     -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.
 
 EOF
@@ -878,10 +877,6 @@ while [ $# -gt 0 ]; do
             fi
             shift 2
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -Z|--zfs-opts)
             bastille_zfs_options="${2}"
             shift 2
@@ -898,7 +893,6 @@ while [ $# -gt 0 ]; do
                     P) VNET_JAIL=1 VNET_JAIL_PASSTHROUGH=1 ;;
                     T) THICK_JAIL=1 ;;
                     V) VNET_JAIL=1 VNET_JAIL_STANDARD=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

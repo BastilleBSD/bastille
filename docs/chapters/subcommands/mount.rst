@@ -69,4 +69,3 @@ It is possible to do the same for the jail path, but again, not recommemded.
     Options:
 
     -a | --auto      Auto mode. Start/stop jail(s) if required.
-    -x | --debug     Enable debug mode.

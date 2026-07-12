@@ -43,7 +43,6 @@ usage() {
     -f | --force          Force an archive import without validating checksum.
     -M | --static-mac     Use a static/persistent MAC address (VNET only) when importing foreign jails.
     -v | --verbose        Enable verbose mode (ZFS only).
-    -x | --debug          Enable debug mode.
 
     Tip: If no option specified, container should be imported from standard input.
 
@@ -73,17 +72,12 @@ while [ "$#" -gt 0 ]; do
             OPT_ZRECV="-u -v"
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     f) OPT_FORCE=1 ;;
                     M) OPT_STATIC_MAC=1 ;;
                     v) OPT_ZRECV="-u -v" ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

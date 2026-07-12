@@ -5,8 +5,8 @@
 .Nm bastille export
 .Nd Export a jail. 
 .Sh SYNOPSIS
-.Nm
-.Op Fl alvx
+.Nm bastille export
+.Op Fl alv
 .Op Fl -gz
 .Op Fl -xz
 .Op Fl -zst
@@ -17,7 +17,7 @@
 .Ar TARGET Op PATH
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille export
 sub-command will export
 .Ar TARGET
 to an image (ZFS) or archive.
@@ -45,8 +45,6 @@ Export to a '.txz' compressed archive.
 Export to a '.tzst' compressed archive.
 .It Fl v , Fl -verbose
 Enable verbose mode (ZFS only).
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 If no
