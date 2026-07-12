@@ -52,6 +52,7 @@ Usage
     verify      Compare release against a "known good" index.
     zfs         Manage ZFS options/attributes for jail(s).
 
+  Use "bastille COMMAND -h|--help" for more information about a command.
+  Use "bastille -c|--config FILE COMMAND" to specify a non-default config file.
   Use "bastille -v|--version" for version information.
-  Use "bastille command -h|--help" for more information about a command.
-  Use "bastille -c|--config FILE command" to specify a non-default config file.
+  Use "bastille -x|--debug COMMAND" to enable debug mode.
