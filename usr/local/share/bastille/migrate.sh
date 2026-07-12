@@ -349,7 +349,7 @@ else
             migrate_user_ssh_key="${migrate_user_home}/.ssh/${OPT_KEYFILE}"
         fi
     else
-        migrate_user_ssh_key="find ${migrate_user_home}/.ssh -maxdepth 1 -type f ! -name '*.pub' | grep -Eos 'id_.*'"
+        migrate_user_ssh_key="$(find ${migrate_user_home}/.ssh -maxdepth 1 -type f ! -name '*.pub' | grep -Eos 'id_.*')"
     fi
 
     opt_ssh_key="-i ${migrate_user_ssh_key}"
