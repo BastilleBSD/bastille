@@ -5,20 +5,20 @@
 .Nm bastille bootstrap
 .Nd Bootstrap a release or template(s). 
 .Sh SYNOPSIS
-.Nm
+.Nm bastille bootstrap
 .Op Fl pux
 .Ar RELEASE
 .Op ARCH
-.Nm
+.Nm bastille bootstrap
 .Op Fl x
 .Ar TEMPLATE
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille bootstrap
 sub-command will bootstrap a release to use when creating jails. It will
 also fetch and verify templates if a url is given as an arguement.
 .Bl -tag -width Ds
-.It Sy bastille bootstrap Oo Fl pux Oc Ar RELEASE Op ARCH
+.It Sy bastille bootstrap Oo Fl pu Oc Ar RELEASE Op ARCH
 .Bl -tag -width Ds
 .It Fl p , Fl -pkgbase
 Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above). Bastille uses
@@ -26,18 +26,14 @@ distribution sets by default, but this option enables the use of
 package sets when bootstrapping FreeBSD release.
 .It Fl u , Fl -update
 Update the release after bootstrap.
-.It Fl x , Fl -debug
-Enable debug mode.
 .Pp
 If
 .Ar ARCH
 is specified, it will be used to bootstrap, as
 opposed to using the hosts arch.
 .El
-.It Sy bastille bootstrap Oo Fl x Oc Ar TEMPLATE
+.It Sy bastille bootstrap Ar TEMPLATE
 .Bl -tag -width Ds
-.It Fl x , Fl -debug
-Enable debug mode.
 .Pp
 .Ar TEMPLATE
 should be a url containing either a single template, or multiple

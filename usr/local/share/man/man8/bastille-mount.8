@@ -5,12 +5,12 @@
 .Nm bastille mount
 .Nd Mount file(s)/directorie(s) inside jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
+.Nm bastille mount
+.Op Fl a
 .Ar TARGET HOST_PATH JAIL_PATH Op FS_TYPE OPTIONS DUMP PASS_NUMBER
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille mount
 sub-command will mount the
 .Ar HOST_PATH
 inside a jail at
@@ -18,12 +18,10 @@ inside a jail at
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 By default
-.Nm
+.Nm bastille mount
 will mount files read-only. To mount as read-write you
 must specity all of the optional arguements. These include
 .Ar FS_TYPE OPTIONS DUMP

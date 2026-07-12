@@ -5,18 +5,16 @@
 .Nm bastille tags
 .Nd Add or remove tags to jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl x
+.Nm bastille tags
 .Ar TARGET Sy add|delete Ar tag1,tag2
-.Nm
-.Op Fl x
+.Nm bastille tags
 .Ar TARGET Sy list Op tag
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille tags
 sub-command add, remove and list tags for jails.
 .Bl -tag -width Ds
-.It Sy bastille tags Oo Fl x Oc Ar TARGET Sy add|remove Ar TAG1,TAG2
+.It Sy bastille tags Ar TARGET Sy add|remove Ar TAG1,TAG2
 .Bl -tag -width Ds
 .It Sy add
 Add specified tag(s) to
@@ -24,16 +22,12 @@ Add specified tag(s) to
 .It Sy remove
 Remove specified tag(s) from
 .Ar TARGET .
-.It Fl x , -debug
-Enable debug mode.
 .El
-.It Sy bastille tags Oo Fl x Oc Ar TARGET Sy list Op TAG
+.It Sy bastille tags Ar TARGET Sy list Op TAG
 .Bl -tag -width Ds
 .It Sy list
 List all tag(s) assigned to
 .Ar TARGET .
-.It Fl x , -debug
-Enable debug mode.
 .El
 .Pp
 If the

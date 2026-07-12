@@ -12,7 +12,3 @@ be ``jail.conf``. Other common filenames are ``fstab`` or ``rctl.conf``.
 
   ishmael ~ # bastille edit help
   Usage: bastille edit [option(s)] TARGET [FILE]
-
-      Options:
-
-      -x | --debug          Enable debug mode.

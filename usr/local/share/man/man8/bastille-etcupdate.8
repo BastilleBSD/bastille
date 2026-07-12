@@ -5,29 +5,28 @@
 .Nm bastille etcupdate
 .Nd Update /etc for jail(s). 
 .Sh SYNOPSIS
-.Nm
-.Op Fl fx
+.Nm bastille etcupdate
+.Op Fl f
 .Sy bootstrap
 .Ar RELEASE
-.Nm
-.Op Fl dx
+.Nm bastille etcupdate
+.Op Fl d
 .Ar TARGET
 .Sy update
 .Ar RELEASE
-.Nm
-.Op Fl x
+.Nm bastille etcupdate
 .Ar TARGET
 .Sy diff|resolve
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille etcupdate
 sub-command will bootstrap a tarball from
 .Ar RELEASE
 which can then be used to update the contents of
 .Pa /etc
 inside jails after performing an upgrade.
 .Bl -tag -width Ds
-.It Sy bastille etcupdate Oo Fl fx Oc Sy bootstrap Ar RELEASE
+.It Sy bastille etcupdate Oo Fl f Oc Sy bootstrap Ar RELEASE
 .Bl -tag -width Ds
 .It Sy bootstrap
 Bootstrap the 'src' archives for
@@ -36,10 +35,8 @@ then create a tarball from it. The tarball makes it
 much easier and faster to apply to jails.
 .It Fl f , Fl -force
 Force a re-bootstrap of a release.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
-.It Sy bastille etcupdate Oo Fl dx Oc Ar TARGET Sy update Ar RELEASE
+.It Sy bastille etcupdate Oo Fl d Oc Ar TARGET Sy update Ar RELEASE
 .Bl -tag -width Ds
 .It Sy update
 Update the contents of
@@ -53,8 +50,6 @@ as the base.
 must first be bootstrapped.
 .It Fl d , Fl -dry-run
 Show output, but do not apply.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 The
@@ -63,7 +58,7 @@ specified here is the release you want to use as the base of
 your
 .Ar TARGET
 /etc contents.
-.It Sy bastille etcupdate Oo Fl x Oc Ar TARGET Sy diff|resolve
+.It Sy bastille etcupdate Ar TARGET Sy diff|resolve
 .Bl -tag -width Ds
 .It Sy diff
 Compare and show changes to
@@ -80,8 +75,6 @@ Sometimes when performing the
 sub-command, it leaves
 some conflicts between the old and new files. Use this option
 to resolve these conflicts.
-.It Fl x , Fl -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Bootstrap 15.0-RELEASE for use with etcupdate:

@@ -41,7 +41,6 @@ usage() {
 
     -p | --pkgbase     Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above).
     -u | --update      Update the release after bootstrap.
-    -x | --debug       Enable debug mode.
 
 EOF
     exit 1
@@ -535,15 +534,11 @@ while [ "$#" -gt 0 ]; do
             PKGBASE=1
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
+                    u) OPT_UPDATE=1 ;;
                     p) PKGBASE=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

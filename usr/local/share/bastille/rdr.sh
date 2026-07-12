@@ -43,7 +43,6 @@ usage() {
     -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comma-separated.
     -s | --source      IP|TABLE      Limit rdr to a source IP or table.
     -t | --type        ipv4|ipv6     Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.
-    -x | --debug                     Enable debug mode.
 
 EOF
     exit 1
@@ -314,10 +313,6 @@ while [ "$#" -gt 0 ]; do
                 RDR_INET="${2}"
                 shift 2
             fi
-            ;;
-        -x|--debug)
-            enable_debug
-            shift
             ;;
         -*)
             error_exit "[ERROR]: Unknown option: \"${1}\""

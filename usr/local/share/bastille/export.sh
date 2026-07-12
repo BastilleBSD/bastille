@@ -52,7 +52,6 @@ usage() {
          --txz         Export to a '.txz' compressed archive.
          --tzst        Export to a '.tzst' compressed archive.
     -v | --verbose     Enable verbose mode (ZFS only).
-    -x | --debug       Enable debug mode.
 
 Note: If no export option specified, the jail should be redirected to standard output.
 
@@ -140,9 +139,6 @@ if [ -n "${bastille_export_options}" ]; then
             -v|--verbose)
                 OPT_ZSEND="-Rv"
                 ;;
-            -x)
-                enable_debug
-                ;;
             -*)
                 error_notify "[ERROR]: Unknown Option: \"${1}\""
                 usage
@@ -208,16 +204,11 @@ else
                 OPT_ZSEND="-Rv"
                 shift
                 ;;
-            -x)
-                enable_debug
-                shift
-                ;;
             -*)
                 for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                     case ${opt} in
                         a) AUTO=1 ;;
                         l) LIVE=1 ;;
-                        x) enable_debug ;;
                         *) error_exit "[ERROR]: Unknown Option: \"${1}\""
                     esac
                 done

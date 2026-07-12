@@ -23,4 +23,3 @@ port by supplying it as in ``user@host:port``.
       -k | --keyfile FILE     Specify an alternative private keyfile name. Must be in '~/.ssh'
       -l | --live             Migrate a running jail (ZFS only).
       -p | --password         Use password based authentication.
-      -x | --debug            Enable debug mode.

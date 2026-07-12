@@ -32,19 +32,19 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.4.4
+BASTILLE_VERSION="1.4.4"
 
 # Validate config file
 # Copy default when 'setup' is called
 # so we can skip to the setup command
 bastille_conf_check() {
 
-    local _config="${1}"
+    local config="${1}"
     shift 1
-    local _args="$@"
+    local args="$@"
 
-    if [ ! -r "${_config}" ]; then
-        if echo "${_args}" | grep -Eosqw "setup"; then
+    if [ ! -r "${config}" ]; then
+        if echo "${args}" | grep -Eosqw "setup"; then
             cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
         else
             echo -e "\n[ERROR]: No config file found!"
@@ -117,9 +117,10 @@ Available Commands:
   verify      Compare release against a "known good" index.
   zfs         Manage ZFS options/attributes for jail(s).
 
+Use "bastille COMMAND -h|--help" for more information about a command.
+Use "bastille -c|--config FILE COMMAND" to specify a non-default config file.
 Use "bastille -v|--version" for version information.
-Use "bastille command -h|--help" for more information about a command.
-Use "bastille -c|--config FILE command" to specify a non-default config file.
+Use "bastille -x|--debug COMMAND" to enable debug mode.
 
 EOF
     exit 1
@@ -148,13 +149,6 @@ bastille_perms_check
 # Handle options
 while [ "$#" -gt 0 ]; do
     case "${1}" in
-        -h|--help|help)
-            usage
-            ;;
-        version|-v|--version)
-            info 1 "${BASTILLE_VERSION}"
-            exit 0
-            ;;
         -c|--config)
             BASTILLE_CONFIG="${2}"
             if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
@@ -167,6 +161,17 @@ while [ "$#" -gt 0 ]; do
             # Load common.sh after setting BASTILLE_CONFIG
             . /usr/local/share/bastille/common.sh
             shift 2
+            ;;
+        -h|--help|help)
+            usage
+            ;;
+        version|-v|--version)
+            info 1 "${BASTILLE_VERSION}"
+            exit 0
+            ;;
+        -x|--debug)
+            enable_debug
+            shift
             ;;
         -*)
             error_exit "Unknown Option: \"${1}\""
@@ -184,7 +189,7 @@ else
     shift
 fi
 
-# Handle sub-commands.
+# Handle sub-commands
 case "${CMD}" in
     # 39 total commands
     bootstrap) ;;
@@ -243,14 +248,10 @@ esac
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 
 if [ -f "${SCRIPTPATH}" ]; then
-
     : "${UMASK:=022}"
     umask "${UMASK}"
-
     : "${SH:=sh}"
-
-    exec ${SH} "${SCRIPTPATH}" "$@"
-
+    exec ${SH} ${BASTILLE_DEBUG} "${SCRIPTPATH}" "$@"
 else
     error_exit "${SCRIPTPATH} not found."
 fi

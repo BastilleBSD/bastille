@@ -24,4 +24,3 @@ command with ``-i|--ignore`` to skip any stopped jail(s).
       -d | --delay VALUE     Time (seconds) to wait after starting each jail.
       -i | --ignore          Ignore stopped jails (do not start if stopped).
       -v | --verbose         Enable verbose mode.
-      -x | --debug           Enable debug mode.

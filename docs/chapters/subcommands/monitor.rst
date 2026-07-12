@@ -80,7 +80,3 @@ Help
                                         TARGET add|delete|list service1,service2
                                         TARGET list [service]
                                         TARGET
-
-      Options:
-
-      -x | --debug      Enable debug mode.

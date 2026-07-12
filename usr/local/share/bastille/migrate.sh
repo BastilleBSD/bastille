@@ -45,7 +45,6 @@ usage() {
     -k | --keyfile FILE     Specify an alternative private keyfile name. Must be in '~/.ssh'.
     -l | --live             Migrate a running jail (ZFS only).
     -p | --password         Use password based authentication.
-    -x | --debug            Enable debug mode.
 
 EOF
     exit 1
@@ -93,10 +92,6 @@ while [ "$#" -gt 0 ]; do
             OPT_PASSWORD=1
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
@@ -105,7 +100,6 @@ while [ "$#" -gt 0 ]; do
                     d) OPT_DESTROY=1 ;;
                     l) LIVE=1 ;;
                     p) OPT_PASSWORD=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

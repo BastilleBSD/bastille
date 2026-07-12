@@ -22,4 +22,3 @@ inside the jail(s).
       Options:
 
       -a | --auto      Auto mode. Start/stop jail(s) if required.
-      -x | --debug     Enable debug mode.

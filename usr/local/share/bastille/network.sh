@@ -47,7 +47,6 @@ usage() {
     -P | --passthrough     Add a raw interface.
     -V | --vnet            Add a physical interface.
     -v | --vlan VLANID     Assign VLANID to interface (VNET only).
-    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
@@ -99,10 +98,6 @@ while [ "$#" -gt 0 ]; do
 	    fi
             shift 2
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${opt} in
@@ -112,7 +107,6 @@ while [ "$#" -gt 0 ]; do
                     n) NO_IP=1 ;;
                     P) PASSTHROUGH=1 ;;
                     V) VNET=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

@@ -56,6 +56,7 @@ enable_debug() {
     # Enable debug mode.
     warn 1 "***DEBUG MODE***"
     set -x
+    export BASTILLE_DEBUG="-x"
 }
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a

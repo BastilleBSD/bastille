@@ -20,4 +20,3 @@ The TEMPLATE arg should be called with the ``project/template`` format.
       Options:
 
       -a | --auto      Auto mode. Start/stop jail(s) if required.
-      -x | --debug     Enable debug mode.

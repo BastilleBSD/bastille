@@ -36,6 +36,5 @@ Available options are:
            --txz         Export to a '.txz' compressed archive.
            --tzst        Export to a '.tzst' compressed archive.
       -v | --verbose     Enable verbose mode (ZFS only).
-      -x | --debug       Enable debug mode.
 
       Note: If no export option specified, the container should be redirected to standard output.

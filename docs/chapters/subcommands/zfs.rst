@@ -34,4 +34,3 @@ To destroy a snaphot however, you must supply a TAG. To destroy a snapshot, run
 
       -a | --auto        Auto mode. Start/stop jail(s) if required.
       -v | --verbose     Enable verbose mode.
-      -x | --debug       Enable debug mode.

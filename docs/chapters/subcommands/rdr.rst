@@ -42,7 +42,6 @@ The ``rdr`` command includes 4 additional options:
     -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comman separated.
     -s | --source      IP|table      Limit rdr to a source IP or table.
     -t | --type        ipv4|ipv6     Specify IP type. Must be used if -s or -d are used. Defaults to both.
-    -x | --debug                     Enable debug mode.
 
 .. code-block:: shell
 
@@ -92,4 +91,3 @@ Simply use the table name instead of an IP address or subnet.
       -i | --interface   IF,IF         Specify interface(s) to apply rule to. Comma-separated.
       -s | --source      IP|TABLE      Limit rdr to a source IP or table.
       -t | --type        ipv4|ipv6     Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.
-      -x | --debug                     Enable debug mode.

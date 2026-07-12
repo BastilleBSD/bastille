@@ -41,7 +41,6 @@ usage() {
     -b | --boot            Respect jail boot setting.
     -d | --delay VALUE     Time (seconds) to wait after starting each jail.
     -v | --verbose         Enable verbose mode.
-    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
@@ -72,16 +71,11 @@ while [ "$#" -gt 0 ]; do
             OPTION="-v"
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     b) BOOT=1 ;;
                     v) OPTION="-v" ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

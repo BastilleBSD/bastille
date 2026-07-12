@@ -28,4 +28,3 @@ option will retain the release cache (``*.txz`` file), if you choose to keep it.
       -c | --no-cache     Do not destroy cache when destroying a release (legacy releases).
       -f | --force        Force unmount any mounted datasets when destroying a jail or release (ZFS only).
       -y | --yes          Do not prompt. Assume always yes.
-      -x | --debug        Enable debug mode.

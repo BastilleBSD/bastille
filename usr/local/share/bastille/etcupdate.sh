@@ -39,7 +39,6 @@ usage() {
 
     -d | --dry-run     Show output, but do not apply.
     -f | --force       Force a re-bootstrap of a RELEASE.
-    -x | --debug       Enable debug mode.
 
 EOF
     exit 1
@@ -182,16 +181,11 @@ while [ "$#" -gt 0 ]; do
             FORCE=1
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     d) DRY_RUN=1 ;;
                     f) FORCE=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "Unknown Option: \"${1}\"" ;;
                 esac
             done

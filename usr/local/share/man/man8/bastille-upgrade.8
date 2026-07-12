@@ -5,15 +5,15 @@
 .Nm bastille upgrade
 .Nd Upgrade a jail to new release.
 .Sh SYNOPSIS
-.Nm
-.Op Fl afx
+.Nm bastille upgrade
+.Op Fl af
 .Ar TARGET NEW_RELEASE
-.Nm
-.Op Fl afx
+.Nm bastille upgrade
+.Op Fl af
 .Ar TARGET install
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille upgrade
 sub-command will upgrade
 .Ar TARGET
 to
@@ -26,8 +26,6 @@ Force upgrade a release (FreeBSD legacy releases).
 .Pp
 This will force the 'fetch' command to proceed in the
 event of a previous failed upgrade.
-.It Fl x , -debug
-Enable debug mode.
 .El
 .Pp
 The

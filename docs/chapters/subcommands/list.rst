@@ -22,4 +22,3 @@ Use ``-p|--pretty`` to print in columns instead of rows.
       -j | --json       List jails or sub-arg(s) in json format.
       -p | --pretty     Print JSON in columns. Must be used with -j|--json.
       -u | --up         List running jails only.
-      -x | --debug      Enable debug mode.
