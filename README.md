@@ -30,25 +30,25 @@ deployment and management of containerized applications on FreeBSD.
 
 Bastille is available for installation from the official FreeBSD ports tree.
 
-**pkg**
+**pkg:**
 ```shell
 pkg install bastille
 ```
 
-**ports**
+**ports:**
 ```shell
 git clone https://git.freebsd.org/ports.git --depth 1 /usr/ports
 make -C /usr/ports/sysutils/bastille install clean
 ```
 
-**Git** (bleeding edge / unstable -- primarily for developers)
+**git:** (bleeding edge / unstable -- primarily for developers)
 ```shell
 git clone https://github.com/bastillebsd/bastille.git
 cd bastille
 make install
 ```
 
-**enable at boot**
+**Enable jail startup at boot:**
 ```shell
 sysrc bastille_enable=YES
 ```
@@ -56,9 +56,7 @@ sysrc bastille_enable=YES
 ### Upgrading
 
 When upgrading from a previous version of bastille (e.g. 0.10.20230714 to
-1.2.1.251203) you will need to update your bastille.conf
-
-Be sure to read the [Breaking Changes](#breaking-changes) below.
+1.2.1.251203) you might need to update your bastille.conf
 
 ```shell
 cd /usr/local/etc/bastille
