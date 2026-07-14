@@ -92,10 +92,10 @@ for jail in ${JAILS}; do
     check_fib "${jail}"
 
     if [ -n "${USER}" ]; then
-        if jexec -l "${jail}" id "${USER}" >/dev/null 2>&1; then
-            USER_SHELL="$(jexec -l "${jail}" getent passwd "${USER}" | cut -d: -f7)"
+        if ${SETFIB} jexec -l "${jail}" id "${USER}" >/dev/null 2>&1; then
+            USER_SHELL="$(${SETFIB} jexec -l "${jail}" getent passwd "${USER}" | cut -d: -f7)"
             if [ -n "${USER_SHELL}" ]; then
-                if jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                if ${SETFIB} jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
                     ${SETFIB} jexec -l "${jail}" ${LOGIN} -f "${USER}"
                 else
                     error_exit "[ERROR]: Invalid shell for user: ${USER}"

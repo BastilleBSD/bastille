@@ -529,7 +529,7 @@ clone_jail() {
     update_fstab "${TARGET}" "${NEWNAME}"
 
     # Display exit status
-    if [ "$?" -ne 0 ]; then
+    if [ "${ERRORS}" -ne 0 ]; then
         error_exit "[ERROR]: An error has occurred while cloning '${TARGET}'."
     else
         info 1 "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
