@@ -501,9 +501,6 @@ clone_jail() {
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
 
-                if [ "${ERRORS}" -ne 0 ]; then
-                    error_exit "[ERROR]: Failed to clone jail: ${TARGET}"
-                fi
             fi
 
         else
@@ -517,7 +514,7 @@ clone_jail() {
             fi
 
             # Perform container file copy (archive mode)
-            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}" || ERRORS=$((ERRORS + 1))
 
         fi
     else
@@ -530,6 +527,7 @@ clone_jail() {
 
     # Display exit status
     if [ "${ERRORS}" -ne 0 ]; then
+        bastille destroy -fay "${NEWNAME}" >/dev/null 2>/dev/null
         error_exit "[ERROR]: An error has occurred while cloning '${TARGET}'."
     else
         info 1 "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
