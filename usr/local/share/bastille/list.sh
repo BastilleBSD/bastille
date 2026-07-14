@@ -118,7 +118,7 @@ get_max_lengths() {
         if [ "${MAX_LENGTH_JAIL_HOSTNAME}" -lt 8 ]; then MAX_LENGTH_JAIL_HOSTNAME=8; fi
 
         # Set max length for jail ports (active)
-        MAX_LENGTH_JAIL_PORTS=$(find ${bastille_jailsdir}/*/rdr.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 awk '{ lines++; chars += length($0)} END { chars += lines - 1; print chars }' | sort -nr | head -n 1)
+        MAX_LENGTH_JAIL_PORTS=$(find ${bastille_jailsdir}/*/rdr.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 awk '{ s=$5" "$6" "$7; chars += length(s)} END { chars += lines - 1; print chars }' | sort -nr | head -n 1)
         MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-15}
         if [ "${MAX_LENGTH_JAIL_PORTS}" -lt 15 ]; then MAX_LENGTH_JAIL_PORTS=15; fi
         if [ "${MAX_LENGTH_JAIL_PORTS}" -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
