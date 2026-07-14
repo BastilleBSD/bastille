@@ -109,17 +109,18 @@ set_target "${TARGET}"
 for jail in ${JAILS}; do
 
     bastille_jail_monitor="${bastille_jailsdir}/${jail}/monitor"
+    check_fib "${jail}"
 
     ## iterate service(s) and check service status; restart on failure
     if [ -z "${ACTION}" ] && [ -f "${bastille_jail_monitor}" ]; then
         check_target_is_running "${jail}" || continue
         for service in $(xargs < "${bastille_jail_monitor}"); do
             ## check service status
-            if ! jexec -l -U root "${jail}" service "${service}" status >/dev/null 2>/dev/null; then
+            if ! ${SETFIB} jexec -l -U root "${jail}" service "${service}" status >/dev/null 2>/dev/null; then
                 echo "$(date '+%Y-%m-%d %H:%M:%S'): ${service} service not running in ${jail}. Restarting..." | tee -a "${bastille_monitor_logfile}"
 
                 ## attempt to restart the service if needed; update logs if unable
-                if ! jexec -l -U root "${jail}" service "${service}" restart; then
+                if ! ${SETFIB} jexec -l -U root "${jail}" service "${service}" restart; then
                     echo "$(date '+%Y-%m-%d %H:%M:%S'): Failed to restart ${service} service in ${jail}." | tee -a "${bastille_monitor_logfile}"
                     ERRORS=$((ERRORS +1))
                 fi

@@ -87,5 +87,6 @@ info 1 "\n[${TARGET}]:"
 if [ ! -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
     error_exit "[ERROR]: htop not found on ${TARGET}."
 elif [ -x "${bastille_jailsdir}/${TARGET}/root/usr/local/bin/htop" ]; then
-    jexec -l ${TARGET} /usr/local/bin/htop
+    check_fib "${TARGET}"
+    ${SETFIB} jexec -l ${TARGET} /usr/local/bin/htop
 fi

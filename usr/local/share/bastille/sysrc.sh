@@ -90,7 +90,8 @@ for jail in ${JAILS}; do
     info 1 "\n[${jail}]:"
 
     if [ -f "${bastille_jailsdir}/${jail}/root/usr/sbin/sysrc" ]; then
-        jexec -l "${jail}" /usr/sbin/sysrc "$@"
+        check_fib "${jail}"
+        ${SETFIB} jexec -l "${jail}" /usr/sbin/sysrc "$@"
     else
         sysrc -j "${jail}" "$@"
     fi

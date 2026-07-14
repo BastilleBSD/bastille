@@ -84,4 +84,5 @@ fi
 
 info 1 "\n[${TARGET}]:"
 
-jexec -l "${TARGET}" /usr/bin/top
+check_fib "${TARGET}"
+${SETFIB} jexec -l "${TARGET}" /usr/bin/top
