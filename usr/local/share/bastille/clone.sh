@@ -96,6 +96,7 @@ NEWNAME="${2}"
 IP="${3}"
 VNET_JAIL=0
 CLONE_INTERFACE_COUNT=0
+ERRORS=0
 
 bastille_root_check
 set_target_single "${TARGET}"
