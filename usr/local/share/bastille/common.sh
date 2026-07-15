@@ -58,7 +58,7 @@ enable_debug() {
     if [ "${debug}" -eq 1 ]; then
         set -x
         BASTILLE_DEBUG="-x"
-    elif [ "${debug}}" -eq 2 ]; then
+    elif [ "${debug}" -eq 2 ]; then
         set -x
         export BASTILLE_DEBUG="-x"
     fi
