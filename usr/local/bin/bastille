@@ -170,7 +170,11 @@ while [ "$#" -gt 0 ]; do
             exit 0
             ;;
         -x|--debug)
-            enable_debug
+            enable_debug 1
+            shift
+            ;;
+        -xx)
+            enable_debug 2
             shift
             ;;
         -*)
