@@ -53,14 +53,12 @@ enable_color() {
 }
 
 enable_debug() {
-    local level="${1}"
-    # Enable debug mode.
+    local debug="${1}"
     warn 1 "***DEBUG MODE***"
-    set -x
-    if [ "${level}" -eq 1 ]; then
+    if [ "${debug}" -eq 1 ]; then
         set -x
         BASTILLE_DEBUG="-x"
-    elif [ "${level}" -eq 2 ]; then
+    elif [ "${debug}}" -eq 2 ]; then
         set -x
         export BASTILLE_DEBUG="-x"
     fi
