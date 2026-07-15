@@ -722,11 +722,12 @@ create_jail() {
     ## Using templating function to fetch necessary packges @hackacad
     elif [ "${LINUX_JAIL}" -eq 1 ]; then
         info 1 "\nFetching packages..."
-        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
-        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
-        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
-        jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
-        jexec -l "${NAME}" /bin/bash -c "apt update"
+        check_fib "${NAME}"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "apt update"
     else
         # Thin jail.
         if [ -n "${bastille_template_thin}" ]; then

@@ -90,7 +90,6 @@ for jail in ${JAILS}; do
     info 1 "\n[${jail}]:"
 
     check_fib "${jail}"
-
     # Allow executing commands on linux jails
     if grep -qw "linsysfs" "${bastille_jailsdir}/${jail}/fstab"; then
         ${SETFIB} jexec -l -u root "${jail}" "$@"

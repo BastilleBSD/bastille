@@ -96,6 +96,7 @@ NEWNAME="${2}"
 IP="${3}"
 VNET_JAIL=0
 CLONE_INTERFACE_COUNT=0
+ERRORS=0
 
 bastille_root_check
 set_target_single "${TARGET}"
@@ -125,7 +126,7 @@ define_ips() {
                 error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
             fi
         elif ifconfig | grep -qwF "${IP4_ADDR}"; then
-            warn 1 "\n[WARNING]: IP address already in use: ${TEST_IP}"
+            warn 1 "\n[WARNING]: IP address already in use: ${IP4_ADDR}"
         fi
     fi
 
@@ -501,9 +502,6 @@ clone_jail() {
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}/root@bastille_clone_${DATE}"
                 zfs destroy "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${NEWNAME}@bastille_clone_${DATE}"
 
-                if [ "${ERRORS}" -ne 0 ]; then
-                    error_exit "[ERROR]: Failed to clone jail: ${TARGET}"
-                fi
             fi
 
         else
@@ -517,7 +515,7 @@ clone_jail() {
             fi
 
             # Perform container file copy (archive mode)
-            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
+            cp -a "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}" || ERRORS=$((ERRORS + 1))
 
         fi
     else
@@ -529,7 +527,8 @@ clone_jail() {
     update_fstab "${TARGET}" "${NEWNAME}"
 
     # Display exit status
-    if [ "$?" -ne 0 ]; then
+    if [ "${ERRORS}" -ne 0 ]; then
+        bastille destroy -fay "${NEWNAME}" >/dev/null 2>/dev/null
         error_exit "[ERROR]: An error has occurred while cloning '${TARGET}'."
     else
         info 1 "\nCloned '${TARGET}' to '${NEWNAME}' successfully."
