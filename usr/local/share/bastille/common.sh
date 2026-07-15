@@ -59,6 +59,7 @@ enable_debug() {
     set -x
     if [ "${level}" -eq 1 ]; then
         set -x
+        BASTILLE_DEBUG="-x"
     elif [ "${level}" -eq 2 ]; then
         set -x
         export BASTILLE_DEBUG="-x"
