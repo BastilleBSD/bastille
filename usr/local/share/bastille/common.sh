@@ -92,7 +92,7 @@ info() {
     level="${1}"
     shift 1
     # Level 3 should always be printed. See config subcommand
-    if [ "${level}" -eq 3]; then
+    if [ "${level}" -eq 3 ]; then
         printf "%b\n" "$*"
     elif [ "${BASTILLE_QUIET}" -ne 1 ] && [ "${level}" -ne 3 ]; then
         if [ "${level}" -eq 1 ]; then
