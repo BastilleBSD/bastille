@@ -6,7 +6,7 @@
 .Nd open-source jail automation and management tool
 .Sh SYNOPSIS
 .Nm
-.Op Fl vhx
+.Op Fl vhqx
 .Op Fl c Ar file
 .Ar COMMAND
 .Op option(s)
@@ -26,6 +26,8 @@ Display usage information. This option is also available for each
 sub-command, though they are not listed in the man pages.
 .It Fl v , Fl -version
 Print version information.
+.It Fl q , Fl -quiet
+Supress Bastille-specific output.
 .It Fl x , Fl -debug
 Enable debug mode.
 .Sh SUBCOMMANDS

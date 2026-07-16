@@ -120,6 +120,7 @@ Available Commands:
 Use "bastille COMMAND -h|--help" for more information about a command.
 Use "bastille -c|--config FILE COMMAND" to specify a non-default config file.
 Use "bastille -v|--version" for version information.
+Use "bastille -q|--quiet COMMAND" to supress Bastille-specific output.
 Use "bastille -x|--debug COMMAND" to enable debug mode.
 
 EOF
@@ -147,6 +148,7 @@ bastille_perms_check
 . /usr/local/share/bastille/common.sh
 
 # Handle options
+[ -z "${BASTILLE_QUIET}" ] && export BASTILLE_QUIET=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -c|--config)
@@ -168,6 +170,10 @@ while [ "$#" -gt 0 ]; do
         version|-v|--version)
             info 1 "${BASTILLE_VERSION}"
             exit 0
+            ;;
+        -q|--quiet)
+            export BASTILLE_QUIET=1
+            shift
             ;;
         -x|--debug)
             enable_debug 1
