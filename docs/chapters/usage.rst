@@ -55,4 +55,5 @@ Usage
   Use "bastille COMMAND -h|--help" for more information about a command.
   Use "bastille -c|--config FILE COMMAND" to specify a non-default config file.
   Use "bastille -v|--version" for version information.
+  Use "bastille -q|--quiet COMMAND" to supress Bastille-specific output.
   Use "bastille -x|--debug COMMAND" to enable debug mode.

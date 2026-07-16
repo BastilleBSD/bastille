@@ -72,7 +72,9 @@ fi
 
 # Error messages/functions
 error_notify() {
-    printf "%b\n" "${COLOR_RED}$*${COLOR_RESET}" 1>&2
+    if [ "${BASTILLE_QUIET}" -ne 1 ]; then
+        printf "%b\n" "${COLOR_RED}$*${COLOR_RESET}"
+    fi
 }
 
 error_continue() {
@@ -83,42 +85,43 @@ error_continue() {
 
 error_exit() {
     error_notify "$@"
-    echo
     exit 1
 }
 
 info() {
-
     level="${1}"
     shift 1
-
-    if [ "${level}" -eq 1 ]; then
-        printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}" 1>&2
-    elif [ "${level}" -eq 2 ]; then
-        printf "%b\n" "$*" 1>&2
-    else
+    # Level 3 should always be printed. See config subcommand
+    if [ "${level}" -eq 3 ]; then
         printf "%b\n" "$*"
+    elif [ "${BASTILLE_QUIET}" -ne 1 ] && [ "${level}" -ne 3 ]; then
+        if [ "${level}" -eq 1 ]; then
+            printf "%b\n" "${COLOR_GREEN}$*${COLOR_RESET}"
+        elif [ "${level}" -eq 2 ]; then
+            printf "%b\n" "$*"
+        fi
     fi
 }
 
 
 warn() {
-
     level="${1}"
     shift 1
-
-    if [ "${level}" -eq 1 ]; then
-        printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}" 1>&2
-    elif [ "${level}" -eq 3 ]; then
+    # Level 3 should always be printed. See config subcommand
+    if [ "${level}" -eq 3 ]; then
         printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}"
+    elif [ "${BASTILLE_QUIET}" -ne 1 ] && [ "${level}" -ne 3 ]; then
+        if [ "${level}" -eq 1 ]; then
+            printf "%b\n" "${COLOR_YELLOW}$*${COLOR_RESET}"
+        elif [ "${level}" -eq 2 ]; then
+            printf "%b\n" "$*"
+        fi
     fi
 }
 
 check_target_exists() {
-
     local target="${1}"
     local jail_list="$(bastille list jails)"
-
     if ! echo "${jail_list}" | grep -Eq "^${target}$"; then
         return 1
     else
@@ -127,9 +130,7 @@ check_target_exists() {
 }
 
 check_target_is_running() {
-
     local target="${1}"
-
     if ! jls name | grep -Eq "^${target}$"; then
         return 1
     else
@@ -138,9 +139,7 @@ check_target_is_running() {
 }
 
 check_target_is_stopped() {
-
     local target="${1}"
-
     if jls name | grep -Eq "^${target}$"; then
         return 1
     else
@@ -149,7 +148,6 @@ check_target_is_stopped() {
 }
 
 get_bastille_epair_count() {
-
     for config in /usr/local/etc/bastille/*.conf; do
         local bastille_jailsdir="$(sysrc -f "${config}" -n bastille_jailsdir)"
         BASTILLE_EPAIR_LIST="$(printf '%s\n%s' "$( (grep -Ehos "bastille[0-9]+" ${bastille_jailsdir}/*/jail.conf; ifconfig -g epair | grep -Eos "e[0-9]+a_bastille[0-9]+$" | grep -Eos 'bastille[0-9]+') | sort -u)" "${BASTILLE_EPAIR_LIST}")"
@@ -160,10 +158,8 @@ get_bastille_epair_count() {
 }
 
 get_jail_name() {
-
     local jid="${1}"
     local jail_name="$(jls -j ${jid} name 2>/dev/null)"
-
     if [ -z "${jail_name}" ]; then
         return 1
     else
@@ -172,11 +168,9 @@ get_jail_name() {
 }
 
 jail_autocomplete() {
-
     local target="${1}"
     local jail_list="$(bastille list jails)"
     local auto_target="$(echo "${jail_list}" | grep -E "^${target}")"
-
     if [ -n "${auto_target}" ]; then
         if [ "$(echo "${auto_target}" | wc -l)" -eq 1 ]; then
             echo "${auto_target}"
@@ -190,9 +184,7 @@ jail_autocomplete() {
 }
 
 list_jail_priority() {
-
     local jail_list="${1}"
-
     if [ -d "${bastille_jailsdir}" ]; then
         for jail in ${jail_list}; do
             # Remove boot.conf in favor of settings.conf
@@ -223,7 +215,6 @@ list_jail_priority() {
 }
 
 set_target() {
-
     local target=${1}
     if [ "${2}" = "reverse" ]; then
         local order="${2}"
@@ -232,7 +223,6 @@ set_target() {
     fi
     JAILS=""
     TARGET=""
-
     if echo "${target}" | grep -Eq '^[aA][lL][lL]$'; then
         target_all_jails
     else
@@ -277,11 +267,9 @@ set_target() {
 }
 
 set_target_single() {
-
     local target="${1}"
     JAILS=""
     TARGET=""
-
     if [ "${target}" = ALL ] || [ "${target}" = all ]; then
         error_exit "[all|ALL] not supported with this command."
     elif [ "$(echo ${target} | wc -w)" -gt 1 ]; then
@@ -314,12 +302,9 @@ set_target_single() {
 
 # This function is run immediately
 set_bastille_mountpoints() {
-
     if checkyesno bastille_zfs_enable; then
-
         # We have to do this if ALTROOT is enabled/present
         local altroot="$(zpool get -Ho value altroot ${bastille_zfs_zpool})"
-
         # Set mountpoints to *bastille*dir*
         # shellcheck disable=SC2034
         bastille_prefix_mountpoint="${bastille_prefix}"
@@ -335,7 +320,6 @@ set_bastille_mountpoints() {
         bastille_templatesdir_mountpoint="${bastille_templatesdir}"
         # shellcheck disable=SC2034
         bastille_logsdir_mountpoint="${bastille_logsdir}"
-
         # Add _altroot to *dir* if set
         if [ "${altroot}" != "-" ]; then
             # Set *dir* to include ALTROOT
@@ -351,10 +335,8 @@ set_bastille_mountpoints() {
 }
 
 target_all_jails() {
-
     local jails="$(bastille list jails)"
     JAILS=""
-
     for jail in ${jails}; do
         if [ -d "${bastille_jailsdir}/${jail}" ]; then
             JAILS="${JAILS} ${jail}"
@@ -373,11 +355,9 @@ target_all_jails() {
 }
 
 update_fstab() {
-
     local oldname="${1}"
     local newname="${2}"
     local fstab="${bastille_jailsdir}/${newname}/fstab"
-
     if [ -f "${fstab}" ]; then
         sed -i '' "s|${bastille_jailsdir}/${oldname}/root/|${bastille_jailsdir}/${newname}/root/|" "${fstab}"
     else
@@ -386,7 +366,6 @@ update_fstab() {
 }
 
 generate_static_mac() {
-
     local jail_name="${1}"
     local external_interface="${2}"
     local external_interface_mac="$(ifconfig ${external_interface} | grep ether | awk '{print $2}')"
@@ -394,7 +373,6 @@ generate_static_mac() {
     local macaddr_prefix="58:9c:fc"
     # Use hash of interface+jailname for jail MAC suffix
     local macaddr_suffix="$(echo -n "${external_interface_mac}${external_interface}${jail_name}" | sed 's#:##g' | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
-
     if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
         error_notify "Failed to generate MAC address."
     fi
@@ -403,13 +381,11 @@ generate_static_mac() {
 }
 
 generate_vnet_jail_netblock() {
-
     local jail_name="${1}"
     # interface_type can be "standard" "bridge" or "passthrough"
     local interface_type="${2}"
     local external_interface="${3}"
     local static_mac="${4}"
-
     # Set epair/interface values for host/jail
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
         if [ "${interface_type}" = "bridge" ]; then
@@ -448,7 +424,6 @@ generate_vnet_jail_netblock() {
         local ng_if=ng0_${jail_name}
         local jng_if=${jail_name}
     fi
-
     # VNET_JAIL_BRIDGE
     if [ "${interface_type}" = "bridge" ]; then
         if [ "${static_mac}" -eq 1 ]; then
@@ -475,7 +450,6 @@ EOF
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
         fi
-
     # VNET_JAIL_STANDARD
     elif [ "${interface_type}" = "standard" ]; then
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
@@ -522,7 +496,6 @@ EOF
 EOF
             fi
         fi
-
     # VNET_JAIL_PASSTHROUGH
     elif [ "${interface_type}" = "passthrough" ]; then
         cat <<-EOF
@@ -534,14 +507,12 @@ EOF
 }
 
 validate_ip() {
-
     local ip="${1}"
     local vnet_jail="${2}"
     local ip4="$(echo ${ip} | awk -F"/" '{print $1}')"
     local ip6="$(echo ${ip} | grep -E '^(([a-fA-F0-9:]+$)|([a-fA-F0-9:]+\/[0-9]{1,3}$)|SLAAC)' | awk -F"/" '{print $1}')"
     local subnet="$(echo ${ip} | awk -F"/" '{print $2}')"
     local IFS
-
     if [ -n "${ip6}" ]; then
         if [ "${vnet_jail}" -eq 1 ]; then
             if [ -z "${subnet}" ]; then
@@ -582,7 +553,6 @@ validate_ip() {
                     error_exit "[ERROR]: Invalid IP: ${ip4}"
                 fi
             done
-
             info 1 "\nValid IP: ${ip4}"
             export IP4_ADDR="${ip4}"
         else
@@ -594,7 +564,6 @@ validate_ip() {
 }
 
 validate_netconf() {
-
     # Add default 'bastille_network_vnet_type' on old config file
     # This is so we don't have to indtroduce a 'breaking change' statement
     if ! grep -oq "bastille_network_vnet_type=" "${BASTILLE_CONFIG}"; then
@@ -602,7 +571,6 @@ validate_netconf() {
         # shellcheck disable=SC1090
         . ${BASTILLE_CONFIG}
     fi
-
     # Validate that 'bastille_network_vnet_type' has been set
     if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
         error_exit "[ERROR]: 'bastille_network_loopback' and 'bastille_network_shared' cannot both be set."
@@ -645,19 +613,15 @@ checkyesno() {
 }
 
 update_jail_syntax_v1() {
-
     local jail="${1}"
     local jail_config="${bastille_jailsdir}/${jail}/jail.conf"
     local jail_rc_config="${bastille_jailsdir}/${jail}/root/etc/rc.conf"
-
     # Only apply if old syntax is found
     if grep -Eoq "exec.prestart.*ifconfig epair[0-9]+ create.*" "${jail_config}"; then
-
         warn 1 "\n[WARNING]\n"
         warn 1 "Updating jail.conf file..."
         warn 1 "Please review your jail.conf file after completion."
         warn 1 "VNET jails created without -M will be assigned a new MAC address."
-
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
@@ -670,11 +634,9 @@ update_jail_syntax_v1() {
             local new_host_epair="e0a_bastille${epair_num}"
             local new_jail_epair="e0b_bastille${epair_num}"
         fi
-
         # Delete unneeded lines
         sed -i '' "/.*exec.prestart.*ifconfig.*up name.*;/d" "${jail_config}"
         sed -i '' "/.*exec.poststop.*ifconfig.*deletem.*;/d" "${jail_config}"
-
         # Change jail.conf
         sed -i '' "s|.*vnet.interface =.*|  vnet.interface = ${new_jail_epair};|g" "${jail_config}"
         sed -i '' "s|.*ifconfig epair.*create.*|  exec.prestart += \"epair0=\\\\\$(ifconfig epair create) \&\& ifconfig \\\\\${epair0} up name ${new_host_epair} \&\& ifconfig \\\\\${epair0%a}b up name ${new_jail_epair}\";|g" "${jail_config}"
@@ -683,19 +645,14 @@ update_jail_syntax_v1() {
         sed -i '' "/ether.*:.*:.*:.*:.*:.*b/ s|ifconfig.*ether|ifconfig ${new_jail_epair} ether|g" "${jail_config}"
         sed -i '' "s|ifconfig.*description|ifconfig ${new_host_epair} description|g" "${jail_config}"
         sed -i '' "s|ifconfig.*destroy|ifconfig ${new_host_epair} destroy|g" "${jail_config}"
-
         # Change rc.conf
         sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
-
     elif grep -Eoq "exec.poststop.*jib destroy.*" "${jail_config}"; then
-
         warn 1 "\n[WARNING]\n"
         warn 1 "Updating jail.conf file..."
         warn 1 "Please review your jail.conf file after completion."
         warn 1 "VNET jails created without -M will be assigned a new MAC address."
-
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
-
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
@@ -710,7 +667,6 @@ update_jail_syntax_v1() {
             local new_jail_epair="e0b_bastille${epair_num}"
             local jib_epair="bastille${epair_num}"
         fi
-
         # Change jail.conf
         sed -i '' "s|.*vnet.interface =.*|  vnet.interface = ${new_jail_epair};|g" "${jail_config}"
         sed -i '' "s|jib addm.*|jib addm ${jib_epair} ${external_interface}|g" "${jail_config}"
@@ -718,10 +674,8 @@ update_jail_syntax_v1() {
         sed -i '' "/ether.*:.*:.*:.*:.*:.*b/ s|ifconfig.*ether|ifconfig ${new_jail_epair} ether|g" "${jail_config}"
         sed -i '' "s|ifconfig.*description|ifconfig ${new_host_epair} description|g" "${jail_config}"
         sed -i '' "s|jib destroy.*|ifconfig ${new_host_epair} destroy\";|g" "${jail_config}"
-
         # Change rc.conf
         sed -i '' "/ifconfig_.*_name.*vnet.*/ s|ifconfig_.*_name|ifconfig_${new_jail_epair}_name|g" "${jail_rc_config}"
-
     fi
 }
 
