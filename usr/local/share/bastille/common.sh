@@ -53,10 +53,15 @@ enable_color() {
 }
 
 enable_debug() {
-    # Enable debug mode.
+    local debug="${1}"
     warn 1 "***DEBUG MODE***"
-    set -x
-    export BASTILLE_DEBUG="-x"
+    if [ "${debug}" -eq 1 ]; then
+        set -x
+        BASTILLE_DEBUG="-x"
+    elif [ "${debug}" -eq 2 ]; then
+        set -x
+        export BASTILLE_DEBUG="-x"
+    fi
 }
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
