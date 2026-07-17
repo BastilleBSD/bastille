@@ -29,6 +29,7 @@ Christer Edwards [christer.edwards@gmail.com]
 - Eric Borisch
 - Kevet Duncombe
 - Victor Tschetter
+- Sasha Karcz
 
 ### Special thanks
 Software doesn't happen in a vacuum. Thank you to the following people who may

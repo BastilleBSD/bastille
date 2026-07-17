@@ -31,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     error_notify "Usage: bastille start [option(s)] TARGET"
@@ -95,6 +96,25 @@ fi
 TARGET="${1}"
 
 bastille_root_check
+
+# Brand dispatch: route VM targets to the bhyve supervisor.
+if check_vm_exists "${TARGET}"; then
+    # Respect '-b|--boot' + settings.conf boot value, like jails.
+    if [ "${BOOT}" -eq 1 ]; then
+        BOOT_ENABLED="$(sysrc -f ${bastille_vmdir}/${TARGET}/settings.conf -n boot)"
+        if [ "${BOOT_ENABLED}" = "off" ]; then
+            exit 0
+        fi
+    fi
+    info 1 "\n[${TARGET}]:"
+    if vm_start "${TARGET}"; then
+        sleep "${DELAY_TIME}"
+        exit 0
+    else
+        exit 1
+    fi
+fi
+
 set_target "${TARGET}"
 
 for jail in ${JAILS}; do

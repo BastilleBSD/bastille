@@ -15,6 +15,7 @@
 .Op Fl -no-boot
 .Op Fl -no-ip
 .Op Fl -no-validate
+.Op Fl -vm
 .Ar NAME RELEASE IP Op INTERFACE
 .Sh DESCRIPTION
 The
@@ -106,6 +107,20 @@ Set VLAN ID (VNET only).
 This will configure the jail to use the specified
 .Ar VALUE
 as the VLAN ID.
+.It Fl -vm
+Create a bhyve virtual machine from a VM template instead of a jail.
+.Pp
+In this mode the positional arguments are
+.Ar NAME
+and
+.Ar TEMPLATE
+(a template whose Bastillefile opens with the
+.Sy VM
+verb). The VM is defined by the template, backed by zvols, and managed with
+the same lifecycle verbs as jails
+.Po Nm bastille start , Nm stop , Nm console , Nm destroy Pc .
+Requires ZFS and
+.Xr bhyve 8 .
 .It Fl Z Ar VALUE,VALUE , Fl -zfs-opts Ar VALUE,VALUE
 Custom zfs options. Comma-separated.
 .Pp
@@ -120,6 +135,8 @@ This overrides the defaults. See
 .Sy bastille create -B myjail 15.0-RELEASE DHCP mycustombridge
 .It Create a Linux jail:
 .Sy bastille create -L myjail bookworm 10.2.4.5
+.It Create a bhyve VM from a VM template:
+.Sy bastille create --vm builder sasha/forgejo-runner-vm
 .It Create a VNET jail with boot=off and custom gateway:
 .Sy bastille create -V --no-boot -g 10.1.1.1 myjail 15.0-RELEASE 10.1.1.4/24 vtnet0
 .Pp

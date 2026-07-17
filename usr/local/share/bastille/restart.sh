@@ -31,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     error_notify "Usage: bastille restart [option(s)] TARGET"
@@ -98,6 +99,20 @@ fi
 TARGET="${1}"
 
 bastille_root_check
+
+# Brand dispatch: restart a VM via its own stop/start (which dispatch too).
+if check_vm_exists "${TARGET}"; then
+    if [ "${IGNORE}" -eq 1 ]; then
+        if check_vm_is_stopped "${TARGET}"; then
+            info 1 "\n[${TARGET}]:"
+            error_exit "VM is stopped."
+        fi
+    fi
+    bastille stop ${stop_options} "${TARGET}"
+    bastille start ${start_options} "${TARGET}"
+    exit $?
+fi
+
 set_target "${TARGET}"
 
 for jail in ${JAILS}; do

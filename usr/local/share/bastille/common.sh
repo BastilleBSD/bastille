@@ -35,6 +35,16 @@
 # shellcheck disable=SC1090
 . ${BASTILLE_CONFIG}
 
+# Provide defaults for VM (bhyve) settings so configs predating VM support
+# keep working without edits. Real values come from bastille.conf.
+: "${bastille_vmdir:=${bastille_prefix}/vms}"
+: "${bastille_vm_bootrom:=/usr/local/share/uefi-firmware/BHYVE_UEFI.fd}"
+: "${bastille_vm_bridge:=bridge0}"
+: "${bastille_vm_shutdown_timeout:=30}"
+: "${bastille_vm_disk_type:=virtio-blk}"
+: "${bastille_vm_nic_type:=virtio-net}"
+: "${bastille_vm_devfs_ruleset:=100}"
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -144,6 +154,46 @@ check_target_is_stopped() {
         return 1
     else
         return 0
+    fi
+}
+
+check_vm_exists() {
+    local target="${1}"
+    if [ -f "${bastille_vmdir}/${target}/vm.conf" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_vm_is_running() {
+    ## A Bastille VM is running when its supervision jail exists. Keying on the
+    ## jail (not /dev/vmm) is what lets 'stop' tear down a persistent jail that
+    ## lingers after bhyve exits -- e.g. when a guest powers itself off.
+    local target="${1}"
+    if jls name 2>/dev/null | grep -Eq "^${target}$"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_vm_is_stopped() {
+    local target="${1}"
+    if jls name 2>/dev/null | grep -Eq "^${target}$"; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+check_vm_guest_is_running() {
+    ## The bhyve guest itself is live when its vmm(4) instance exists.
+    local target="${1}"
+    if [ -e "/dev/vmm/${target}" ]; then
+        return 0
+    else
+        return 1
     fi
 }
 
