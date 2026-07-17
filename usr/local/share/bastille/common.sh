@@ -73,7 +73,7 @@ fi
 # Error messages/functions
 error_notify() {
     if [ "${BASTILLE_QUIET}" -ne 1 ]; then
-        printf "%b\n" "${COLOR_RED}$*${COLOR_RESET}"
+        printf "%b\n" "${COLOR_RED}$*${COLOR_RESET}" >&2
     fi
 }
 
