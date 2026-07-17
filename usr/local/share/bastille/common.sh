@@ -175,7 +175,7 @@ jail_autocomplete() {
         if [ "$(echo "${auto_target}" | wc -l)" -eq 1 ]; then
             echo "${auto_target}"
         else
-            error_continue "Multiple jails found for ${target}:\n${auto_target}"
+            error_continue "[ERROR]: Multiple jails found for ${target}:\n${auto_target}"
             return 1
         fi
     else
@@ -231,7 +231,7 @@ set_target() {
                 if get_jail_name "${jail}" > /dev/null; then
                     jail="$(get_jail_name ${jail})"
                 else
-                    error_continue "Error: JID \"${jail}\" not found. Is jail running?"
+                    error_continue "[ERROR]: JID not found: ${jail}"
                 fi
             elif ! check_target_exists "${jail}"; then
                 if jail_autocomplete "${jail}" > /dev/null; then
@@ -240,7 +240,7 @@ set_target() {
                     if grep -Ehoqw ${jail} ${bastille_jailsdir}/*/tags 2>/dev/null; then
                         jail="$(grep -Elw ${jail} ${bastille_jailsdir}/*/tags | awk -F"/tags" '{print $1}' | sed "s#${bastille_jailsdir}/##g" | tr '\n' ' ')"
                     else
-                        error_continue "Jail not found \"${jail}\""
+                        error_continue "[ERROR]: Jail not found: ${jail}"
                     fi
                 else
                     echo
@@ -271,20 +271,20 @@ set_target_single() {
     JAILS=""
     TARGET=""
     if echo "${target}" | grep -Eq '^[aA][lL][lL]$'; then
-        error_exit "[all|ALL] not supported with this command."
+        error_exit "[ERROR]: [all|ALL] is not supported with this command."
     elif [ "$(echo ${target} | wc -w)" -gt 1 ]; then
-        error_exit "Error: Command only supports a single TARGET."
+        error_exit "[ERROR]: Command only supports a single TARGET."
     elif [ ! -d "${bastille_jailsdir}/${target}" ] && echo "${target}" | grep -Eq '^[0-9]+$'; then
         if get_jail_name "${target}" > /dev/null; then
             target="$(get_jail_name ${target})"
         else
-            error_exit "Error: JID \"${target}\" not found. Is jail running?"
+            error_exit "[ERROR]: JID not found: ${target}"
         fi
     elif ! check_target_exists "${target}"; then
             if jail_autocomplete "${target}" > /dev/null; then
                 target="$(jail_autocomplete ${target})"
             elif [ $? -eq 2 ]; then
-                error_exit "Jail not found \"${target}\""
+                error_exit "[ERROR]: Jail not found: ${target}"
             else
                 echo
                 exit 1
