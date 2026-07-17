@@ -270,7 +270,7 @@ set_target_single() {
     local target="${1}"
     JAILS=""
     TARGET=""
-    if [ "${target}" = ALL ] || [ "${target}" = all ]; then
+    if echo "${target}" | grep -Eq '^[aA][lL][lL]$'; then
         error_exit "[all|ALL] not supported with this command."
     elif [ "$(echo ${target} | wc -w)" -gt 1 ]; then
         error_exit "Error: Command only supports a single TARGET."
