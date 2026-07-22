@@ -476,16 +476,22 @@ vm_generate_supervisor_conf() {
         local iface_lines=""
         local bridge_lines=""
         local taps_file="$(vm_taps_file "${vm_name}")"
+        local epairs_file="$(vm_epairs_file "${vm_name}")"
         local nic=0
-        while read -r epair_a epair_b; do
-            local tap="$(sed -n "$((nic + 1))p" "${taps_file}")"
-            iface_lines="${iface_lines}  vnet.interface += ${epair_b};
+        # The epairs/taps files are written by vm_create_vnet at start time, so
+        # they are absent during the create-time render. Skip the per-NIC lines
+        # when they are missing; vm_start re-renders once the files exist.
+        if [ -f "${epairs_file}" ]; then
+            while read -r epair_a epair_b; do
+                local tap="$(sed -n "$((nic + 1))p" "${taps_file}")"
+                iface_lines="${iface_lines}  vnet.interface += ${epair_b};
   vnet.interface += ${tap};
 "
-            bridge_lines="${bridge_lines}  exec.start += \"ifconfig bridge${nic} create && ifconfig bridge${nic} addm ${epair_b} addm ${tap} up && ifconfig ${epair_b} up && ifconfig ${tap} up\";
+                bridge_lines="${bridge_lines}  exec.start += \"ifconfig bridge${nic} create && ifconfig bridge${nic} addm ${epair_b} addm ${tap} up && ifconfig ${epair_b} up && ifconfig ${tap} up\";
 "
-            nic=$((nic + 1))
-        done < "$(vm_epairs_file "${vm_name}")"
+                nic=$((nic + 1))
+            done < "${epairs_file}"
+        fi
 
         cat << EOF > "${supervisor_conf}"
 ${vm_name} {
