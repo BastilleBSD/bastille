@@ -52,8 +52,13 @@ Verb reference
 - ``CPU n`` -- virtual CPU count (``bhyve -c``).
 - ``MEM size`` -- guest memory, e.g. ``8G`` (``bhyve -m``).
 - ``BOOTROM spec`` -- ``uefi`` (default), ``uefi-csm``, or a firmware path.
-- ``DISK name size [zfsprop=val ...]`` -- creates and attaches a virtio-blk
-  zvol in declaration order.
+- ``DISK name size [source=image] [zfsprop=val ...]`` creates and attaches a
+  virtio-blk zvol in declaration order. With ``source=<url or path>`` Bastille
+  populates the disk from a cloud/disk image at create time: a raw image is
+  written with ``dd`` (no dependency), a qcow2 image is converted straight onto
+  the zvol with ``qemu-img`` (``sysutils/qemu-tools``). This is how you boot a
+  pre-built cloud image and let cloud-init provision it, instead of installing
+  from an ISO.
 - ``NIC bridge`` attaches the guest NIC to the named bridge (default:
   ``bastille_vm_bridge``). See "Networking modes" below.
 - ``ISO url|path`` -- attaches installation media as an ahci-cd device. Remote
@@ -64,11 +69,17 @@ Verb reference
   (``alpine-virt-3.21.iso`` becomes ``Alpine-3.21``). Falls back to
   ``uefi-guest``.
 - ``CLOUDINIT file`` takes a path (relative to the template directory, or
-  absolute) to a cloud-init user-data file. Bastille builds a NoCloud ``CIDATA`` seed ISO
-  from it (plus an auto-generated meta-data with the VM's instance-id and
-  hostname) and attaches it as a CD. A cloud-init-enabled guest applies it at
-  first boot: users, SSH keys, packages, ``runcmd``, network, and so on. Uses
-  base ``makefs(8)``, no ports dependency.
+  absolute) to a cloud-init user-data file. Bastille builds a NoCloud ``CIDATA``
+  seed from it (plus an auto-generated meta-data with the VM's instance-id and
+  hostname) and attaches it as a virtio-blk disk. A cloud-init-enabled guest
+  applies it at first boot: users, SSH keys, packages, ``runcmd``, and so on.
+  Uses base ``makefs(8)``, no ports dependency. The seed is virtio-blk (not an
+  optical device) so it is visible when the guest's cloud-init ``ds-identify``
+  runs early in boot.
+- ``NETWORK_CONFIG file`` adds a cloud-init network-config (v1 or v2) to the
+  seed, so the guest gets a deterministic (for example static) address at first
+  boot. Renderer-agnostic: cloud-init applies it as netplan on Ubuntu or
+  systemd-networkd on Debian.
 - ``RDR proto host_port vm_port`` -- recorded for a future release; pf wiring
   for VMs is not yet enabled.
 

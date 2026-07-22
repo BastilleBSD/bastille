@@ -174,6 +174,52 @@ vm_create_disk() {
     fi
 }
 
+vm_write_disk_image() {
+    ## Populate a VM disk from a cloud/disk image (the DISK 'source=' option).
+    ## This is what makes cloud-init useful: you boot a pre-built cloud image and
+    ## cloud-init provisions it, rather than installing from an ISO. Raw images
+    ## are written with dd (no dependency); qcow2 images are converted straight
+    ## onto the zvol with qemu-img (sysutils/qemu-tools) when available.
+    local vm_name="${1}"
+    local disk="${2}"
+    local source="${3}"
+    local device="$(vm_disk_device "${vm_name}" "${disk}")"
+
+    # Fetch remote images into the cache (mirrors the ISO caching posture).
+    case "${source}" in
+        http://*|https://*|ftp://*)
+            local img_cache="${bastille_cachedir}/img"
+            local img_path="${img_cache}/$(basename "${source}")"
+            if [ ! -f "${img_path}" ]; then
+                mkdir -p "${img_cache}"
+                info 1 "Fetching disk image: ${source}"
+                if ! fetch -o "${img_path}" "${source}"; then
+                    error_exit "[ERROR]: Failed to fetch disk image: ${source}"
+                fi
+            fi
+            source="${img_path}"
+            ;;
+    esac
+    if [ ! -f "${source}" ]; then
+        error_exit "[ERROR]: Disk image not found: ${source}"
+    fi
+
+    info 1 "Writing image to ${disk}: $(basename "${source}")"
+    # qcow2 magic is "QFI\xfb" (51 46 49 fb); anything else is treated as raw.
+    if [ "$(head -c 4 "${source}" 2>/dev/null | od -An -tx1 | tr -d ' \n')" = "514649fb" ]; then
+        if ! command -v qemu-img >/dev/null 2>&1; then
+            error_exit "[ERROR]: qcow2 image needs sysutils/qemu-tools (qemu-img); use a raw image or install it."
+        fi
+        if ! qemu-img convert -O raw "${source}" "${device}"; then
+            error_exit "[ERROR]: Failed to write qcow2 image to ${disk}."
+        fi
+    else
+        if ! dd if="${source}" of="${device}" bs=1m conv=sync status=none 2>/dev/null; then
+            error_exit "[ERROR]: Failed to write raw image to ${disk}."
+        fi
+    fi
+}
+
 # ----------------------------------------------------------------------------
 # tap / bridge lifecycle
 #
@@ -389,10 +435,13 @@ vm_generate_args() {
             slot=$((slot + 1))
         fi
 
-        # cloud-init NoCloud seed (a CIDATA CD the guest reads at first boot).
+        # cloud-init NoCloud seed, presented as a virtio-blk disk labeled
+        # CIDATA. virtio-blk is in the guest initramfs (same as the boot disk),
+        # so cloud-init's ds-identify sees the seed early enough; an AHCI/optical
+        # device can be probed too late in boot to be detected.
         local seed="${bastille_vmdir}/${vm_name}/seed.iso"
         if [ -f "${seed}" ]; then
-            printf '%s\n' "-s ${slot},ahci-cd,${seed}"
+            printf '%s\n' "-s ${slot},virtio-blk,${seed}"
             slot=$((slot + 1))
         fi
 
@@ -643,27 +692,45 @@ vm_guess_os_from_iso() {
 }
 
 vm_build_cloudinit_seed() {
-    ## Build a NoCloud "cidata" seed ISO from a user-data file plus an
-    ## auto-generated meta-data, using base makefs(8) (no ports dependency). A
-    ## cloud-init-enabled guest reads it from the attached CD at first boot and
-    ## applies it (users, SSH keys, packages, runcmd, network, and so on).
+    ## Build a NoCloud "cidata" seed ISO using base makefs(8) (no ports
+    ## dependency). It always carries an auto-generated meta-data, plus the
+    ## user-data and/or network-config the template declared. A cloud-init guest
+    ## reads it from the attached CD at first boot and applies it: users, SSH
+    ## keys, packages, runcmd, and (renderer-agnostic) network configuration.
     local vm_name="${1}"
     local userdata="${2}"
+    local netconfig="${3}"
     local vmdir="${bastille_vmdir}/${vm_name}"
 
-    if [ ! -f "${userdata}" ]; then
-        error_exit "[ERROR]: cloud-init user-data not found: ${userdata}"
-    fi
-
     local seed_dir="$(mktemp -d "/tmp/bastille-cidata-${vm_name}.XXXXXX")"
-    # Keep an inspectable copy of the user-data with the VM (a debuggable
-    # boundary, like bhyve.args).
-    cp "${userdata}" "${vmdir}/cloud-init.yaml"
-    cp "${userdata}" "${seed_dir}/user-data"
     cat > "${seed_dir}/meta-data" <<EOF
 instance-id: ${vm_name}
 local-hostname: ${vm_name}
 EOF
+
+    # user-data (cloud-init requires the file to exist; default to an empty one).
+    if [ -n "${userdata}" ]; then
+        if [ ! -f "${userdata}" ]; then
+            rm -rf "${seed_dir}"
+            error_exit "[ERROR]: cloud-init user-data not found: ${userdata}"
+        fi
+        cp "${userdata}" "${vmdir}/cloud-init.yaml"
+        cp "${userdata}" "${seed_dir}/user-data"
+    else
+        printf '#cloud-config\n' > "${seed_dir}/user-data"
+    fi
+
+    # network-config (optional). cloud-init renders it to whatever the guest
+    # uses (netplan on Ubuntu, systemd-networkd/ifupdown on Debian), so it works
+    # across distros unlike a hand-written netplan file.
+    if [ -n "${netconfig}" ]; then
+        if [ ! -f "${netconfig}" ]; then
+            rm -rf "${seed_dir}"
+            error_exit "[ERROR]: cloud-init network-config not found: ${netconfig}"
+        fi
+        cp "${netconfig}" "${vmdir}/network-config.yaml"
+        cp "${netconfig}" "${seed_dir}/network-config"
+    fi
 
     # Label CIDATA is what cloud-init's NoCloud datasource looks for.
     if ! makefs -t cd9660 -o rockridge -o label=CIDATA "${vmdir}/seed.iso" "${seed_dir}" >/dev/null 2>&1; then
@@ -693,11 +760,13 @@ vm_create() {
     local M_MEM="512M"
     local M_BOOTROM="${bastille_vm_bootrom}"
     local M_DISKS=""
+    local M_DISK_SOURCES=""
     local M_NICS=""
     local M_ISO=""
     local M_ADDRESS=""
     local M_OS=""
     local M_CLOUDINIT=""
+    local M_NETCONFIG=""
     local RDR_RULES=""
     local seen_vm=0
 
@@ -737,19 +806,31 @@ vm_create() {
                 M_BOOTROM="$(vm_resolve_bootrom "${args}")"
                 ;;
             DISK)
-                # "DISK disk0 40G [prop=val ...]" -> "disk0:40G[,prop=val,...]"
+                # "DISK disk0 40G [source=<image>] [prop=val ...]". source=<url
+                # or path> populates the disk from a cloud/disk image; other
+                # tokens are zfs properties.
                 local d_name="$(echo "${args}" | awk '{print $1}')"
                 local d_size="$(echo "${args}" | awk '{print $2}')"
-                local d_props="$(echo "${args}" | awk '{$1="";$2="";sub(/^ */,"");print}' | tr ' ' ',')"
                 if [ -z "${d_name}" ] || [ -z "${d_size}" ]; then
                     set +f; unset IFS
                     error_exit "[ERROR]: DISK requires a name and size: ${args}"
                 fi
+                local d_source=""
+                local d_props=""
+                for d_tok in $(echo "${args}" | awk '{for (i=3; i<=NF; i++) print $i}'); do
+                    case "${d_tok}" in
+                        source=*) d_source="${d_tok#source=}" ;;
+                        *) d_props="${d_props}${d_props:+,}${d_tok}" ;;
+                    esac
+                done
                 local d_spec="${d_name}:${d_size}"
                 if [ -n "${d_props}" ]; then
                     d_spec="${d_spec},${d_props}"
                 fi
                 M_DISKS="${M_DISKS} ${d_spec}"
+                if [ -n "${d_source}" ]; then
+                    M_DISK_SOURCES="${M_DISK_SOURCES} ${d_name}=${d_source}"
+                fi
                 ;;
             NIC)
                 local n_bridge="$(echo "${args}" | awk '{print $1}')"
@@ -771,6 +852,11 @@ vm_create() {
                 # Path to a cloud-init user-data file (relative to the template
                 # directory, or absolute). Built into a NoCloud seed ISO.
                 M_CLOUDINIT="$(echo "${args}" | awk '{print $1}')"
+                ;;
+            NETWORK_CONFIG|NETCONFIG)
+                # Path to a cloud-init network-config file, added to the seed so
+                # the guest gets a deterministic (e.g. static) IP at first boot.
+                M_NETCONFIG="$(echo "${args}" | awk '{print $1}')"
                 ;;
             RDR)
                 RDR_RULES="${RDR_RULES}${args}
@@ -849,6 +935,11 @@ vm_create() {
         vm_create_disk "${vm_name}" "${spec}"
     done
 
+    # Populate any disk that declared a source image (cloud image boot disk).
+    for src_entry in ${M_DISK_SOURCES}; do
+        vm_write_disk_image "${vm_name}" "${src_entry%%=*}" "${src_entry#*=}"
+    done
+
     # Persist RDR rules for later application (needs ADDRESS).
     if [ -n "${RDR_RULES}" ]; then
         if [ -z "${M_ADDRESS}" ]; then
@@ -859,14 +950,19 @@ vm_create() {
         fi
     fi
 
-    # Build the cloud-init NoCloud seed, if the template declared one. Resolve
-    # the path relative to the template directory unless it is absolute.
-    if [ -n "${M_CLOUDINIT}" ]; then
+    # Build the cloud-init NoCloud seed if the template declared user-data
+    # and/or network-config. Resolve paths relative to the template directory
+    # unless absolute.
+    if [ -n "${M_CLOUDINIT}" ] || [ -n "${M_NETCONFIG}" ]; then
         case "${M_CLOUDINIT}" in
-            /*) : ;;
+            ""|/*) : ;;
             *) M_CLOUDINIT="${template_dir}/${M_CLOUDINIT}" ;;
         esac
-        vm_build_cloudinit_seed "${vm_name}" "${M_CLOUDINIT}"
+        case "${M_NETCONFIG}" in
+            ""|/*) : ;;
+            *) M_NETCONFIG="${template_dir}/${M_NETCONFIG}" ;;
+        esac
+        vm_build_cloudinit_seed "${vm_name}" "${M_CLOUDINIT}" "${M_NETCONFIG}"
     fi
 
     # Materialize derived artifacts (bhyve.args, supervisor.conf, vm-run.sh).
@@ -1107,6 +1203,7 @@ vm_clone() {
     if [ -f "${src_dir}/seed.iso" ]; then
         cp "${src_dir}/seed.iso" "${dst_dir}/seed.iso"
         [ -f "${src_dir}/cloud-init.yaml" ] && cp "${src_dir}/cloud-init.yaml" "${dst_dir}/cloud-init.yaml"
+        [ -f "${src_dir}/network-config.yaml" ] && cp "${src_dir}/network-config.yaml" "${dst_dir}/network-config.yaml"
     fi
 
     # Copy-on-write clone of each disk.
