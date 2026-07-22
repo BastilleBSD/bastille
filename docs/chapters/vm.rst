@@ -78,8 +78,15 @@ Verb reference
   runs early in boot.
 - ``NETWORK_CONFIG file`` adds a cloud-init network-config (v1 or v2) to the
   seed, so the guest gets a deterministic (for example static) address at first
-  boot. Renderer-agnostic: cloud-init applies it as netplan on Ubuntu or
-  systemd-networkd on Debian.
+  boot. cloud-init renders it to whatever the guest uses: netplan or
+  systemd-networkd on Debian/Ubuntu, ifupdown (``/etc/network/interfaces``) on
+  Alpine. One portability caveat: the netplan-style ``match`` selector is only
+  honored by the netplan/networkd renderers. The ifupdown renderer uses the
+  ``ethernets`` key as the literal interface name, so for those guests name the
+  device directly (``eth0``) instead of a logical name plus ``match``. For
+  example, ``ethernets: {eth0: {addresses: [...]}}`` works everywhere, whereas
+  ``ethernets: {primary: {match: {name: "e*"}, ...}}`` only works on
+  netplan/networkd guests.
 - ``RDR proto host_port vm_port`` -- recorded for a future release; pf wiring
   for VMs is not yet enabled.
 
