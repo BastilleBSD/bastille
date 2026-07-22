@@ -613,6 +613,67 @@ validate_ip() {
     fi
 }
 
+check_address_in_use() {
+    ## Echo a short description of what already holds an IPv4/IPv6 address (a
+    ## host interface, another jail, or a VM), or nothing if it is free. Used by
+    ## create/clone to refuse a duplicate address. Matches the bare address,
+    ## ignoring any "interface|" prefix or "/subnet" suffix.
+    local addr="${1}"
+    if [ -z "${addr}" ]; then
+        return 1
+    fi
+    # Normalize: drop "interface|" prefix and "/subnet" suffix.
+    local want="${addr##*|}"
+    want="${want%%/*}"
+    if [ -z "${want}" ]; then
+        return 1
+    fi
+
+    # Host interfaces (exact inet/inet6 match; escape dots so they are literal).
+    local want_re="$(printf '%s' "${want}" | sed 's/[.]/\\./g')"
+    if ifconfig 2>/dev/null | grep -Eq "^[[:space:]]*inet6?[[:space:]]+${want_re}([[:space:]]|%|\$)"; then
+        echo "a host interface"
+        return 0
+    fi
+
+    # Other jails: shared-IP jails record the address in jail.conf (ip4.addr /
+    # ip6.addr); VNET jails record it inside the jail's rc.conf (ifconfig_vnet*),
+    # the same two sources bastille list reads.
+    if [ -d "${bastille_jailsdir}" ]; then
+        local jd jail_ips
+        for jd in "${bastille_jailsdir}"/*/; do
+            [ -d "${jd}" ] || continue
+            jail_ips="$(
+                sed -n 's/^[[:space:]]*ip[46]\.addr[[:space:]]*[+]*=[[:space:]]*\(.*\);.*$/\1/p' "${jd}jail.conf" 2>/dev/null \
+                    | sed -e 's#/# #g' -e 's/.*|//g' | awk '{print $1}'
+                grep -E '^ifconfig_vnet.*inet ' "${jd}root/etc/rc.conf" 2>/dev/null \
+                    | grep -o 'inet .*' | awk '{print $2}' | sed -E 's#/[0-9]+.*##g; s/"//g'
+                grep -E '^ifconfig_vnet.*inet6' "${jd}root/etc/rc.conf" 2>/dev/null \
+                    | grep -Eow '(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?' | sed 's/"//g'
+            )"
+            if printf '%s\n' "${jail_ips}" | grep -qxF "${want}"; then
+                echo "jail $(basename "${jd}")"
+                return 0
+            fi
+        done
+    fi
+
+    # VMs (address= in each vm.conf).
+    if [ -d "${bastille_vmdir}" ]; then
+        local vc vaddr
+        for vc in "${bastille_vmdir}"/*/vm.conf; do
+            [ -f "${vc}" ] || continue
+            vaddr="$(sysrc -f "${vc}" -n address 2>/dev/null)"
+            vaddr="${vaddr%%/*}"
+            if [ -n "${vaddr}" ] && [ "${vaddr}" = "${want}" ]; then
+                echo "VM $(basename "$(dirname "${vc}")")"
+                return 0
+            fi
+        done
+    fi
+    return 1
+}
+
 validate_netconf() {
     # Add default 'bastille_network_vnet_type' on old config file
     # This is so we don't have to indtroduce a 'breaking change' statement

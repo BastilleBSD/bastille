@@ -156,15 +156,24 @@ define_ips() {
             if [ "${VNET_JAIL}" -eq 0 ]; then
                 error_exit "[ERROR]: Unsupported IP option for non-VNET jail: ${IP4_ADDR}"
             fi
-        # Warn if IP is in use
-        elif ifconfig | grep -qwF "${IP4_ADDR}"; then
-            warn 1 "[WARNING]: IP address in use: ${IP4_ADDR}"
+        # Refuse a concrete address already held by a host interface, another
+        # jail, or a VM (a duplicate address silently breaks connectivity).
+        else
+            local owner_in_use="$(check_address_in_use "${IP4_ADDR}")"
+            if [ -n "${owner_in_use}" ]; then
+                error_exit "[ERROR]: IP address already in use by ${owner_in_use}: ${IP4_ADDR}"
+            fi
         fi
     fi
 
     if [ -n "${IP6_ADDR}" ]; then
         if [ "${IP6_ADDR}" = "SLAAC" ] && [ "${VNET_JAIL}" -eq 0 ]; then
             error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
+        elif [ "${IP6_ADDR}" != "SLAAC" ] && [ "${IP6_ADDR}" != "inherit" ] && [ "${IP6_ADDR}" != "ip_hostname" ]; then
+            local owner_in_use="$(check_address_in_use "${IP6_ADDR}")"
+            if [ -n "${owner_in_use}" ]; then
+                error_exit "[ERROR]: IP address already in use by ${owner_in_use}: ${IP6_ADDR}"
+            fi
         fi
     fi
 
