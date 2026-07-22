@@ -18,7 +18,10 @@ the host:
 .. code-block:: shell
 
   pkg install edk2-bhyve
-  kldload vmm nmdm if_bridge if_tap
+  kldload vmm nmdm if_bridge if_tap if_epair
+
+(``if_epair`` is only needed for VNET-mode VMs; add these to
+``kld_list`` in ``/etc/rc.conf`` to load them at boot.)
 
 VMs require ZFS. Set ``bastille_zfs_enable=YES`` and ``bastille_zfs_zpool`` in
 ``bastille.conf``. See the ``VM (bhyve) options`` block in the sample config
@@ -193,7 +196,11 @@ the clone/rollback story jails already enjoy.
 Status
 ------
 
-This is an initial implementation. Suspend/resume, live migration, cloud-init
-seeding, graphical (VNC) consoles, Windows guests, and PCI passthrough are out
-of scope for this release. The ``bhyve.args`` file is the debuggable boundary
-between the manifest and the hypervisor: if a VM misbehaves, read and diff it.
+This is an initial implementation. Supported: the full create/start/stop/
+console/list/destroy/clone lifecycle, **shared and VNET networking** (see
+"Networking modes"), and **cloud-init seeding** (``CLOUDINIT`` user-data,
+``NETWORK_CONFIG``, ``DISK source=`` cloud-image import, and ``clone --reseed``;
+see the "Verb reference"). Suspend/resume, live migration, graphical (VNC)
+consoles, Windows guests, and PCI passthrough are out of scope for this release.
+The ``bhyve.args`` file is the debuggable boundary between the manifest and the
+hypervisor: if a VM misbehaves, read and diff it.
