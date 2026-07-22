@@ -125,9 +125,22 @@ Cloning is a ``zfs clone`` of the VM's zvols plus a manifest rewrite, so it is
 near-instant and space-efficient: provision one base VM, then clone it per
 worker. The clone shares unwritten blocks with the source (copy-on-write), so
 the source cannot be destroyed while clones of it exist, which is the correct
-golden-image behavior. The optional third argument sets the clone's ``ADDRESS``;
-the guest's in-VM network config is copied as-is and should be reconfigured
-inside the clone.
+golden-image behavior. By default the clone is an identical twin: the optional
+third argument sets the clone's ``ADDRESS`` metadata, but the guest's in-VM
+network config is copied as-is, so a plain clone should be reconfigured inside
+the clone to avoid an address conflict with the source.
+
+``--reseed`` makes the clone a distinct instance instead. It rebuilds the
+cloud-init seed with a fresh ``instance-id``, so cloud-init treats the clone as
+a new instance and re-runs its per-instance provisioning at first boot: it
+applies the new address (``bastille clone --reseed src new 10.0.0.42``), sets
+the hostname (``--hostname NAME``, default the clone name), re-applies users and
+SSH keys, and regenerates the guest's SSH host keys. A new ``--reseed`` address
+is refused if it is already in use, and both the ``network-config`` and the
+``ADDRESS`` metadata are updated together so they cannot diverge. This is the
+"stamp N distinct instances from one golden image at copy-on-write speed"
+workflow. (Note: ``/etc/machine-id`` is still inherited from the source; a
+future ``--clean`` will reset it.)
 
 ``bastille list`` grows a VM row per VM with a ``Type`` column of ``vm``;
 ``bastille list vms`` shows only VMs.

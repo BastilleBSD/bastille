@@ -42,6 +42,10 @@ usage() {
 
     -a | --auto      Auto mode. Start/stop jail(s) if required. Cannot be used with [-l|--live].
     -l | --live      Clone a running jail (ZFS only). Cannot be used with [-a|--auto].
+    --reseed         (VM only) Rebuild the cloud-init seed with a fresh instance-id so the
+                     clone re-provisions at first boot (its own IP/hostname/keys) instead
+                     of being an identical twin. Pass ADDRESS to give it a new address.
+    --hostname NAME  (VM only, with --reseed) Hostname for the reseeded clone (default: NEW_NAME).
 
 EOF
     exit 1
@@ -50,6 +54,8 @@ EOF
 # Handle options
 AUTO=0
 LIVE=0
+RESEED=0
+RESEED_HOSTNAME=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -66,6 +72,17 @@ while [ "$#" -gt 0 ]; do
                 LIVE=1
                 shift
             fi
+            ;;
+        --reseed)
+            RESEED=1
+            shift
+            ;;
+        --hostname)
+            if [ -z "${2}" ]; then
+                error_exit "[ERROR]: [--hostname] requires a name."
+            fi
+            RESEED_HOSTNAME="${2}"
+            shift 2
             ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
@@ -93,8 +110,13 @@ bastille_root_check
 # Brand dispatch: clone a VM. Address is optional (it is RDR metadata; the
 # guest's real network config lives inside the guest and is cloned as-is).
 if [ "$#" -ge 2 ] && check_vm_exists "${1}"; then
-    vm_clone "${1}" "${2}" "${3}" "${AUTO}" "${LIVE}"
+    vm_clone "${1}" "${2}" "${3}" "${AUTO}" "${LIVE}" "${RESEED}" "${RESEED_HOSTNAME}"
     exit $?
+fi
+
+# --reseed / --hostname are VM-only.
+if [ "${RESEED}" -eq 1 ] || [ -n "${RESEED_HOSTNAME}" ]; then
+    error_exit "[ERROR]: [--reseed] and [--hostname] apply only to VM clones."
 fi
 
 # Verify parameter count

@@ -700,12 +700,17 @@ vm_build_cloudinit_seed() {
     local vm_name="${1}"
     local userdata="${2}"
     local netconfig="${3}"
+    # instance-id drives cloud-init's "new instance" detection; a fresh value
+    # (used by clone --reseed) makes a cloned guest re-run its per-instance
+    # provisioning. Both default to the VM name for a normal create.
+    local instance_id="${4:-${vm_name}}"
+    local hostname="${5:-${vm_name}}"
     local vmdir="${bastille_vmdir}/${vm_name}"
 
     local seed_dir="$(mktemp -d "/tmp/bastille-cidata-${vm_name}.XXXXXX")"
     cat > "${seed_dir}/meta-data" <<EOF
-instance-id: ${vm_name}
-local-hostname: ${vm_name}
+instance-id: ${instance_id}
+local-hostname: ${hostname}
 EOF
 
     # user-data (cloud-init requires the file to exist; default to an empty one).
@@ -1149,6 +1154,8 @@ vm_clone() {
     local new_address="${3}"
     local auto="${4}"
     local live="${5}"
+    local reseed="${6:-0}"
+    local reseed_hostname="${7}"
     local src_dir="${bastille_vmdir}/${target}"
     local dst_dir="${bastille_vmdir}/${newname}"
     local src_ds="${bastille_zfs_zpool}/${bastille_zfs_prefix}/vms/${target}"
@@ -1167,6 +1174,15 @@ vm_clone() {
 
     if ! checkyesno bastille_zfs_enable || [ -z "${bastille_zfs_zpool}" ]; then
         error_exit "[ERROR]: VM clone requires ZFS."
+    fi
+
+    # For a reseed with a new address, refuse a collision up front (before any
+    # dataset is created), reusing the create-time guard.
+    if [ "${reseed}" = "1" ] && [ -n "${new_address}" ]; then
+        local addr_owner="$(check_address_in_use "${new_address%%/*}")"
+        if [ -n "${addr_owner}" ]; then
+            error_exit "[ERROR]: IP address already in use by ${addr_owner}: ${new_address}"
+        fi
     fi
 
     # State: stopped (or -a to auto-stop, or -l to clone a running VM).
@@ -1197,10 +1213,42 @@ vm_clone() {
     if [ -f "${src_dir}/settings.conf" ]; then
         cp "${src_dir}/settings.conf" "${dst_dir}/settings.conf"
     fi
-    # Carry the cloud-init seed if the source has one. cloud-init keys off the
-    # instance-id (the source's name), so the clone will not re-run the source's
-    # provisioning, which is the right default for a golden image.
-    if [ -f "${src_dir}/seed.iso" ]; then
+    # cloud-init seed. Two modes:
+    #  - default (golden image): copy the source seed verbatim. cloud-init keys
+    #    off the instance-id (the source's name) and so does not re-run, giving
+    #    an identical twin the operator reconfigures by hand.
+    #  - reseed: rebuild the seed with a fresh instance-id (and optional new
+    #    address/hostname) so cloud-init treats the clone as a new instance and
+    #    re-runs its per-instance provisioning: network, hostname, users/keys,
+    #    and SSH host-key regeneration. That stamps a distinct instance.
+    if [ "${reseed}" = "1" ]; then
+        local rs_host="${reseed_hostname:-${newname}}"
+        local rs_ud="" rs_nc=""
+        if [ -f "${src_dir}/cloud-init.yaml" ]; then
+            rs_ud="$(mktemp -t bastille-reseed-ud)"
+            # Give the clone its own hostname: rewrite a hardcoded user-data
+            # hostname (meta-data local-hostname covers the case with none).
+            sed -E "s/^([[:space:]]*hostname:).*/\1 ${rs_host}/" "${src_dir}/cloud-init.yaml" > "${rs_ud}"
+        fi
+        if [ -f "${src_dir}/network-config.yaml" ]; then
+            rs_nc="$(mktemp -t bastille-reseed-nc)"
+            if [ -n "${new_address}" ]; then
+                # Rewrite the address on the network-config's addresses line,
+                # preserving the original prefix length.
+                sed -E "/addresses:/ s#([0-9]{1,3}\.){3}[0-9]{1,3}#${new_address%%/*}#" \
+                    "${src_dir}/network-config.yaml" > "${rs_nc}"
+            else
+                cp "${src_dir}/network-config.yaml" "${rs_nc}"
+            fi
+        fi
+        if [ -z "${rs_ud}" ] && [ -z "${rs_nc}" ]; then
+            warn 1 "[WARNING]: --reseed on a VM with no cloud-init; the clone gets only a fresh instance-id and hostname."
+        elif [ -n "${rs_nc}" ] && [ -z "${new_address}" ]; then
+            warn 1 "[WARNING]: --reseed without an address: the clone requests the same address as '${target}'. Pass an address to avoid a conflict."
+        fi
+        vm_build_cloudinit_seed "${newname}" "${rs_ud}" "${rs_nc}" "${newname}" "${rs_host}"
+        rm -f "${rs_ud}" "${rs_nc}"
+    elif [ -f "${src_dir}/seed.iso" ]; then
         cp "${src_dir}/seed.iso" "${dst_dir}/seed.iso"
         [ -f "${src_dir}/cloud-init.yaml" ] && cp "${src_dir}/cloud-init.yaml" "${dst_dir}/cloud-init.yaml"
         [ -f "${src_dir}/network-config.yaml" ] && cp "${src_dir}/network-config.yaml" "${dst_dir}/network-config.yaml"
@@ -1230,8 +1278,13 @@ vm_clone() {
     vm_render_artifacts "${newname}"
 
     info 1 "Cloned '${target}' to '${newname}' successfully."
-    info 1 "Note: the guest's in-VM network config is copied as-is; reconfigure"
-    info 1 "it inside the clone to avoid an address conflict with '${target}'."
+    if [ "${reseed}" = "1" ]; then
+        info 1 "Reseeded: cloud-init re-provisions the clone at first boot (fresh"
+        info 1 "instance-id, hostname '${reseed_hostname:-${newname}}'${new_address:+, address ${new_address}})."
+    else
+        info 1 "Note: the guest's in-VM network config is copied as-is; reconfigure"
+        info 1 "it inside the clone to avoid an address conflict with '${target}'."
+    fi
 
     if [ "${auto}" = "1" ]; then
         bastille start "${target}"
