@@ -940,9 +940,17 @@ if [ "${VM_MODE}" -eq 1 ]; then
     if [ "$#" -ne 2 ]; then
         usage
     fi
+    # [-V|--vnet] selects VNET networking: the VM's supervision jail becomes a
+    # VNET jail with the guest's tap inside its own network stack. Default is
+    # shared (guest tap on a host bridge).
+    if [ "${VNET_JAIL}" -eq 1 ]; then
+        VM_NETWORK_TYPE="vnet"
+    else
+        VM_NETWORK_TYPE="shared"
+    fi
     info 1 "\nCreating VM: ${NAME}..."
     validate_vm_name
-    vm_create "${NAME}" "${TEMPLATE}"
+    vm_create "${NAME}" "${TEMPLATE}" "${VM_NETWORK_TYPE}"
     exit 0
 fi
 

@@ -54,8 +54,8 @@ Verb reference
 - ``BOOTROM spec`` -- ``uefi`` (default), ``uefi-csm``, or a firmware path.
 - ``DISK name size [zfsprop=val ...]`` -- creates and attaches a virtio-blk
   zvol in declaration order.
-- ``NIC bridge`` -- creates a persistently named tap (``vm-<name>-<n>``) and
-  adds it to the named bridge (default: ``bastille_vm_bridge``).
+- ``NIC bridge`` attaches the guest NIC to the named bridge (default:
+  ``bastille_vm_bridge``). See "Networking modes" below.
 - ``ISO url|path`` -- attaches installation media as an ahci-cd device. Remote
   URLs are fetched into the Bastille cache.
 - ``ADDRESS ip`` -- records the guest address (required for ``RDR``).
@@ -64,6 +64,21 @@ Verb reference
 
 Jail-only verbs (``PKG``, ``SYSRC``, ``CP``, ``CMD``, ``SERVICE`` ...) are
 errors in a VM template; a template is one brand.
+
+Networking modes
+~~~~~~~~~~~~~~~~
+
+A VM's networking has two modes, chosen at create time the way jails choose
+theirs:
+
+- **shared** (default): the guest's tap is a member of the named host bridge,
+  the pattern vm-bhyve uses. Simple, and the guest address is configured inside
+  the guest.
+- **VNET** (``bastille create --vm -V``): the supervision jail becomes a VNET
+  jail, and the guest's tap lives inside the jail's own network stack, uplinked
+  to the host bridge through an epair. The host sees only the a-side of the
+  epair, so the VM's networking is fully contained in its jail, exactly like a
+  VNET jail. This is the mode that makes "a VM is a jail" complete.
 
 Lifecycle
 ---------

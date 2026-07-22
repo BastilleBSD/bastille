@@ -242,6 +242,84 @@ vm_destroy_taps() {
     rm -f "$(vm_taps_file "${vm_name}")"
 }
 
+# VNET mode: instead of a host tap on a host bridge, the supervision jail is a
+# VNET jail and the guest's networking lives inside it. For each NIC we create
+# an epair (host side onto the named bridge) plus a guest tap; both the
+# jail-side epair and the tap are moved into the jail's own vnet at jail
+# creation and bridged together inside the jail (see vm_generate_supervisor_conf).
+# The host sees only the a-side of the epair, exactly like a VNET jail.
+
+vm_epairs_file() {
+    echo "${bastille_vmdir}/${1}/epairs"
+}
+
+vm_epair_list() {
+    ## One "epair_a epair_b" pair per NIC, in declaration order.
+    local epairs_file="$(vm_epairs_file "${1}")"
+    if [ -f "${epairs_file}" ]; then
+        cat "${epairs_file}"
+    fi
+}
+
+vm_create_vnet() {
+    ## Create the host-side interfaces for every NIC of a VNET VM. Records tap
+    ## names (for the bhyve argument vector) and epair pairs (for supervisor.conf
+    ## and teardown). The jail-side epair and the tap are moved into the jail's
+    ## vnet by the generated supervisor.conf at jail creation.
+    local vm_name="${1}"
+    local nics="$(vm_get "${vm_name}" nics)"
+    local taps_file="$(vm_taps_file "${vm_name}")"
+    local epairs_file="$(vm_epairs_file "${vm_name}")"
+
+    : > "${taps_file}"
+    : > "${epairs_file}"
+    local index=0
+    for bridge in ${nics}; do
+        if ! ifconfig -g bridge | grep -owq "${bridge}"; then
+            error_exit "[ERROR]: '${bridge}' is not a bridge interface."
+        fi
+        local epair_a="$(ifconfig epair create)"
+        if [ -z "${epair_a}" ]; then
+            error_exit "[ERROR]: Failed to create epair for VM: ${vm_name}"
+        fi
+        local epair_b="${epair_a%a}b"
+        ifconfig "${epair_a}" description "vm-${vm_name}-${index}: Bastille VM ${vm_name} nic${index} uplink" >/dev/null
+        ifconfig "${epair_a}" up >/dev/null
+        ifconfig "${bridge}" addm "${epair_a}" >/dev/null
+        local tap="$(ifconfig tap create)"
+        if [ -z "${tap}" ]; then
+            error_exit "[ERROR]: Failed to create tap for VM: ${vm_name}"
+        fi
+        ifconfig "${tap}" description "vm-${vm_name}-${index}: Bastille VM ${vm_name} nic${index}" >/dev/null
+        printf '%s\n' "${tap}" >> "${taps_file}"
+        printf '%s %s\n' "${epair_a}" "${epair_b}" >> "${epairs_file}"
+        index=$((index + 1))
+    done
+}
+
+vm_destroy_vnet() {
+    ## Tear down VNET interfaces. jail -r already destroys the jail's own vnet
+    ## interfaces (jail-side epair, tap, in-jail bridge); this cleans up the
+    ## host-side epair and any stragglers idempotently, then clears the files.
+    local vm_name="${1}"
+    local epairs_file="$(vm_epairs_file "${vm_name}")"
+    if [ -f "${epairs_file}" ]; then
+        while read -r epair_a epair_b; do
+            for iface in ${epair_a} ${epair_b}; do
+                if [ -n "${iface}" ] && ifconfig "${iface}" >/dev/null 2>&1; then
+                    ifconfig "${iface}" destroy >/dev/null 2>&1
+                fi
+            done
+        done < "${epairs_file}"
+    fi
+    for tap in $(vm_tap_list "${vm_name}"); do
+        if ifconfig "${tap}" >/dev/null 2>&1; then
+            ifconfig "${tap}" destroy >/dev/null 2>&1
+        fi
+    done
+    rm -f "$(vm_epairs_file "${vm_name}")" "$(vm_taps_file "${vm_name}")"
+}
+
 # ----------------------------------------------------------------------------
 # bhyve argument generation
 # ----------------------------------------------------------------------------
@@ -372,10 +450,55 @@ vm_generate_supervisor_conf() {
     local vm_name="${1}"
     local supervisor_conf="${bastille_vmdir}/${vm_name}/supervisor.conf"
     local run_script="${bastille_vmdir}/${vm_name}/vm-run.sh"
+    local network_type="$(vm_get "${vm_name}" network_type)"
+    : "${network_type:=shared}"
 
-    cat << EOF > "${supervisor_conf}"
+    # bhyve runs a foreground loop, so daemon(8) backgrounds it -- otherwise
+    # 'jail -c' would block until the guest powers off. bhyve stays confined to
+    # this jail because daemon(8) runs inside it. The </dev/null and >/dev/null
+    # redirections detach the daemon subtree from jail -c's stdio so
+    # 'bastille start' (and the rc.d boot pipeline) return promptly instead of
+    # hanging on an inherited stdout pipe; bhyve output still goes to the -o log.
+    local launch="/usr/sbin/daemon -o ${bastille_logsdir}/${vm_name}_vm.log /bin/sh ${run_script} </dev/null >/dev/null 2>&1"
+
+    if [ "${network_type}" = "vnet" ]; then
+        # VNET mode: the jail owns its network stack. Move each NIC's jail-side
+        # epair and tap into the vnet, then bridge them together inside the jail
+        # before launching bhyve. Interface names come from the runtime files
+        # written by vm_create_vnet, so they are known at render time.
+        local iface_lines=""
+        local bridge_lines=""
+        local taps_file="$(vm_taps_file "${vm_name}")"
+        local nic=0
+        while read -r epair_a epair_b; do
+            local tap="$(sed -n "$((nic + 1))p" "${taps_file}")"
+            iface_lines="${iface_lines}  vnet.interface += ${epair_b};
+  vnet.interface += ${tap};
+"
+            bridge_lines="${bridge_lines}  exec.start += \"ifconfig bridge${nic} create && ifconfig bridge${nic} addm ${epair_b} addm ${tap} up && ifconfig ${epair_b} up && ifconfig ${tap} up\";
+"
+            nic=$((nic + 1))
+        done < "$(vm_epairs_file "${vm_name}")"
+
+        cat << EOF > "${supervisor_conf}"
 ${vm_name} {
-  # Bastille bhyve supervision jail (generated).
+  # Bastille bhyve supervision jail (generated, VNET mode).
+  # This is an implementation detail; edit vm.conf, not this file.
+  path = /;
+  host.hostname = ${vm_name};
+  persist;
+  allow.vmm;
+  enforce_statfs = 1;
+  vnet;
+${iface_lines}  exec.clean;
+${bridge_lines}  exec.start += "${launch}";
+  exec.stop = "";
+}
+EOF
+    else
+        cat << EOF > "${supervisor_conf}"
+${vm_name} {
+  # Bastille bhyve supervision jail (generated, shared mode).
   # This is an implementation detail; edit vm.conf, not this file.
   path = /;
   host.hostname = ${vm_name};
@@ -383,16 +506,11 @@ ${vm_name} {
   allow.vmm;
   enforce_statfs = 1;
   exec.clean;
-  # bhyve runs a foreground loop, so daemon(8) backgrounds it -- otherwise
-  # 'jail -c' would block until the guest powers off. bhyve stays confined to
-  # this jail because daemon(8) itself runs inside it. The </dev/null and
-  # >/dev/null redirections detach the daemon subtree from jail -c's stdio so
-  # 'bastille start' (and the rc.d boot pipeline) return promptly instead of
-  # hanging on an inherited stdout pipe; bhyve output still goes to the -o log.
-  exec.start = "/usr/sbin/daemon -o ${bastille_logsdir}/${vm_name}_vm.log /bin/sh ${run_script} </dev/null >/dev/null 2>&1";
+  exec.start = "${launch}";
   exec.stop = "";
 }
 EOF
+    fi
 }
 
 # ----------------------------------------------------------------------------
@@ -481,6 +599,7 @@ vm_create() {
     ## backing zvols. Networking taps are created lazily at start time.
     local vm_name="${1}"
     local template="${2}"
+    local network_type="${3:-shared}"
     local template_dir="${bastille_templatesdir}/${template}"
     local bastillefile="${template_dir}/Bastillefile"
     local vmdir="${bastille_vmdir}/${vm_name}"
@@ -617,6 +736,7 @@ vm_create() {
     vm_set "${vm_name}" nics "${M_NICS}"
     vm_set "${vm_name}" iso "${M_ISO}"
     vm_set "${vm_name}" address "${M_ADDRESS}"
+    vm_set "${vm_name}" network_type "${network_type}"
 
     # Boot/priority settings shared with the jail convention.
     sysrc -f "${vmdir}/settings.conf" boot="${BOOT:-on}" >/dev/null
@@ -669,16 +789,29 @@ vm_start() {
         return 1
     fi
 
-    # Create taps first so their tapN names flow into the bhyve argument
-    # vector, then regenerate artifacts (honors manifest edits). Order matters:
-    # vm_generate_args reads the taps runtime file.
-    vm_create_taps "${vm_name}"
+    local network_type="$(vm_get "${vm_name}" network_type)"
+    : "${network_type:=shared}"
+
+    # Create host-side interfaces first so their names flow into the bhyve
+    # argument vector (and, for VNET, the supervisor.conf), then regenerate
+    # artifacts (honors manifest edits). Order matters: vm_generate_args and the
+    # VNET supervisor.conf read the taps/epairs runtime files.
+    if [ "${network_type}" = "vnet" ]; then
+        vm_create_vnet "${vm_name}"
+    else
+        vm_create_taps "${vm_name}"
+    fi
     vm_render_artifacts "${vm_name}"
 
-    # Start the supervision jail; its exec.start execs the bhyve loop.
+    # Start the supervision jail; its exec.start execs the bhyve loop (and, for
+    # VNET, first builds the in-jail bridge).
     if ! jail -f "${bastille_vmdir}/${vm_name}/supervisor.conf" -c "${vm_name}"; then
         error_notify "[ERROR]: Failed to start supervision jail: ${vm_name}"
-        vm_destroy_taps "${vm_name}"
+        if [ "${network_type}" = "vnet" ]; then
+            vm_destroy_vnet "${vm_name}"
+        else
+            vm_destroy_taps "${vm_name}"
+        fi
         return 1
     fi
 
@@ -729,9 +862,13 @@ vm_stop() {
         jail -f "${bastille_vmdir}/${vm_name}/supervisor.conf" -r "${vm_name}" >/dev/null 2>&1
     fi
 
-    # Destroy the vmm instance and tear down taps.
+    # Destroy the vmm instance and tear down networking.
     bhyvectl --destroy --vm="${vm_name}" >/dev/null 2>&1
-    vm_destroy_taps "${vm_name}"
+    if [ "$(vm_get "${vm_name}" network_type)" = "vnet" ]; then
+        vm_destroy_vnet "${vm_name}"
+    else
+        vm_destroy_taps "${vm_name}"
+    fi
 
     return 0
 }
