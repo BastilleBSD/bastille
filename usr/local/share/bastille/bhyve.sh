@@ -389,6 +389,13 @@ vm_generate_args() {
             slot=$((slot + 1))
         fi
 
+        # cloud-init NoCloud seed (a CIDATA CD the guest reads at first boot).
+        local seed="${bastille_vmdir}/${vm_name}/seed.iso"
+        if [ -f "${seed}" ]; then
+            printf '%s\n' "-s ${slot},ahci-cd,${seed}"
+            slot=$((slot + 1))
+        fi
+
         # The vmm(4) instance name is the VM name, matching the jail name.
         printf '%s\n' "${vm_name}"
     } > "${args_file}"
@@ -629,6 +636,38 @@ vm_guess_os_from_iso() {
     fi
 }
 
+vm_build_cloudinit_seed() {
+    ## Build a NoCloud "cidata" seed ISO from a user-data file plus an
+    ## auto-generated meta-data, using base makefs(8) (no ports dependency). A
+    ## cloud-init-enabled guest reads it from the attached CD at first boot and
+    ## applies it (users, SSH keys, packages, runcmd, network, and so on).
+    local vm_name="${1}"
+    local userdata="${2}"
+    local vmdir="${bastille_vmdir}/${vm_name}"
+
+    if [ ! -f "${userdata}" ]; then
+        error_exit "[ERROR]: cloud-init user-data not found: ${userdata}"
+    fi
+
+    local seed_dir="$(mktemp -d "/tmp/bastille-cidata-${vm_name}.XXXXXX")"
+    # Keep an inspectable copy of the user-data with the VM (a debuggable
+    # boundary, like bhyve.args).
+    cp "${userdata}" "${vmdir}/cloud-init.yaml"
+    cp "${userdata}" "${seed_dir}/user-data"
+    cat > "${seed_dir}/meta-data" <<EOF
+instance-id: ${vm_name}
+local-hostname: ${vm_name}
+EOF
+
+    # Label CIDATA is what cloud-init's NoCloud datasource looks for.
+    if ! makefs -t cd9660 -o rockridge -o label=CIDATA "${vmdir}/seed.iso" "${seed_dir}" >/dev/null 2>&1; then
+        rm -rf "${seed_dir}"
+        error_exit "[ERROR]: Failed to build cloud-init seed ISO."
+    fi
+    rm -rf "${seed_dir}"
+    info 2 "Wrote cloud-init seed: ${vmdir}/seed.iso"
+}
+
 vm_create() {
     ## Render a VM template into an authoritative manifest, then create the
     ## backing zvols. Networking taps are created lazily at start time.
@@ -652,6 +691,7 @@ vm_create() {
     local M_ISO=""
     local M_ADDRESS=""
     local M_OS=""
+    local M_CLOUDINIT=""
     local RDR_RULES=""
     local seen_vm=0
 
@@ -720,6 +760,11 @@ vm_create() {
                 # Human label for the guest OS shown in 'bastille list'
                 # (e.g. "Ubuntu 24.04"). Overrides the guess from the ISO name.
                 M_OS="${args}"
+                ;;
+            CLOUDINIT|CLOUD_INIT)
+                # Path to a cloud-init user-data file (relative to the template
+                # directory, or absolute). Built into a NoCloud seed ISO.
+                M_CLOUDINIT="$(echo "${args}" | awk '{print $1}')"
                 ;;
             RDR)
                 RDR_RULES="${RDR_RULES}${args}
@@ -806,6 +851,16 @@ vm_create() {
             printf '%s' "${RDR_RULES}" > "${vmdir}/rdr.conf.pending"
             info 2 "Recorded pending RDR rules: ${vmdir}/rdr.conf.pending"
         fi
+    fi
+
+    # Build the cloud-init NoCloud seed, if the template declared one. Resolve
+    # the path relative to the template directory unless it is absolute.
+    if [ -n "${M_CLOUDINIT}" ]; then
+        case "${M_CLOUDINIT}" in
+            /*) : ;;
+            *) M_CLOUDINIT="${template_dir}/${M_CLOUDINIT}" ;;
+        esac
+        vm_build_cloudinit_seed "${vm_name}" "${M_CLOUDINIT}"
     fi
 
     # Materialize derived artifacts (bhyve.args, supervisor.conf, vm-run.sh).
@@ -1039,6 +1094,13 @@ vm_clone() {
     cp "${src_dir}/vm.conf" "${dst_dir}/vm.conf"
     if [ -f "${src_dir}/settings.conf" ]; then
         cp "${src_dir}/settings.conf" "${dst_dir}/settings.conf"
+    fi
+    # Carry the cloud-init seed if the source has one. cloud-init keys off the
+    # instance-id (the source's name), so the clone will not re-run the source's
+    # provisioning, which is the right default for a golden image.
+    if [ -f "${src_dir}/seed.iso" ]; then
+        cp "${src_dir}/seed.iso" "${dst_dir}/seed.iso"
+        [ -f "${src_dir}/cloud-init.yaml" ] && cp "${src_dir}/cloud-init.yaml" "${dst_dir}/cloud-init.yaml"
     fi
 
     # Copy-on-write clone of each disk.

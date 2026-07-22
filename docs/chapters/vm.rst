@@ -63,6 +63,12 @@ Verb reference
   (e.g. ``Ubuntu 24.04``). Optional; if omitted it is guessed from the ISO name
   (``alpine-virt-3.21.iso`` becomes ``Alpine-3.21``). Falls back to
   ``uefi-guest``.
+- ``CLOUDINIT file`` takes a path (relative to the template directory, or
+  absolute) to a cloud-init user-data file. Bastille builds a NoCloud ``CIDATA`` seed ISO
+  from it (plus an auto-generated meta-data with the VM's instance-id and
+  hostname) and attaches it as a CD. A cloud-init-enabled guest applies it at
+  first boot: users, SSH keys, packages, ``runcmd``, network, and so on. Uses
+  base ``makefs(8)``, no ports dependency.
 - ``RDR proto host_port vm_port`` -- recorded for a future release; pf wiring
   for VMs is not yet enabled.
 
