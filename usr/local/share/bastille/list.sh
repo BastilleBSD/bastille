@@ -172,8 +172,11 @@ widen_max_lengths_for_vms() {
         if [ "${#vm}" -gt "${MAX_LENGTH_JAIL_NAME}" ]; then MAX_LENGTH_JAIL_NAME="${#vm}"; fi
         VM_ADDR="$(vm_get "${vm}" address)"
         if [ -n "${VM_ADDR}" ] && [ "${#VM_ADDR}" -gt "${MAX_LENGTH_JAIL_IP}" ]; then MAX_LENGTH_JAIL_IP="${#VM_ADDR}"; fi
-        # "uefi-guest" is the widest VM release label.
-        if [ "${MAX_LENGTH_JAIL_RELEASE}" -lt 10 ]; then MAX_LENGTH_JAIL_RELEASE=10; fi
+        # Widen the Release column to the guest OS label (or the "uefi-guest"
+        # fallback, whichever is longer).
+        VM_OS="$(vm_get "${vm}" os)"
+        VM_OS="${VM_OS:-uefi-guest}"
+        if [ "${#VM_OS}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE="${#VM_OS}"; fi
     done
 }
 
@@ -208,11 +211,16 @@ get_vm_info() {
     JAIL_IP="$(vm_get "${VM_NAME}" address)"
     JAIL_IP="${JAIL_IP:-${DEFAULT_VALUE}}"
     JAIL_PORTS="${DEFAULT_VALUE}"
-    # Single-token guest label; a space here would break -j/JSON field parsing.
-    case "$(vm_get "${VM_NAME}" bootrom)" in
-        *CSM*|*csm*) JAIL_RELEASE="uefi-csm" ;;
-        *) JAIL_RELEASE="uefi-guest" ;;
-    esac
+    # Guest OS label (e.g. "Ubuntu-24.04"), derived from the install ISO or an
+    # OS verb at create time. Falls back to the firmware type. Always a single
+    # token, so it never breaks the -j/JSON field parsing.
+    JAIL_RELEASE="$(vm_get "${VM_NAME}" os)"
+    if [ -z "${JAIL_RELEASE}" ]; then
+        case "$(vm_get "${VM_NAME}" bootrom)" in
+            *CSM*|*csm*) JAIL_RELEASE="uefi-csm" ;;
+            *) JAIL_RELEASE="uefi-guest" ;;
+        esac
+    fi
     JAIL_TAGS="${DEFAULT_VALUE}"
 }
 

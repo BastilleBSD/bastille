@@ -594,6 +594,41 @@ vm_fetch_iso() {
     esac
 }
 
+vm_guess_os_from_iso() {
+    ## Best-effort guest OS label from an install ISO's name, shown in
+    ## 'bastille list' instead of a generic "uefi-guest". The result is a
+    ## single whitespace-free token (like "15.0-RELEASE" for jails) so it does
+    ## not break the JSON/columnar output. Returns empty if nothing recognized.
+    local iso="${1}"
+    [ -n "${iso}" ] || return 0
+    local base="$(basename "${iso}" | tr '[:upper:]' '[:lower:]')"
+    local name=""
+    case "${base}" in
+        *alpine*)   name="Alpine" ;;
+        *ubuntu*)   name="Ubuntu" ;;
+        *debian*)   name="Debian" ;;
+        *rocky*)    name="Rocky" ;;
+        *alma*)     name="AlmaLinux" ;;
+        *fedora*)   name="Fedora" ;;
+        *centos*)   name="CentOS" ;;
+        *freebsd*)  name="FreeBSD" ;;
+        *arch*)     name="Arch" ;;
+        *opensuse*|*suse*) name="openSUSE" ;;
+        *) return 0 ;;
+    esac
+    # Arch is rolling; its "version" is a date, so leave it unversioned.
+    if [ "${name}" = "Arch" ]; then
+        echo "${name}"
+        return 0
+    fi
+    local ver="$(echo "${base}" | grep -Eo '[0-9]+(\.[0-9]+)?' | head -1)"
+    if [ -n "${ver}" ]; then
+        echo "${name}-${ver}"
+    else
+        echo "${name}"
+    fi
+}
+
 vm_create() {
     ## Render a VM template into an authoritative manifest, then create the
     ## backing zvols. Networking taps are created lazily at start time.
@@ -616,6 +651,7 @@ vm_create() {
     local M_NICS=""
     local M_ISO=""
     local M_ADDRESS=""
+    local M_OS=""
     local RDR_RULES=""
     local seen_vm=0
 
@@ -680,6 +716,11 @@ vm_create() {
             ADDRESS)
                 M_ADDRESS="$(echo "${args}" | awk '{print $1}')"
                 ;;
+            OS)
+                # Human label for the guest OS shown in 'bastille list'
+                # (e.g. "Ubuntu 24.04"). Overrides the guess from the ISO name.
+                M_OS="${args}"
+                ;;
             RDR)
                 RDR_RULES="${RDR_RULES}${args}
 "
@@ -737,6 +778,15 @@ vm_create() {
     vm_set "${vm_name}" iso "${M_ISO}"
     vm_set "${vm_name}" address "${M_ADDRESS}"
     vm_set "${vm_name}" network_type "${network_type}"
+
+    # Guest OS label for 'bastille list' (Release column). Prefer an explicit
+    # OS verb, else guess from the ISO name. Collapse whitespace to a single
+    # token so it never breaks the columnar/JSON output.
+    if [ -z "${M_OS}" ]; then
+        M_OS="$(vm_guess_os_from_iso "${M_ISO}")"
+    fi
+    M_OS="$(echo "${M_OS}" | tr -s ' ' '-' | sed 's/^-//;s/-$//')"
+    vm_set "${vm_name}" os "${M_OS}"
 
     # Boot/priority settings shared with the jail convention.
     sysrc -f "${vmdir}/settings.conf" boot="${BOOT:-on}" >/dev/null

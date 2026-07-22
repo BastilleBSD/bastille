@@ -59,6 +59,10 @@ Verb reference
 - ``ISO url|path`` -- attaches installation media as an ahci-cd device. Remote
   URLs are fetched into the Bastille cache.
 - ``ADDRESS ip`` -- records the guest address (required for ``RDR``).
+- ``OS label`` -- guest OS label shown in the ``bastille list`` Release column
+  (e.g. ``Ubuntu 24.04``). Optional; if omitted it is guessed from the ISO name
+  (``alpine-virt-3.21.iso`` becomes ``Alpine-3.21``). Falls back to
+  ``uefi-guest``.
 - ``RDR proto host_port vm_port`` -- recorded for a future release; pf wiring
   for VMs is not yet enabled.
 
