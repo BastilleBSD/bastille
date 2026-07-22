@@ -164,6 +164,11 @@ vm_create_disk() {
 
     if zfs list "${dataset}" >/dev/null 2>&1; then
         info 2 "Disk already exists: ${dataset}"
+        # Enforce volmode=dev even on a pre-existing disk. A VM zvol left at the
+        # system default (commonly geom) is exposed to GEOM, and GEOM tasting a
+        # guest GPT can panic the host kernel (g_label_taste). VM disks must
+        # never appear as GEOM providers.
+        zfs set volmode=dev "${dataset}" >/dev/null 2>&1
         return 0
     fi
 
