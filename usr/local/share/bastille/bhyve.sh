@@ -372,6 +372,163 @@ vm_destroy_vnet() {
 }
 
 # ----------------------------------------------------------------------------
+# Supervision-jail hardening: skeleton root + restricted devfs (opt-in)
+#
+# Default (v1): the supervision jail uses path=/ and shares the host /dev.
+# With bastille_vm_isolated_devfs=YES the jail instead gets its own root -- a
+# read-only nullfs skeleton of just the host userland bhyve needs, plus a
+# private devfs whose per-VM ruleset exposes only this VM's nodes (its vmm
+# instance, console, disks, tap, and null/zero/random) and hides /dev/mem,
+# /dev/kmem, and raw host disks. A device-model escape then lands in a jail
+# that can reach one VM and nothing else. A dedicated root is required because
+# a restrictive devfs over path=/ would mask the host's own /dev (Phase 0).
+# ----------------------------------------------------------------------------
+
+# Read-only host dirs nullfs-mounted into the skeleton: rtld + libs + the
+# binaries the run script and bhyve exec (sh, cat, ifconfig, bhyve, bhyvectl,
+# daemon) + the UEFI firmware. None exposes /etc, /usr/home, or host secrets.
+BASTILLE_VM_SKEL_DIRS="/bin /sbin /lib /libexec /usr/lib /usr/sbin /usr/local/share"
+
+vm_hardened() {
+    ## True unless isolated-devfs hardening is explicitly disabled. Default on:
+    ## the supervision jail gets its own root and a restricted devfs. Set
+    ## bastille_vm_isolated_devfs=NO to fall back to the shared-host-/dev jail.
+    case "${bastille_vm_isolated_devfs:-YES}" in
+        [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+vm_jail_root() {
+    echo "${bastille_vmdir}/${1}/root"
+}
+
+vm_devfs_ruleset_num() {
+    ## Ruleset number for a VM's private devfs, assigned once and stored in the
+    ## manifest. VM rulesets live at/above 1000 to avoid the system (1-5) and
+    ## Bastille jail rulesets.
+    local vm_name="${1}"
+    local num="$(vm_get "${vm_name}" devfs_ruleset)"
+    if [ -z "${num}" ]; then
+        local used="$(devfs rule showsets 2>/dev/null)"
+        num=1000
+        while echo "${used}" | grep -qx "${num}"; do
+            num=$((num + 1))
+        done
+        vm_set "${vm_name}" devfs_ruleset "${num}"
+    fi
+    echo "${num}"
+}
+
+vm_load_devfs_ruleset() {
+    ## (Re)build the VM's devfs ruleset from the current tap/disk set: hide
+    ## everything, then unhide only this VM's nodes. Echoes the ruleset number.
+    local vm_name="${1}"
+    local rs="$(vm_devfs_ruleset_num "${vm_name}")"
+    local vms_ds="${bastille_zfs_zpool}/${bastille_zfs_prefix}/vms/${vm_name}"
+
+    devfs rule -s "${rs}" delset >/dev/null 2>&1
+    devfs rule -s "${rs}" add hide >/dev/null 2>&1
+    local n
+    for n in null zero random urandom; do
+        devfs rule -s "${rs}" add path "${n}" unhide >/dev/null 2>&1
+    done
+    # bhyve reads host PCI config (/dev/pci) to locate the LPC bridge selector
+    # when building the guest's ACPI tables.
+    devfs rule -s "${rs}" add path pci unhide >/dev/null 2>&1
+    # bhyve control + this VM's vmm instance (vmmctl on releases that route VM
+    # creation through it).
+    devfs rule -s "${rs}" add path vmm unhide >/dev/null 2>&1
+    devfs rule -s "${rs}" add path "vmm/${vm_name}" unhide >/dev/null 2>&1
+    if [ -e /dev/vmmctl ]; then
+        devfs rule -s "${rs}" add path vmmctl unhide >/dev/null 2>&1
+    fi
+    # bhyve maps the bootrom (and, with a framebuffer, the fbuf) as devmem
+    # segments that appear under /dev/vmm.io/<name>.*; without them the guest
+    # cannot initialize its bootrom.
+    devfs rule -s "${rs}" add path vmm.io unhide >/dev/null 2>&1
+    devfs rule -s "${rs}" add path "vmm.io/${vm_name}.*" unhide >/dev/null 2>&1
+    # console. nmdm's cloned nodes only match a glob here (an exact
+    # nmdm-<name>.1A path does not unhide), so allow both this VM's ends; bhyve
+    # uses .1A, bastille console uses .1B.
+    devfs rule -s "${rs}" add path "nmdm-${vm_name}.*" unhide >/dev/null 2>&1
+    # this VM's taps.
+    local tap
+    for tap in $(cat "$(vm_taps_file "${vm_name}")" 2>/dev/null); do
+        devfs rule -s "${rs}" add path "${tap}" unhide >/dev/null 2>&1
+    done
+    # this VM's zvols: unhide each intermediate path component, then the leaf.
+    local acc="zvol" comp
+    devfs rule -s "${rs}" add path zvol unhide >/dev/null 2>&1
+    for comp in $(echo "${vms_ds}" | tr '/' ' '); do
+        acc="${acc}/${comp}"
+        devfs rule -s "${rs}" add path "${acc}" unhide >/dev/null 2>&1
+    done
+    devfs rule -s "${rs}" add path "${acc}/*" unhide >/dev/null 2>&1
+    echo "${rs}"
+}
+
+vm_setup_jail_root() {
+    ## Build the skeleton root and mount everything the hardened supervision
+    ## jail needs: ro-nullfs userland, the private restricted devfs, and the
+    ## runtime files (bhyve.args, vm-run.sh, seed) placed inside the root with
+    ## jail-relative paths. Idempotent enough to survive a re-start.
+    local vm_name="${1}"
+    local root="$(vm_jail_root "${vm_name}")"
+    local vmdir="${bastille_vmdir}/${vm_name}"
+
+    vm_teardown_jail_root "${vm_name}"
+    mkdir -p "${root}"
+    local d
+    for d in ${BASTILLE_VM_SKEL_DIRS}; do
+        mkdir -p "${root}${d}"
+        mount -t nullfs -o ro "${d}" "${root}${d}"
+    done
+
+    # Minimal /etc: jail(8) resolves the exec user (root) via getpwnam, which
+    # needs a passwd db in the jail. A generated one-user /etc keeps host
+    # secrets (master.passwd hashes, ssh keys) out of the jail entirely.
+    mkdir -p "${root}/etc"
+    printf 'root:*:0:0::0:0:root:/root:/bin/sh\n' > "${root}/etc/master.passwd"
+    printf 'wheel:*:0:root\n' > "${root}/etc/group"
+    pwd_mkdb -p -d "${root}/etc" "${root}/etc/master.passwd" >/dev/null 2>&1
+    # Writable /tmp: bhyve's ACPI table builder needs a temp file.
+    mkdir -p "${root}/tmp"
+    chmod 1777 "${root}/tmp"
+    mkdir -p "${root}/dev"
+    local rs="$(vm_load_devfs_ruleset "${vm_name}")"
+    mount -t devfs -o ruleset="${rs}" devfs "${root}/dev"
+
+    # Runtime files inside the root, with jail-relative paths (the seed is the
+    # only instance-dir path in bhyve.args; the firmware and zvols resolve via
+    # the nullfs firmware mount and the private devfs).
+    sed "s#${vmdir}/seed.iso#/seed.iso#g" "${vmdir}/bhyve.args" > "${root}/bhyve.args"
+    sed "s#${vmdir}/bhyve.args#/bhyve.args#g" "${vmdir}/vm-run.sh" > "${root}/vm-run.sh"
+    chmod 0700 "${root}/vm-run.sh"
+    if [ -f "${vmdir}/seed.iso" ]; then
+        cp "${vmdir}/seed.iso" "${root}/seed.iso"
+    fi
+}
+
+vm_teardown_jail_root() {
+    ## Unmount everything under the skeleton root (devfs and nullfs) so the
+    ## dataset is not busy at destroy, then drop the ruleset. Idempotent.
+    local vm_name="${1}"
+    local root="$(vm_jail_root "${vm_name}")"
+    if [ -d "${root}" ]; then
+        # Deepest mounts first.
+        local mp
+        for mp in $(mount | awk -v r="${root}/" '$3 ~ ("^" r) {print length($3), $3}' | sort -rn | awk '{print $2}'); do
+            umount -f "${mp}" >/dev/null 2>&1
+        done
+    fi
+    local rs="$(vm_get "${vm_name}" devfs_ruleset)"
+    if [ -n "${rs}" ]; then
+        devfs rule -s "${rs}" delset >/dev/null 2>&1
+    fi
+}
+
+# ----------------------------------------------------------------------------
 # bhyve argument generation
 # ----------------------------------------------------------------------------
 
@@ -479,9 +636,9 @@ while :; do
     # Destroy any prior vmm instance first. bhyve does not tear down
     # /dev/vmm/<name> on exit, so this must run before every boot -- including
     # a guest-requested reboot -- or the next bhyve would fail "already in use".
-    bhyvectl --destroy --vm="\${vm_name}" >/dev/null 2>&1
+    /usr/sbin/bhyvectl --destroy --vm="\${vm_name}" >/dev/null 2>&1
     # shellcheck disable=SC2046
-    bhyve \$(cat "\${args_file}")
+    /usr/sbin/bhyve \$(/bin/cat "\${args_file}")
     rc=\$?
     # 0 = guest requested reboot; anything else = power off / halt / error.
     if [ "\${rc}" -ne 0 ]; then
@@ -489,7 +646,7 @@ while :; do
     fi
 done
 
-bhyvectl --destroy --vm="\${vm_name}" >/dev/null 2>&1
+/usr/sbin/bhyvectl --destroy --vm="\${vm_name}" >/dev/null 2>&1
 EOF
     chmod 0700 "${run_script}"
 }
@@ -500,14 +657,11 @@ vm_generate_supervisor_conf() {
     ## guest RAM is accounted for, giving the VM a real JID that jls and rctl
     ## treat as a peer of jails.
     ##
-    ## NOTE: this v1 jail uses path=/ and shares the host's /dev. It does NOT
-    ## use mount.devfs + a restrictive devfs_ruleset: with path=/ that would
-    ## stack a locked-down devfs over the host's own /dev and hide host devices
-    ## (e.g. /dev/zfs). Proper devfs confinement -- a dedicated jail root with
-    ## its own isolated /dev exposing only this VM's vmm/tap/nmdm devices -- is
-    ## the intended hardening and is deferred until it can be validated on real
-    ## bhyve hardware. Confinement today is allow.vmm + rctl + the jail
-    ## namespace, layered on bhyve's own Capsicum sandbox.
+    ## Confinement is allow.vmm + rctl + the jail namespace, layered on bhyve's
+    ## own Capsicum sandbox. With hardening on (the default), the jail also gets
+    ## its own root and a private restricted devfs (see vm_setup_jail_root) that
+    ## exposes only this VM's nodes; with bastille_vm_isolated_devfs=NO it uses
+    ## path=/ and shares the host's /dev.
     local vm_name="${1}"
     local supervisor_conf="${bastille_vmdir}/${vm_name}/supervisor.conf"
     local run_script="${bastille_vmdir}/${vm_name}/vm-run.sh"
@@ -520,7 +674,15 @@ vm_generate_supervisor_conf() {
     # redirections detach the daemon subtree from jail -c's stdio so
     # 'bastille start' (and the rc.d boot pipeline) return promptly instead of
     # hanging on an inherited stdout pipe; bhyve output still goes to the -o log.
+    #
+    # Hardened: the jail root is the skeleton vm_setup_jail_root builds, and the
+    # run script, args, seed, and log live inside it at jail-relative paths.
+    local jail_path="/"
     local launch="/usr/sbin/daemon -o ${bastille_logsdir}/${vm_name}_vm.log /bin/sh ${run_script} </dev/null >/dev/null 2>&1"
+    if vm_hardened; then
+        jail_path="$(vm_jail_root "${vm_name}")"
+        launch="/usr/sbin/daemon -o /vm.log /bin/sh /vm-run.sh </dev/null >/dev/null 2>&1"
+    fi
 
     if [ "${network_type}" = "vnet" ]; then
         # VNET mode: the jail owns its network stack. Move each NIC's jail-side
@@ -541,7 +703,7 @@ vm_generate_supervisor_conf() {
                 iface_lines="${iface_lines}  vnet.interface += ${epair_b};
   vnet.interface += ${tap};
 "
-                bridge_lines="${bridge_lines}  exec.start += \"ifconfig bridge${nic} create && ifconfig bridge${nic} addm ${epair_b} addm ${tap} up && ifconfig ${epair_b} up && ifconfig ${tap} up\";
+                bridge_lines="${bridge_lines}  exec.start += \"/sbin/ifconfig bridge${nic} create && /sbin/ifconfig bridge${nic} addm ${epair_b} addm ${tap} up && /sbin/ifconfig ${epair_b} up && /sbin/ifconfig ${tap} up\";
 "
                 nic=$((nic + 1))
             done < "${epairs_file}"
@@ -551,7 +713,7 @@ vm_generate_supervisor_conf() {
 ${vm_name} {
   # Bastille bhyve supervision jail (generated, VNET mode).
   # This is an implementation detail; edit vm.conf, not this file.
-  path = /;
+  path = ${jail_path};
   host.hostname = ${vm_name};
   persist;
   allow.vmm;
@@ -567,11 +729,17 @@ EOF
 ${vm_name} {
   # Bastille bhyve supervision jail (generated, shared mode).
   # This is an implementation detail; edit vm.conf, not this file.
-  path = /;
+  path = ${jail_path};
   host.hostname = ${vm_name};
   persist;
   allow.vmm;
   enforce_statfs = 1;
+  # Own (empty) network stack. The guest's tap lives on the host bridge and
+  # bhyve drives it through its /dev/tap device node, so the supervision jail
+  # needs no host network visibility: this hides every host interface (and
+  # every other VM's tap) from a device-model escape, while the guest still
+  # sits directly on the shared bridge.
+  vnet;
   exec.clean;
   exec.start = "${launch}";
   exec.stop = "";
@@ -1020,10 +1188,19 @@ vm_start() {
     fi
     vm_render_artifacts "${vm_name}"
 
+    # Hardened (default): build the skeleton root and private restricted devfs,
+    # and place the runtime files inside it, before starting the jail.
+    if vm_hardened; then
+        vm_setup_jail_root "${vm_name}"
+    fi
+
     # Start the supervision jail; its exec.start execs the bhyve loop (and, for
     # VNET, first builds the in-jail bridge).
     if ! jail -f "${bastille_vmdir}/${vm_name}/supervisor.conf" -c "${vm_name}"; then
         error_notify "[ERROR]: Failed to start supervision jail: ${vm_name}"
+        if vm_hardened; then
+            vm_teardown_jail_root "${vm_name}"
+        fi
         if [ "${network_type}" = "vnet" ]; then
             vm_destroy_vnet "${vm_name}"
         else
@@ -1087,6 +1264,11 @@ vm_stop() {
         vm_destroy_taps "${vm_name}"
     fi
 
+    # Hardened: unmount the skeleton root and drop the devfs ruleset.
+    if vm_hardened; then
+        vm_teardown_jail_root "${vm_name}"
+    fi
+
     return 0
 }
 
@@ -1117,6 +1299,11 @@ vm_destroy() {
     if check_vm_is_running "${vm_name}"; then
         vm_stop "${vm_name}" 1
     fi
+
+    # Ensure the hardened skeleton root is fully unmounted before touching the
+    # dataset or directory: leftover nullfs/devfs mounts under it would make zfs
+    # destroy fail and, worse, let rm -rf traverse into host /bin or /dev.
+    vm_teardown_jail_root "${vm_name}"
 
     # Destroy zvol-backed disks.
     if checkyesno bastille_zfs_enable && [ -n "${bastille_zfs_zpool}" ]; then

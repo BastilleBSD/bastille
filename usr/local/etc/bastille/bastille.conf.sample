@@ -91,14 +91,14 @@ bastille_template_vnet="default/vnet"                                 ## default
 bastille_template_vlan="default/vlan"                                 ## default: "default/vlan"
 
 ## VM (bhyve) options
-## Requires: vmm(4), nmdm(4), if_bridge(4), if_tap(4) and sysutils/edk2-bhyve.
+## Requires: vmm(4), nmdm(4), if_bridge(4), if_tap(4), if_epair(4) (VNET) and sysutils/edk2-bhyve.
 bastille_vm_enable="NO"                                                                        ## default: "NO"
 bastille_vm_bootrom="/usr/local/share/uefi-firmware/BHYVE_UEFI.fd"                             ## default: edk2-bhyve UEFI firmware
 bastille_vm_bridge="bridge0"                                                                   ## default: bridge for VM NICs
 bastille_vm_shutdown_timeout="30"                                                              ## default: graceful ACPI poweroff timeout (seconds)
 bastille_vm_disk_type="virtio-blk"                                                             ## default: "virtio-blk" (or "ahci-hd", "nvme")
 bastille_vm_nic_type="virtio-net"                                                              ## default: "virtio-net" (or "e1000")
-bastille_vm_devfs_ruleset="100"                                                                ## reserved: devfs ruleset for future VM /dev isolation (unused in v1)
+bastille_vm_isolated_devfs="YES"                                                               ## default: "YES" (own jail root + restricted per-VM devfs + network isolation); "NO" shares host /dev
 
 ## Monitoring
 bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"                           ## default: "/usr/local/etc/cron.d/bastille-monitor"

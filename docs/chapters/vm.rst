@@ -171,11 +171,28 @@ confinement (namespace + rctl limits) on top of bhyve's Capsicum sandbox.
 
 .. note::
 
-   The v1 supervision jail uses ``path=/`` and shares the host's ``/dev``. A
-   restrictive per-VM devfs ruleset that exposes only the VM's own vmm/tap/nmdm
-   devices is the intended additional hardening, but it requires giving the
-   jail its own root so its ``/dev`` is isolated from the host's -- deferred to
-   a follow-up. The ``bastille_vm_devfs_ruleset`` config key is reserved for it.
+   **Supervision-jail hardening (on by default).** With
+   ``bastille_vm_isolated_devfs=YES`` (the default), the supervision jail runs
+   in its own root -- a read-only nullfs skeleton of only the userland bhyve
+   needs -- with a **private devfs** whose per-VM ruleset exposes just that
+   VM's own nodes: its ``vmm``/``vmm.io`` instance, ``nmdm`` console, tap, and
+   zvols, plus ``null``/``zero``/``random`` and ``pci`` (bhyve reads host PCI
+   config to build the guest's ACPI tables). ``/dev/mem``, ``/dev/kmem``, raw
+   host disks (``ada*``/``da*``/``nvme*``), and every other VM's nodes are
+   hidden, so a device-model escape sees one VM and nothing else. The jail also
+   gets its own vnet -- empty in shared mode (the guest's tap stays on the host
+   bridge and bhyve drives it through the ``/dev/tap`` node), full in VNET
+   mode -- so ``ifconfig`` inside it never shows host interfaces or other VMs'
+   taps. bhyve's own Capsicum sandbox composes on top. Set
+   ``bastille_vm_isolated_devfs=NO`` to fall back to a ``path=/`` jail that
+   shares the host ``/dev``.
+
+.. note::
+
+   VM disks are always created with ``volmode=dev``. A zvol left at the system
+   default (commonly ``geom``) is tasted by GEOM, and tasting a guest GPT can
+   panic the host kernel; avoid ``zfs set volmode=geom`` on a VM disk for the
+   same reason.
 
 The instance layout mirrors a jail's:
 
