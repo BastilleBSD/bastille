@@ -101,11 +101,10 @@ vm_nmdm_client() {
     echo "/dev/nmdm-${1}.1B"
 }
 
-# NOTE: A restrictive devfs ruleset for the supervision jail is deliberately
-# NOT applied in v1. With path=/ (see vm_generate_supervisor_conf) a
-# mount.devfs would stack over the host's own /dev and hide host devices such
-# as /dev/zfs. Isolating the VM's /dev requires a dedicated jail root, which is
-# deferred; the config key bastille_vm_devfs_ruleset is reserved for that work.
+# NOTE: the supervision jail's /dev is confined by default (its own root plus a
+# private per-VM devfs; see the hardening section below and the config key
+# bastille_vm_isolated_devfs). Setting that to NO falls back to a path=/ jail
+# sharing the host /dev.
 
 # ----------------------------------------------------------------------------
 # Disk (zvol) lifecycle
@@ -372,16 +371,19 @@ vm_destroy_vnet() {
 }
 
 # ----------------------------------------------------------------------------
-# Supervision-jail hardening: skeleton root + restricted devfs (opt-in)
+# Supervision-jail hardening: skeleton root + restricted devfs (default on)
 #
-# Default (v1): the supervision jail uses path=/ and shares the host /dev.
-# With bastille_vm_isolated_devfs=YES the jail instead gets its own root -- a
-# read-only nullfs skeleton of just the host userland bhyve needs, plus a
-# private devfs whose per-VM ruleset exposes only this VM's nodes (its vmm
-# instance, console, disks, tap, and null/zero/random) and hides /dev/mem,
-# /dev/kmem, and raw host disks. A device-model escape then lands in a jail
-# that can reach one VM and nothing else. A dedicated root is required because
-# a restrictive devfs over path=/ would mask the host's own /dev (Phase 0).
+# By default (bastille_vm_isolated_devfs=YES) the supervision jail gets its own
+# root -- a read-only nullfs skeleton of just the host userland bhyve needs, a
+# minimal generated /etc, and a writable /tmp -- plus a private devfs whose
+# per-VM ruleset exposes only this VM's nodes (its vmm/vmm.io instance, nmdm
+# console, disks, tap, and null/zero/random/urandom + pci for ACPI) and hides
+# /dev/mem, /dev/kmem, raw host disks, and every other VM. The jail also gets
+# its own vnet (empty in shared mode, full in VNET mode), so it sees no host
+# interfaces. A device-model escape then lands in a jail that can reach one VM
+# and nothing else. Set bastille_vm_isolated_devfs=NO to fall back to a path=/
+# jail sharing the host /dev; a dedicated root is required because a restrictive
+# devfs over path=/ would mask the host's own /dev (Phase 0).
 # ----------------------------------------------------------------------------
 
 # Read-only host dirs nullfs-mounted into the skeleton: rtld + libs + the
