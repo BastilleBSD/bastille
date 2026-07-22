@@ -142,7 +142,20 @@ is refused if it is already in use, and both the ``network-config`` and the
 workflow. (Note: ``/etc/machine-id`` is still inherited from the source; a
 future ``--clean`` will reset it.)
 
-``bastille list`` grows a VM row per VM with a ``Type`` column of ``vm``;
+``bastille list`` grows a VM row per VM with a ``Type`` column of ``vm``. For a
+VM the ``Release`` column shows the guest's Linux distribution and version (the
+``OS`` label, or the value guessed from the ISO/image name), not a FreeBSD
+release, so jails and VMs read uniformly in one listing:
+
+.. code-block:: none
+
+   JID  Name      State  Type  IP Address     Release       Tags
+   3    nebula    Up     thin  192.168.1.56   15.0-RELEASE  -
+   7    debian12  Up     vm    192.168.1.229  Debian-12     -
+   8    alpine1   Up     vm    192.168.1.240  Alpine-3.21   -
+
+(columns trimmed for brevity). A VM with no ``OS`` label and no guessable image
+name falls back to ``uefi-guest`` (or ``uefi-csm`` for a CSM/BIOS guest).
 ``bastille list vms`` shows only VMs.
 
 How it works
