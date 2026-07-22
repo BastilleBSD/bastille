@@ -93,8 +93,17 @@ Lifecycle
   bastille start builder
   bastille console builder        # serial console; detach with ~.
   bastille list                   # VMs appear with Type 'vm'
+  bastille clone builder ci-1 10.0.0.41   # near-instant golden-image clone
   bastille stop builder
   bastille destroy builder
+
+Cloning is a ``zfs clone`` of the VM's zvols plus a manifest rewrite, so it is
+near-instant and space-efficient: provision one base VM, then clone it per
+worker. The clone shares unwritten blocks with the source (copy-on-write), so
+the source cannot be destroyed while clones of it exist, which is the correct
+golden-image behavior. The optional third argument sets the clone's ``ADDRESS``;
+the guest's in-VM network config is copied as-is and should be reconfigured
+inside the clone.
 
 ``bastille list`` grows a VM row per VM with a ``Type`` column of ``vm``;
 ``bastille list vms`` shows only VMs.

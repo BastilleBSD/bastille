@@ -978,3 +978,102 @@ vm_destroy() {
 
     return 0
 }
+
+vm_clone() {
+    ## Clone a VM. Per the design, this is a `zfs clone` of the source's zvols
+    ## (near-instant, copy-on-write) plus a manifest rewrite, which is the
+    ## golden-image workflow the whole storage model exists for. The clone's
+    ## disks share unwritten blocks with the source until either diverges, so a
+    ## clone depends on a snapshot of the source (standard ZFS COW, the same as
+    ## `bastille create -C` clone jails): the source cannot be destroyed while
+    ## clones of it exist, which is the correct golden-image semantics.
+    local target="${1}"
+    local newname="${2}"
+    local new_address="${3}"
+    local auto="${4}"
+    local live="${5}"
+    local src_dir="${bastille_vmdir}/${target}"
+    local dst_dir="${bastille_vmdir}/${newname}"
+    local src_ds="${bastille_zfs_zpool}/${bastille_zfs_prefix}/vms/${target}"
+    local dst_ds="${bastille_zfs_zpool}/${bastille_zfs_prefix}/vms/${newname}"
+
+    # Validate the new name.
+    if check_vm_exists "${newname}"; then
+        error_exit "[ERROR]: VM already exists: ${newname}"
+    elif check_target_exists "${newname}"; then
+        error_exit "[ERROR]: A jail already exists with that name: ${newname}"
+    elif [ "$(echo "${newname}" | tr -c -d 'a-zA-Z0-9-_')" != "${newname}" ]; then
+        error_exit "[ERROR]: VM names may not contain special characters!"
+    elif echo "${newname}" | grep -qE '^[0-9]+$'; then
+        error_exit "[ERROR]: VM names may not contain only digits."
+    fi
+
+    if ! checkyesno bastille_zfs_enable || [ -z "${bastille_zfs_zpool}" ]; then
+        error_exit "[ERROR]: VM clone requires ZFS."
+    fi
+
+    # State: stopped (or -a to auto-stop, or -l to clone a running VM).
+    if [ "${live}" = "1" ]; then
+        if ! check_vm_is_running "${target}"; then
+            error_exit "[ERROR]: [-l|--live] can only be used with a running VM."
+        fi
+    elif check_vm_is_running "${target}"; then
+        if [ "${auto}" = "1" ]; then
+            bastille stop "${target}"
+        else
+            error_notify "VM is running."
+            error_exit "Use [-a|--auto] to auto-stop, or [-l|--live] (crash-consistent) to clone a running VM."
+        fi
+    fi
+
+    info 1 "\nCloning VM '${target}' to '${newname}'..."
+
+    # New instance dataset to hold the cloned manifest and config.
+    if ! zfs create "${dst_ds}"; then
+        error_exit "[ERROR]: Failed to create clone dataset: ${dst_ds}"
+    fi
+    mkdir -p "${dst_dir}"
+    chmod 0700 "${dst_dir}"
+
+    # Manifest rewrite: copy vm.conf and boot/priority settings.
+    cp "${src_dir}/vm.conf" "${dst_dir}/vm.conf"
+    if [ -f "${src_dir}/settings.conf" ]; then
+        cp "${src_dir}/settings.conf" "${dst_dir}/settings.conf"
+    fi
+
+    # Copy-on-write clone of each disk.
+    local snap="bastille_clone_${newname}_$(date +%F-%H%M%S)"
+    local disks="$(vm_get "${target}" disks)"
+    for spec in ${disks}; do
+        local disk="$(echo "${spec}" | awk -F: '{print $1}')"
+        if ! zfs snapshot "${src_ds}/${disk}@${snap}" || \
+           ! zfs clone "${src_ds}/${disk}@${snap}" "${dst_ds}/${disk}"; then
+            error_notify "[ERROR]: Failed to clone disk: ${disk}"
+            zfs destroy -rf "${dst_ds}" >/dev/null 2>&1
+            zfs destroy "${src_ds}/${disk}@${snap}" >/dev/null 2>&1
+            return 1
+        fi
+    done
+
+    # Optional new address for the clone (the ADDRESS field is RDR metadata).
+    if [ -n "${new_address}" ]; then
+        vm_set "${newname}" address "${new_address}"
+    fi
+
+    # Regenerate name-specific artifacts and the console symlink for the clone.
+    ln -sf "$(vm_nmdm_client "${newname}")" "${dst_dir}/console"
+    vm_render_artifacts "${newname}"
+
+    info 1 "Cloned '${target}' to '${newname}' successfully."
+    info 1 "Note: the guest's in-VM network config is copied as-is; reconfigure"
+    info 1 "it inside the clone to avoid an address conflict with '${target}'."
+
+    if [ "${auto}" = "1" ]; then
+        bastille start "${target}"
+        bastille start "${newname}"
+    elif [ "${live}" = "1" ]; then
+        bastille start "${newname}"
+    fi
+
+    return 0
+}

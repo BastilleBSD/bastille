@@ -31,9 +31,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     error_notify "Usage: bastille clone [option(s)] TARGET NEW_NAME IP"
+    error_notify "       bastille clone [option(s)] VM_TARGET NEW_NAME [ADDRESS]"
     cat << EOF
 
     Options:
@@ -84,6 +86,15 @@ done
 # Verify options
 if [ "${AUTO}" -eq 1 ] && [ "${LIVE}" -eq 1 ]; then
     error_exit "[-a|--auto] cannot be used with [-l|--live]"
+fi
+
+bastille_root_check
+
+# Brand dispatch: clone a VM. Address is optional (it is RDR metadata; the
+# guest's real network config lives inside the guest and is cloned as-is).
+if [ "$#" -ge 2 ] && check_vm_exists "${1}"; then
+    vm_clone "${1}" "${2}" "${3}" "${AUTO}" "${LIVE}"
+    exit $?
 fi
 
 # Verify parameter count
