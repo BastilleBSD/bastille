@@ -510,6 +510,16 @@ vm_setup_jail_root() {
     if [ -f "${vmdir}/seed.iso" ]; then
         cp "${vmdir}/seed.iso" "${root}/seed.iso"
     fi
+
+    # Make an install ISO (if any) reachable in the jail root. bhyve.args
+    # references it by absolute path, so nullfs-mount its directory read-only at
+    # the same path inside the root. ISOs can be large; mount rather than copy.
+    local iso="$(vm_get "${vm_name}" iso)"
+    if [ -n "${iso}" ] && [ -f "${iso}" ]; then
+        local iso_dir="$(dirname "${iso}")"
+        mkdir -p "${root}${iso_dir}"
+        mount -t nullfs -o ro "${iso_dir}" "${root}${iso_dir}"
+    fi
 }
 
 vm_teardown_jail_root() {
