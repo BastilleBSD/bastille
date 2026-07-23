@@ -104,13 +104,16 @@ into ``/usr`` and ``/etc`` of the jail directory.
 So, if you have ``project/template/usr/local/share/myapp.conf``, it will be copied into the
 jail, and placed at ``/usr/local/share/myapp.conf``.
 
-Note: due to the way FreeBSD segregates user-space, the majority of your
+Note: Due to the way FreeBSD segregates user-space, the majority of your
 overlayed template files will be in ``/usr/local``. The few general exceptions
 are the ``/etc/hosts``, ``/etc/resolv.conf``, and ``/etc/rc.conf.local``.
 
 The above example of ``usr`` and ``etc`` will include anything under ``usr`` and
 ``etc`` inside the template. You do not need to list individual files. Just
 include the top-level directory name. List these top-level directories one per line.
+
+Note also: If the path starts with ``/`` it will copy exactly ``/usr`` into the jail, and
+not ``project/template/usr``.
 
 ``INCLUDE``       - specify a template to include. Make sure the template is
 bootstrapped, or you are using the template url
