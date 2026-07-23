@@ -43,6 +43,16 @@ list_jails() {
         priority="$(sysrc -f ${jailsdir}/${jail}/settings.conf -n priority)"
         echo "${jail} ${priority}"
     done
+    # Include bhyve VMs so they boot/shut down alongside jails, ordered by
+    # the same priority setting. VM lifecycle brand-dispatches in bastille.
+    local vmdir=$(. $bastille_conf; echo ${bastille_vmdir:-${bastille_prefix}/vms})
+    if [ -n "${vmdir}" ] && [ -d "${vmdir}" ]; then
+        local vm_list=$(find ${vmdir}/* -mindepth 1 -maxdepth 1 -type f -name vm.conf 2>/dev/null | xargs -n1 dirname | xargs -n1 basename)
+        for vm in ${vm_list}; do
+            priority="$(sysrc -f ${vmdir}/${vm}/settings.conf -n priority)"
+            echo "${vm} ${priority}"
+        done
+    fi
 }
 
 sort_jails() {

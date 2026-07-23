@@ -31,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     error_notify "Usage: bastille console [option(s)] TARGET [USER]"
@@ -73,6 +74,30 @@ TARGET="${1}"
 USER="${2}"
 
 bastille_root_check
+
+# Brand dispatch: a VM console is the nmdm serial line, not a jexec login.
+if check_vm_exists "${TARGET}"; then
+    if ! check_vm_is_running "${TARGET}"; then
+        if [ "${AUTO}" -eq 1 ]; then
+            bastille start "${TARGET}" || error_exit "[ERROR]: Failed to start VM: ${TARGET}"
+            # bhyve is daemon-backgrounded, so wait briefly for /dev/vmm/<name>.
+            waited=0
+            while [ "${waited}" -lt 10 ]; do
+                check_vm_is_running "${TARGET}" && break
+                sleep 1
+                waited=$((waited + 1))
+            done
+        else
+            info 1 "\n[${TARGET}]:"
+            error_notify "VM is not running."
+            error_exit "Use [-a|--auto] to auto-start the VM."
+        fi
+    fi
+    info 1 "\n[${TARGET}]:"
+    vm_console "${TARGET}"
+    exit $?
+fi
+
 set_target "${TARGET}"
 
 for jail in ${JAILS}; do

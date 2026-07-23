@@ -32,6 +32,7 @@ https://docs.bastillebsd.org.
    chapters/template
    chapters/hardened-bsd
    chapters/linux-jails
+   chapters/vm
    chapters/pkgbase
    chapters/zfs-support
 

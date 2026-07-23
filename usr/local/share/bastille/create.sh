@@ -31,11 +31,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     # Build an independent usage for the create command
     # If no option specified, will create a thin jail by default
     error_notify "Usage: bastille create [option(s)] NAME RELEASE IP [INTERFACE]"
+    error_notify "       bastille create --vm [option(s)] NAME TEMPLATE"
     cat << EOF
 
     Options:
@@ -57,10 +59,29 @@ usage() {
          --tags TAG1,TAG2           Apply specified tag(s) to jail. Comma-separated.
     -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
     -v | --vlan VLANID              Set VLAN ID (VNET only).
+         --vm                       Create a bhyve VM from a VM template (NAME TEMPLATE).
     -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.
 
 EOF
     exit 1
+}
+
+validate_vm_name() {
+
+    local NAME_VERIFY="${NAME}"
+    local NAME_SANITY="$(echo "${NAME_VERIFY}" | tr -c -d 'a-zA-Z0-9-_')"
+
+    if check_vm_exists "${NAME}"; then
+        error_exit "[ERROR]: VM already exists: ${NAME}"
+    elif check_target_exists "${NAME}"; then
+        error_exit "[ERROR]: A jail already exists with that name: ${NAME}"
+    elif [ -n "$(echo "${NAME_SANITY}" | awk "/^[-_].*$/")" ]; then
+        error_exit "[ERROR]: VM names may not begin with (-|_) characters!"
+    elif [ "${NAME_VERIFY}" != "${NAME_SANITY}" ]; then
+        error_exit "[ERROR]: VM names may not contain special characters!"
+    elif echo "${NAME_VERIFY}" | grep -qE '^[0-9]+$'; then
+        error_exit "[ERROR]: VM names may not contain only digits."
+    fi
 }
 
 validate_name() {
@@ -70,6 +91,8 @@ validate_name() {
 
     if check_target_exists "${NAME}"; then
         error_exit "[ERROR]: Jail already exists: ${NAME}"
+    elif check_vm_exists "${NAME}"; then
+        error_exit "[ERROR]: A VM already exists with that name: ${NAME}"
     fi
 
     # Make sure NAME has only allowed characters
@@ -133,15 +156,24 @@ define_ips() {
             if [ "${VNET_JAIL}" -eq 0 ]; then
                 error_exit "[ERROR]: Unsupported IP option for non-VNET jail: ${IP4_ADDR}"
             fi
-        # Warn if IP is in use
-        elif ifconfig | grep -qwF "${IP4_ADDR}"; then
-            warn 1 "[WARNING]: IP address in use: ${IP4_ADDR}"
+        # Refuse a concrete address already held by a host interface, another
+        # jail, or a VM (a duplicate address silently breaks connectivity).
+        else
+            local owner_in_use="$(check_address_in_use "${IP4_ADDR}")"
+            if [ -n "${owner_in_use}" ]; then
+                error_exit "[ERROR]: IP address already in use by ${owner_in_use}: ${IP4_ADDR}"
+            fi
         fi
     fi
 
     if [ -n "${IP6_ADDR}" ]; then
         if [ "${IP6_ADDR}" = "SLAAC" ] && [ "${VNET_JAIL}" -eq 0 ]; then
             error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
+        elif [ "${IP6_ADDR}" != "SLAAC" ] && [ "${IP6_ADDR}" != "inherit" ] && [ "${IP6_ADDR}" != "ip_hostname" ]; then
+            local owner_in_use="$(check_address_in_use "${IP6_ADDR}")"
+            if [ -n "${owner_in_use}" ]; then
+                error_exit "[ERROR]: IP address already in use by ${owner_in_use}: ${IP6_ADDR}"
+            fi
         fi
     fi
 
@@ -780,6 +812,7 @@ PRIORITY="99"
 OPT_GATEWAY=""
 OPT_NAMESERVER=""
 OPT_TAGS=""
+VM_MODE=0
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -878,6 +911,10 @@ while [ $# -gt 0 ]; do
             fi
             shift 2
             ;;
+        --vm)
+            VM_MODE=1
+            shift
+            ;;
         -Z|--zfs-opts)
             bastille_zfs_options="${2}"
             shift 2
@@ -904,6 +941,27 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
+
+# Brand dispatch: a VM is created from a template, bypassing the jail path.
+if [ "${VM_MODE}" -eq 1 ]; then
+    NAME="${1}"
+    TEMPLATE="${2}"
+    if [ "$#" -ne 2 ]; then
+        usage
+    fi
+    # [-V|--vnet] selects VNET networking: the VM's supervision jail becomes a
+    # VNET jail with the guest's tap inside its own network stack. Default is
+    # shared (guest tap on a host bridge).
+    if [ "${VNET_JAIL}" -eq 1 ]; then
+        VM_NETWORK_TYPE="vnet"
+    else
+        VM_NETWORK_TYPE="shared"
+    fi
+    info 1 "\nCreating VM: ${NAME}..."
+    validate_vm_name
+    vm_create "${NAME}" "${TEMPLATE}" "${VM_NETWORK_TYPE}"
+    exit 0
+fi
 
 # Validate options
 # Do not allow EMPTY_JAIL with any other jail type

@@ -1,0 +1,17 @@
+# Example Bastille VM template.
+#
+# A VM template is an ordinary template whose Bastillefile opens with the VM
+# verb. Apply it with:
+#
+#   bastille create --vm alpine tests/vm-tests/alpine-vm
+#
+# Requires: ZFS, sysutils/edk2-bhyve, and the vmm/nmdm/if_bridge/if_tap kmods.
+
+VM
+CPU 2
+MEM 2G
+BOOTROM uefi
+DISK disk0 20G
+NIC bridge0
+ADDRESS 10.0.0.40
+ISO https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.0-x86_64.iso

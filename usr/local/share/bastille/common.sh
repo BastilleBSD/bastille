@@ -35,6 +35,16 @@
 # shellcheck disable=SC1090
 . ${BASTILLE_CONFIG}
 
+# Provide defaults for VM (bhyve) settings so configs predating VM support
+# keep working without edits. Real values come from bastille.conf.
+: "${bastille_vmdir:=${bastille_prefix}/vms}"
+: "${bastille_vm_bootrom:=/usr/local/share/uefi-firmware/BHYVE_UEFI.fd}"
+: "${bastille_vm_bridge:=bridge0}"
+: "${bastille_vm_shutdown_timeout:=30}"
+: "${bastille_vm_disk_type:=virtio-blk}"
+: "${bastille_vm_nic_type:=virtio-net}"
+: "${bastille_vm_devfs_ruleset:=100}"
+
 COLOR_RED=
 COLOR_GREEN=
 COLOR_YELLOW=
@@ -144,6 +154,46 @@ check_target_is_stopped() {
         return 1
     else
         return 0
+    fi
+}
+
+check_vm_exists() {
+    local target="${1}"
+    if [ -f "${bastille_vmdir}/${target}/vm.conf" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_vm_is_running() {
+    ## A Bastille VM is running when its supervision jail exists. Keying on the
+    ## jail (not /dev/vmm) is what lets 'stop' tear down a persistent jail that
+    ## lingers after bhyve exits -- e.g. when a guest powers itself off.
+    local target="${1}"
+    if jls name 2>/dev/null | grep -Eq "^${target}$"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_vm_is_stopped() {
+    local target="${1}"
+    if jls name 2>/dev/null | grep -Eq "^${target}$"; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+check_vm_guest_is_running() {
+    ## The bhyve guest itself is live when its vmm(4) instance exists.
+    local target="${1}"
+    if [ -e "/dev/vmm/${target}" ]; then
+        return 0
+    else
+        return 1
     fi
 }
 
@@ -561,6 +611,67 @@ validate_ip() {
     else
         error_exit "[ERROR]: IP incorrectly formatted: ${ip}"
     fi
+}
+
+check_address_in_use() {
+    ## Echo a short description of what already holds an IPv4/IPv6 address (a
+    ## host interface, another jail, or a VM), or nothing if it is free. Used by
+    ## create/clone to refuse a duplicate address. Matches the bare address,
+    ## ignoring any "interface|" prefix or "/subnet" suffix.
+    local addr="${1}"
+    if [ -z "${addr}" ]; then
+        return 1
+    fi
+    # Normalize: drop "interface|" prefix and "/subnet" suffix.
+    local want="${addr##*|}"
+    want="${want%%/*}"
+    if [ -z "${want}" ]; then
+        return 1
+    fi
+
+    # Host interfaces (exact inet/inet6 match; escape dots so they are literal).
+    local want_re="$(printf '%s' "${want}" | sed 's/[.]/\\./g')"
+    if ifconfig 2>/dev/null | grep -Eq "^[[:space:]]*inet6?[[:space:]]+${want_re}([[:space:]]|%|\$)"; then
+        echo "a host interface"
+        return 0
+    fi
+
+    # Other jails: shared-IP jails record the address in jail.conf (ip4.addr /
+    # ip6.addr); VNET jails record it inside the jail's rc.conf (ifconfig_vnet*),
+    # the same two sources bastille list reads.
+    if [ -d "${bastille_jailsdir}" ]; then
+        local jd jail_ips
+        for jd in "${bastille_jailsdir}"/*/; do
+            [ -d "${jd}" ] || continue
+            jail_ips="$(
+                sed -n 's/^[[:space:]]*ip[46]\.addr[[:space:]]*[+]*=[[:space:]]*\(.*\);.*$/\1/p' "${jd}jail.conf" 2>/dev/null \
+                    | sed -e 's#/# #g' -e 's/.*|//g' | awk '{print $1}'
+                grep -E '^ifconfig_vnet.*inet ' "${jd}root/etc/rc.conf" 2>/dev/null \
+                    | grep -o 'inet .*' | awk '{print $2}' | sed -E 's#/[0-9]+.*##g; s/"//g'
+                grep -E '^ifconfig_vnet.*inet6' "${jd}root/etc/rc.conf" 2>/dev/null \
+                    | grep -Eow '(::)?[0-9a-fA-F]{1,4}(::?[0-9a-fA-F]{1,4}){1,7}(::)?' | sed 's/"//g'
+            )"
+            if printf '%s\n' "${jail_ips}" | grep -qxF "${want}"; then
+                echo "jail $(basename "${jd}")"
+                return 0
+            fi
+        done
+    fi
+
+    # VMs (address= in each vm.conf).
+    if [ -d "${bastille_vmdir}" ]; then
+        local vc vaddr
+        for vc in "${bastille_vmdir}"/*/vm.conf; do
+            [ -f "${vc}" ] || continue
+            vaddr="$(sysrc -f "${vc}" -n address 2>/dev/null)"
+            vaddr="${vaddr%%/*}"
+            if [ -n "${vaddr}" ] && [ "${vaddr}" = "${want}" ]; then
+                echo "VM $(basename "$(dirname "${vc}")")"
+                return 0
+            fi
+        done
+    fi
+    return 1
 }
 
 validate_netconf() {

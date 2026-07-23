@@ -31,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     error_notify "Usage: bastille stop [option(s)] TARGET"
@@ -85,6 +86,17 @@ fi
 TARGET="${1}"
 
 bastille_root_check
+
+# Brand dispatch: route VM targets to the bhyve supervisor.
+if check_vm_exists "${TARGET}"; then
+    info 1 "\n[${TARGET}]:"
+    if vm_stop "${TARGET}" "${FORCE}"; then
+        exit 0
+    else
+        exit 1
+    fi
+fi
+
 set_target "${TARGET}" "reverse"
 
 for jail in ${JAILS}; do

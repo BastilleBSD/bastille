@@ -31,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     error_notify "Usage: bastille list [option(s)] [all|backup|export|import|ip|jail|limit]"
@@ -143,9 +144,125 @@ get_max_lengths() {
         #MAX_LENGTH_JAIL_TAGS=$(find ${bastille_jailsdir}/*/tags -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 sh -c 'grep -h . "$1" | paste -sd "," -' sh | awk '{print length}' | sort -nr | head -n 1)
         #MAX_LENGTH_JAIL_TAGS=${MAX_LENGTH_JAIL_TAG:-10}
 
+        # Factor VM instances into shared column widths so VM rows align.
+        widen_max_lengths_for_vms
+
+    elif [ -d "${bastille_vmdir}" ] && ls -v --color=never "${bastille_vmdir}"/*/vm.conf >/dev/null 2>&1; then
+        # No jails directory, but VMs exist: seed defaults so VM rows still list.
+        DEFAULT_VALUE="-"
+        SPACER=2
+        MAX_LENGTH_JAIL_NAME=10
+        MAX_LENGTH_JAIL_TYPE=5
+        MAX_LENGTH_JID=3
+        MAX_LENGTH_JAIL_IP=10
+        MAX_LENGTH_JAIL_PORTS=15
+        MAX_LENGTH_JAIL_RELEASE=10
+        widen_max_lengths_for_vms
     else
         error_exit "[ERROR]: No jails found."
     fi
+}
+
+widen_max_lengths_for_vms() {
+
+    [ -d "${bastille_vmdir}" ] || return 0
+    for vmconf in "${bastille_vmdir}"/*/vm.conf; do
+        [ -f "${vmconf}" ] || continue
+        vm="$(basename "$(dirname "${vmconf}")")"
+        if [ "${#vm}" -gt "${MAX_LENGTH_JAIL_NAME}" ]; then MAX_LENGTH_JAIL_NAME="${#vm}"; fi
+        VM_ADDR="$(vm_get "${vm}" address)"
+        if [ -n "${VM_ADDR}" ] && [ "${#VM_ADDR}" -gt "${MAX_LENGTH_JAIL_IP}" ]; then MAX_LENGTH_JAIL_IP="${#VM_ADDR}"; fi
+        # Widen the Release column to the guest OS label (or the "uefi-guest"
+        # fallback, whichever is longer).
+        VM_OS="$(vm_get "${vm}" os)"
+        VM_OS="${VM_OS:-uefi-guest}"
+        if [ "${#VM_OS}" -gt "${MAX_LENGTH_JAIL_RELEASE}" ]; then MAX_LENGTH_JAIL_RELEASE="${#VM_OS}"; fi
+    done
+}
+
+get_vm_list() {
+
+    if [ -n "${TARGET}" ]; then
+        VM_LIST="${TARGET}"
+    else
+        VM_LIST="$(ls -v --color=never "${bastille_vmdir}" 2>/dev/null | sed "s/\n//g")"
+    fi
+}
+
+get_vm_info() {
+
+    VM_NAME="${1}"
+
+    # A VM's JID exists only while its supervision jail is running.
+    JID="$(jls -j ${VM_NAME} jid 2>/dev/null)"
+    JID="${JID:-${DEFAULT_VALUE}}"
+
+    if check_vm_is_running "${VM_NAME}"; then
+        JAIL_STATE="Up"
+    else
+        JAIL_STATE="Down"
+    fi
+
+    JAIL_TYPE="vm"
+    BOOT="$(sysrc -f ${bastille_vmdir}/${VM_NAME}/settings.conf -n boot 2>/dev/null)"
+    BOOT="${BOOT:-${DEFAULT_VALUE}}"
+    PRIORITY="$(sysrc -f ${bastille_vmdir}/${VM_NAME}/settings.conf -n priority 2>/dev/null)"
+    PRIORITY="${PRIORITY:-${DEFAULT_VALUE}}"
+    JAIL_IP="$(vm_get "${VM_NAME}" address)"
+    JAIL_IP="${JAIL_IP:-${DEFAULT_VALUE}}"
+    JAIL_PORTS="${DEFAULT_VALUE}"
+    # Guest OS label (e.g. "Ubuntu-24.04"), derived from the install ISO or an
+    # OS verb at create time. Falls back to the firmware type. Always a single
+    # token, so it never breaks the -j/JSON field parsing.
+    JAIL_RELEASE="$(vm_get "${VM_NAME}" os)"
+    if [ -z "${JAIL_RELEASE}" ]; then
+        case "$(vm_get "${VM_NAME}" bootrom)" in
+            *CSM*|*csm*) JAIL_RELEASE="uefi-csm" ;;
+            *) JAIL_RELEASE="uefi-guest" ;;
+        esac
+    fi
+    JAIL_TAGS="${DEFAULT_VALUE}"
+}
+
+# Append VM rows to the default table, matching list_bastille's format.
+print_vm_rows() {
+
+    [ -d "${bastille_vmdir}" ] || return 0
+    get_vm_list
+
+    for vm in ${VM_LIST}; do
+
+        [ -f "${bastille_vmdir}/${vm}/vm.conf" ] || continue
+
+        get_vm_info "${vm}"
+
+        # Honor the -u|-d state filter, like get_jail_info does for jails.
+        if [ "${OPT_STATE:-all}" != "all" ] && [ "${JAIL_STATE}" != "${OPT_STATE}" ]; then
+            continue
+        fi
+
+        printf " ${JID}%*s${vm}%*s${BOOT}%*s${PRIORITY}%*s${JAIL_STATE}%*s${JAIL_TYPE}%*s${JAIL_IP}%*s${JAIL_PORTS}%*s${JAIL_RELEASE}%*s${JAIL_TAGS}\n" "$((${MAX_LENGTH_JID} - ${#JID} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_NAME} - ${#vm} + ${SPACER}))" "" "$((4 - ${#BOOT} + ${SPACER}))" "" "$((4 - ${#PRIORITY} + ${SPACER}))" "" "$((5 - ${#JAIL_STATE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} - ${#JAIL_TYPE} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_IP} - ${#JAIL_IP} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_PORTS} - ${#JAIL_PORTS} + ${SPACER}))" "" "$((${MAX_LENGTH_JAIL_RELEASE} - ${#JAIL_RELEASE} + ${SPACER}))" ""
+
+    done
+}
+
+list_vm() {
+
+    printf " %-20s %-8s %s\n" "Name" "State" "Type"
+    for vmconf in "${bastille_vmdir}"/*/vm.conf; do
+        [ -f "${vmconf}" ] || continue
+        vm="$(basename "$(dirname "${vmconf}")")"
+        if check_vm_is_running "${vm}"; then
+            VM_STATE="Up"
+        else
+            VM_STATE="Down"
+        fi
+        # Honor the -u|-d state filter.
+        if [ "${OPT_STATE:-all}" != "all" ] && [ "${VM_STATE}" != "${OPT_STATE}" ]; then
+            continue
+        fi
+        printf " %-20s %-8s %s\n" "${vm}" "${VM_STATE}" "vm"
+    done
 }
 
 get_jail_info() {
@@ -349,6 +466,9 @@ list_bastille(){
     wait
 
     print_info
+
+    # Append bhyve VMs as peers of jails (Type column shows 'vm').
+    print_vm_rows
 }
 
 list_all(){
@@ -793,6 +913,9 @@ if [ "$#" -eq 1 ]; then
         jail|jails|container|containers)
             list_jail
             ;;
+        vm|vms)
+            list_vm
+            ;;
         log|logs)
             list_log
             ;;
@@ -806,6 +929,13 @@ if [ "$#" -eq 1 ]; then
         *)
             # Check if we want to query all info for a specific jail instead.
             TARGET="${1}"
+            # A VM target renders as a single-row VM table.
+            if check_vm_exists "${TARGET}"; then
+                get_max_lengths
+                printf " JID%*sName%*sBoot%*sPrio%*sState%*sType%*sIP Address%*sPublished Ports%*sRelease%*sTags\n" "$((${MAX_LENGTH_JID} + ${SPACER} - 3))" "" "$((${MAX_LENGTH_JAIL_NAME} + ${SPACER} - 4))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${SPACER}))" "" "$((${MAX_LENGTH_JAIL_TYPE} + ${SPACER} - 4))" "" "$((${MAX_LENGTH_JAIL_IP} + ${SPACER} - 10))" "" "$((${MAX_LENGTH_JAIL_PORTS} + ${SPACER} - 15))" "" "$((${MAX_LENGTH_JAIL_RELEASE} + ${SPACER} - 7))" ""
+                print_vm_rows
+                exit 0
+            fi
       	    set_target "${TARGET}"
             if [ -f "${bastille_jailsdir}/${TARGET}/jail.conf" ]; then
                 if [ "${OPT_JSON}" -eq 1 ]; then

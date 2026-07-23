@@ -31,6 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
+. /usr/local/share/bastille/bhyve.sh
 
 usage() {
     error_notify "Usage: bastille destroy [option(s)] JAIL"
@@ -332,7 +333,19 @@ case "${TARGET}" in
         destroy_release
         ;;
     *)
-        if [ -d "${bastille_releasesdir}/${TARGET}" ]; then
+        if check_vm_exists "${TARGET}"; then
+            # Destroy targeted VM
+            if [ "${AUTO_YES}" -ne 1 ]; then
+                info 1 "\nDeleting VM: ${TARGET}"
+                # shellcheck disable=SC3045
+                read -p "Are you sure you want to continue? [y/N]: " answer
+                case "${answer}" in
+                    [Yy]|[Yy][Ee][Ss]) ;;
+                    *) error_exit "[ERROR]: VM not destroyed." ;;
+                esac
+            fi
+            vm_destroy "${TARGET}" "${FORCE}"
+        elif [ -d "${bastille_releasesdir}/${TARGET}" ]; then
             NAME_VERIFY="${TARGET}"
             destroy_release
         else
