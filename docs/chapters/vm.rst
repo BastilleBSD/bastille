@@ -66,7 +66,11 @@ Verb reference
   ``bastille_vm_bridge``). See "Networking modes" below.
 - ``ISO url|path`` -- attaches installation media as an ahci-cd device. Remote
   URLs are fetched into the Bastille cache.
-- ``ADDRESS ip`` -- records the guest address (required for ``RDR``).
+- ``ADDRESS ip`` -- records the guest address in the manifest (used by ``RDR``
+  and the ``bastille list`` IP column). When a ``NETWORK_CONFIG`` is present the
+  address is derived from it, so you do not repeat it here. Use ``ADDRESS`` for
+  a guest with no cloud-init network-config (a DHCP or ISO-install VM) where you
+  still want the metadata recorded.
 - ``OS label`` -- guest OS label shown in the ``bastille list`` Release column
   (e.g. ``Ubuntu 24.04``). Optional; if omitted it is guessed from the ISO name
   (``alpine-virt-3.21.iso`` becomes ``Alpine-3.21``). Falls back to
@@ -81,7 +85,9 @@ Verb reference
   runs early in boot.
 - ``NETWORK_CONFIG file`` adds a cloud-init network-config (v1 or v2) to the
   seed, so the guest gets a deterministic (for example static) address at first
-  boot. cloud-init renders it to whatever the guest uses: netplan or
+  boot. Bastille derives the VM's ``ADDRESS`` metadata from the first address in
+  this file, so the guest's address is declared once, here, rather than repeated
+  in an ``ADDRESS`` verb. cloud-init renders it to whatever the guest uses: netplan or
   systemd-networkd on Debian/Ubuntu, ifupdown (``/etc/network/interfaces``) on
   Alpine. One portability caveat: the netplan-style ``match`` selector is only
   honored by the netplan/networkd renderers. The ifupdown renderer uses the

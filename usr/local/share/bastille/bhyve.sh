@@ -876,6 +876,15 @@ vm_guess_os_from_iso() {
     fi
 }
 
+vm_netconfig_address() {
+    ## First IPv4 address (bare, no /prefix) declared in a cloud-init
+    ## network-config (v1 'address:' or v2 'addresses:'). Used to derive the
+    ## ADDRESS metadata so the guest's address lives in exactly one place.
+    local file="${1}"
+    grep -E '^[[:space:]]*(addresses|address):' "${file}" 2>/dev/null \
+        | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1
+}
+
 vm_build_cloudinit_seed() {
     ## Build a NoCloud "cidata" seed ISO using base makefs(8) (no ports
     ## dependency). It always carries an auto-generated meta-data, plus the
@@ -1096,6 +1105,32 @@ vm_create() {
     mkdir -p "${vmdir}"
     chmod 0700 "${vmdir}"
 
+    # Resolve cloud-init file paths (relative to the template dir unless
+    # absolute) up front: the ADDRESS metadata is derived from the
+    # network-config below.
+    case "${M_CLOUDINIT}" in
+        ""|/*) : ;;
+        *) M_CLOUDINIT="${template_dir}/${M_CLOUDINIT}" ;;
+    esac
+    case "${M_NETCONFIG}" in
+        ""|/*) : ;;
+        *) M_NETCONFIG="${template_dir}/${M_NETCONFIG}" ;;
+    esac
+
+    # The guest address lives in one place. A network-config, when present, is
+    # authoritative (it is what actually configures the guest), so derive the
+    # ADDRESS metadata from it rather than repeating the IP in an ADDRESS verb.
+    # Warn if both were given and disagree.
+    if [ -n "${M_NETCONFIG}" ] && [ -f "${M_NETCONFIG}" ]; then
+        local nc_addr="$(vm_netconfig_address "${M_NETCONFIG}")"
+        if [ -n "${nc_addr}" ]; then
+            if [ -n "${M_ADDRESS}" ] && [ "${M_ADDRESS}" != "${nc_addr}" ]; then
+                warn 1 "[WARNING]: ADDRESS (${M_ADDRESS}) differs from the network-config address (${nc_addr}); using the network-config."
+            fi
+            M_ADDRESS="${nc_addr}"
+        fi
+    fi
+
     vm_set "${vm_name}" version "1"
     vm_set "${vm_name}" cpu "${M_CPU}"
     vm_set "${vm_name}" memory "${M_MEM}"
@@ -1141,17 +1176,8 @@ vm_create() {
     fi
 
     # Build the cloud-init NoCloud seed if the template declared user-data
-    # and/or network-config. Resolve paths relative to the template directory
-    # unless absolute.
+    # and/or network-config (paths were resolved above).
     if [ -n "${M_CLOUDINIT}" ] || [ -n "${M_NETCONFIG}" ]; then
-        case "${M_CLOUDINIT}" in
-            ""|/*) : ;;
-            *) M_CLOUDINIT="${template_dir}/${M_CLOUDINIT}" ;;
-        esac
-        case "${M_NETCONFIG}" in
-            ""|/*) : ;;
-            *) M_NETCONFIG="${template_dir}/${M_NETCONFIG}" ;;
-        esac
         vm_build_cloudinit_seed "${vm_name}" "${M_CLOUDINIT}" "${M_NETCONFIG}"
     fi
 
