@@ -1317,6 +1317,23 @@ vm_destroy() {
     # destroy fail and, worse, let rm -rf traverse into host /bin or /dev.
     vm_teardown_jail_root "${vm_name}"
 
+    # Wait out the teardown race. jail -r signals the supervisor's bhyve/sh
+    # processes but returns before they exit, and for a hardened VM their cwd is
+    # on this instance dataset, so an immediate zfs destroy fails "busy". Wait
+    # for the dataset to be released, then force any straggler.
+    local vmdir="${bastille_vmdir}/${vm_name}"
+    local waited=0
+    while [ "${waited}" -lt 10 ] && [ -n "$(fuser -c "${vmdir}" 2>/dev/null)" ]; do
+        sleep 1
+        waited=$((waited + 1))
+    done
+    local holders="$(fuser -c "${vmdir}" 2>/dev/null | tr -cs '0-9' ' ')"
+    if [ -n "${holders}" ]; then
+        # shellcheck disable=SC2086
+        kill -9 ${holders} >/dev/null 2>&1
+        sleep 1
+    fi
+
     # Destroy zvol-backed disks.
     if checkyesno bastille_zfs_enable && [ -n "${bastille_zfs_zpool}" ]; then
         local dataset="${bastille_zfs_zpool}/${bastille_zfs_prefix}/vms/${vm_name}"
