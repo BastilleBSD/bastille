@@ -715,12 +715,7 @@ if [ "$#" -eq 0 ]; then
     else
         list_bastille
     fi
-elif [ "$#" -eq 2 ]; then
-    set_target "${1}" || exit 1
-    shift 1
-fi
-
-if [ "$#" -eq 1 ]; then
+elif [ "$#" -eq 1 ] || [ "$#" -eq 2 ]; then
     case "${1}" in
         -a|--all|all)
             if [ "${OPT_JSON}" -eq 1 ]; then
@@ -826,4 +821,6 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
     esac
+else
+    usage
 fi
