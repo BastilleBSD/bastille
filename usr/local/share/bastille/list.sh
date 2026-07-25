@@ -789,7 +789,7 @@ if [ "$#" -eq 1 ]; then
             fi
             ;;
         release|releases)
-            list_release "-p"
+            list_release "${2}"
             ;;
         snap|snapshot|snapshots)
             list_snapshot
