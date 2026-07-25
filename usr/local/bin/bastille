@@ -273,7 +273,7 @@ fi
 
 if [ "${OPT_PLUGIN}" -eq 1 ]; then
     # shellcheck disable=SC2154
-    SCRIPTPATH="${bastille_sharedir}/${BASTILLE_PLUGIN}/${CMD}.sh"
+    SCRIPTPATH="${bastille_sharedir}/plugins/${BASTILLE_PLUGIN}/${CMD}.sh"
 else
     # shellcheck disable=SC2154
     SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
