@@ -90,8 +90,9 @@ VALUE="$@"
 
 # See if property includes an equal (=) sign
 if echo "${PROPERTY}" | grep -q '='; then
-    PROPERTY="$(echo ${PROPERTY} | awk -F"=" '{print $1}')"
-    VALUE="$(echo ${PROPERTY} | awk -F"=" '{print $2}')"
+    local property="${PROPERTY}"
+    PROPERTY="$(echo ${property} | awk -F"=" '{print $1}')"
+    VALUE="$(echo ${property} | awk -F"=" '{print $2}')"
 fi
 
 # This is a list of all supported jail.conf property names
