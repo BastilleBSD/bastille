@@ -96,7 +96,7 @@ validate_release() {
     # Validate Linux releases
     if [ "${PLATFORM_OS}" = "Ubuntu" ] || [ "${PLATFORM_OS}" = "Debian" ]; then
         if [ "${LINUX_JAIL}" -eq 0 ]; then
-            error_exit "[ERROR]: Linux releases can only be used with [-l|--linux]"
+            error_exit "[ERROR]: Linux releases can only be used with [-L|--linux]"
         fi
     elif [ "${PLATFORM_OS}" = "FreeBSD" ] || [ "${PLATFORM_OS}" = "HardenedBSD" ] || [ "${PLATFORM_OS}" = "MidnightBSD" ]; then
         # Validate release existence
