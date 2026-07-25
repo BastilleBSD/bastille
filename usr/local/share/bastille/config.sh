@@ -88,6 +88,12 @@ PROPERTY="${1}"
 shift
 VALUE="$@"
 
+# See if property includes an equal (=) sign
+if echo "${PROPERTY}" | grep -q '='; then
+    PROPERTY="$(echo ${PROPERTY} | awk -F"=" '{print $1}')"
+    VALUE="$(echo ${PROPERTY} | awk -F"=" '{print $2}')"
+fi
+
 # This is a list of all supported jail.conf property names
 validate_property() {
 
