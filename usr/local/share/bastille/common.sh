@@ -700,7 +700,7 @@ bootstrap_plugin() {
 
 load_plugin() {
     plugin="${1}"
-    if [ ! -d "${bastille_sharedir}/${plugin}" ]; then
+    if [ ! -d "${bastille_sharedir}/plugins/${plugin}" ]; then
         error_exit "[ERROR]: Plugin not found: ${plugin}"
     fi
 }
