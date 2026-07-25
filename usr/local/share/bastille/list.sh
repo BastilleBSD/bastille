@@ -592,9 +592,17 @@ list_release() {
                 if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
                     release_patch=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
                     release_patch=${release_patch:-${release}}
-                    info 3 "${release_patch}"
+                    if pkg -r "${bastille_releasesdir}/${release}" which /usr/bin/uname > /dev/null 2>&1; then
+                        info 3 "${release_patch} (pkgbase)"
+                    else
+                        info 3 "${release_patch}"
+                    fi
                 else
-                    info 3 "${release}"
+                    if pkg -r "${bastille_releasesdir}/${release}" which /usr/bin/uname > /dev/null 2>&1; then
+                        info 3 "${release} (pkgbase)"
+                    else
+                        info 3 "${release}"
+                    fi
                 fi
             fi
         done
