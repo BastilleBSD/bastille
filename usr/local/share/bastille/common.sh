@@ -686,11 +686,17 @@ set_bastille_mountpoints
 ###########
 
 bootstrap_plugin() {
-    plugin="${1}"
+    local plugin_url="${1}"
+    local plugin_name="$(basename ${plugin_url} | sed 's/.git//')"
     if ! which -s git; then
         error_exit "[ERROR]: Git not found."
     else
-        if ! git clone "${plugin}" "${bastille_sharedir}/plugins/"; then
+        if [ -d "${bastille_sharedir}/plugins/${plugin_name}" ]; then
+            if ! git -C "${bastille_sharedir}/plugins/${plugin_name}" pull; then
+                error_exit "[ERROR]: Failed to update plugin."
+            fi
+        fi
+        if ! git clone "${plugin}" "${bastille_sharedir}/plugins/${plugin_name}"; then
             error_exit "[ERROR]: Failed to bootstrap plugin."
         else
             info 1 "Plugin bootstrapped. Use 'bastille --plugin PLUGIN...' to run."
@@ -699,7 +705,7 @@ bootstrap_plugin() {
 }
 
 load_plugin() {
-    plugin="${1}"
+    local plugin="${1}"
     if [ ! -d "${bastille_sharedir}/plugins/${plugin}" ]; then
         error_exit "[ERROR]: Plugin not found: ${plugin}"
     fi
