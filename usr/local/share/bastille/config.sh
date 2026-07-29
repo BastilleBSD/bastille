@@ -153,6 +153,9 @@ print_jail_conf() {
 '
 }
 
+# Emit JSON only for the 'get' action (a query); other actions are unchanged.
+[ "${ACTION}" = "get" ] && json_open jail
+
 for jail in ${JAILS}; do
 
     # Backwards compatibility for specifying only an IP with ip[4|6].addr
@@ -182,7 +185,11 @@ for jail in ${JAILS}; do
         elif [ "${ACTION}" = "remove" ]; then
             error_exit "[ERROR]: Cannot remove the 'priority' property."
         elif [ "${ACTION}" = "get" ]; then
-            sysrc -f "${FILE}" -n "${PROPERTY}"
+            if [ "${BASTILLE_JSON}" -eq 1 ]; then
+                json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
+            else
+                sysrc -f "${FILE}" -n "${PROPERTY}"
+            fi
         fi
 
     # Boot property
@@ -199,7 +206,11 @@ for jail in ${JAILS}; do
         elif [ "${ACTION}" = "remove" ]; then
             error_exit "[ERROR]: Cannot remove the 'boot' property."
         elif [ "${ACTION}" = "get" ]; then
-            sysrc -f "${FILE}" -n "${PROPERTY}"
+            if [ "${BASTILLE_JSON}" -eq 1 ]; then
+                json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
+            else
+                sysrc -f "${FILE}" -n "${PROPERTY}"
+            fi
         fi
 
     # Depend property
@@ -234,7 +245,11 @@ for jail in ${JAILS}; do
 
         elif [ "${ACTION}" = "get" ]; then
 
-            sysrc -f "${FILE}" -n "${PROPERTY}"
+            if [ "${BASTILLE_JSON}" -eq 1 ]; then
+                json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
+            else
+                sysrc -f "${FILE}" -n "${PROPERTY}"
+            fi
 
         fi
     else
@@ -272,8 +287,12 @@ for jail in ${JAILS}; do
                         }
                     }'
                 )
+            # capture the awk exit status before any other command resets $?
+            _status=$?
             # check if our output is a warning or regular
-            if [ $? -eq 120 ]; then
+            if [ "${BASTILLE_JSON}" -eq 1 ]; then
+                json_record name "${jail}" "${PROPERTY}" "${_output}"
+            elif [ "${_status}" -eq 120 ]; then
                 warn 3 "${_output}"
             else
                 info 3 "${_output}"
@@ -347,6 +366,8 @@ for jail in ${JAILS}; do
     fi
 
 done
+
+[ "${ACTION}" = "get" ] && json_close
 
 # Only display this message once at the end (not for every jail). -- cwells
 if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ "${BASTILLE_PROPERTY}" -eq 0 ]; then

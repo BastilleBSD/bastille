@@ -121,6 +121,8 @@ Use "bastille COMMAND -h|--help" for more information about a command.
 Use "bastille -c|--config FILE COMMAND" to specify a non-default config file.
 Use "bastille -v|--version" for version information.
 Use "bastille -q|--quiet COMMAND" to supress Bastille-specific output.
+Use "bastille -j|--json COMMAND" for JSON output (on supported commands).
+Use "bastille -p|--pretty COMMAND" for indented JSON output (implies --json).
 Use "bastille -x|--debug COMMAND" to enable debug mode.
 
 EOF
@@ -149,6 +151,8 @@ bastille_perms_check
 
 # Handle options
 [ -z "${BASTILLE_QUIET}" ] && export BASTILLE_QUIET=0
+[ -z "${BASTILLE_JSON}" ] && export BASTILLE_JSON=0
+[ -z "${BASTILLE_JSON_PRETTY}" ] && export BASTILLE_JSON_PRETTY=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -c|--config)
@@ -172,6 +176,19 @@ while [ "$#" -gt 0 ]; do
             exit 0
             ;;
         -q|--quiet)
+            export BASTILLE_QUIET=1
+            shift
+            ;;
+        -j|--json)
+            # JSON output implies quiet so human status lines don't pollute stdout
+            export BASTILLE_JSON=1
+            export BASTILLE_QUIET=1
+            shift
+            ;;
+        -p|--pretty)
+            # Pretty (indented) JSON output; implies --json
+            export BASTILLE_JSON=1
+            export BASTILLE_JSON_PRETTY=1
             export BASTILLE_QUIET=1
             shift
             ;;
@@ -253,6 +270,20 @@ case "${CMD}" in
         usage
         ;;
 esac
+
+# Reject JSON output for commands that cannot produce it: interactive
+# (console, edit, top, htop), or passthrough/streaming commands whose output
+# belongs to the wrapped tool (cmd, pkg, service, sysrc, migrate, template).
+# Printed directly (not error_notify) so the messaeg is not swallowed by the
+# quiet mode that --json implies.
+if [ "${BASTILLE_JSON}" -eq 1 ]; then
+    case "${CMD}" in
+        console|edit|top|htop|cmd|pkg|service|sysrc|migrate|template)
+            printf "%b\n" "[ERROR]: '${CMD}' does not support JSON output (-j|--json)." >&2
+            exit 1
+            ;;
+    esac
+fi
 
 # shellcheck disable=SC2154
 SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"

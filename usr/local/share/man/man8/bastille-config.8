@@ -55,6 +55,39 @@ from the jail configuration.
 .Sy bastille config myjail set priority 10
 .It Set the boot value:
 .Sy bastille config myjail set boot off
+.It Get a property from all jails as JSON:
+.Sy bastille -j config ALL get boot
+.Pp
+The
+.Sy get
+action supports JSON output via the global
+.Fl j , Fl -json
+and
+.Fl p , Fl -pretty
+options (see
+.Xr bastille 8 ) .
+The document is
+.Ql { "bastille": { "type": "jail", "jail": [ ... ] } } ,
+where each jail is emitted as an object in the
+.Ql jail
+array with a
+.Ql jid ,
+a
+.Ql name ,
+and the queried property as a field named after the property itself (for
+example
+.Ql securelevel )
+holding its value. The
+.Ql jid
+leads each record as a native number when the jail is running, or
+.Ql null
+when it is not. The sibling
+.Ql type
+field repeats the array key so a consumer can read
+.Ql .bastille.type
+and index
+.Ql .bastille[.type]
+without knowing the command.
 .Sh SEE ALSO
 .Xr bastille.conf 5 ,
 .Xr bastille-bootstrap 8 ,
