@@ -49,6 +49,8 @@
 . /usr/local/share/bastille/lib/storage.sh
 # shellcheck source=/dev/null
 . /usr/local/share/bastille/lib/migrate.sh
+# shellcheck source=/dev/null
+. /usr/local/share/bastille/lib/json.sh
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.
