@@ -1,0 +1,31 @@
+name: Unit Tests
+
+# Fast, host-agnostic shellspec unit tests. These gate every PR: they run in
+# seconds on a stock runner with no FreeBSD VM, no root, and no jails, so they
+# are reliable and cheap. The heavier end-to-end suite (real jails on FreeBSD)
+# lives in freebsd-e2e.yml and runs on a schedule / on demand instead.
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  shellspec:
+    name: shellspec (POSIX sh)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install shellspec
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/shellspec/shellspec/master/install.sh \
+            | sh -s -- --yes --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit tests
+        run: shellspec --shell sh
