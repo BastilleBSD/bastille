@@ -42,6 +42,8 @@
 # shellcheck source=/dev/null
 . /usr/local/share/bastille/lib/checks.sh
 # shellcheck source=/dev/null
+. /usr/local/share/bastille/lib/config.sh
+# shellcheck source=/dev/null
 . /usr/local/share/bastille/lib/target.sh
 # shellcheck source=/dev/null
 . /usr/local/share/bastille/lib/network.sh

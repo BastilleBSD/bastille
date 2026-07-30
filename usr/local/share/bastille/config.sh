@@ -104,52 +104,8 @@ PROPERTY="${1}"
 shift
 VALUE="$@"
 
-# See if property includes an equal (=) sign
-if echo "${PROPERTY}" | grep -q '='; then
-    raw_property="${PROPERTY}"
-    PROPERTY="$(echo ${raw_property} | awk -F"=" '{print $1}')"
-    VALUE="$(echo ${raw_property} | awk -F"=" '{print $2}')"
-fi
-
-# This is a list of all supported jail.conf property names
-validate_property() {
-
-    local property="${1}"
-
-    case "${property}" in
-        jid|name|path|interface|ip_hostname) ;;
-        ip4.addr|ip4.saddrsel|ip4|ip6.addr|ip6.saddrsel|ip6) ;;
-        vnet|vnet.interface) ;;
-        novnet) ;;
-        host.hostname|host.domainname|host.hostuuid|host.hostid|host) ;;
-        securelevel|devfs_ruleset|children.max|children.cur|enforce_statfs|persist|cpuset.id|parent) ;;
-        nopersist) ;;
-        osrelease|osreldate|meta|env) ;;
-        allow.set_hostname|allow.sysvipc|allow.raw_sockets|allow.chflags) ;;
-        allow.noset_hostname|allow.nosysvipc|allow.noraw_sockets|allow.nochflags) ;;
-        allow.mount|allow.mount.devfs|allow.quotas|allow.read_msgbuf) ;;
-        allow.nomount|allow.nomount.devfs|allow.noquotas|allow.noread_msgbuf) ;;
-        allow.socket_af|allow.mlock|allow.nfsd|allow.reserved_ports) ;;
-        allow.nosocket_af|allow.nomlock|allow.nonfsd|allow.noreserved_ports) ;;
-        allow.unprivileged_parent_tampering|allow.unprivileged_proc_debug) ;;
-        allow.nounprivileged_parent_tampering|allow.nounprivileged_proc_debug) ;;
-        allow.suser|allow.extattr|allow.adjtime|allow.settime|allow.routing|allow.setaudit) ;;
-        allow.nosuser|allow.noextattr|allow.noadjtime|allow.nosettime|allow.norouting|allow.nosetaudit) ;;
-        allow.mount.fdescfs|allow.mount.fusefs|allow.mount.nullfs|allow.mount.procfs|allow.mount.linprocfs) ;;
-        allow.nomount.fdescfs|allow.nomount.fusefs|allow.nomount.nullfs|allow.nomount.procfs|allow.nomount.linprocfs) ;;
-        allow.mount.linsysfs|allow.mount.tmpfs|allow.mount.zfs|allow.vmm) ;;
-        allow.nomount.linsysfs|allow.nomount.tmpfs|allow.nomount.zfs|allow.novmm) ;;
-        linux|linux.osname|linux.osrelease|linux.oss_version) ;;
-        sysvmsg|sysvsem|sysvshm|zfs.mount_snapshot) ;;
-        exec.prepare|exec.prestart|exec.created|exec.start|command|exec.poststart) ;;
-        exec.prestop|exec.stop|exec.poststop|exec.release|exec.clean) ;;
-        exec.jail_user|exec.system_jail_user|exec.system_user|exec.timeout) ;;
-        exec.consolelog|exec.fib|stop.timeout) ;;
-        zfs.dataset|mount|mount.fstab|mount.devfs|mount.fdescfs|mount.procfs) ;;
-        dying|allow.dying);;
-        *) error_exit "[ERROR]: Unsupported property: ${property}" ;;
-    esac
-}
+# See if property includes an equal (=) sign, and split it into PROPERTY/VALUE.
+config_split_property "${PROPERTY}"
 
 case "${PROPERTY}" in
     boot|depend|depends|prio|priority)
@@ -241,34 +197,7 @@ for jail in ${JAILS}; do
             continue
         fi
         if [ "${ACTION}" = 'get' ]; then
-            _output=$(
-                print_jail_conf "${FILE}" | awk -F= -v property="${PROPERTY}" '
-                    $1 == property {
-                        # note that we have found the property
-                        found = 1;
-                        # check if there is a value for this property
-                        if (NF == 2) {
-                            # remove any quotes surrounding the string
-                            #sub(",[^|]*\\|", ",", $2);
-                            sub(/^"/, "", $2);
-                            sub(/"$/, "", $2);
-                            print $2;
-                        } else {
-                            # no value, just the property name
-                            print "enabled";
-                        }
-                        exit 0;
-                    }
-                    END {
-                        # if we have not found anything we need to print a special
-                        # string
-                        if (! found) {
-                            print("not set");
-                            #  let the caller know that this is a warn condition
-                            exit(120);
-                        }
-                    }'
-                )
+            _output=$(print_jail_conf "${FILE}" | config_get_value "${PROPERTY}")
             # check if our output is a warning or regular
             if [ $? -eq 120 ]; then
                 warn 3 "${_output}"
@@ -308,33 +237,7 @@ for jail in ${JAILS}; do
             #
             # awk doesn't have "inplace" editing so we use a temp file
             tmpfile=$(mktemp) || error_exit "[ERROR]: Failed to create tmpfile."
-            if awk -F= -v line="${LINE}" -v property="${PROPERTY}" '
-                BEGIN {
-                    # build RE as string as we can not expand vars in RE literals
-                    prop_re = "^[[:space:]]*" property "[[:space:]]*;?$";
-                }
-                $1 ~ prop_re && !found {
-                    # we already have an entry in the config for this property so
-                    # we need to substitute our line here rather than keep the
-                    # existing line
-                    print(line);
-                    # note we have already found the property
-                    found = 1;
-                    # move onto the next line
-                    next;
-                }
-                $1 == "}" {
-                    # reached the end of the stanza so if we have not already
-                    # added our line we need to do so now
-                    if (! found) {
-                        print(line);
-                    }
-                }
-                {
-                    # print each uninteresting line unchanged
-                    print;
-                }
-            ' "${FILE}" > "${tmpfile}"; then
+            if config_set_line "${PROPERTY}" "${LINE}" < "${FILE}" > "${tmpfile}"; then
                 mv "${tmpfile}" "${FILE}"
             else
                 rm "${tmpfile}"

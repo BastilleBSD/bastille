@@ -88,3 +88,35 @@ checkyesno() {
         ;;
     esac
 }
+
+# Validate a release name (used when converting a jail/thick release). Rejects
+# names beginning with (-|_) or containing anything outside [a-zA-Z0-9-_].
+# Exits non-zero on an invalid name.
+validate_release_name() {
+
+    local name=${1}
+    local sanity="$(echo "${name}" | tr -c -d 'a-zA-Z0-9-_')"
+
+    if [ -n "$(echo "${sanity}" | awk "/^[-_].*$/" )" ]; then
+        error_exit "[ERROR]: Release names may not begin with (-|_) characters!"
+    elif [ "${name}" != "${sanity}" ]; then
+        error_exit "[ERROR]: Release names may not contain special characters!"
+    fi
+
+}
+
+# Validate a comma-separated CPU list against the host's available CPUs.
+# Returns non-zero (without exiting) on the first unavailable CPU so the caller
+# can 'continue'.
+validate_cpus() {
+
+    local cpus="${1}"
+
+    for cpu in $(echo ${cpus} | sed 's/,/ /g'); do
+        if ! cpuset -l ${cpu} 2>/dev/null; then
+            error_notify "[ERROR]: CPU is not available: ${cpu}"
+            return 1
+        fi
+    done
+
+}
