@@ -38,17 +38,17 @@
 # Load library functions. Each file defines a group of helpers; they are
 # sourced here so every subcommand that loads common.sh gets the full set.
 # shellcheck source=/dev/null
-. /usr/local/share/bastille/lib/log.sh
+. "${bastille_sharedir}/lib/log.sh"
 # shellcheck source=/dev/null
-. /usr/local/share/bastille/lib/checks.sh
+. "${bastille_sharedir}/lib/checks.sh"
 # shellcheck source=/dev/null
-. /usr/local/share/bastille/lib/target.sh
+. "${bastille_sharedir}/lib/target.sh"
 # shellcheck source=/dev/null
-. /usr/local/share/bastille/lib/network.sh
+. "${bastille_sharedir}/lib/network.sh"
 # shellcheck source=/dev/null
-. /usr/local/share/bastille/lib/storage.sh
+. "${bastille_sharedir}/lib/storage.sh"
 # shellcheck source=/dev/null
-. /usr/local/share/bastille/lib/migrate.sh
+. "${bastille_sharedir}/lib/migrate.sh"
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.
