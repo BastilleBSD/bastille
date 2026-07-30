@@ -37,15 +37,10 @@
 
 # Load library functions. Each file defines a group of helpers; they are
 # sourced here so every subcommand that loads common.sh gets the full set.
-# The config was loaded above, so bastille_sharedir is set; fall back to the
-# default for an older config file that predates the variable.
-: "${bastille_sharedir:=/usr/local/share/bastille}"
 # shellcheck source=/dev/null
 . "${bastille_sharedir}/lib/log.sh"
 # shellcheck source=/dev/null
 . "${bastille_sharedir}/lib/checks.sh"
-# shellcheck source=/dev/null
-. "${bastille_sharedir}/lib/config.sh"
 # shellcheck source=/dev/null
 . "${bastille_sharedir}/lib/target.sh"
 # shellcheck source=/dev/null
@@ -54,6 +49,9 @@
 . "${bastille_sharedir}/lib/storage.sh"
 # shellcheck source=/dev/null
 . "${bastille_sharedir}/lib/migrate.sh"
+# shellcheck source=/dev/null
+. "${bastille_sharedir}/lib/config.sh"
+# shellcheck source=/dev/null
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.
