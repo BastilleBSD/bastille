@@ -68,10 +68,26 @@ bastille_root_check
 set_target "${TARGET}"
 
 case "${ACTION}" in
-    get|remove)
+    get)
         if [ "$#" -ne 1 ]; then
             error_exit "[ERROR]: Too many parameters for [get|remove] operation."
         fi
+        ;;
+    remove)
+        # 'depend' removal takes a TARGET value; all other properties take
+        # only the property name
+        case "${1}" in
+            depend|depends)
+                if [ "$#" -gt 2 ]; then
+                    error_exit "[ERROR]: Too many parameters for [get|remove] operation."
+                fi
+                ;;
+            *)
+                if [ "$#" -ne 1 ]; then
+                    error_exit "[ERROR]: Too many parameters for [get|remove] operation."
+                fi
+                ;;
+        esac
         ;;
     add|set)
         ;;
@@ -170,88 +186,61 @@ for jail in ${JAILS}; do
     fi
 
     # Handle Bastille specific properties
-    # Currently only 'depend' 'priority' and 'boot'
-    if [ "${PROPERTY}" = "priority" ] || [ "${PROPERTY}" = "prio" ]; then
-
-        PROPERTY="priority"
-        FILE="${bastille_jailsdir}/${jail}/settings.conf"
-
-        if [ "${ACTION}" = "set" ]; then
-            if echo "${VALUE}" | grep -Eq '^[0-9]+$'; then
-                sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
-            else
-                error_exit "Priority value must be a number."
-            fi
-        elif [ "${ACTION}" = "remove" ]; then
-            error_exit "[ERROR]: Cannot remove the 'priority' property."
-        elif [ "${ACTION}" = "get" ]; then
-            if [ "${BASTILLE_JSON}" -eq 1 ]; then
-                json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
-            else
-                sysrc -f "${FILE}" -n "${PROPERTY}"
-            fi
-        fi
-
-    # Boot property
-    elif [ "${PROPERTY}" = "boot" ]; then
+    # Currently only 'depend', 'priority' and 'boot'. All stored in settings.conf
+    if [ "${BASTILLE_PROPERTY}" -eq 1 ]; then
 
         FILE="${bastille_jailsdir}/${jail}/settings.conf"
 
-        if [ "${ACTION}" = "set" ]; then
-            if [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; then
-                sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
-            else
-                error_exit "Boot value must be 'on' or 'off'."
-            fi
-        elif [ "${ACTION}" = "remove" ]; then
-            error_exit "[ERROR]: Cannot remove the 'boot' property."
-        elif [ "${ACTION}" = "get" ]; then
-            if [ "${BASTILLE_JSON}" -eq 1 ]; then
-                json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
-            else
-                sysrc -f "${FILE}" -n "${PROPERTY}"
-            fi
-        fi
+        # Normalize property aliases
+        case "${PROPERTY}" in
+            prio) PROPERTY="priority" ;;
+            depends) PROPERTY="depend" ;;
+        esac
 
-    # Depend property
-    elif [ "${PROPERTY}" = "depend" ] || [ "${PROPERTY}" = "depends" ]; then
+        if [ "${ACTION}" = "get" ]; then
+          if [ "${BASTILLE_JSON}" -eq 1 ]; then
+              json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
+          else
 
-        PROPERTY="depend"
-        FILE="${bastille_jailsdir}/${jail}/settings.conf"
-
-        if [ "${ACTION}" = "set" ]; then
-
-            if [ -z "${VALUE}" ]; then
-                error_exit "[ERROR]: Adding a jail to the 'depend' property requires a TARGET."
-            else
-                set_target "${VALUE}"
-            fi
-
-            info 1 "\n[${jail}]:"
-
-            sysrc -f "${FILE}" "${PROPERTY}+=${JAILS}"
+            sysrc -f "${FILE}" -n "${PROPERTY}"
+          fi
 
         elif [ "${ACTION}" = "remove" ]; then
 
+            # Only 'depend' supports removing a value; the rest are permanent
+            if [ "${PROPERTY}" != "depend" ]; then
+                error_exit "[ERROR]: Cannot remove the '${PROPERTY}' property."
+            fi
             if [ -z "${VALUE}" ]; then
                 error_exit "[ERROR]: Removing a jail from the 'depend' property requires a TARGET."
-            else
-                set_target "${VALUE}"
             fi
-
+            set_target "${VALUE}"
             info 1 "\n[${jail}]:"
-
             sysrc -f "${FILE}" "${PROPERTY}-=${JAILS}"
 
-        elif [ "${ACTION}" = "get" ]; then
+        else # set
 
-            if [ "${BASTILLE_JSON}" -eq 1 ]; then
-                json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
-            else
-                sysrc -f "${FILE}" -n "${PROPERTY}"
-            fi
+            case "${PROPERTY}" in
+                priority)
+                    echo "${VALUE}" | grep -Eq '^[0-9]+$' || error_exit "Priority value must be a number."
+                    sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
+                    ;;
+                boot)
+                    { [ "${VALUE}" = "on" ] || [ "${VALUE}" = "off" ]; } || error_exit "Boot value must be 'on' or 'off'."
+                    sysrc -f "${FILE}" "${PROPERTY}=${VALUE}"
+                    ;;
+                depend)
+                    if [ -z "${VALUE}" ]; then
+                        error_exit "[ERROR]: Adding a jail to the 'depend' property requires a TARGET."
+                    fi
+                    set_target "${VALUE}"
+                    info 1 "\n[${jail}]:"
+                    sysrc -f "${FILE}" "${PROPERTY}+=${JAILS}"
+                    ;;
+            esac
 
         fi
+
     else
         FILE="${bastille_jailsdir}/${jail}/jail.conf"
         if [ ! -f "${FILE}" ]; then
