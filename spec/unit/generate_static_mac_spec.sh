@@ -16,7 +16,9 @@ Describe 'generate_static_mac()'
   mock_host_commands() {
     ifconfig() { echo "        ether 00:11:22:33:44:55"; }
     # A fixed digest makes the suffix deterministic regardless of input.
-    sha256() { echo "0123456789abcdef"; }
+    # Drain stdin (as the real sha256 does) so the upstream `sed` in the pipe
+    # isn't hit with EPIPE -- GNU sed reports that on stderr and fails the run.
+    sha256() { cat >/dev/null 2>&1; echo "0123456789abcdef"; }
   }
   BeforeEach 'mock_host_commands'
 

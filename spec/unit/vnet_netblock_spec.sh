@@ -21,7 +21,9 @@ Describe 'lib/network.sh generate_vnet_jail_netblock()'
   # sha256 is fixed so the derived MAC suffix is stable and assertable.
   mock_host_commands() {
     ifconfig() { echo "        ether 00:11:22:33:44:55"; }
-    sha256()   { echo "abcde"; }
+    # Drain stdin (as the real sha256 does) so the upstream `sed` in the pipe
+    # isn't hit with EPIPE -- GNU sed reports that on stderr and fails the run.
+    sha256()   { cat >/dev/null 2>&1; echo "abcde"; }
   }
   BeforeEach 'mock_host_commands'
 
