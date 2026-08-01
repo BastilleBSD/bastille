@@ -499,6 +499,7 @@ list_single() {
 	    boot)
             HEADER="Boot"
             FIELD="JAIL_BOOT"
+            ;;
 		ip|ips)
 			HEADER="IP Adress"
 			FIELD="JAIL_IP_FULL"
@@ -510,6 +511,7 @@ list_single() {
         prio|priority)
             HEADER="Prio"
             FIELD="JAIL_PRIORITY"
+            ;;
 		rdr|port|ports)
 			HEADER="Ports"
 			FIELD="JAIL_PORTS_FULL"
