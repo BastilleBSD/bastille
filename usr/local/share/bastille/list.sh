@@ -80,7 +80,6 @@ get_max_lengths() {
 
         # Set default values
         DEFAULT_VALUE="-"
-        SPACER=2
 
         # Set max length for JID
         MAX_LENGTH_JID=${MAX_LENGTH_JID:-3}
@@ -455,7 +454,7 @@ list_all(){
 		        "Path"
 
             for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s\n" \
+                printf " %-*s %-*s %-*s %-*s %-*s %-*s\n" \
                     "${MAX_LENGTH_JID}"          "" \
                     "${MAX_LENGTH_JAIL_NAME}"    "" \
                     "${MAX_LENGTH_JAIL_BOOT}"    "" \
@@ -721,7 +720,7 @@ elif [ "$#" -eq 1 ] || [ "$#" -eq 2 ]; then
                 list_all
             fi
             ;;
-        ip|ips|paths|paths|rdr|port|ports|state|status|type|jailtype)
+        ip|ips|path|paths|rdr|port|ports|state|status|type|jailtype)
             list_single "${1}"
             ;;
         release|releases)
