@@ -126,10 +126,8 @@ get_max_lengths() {
         if [ "${MAX_LENGTH_JAIL_HOSTNAME}" -lt 8 ]; then MAX_LENGTH_JAIL_HOSTNAME=8; fi
 
         # Set max length for jail ports (active)
-        MAX_LENGTH_JAIL_PORTS=$(find ${bastille_jailsdir}/*/rdr.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 awk '{ s=$5" "$6" "$7; chars += length(s)} END { chars += lines - 1; print chars }' | sort -nr | head -n 1)
-        MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-10}
-        if [ "${MAX_LENGTH_JAIL_PORTS}" -lt 10 ]; then MAX_LENGTH_JAIL_PORTS=10; fi
-        if [ "${MAX_LENGTH_JAIL_PORTS}" -gt 30 ]; then MAX_LENGTH_JAIL_PORTS=30; fi
+        MAX_LENGTH_JAIL_PORTS=$(find ${bastille_jailsdir}/*/rdr.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 -n1 awk '{ s=$5" "$6" "$7; print length(s) }' | sort -nr | head -n 1)
+        MAX_LENGTH_JAIL_PORTS=${MAX_LENGTH_JAIL_PORTS:-5}
 
         # Set max length for freebsd jail release
         # shellcheck disable=SC2046
@@ -216,10 +214,6 @@ get_jail_info() {
         fi
         JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
-        # Print IPs with commans when JSON is selected
-        JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
-        if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="${JAIL_IP_FULL}"; fi
-
         # Get jail path
         JAIL_PATH=$(/usr/sbin/jls -j ${JAIL_NAME} path 2> /dev/null)
 
@@ -227,7 +221,7 @@ get_jail_info() {
         JAIL_HOSTNAME=$(/usr/sbin/jls -j ${JAIL_NAME} host.hostname 2> /dev/null)
 
         # Get jail ports (active)
-        JAIL_PORTS=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2> /dev/null | awk '{ printf "%s/%s:%s"",",$6,$13,$17 }' | sed "s/,$//")
+        JAIL_PORTS=$(pfctl -a "rdr/${JAIL_NAME}" -Psn 2> /dev/null | awk '{ printf "%s/%s:%s\n", $6,$13,$17 }')
 
         # Get release (FreeBSD or Linux)
         if [ "${IS_FREEBSD_JAIL}" -eq 1 ]; then
@@ -251,9 +245,6 @@ get_jail_info() {
         fi
         JAIL_IP="$(printf '%s\n%s' "${JAIL_IP4}" "${JAIL_IP6}" | sed -e '/^-$/d' -e '/^$/d')"
 
-        JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
-        if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="${JAIL_IP_FULL}"; fi
-
         # Set jail path
         JAIL_PATH=$(sed -n "s/^[ ]*path[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
 
@@ -261,7 +252,7 @@ get_jail_info() {
         JAIL_HOSTNAME=$(sed -n "s/^[ ]*host.hostname[ ]*=[ ]*\(.*\);$/\1/p" "${bastille_jailsdir}/${JAIL_NAME}/jail.conf" 2> /dev/null)
 
         # Get jail ports (inactive)
-        if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '{ for(i=1; i<=NF; i++) if($i == "tcp" || $i == "udp") printf "%s/%s:%s ", $i, $(i+1), $(i+2) }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null | sed "s/,$//"); else JAIL_PORTS=""; fi
+        if [ -f "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" ]; then JAIL_PORTS=$(awk '{ for(i=1; i<=NF; i++) if($i == "tcp" || $i == "udp") printf "%s/%s:%s\n", $i, $(i+1), $(i+2) }' "${bastille_jailsdir}/${JAIL_NAME}/rdr.conf" 2> /dev/null); else JAIL_PORTS=""; fi
 
         # Get jail release (FreeBSD or Linux)
         if [ -n "${JAIL_PATH}" ]; then
@@ -286,9 +277,12 @@ get_jail_info() {
         continue
     fi
 
-    # Add ... if JAIL_PORTS is too long
-    JAIL_PORTS_FULL="${JAIL_PORTS}"
-    if [ "${#JAIL_PORTS}" -gt "${MAX_LENGTH_JAIL_PORTS}" ]; then JAIL_PORTS="$(echo ${JAIL_PORTS} | cut -c-$((${MAX_LENGTH_JAIL_PORTS} - 3)))..."; fi
+	# Print IPs with commas when JSON is selected
+	JAIL_IP_FULL="$(echo ${JAIL_IP} | sed 's/ /,/g')"
+	if [ "${OPT_JSON}" -eq 1 ]; then JAIL_IP="${JAIL_IP_FULL}"; fi
+
+	# Print ports with commas when JSON is selected
+	JAIL_PORTS_FULL="$(echo ${JAIL_PORTS} | sed 's/ /,/g')"
 	if [ "${OPT_JSON}" -eq 1 ]; then JAIL_PORTS="${JAIL_PORTS_FULL}"; fi
 
     # Set default value (-) if empty
@@ -316,16 +310,16 @@ list(){
 
     # Print header
 	printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
-    "${MAX_LENGTH_JID}"          "JID" \
-    "${MAX_LENGTH_JAIL_NAME}"    "Name" \
-    "${MAX_LENGTH_JAIL_BOOT}"    "Boot" \
-    "${MAX_LENGTH_JAIL_PRIO}"    "Prio" \
-    "${MAX_LENGTH_JAIL_STATE}"   "State" \
-    "${MAX_LENGTH_JAIL_TYPE}"    "Type" \
-    "${MAX_LENGTH_JAIL_IP}"      "IP Address" \
-    "${MAX_LENGTH_JAIL_PORTS}"   "Ports" \
-    "${MAX_LENGTH_JAIL_RELEASE}" "Release" \
-    "Tags"
+        "${MAX_LENGTH_JID}"          "JID" \
+        "${MAX_LENGTH_JAIL_NAME}"    "Name" \
+        "${MAX_LENGTH_JAIL_BOOT}"    "Boot" \
+        "${MAX_LENGTH_JAIL_PRIO}"    "Prio" \
+        "${MAX_LENGTH_JAIL_STATE}"   "State" \
+        "${MAX_LENGTH_JAIL_TYPE}"    "Type" \
+        "${MAX_LENGTH_JAIL_IP}"      "IP Address" \
+        "${MAX_LENGTH_JAIL_PORTS}"   "Ports" \
+        "${MAX_LENGTH_JAIL_RELEASE}" "Release" \
+        "Tags"
 	
 	for jail in ${JAIL_LIST}; do
 
@@ -340,41 +334,13 @@ list(){
 		
         get_jail_info "${jail}"
 
-        # Get JAIL_IP count
+        # Get JAIL_IP count and reset FIRST_PASS
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
+        JAIL_PORT_COUNT=$(echo "${JAIL_PORTS}" | wc -l)
 
-        # Print JAIL_IP in columns if -gt 1
-        if [ ${JAIL_IP_COUNT} -gt 1 ]; then
-            # vnet0 has more than one IPs assigned.
-            # Put each IP in its own line below the jails first address. For instance:
-            #  JID     State  IP Address       Published Ports  Hostname  Release          Path
-            #  foo     Up     10.10.10.10      -                foo       14.0-RELEASE-p5  /usr/local/bastille/jails/foo/root
-            #                       10.10.10.11
-            #                       10.10.10.12
-            FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
-            printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
-                "${MAX_LENGTH_JID}"          "${JID}" \
-                "${MAX_LENGTH_JAIL_NAME}"    "${JAIL_NAME}" \
-                "${MAX_LENGTH_JAIL_BOOT}"    "${JAIL_BOOT}" \
-                "${MAX_LENGTH_JAIL_PRIO}"    "${JAIL_PRIO}" \
-                "${MAX_LENGTH_JAIL_STATE}"   "${JAIL_STATE}" \
-                "${MAX_LENGTH_JAIL_TYPE}"    "${JAIL_TYPE}" \
-                "${MAX_LENGTH_JAIL_IP}"      "${FIRST_IP}" \
-                "${MAX_LENGTH_JAIL_PORTS}"   "${JAIL_PORTS}" \
-                "${MAX_LENGTH_JAIL_RELEASE}" "${JAIL_RELEASE}" \
-                "${JAIL_TAGS}"
-			for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s\n" \
-                    "${MAX_LENGTH_JID}"        "" \
-                    "${MAX_LENGTH_JAIL_NAME}"  "" \
-                    "${MAX_LENGTH_JAIL_BOOT}"  "" \
-                    "${MAX_LENGTH_JAIL_PRIO}"  "" \
-                    "${MAX_LENGTH_JAIL_STATE}" "" \
-                    "${MAX_LENGTH_JAIL_TYPE}"  "" \
-                    "${MAX_LENGTH_JAIL_IP}"    "${IP}"
-			done
-        else
-			printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
+        # Print JAIL_IP and JAIL_PORTS in columns if -gt 1
+	    if [ "${JAIL_IP_COUNT}" -eq 1 ] && [ "${JAIL_PORT_COUNT}" -eq 1 ]; then
+	        printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
                 "${MAX_LENGTH_JID}"          "${JID}" \
                 "${MAX_LENGTH_JAIL_NAME}"    "${JAIL_NAME}" \
                 "${MAX_LENGTH_JAIL_BOOT}"    "${JAIL_BOOT}" \
@@ -385,7 +351,41 @@ list(){
                 "${MAX_LENGTH_JAIL_PORTS}"   "${JAIL_PORTS}" \
                 "${MAX_LENGTH_JAIL_RELEASE}" "${JAIL_RELEASE}" \
                 "${JAIL_TAGS}"
-		fi
+        else
+		    FIRST=1
+            while [ "${JAIL_IP_COUNT}" -ge 1 ] || [ "${JAIL_PORT_COUNT}" -ge 1 ]; do
+                IP="$(printf "%s\n" "${JAIL_IP}" | head -n 1)"
+	            PORT="$(printf "%s\n" "${JAIL_PORTS}" | head -n 1)"
+                JAIL_IP=$(printf "%s\n" "${JAIL_IP}" | sed '1d;/^$/d')
+                JAIL_PORTS=$(printf "%s\n" "${JAIL_PORTS}" | sed '1d;/^$/d')
+				JAIL_IP_COUNT=$(( JAIL_IP_COUNT - 1 ))
+				JAIL_PORT_COUNT=$(( JAIL_PORT_COUNT - 1 ))
+                if [ "${FIRST}" -eq 1 ]; then
+				    printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
+                        "${MAX_LENGTH_JID}"          "${JID}" \
+                        "${MAX_LENGTH_JAIL_NAME}"    "${JAIL_NAME}" \
+                        "${MAX_LENGTH_JAIL_BOOT}"    "${JAIL_BOOT}" \
+                        "${MAX_LENGTH_JAIL_PRIO}"    "${JAIL_PRIO}" \
+                        "${MAX_LENGTH_JAIL_STATE}"   "${JAIL_STATE}" \
+                        "${MAX_LENGTH_JAIL_TYPE}"    "${JAIL_TYPE}" \
+                        "${MAX_LENGTH_JAIL_IP}"      "${IP}" \
+                        "${MAX_LENGTH_JAIL_PORTS}"   "${PORT}" \
+                        "${MAX_LENGTH_JAIL_RELEASE}" "${JAIL_RELEASE}" \
+                        "${JAIL_TAGS}"
+                    FIRST=0
+                else
+                    printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s\n" \
+                        "${MAX_LENGTH_JID}"        "" \
+                        "${MAX_LENGTH_JAIL_NAME}"  "" \
+                        "${MAX_LENGTH_JAIL_BOOT}"  "" \
+                        "${MAX_LENGTH_JAIL_PRIO}"  "" \
+                        "${MAX_LENGTH_JAIL_STATE}" "" \
+                        "${MAX_LENGTH_JAIL_TYPE}"  "" \
+                        "${MAX_LENGTH_JAIL_IP}"    "${IP}" \
+					    "${MAX_LENGTH_JAIL_PORTS}" "${PORT}"
+				fi
+		    done
+	    fi
 		
         ) > "${tmp_jail}" &
 
@@ -430,17 +430,12 @@ list_all(){
 
         get_jail_info  "${jail}"
 
-        # Get jail IP count
+        # Get JAIL_IP count and reset FIRST_PASS
         JAIL_IP_COUNT=$(echo "${JAIL_IP}" | wc -l)
+        JAIL_PORT_COUNT=$(echo "${JAIL_PORTS}" | wc -l)
 
-        if [ ${JAIL_IP_COUNT} -gt 1 ]; then
-            # vnet0 has more than one IPs assigned.
-            # Put each IP in its own line below the jails first address. For instance:
-            #  JID     State  IP Address       Published Ports  Hostname  Release          Path
-            #  foo     Up     10.10.10.10      -                foo       14.0-RELEASE-p5  /usr/local/bastille/jails/foo/root
-            #                 10.10.10.11
-            #                 10.10.10.12
-            FIRST_IP="$(echo "${JAIL_IP}" | head -n 1)"
+        # Print JAIL_IP and JAIL_PORTS in columns if -gt 1
+	    if [ "${JAIL_IP_COUNT}" -eq 1 ] && [ "${JAIL_PORT_COUNT}" -eq 1 ]; then
 	        printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
 		        "${MAX_LENGTH_JID}"           "${JID}" \
 	    	    "${MAX_LENGTH_JAIL_NAME}"     "${JAIL_NAME}" \
@@ -451,30 +446,41 @@ list_all(){
 		        "${MAX_LENGTH_JAIL_PORTS}"    "${JAIL_PORTS}" \
 		        "${MAX_LENGTH_JAIL_HOSTNAME}" "${JAIL_HOSTNAME}" \
 		        "${MAX_LENGTH_JAIL_RELEASE}"  "${JAIL_RELEASE}" \
-		        "Path"
-
-            for IP in $(echo "${JAIL_IP}" | tail -n +2); do
-                printf " %-*s %-*s %-*s %-*s %-*s %-*s\n" \
-                    "${MAX_LENGTH_JID}"          "" \
-                    "${MAX_LENGTH_JAIL_NAME}"    "" \
-                    "${MAX_LENGTH_JAIL_BOOT}"    "" \
-                    "${MAX_LENGTH_JAIL_PRIO}"    "" \
-                    "${MAX_LENGTH_JAIL_STATE}"   "" \
-                    "${MAX_LENGTH_JAIL_IP}"      "${IP}"
-            done
+		        "${JAIL_PATH}"
         else
-			printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
-				"${MAX_LENGTH_JID}"           "${JID}" \
-				"${MAX_LENGTH_JAIL_NAME}"     "${JAIL_NAME}" \
-				"${MAX_LENGTH_JAIL_BOOT}"     "${JAIL_BOOT}" \
-				"${MAX_LENGTH_JAIL_PRIO}"     "${JAIL_PRIO}" \
-				"${MAX_LENGTH_JAIL_STATE}"    "${JAIL_STATE}" \
-				"${MAX_LENGTH_JAIL_IP}"       "${JAIL_IP}" \
-				"${MAX_LENGTH_JAIL_PORTS}"    "${JAIL_PORTS}" \
-				"${MAX_LENGTH_JAIL_HOSTNAME}" "${JAIL_HOSTNAME}" \
-				"${MAX_LENGTH_JAIL_RELEASE}"  "${JAIL_RELEASE}" \
-				"${JAIL_PATH}"
-        fi
+		    FIRST=1
+            while [ "${JAIL_IP_COUNT}" -ge 1 ] || [ "${JAIL_PORT_COUNT}" -ge 1 ]; do
+                IP="$(printf "%s\n" "${JAIL_IP}" | head -n 1)"
+	            PORT="$(printf "%s\n" "${JAIL_PORTS}" | head -n 1)"
+                JAIL_IP=$(printf "%s\n" "${JAIL_IP}" | sed '1d;/^$/d')
+                JAIL_PORTS=$(printf "%s\n" "${JAIL_PORTS}" | sed '1d;/^$/d')
+				JAIL_IP_COUNT=$(( JAIL_IP_COUNT - 1 ))
+				JAIL_PORT_COUNT=$(( JAIL_PORT_COUNT - 1 ))
+                if [ "${FIRST}" -eq 1 ]; then
+				    printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %-*s %s\n" \
+                        "${MAX_LENGTH_JID}"           "${JID}" \
+                        "${MAX_LENGTH_JAIL_NAME}"     "${JAIL_NAME}" \
+                        "${MAX_LENGTH_JAIL_BOOT}"     "${JAIL_BOOT}" \
+                        "${MAX_LENGTH_JAIL_PRIO}"     "${JAIL_PRIO}" \
+                        "${MAX_LENGTH_JAIL_STATE}"    "${JAIL_STATE}" \
+                        "${MAX_LENGTH_JAIL_IP}"       "${IP}" \
+                        "${MAX_LENGTH_JAIL_PORTS}"    "${PORT}" \
+                        "${MAX_LENGTH_JAIL_HOSTNAME}" "${JAIL_HOSTNAME}" \
+                        "${MAX_LENGTH_JAIL_RELEASE}"  "${JAIL_RELEASE}" \
+                        "${JAIL_PATH}"
+                    FIRST=0
+                else
+                    printf " %-*s %-*s %-*s %-*s %-*s %-*s %-*s\n" \
+                        "${MAX_LENGTH_JID}"        "" \
+                        "${MAX_LENGTH_JAIL_NAME}"  "" \
+                        "${MAX_LENGTH_JAIL_BOOT}"  "" \
+                        "${MAX_LENGTH_JAIL_PRIO}"  "" \
+                        "${MAX_LENGTH_JAIL_STATE}" "" \
+                        "${MAX_LENGTH_JAIL_IP}"    "${IP}" \
+                        "${MAX_LENGTH_JAIL_PORTS}" "${PORT}"
+				fi
+		    done
+	    fi
 
         ) > "${tmp_jail}" &
 
