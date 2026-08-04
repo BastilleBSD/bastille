@@ -301,7 +301,8 @@ ${NAME} {
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
   exec.start += '${EXEC_START_DEFINITION}';
-  exec.stop = '/bin/sh /etc/rc.shutdown';
+  exec.stop = '${EXEC_STOP_DEFINITION}';
+  exec.stop += '/bin/sh /etc/rc.shutdown';
   host.hostname = ${NAME};
   mount.devfs;
   mount.fstab = ${bastille_jail_fstab};
@@ -321,7 +322,8 @@ ${NAME} {
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
   exec.start += '${EXEC_START_DEFINITION}';
-  exec.stop = '/bin/sh /etc/rc.shutdown';
+  exec.stop = '${EXEC_STOP_DEFINITION}';
+  exec.stop += '/bin/sh /etc/rc.shutdown';
   host.hostname = ${NAME};
   mount.devfs;
   mount.fstab = ${bastille_jail_fstab};
@@ -581,6 +583,7 @@ create_jail() {
         if [ -n "${OCI_EXEC}" ]; then
             EXEC_START_DEFINITION=". /root/.oci-env; ${OCI_EXEC} &"
         fi
+        EXEC_STOP_DEFINITION="s6-svscanctl -t /run/s6/services"
     
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
