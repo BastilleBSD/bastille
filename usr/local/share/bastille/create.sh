@@ -784,6 +784,11 @@ create_jail() {
 		for prop in ${properties}; do
             bastille -q config "${NAME}" set "${prop}"
 		done
+		port="$(cat ${bastille_jail}/ports | awk -F"/" '{print $1}')"
+		proto="$(cat ${bastille_jail}/ports | awk -F"/" '{print $2}')"
+		if [ -n "${port}" ] && [ -n "${proto}" ]; then
+            bastille -q rdr "${NAME}" "${proto}" "${port}" "${port}"
+        fi
     elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         generate_minimal_conf
     fi
