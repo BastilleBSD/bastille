@@ -52,6 +52,7 @@ usage() {
          --no-boot                  Set boot=off.
          --no-validate              Do not validate the release name.
          --no-ip                    Create jail without an ip (VNET only).
+         --os OS                    Specify an alternative OS type (OCI only).
     -O | --oci                      Create an OCI-image jail (experimental).
     -P | --passthrough              Enable VNET. INTERFACE is used as-is.
     -p | --priority VALUE           Set priority value.
@@ -300,8 +301,8 @@ ${NAME} {
   devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
-  exec.start = '/bin/sh /etc/rc';
-  exec.stop = '/bin/sh /etc/rc.shutdown';
+  exec.start = '${EXEC_START_DEFINITION}';
+  exec.stop = '${EXEC_STOP_DEFINITION}';
   host.hostname = ${NAME};
   mount.devfs;
   mount.fstab = ${bastille_jail_fstab};
@@ -319,8 +320,8 @@ ${NAME} {
   devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
-  exec.start = '/bin/sh /etc/rc';
-  exec.stop = '/bin/sh /etc/rc.shutdown';
+  exec.start = '${EXEC_START_DEFINITION}';
+  exec.stop = '${EXEC_STOP_DEFINITION}';
   host.hostname = ${NAME};
   mount.devfs;
   mount.fstab = ${bastille_jail_fstab};
@@ -503,7 +504,7 @@ create_jail() {
 
         info 1 "\nPulling image: ${OCI_IMAGE}..."
 
-        if ! buildah pull "${OCI_IMAGE}"; then
+        if ! buildah pull --os="${OCI_OS}" "${OCI_IMAGE}"; then
             error_exit "[ERROR]: Failed to pull image: ${OCI_IMAGE}"
         fi
 
@@ -533,7 +534,7 @@ create_jail() {
         if [ "${OCI_ENTRYPOINT}" = "null" ]; then
             OCI_ENTRYPOINT=""
         else
-            OCI_ENTRYPOINT="$(printf "%s\n" "${OCI_ENTRYPOINT}" | jq -r '.[]')"
+            OCI_ENTRYPOINT="$(printf "%s\n" "${OCI_ENTRYPOINT}" | jq -r 'if type == "array" then join(" ") else .[] end')"
         fi
         echo "${OCI_ENTRYPOINT}" > "${bastille_jail_container}/entrypoint"
         OCI_CMD="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Cmd')"
@@ -594,7 +595,14 @@ create_jail() {
         if [ -n "${OCI_EXEC}" ]; then
             EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_container}/${NAME}.log\" -p \"${bastille_jail_container}/${NAME}.pid\" sh -c \"jexec ${NAME} sh -c \\\'. /root/.env; ${OCI_EXEC}\\\'\""
         fi
-    
+        if [ "${OCI_OS}" = "freebsd" ]; then
+            EXEC_START_DEFINITION="/bin/sh /etc/rc"
+            EXEC_STOP_DEFINITION="/bin/sh /etc/rc.shutdown"
+        else
+            EXEC_START_DEFINITION=""
+            EXEC_STOP_DEFINITION=""
+        fi
+
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
             echo "${OCI_VOLUMES}" | while read -r oci_volume_path; do
@@ -987,6 +995,7 @@ PRIORITY="99"
 OPT_GATEWAY=""
 OPT_NAMESERVER=""
 OPT_TAGS=""
+OCI_OS="freebsd"
 OPT_OCI_ENV=""
 while [ $# -gt 0 ]; do
     case "${1}" in
@@ -1059,6 +1068,10 @@ while [ $# -gt 0 ]; do
         --no-validate|no-validate)
             VALIDATE_RELEASE=0
             shift
+            ;;
+        --os)
+            OPT_OCI_OS="${2}"
+            shift 2
             ;;
         -O|--oci)
             OCI_JAIL=1
@@ -1160,7 +1173,11 @@ elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ] && [ "${STATIC_MAC}" -eq 1 ]; then
 # Don't allow OPT_OCI_ENV withouth OCI_JAIL
 elif [ -n "${OPT_OCI_ENV}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
     error_exit "[ERROR]: [-e|--env] can only be used with [-O|--oci]."
+# Dont't allow OCI_OS_TYPE without OCI_JAIL
+elif [ -n "${OPT_OCI_OS}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
+    error_exit "[ERROR]: [--os] can only be used with [-O|--oci]."
 fi
+
 
 # Set interface type for VNET jails
 if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
@@ -1301,6 +1318,9 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
                 validate_release
                 ;;
             *ghcr.io*|*docker.io*)
+                if [ -n "${OPT_OCI_OS}" ]; then
+                    OCI_OS="${OPT_OCI_OS}"
+                fi
                 OCI_IMAGE="${RELEASE}"
                 ;;
             *)
