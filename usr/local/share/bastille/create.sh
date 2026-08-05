@@ -548,24 +548,26 @@ create_jail() {
         else
             OCI_ENV="$(printf "%s\n" "${OCI_ENV}" | jq -r '.[]')"
         fi
-        #OCI_PORTS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.ExposedPorts')"
-        #if [ "${OCI_PORTS}" = "null" ] || [ "${OCI_PORTS}" = "{}" ]; then
-        #    OCI_PORTS=""
-        #else
-        #    OCI_PORTS="$(printf "%s\n" "${OCI_PORTS}" | jq -r 'keys_unsorted[]')"
-        #fi
+        OCI_PORTS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.ExposedPorts')"
+        if [ "${OCI_PORTS}" = "null" ] || [ "${OCI_PORTS}" = "{}" ]; then
+            OCI_PORTS=""
+        else
+            OCI_PORTS="$(printf "%s\n" "${OCI_PORTS}" | jq -r 'keys_unsorted[]')"
+        fi
+		echo "${OCI_PORTS}" > "${bastille_jail}/ports"
         OCI_VOLUMES="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Volumes')"
         if [ "${OCI_VOLUMES}" = "null" ] || [ "${OCI_VOLUMES}" = "{}" ]; then
             OCI_VOLUMES=""
         else
             OCI_VOLUMES="$(printf "%s\n" "${OCI_VOLUMES}" | jq -r 'keys_unsorted[]')"
         fi
-        #OCI_LABELS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Labels')"
-        #if [ "${OCI_LABELS}" = "null" ] || [ "${OCI_LABELS}" = "{}" ]; then
-        #    OCI_LABELS=""
-        #else
-        #    OCI_LABELS="$(printf "%s\n" "${OCI_LABELS}" | jq -r 'keys_unsorted[]')"
-        #fi
+        OCI_LABELS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Labels')"
+        if [ "${OCI_LABELS}" = "null" ] || [ "${OCI_LABELS}" = "{}" ]; then
+            OCI_LABELS=""
+        else
+            OCI_LABELS="$(printf "%s\n" "${OCI_LABELS}" | jq -r 'to_entries[] | "\(.key)=\(.value)"')"
+        fi
+		echo "${OCI_LABELS}" > "${bastille_jail}/labels"
 
         buildah umount "${OCI_CONTAINER}" > /dev/null 2>&1
         buildah rm "${OCI_CONTAINER}" > /dev/null 2>&1
@@ -778,6 +780,10 @@ create_jail() {
         generate_linux_jail_conf
     elif [ "${OCI_JAIL}" -eq 1 ]; then
         generate_oci_jail_conf
+        properties="$(grep -o 'org.freebsd.jail.*' "${bastille_jail}/labels" | sed 's/org.freebsd.jail.//g' | awk -F"=" '{print $1}')"
+		for prop in ${properties}; do
+            bastille -q config "${NAME}" set "${prop}"
+		done
     elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         generate_minimal_conf
     fi
