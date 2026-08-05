@@ -44,6 +44,7 @@ usage() {
     -C | --clone                    Create a clone jail (ZFS only).
     -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
     -E | --empty                    Create an empty jail (NAME only).
+    -e | --env KEY=VALUE            Specify additinal environment variables.
     -g | --gateway IP               Specify a default router/gateway.
     -L | --linux                    Create a Linux jail (experimental).
     -M | --static-mac               Use a static/persistent MAC address (VNET only).
@@ -300,9 +301,7 @@ ${NAME} {
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
-  exec.start += '${EXEC_START_DEFINITION}';
-  exec.stop = '${EXEC_STOP_DEFINITION}';
-  exec.stop += '/bin/sh /etc/rc.shutdown';
+  exec.stop = '/bin/sh /etc/rc.shutdown';
   host.hostname = ${NAME};
   mount.devfs;
   mount.fstab = ${bastille_jail_fstab};
@@ -321,9 +320,7 @@ ${NAME} {
   exec.clean;
   exec.consolelog = ${bastille_jail_log};
   exec.start = '/bin/sh /etc/rc';
-  exec.start += '${EXEC_START_DEFINITION}';
-  exec.stop = '${EXEC_STOP_DEFINITION}';
-  exec.stop += '/bin/sh /etc/rc.shutdown';
+  exec.stop = '/bin/sh /etc/rc.shutdown';
   host.hostname = ${NAME};
   mount.devfs;
   mount.fstab = ${bastille_jail_fstab};
@@ -413,6 +410,7 @@ create_jail() {
     bastille_jail_fstab="${bastille_jail}/fstab"  ## file
     bastille_jail_conf="${bastille_jail}/jail.conf"  ## file
     bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
+    bastille_jail_container="${bastille_jail}/container"
     # shellcheck disable=SC2034
     bastille_jail_rc_conf="${bastille_jail_path}/etc/rc.conf" ## file
     # shellcheck disable=SC2034
@@ -529,6 +527,7 @@ create_jail() {
 
         info 1 "\nReading image config..."
         OCI_JSON="$(buildah inspect --type image "${OCI_IMAGE}")"
+        mkdir -p "${bastille_jail_container}"
 
         OCI_ENTRYPOINT="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Entrypoint')"
         if [ "${OCI_ENTRYPOINT}" = "null" ]; then
@@ -536,43 +535,29 @@ create_jail() {
         else
             OCI_ENTRYPOINT="$(printf "%s\n" "${OCI_ENTRYPOINT}" | jq -r '.[]')"
         fi
+        echo "${OCI_ENTRYPOINT}" > "${bastille_jail_container}/entrypoint"
         OCI_CMD="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Cmd')"
         if [ "${OCI_CMD}" = "null" ]; then
             OCI_CMD=""
         else
             OCI_CMD="$(printf "%s\n" "${OCI_CMD}" | jq -r '.[]')"
         fi
+        echo "${OCI_CMD}" > "${bastille_jail_container}/cmd"
         OCI_ENV="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Env')"
         if [ "${OCI_ENV}" = "null" ]; then
             OCI_ENV=""
         else
             OCI_ENV="$(printf "%s\n" "${OCI_ENV}" | jq -r '.[]')"
         fi
-        OCI_PORTS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.ExposedPorts')"
-        if [ "${OCI_PORTS}" = "null" ] || [ "${OCI_PORTS}" = "{}" ]; then
-            OCI_PORTS=""
-        else
-            OCI_PORTS="$(printf "%s\n" "${OCI_PORTS}" | jq -r 'keys_unsorted[]')"
+        echo "${OCI_ENV}" > "${bastille_jail_container}/env"
+        if [ -n "${OPT_OCI_ENV}" ]; then
+            if [ -n "${OCI_ENV}" ]; then
+                OCI_ENV="$(printf '%s\n%s' "${OCI_ENV}" "${OPT_OCI_ENV}")"
+            else
+                OCI_ENV="${OPT_OCI_ENV}"
+            fi
         fi
-		echo "${OCI_PORTS}" > "${bastille_jail}/ports"
-        OCI_VOLUMES="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Volumes')"
-        if [ "${OCI_VOLUMES}" = "null" ] || [ "${OCI_VOLUMES}" = "{}" ]; then
-            OCI_VOLUMES=""
-        else
-            OCI_VOLUMES="$(printf "%s\n" "${OCI_VOLUMES}" | jq -r 'keys_unsorted[]')"
-        fi
-        OCI_LABELS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Labels')"
-        if [ "${OCI_LABELS}" = "null" ] || [ "${OCI_LABELS}" = "{}" ]; then
-            OCI_LABELS=""
-        else
-            OCI_LABELS="$(printf "%s\n" "${OCI_LABELS}" | jq -r 'to_entries[] | "\(.key)=\(.value)"')"
-        fi
-		echo "${OCI_LABELS}" > "${bastille_jail}/labels"
-
-        buildah umount "${OCI_CONTAINER}" > /dev/null 2>&1
-        buildah rm "${OCI_CONTAINER}" > /dev/null 2>&1
-
-        OCI_ENV_FILE="${bastille_jail_path}/root/.oci-env"
+        OCI_ENV_FILE="${bastille_jail_path}/root/.env"
         : > "${OCI_ENV_FILE}"
         if [ -n "${OCI_ENV}" ]; then
             echo "${OCI_ENV}" | while IFS='=' read -r oci_env_name oci_env_value; do
@@ -580,19 +565,42 @@ create_jail() {
                 echo "export ${oci_env_name}=\"${oci_env_value}\"" >> "${OCI_ENV_FILE}"
             done
         fi
+        OCI_PORTS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.ExposedPorts')"
+        if [ "${OCI_PORTS}" = "null" ] || [ "${OCI_PORTS}" = "{}" ]; then
+            OCI_PORTS=""
+        else
+            OCI_PORTS="$(printf "%s\n" "${OCI_PORTS}" | jq -r 'keys_unsorted[]')"
+        fi
+        echo "${OCI_PORTS}" > "${bastille_jail_container}/ports"
+        OCI_VOLUMES="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Volumes')"
+        if [ "${OCI_VOLUMES}" = "null" ] || [ "${OCI_VOLUMES}" = "{}" ]; then
+            OCI_VOLUMES=""
+        else
+            OCI_VOLUMES="$(printf "%s\n" "${OCI_VOLUMES}" | jq -r 'keys_unsorted[]')"
+        fi
+        echo "${OCI_VOLUMES}" > "${bastille_jail_container}/volumes"
+        OCI_LABELS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Labels')"
+        if [ "${OCI_LABELS}" = "null" ] || [ "${OCI_LABELS}" = "{}" ]; then
+            OCI_LABELS=""
+        else
+            OCI_LABELS="$(printf "%s\n" "${OCI_LABELS}" | jq -r 'to_entries[] | "\(.key)=\(.value)"')"
+        fi
+        echo "${OCI_LABELS}" > "${bastille_jail_container}/labels"
+
+        buildah umount "${OCI_CONTAINER}" > /dev/null 2>&1
+        buildah rm "${OCI_CONTAINER}" > /dev/null 2>&1
 
         OCI_EXEC="$(echo "${OCI_ENTRYPOINT} ${OCI_CMD}" | sed -E 's/^ +| +$//g')"
         if [ -n "${OCI_EXEC}" ]; then
-            EXEC_START_DEFINITION=". /root/.oci-env; ${OCI_EXEC} &"
+            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_container}/${NAME}.log\" -p \"${bastille_jail_container}/${NAME}.pid\" sh -c \"jexec ${NAME} sh -c \\\'. /root/.env; ${OCI_EXEC}\\\'\""
         fi
-        EXEC_STOP_DEFINITION="s6-svscanctl -t /run/s6/services"
     
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
             echo "${OCI_VOLUMES}" | while read -r oci_volume_path; do
                 [ -n "${oci_volume_path}" ] || continue
                 oci_volume_name="$(echo "${oci_volume_path}")"
-                oci_volume_host="${bastille_jailsdir}/${NAME}/volumes${oci_volume_name}"
+                oci_volume_host="${bastille_jail}/volumes${oci_volume_name}"
                 mkdir -p "${oci_volume_host}"
                 mkdir -p "${bastille_jail_path}${oci_volume_path}"
                 echo "${oci_volume_host} ${bastille_jail_path}${oci_volume_path} nullfs rw 0 0" >> "${bastille_jail_fstab}"
@@ -780,18 +788,15 @@ create_jail() {
         generate_linux_jail_conf
     elif [ "${OCI_JAIL}" -eq 1 ]; then
         generate_oci_jail_conf
-        properties="$(grep -o 'org.freebsd.jail.*' "${bastille_jail}/labels" | sed 's/org.freebsd.jail.//g' | awk -F"=" '{print $1}')"
+        properties="$(grep -o 'org.freebsd.jail.*' "${bastille_jail_container}/labels" | sed 's/org.freebsd.jail.//g' | awk -F"=" '{print $1}')"
 		for prop in ${properties}; do
             bastille -q config "${NAME}" set "${prop}"
 		done
-		ports="$(cat ${bastille_jail}/ports)"
-		for entry in ${ports}; do
-    		port="$(echo ${entry} | awk -F"/" '{print $1}')"
-	    	proto="$(echo ${entry} | awk -F"/" '{print $2}')"
-		    if [ -n "${port}" ] && [ -n "${proto}" ]; then
-                bastille -q rdr "${NAME}" "${proto}" "${port}" "${port}"
-            fi
-		done
+		port="$(cat ${bastille_jail_container}/ports | awk -F"/" '{print $1}')"
+		proto="$(cat ${bastille_jail_container}/ports | awk -F"/" '{print $2}')"
+		if [ -n "${port}" ] && [ -n "${proto}" ]; then
+            bastille -q rdr "${NAME}" "${proto}" "${port}" "${port}"
+        fi
     elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         generate_minimal_conf
     fi
@@ -932,6 +937,7 @@ create_jail() {
 
     # Apply nameserver (if set)
     if [ -n "${OPT_NAMESERVER}" ]; then
+
         sed -i '' "/^nameserver.*/d" "${bastille_jail_resolv_conf}"
         for ns in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
             echo "nameserver ${ns}" >> "${bastille_jail_resolv_conf}"
@@ -944,7 +950,12 @@ create_jail() {
     fi
 
     # Apply values changed by the template. -- cwells
-    if [ "${EMPTY_JAIL}" -eq 0 ] && [ "${LINUX_JAIL}" -eq 0 ]; then
+    if [ "${OCI_JAIL}" -eq 1 ]; then
+        bastille stop "${NAME}"
+        sed -i '' "$(printf '/exec.start = .*/a\\\n  exec.poststart = '\''%s'\'';' "${EXEC_POSTSTART_DEFINITION}")" "${bastille_jail_conf}"
+        #sed -i '' "$(printf '/exec.stop += .*/i\\\n  exec.stop = '\''%s'\'';' "${EXEC_STOP_DEFINITION}")" "${bastille_jail_conf}"
+        bastille start "${NAME}"
+    elif [ "${EMPTY_JAIL}" -eq 0 ] && [ "${LINUX_JAIL}" -eq 0 ]; then
         bastille restart "${NAME}"
     elif [ "${EMPTY_JAIL}" -eq 1 ]; then
         # Don't restart empty jails unless a template defined.
@@ -976,6 +987,7 @@ PRIORITY="99"
 OPT_GATEWAY=""
 OPT_NAMESERVER=""
 OPT_TAGS=""
+OPT_OCI_ENV=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -993,6 +1005,14 @@ while [ $# -gt 0 ]; do
         -D|--dual)
             DUAL_STACK=1
             shift
+            ;;
+        -e|--env)
+            if [ -z "${OPT_OCI_ENV}" ]; then
+                OPT_OCI_ENV="${2}"
+            else
+                OPT_OCI_ENV="$(printf "%s\n%s" "${OPT_OCI_ENV}" "${2}")"
+            fi
+            shift 2
             ;;
         -E|--empty)
             EMPTY_JAIL=1
@@ -1137,6 +1157,9 @@ elif { [ "${VNET_JAIL_STANDARD}" -eq 1 ] && [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; } |
 # Don't allow STATIC_MAC with VNET_JAIL_PASSTHROUGH
 elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ] && [ "${STATIC_MAC}" -eq 1 ]; then
     error_exit "[ERROR]: [-P|--passthrough] does not support [-M|--static-mac]."
+# Don't allow OPT_OCI_ENV withouth OCI_JAIL
+elif [ -n "${OPT_OCI_ENV}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
+    error_exit "[ERROR]: [-e|--env] can only be used with [-O|--oci]."
 fi
 
 # Set interface type for VNET jails
@@ -1158,8 +1181,6 @@ else
     INTERFACE="${4}"
 fi
 
-info 1 "\nCreating jail: ${NAME}..."
-
 if [ "${EMPTY_JAIL}" -eq 1 ]; then
     if [ $# -ne 1 ]; then
         usage
@@ -1169,6 +1190,8 @@ else
         usage
     fi
 fi
+
+info 1 "\nCreating jail: ${NAME}..."
 
 # Validate jail name
 if [ -n "${NAME}" ]; then
@@ -1277,7 +1300,7 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
                 NAME_VERIFY=Debian13
                 validate_release
                 ;;
-            *ghcr.io*)
+            *ghcr.io*|*docker.io*)
                 OCI_IMAGE="${RELEASE}"
                 ;;
             *)
