@@ -544,6 +544,13 @@ create_jail() {
             OCI_CMD="$(printf "%s\n" "${OCI_CMD}" | jq -r '.[]')"
         fi
         echo "${OCI_CMD}" > "${bastille_jail_container}/cmd"
+        OCI_WORKDIR="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.WorkingDir')"
+        if [ "${OCI_WORKDIR}" = "null" ]; then
+            OCI_WORKDIR=""
+        else
+            #OCI_WORKDIR="$(printf "%s\n" "${OCI_WORKDIR}" | jq -r '.[]')"
+        fi
+        echo "${OCI_WORKDIR}" > "${bastille_jail_container}/workingdir"
         OCI_ENV="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Env')"
         if [ "${OCI_ENV}" = "null" ]; then
             OCI_ENV=""
@@ -593,7 +600,7 @@ create_jail() {
 
         OCI_EXEC="$(echo "${OCI_ENTRYPOINT} ${OCI_CMD}" | sed -E 's/^ +| +$//g')"
         if [ -n "${OCI_EXEC}" ]; then
-            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_container}/${NAME}.log\" -p \"${bastille_jail_container}/${NAME}.pid\" sh -c \"jexec ${NAME} sh -c \\\'. /root/.env; ${OCI_EXEC}\\\'\""
+            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_container}/${NAME}.log\" -p \"${bastille_jail_container}/${NAME}.pid\" sh -c \"jexec -d "${OCI_WORKDIR}" "${NAME}" sh -c \\\'. /root/.env; ${OCI_EXEC}\\\'\""
         fi
         if [ "${OCI_OS}" = "freebsd" ]; then
             EXEC_START_DEFINITION="/bin/sh /etc/rc"
