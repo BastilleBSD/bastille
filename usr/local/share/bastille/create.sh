@@ -558,6 +558,8 @@ create_jail() {
             OCI_ENV="$(printf "%s\n" "${OCI_ENV}" | jq -r '.[]')"
         fi
         echo "${OCI_ENV}" > "${bastille_jail_container}/env"
+        OCI_PUID="$(sysrc -f "${bastille_jail_container}/env" -n PUID 2>/dev/null)"
+        OCI_PGID="$(sysrc -f "${bastille_jail_container}/env" -n PGID 2>/dev/null)"
         if [ -n "${OPT_OCI_ENV}" ]; then
             if [ -n "${OCI_ENV}" ]; then
                 OCI_ENV="$(printf '%s\n%s' "${OCI_ENV}" "${OPT_OCI_ENV}")"
@@ -620,6 +622,9 @@ create_jail() {
                 mkdir -p "${bastille_jail_path}${oci_volume_path}"
                 echo "${oci_volume_host} ${bastille_jail_path}${oci_volume_path} nullfs rw 0 0" >> "${bastille_jail_fstab}"
             done
+        fi
+        if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ]; then
+            chown -R "${OCI_PUID}:${OCI_PGID}" "${bastille_jail}/volumes"
         fi
 
         if [ ! -f "${bastille_jail_conf}" ]; then
