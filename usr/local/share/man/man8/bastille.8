@@ -28,6 +28,20 @@ sub-command, though they are not listed in the man pages.
 Print version information.
 .It Fl q , Fl -quiet
 Supress Bastille-specific output.
+.It Fl j , Fl -json
+Emit output as JSON on supported sub-commands.
+Implies
+.Fl -quiet
+so human-readable status lines do not pollute the JSON on stdout.
+Interactive and passthrough sub-commands
+.Po
+.Sy console , edit , top , htop , cmd , pkg , service , sysrc , migrate , template
+.Pc
+do not support JSON output and exit with an error when it is requested.
+Must be placed before the sub-command.
+.It Fl p , Fl -pretty
+Emit indented (pretty) JSON output. Implies
+.Fl -json .
 .It Fl x , Fl -debug
 Enable debug mode.
 .Sh SUBCOMMANDS
