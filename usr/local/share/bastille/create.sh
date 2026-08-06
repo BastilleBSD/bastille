@@ -547,7 +547,7 @@ create_jail() {
         OCI_WORKDIR="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.WorkingDir')"
         if [ "${OCI_WORKDIR}" = "null" ]; then
             OCI_WORKDIR=""
-        else
+        #else
             #OCI_WORKDIR="$(printf "%s\n" "${OCI_WORKDIR}" | jq -r '.[]')"
         fi
         echo "${OCI_WORKDIR}" > "${bastille_jail_container}/workingdir"
