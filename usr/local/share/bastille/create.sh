@@ -600,7 +600,7 @@ create_jail() {
 
         OCI_EXEC="$(echo "${OCI_ENTRYPOINT} ${OCI_CMD}" | sed -E 's/^ +| +$//g')"
         if [ -n "${OCI_EXEC}" ]; then
-            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_container}/${NAME}.log\" -p \"${bastille_jail_container}/${NAME}.pid\" sh -c \"jexec -d "${OCI_WORKDIR}" "${NAME}" sh -c \\\'. /root/.env; ${OCI_EXEC}\\\'\""
+            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_container}/${NAME}.log\" -p \"${bastille_jail_container}/${NAME}.pid\" sh -c \"jexec -d \"${OCI_WORKDIR}\" \"${NAME}\" sh -c \\\'. /root/.env; ${OCI_EXEC}\\\'\""
         fi
         if [ "${OCI_OS}" = "freebsd" ]; then
             EXEC_START_DEFINITION="/bin/sh /etc/rc"
