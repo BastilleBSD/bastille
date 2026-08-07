@@ -2,3 +2,8 @@
 .idea
 *.orig
 docs/_build
+
+# shellspec output (unit test tier)
+/report
+/coverage
+/.shellspec-local

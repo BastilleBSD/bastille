@@ -107,19 +107,6 @@ fi
 bastille_root_check
 set_target "${TARGET}"
 
-validate_cpus() {
-
-    local cpus="${1}"
-
-    for cpu in $(echo ${cpus} | sed 's/,/ /g'); do
-        if ! cpuset -l ${cpu} 2>/dev/null; then
-            error_notify "[ERROR]: CPU is not available: ${cpu}"
-            return 1
-        fi
-    done
-
-}
-
 add_cpuset() {
 
     local jail="${1}"
