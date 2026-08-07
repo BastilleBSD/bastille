@@ -44,7 +44,7 @@ usage() {
     -C | --clone                    Create a clone jail (ZFS only).
     -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
     -E | --empty                    Create an empty jail (NAME only).
-    -e | --env KEY=VALUE            Specify additinal environment variables.
+    -e | --env KEY=VALUE            Specify additinal environment variables (OCI only).
     -g | --gateway IP               Specify a default router/gateway.
     -L | --linux                    Create a Linux jail (experimental).
     -M | --static-mac               Use a static/persistent MAC address (VNET only).
