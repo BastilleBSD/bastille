@@ -544,6 +544,11 @@ create_jail() {
             OCI_CMD="$(printf "%s\n" "${OCI_CMD}" | jq -r 'if type == "array" then join(" ") else .[] end')"
         fi
         echo "${OCI_CMD}" > "${bastille_jail_container}/cmd"
+        OCI_STOP_SIGNAL="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.StopSignal')"
+        if [ "${OCI_STOP_SIGNAL}" = "null" ]; then
+            OCI_STOP_SIGNAL="SIGTERM"
+        fi
+        echo "${OCI_STOP_SIGNAL}" > "${bastille_jail_container}/stopsignal"
         OCI_WORKDIR="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.WorkingDir')"
         if [ "${OCI_WORKDIR}" = "null" ]; then
             OCI_WORKDIR="/"
@@ -552,6 +557,10 @@ create_jail() {
         fi
         echo "${OCI_WORKDIR}" > "${bastille_jail_container}/workingdir"
         OCI_ENV="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Env')"
+        OCI_ENV_FILE="${bastille_jail_container}/env"
+        ENV_FILE="${bastille_jail}/env"
+        : > "${OCI_ENV_FILE}"
+        : > "${ENV_FILE}"
         if [ "${OCI_ENV}" = "null" ]; then
             OCI_ENV=""
         else
@@ -567,12 +576,10 @@ create_jail() {
                 OCI_ENV="${OPT_OCI_ENV}"
             fi
         fi
-        OCI_ENV_FILE="${bastille_jail_path}/root/.env"
-        : > "${OCI_ENV_FILE}"
         if [ -n "${OCI_ENV}" ]; then
             echo "${OCI_ENV}" | while IFS='=' read -r oci_env_name oci_env_value; do
                 [ -n "${oci_env_name}" ] || continue
-                echo "export ${oci_env_name}=\"${oci_env_value}\"" >> "${OCI_ENV_FILE}"
+                echo "export ${oci_env_name}=\"${oci_env_value}\"" >> "${ENV_FILE}"
             done
         fi
         OCI_PORTS="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.ExposedPorts')"
@@ -602,7 +609,8 @@ create_jail() {
 
         OCI_EXEC="$(echo "${OCI_ENTRYPOINT} ${OCI_CMD}" | sed -E 's/^ +| +$//g')"
         if [ -n "${OCI_EXEC}" ]; then
-            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_container}/${NAME}.log\" -p \"${bastille_jail_container}/${NAME}.pid\" sh -c \"jexec -d \"${OCI_WORKDIR}\" \"${NAME}\" sh -c \\\'. /root/.env; ${OCI_EXEC}\\\'\""
+            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_logsdir}/${NAME}_oci.log\" -p \"${bastille_jail}/${NAME}.pid\" env -i sh -c \". \"${ENV_FILE}\"; jexec -d \"${OCI_WORKDIR}\" \"${NAME}\" sh -c \\\'${OCI_EXEC}\\\'\""
+            EXEC_PRESTOP_DEFINITION="kill -"${OCI_STOP_SIGNAL}" \"\$\(cat "${bastille_jail}/${NAME}.pid"\)\""
         fi
         if [ "${OCI_OS}" = "freebsd" ]; then
             EXEC_START_DEFINITION="/bin/sh /etc/rc"
@@ -973,7 +981,7 @@ create_jail() {
     if [ "${OCI_JAIL}" -eq 1 ]; then
         bastille stop "${NAME}"
         sed -i '' "$(printf '/exec.start = .*/a\\\n  exec.poststart = '\''%s'\'';' "${EXEC_POSTSTART_DEFINITION}")" "${bastille_jail_conf}"
-        #sed -i '' "$(printf '/exec.stop += .*/i\\\n  exec.stop = '\''%s'\'';' "${EXEC_STOP_DEFINITION}")" "${bastille_jail_conf}"
+        sed -i '' "$(printf '/exec.stop = .*/i\\\n  exec.prestop = '\''%s'\'';' "${EXEC_PRESTOP_DEFINITION}")" "${bastille_jail_conf}"
         bastille start "${NAME}"
     elif [ "${EMPTY_JAIL}" -eq 0 ] && [ "${LINUX_JAIL}" -eq 0 ]; then
         bastille restart "${NAME}"
