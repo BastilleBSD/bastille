@@ -187,6 +187,8 @@ get_jail_info() {
         JAIL_TYPE="thin"
     elif [ "${IS_LINUX_JAIL}" -eq 1 ] && [ "${IS_FREEBSD_JAIL}" -eq 0 ]; then
         JAIL_TYPE="linux"
+	elif [ -d "${bastille_jailsdir}/${JAIL_NAME}/container" ]; then
+        JAIL_TYPE="oci"
     elif checkyesno bastille_zfs_enable; then
         if [ "$(zfs get -H -o value origin ${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${JAIL_NAME}/root)" != "-" ]; then
             JAIL_TYPE="clone"
