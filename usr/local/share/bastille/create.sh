@@ -624,7 +624,7 @@ create_jail() {
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
             if [ -n "${OPT_DATA_PATH}" ]; then
-                OCI_DATA_PATH="${OPT_DATA_PATH}/${NAME}"
+                OCI_DATA_PATH="${OPT_DATA_PATH}"
             else
                 OCI_DATA_PATH="${bastille_jail}/volumes"
             fi
