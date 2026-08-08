@@ -624,14 +624,14 @@ create_jail() {
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
             if [ -n "${OPT_DATA_PATH}" ]; then
-                OCI_VOLUME_PATH="${OPT_DATA_PATH}/${NAME}"
+                OCI_DATA_PATH="${OPT_DATA_PATH}/${NAME}"
             else
-                OCI_VOLUME_PATH="${bastille_jail}/volumes"
+                OCI_DATA_PATH="${bastille_jail}/volumes"
             fi
             echo "${OCI_VOLUMES}" | while read -r oci_volume_path; do
                 [ -n "${oci_volume_path}" ] || continue
                 oci_volume_name="$(echo "${oci_volume_path}" | sed 's|//|/|g')"
-                oci_volume_host="$(echo ${OCI_VOLUME_PATH}${oci_volume_name} | sed 's|//|/|g')"
+                oci_volume_host="$(echo ${OCI_DATA_PATH}${oci_volume_name} | sed 's|//|/|g')"
                 mkdir -p "${oci_volume_host}"
                 mkdir -p "${bastille_jail_path}${oci_volume_path}"
                 echo "${oci_volume_host} ${bastille_jail_path}${oci_volume_path} nullfs rw 0 0" >> "${bastille_jail_fstab}"
