@@ -505,7 +505,7 @@ create_jail() {
 
         info 1 "\nPulling image: ${OCI_IMAGE}..."
 
-        if ! buildah pull --os="${OCI_OS}" "${OCI_IMAGE}"; then
+        if ! buildah pull --policy=newer --os="${OCI_OS}" "${OCI_IMAGE}"; then
             error_exit "[ERROR]: Failed to pull image: ${OCI_IMAGE}"
         fi
 
