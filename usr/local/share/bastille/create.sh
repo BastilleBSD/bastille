@@ -42,6 +42,7 @@ usage() {
 
     -B | --bridge                   Enable VNET. INTERFACE must be a bridge.
     -C | --clone                    Create a clone jail (ZFS only).
+         --data-path PATH           Override path to persistent data (OCI only).
     -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
     -E | --empty                    Create an empty jail (NAME only).
     -e | --env KEY=VALUE            Specify additinal environment variables (OCI only).
@@ -52,8 +53,8 @@ usage() {
          --no-boot                  Set boot=off.
          --no-validate              Do not validate the release name.
          --no-ip                    Create jail without an ip (VNET only).
-         --os OS                    Specify an alternative OS type (OCI only).
     -O | --oci                      Create an OCI-image jail (experimental).
+         --os OS                    Specify an alternative OS type (OCI only).
     -P | --passthrough              Enable VNET. INTERFACE is used as-is.
     -p | --priority VALUE           Set priority value.
     -T | --thick                    Create a thick jail.
@@ -622,17 +623,22 @@ create_jail() {
 
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
+            if [ -n "${OPT_DATA_PATH}" ]; then
+                OCI_VOLUME_PATH="${OPT_DATA_PATH}/${NAME}"
+            else
+                OCI_VOLUME_PATH="${bastille_jail}/volumes"
+            fi
             echo "${OCI_VOLUMES}" | while read -r oci_volume_path; do
                 [ -n "${oci_volume_path}" ] || continue
-                oci_volume_name="$(echo "${oci_volume_path}")"
-                oci_volume_host="${bastille_jail}/volumes${oci_volume_name}"
+                oci_volume_name="$(echo "${oci_volume_path}" | sed 's|//|/|g')"
+                oci_volume_host="$(echo ${OCI_VOLUME_PATH}${oci_volume_name} | sed 's|//|/|g')"
                 mkdir -p "${oci_volume_host}"
                 mkdir -p "${bastille_jail_path}${oci_volume_path}"
                 echo "${oci_volume_host} ${bastille_jail_path}${oci_volume_path} nullfs rw 0 0" >> "${bastille_jail_fstab}"
             done
         fi
         if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ]; then
-            chown -R "${OCI_PUID}:${OCI_PGID}" "${bastille_jail}/volumes"
+            chown -R "${OCI_PUID}:${OCI_PGID}" "${OCI_DATA_PATH}"
         fi
 
         if [ ! -f "${bastille_jail_conf}" ]; then
@@ -1031,6 +1037,13 @@ while [ $# -gt 0 ]; do
             CLONE_JAIL=1
             shift
             ;;
+        --data-path)
+            OPT_DATA_PATH="${2}"
+            if [ ! -d "${OPT_DATA_PATH}" ]; then
+                error_exit "[ERROR]: Invalid path: ${OPT_DATA_PATH}"
+            fi
+            shift 2
+            ;;
         -D|--dual)
             DUAL_STACK=1
             shift
@@ -1196,6 +1209,9 @@ elif [ -n "${OPT_OCI_ENV}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
 # Dont't allow OCI_OS_TYPE without OCI_JAIL
 elif [ -n "${OPT_OCI_OS}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
     error_exit "[ERROR]: [--os] can only be used with [-O|--oci]."
+# Dont't allow OPT_DATA_PATH without OCI_JAIL
+elif [ -n "${OPT_DATA_PATH}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
+    error_exit "[ERROR]: [--data-path] can only be used with [-O|--oci]."
 fi
 
 
