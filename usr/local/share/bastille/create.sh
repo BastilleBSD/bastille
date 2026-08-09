@@ -504,6 +504,9 @@ create_jail() {
         done
 
         ## ${bastille_volumesdir}
+        if [ -z "${bastille_volumesdir}" ]; then
+            bastille_volumesdir="${bastille_prefix}/volumes"
+        fi
         if [ ! -d "${bastille_volumesdir}" ]; then
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
