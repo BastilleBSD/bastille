@@ -56,7 +56,6 @@ while [ "$#" -gt 0 ]; do
             if [ ! -d "${OPT_DATA_PATH}" ]; then
                 error_exit "[ERROR]: Invalid path: ${OPT_DATA_PATH}"
             fi
-            bastille_volumesdir="${DATA_PATH}"
             shift 2
             ;;
         -*)
@@ -85,7 +84,7 @@ fi
 indent_count() {
 
     local line="${1}"
-    local indent=$(printf "%s" "${line}" | sed 's/[^ ].*//' | wc -c)
+    local indent="$(printf "%s" "${line}" | sed 's/[^ ].*//' | wc -c)"
 
     printf "%s\n" "${indent}"
 }
@@ -180,7 +179,7 @@ for service in $(grep -E "^service=" "${COMPOSE_CONF}" | cut -d= -f2-); do
 
     if [ "${ip}" != "inherit" ] && ! route -n get "${ip}" | grep "gateway" >/dev/null 2>/dev/null; then
         if grep -Eq "^${service}_ports" "${COMPOSE_CONF}"; then
-            for port in "$(grep -E "^${service}_ports" "${COMPOSE_CONF}" | cut -d= -f2- | sed 's/\"//g')"; do
+            for port in $(grep -E "^${service}_ports" "${COMPOSE_CONF}" | cut -d= -f2- | sed 's/\"//g'); do
                 host_port="$(echo "${port}" | awk -F":" '{print $1}')"
                 jail_port="$(echo "${port}" | awk -F":" '{print $2}')"
                 bastille rdr "${service}" tcp "${host_port}" "${jail_port}"

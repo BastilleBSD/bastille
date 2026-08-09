@@ -635,7 +635,7 @@ create_jail() {
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
             if [ -n "${OPT_DATA_PATH}" ]; then
-                OCI_DATA_PATH="(echo "${OPT_DATA_PATH}" | sed 's%/${NAME}$%%')"
+                OCI_DATA_PATH="(printf "%s\n" "${OPT_DATA_PATH}" | sed 's%/${NAME}$%%')"
             else
                 OCI_DATA_PATH="${bastille_volumesdir}/${NAME}"
             fi
@@ -1034,7 +1034,6 @@ OPT_NAMESERVER=""
 OPT_TAGS=""
 OCI_OS="freebsd"
 OPT_OCI_ENV=""
-OPT_OCI_VOLUME=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
