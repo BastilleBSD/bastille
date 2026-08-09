@@ -48,6 +48,8 @@ set_bastille_mountpoints() {
         # shellcheck disable=SC2034
         bastille_releasesdir_mountpoint="${bastille_releasesdir}"
         # shellcheck disable=SC2034
+        bastille_volumesdir_mountpoint="${bastille_volumesdir}"
+        # shellcheck disable=SC2034
         bastille_templatesdir_mountpoint="${bastille_templatesdir}"
         # shellcheck disable=SC2034
         bastille_logsdir_mountpoint="${bastille_logsdir}"
@@ -61,6 +63,7 @@ set_bastille_mountpoints() {
             bastille_releasesdir="${altroot}${bastille_releasesdir}"
             bastille_templatesdir="${altroot}${bastille_templatesdir}"
             bastille_logsdir="${altroot}${bastille_logsdir}"
+            bastille_volumesdir="${altroot}${bastille_volumesdir}"
         fi
     fi
 }

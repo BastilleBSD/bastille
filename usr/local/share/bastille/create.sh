@@ -503,9 +503,20 @@ create_jail() {
             fi
         done
 
+        ## ${bastille_volumesdir}
+        if [ ! -d "${bastille_volumesdir}" ]; then
+            if checkyesno bastille_zfs_enable; then
+                if [ -n "${bastille_zfs_zpool}" ]; then
+                    zfs create ${bastille_zfs_options} -o mountpoint="${bastille_volumesdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/volumes"
+                fi
+            else
+                mkdir -p "${bastille_volumesdir}"
+            fi
+        fi
+
         info 1 "\nPulling image: ${OCI_IMAGE}..."
 
-        if ! buildah pull --policy=newer --os="${OCI_OS}" "${OCI_IMAGE}"; then
+        if ! buildah pull --os="${OCI_OS}" "${OCI_IMAGE}"; then
             error_exit "[ERROR]: Failed to pull image: ${OCI_IMAGE}"
         fi
 
@@ -624,9 +635,9 @@ create_jail() {
         : > "${bastille_jail_fstab}"
         if [ -n "${OCI_VOLUMES}" ]; then
             if [ -n "${OPT_DATA_PATH}" ]; then
-                OCI_DATA_PATH="${OPT_DATA_PATH}"
+                OCI_DATA_PATH="(echo "${OPT_DATA_PATH}" | sed 's%/${NAME}$%%')"
             else
-                OCI_DATA_PATH="${bastille_jail}/volumes"
+                OCI_DATA_PATH="${bastille_volumesdir}/${NAME}"
             fi
             echo "${OCI_VOLUMES}" | while read -r oci_volume_path; do
                 [ -n "${oci_volume_path}" ] || continue
@@ -1023,6 +1034,7 @@ OPT_NAMESERVER=""
 OPT_TAGS=""
 OCI_OS="freebsd"
 OPT_OCI_ENV=""
+OPT_OCI_VOLUME=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -1039,7 +1051,7 @@ while [ $# -gt 0 ]; do
             ;;
         --data-path)
             OPT_DATA_PATH="${2}"
-            if [ ! -d "${OPT_DATA_PATH}" ]; then
+            if [ ! -d "${OPT_DATA_PATH}" ] || [ ! -d "$(dirname "${OPT_DATA_PATH}")" ]; then
                 error_exit "[ERROR]: Invalid path: ${OPT_DATA_PATH}"
             fi
             shift 2

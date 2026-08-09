@@ -143,6 +143,17 @@ bootstrap_directories() {
         fi
     fi
 
+    ## ${bastille_volumesdir}
+    if [ ! -d "${bastille_volumesdir}" ]; then
+        if checkyesno bastille_zfs_enable; then
+            if [ -n "${bastille_zfs_zpool}" ]; then
+                zfs create ${bastille_zfs_options} -o mountpoint="${bastille_volumesdir_mountpoint}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/volumes"
+            fi
+        else
+            mkdir -p "${bastille_volumesdir}"
+        fi
+    fi
+
     ## ${bastille_releasesdir}
     if [ ! -d "${bastille_releasesdir}" ]; then
         if checkyesno bastille_zfs_enable; then

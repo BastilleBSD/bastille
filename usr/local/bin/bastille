@@ -111,6 +111,7 @@ Available Commands:
   tags        Add or remove tags to jail(s).
   template    Apply templates to jail(s).
   top         Process viewer. See top(1).
+  up          Deploy an OCI jail from a *compose.yml file.
   umount      Unmount file(s)/directorie(s) from jail(s).
   update      Update a jail or release.
   upgrade     Upgrade a jail to new release.
@@ -242,6 +243,7 @@ case "${CMD}" in
     tags) ;;
     template) ;;
     top) ;;
+    up) ;;
     umount|unmount)
         CMD="umount"
         ;;
