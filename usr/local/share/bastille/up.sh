@@ -56,6 +56,7 @@ while [ "$#" -gt 0 ]; do
             if [ ! -d "${OPT_DATA_PATH}" ]; then
                 error_exit "[ERROR]: Invalid path: ${OPT_DATA_PATH}"
             fi
+            bastille_volumesdir="${DATA_PATH}"
             shift 2
             ;;
         -*)
@@ -84,7 +85,7 @@ fi
 indent_count() {
 
     local line="${1}"
-    local indent="$(printf "%s" "${line}" | sed 's/[^ ].*//' | wc -c)"
+    local indent=$(printf "%s" "${line}" | sed 's/[^ ].*//' | wc -c)
 
     printf "%s\n" "${indent}"
 }
@@ -101,6 +102,9 @@ process_line() {
         elif echo "${line}" | grep -q '='; then
             local option="$(printf "%s\n" "${line}" | sed 's/=/ /g' | awk '{print $1}')"
             local value="$(printf "%s\n" "${line}" | sed 's/=/ /g' | awk '{print $2}')"
+        else
+            local option="$(printf "%s\n" "${line}")"
+            local value="$(printf "%s\n" "${line}")"
         fi
     else
         local line="$(printf "%s\n" "${line}" | sed -e 's/^[[:blank:]]*-[[:blank:]]*//g' -e 's/^[[:blank:]]*//g' -e 's/[[:blank:]]*#.*//g')"
@@ -124,13 +128,15 @@ process_line() {
             SERVICE_OPTION="${option}"
             if [ -n "${value}" ]; then
                 SERVICE_VALUE="${value}"
-            echo "${SERVICE}_${SERVICE_OPTION}=${SERVICE_VALUE}" >> "${COMPOSE_CONF}"
+                echo "${SERVICE}_${SERVICE_OPTION}=${SERVICE_VALUE}" >> "${COMPOSE_CONF}"
             fi
             ;;
         *6)
             SERVICE_VALUE_HOST="${option}"
             SERVICE_VALUE_JAIL="${value}"
-            if [ -n "${SERVICE_VALUE_HOST}" ] && [ -n "${SERVICE_VALUE_JAIL}" ]; then
+            if [ "${SERVICE_VALUE_HOST}" = "${SERVICE_VALUE_JAIL}" ]; then
+                echo "${SERVICE}_${SERVICE_OPTION}=${SERVICE_VALUE_HOST}" >> "${COMPOSE_CONF}"
+            elif [ -n "${SERVICE_VALUE_HOST}" ] && [ -n "${SERVICE_VALUE_JAIL}" ]; then
                 echo "${SERVICE}_${SERVICE_OPTION}=${SERVICE_VALUE_HOST}:${SERVICE_VALUE_JAIL}" >> "${COMPOSE_CONF}"
             fi
             ;;
@@ -159,6 +165,7 @@ if [ -f "${ENV_FILE}" ]; then
 fi
 
 for service in $(grep -E "^service=" "${COMPOSE_CONF}" | cut -d= -f2-); do
+    jail_name="$(grep -E "^${service}_container_name" "${COMPOSE_CONF}" | cut -d= -f2-)"
     ip="$(grep -E "^${service}_network_mode" "${COMPOSE_CONF}" | cut -d= -f2-)"
     if [ "${ip}" = "host" ] || [ -z "${ip}" ]; then
         ip="inherit"
@@ -171,19 +178,34 @@ for service in $(grep -E "^service=" "${COMPOSE_CONF}" | cut -d= -f2-); do
     if [ -n "${OPT_DATA_PATH}" ]; then
         cmd="$(printf "%s %s %s" "${cmd}" "--data-path" "${OPT_DATA_PATH}")"
     fi
-    cmd="$(printf "%s %s" "${cmd}" "$(grep -E "^${service}_container_name" "${COMPOSE_CONF}" | cut -d= -f2-)")"
+    cmd="$(printf "%s %s" "${cmd}" "${jail_name}")"
     cmd="$(printf "%s %s" "${cmd}" "$(grep -E "^${service}_image" "${COMPOSE_CONF}" | cut -d= -f2-)")"
     cmd="$(printf "%s %s" "${cmd}" "${ip}")"
 
     eval "${cmd}" || exit 1
 
+    # RDR
     if [ "${ip}" != "inherit" ] && ! route -n get "${ip}" | grep "gateway" >/dev/null 2>/dev/null; then
         if grep -Eq "^${service}_ports" "${COMPOSE_CONF}"; then
             for port in $(grep -E "^${service}_ports" "${COMPOSE_CONF}" | cut -d= -f2- | sed 's/\"//g'); do
                 host_port="$(echo "${port}" | awk -F":" '{print $1}')"
                 jail_port="$(echo "${port}" | awk -F":" '{print $2}')"
-                bastille rdr "${service}" tcp "${host_port}" "${jail_port}"
+                bastille rdr "${jail_name}" tcp "${host_port}" "${jail_port}"
             done
         fi
     fi
+
+    # Depend
+    if grep -Eq "^${service}_depends_on" "${COMPOSE_CONF}"; then
+        REQUIRE_START="${REQUIRE_START} ${jail_name}"
+        bastille stop "${jail_name}"
+        for depend_service in $(grep -E "^${service}_depends_on" "${COMPOSE_CONF}" | cut -d= -f2- | sed 's/\"//g'); do
+            depend_jail="$(grep -E "^${depend_service}_container_name" "${COMPOSE_CONF}" | cut -d= -f2-)"
+            sysrc -f "${bastille_jailsdir}/${jail_name}/settings.conf" depend+="${depend_jail}"
+        done
+    fi
+done
+
+for jail in ${REQUIRE_START}; do
+    bastille start "${jail}"
 done
