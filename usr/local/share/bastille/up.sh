@@ -179,7 +179,7 @@ for service in $(grep -E "^service=" "${COMPOSE_CONF}" | cut -d= -f2-); do
     eval "${cmd}" || exit 1
 
     if [ "${ip}" != "inherit" ] && ! route -n get "${ip}" | grep "gateway" >/dev/null 2>/dev/null; then
-        if grep -E "^${service}_ports" "${COMPOSE_CONF}"; then
+        if grep -Eq "^${service}_ports" "${COMPOSE_CONF}"; then
             for port in "$(grep -E "^${service}_ports" "${COMPOSE_CONF}" | cut -d= -f2- | sed 's/\"//g')"; do
                 host_port="$(echo "${port}" | awk -F":" '{print $1}')"
                 jail_port="$(echo "${port}" | awk -F":" '{print $2}')"
