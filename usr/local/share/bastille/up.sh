@@ -56,7 +56,6 @@ while [ "$#" -gt 0 ]; do
             if [ ! -d "${OPT_DATA_PATH}" ]; then
                 error_exit "[ERROR]: Invalid path: ${OPT_DATA_PATH}"
             fi
-            bastille_volumesdir="${DATA_PATH}"
             shift 2
             ;;
         -*)
