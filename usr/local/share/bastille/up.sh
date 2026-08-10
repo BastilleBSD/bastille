@@ -84,7 +84,7 @@ fi
 indent_count() {
 
     local line="${1}"
-    local indent=$(printf "%s" "${line}" | sed 's/[^ ].*//' | wc -c)
+    local indent="$(printf "%s" "${line}" | sed 's/[^ ].*//' | wc -c)"
 
     printf "%s\n" "${indent}"
 }
