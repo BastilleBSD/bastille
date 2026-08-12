@@ -96,7 +96,7 @@ bastille_dns_remove_entry() {
         bastille_dns_domain="bastille"
     fi
     # Validate command existence/enabled
-    if command -v "${dns_cmd}"-control >/dev/null 2>&1; then
+    if ! command -v "${dns_cmd}"-control >/dev/null 2>&1; then
         error_notify "[ERROR]: Resolver not found: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
     elif [ "$(sysrc -n "${dns_sysrc}"_enable 2>/dev/null)" != "YES" ]; then
