@@ -309,8 +309,8 @@ configure_dns() {
         # Configure interface and network
         if [ -z "${bastille_dns_interface}" ]; then
             error_exit "[ERROR]: Variable not set in config file: bastille_dns_interface"
-        elif [ -z "${bastille_dns_network}" ]; then
-            error_exit "[ERROR]: Variable not set in config file: bastille_dns_network"
+        elif [ -z "${bastille_dns_gateway}" ]; then
+            error_exit "[ERROR]: Variable not set in config file: bastille_dns_gateway"
         else
             ifconfig "${bastille_dns_interface}" inet "${bastille_dns_gateway}" alias
             sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_gateway}"
