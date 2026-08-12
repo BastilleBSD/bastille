@@ -743,6 +743,11 @@ create_jail() {
         done
     fi
 
+    # Apply DNS settings (if set)
+    if checkyesno bastille_dns_enable; then
+        echo "nameserver ${bastille_dns_gateway}" >> "${bastille_jail_resolv_conf}"
+    fi
+
     # Apply tags (if set)
     if [ -n "${OPT_TAGS}" ]; then
         bastille tags "${NAME}" add "${OPT_TAGS}"

@@ -286,30 +286,25 @@ configure_bridge() {
 
 configure_dns() {
 
-    # Only for loopback address
-    if [ -z "${bastille_network_loopback}" ]; then
-        error_notify "[ERROR]: DNS is only for NAT jails."
-        error_exit "See 'bastille setup loopback'."
+    # Enable DNS if not enabled already
+    if [ "$(sysrc -f "${BASTILLE_CONFIG}" -n bastille_dns_enable)" != "YES" ]; then
+        sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable="YES" >/dev/null 2>/dev/null
     fi
-    # Enable DNS
-    if [ "$(sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable)" != "YES" ]; then
-        sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable="YES"
-    fi
+    # Setup DNS
     if [ -f "/var/unbound/conf.d/bastille.conf" ]; then
-        info 3 "\nDNS has already been configured."
+        info 1 "\nDNS has already been configured."
     else
-        local old_nameserver="$(grep -E "^nameserver" /etc/resolv.conf | awk '{print $2}' | sed 's/\n/ /g')"
-        # Use unbound if available, otherwise local-unbound
+        # Use local-unbound
         if which local-unbound >/dev/null 2>&1; then
             local resolver="local-unbound"
             local resolver_sysrc="local_unbound"
         else
-            error_exit "[ERROR]: No valid DNS resolver found."
+            error_exit "[ERROR]: Resolver not found: ${resolver}"
         fi
-        # Validate resolver enabled
-        if [ "$(sysrc "${resolver_sysrc}")" != "YES" ]; then
-            info 3 "\nEnabling resolver: ${resolver}"
-            sysrc "${resolver_sysrc}"_enable="YES"
+        # Enable resolver
+        if [ "$(sysrc "${resolver_sysrc}" 2>/dev/null)" != "YES" ]; then
+            info 1 "\nEnabling resolver: ${resolver}"
+            sysrc "${resolver_sysrc}"_enable="YES" >/dev/null 2>/dev/null
         fi
         # Configure interface and network
         if [ -z "${bastille_dns_interface}" ]; then
@@ -317,13 +312,20 @@ configure_dns() {
         elif [ -z "${bastille_dns_network}" ]; then
             error_exit "[ERROR]: Variable not set in config file: bastille_dns_network"
         else
-            ifconfig "${bastille_dns_interface}" inet "${bastille_dns_network}" alias
-            sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_network}"
+            ifconfig "${bastille_dns_interface}" inet "${bastille_dns_gateway}" alias
+            sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_gateway}"
         fi
         # Run setup for resolver
-        eval ${resolver}-setup "$( echo ${bastille_dns_network} | cut -d/ -f1)" ${old_nameserver}
-        cp -f "${bastille_sharedir}/lib/dns/bastille.conf" /var/unbound/conf.d/
+        info 1 "\nStarting resolver: ${resolver}"
         service local_unbound start
+        info 1 "\nRunning setup for resolver: ${resolver}"
+        mkdir -p /var/unbound/conf.d
+        chown -R unbound:unbound /var/unbound
+        chmod -R 755 /var/unbound
+        cp -f "${bastille_sharedir}/lib/dns/bastille.conf" /var/unbound/conf.d/
+        ${resolver}-setup
+        service "${resolver_sysrc}" restart
+        info 1 "\nDNS resolver successfully configured: ${resolver}"
     fi
 }
 
@@ -593,7 +595,26 @@ case "${OPT_CONFIG}" in
         fi
         ;;
     dns)
-        configure_dns
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            configure_dns
+        else
+            warn 1 "[WARNING]: Bastille will enable and configure basic 'local-unbound' functionality."
+            warn 1 "If you are already using 'local-unbound' or 'unbound' DO NOT run this setup as it"
+            warn 1 "might interfere with already configured options."
+            # shellcheck disable=SC3045
+            read -p "Do you really want to continue setting up DNS for Bastille? [y|n]:" answer
+            case "${answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    configure_dns
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "DNS setup cancelled."
+                    ;;
+                *)
+                    error_exit "Invalid selection. Please answer 'y' or 'n'"
+                    ;;
+            esac
+        fi
         ;;
     *)
         error_exit "[ERROR]: Unknown option: \"${1}\""

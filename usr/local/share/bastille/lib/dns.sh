@@ -35,8 +35,8 @@ bastille_dns_add_entry() {
     local type="${1}"
     local jail="${2}"
     local ip="${3}"
-    local bastille_dns_network_ip="$(echo "${bastille_dns_network}" | cut -d/ -f1)"
-    local bastille_dns_network_subnet="$(echo "${bastille_dns_network}" | cut -d/ -f2)"
+	local dns_cmd="local-unbound"
+	local dns_sysrc="local_unbound"
 
     # Validate DNS interface
     if ! ifconfig "${bastille_dns_interface}" >/dev/null 2>/dev/null; then
@@ -44,26 +44,20 @@ bastille_dns_add_entry() {
         error_continue "See 'bastille setup dns'."
     fi
     # Validate DNS ip
-    if ! ifconfig "${bastille_dns_interface}" | grep -Eoq "inet: ${bastille_dns_network_ip} "; then
+    if ! ifconfig "${bastille_dns_interface}" | grep -Eoq "inet ${bastille_dns_gateway} "; then
         error_notify "[ERROR]: DNS interface has not been configured."
         error_continue "See 'bastille setup dns'."
     fi
-    # Validate top leve domain
+    # Validate top level domain
     if [ -z "${bastille_dns_domain}" ]; then
         bastille_dns_domain="bastille"
     fi
-    # Set unbound cmd
-    if ! command -v unbound-control >/dev/null 2>&1; then
-        local dns_cmd="unbound-control"
-    elif ! command -v local-unbound-control >/dev/null 2>&1; then
-        local dns_cmd="local-unbound-control"
-    else
-        error_notify "[ERROR]: No valid DNS resolver found."
+    # Validate command existence/enabled
+    if ! command -v "${dns_cmd}"-control >/dev/null 2>&1; then
+        error_notify "[ERROR]: Resolver not found: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
-    fi
-    # Validate unbound enabled
-    if ! ${dns_cmd} status >/dev/null 2>&1; then
-        error_notify "[ERROR]: DNS resolver is not enabled."
+    elif [ "$(sysrc -n "${dns_sysrc}"_enable 2>/dev/null)" != "YES" ]; then
+        error_notify "[ERROR]: Resolver not enabled: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
     fi
     # Validate unbound zone exists
@@ -84,35 +78,29 @@ bastille_dns_remove_entry() {
     local type="${1}"
     local jail="${2}"
     local ip="${3}"
-    local bastille_dns_network_ip="$(echo "${bastille_dns_network}" | cut -d/ -f1)"
-    local bastille_dns_network_subnet="$(echo "${bastille_dns_network}" | cut -d/ -f2)"
-
+	local dns_cmd="local-unbound"
+	local dns_sysrc="local_unbound"
+	
     # Validate DNS interface
     if ! ifconfig "${bastille_dns_interface}" >/dev/null 2>/dev/null; then
         error_notify "[ERROR]: DNS interface has not been configured."
         error_continue "See 'bastille setup dns'."
     fi
     # Validate DNS ip
-    if ! ifconfig "${bastille_dns_interface}" | grep -Eoq "inet: ${bastille_dns_network_ip} "; then
+    if ! ifconfig "${bastille_dns_interface}" | grep -Eoq "inet ${bastille_dns_gateway} "; then
         error_notify "[ERROR]: DNS interface has not been configured."
         error_continue "See 'bastille setup dns'."
     fi
-    # Validate top leve domain
+    # Validate top level domain
     if [ -z "${bastille_dns_domain}" ]; then
         bastille_dns_domain="bastille"
     fi
-    # Set unbound cmd
-    if ! command -v unbound-control >/dev/null 2>&1; then
-        local dns_cmd="unbound-control"
-    elif ! command -v local-unbound-control >/dev/null 2>&1; then
-        local dns_cmd="local-unbound-control"
-    else
-        error_notify "[ERROR]: No valid DNS resolver found."
+    # Validate command existence/enabled
+    if command -v "${dns_cmd}"-control >/dev/null 2>&1; then
+        error_notify "[ERROR]: Resolver not found: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
-    fi
-    # Validate unbound enabled
-    if ! ${dns_cmd} status >/dev/null 2>&1; then
-        error_notify "[ERROR]: DNS resolver is not enabled."
+    elif [ "$(sysrc -n "${dns_sysrc}"_enable 2>/dev/null)" != "YES" ]; then
+        error_notify "[ERROR]: Resolver not enabled: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
     fi
     # Validate unbound zone exists
