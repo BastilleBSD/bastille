@@ -36,6 +36,7 @@ bastille_dns_add_entry() {
     local jail="${2}"
     local ip="${3}"
 	local dns_cmd="local-unbound"
+	local dns_ctl_cmd="local-unbound-control"
 	local dns_sysrc="local_unbound"
 
     # Validate DNS interface
@@ -53,7 +54,7 @@ bastille_dns_add_entry() {
         bastille_dns_domain="bastille"
     fi
     # Validate command existence/enabled
-    if ! command -v "${dns_cmd}"-control >/dev/null 2>&1; then
+    if ! command -v "${dns_ctl_cmd}" >/dev/null 2>&1; then
         error_notify "[ERROR]: Resolver not found: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
     elif [ "$(sysrc -n "${dns_sysrc}"_enable 2>/dev/null)" != "YES" ]; then
@@ -61,8 +62,8 @@ bastille_dns_add_entry() {
         error_continue "See 'bastille setup dns'."
     fi
     # Validate unbound zone exists
-    if ! ${dns_cmd} list_local_zones | grep -qE "^${bastille_dns_domain}. static$"; then
-        ${dns_cmd} local_zone "${bastille_dns_domain}" static >/dev/null 2>&1
+    if ! ${dns_ctl_cmd} list_local_zones | grep -qE "^${bastille_dns_domain}. static$"; then
+        ${dns_ctl_cmd} local_zone "${bastille_dns_domain}" static >/dev/null 2>&1
     fi
     if [ "${type}" = "ipv4" ]; then
         type="A"
@@ -70,7 +71,7 @@ bastille_dns_add_entry() {
         type="AAAA"
     fi
     # Execute
-    ${dns_cmd} "local_data" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
+    ${dns_ctl_cmd} "local_data" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
 }
 
 bastille_dns_remove_entry() {
@@ -79,6 +80,7 @@ bastille_dns_remove_entry() {
     local jail="${2}"
     local ip="${3}"
 	local dns_cmd="local-unbound"
+	local dns_ctl_cmd="local-unbound-control"
 	local dns_sysrc="local_unbound"
 	
     # Validate DNS interface
@@ -96,7 +98,7 @@ bastille_dns_remove_entry() {
         bastille_dns_domain="bastille"
     fi
     # Validate command existence/enabled
-    if ! command -v "${dns_cmd}"-control >/dev/null 2>&1; then
+    if ! command -v "${dns_ctl_cmd}" >/dev/null 2>&1; then
         error_notify "[ERROR]: Resolver not found: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
     elif [ "$(sysrc -n "${dns_sysrc}"_enable 2>/dev/null)" != "YES" ]; then
@@ -104,8 +106,8 @@ bastille_dns_remove_entry() {
         error_continue "See 'bastille setup dns'."
     fi
     # Validate unbound zone exists
-    if ! ${dns_cmd} list_local_zones | grep -qE "^${bastille_dns_domain}. static$"; then
-        ${dns_cmd} local_zone "${bastille_dns_domain}" static >/dev/null 2>&1
+    if ! ${dns_ctl_cmd} list_local_zones | grep -qE "^${bastille_dns_domain}. static$"; then
+        ${dns_ctl_cmd} local_zone "${bastille_dns_domain}" static >/dev/null 2>&1
     fi
     if [ "${type}" = "ipv4" ]; then
         type="A"
@@ -113,5 +115,5 @@ bastille_dns_remove_entry() {
         type="AAAA"
     fi
     # Execute
-    ${dns_cmd} "local_data_remove" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
+    ${dns_ctl_cmd} "local_data_remove" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
 }
