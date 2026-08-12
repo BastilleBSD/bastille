@@ -287,7 +287,7 @@ configure_bridge() {
 configure_dns() {
 
     # Only for loopback address
-    if [ "${bastille_network_loopback}" ]; then
+    if [ -z "${bastille_network_loopback}" ]; then
         error_notify "[ERROR]: DNS is only for NAT jails."
         error_exit "See 'bastille setup loopback'."
     fi
