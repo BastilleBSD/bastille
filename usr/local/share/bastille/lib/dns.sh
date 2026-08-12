@@ -62,7 +62,7 @@ bastille_dns_add_entry() {
     fi
     # Validate unbound zone exists
     if ! ${dns_cmd} list_local_zones | grep -qE "^${bastille_dns_domain}. static$"; then
-        ${dns_cmd} local_zone "${unbound_zone}" static >/dev/null 2>&1
+        ${dns_cmd} local_zone "${bastille_dns_domain}" static >/dev/null 2>&1
     fi
     if [ "${type}" = "ipv4" ]; then
         type="A"
@@ -105,7 +105,7 @@ bastille_dns_remove_entry() {
     fi
     # Validate unbound zone exists
     if ! ${dns_cmd} list_local_zones | grep -qE "^${bastille_dns_domain}. static$"; then
-        ${dns_cmd} local_zone "${unbound_zone}" static >/dev/null 2>&1
+        ${dns_cmd} local_zone "${bastille_dns_domain}" static >/dev/null 2>&1
     fi
     if [ "${type}" = "ipv4" ]; then
         type="A"
