@@ -292,7 +292,7 @@ configure_dns() {
         error_exit "See 'bastille setup loopback'."
     fi
     # Enable DNS
-    if [ "$(sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable)" != "YES"; then
+    if [ "$(sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable)" != "YES" ]; then
         sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable="YES"
     fi
     if [ -f "/var/unbound/conf.d/bastille.conf" ]; then
@@ -321,7 +321,7 @@ configure_dns() {
             sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_network}"
         fi
         # Run setup for resolver
-        eval ${resolver}-setup "$( echo ${bastille_dns_network} | cut -d/ -f1)" ${nameserver}
+        eval ${resolver}-setup "$( echo ${bastille_dns_network} | cut -d/ -f1)" ${old_nameserver}
         cp -f "${bastille_sharedir}/lib/dns/bastille.conf" /var/unbound/conf.d/
         service local_unbound start
     fi
