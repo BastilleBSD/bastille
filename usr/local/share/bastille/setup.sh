@@ -292,14 +292,14 @@ configure_dns() {
         error_exit "See 'bastille setup loopback'."
     fi
     # Enable DNS
-    if checkyesno bastille_dns_enable; then
+    if [ "$(sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable)" != "YES"; then
         sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable="YES"
     fi
     if [ -f "/var/unbound/conf.d/bastille.conf" ]; then
         info 3 "\nDNS has already been configured."
     else
         # Use unbound if available, otherwise local-unbound
-        if ! which local-unbound >/dev/null 2>&1; then
+        if which local-unbound >/dev/null 2>&1; then
             local resolver="local-unbound"
             local resolver_sysrc="local_unbound"
         else
@@ -322,7 +322,8 @@ configure_dns() {
         # Run setup for resolver
         eval ${resolver}-setup
         cp -f "${bastille_sharedir}/dns/bastille.conf" /var/unbound/conf.d/
-        service local-unbound start
+        service local_unbound start
+    fi
 }
 
 configure_vnet() {
@@ -589,6 +590,9 @@ case "${OPT_CONFIG}" in
             configure_vnet
             configure_bridge "${OPT_ARG}"
         fi
+        ;;
+    dns)
+        configure_dns
         ;;
     *)
         error_exit "[ERROR]: Unknown option: \"${1}\""
