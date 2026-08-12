@@ -323,7 +323,7 @@ configure_dns() {
         chown -R unbound:unbound /var/unbound
         chmod -R 755 /var/unbound
         cp -f "${bastille_sharedir}/lib/dns/bastille.conf" /var/unbound/conf.d/
-        sed -i '' "s/%%bastille_dns_gateway%%/"${bastille_dns_gateway}"/" /var/unbound/conf.d/bastille.conf
+        sed -i '' "s/%%bastille_dns_gateway%%/${bastille_dns_gateway}/" /var/unbound/conf.d/bastille.conf
         ${resolver}-setup
         service "${resolver_sysrc}" restart
         info 1 "\nDNS resolver successfully configured: ${resolver}"
