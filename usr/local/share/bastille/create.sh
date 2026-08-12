@@ -744,7 +744,7 @@ create_jail() {
     fi
 
     # Apply DNS settings (if set)
-    if checkyesno bastille_dns_enable; then
+    if [ "${VNET_JAIL}" -eq 0 ] && checkyesno bastille_dns_enable; then
         echo "nameserver ${bastille_dns_gateway}" >> "${bastille_jail_resolv_conf}"
     fi
 
