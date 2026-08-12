@@ -298,7 +298,7 @@ configure_dns() {
     if [ -f "/var/unbound/conf.d/bastille.conf" ]; then
         info 3 "\nDNS has already been configured."
     else
-        local old_nameserver="$(grep -E "^nameserver" /etc/resolv.conf | cut -f2- | sed 's/\n/ /g')"
+        local old_nameserver="$(grep -E "^nameserver" /etc/resolv.conf | awk '{print $2}' | sed 's/\n/ /g')"
         # Use unbound if available, otherwise local-unbound
         if which local-unbound >/dev/null 2>&1; then
             local resolver="local-unbound"

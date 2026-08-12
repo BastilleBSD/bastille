@@ -39,12 +39,12 @@ bastille_dns_add_entry() {
     local bastille_dns_network_subnet="$(echo "${bastille_dns_network}" | cut -d/ -f2)"
 
     # Validate DNS interface
-    if ifconfig "${bastille_dns_interface}" >/dev/null 2>/dev/null; then
+    if ! ifconfig "${bastille_dns_interface}" >/dev/null 2>/dev/null; then
         error_notify "[ERROR]: DNS interface has not been configured."
         error_continue "See 'bastille setup dns'."
     fi
     # Validate DNS ip
-    if ifconfig "${bastille_dns_interface}" | grep -Eoq "inet: ${bastille_dns_network_ip} "; then
+    if ! ifconfig "${bastille_dns_interface}" | grep -Eoq "inet: ${bastille_dns_network_ip} "; then
         error_notify "[ERROR]: DNS interface has not been configured."
         error_continue "See 'bastille setup dns'."
     fi
@@ -88,12 +88,12 @@ bastille_dns_remove_entry() {
     local bastille_dns_network_subnet="$(echo "${bastille_dns_network}" | cut -d/ -f2)"
 
     # Validate DNS interface
-    if ifconfig "${bastille_dns_interface}" >/dev/null 2>/dev/null; then
+    if ! ifconfig "${bastille_dns_interface}" >/dev/null 2>/dev/null; then
         error_notify "[ERROR]: DNS interface has not been configured."
         error_continue "See 'bastille setup dns'."
     fi
     # Validate DNS ip
-    if ifconfig "${bastille_dns_interface}" | grep -Eoq "inet: ${bastille_dns_network_ip} "; then
+    if ! ifconfig "${bastille_dns_interface}" | grep -Eoq "inet: ${bastille_dns_network_ip} "; then
         error_notify "[ERROR]: DNS interface has not been configured."
         error_continue "See 'bastille setup dns'."
     fi
