@@ -143,7 +143,9 @@ for jail in ${JAILS}; do
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
                     # Add DNS (if set)
-                    bastille_dns "add" "ipv4" "${jail}" "${ip}"
+                    if checkyesno bastille_dns_enable; then
+                        bastille_dns_add_entry "ipv4" "${jail}" "${ip}"
+                    fi
                 else
                     error_continue "[ERROR]: ${if} interface does not exist."
                 fi
@@ -168,7 +170,9 @@ for jail in ${JAILS}; do
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
                     # Add DNS (if set)
-                    bastille_dns "add" "ipv6" "${jail}" "${ip}"
+                    if checkyesno bastille_dns_enable; then
+                        bastille_dns_add_entry "ipv6" "${jail}" "${ip}"
+                    fi
                 else
                     error_continue "[ERROR]: ${if} interface does not exist."
                 fi

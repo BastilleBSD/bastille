@@ -15,8 +15,10 @@ bastille_logsdir="/var/log/bastille"                                  ## default
 bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
 
 ## Bastille DNS
-bastille_dns_resolvers=""                                             ## default: ""
-bastille_dns_zone=""                                                  ## default: ""
+bastille_dns_enable=""                                                ## default: ""
+bastille_dns_interface="bastille0"                                    ## default: "bastille0"
+bastille_dns_network"10.0.0.1/24"                                     ## default: "10.0.0.1/24"
+bastille_dns_domain="bastille"                                        ## default: "bastille"
 
 ## Bastille commands directory (assumed by bastille pkg)
 bastille_sharedir="/usr/local/share/bastille"                         ## default: "/usr/local/share/bastille"

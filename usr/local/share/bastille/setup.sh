@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille setup [option(s)] [bridge|linux|loopback|netgraph|firewall|shared|storage|vnet]"
+    error_notify "Usage: bastille setup [option(s)] [bridge|dns|linux|loopback|netgraph|firewall|shared|storage|vnet]"
     cat << EOF
 
     Options:
@@ -282,6 +282,47 @@ configure_bridge() {
     else
         info 1 "\nBridge has alread been configured: [${bridge_name}]"
     fi
+}
+
+configure_dns() {
+
+    # Only for loopback address
+    if [ "${bastille_network_loopback}" ]; then
+        error_notify "[ERROR]: DNS is only for NAT jails."
+        error_exit "See 'bastille setup loopback'."
+    fi
+    # Enable DNS
+    if checkyesno bastille_dns_enable; then
+        sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable="YES"
+    fi
+    if [ -f "/var/unbound/conf.d/bastille.conf" ]; then
+        info 3 "\nDNS has already been configured."
+    else
+        # Use unbound if available, otherwise local-unbound
+        if ! which local-unbound >/dev/null 2>&1; then
+            local resolver="local-unbound"
+            local resolver_sysrc="local_unbound"
+        else
+            error_exit "[ERROR]: No valid DNS resolver found."
+        fi
+        # Validate resolver enabled
+        if [ "$(sysrc "${resolver_sysrc}")" != "YES" ]; then
+            info 3 "\nEnabling resolver: ${resolver}"
+            sysrc "${resolver_sysrc}"_enable="YES"
+        fi
+        # Configure interface and network
+        if [ -z "${bastille_dns_interface}" ]; then
+            error_exit "[ERROR]: Variable not set in config file: bastille_dns_interface"
+        elif [ -z "${bastille_dns_network}" ]; then
+            error_exit "[ERROR]: Variable not set in config file: bastille_dns_network"
+        else
+            ifconfig "${bastille_dns_interface}" inet "${bastille_dns_network}" alias
+            sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_network}"
+        fi
+        # Run setup for resolver
+        eval ${resolver}-setup
+        cp -f "${bastille_sharedir}/dns/bastille.conf" /var/unbound/conf.d/
+        service local-unbound start
 }
 
 configure_vnet() {

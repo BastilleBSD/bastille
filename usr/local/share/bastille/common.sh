@@ -49,6 +49,8 @@
 . "${bastille_sharedir}/lib/storage.sh"
 # shellcheck source=/dev/null
 . "${bastille_sharedir}/lib/migrate.sh"
+# shellcheck source=/dev/null
+. "${bastille_sharedir}/lib/dns.sh"
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.
