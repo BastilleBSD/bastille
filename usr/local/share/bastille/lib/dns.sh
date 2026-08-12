@@ -70,7 +70,7 @@ bastille_dns_add_entry() {
         type="AAAA"
     fi
     # Execute
-    ${dns_cmd} "local_data" "${name}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
+    ${dns_cmd} "local_data" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
 }
 
 bastille_dns_remove_entry() {
@@ -113,5 +113,5 @@ bastille_dns_remove_entry() {
         type="AAAA"
     fi
     # Execute
-    ${dns_cmd} "local_data_remove" "${name}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
+    ${dns_cmd} "local_data_remove" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
 }

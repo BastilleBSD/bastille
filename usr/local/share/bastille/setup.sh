@@ -304,7 +304,7 @@ configure_dns() {
         # Enable resolver
         if [ "$(sysrc "${resolver_sysrc}" 2>/dev/null)" != "YES" ]; then
             info 1 "\nEnabling resolver: ${resolver}"
-            sysrc "${resolver_sysrc}"_enable="YES" >/dev/null 2>/dev/null
+            sysrc ${resolver_sysrc}_enable="YES" >/dev/null 2>/dev/null
         fi
         # Configure interface and network
         if [ -z "${bastille_dns_interface}" ]; then
