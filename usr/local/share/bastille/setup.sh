@@ -298,6 +298,7 @@ configure_dns() {
     if [ -f "/var/unbound/conf.d/bastille.conf" ]; then
         info 3 "\nDNS has already been configured."
     else
+        local old_nameserver="$(grep -E "^nameserver" /etc/resolv.conf | cut -f2- | sed 's/\n/ /g')"
         # Use unbound if available, otherwise local-unbound
         if which local-unbound >/dev/null 2>&1; then
             local resolver="local-unbound"
@@ -320,7 +321,7 @@ configure_dns() {
             sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_network}"
         fi
         # Run setup for resolver
-        eval ${resolver}-setup
+        eval ${resolver}-setup "$( echo ${bastille_dns_network} | cut -d/ -f1)" ${nameserver}
         cp -f "${bastille_sharedir}/dns/bastille.conf" /var/unbound/conf.d/
         service local_unbound start
     fi
