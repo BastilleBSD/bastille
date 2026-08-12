@@ -322,7 +322,7 @@ configure_dns() {
         fi
         # Run setup for resolver
         eval ${resolver}-setup "$( echo ${bastille_dns_network} | cut -d/ -f1)" ${nameserver}
-        cp -f "${bastille_sharedir}/dns/bastille.conf" /var/unbound/conf.d/
+        cp -f "${bastille_sharedir}/lib/dns/bastille.conf" /var/unbound/conf.d/
         service local_unbound start
     fi
 }
