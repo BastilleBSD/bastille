@@ -5,13 +5,13 @@
 .Nm bastille restart
 .Nd Restart a jail.
 .Sh SYNOPSIS
-.Nm
-.Op Fl bivx
+.Nm bastille restart
+.Op Fl biv
 .Op Fl d Ar VALUE
 .Ar TARGET
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille restart
 sub-command will restart
 .Ar TARGET .
 .Bl -tag -width Ds
@@ -23,8 +23,6 @@ Time (seconds) to wait after starting each jail.
 Ignore stopped jails (do not start if stopped).
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Restart all jails, ignoring stopped jail:

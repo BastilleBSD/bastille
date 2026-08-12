@@ -42,7 +42,6 @@ usage() {
     -d | --delay VALUE     Time (seconds) to wait after starting each jail.
     -i | --ignore          Ignore stopped jails (do not start if stopped).
     -v | --verbose         Enable verbose mode.
-    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
@@ -74,18 +73,12 @@ while [ "$#" -gt 0 ]; do
             stop_options="${stop_options} -v"
             shift
             ;;
-        -x|--debug)
-            start_options="${start_options} -x"
-            stop_options="${stop_options} -x"
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     b) start_options="${start_options} -b" ;;
                     i) IGNORE=1 ;;
                     v) start_options="${start_options} -v" stop_options="${stop_options} -v" ;;
-                    x) start_options="${start_options} -x" stop_options="${stop_options} -x" ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

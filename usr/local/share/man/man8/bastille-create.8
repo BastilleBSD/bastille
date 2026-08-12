@@ -5,8 +5,8 @@
 .Nm bastille create
 .Nd Create a jail.
 .Sh SYNOPSIS
-.Nm
-.Op Fl BCDELMPTVvx
+.Nm bastille create
+.Op Fl BCDELMPTVv
 .Op Fl g Ar IP
 .Op Fl n Ar IP,IP
 .Op Fl p Ar VALUE
@@ -18,7 +18,7 @@
 .Ar NAME RELEASE IP Op INTERFACE
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille create
 sub-command is used to create a jail with any of the given options. The
 .Ar INTERFACE
 value is only optional for classic/standard jails. For any type of VNET
@@ -106,8 +106,6 @@ Set VLAN ID (VNET only).
 This will configure the jail to use the specified
 .Ar VALUE
 as the VLAN ID.
-.It Fl x , -debug
-Enable debug mode.
 .It Fl Z Ar VALUE,VALUE , Fl -zfs-opts Ar VALUE,VALUE
 Custom zfs options. Comma-separated.
 .Pp

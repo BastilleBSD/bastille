@@ -43,7 +43,6 @@ usage() {
     -c | --no-cache     Do not destroy cache when destroying a release (legacy releases).
     -f | --force        Force unmount any mounted datasets when destroying a jail or release (ZFS only).
     -y | --yes          Do not prompt. Assume always yes.
-    -x | --debug        Enable debug mode.
 
 EOF
     exit 1
@@ -253,10 +252,6 @@ while [ "$#" -gt 0 ]; do
             AUTO_YES=1
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
@@ -264,7 +259,6 @@ while [ "$#" -gt 0 ]; do
                     c) NO_CACHE=1 ;;
                     f) FORCE=1 ;;
                     y) AUTO_YES=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
@@ -320,6 +314,11 @@ case "${TARGET}" in
     current-build-latest|current-BUILD-LATEST|CURRENT-BUILD-LATEST)
         ## check for HardenedBSD(latest current build release)
         NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '(current-build-latest)$' | sed 's/CURRENT/current/;s/build/BUILD/g;s/latest/LATEST/g')
+        destroy_release
+        ;;
+    [2-4].[0-9]*)
+        # MightnightBSD
+        NAME_VERIFY=$(echo "${TARGET}" | grep -iwE '^[0-9.]+$')
         destroy_release
         ;;
     Ubuntu_1804|Ubuntu_2004|Ubuntu_2204|UBUNTU_1804|UBUNTU_2004|UBUNTU_2204)

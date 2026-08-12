@@ -5,12 +5,12 @@
 .Nm bastille umount
 .Nd Unmount file(s)/directorie(s) from jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
+.Nm bastille umount
+.Op Fl a
 .Ar TARGET JAIL_PATH
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille umount
 sub-command will unmount
 .Ar JAIL_PATH
 from
@@ -18,8 +18,6 @@ from
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Unmount /my/path/in/jail from myjail:

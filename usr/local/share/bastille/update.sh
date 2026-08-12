@@ -39,7 +39,6 @@ usage() {
 
     -a | --auto      Auto mode. Start/stop jail(s) if required.
     -f | --force     Force update a release (FreeBSD legacy releases).
-    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -69,16 +68,11 @@ while [ "$#" -gt 0 ]; do
             OPTION="-F"
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     a) AUTO=1 ;;
                     f) OPTION="-F" ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
@@ -111,12 +105,12 @@ jail_check() {
 
     # Check for thin jail
     if grep -qw "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/fstab"; then
-        error_notify "[ERROR]: ${TARGET} is not a thick container."
+        error_notify "[ERROR]: ${TARGET} is a thin jail."
         error_exit "See 'bastille update RELEASE' to update thin jails."
     fi
 
     # Verify PLATFORM_OS inside jail
-    JAIL_PLATFORM_OS="$( ${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version )"
+    JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
     if echo "${JAIL_PLATFORM_OS}" | grep -q "HBSD"; then
         JAIL_PLATFORM_OS="HardenedBSD"
     else
@@ -124,7 +118,7 @@ jail_check() {
     fi
 
     # Set OLD_RELEASE
-    OLD_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+    OLD_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
     if [ -z "${OLD_RELEASE}" ]; then
         error_exit "[ERROR]: Can't determine '${TARGET}' version."
     fi
@@ -181,9 +175,9 @@ jail_update() {
     fi
 
     # Update release version (including patch level)
-    UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+    UPDATED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
     if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
-        bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
+        bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
         info 1 "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
     else
         info 1 "\nNo updates available.\n"
@@ -234,9 +228,9 @@ jail_update_pkgbase() {
         fi
 
         # Update release version (including patch level)
-        UPDATED_RELEASE=$(/usr/sbin/jexec -l "${TARGET}" freebsd-version 2>/dev/null)
+        UPDATED_RELEASE="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
         if [ "${OLD_RELEASE}" != "${UPDATED_RELEASE}" ]; then
-            bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null
+            bastille config ${TARGET} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
             info 1 "\nUpdate complete: ${OLD_RELEASE} > ${UPDATED_RELEASE}\n"
         else
             info 1 "\nNo updates available.\n"
@@ -311,6 +305,14 @@ release_update() {
         -f "${freebsd_update_conf}" \
         install --currently-running "${TARGET_TRIM}"
 
+        # Updated osrelase for child jails
+        UPDATED_RELEASE="$(${bastille_releasesdir}/${TARGET}/bin/freebsd-version 2>/dev/null)"
+        for jail in $(bastille list jails); do
+            if grep -qw "${bastille_jailsdir}/${jail}/root/.bastille" "${bastille_jailsdir}/${jail}/fstab"; then
+                bastille config ${jail} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
+            fi
+        done
+
     elif [ "${RELEASE_PLATFORM_OS}" = "HardenedBSD" ]; then
 
         local release_dir="${bastille_releasesdir}/${TARGET}"
@@ -370,6 +372,14 @@ release_update_pkgbase() {
 
             error_exit "[ERROR]: Failed to update release: ${TARGET}"
         fi
+
+        # Updated osrelase for child jails
+        UPDATED_RELEASE="$(${bastille_releasesdir}/${TARGET}/bin/freebsd-version 2>/dev/null)"
+        for jail in $(bastille list jails); do
+            if grep -qw "${bastille_jailsdir}/${jail}/root/.bastille" "${bastille_jailsdir}/${jail}/fstab"; then
+                bastille config ${jail} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
+            fi
+        done
     fi
 }
 

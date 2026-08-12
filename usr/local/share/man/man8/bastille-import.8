@@ -5,13 +5,13 @@
 .Nm bastille import
 .Nd Import a jail. 
 .Sh SYNOPSIS
-.Nm
-.Op Fl fMvx
+.Nm bastille import
+.Op Fl fMv
 .Ar TARGET
 .Op RELEASE
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille import
 sub-command will attempt to import a jail from an image or archive.
 Bastille supports importing jails from other jail managers such
 as iocage, ezjail and qjail.
@@ -28,8 +28,6 @@ Force an archive import without validation checksum.
 Use a static/persistent MAC address (VNET only) when importing foreign jails.
 .It Fl v , Fl -verbose
 Enable verbose mode (ZFS only).
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 The

@@ -5,18 +5,16 @@
 .Nm bastille sysrc
 .Nd Edit rc files inside jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
+.Nm bastille sysrc
+.Op Fl a
 .Ar TARGET ARGS
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille sysrc
 sub-command will run specified sysrc arguements inside jails.
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Enable nginx inside myjail:

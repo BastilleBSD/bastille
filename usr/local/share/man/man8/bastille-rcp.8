@@ -5,12 +5,12 @@
 .Nm bastille rcp
 .Nd Copy file(s)/directorie(s) from jail to host.
 .Sh SYNOPSIS
-.Nm
-.Op Fl qx
+.Nm bastille rcp
+.Op Fl q
 .Ar TARGET JAIL_PATH HOST_PATH
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille rcp
 sub-command will copy
 .Ar JAIL_PATH
 to
@@ -20,8 +20,6 @@ from inside
 .Bl -tag -width Ds
 .It Fl q , -quiet
 Suppress output.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Copy /etc/resolv.conf.custom to host:

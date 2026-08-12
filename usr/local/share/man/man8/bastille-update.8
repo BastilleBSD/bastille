@@ -5,12 +5,12 @@
 .Nm bastille update
 .Nd Update a jail or release.
 .Sh SYNOPSIS
-.Nm
-.Op Fl afx
+.Nm bastille update
+.Op Fl af
 .Ar TARGET
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille update
 sub-command will update
 .Ar TARGET
 with the latest patches and security updates.
@@ -25,8 +25,6 @@ Force update a release (FreeBSD legacy releases).
 .Pp
 This will force the 'fetch' command to proceed in the
 event of a previous failed upgrade.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Update 15.0-RELEASE:

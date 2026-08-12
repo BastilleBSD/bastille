@@ -41,7 +41,6 @@ usage() {
     -a | --auto      Auto mode. Start/stop jail(s) if required.
     -H | --host      Use host 'pkg' binary instead of jails.
     -y | --yes       Do not prompt. Assume always yes.
-    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -68,17 +67,12 @@ while [ "$#" -gt 0 ]; do
             AUTO_YES=1
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                    a) AUTO=1 ;;
                     H) USE_HOST_PKG=1 ;;
                     y) AUTO_YES=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

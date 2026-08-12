@@ -5,19 +5,19 @@
 .Nm bastille zfs
 .Nd Manage ZFS options/attributes for jail(s).
 .Sh SYNOPSIS
-.Nm Oo Fl avx Oc Ar TARGET Sy snapshot|destroy|rollback Op TAG
-.Nm Oo Fl avx Oc Ar TARGET Sy df|usage
-.Nm Oo Fl avx Oc Ar TARGET Sy get|set Ar KEY=VALUE
-.Nm Oo Fl avx Oc Ar TARGET Sy jail Ar pool/dataset /jail/path
-.Nm Oo Fl avx Oc Ar TARGET Sy unjail Ar pool/dataset
+.Nm bastille zfs Oo Fl av Oc Ar TARGET Sy snapshot|destroy|rollback Op TAG
+.Nm bastille zfs Oo Fl av Oc Ar TARGET Sy df|usage
+.Nm bastille zfs Oo Fl av Oc Ar TARGET Sy get|set Ar KEY=VALUE
+.Nm bastille zfs Oo Fl av Oc Ar TARGET Sy jail Ar pool/dataset /jail/path
+.Nm bastille zfs Oo Fl av Oc Ar TARGET Sy unjail Ar pool/dataset
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille zfs
 sub-command can manage snapshots, show disk usage, get or
 set attributes for jail datasets and jail or unjail specified
 datasets.
 .Bl -tag -width Ds
-.It Sy bastille zfs Oo Fl avx Oc Ar TARGET Sy snapshot|destroy|rollback Op TAG
+.It Sy bastille zfs Oo Fl av Oc Ar TARGET Sy snapshot|destroy|rollback Op TAG
 .Bl -tag -width Ds
 .It Sy snapshot
 Create a snapshot for
@@ -33,15 +33,13 @@ to last snapshot.
 Auto mode. Start/stop jail(s) if required.
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .El
 .Pp
 If
 .Ar TAG
 is specified, Bastille will use it as the naming scheme for the snapshot.
 Otherwise, Bastille will use its internal one.
-.It Sy bastille zfs Oo Fl avx Oc Ar TARGET Sy df|usage
+.It Sy bastille zfs Oo Fl av Oc Ar TARGET Sy df|usage
 .Bl -tag -width Ds
 .It Sy df
 Show the space that
@@ -53,10 +51,8 @@ Same as 'df'.
 Auto mode. Start/stop jail(s) if required.
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .El
-.It Sy bastille zfs Oo Fl avx Oc Ar TARGET Sy get|set Ar KEY=VALUE
+.It Sy bastille zfs Oo Fl av Oc Ar TARGET Sy get|set Ar KEY=VALUE
 .Bl -tag -width Ds
 .It Sy get
 Get the
@@ -72,10 +68,8 @@ for
 Auto mode. Start/stop jail(s) if required.
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .El
-.It Sy bastille zfs Oo Fl avx Oc Ar TARGET Sy jail Ar pool/dataset /jail/path
+.It Sy bastille zfs Oo Fl av Oc Ar TARGET Sy jail Ar pool/dataset /jail/path
 .Bl -tag -width Ds
 .It Sy jail
 Jail the specified dataset, and mount it at the
@@ -86,10 +80,8 @@ destroy a jail.
 Auto mode. Start/stop jail(s) if required.
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .El
-.It Sy bastille zfs Oo Fl avx Oc Ar TARGET Sy unjail Ar pool/dataset
+.It Sy bastille zfs Oo Fl av Oc Ar TARGET Sy unjail Ar pool/dataset
 .Bl -tag -width Ds
 .It Sy unjail
 Unjail the specified dataset.
@@ -97,8 +89,6 @@ Unjail the specified dataset.
 Auto mode. Start/stop jail(s) if required.
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .El
 .Sh EXAMPLES
 .Bl -tag -width Ds

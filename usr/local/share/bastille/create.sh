@@ -57,7 +57,6 @@ usage() {
          --tags TAG1,TAG2           Apply specified tag(s) to jail. Comma-separated.
     -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
     -v | --vlan VLANID              Set VLAN ID (VNET only).
-    -x | --debug                    Enable debug mode.
     -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.
 
 EOF
@@ -97,7 +96,7 @@ validate_release() {
     # Validate Linux releases
     if [ "${PLATFORM_OS}" = "Ubuntu" ] || [ "${PLATFORM_OS}" = "Debian" ]; then
         if [ "${LINUX_JAIL}" -eq 0 ]; then
-            error_exit "[ERROR]: Linux releases can only be used with [-l|--linux]"
+            error_exit "[ERROR]: Linux releases can only be used with [-L|--linux]"
         fi
     elif [ "${PLATFORM_OS}" = "FreeBSD" ] || [ "${PLATFORM_OS}" = "HardenedBSD" ] || [ "${PLATFORM_OS}" = "MidnightBSD" ]; then
         # Validate release existence
@@ -110,7 +109,7 @@ validate_release() {
     fi
 
     # Set OS_RELEASE_DEFINITION
-    OS_RELEASE_DEFINITION="osrelease = \"$( ${bastille_releasesdir}/${RELEASE}/bin/freebsd-version )\";"
+    OS_RELEASE_DEFINITION="osrelease = \"$(${bastille_releasesdir}/${RELEASE}/bin/freebsd-version)\";"
 }
 
 define_ips() {
@@ -723,11 +722,12 @@ create_jail() {
     ## Using templating function to fetch necessary packges @hackacad
     elif [ "${LINUX_JAIL}" -eq 1 ]; then
         info 1 "\nFetching packages..."
-        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
-        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
-        jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
-        jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
-        jexec -l "${NAME}" /bin/bash -c "apt update"
+        check_fib "${NAME}"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive rm /var/cache/apt/archives/rsyslog*.deb"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive dpkg --force-depends --force-confdef --force-confold -i /var/cache/apt/archives/*.deb"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "chmod 777 /tmp"
+        ${SETFIB} jexec -l "${NAME}" /bin/bash -c "apt update"
     else
         # Thin jail.
         if [ -n "${bastille_template_thin}" ]; then
@@ -878,10 +878,6 @@ while [ $# -gt 0 ]; do
             fi
             shift 2
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -Z|--zfs-opts)
             bastille_zfs_options="${2}"
             shift 2
@@ -898,7 +894,6 @@ while [ $# -gt 0 ]; do
                     P) VNET_JAIL=1 VNET_JAIL_PASSTHROUGH=1 ;;
                     T) THICK_JAIL=1 ;;
                     V) VNET_JAIL=1 VNET_JAIL_STANDARD=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done

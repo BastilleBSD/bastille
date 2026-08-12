@@ -3,6 +3,8 @@ Templates
 
 Looking for ready made CI/CD validated `Bastille Templates`_?
 
+.. _Bastille Templates: https://github.com/bastillebsd/templates
+
 Bastille features a template system, allowing you to automate just about anything
 from executing arbitrary commands to copying files all with a simple file called a
 Bastillefile. A template is applied by running ``bastille template TARGET project/template``
@@ -102,13 +104,16 @@ into ``/usr`` and ``/etc`` of the jail directory.
 So, if you have ``project/template/usr/local/share/myapp.conf``, it will be copied into the
 jail, and placed at ``/usr/local/share/myapp.conf``.
 
-Note: due to the way FreeBSD segregates user-space, the majority of your
+Note: Due to the way FreeBSD segregates user-space, the majority of your
 overlayed template files will be in ``/usr/local``. The few general exceptions
 are the ``/etc/hosts``, ``/etc/resolv.conf``, and ``/etc/rc.conf.local``.
 
 The above example of ``usr`` and ``etc`` will include anything under ``usr`` and
 ``etc`` inside the template. You do not need to list individual files. Just
 include the top-level directory name. List these top-level directories one per line.
+
+Note also: If the path starts with ``/`` it will copy exactly ``/usr`` into the jail, and
+not ``project/template/usr``.
 
 ``INCLUDE``       - specify a template to include. Make sure the template is
 bootstrapped, or you are using the template url
@@ -170,6 +175,74 @@ Special Hook Cases
 
 ``ARG`` will always treat an ampersand "\``&``" literally, without the need to
 escape it. Escaping it will cause errors.
+
+Passing ARG Values From a File
+------------------------------
+
+When a template declares a lot of ``ARG`` values, listing them all on the
+command line with repeated ``--arg NAME=VALUE`` flags becomes unwieldy. The
+``template`` sub-command accepts a ``--arg-file`` option that points at a
+plain-text file containing the values.
+
+.. code-block:: shell
+
+  ishmael ~ # bastille template TARGET project/template --arg-file /path/to/args.env
+
+The file must already exist; Bastille will exit with
+``[ERROR]: File not found: <path>`` otherwise.
+
+File Format
+^^^^^^^^^^^
+
+Each line in the file is a ``NAME=VALUE`` pair, one ``ARG`` per line. The
+``NAME`` portion must start at the beginning of the line (Bastille looks up
+each ``ARG`` with an anchored match on ``^NAME=``), and ``VALUE`` is
+everything that follows the first ``=``.
+
+.. code-block:: shell
+
+  # /path/to/args.env
+  MINECRAFT_MEMX=2048M
+  MINECRAFT_MEMS=2048M
+
+Lines that do not begin with ``NAME=`` (for example blank lines or shell-style
+comments) are ignored because they cannot match the anchored lookup, so they
+are safe to include for readability. An ``ARG`` whose name does not appear in
+the file simply falls through to its default.
+
+Precedence
+^^^^^^^^^^
+
+For any given ``ARG NAME`` referenced inside the Bastillefile, the value is
+resolved in this order:
+
+1. ``--arg NAME=VALUE`` passed on the command line (highest priority).
+2. A ``^NAME=`` line found in the ``--arg-file``.
+3. The default value supplied next to the ``ARG`` declaration in the
+   Bastillefile (lowest priority).
+
+This means you can keep a baseline of values in a file and selectively
+override any of them on the command line without editing the file:
+
+.. code-block:: shell
+
+  ishmael ~ # bastille template azkaban games/minecraft-server \
+      --arg-file /etc/bastille/minecraft.env \
+      --arg MINECRAFT_MEMX=4096M
+
+In the example above every ``ARG`` is sourced from ``minecraft.env`` except
+``MINECRAFT_MEMX``, which is taken from the explicit ``--arg`` flag.
+
+Notes
+^^^^^
+
+* Only the first ``--arg-file`` on the command line is honored; subsequent
+  occurrences are ignored.
+* The path is read on each ``ARG`` lookup, so the file must remain readable
+  for the duration of the template run.
+* Values are passed through the same escaping logic as ``--arg``, so the
+  rule from `Special Hook Cases`_ applies — an ampersand "\``&``" in a value
+  is treated literally and must not be escaped.
 
 Bootstrapping Templates
 -----------------------

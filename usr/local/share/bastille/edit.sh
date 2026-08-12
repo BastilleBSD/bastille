@@ -33,15 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille edit [option(s)] TARGET [FILE]"
-    cat << EOF
-
-    Options:
-
-    -x | --debug     Enable debug mode.
-
-EOF
-    exit 1
+    error_exit "Usage: bastille edit [option(s)] TARGET [FILE]"
 }
 
 # Handle options
@@ -49,10 +41,6 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
-            ;;
-        -x|--debug)
-            enable_debug
-            shift
             ;;
         -*)
             error_notify "[ERROR]: Unknown Option: \"${1}\""

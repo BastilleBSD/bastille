@@ -5,15 +5,15 @@
 .Nm bastille convert
 .Nd Convert a jail from thin to thick; convert a jail to a custom release.
 .Sh SYNOPSIS
-.Nm
-.Op Fl ayx
+.Nm bastille convert
+.Op Fl ay
 .Ar TARGET
-.Nm
-.Op Fl ax
+.Nm bastille convert
+.Op Fl a
 .Ar TARGET RELEASE
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille convert
 sub-command will convert a thin jail to a thick jail if only the
 .Ar TARGET
 argument is given. If a
@@ -25,24 +25,20 @@ is specified, it will convert the jail
 and you will have a duplicate of it to use a a release base for
 any new jails.
 .Bl -tag -width Ds
-.It Sy bastille convert Oo Fl ayx Oc Ar TARGET
+.It Sy bastille convert Oo Fl ay Oc Ar TARGET
 .Bl -tag -width Ds
 .It Fl a , -auto
 Auto mode. Start/stop jail(s) if required.
 .It Fl y , -yes
 Do not prompt. Assume always yes.
-.It Fl x , -debug
-Enable debug mode.
 .Pp
 Converting a thin jail to a thick jail is not reversible. You will
 be be prompted to accept this action if [-y|--yes] is not specified.
 .El
-.It Sy bastille convert Oo Fl ayx Oc Ar TARGET RELEASE
+.It Sy bastille convert Oo Fl ay Oc Ar TARGET RELEASE
 .Bl -tag -width Ds
 .It Fl a , -auto
 Auto mode. Start/stop jail(s) if requried.
-.It Fl x , -debug
-Enable debug mode.
 .Pp
 A release created by this method is stored in the releases directory, and
 can be used to create jails with the '--no-validate' flag. See

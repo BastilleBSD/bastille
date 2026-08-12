@@ -5,25 +5,24 @@
 .Nm bastille rdr
 .Nd Redirect host port to jail port.
 .Sh SYNOPSIS
-.Nm
-.Op Fl x
+.Nm bastille rdr
 .Op Fl d Ar IP
 .Op Fl i Ar INTERFACE
 .Op Fl s Ar IP|TABLE
 .Op Fl t Ar ipv4|ipv6
 .Ar TARGET Sy tcp|udp Ar HOST_PORT JAIL_PORT Op log LOG_OPTIONS
-.Nm
+.Nm bastille rdr
 .Op Fl x
 .Ar TARGET Sy clear|reset|list
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille rdr
 sub-command will redirect
 .Ar HOST_PORT
 to
 .Ar JAIL_PORT .
 .Bl -tag -width Ds
-.It Sy bastille rdr Oo Fl x Oc Oo Fl d Ar IP Oc Oo Fl i Ar INTERFACE Oc Oo Fl s Ar IP|TABLE Oc Oo Fl t Ar ipv4|ipv6 Oc Ar TARGET Sy tcp|udp HOST_PORT JAIL_PORT Op log LOG_OPTIONS
+.It Sy bastille rdr Oo Fl d Ar IP Oc Oo Fl i Ar INTERFACE Oc Oo Fl s Ar IP|TABLE Oc Oo Fl t Ar ipv4|ipv6 Oc Ar TARGET Sy tcp|udp HOST_PORT JAIL_PORT Op log LOG_OPTIONS
 .Bl -tag -width Ds
 .It Sy tcp|udp
 Specify protocol to use for the given rule.
@@ -37,10 +36,8 @@ Limit rdr to a source IP or table.
 The table should exist in your 'pf.conf'.
 .It Fl t Ar ipv4|ipv6 , Fl -type Ar ipv4|ipv6
 Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
-.It Sy bastille rdr Oo Fl x Oc Ar TARGET Sy clear|reset|list 
+.It Sy bastille rdr Ar TARGET Sy clear|reset|list 
 .Bl -tag -width Ds
 .It Sy clear
 Clear the rules from the system, but don't remove from the jail
@@ -52,8 +49,6 @@ configuration.
 List active rules.
 .Ar INTERFACE
 from the jail.
-.It Fl x , Fl -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Forward port 80 from host to myjail:

@@ -47,7 +47,6 @@ usage() {
     -P | --passthrough     Add a raw interface.
     -V | --vnet            Add a physical interface.
     -v | --vlan VLANID     Assign VLANID to interface (VNET only).
-    -x | --debug           Enable debug mode.
 
 EOF
     exit 1
@@ -99,10 +98,6 @@ while [ "$#" -gt 0 ]; do
 	    fi
             shift 2
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
             for opt in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
                 case ${opt} in
@@ -112,7 +107,6 @@ while [ "$#" -gt 0 ]; do
                     n) NO_IP=1 ;;
                     P) PASSTHROUGH=1 ;;
                     V) VNET=1 ;;
-                    x) enable_debug ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
             done
@@ -472,6 +466,7 @@ EOF
         else
             sed -i '' "s/ip4.addr = .*/&\n  ip4.addr += ${if}|${ip};/" ${jail_config}
         fi
+        info 2 "Added Standard interface: \"${if}\""
     fi
 }
 
@@ -636,7 +631,8 @@ case "${ACTION}" in
         validate_netconf
         validate_netif "${INTERFACE}"
 
-        if check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
+        # Check if interface has already been added (except for standard/classic jails)
+        if [ "${STANDARD}" -eq 0 ] && check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             info 1 "\nInterface already added: ${INTERFACE}"
             exit 0
         elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then

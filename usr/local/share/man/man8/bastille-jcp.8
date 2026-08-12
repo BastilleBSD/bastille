@@ -5,19 +5,17 @@
 .Nm bastille jcp
 .Nd Copy file(s)/directorie(s) from jail to jail(s). 
 .Sh SYNOPSIS
-.Nm
-.Op Fl qx
+.Nm bastille jcp
+.Op Fl q
 .Ar SOURCE_JAIL JAIL_PATH DESTINATION_JAIL JAIL_PATH
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille jcp
 sub-command will copy files and directories from a single
 jail to any targeted jail(s).
 .Bl -tag -width Ds
 .It Fl q , Fl -quiet
 Suppress output.
-.It Fl x , Fl -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Copy /etc/resolv.conf from myjail to yourjail:

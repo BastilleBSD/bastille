@@ -6,12 +6,12 @@
 .Nd Manage packages inside jail(s). See
 .Xr pkg 8 .
 .Sh SYNOPSIS
-.Nm
-.Op Fl aHyx
+.Nm bastille pkg
+.Op Fl aHy
 .Ar TARGET ARGS
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille pkg
 sub-command allows package management inside jails.
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
@@ -20,8 +20,6 @@ Auto mode. Start/stop jail(s) if required.
 Use host 'pkg' binary instead of jails.
 .It Fl y , Fl -yes
 Do not prompt. Assume always yes.
-.It Fl x , Fl -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Install nginx inside myjail:

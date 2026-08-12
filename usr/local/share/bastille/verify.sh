@@ -33,15 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille verify [option(s)] RELEASE|TEMPLATE"
-    cat << EOF
-
-    Options:
-
-    -x | --debug     Enable debug mode.
-
-EOF
-    exit 1
+    error_exit "Usage: bastille verify [option(s)] RELEASE|TEMPLATE"
 }
 
 verify_release() {
@@ -155,10 +147,6 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
-            ;;
-        -x|--debug)
-            enable_debug
-            shift
             ;;
         -*)
             error_exit "[ERROR]: Unknown Option: \"${1}\""

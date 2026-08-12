@@ -12,6 +12,7 @@ for ZFS.  As of Bastille 0.13 you no longer need to do these steps manually. The
 setup program when you run:
 
 .. code-block:: shell
+
    bastille setup
 
 will create the zfs settings for you IF you are running zfs.  This section is

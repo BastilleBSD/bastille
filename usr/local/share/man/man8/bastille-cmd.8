@@ -5,12 +5,12 @@
 .Nm bastille cmd
 .Nd Execute command(s) inside jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
+.Nm bastille cmd
+.Op Fl a
 .Ar TARGET COMMAND
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille cmd
 sub-command will run the specified
 .Ar COMMAND
 inside
@@ -18,8 +18,6 @@ inside
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , Fl -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It List contents of /etc:

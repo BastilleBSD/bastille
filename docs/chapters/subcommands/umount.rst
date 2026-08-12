@@ -33,4 +33,3 @@ backslash \, and enclose the mount point in quotes "".
       Options:
 
       -a | --auto      Auto mode. Start/stop jail(s) if required.
-      -x | --debug     Enable debug mode.

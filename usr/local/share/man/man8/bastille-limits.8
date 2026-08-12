@@ -8,31 +8,31 @@
 and
 .Xr cpuset 1 . 
 .Sh SYNOPSIS
-.Nm
+.Nm bastille limits
 .Op Fl alx
 .Ar TARGET
 .Sy add
 .Ar OPTION VALUE
-.Nm
+.Nm bastille limits
 .Op Fl ax
 .Ar TARGET
 .Sy remove
 .Ar OPTION
-.Nm
+.Nm bastille limits
 .Op Fl ax
 .Ar TARGET
 .Sy clear|reset|stats
-.Nm
+.Nm bastille limits
 .Op Fl ax
 .Ar TARGET
 .Sy list|show
 .Op active
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille limits
 sub-command allows adding and setting limits to jail(s).
 .Bl -tag -width Ds
-.It Sy bastille limits Oo Fl alx Oc Ar TARGET Sy add Ar OPTION VALUE
+.It Sy bastille limits Oo Fl al Oc Ar TARGET Sy add Ar OPTION VALUE
 .Bl -tag -width Ds
 .It Sy add
 Add the specified
@@ -43,8 +43,6 @@ to the jail along with its
 Auto mode. Start/stop jail(s) if required.
 .It Fl l , Fl -log
 Enable logging for the specified rule (RCTL only).
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 The
@@ -53,7 +51,7 @@ and
 .Ar VALUE
 shoud conform to RCTL specs. See
 .Xr rctl 8 .
-.It Sy bastille limits Oo Fl ax Oc Ar TARGET Sy remove Ar OPTION
+.It Sy bastille limits Oo Fl a Oc Ar TARGET Sy remove Ar OPTION
 .Bl -tag -width Ds
 .It Sy remove
 Remove the specified
@@ -61,10 +59,8 @@ Remove the specified
 from the jail.
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
-.It Sy bastille limits Oo Fl ax Oc Ar TARGET Sy clear|reset|stats
+.It Sy bastille limits Oo Fl a Oc Ar TARGET Sy clear|reset|stats
 .Bl -tag -width Ds
 .It Sy clear
 Clear limits from the system, but don't remove from jail configuration.
@@ -72,10 +68,8 @@ Clear limits from the system, but don't remove from jail configuration.
 Clear limits from system, and remove from jail configuration.
 .It Sy stats
 Show limit stats (RCTL only).
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
-.It Sy bastille limits Oo Fl ax Oc Ar TARGET Sy list|show Op active
+.It Sy bastille limits Oo Fl a Oc Ar TARGET Sy list|show Op active
 .Bl -tag -width Ds
 .It Sy list
 Show all configured limits on the system, active or not.
@@ -86,8 +80,6 @@ is given as the last argument here, only active limits will
 be shown.
 .It Sy show
 Same as list.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Sh EXAMPLES
 .Bl -tag -width Ds

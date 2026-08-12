@@ -5,16 +5,13 @@
 .Nm bastille monitor
 .Nd Monitor and attempt to restart jail service(s). 
 .Sh SYNOPSIS
-.Nm
-.Op Fl x
+.Nm bastille monitor
 .Ar enable|disable|status
-.Nm
-.Op Fl x
+.Nm bastille monitor
 .Ar TARGET
 .Sy add|delete
 .Ar SERVICE1,SERVICE2
-.Nm
-.Op Fl x
+.Nm bastille monitor
 .Sy list
 .Op SERVICE
 .Sh DESCRIPTION
@@ -25,10 +22,8 @@ mechanism. It will attempt to restart them if/when
 they stop. See also
 .Xr bastille.conf 5 .
 .Bl -tag -width Ds
-.It Sy bastille monitor Oo Fl x Oc Ar TARGET
+.It Sy bastille monitor Ar TARGET
 .Bl -tag -width Ds
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 Calling
@@ -39,7 +34,7 @@ is how we initiante the checking/restarting
 of services. Any service(s) defined for
 .Ar TARGET
 will be restarted if they are stopped.
-.It Sy bastille monitor Oo Fl x Oc Sy enable|disable|status 
+.It Sy bastille monitor Sy enable|disable|status 
 .Bl -tag -width Ds
 .It Sy enable
 This will enable monitoring, adding a cron entry to be
@@ -51,10 +46,8 @@ Disable the monitoring function. This will remove the
 cron entry.
 .It Sy status
 Check if the monitor is currently active or inactive.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
-.It Sy bastille monitor Oo Fl x Oc Ar TARGET Sy add|delete Ar SERVICE1,SERVICE2
+.It Sy bastille monitor Ar TARGET Sy add|delete Ar SERVICE1,SERVICE2
 .Bl -tag -width Ds
 .It Sy add
 Add the
@@ -64,8 +57,6 @@ to the list of services to be monitored.
 Remove the
 .Ar SERVICE
 from the monitoring list.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .It Sy bastille monitor Oo Fl x Oc Ar TARGET Sy list Op SERVICE
 .Bl -tag -width Ds

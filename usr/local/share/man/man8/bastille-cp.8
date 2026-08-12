@@ -5,12 +5,12 @@
 .Nm bastille cp
 .Nd Copy file(s)/directorie(s) from host to jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl qx
+.Nm bastille cp
+.Op Fl q
 .Ar TARGET HOST_PATH JAIL_PATH
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille cp
 sub-command will copy
 .Ar HOST_PATH
 to
@@ -20,8 +20,6 @@ inside
 .Bl -tag -width Ds
 .It Fl q , -quiet
 Suppress output.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Copy /etc/resolv.conf into myjail:

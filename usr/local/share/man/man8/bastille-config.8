@@ -5,32 +5,28 @@
 .Nm bastille config
 .Nd Get, set, add or remove properties from jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl x
+.Nm bastille config
 .Ar TARGET
 .Cm set|add
 .Ar PROPERTY
 .Op VALUE
-.Nm
-.Op Fl x
+.Nm bastille config
 .Ar TARGET
 .Cm get|remove
 .Ar PROPERTY
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille config
 sub-command will modify targeted jail(s) configuration and
 get, set, add or remove properties.
 .Bl -tag -width Ds
-.It Sy bastille config Oo Fl x Oc Ar TARGET Sy set|add Ar PROPERTY Op VALUE
+.It Sy bastille config Ar TARGET Sy set|add Ar PROPERTY Op VALUE
 .Bl -tag -width Ds
 .It Sy set
 Set the value of the specified property from the jail configuration.
 If the property is not set, it will be added and set.
 .It Sy add
 Same as set.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 It is not always necesary to set a
@@ -38,7 +34,7 @@ It is not always necesary to set a
 for a
 .Ar PROPERTY .
 For example, 'allow.mlock=1' is the same as 'allow.mlock'.
-.It Sy bastille config Oo Fl x Oc Ar TARGET Sy get|remove Ar PROPERTY
+.It Sy bastille config Ar TARGET Sy get|remove Ar PROPERTY
 .Bl -tag -width Ds
 .It Sy get
 Get the value of the specified
@@ -51,8 +47,6 @@ shown the value.
 Remove the specified
 .Ar PROPERTY
 from the jail configuration.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Set allow.mlock inside myjail:

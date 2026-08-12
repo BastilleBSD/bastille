@@ -5,17 +5,17 @@
 .Nm bastille list
 .Nd List jails, releases, templates and more...
 .Sh SYNOPSIS
-.Nm
-.Op Fl djpux
+.Nm bastille list
+.Op Fl djpu
 .Oo all|backup|export|import|ip|jail
 limit|log|path|port|priority|snapshot|state|template|type
 .Oc
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille list
 sub-command will list any of the above contents for you.
 .Bl -tag -width Ds
-.It Sy bastille list Oo Fl djpux Oc Oo all|backup|export|import|ip|jail
+.It Sy bastille list Oo Fl djpu Oc Oo all|backup|export|import|ip|jail
 limit|log|path|port|priority|snapshot|state|template|type
 .Oc
 .It Sy all
@@ -52,8 +52,6 @@ List jails or sub-arg(s) in json format.
 Print JSON in columns.
 .It Fl u , Fl -up
 List running jails only.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 By default, the

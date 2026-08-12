@@ -85,7 +85,7 @@ the new release.
 Limitations
 -----------
 
-Bastille tries its best to determine which *BSD you are using. It is possible to
+Bastille tries its best to determine which ``*BSD`` you are using. It is possible to
 mix and match any of the supported BSD distributions, but it is up to the end
 user to ensure the correct environment/tools when doing so. See below...
 

@@ -31,4 +31,3 @@ flag.
 	
       -a | --auto      Auto mode. Start/stop jail(s) if required.
       -y | --yes       Do not prompt. Assume always yes.
-      -x | --debug     Enable debug mode.

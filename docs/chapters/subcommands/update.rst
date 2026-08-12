@@ -50,4 +50,3 @@ will be updated just like the release shown above.
 
       -a | --auto      Auto mode. Start/stop jail(s) if required.
       -f | --force     Force update a release (FreeBSD legacy releases).
-      -x | --debug     Enable debug mode.

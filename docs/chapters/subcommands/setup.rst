@@ -63,4 +63,3 @@ Running ``bastille setup`` without any options will attempt to auto-configure th
       Options:
 
       -y | --yes       Do not prompt. Assume always yes.
-      -x | --debug     Enable debug mode.

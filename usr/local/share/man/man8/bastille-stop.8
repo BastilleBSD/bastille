@@ -5,19 +5,19 @@
 .Nm bastille stop
 .Nd Stop running jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl vx
+.Nm bastille stop
+.Op Fl fv
 .Ar TARGET
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille stop
 sub-command will stop
 .Ar TARGET .
 .Bl -tag -width Ds
+.It Fl f , -force
+Force stop jail(s).
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Stop all jails with verbose mode:

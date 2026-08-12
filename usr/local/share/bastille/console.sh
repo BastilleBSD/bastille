@@ -39,7 +39,6 @@ usage() {
     Options:
 
     -a | --auto      Auto mode. Start/stop jail(s) if required.
-    -x | --debug     Enable debug mode.
 
 EOF
     exit 1
@@ -56,19 +55,8 @@ while [ "$#" -gt 0 ]; do
             AUTO=1
             shift
             ;;
-        -x|--debug)
-            enable_debug
-            shift
-            ;;
         -*)
-            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${opt} in
-                    x) enable_debug ;;
-                    a) AUTO=1 ;;
-                    *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
-                esac
-            done
-            shift
+            error_exit "[ERROR]: Unknown Option: \"${1}\""
             ;;
         *)
             break
@@ -104,10 +92,10 @@ for jail in ${JAILS}; do
     check_fib "${jail}"
 
     if [ -n "${USER}" ]; then
-        if jexec -l "${jail}" id "${USER}" >/dev/null 2>&1; then
-            USER_SHELL="$(jexec -l "${jail}" getent passwd "${USER}" | cut -d: -f7)"
+        if ${SETFIB} jexec -l "${jail}" id "${USER}" >/dev/null 2>&1; then
+            USER_SHELL="$(${SETFIB} jexec -l "${jail}" getent passwd "${USER}" | cut -d: -f7)"
             if [ -n "${USER_SHELL}" ]; then
-                if jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
+                if ${SETFIB} jexec -l "${jail}" grep -qwF "${USER_SHELL}" /etc/shells; then
                     ${SETFIB} jexec -l "${jail}" ${LOGIN} -f "${USER}"
                 else
                     error_exit "[ERROR]: Invalid shell for user: ${USER}"

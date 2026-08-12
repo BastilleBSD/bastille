@@ -5,13 +5,13 @@
 .Nm bastille start
 .Nd Start stopped jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl bvx
+.Nm bastille start
+.Op Fl bv
 .Op Fl d Ar VALUE
 .Ar TARGET
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille start
 sub-command will start
 .Ar TARGET .
 .Bl -tag -width Ds
@@ -21,8 +21,6 @@ Respect jail boot setting.
 Time (seconds) to wait after starting each jail.
 .It Fl v , Fl -verbose
 Enable verbose mode.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Start all jails with verbose mode:

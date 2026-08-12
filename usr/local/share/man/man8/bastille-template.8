@@ -5,12 +5,12 @@
 .Nm bastille template
 .Nd Apply templates to jail(s).
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
+.Nm bastille template
+.Op Fl a
 .Ar TARGET|convert TEMPLATE
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille template
 sub-command will apply the specified
 .Ar TEMPLATE
 to
@@ -18,8 +18,6 @@ to
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , -debug
-Enable debug mode.
 .El
 .Pp
 The

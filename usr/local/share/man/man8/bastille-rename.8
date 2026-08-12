@@ -5,12 +5,12 @@
 .Nm bastille rename
 .Nd Rename a jail.
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
+.Nm bastille rename
+.Op Fl a
 .Ar TARGET NEW_NAME
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille rename
 sub-command will rename
 .Ar TARGET
 to
@@ -18,8 +18,6 @@ to
 .Bl -tag -width Ds
 .It Fl a , -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Rename myjail to your jail:

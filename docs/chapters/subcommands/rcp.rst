@@ -17,4 +17,3 @@ Unless you see errors reported in the output the ``rcp`` was successful.
       Options:
 
       -q | --quiet     Suppress output.
-      -x | --debug     Enable debug mode.

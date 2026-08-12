@@ -5,20 +5,18 @@
 .Nm bastille console
 .Nd Console into a jail.
 .Sh SYNOPSIS
-.Nm
-.Op Fl ax
+.Nm bastille console
+.Op Fl a
 .Ar TARGET
 .Op USER
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille console
 sub-command will enter a jails shell. If a user is given, it
 will enter as that user.
 .Bl -tag -width Ds
 .It Fl a , -auto
 Auto mode. Start/stop jail(s) if required.
-.It Fl x , -debug
-Enable debug mode.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Console into myjail:

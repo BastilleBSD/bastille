@@ -36,13 +36,6 @@
 usage() {
     error_notify "Usage: bastille tags [option(s)] TARGET add|delete TAG1,TAG2"
     error_notify "                                 TARGET list [TAG]"
-    cat << EOF
-
-    Options:
-
-    -x | --debug     Enable debug mode.
-
-EOF
     exit 1
 }
 
@@ -51,10 +44,6 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
-            ;;
-        -x|--debug)
-            enable_debug
-            shift
             ;;
         -*)
             error_exit "[ERROR]: Unknown Option: \"${1}\""

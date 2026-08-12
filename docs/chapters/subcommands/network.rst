@@ -46,4 +46,3 @@ network TARGET remove INTERFACE`` while both jails are stopped.
       -P | --passthrough     Add a raw interface.
       -V | --vnet            Add a physical interface.
       -v | --vlan VLANID     Assign VLANID to interface (VNET only).
-      -x | --debug           Enable debug mode.

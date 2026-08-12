@@ -5,14 +5,14 @@
 .Nm bastille migrate
 .Nd Migrate jail(s) to a remote system.
 .Sh SYNOPSIS
-.Nm
-.Op Fl abdlpx
+.Nm bastille migrate
+.Op Fl abdlp
 .Op Fl -doas
 .Op Fl k Ar FILE
 .Ar TARGET USER@HOST Ns Op :PORT
 .Sh DESCRIPTION
 The
-.Nm
+.Nm bastille migrate
 sub-command will migrate a jail to the specified remote host.
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
@@ -37,8 +37,6 @@ Migrate a running jail (ZFS only).
 Use password based authentication.
 .Pp
 The default is to use SSH keys.
-.It Fl x , Fl -debug
-Enable debug mode.
 .El
 .Pp
 If no

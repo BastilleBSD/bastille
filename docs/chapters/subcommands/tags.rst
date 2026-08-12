@@ -14,7 +14,3 @@ tags
   ishmael ~ # bastille tags help
   Usage: bastille tags [option(s)] TARGET add|delete TAG1,TAG2
                                    TARGET list [TAG]
-
-      Options:
-
-      -x | --debug     Enable debug mode.

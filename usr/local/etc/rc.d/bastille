@@ -37,19 +37,19 @@ stop_cmd="bastille_stop"
 restart_cmd="bastille_restart"
 
 list_jails() {
-    local _jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
-    local _jail_list=$(find ${_jailsdir}/* -mindepth 1 -maxdepth 1 -type f -name jail.conf | xargs -n1 dirname | xargs -n1 basename)
-    for _jail in ${_jail_list}; do
-        _priority="$(sysrc -f ${_jailsdir}/${_jail}/settings.conf -n priority)"
-        echo "${_jail} ${_priority}"
+    local jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
+    local jail_list=$(find ${jailsdir}/* -mindepth 1 -maxdepth 1 -type f -name jail.conf | xargs -n1 dirname | xargs -n1 basename)
+    for jail in ${jail_list}; do
+        priority="$(sysrc -f ${jailsdir}/${jail}/settings.conf -n priority)"
+        echo "${jail} ${priority}"
     done
 }
 
 sort_jails() {
-    local _order="${1}"
-    if [ "${_order}" = "forward" ]; then
+    local order="${1}"
+    if [ "${order}" = "forward" ]; then
         bastille_jail_list="$(list_jails | sort -k2 -n | awk '{print $1}')"
-    elif [ "${_order}" = "reverse" ]; then
+    elif [ "${order}" = "reverse" ]; then
         bastille_jail_list="$(list_jails | sort -k2 -nr | awk '{print $1}')"
     else
         echo "[ERROR]: Fatal error, could not get jail list."
