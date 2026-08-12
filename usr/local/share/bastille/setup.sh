@@ -301,11 +301,6 @@ configure_dns() {
         else
             error_exit "[ERROR]: Resolver not found: ${resolver}"
         fi
-        # Enable resolver
-        if [ "$(sysrc "${resolver_sysrc}" 2>/dev/null)" != "YES" ]; then
-            info 1 "\nEnabling resolver: ${resolver}"
-            sysrc ${resolver_sysrc}_enable="YES" >/dev/null 2>/dev/null
-        fi
         # Configure interface and network
         if [ -z "${bastille_dns_interface}" ]; then
             error_exit "[ERROR]: Variable not set in config file: bastille_dns_interface"
@@ -314,6 +309,11 @@ configure_dns() {
         else
             ifconfig "${bastille_dns_interface}" inet "${bastille_dns_gateway}" alias
             sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_gateway}"
+        fi
+        # Enable resolver
+        if [ "$(sysrc "${resolver_sysrc}" 2>/dev/null)" != "YES" ]; then
+            info 1 "\nEnabling resolver: ${resolver}"
+            sysrc ${resolver_sysrc}_enable="YES" >/dev/null 2>/dev/null
         fi
         # Run setup for resolver
         info 1 "\nStarting resolver: ${resolver}"
