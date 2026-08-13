@@ -119,6 +119,7 @@ define_ips() {
     IP6_DEFINITION=""
     IP4_ADDR=""
     IP6_ADDR=""
+    
 
     for ip in ${IP}; do
         validate_ip "${ip}" "${VNET_JAIL}"
@@ -142,19 +143,6 @@ define_ips() {
     if [ -n "${IP6_ADDR}" ]; then
         if [ "${IP6_ADDR}" = "SLAAC" ] && [ "${VNET_JAIL}" -eq 0 ]; then
             error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
-        fi
-    fi
-
-    # Set interface value
-    if [ ! -f "${bastille_jail_conf}" ]; then
-        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_shared}
-        fi
-        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_loopback}
-        fi
-        if [ -n "${INTERFACE}" ]; then
-            local bastille_jail_conf_interface=${INTERFACE}
         fi
     fi
 
@@ -196,6 +184,66 @@ validate_netif() {
 
     local LIST_INTERFACES="$(ifconfig -l)"
 
+    # Validate proper network config
+    validate_netconf
+
+    # Do not allow netgraph with -B|--bridge yet...
+    if { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } || \
+       { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "passthrough" ]; } then
+        error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] or [-P|--passthrough] option."
+    fi
+
+    # Validate interface
+    if [ -z "${INTERFACE}" ]; then
+        if [ "${VNET_JAIL}" -eq 1 ]; then
+            if [ "${VNET_JAIL_STANDARD}" -eq 0 ]; then
+                if [ -z "${bastille_network_vnet}" ]; then
+                    error_exit "[ERROR]: Missing interface value."
+                else
+                    bastille_jail_conf_interface="${bastille_network_vnet}"
+                fi
+            elif [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; then
+                if [ -z "${bastille_network_bridge}" ]; then
+                    error_exit "[ERROR]: Missing interface value."
+                else
+                    bastille_jail_conf_interface="${bastille_network_bridge}"
+                fi
+            elif [ "${VNET_JAIL_PASSTHROUGH}" ]; then
+                error_exit "[ERROR]: Missing interface value."
+            fi
+        else
+            if [ "${STANDARD_JAIL_NAT}" -eq 1 ]; then
+                if [ -z "${bastille_network_loopback}" ]; then
+                    error_exit "[ERROR]: Missing interface value."
+                else
+                    bastille_jail_conf_interface="${bastille_network_loopback}"
+                fi
+            elif [ "${STANDARD_JAIL_SHARED}" -eq 1 ]; then
+                if [ -z "${bastille_network_shared}" ]; then
+                    error_exit "[ERROR]: Missing interface value."
+                else
+                    bastille_jail_conf_interface="${bastille_network_shared}"
+                fi
+            fi
+        fi
+    fi
+
+    # Validate interface type
+    if [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; then
+        if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+            error_exit "[ERROR]: Interface is not a bridge: ${INTERFACE}"
+        fi
+    elif [ "${VNET_INTERFACE_TYPE}" = "standard" ]; then
+        if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+            error_exit "[ERROR]: Interface is a bridge: ${INTERFACE}"
+        fi
+    elif [ "${VNET_INTERFACE_TYPE}" = "passthrough" ]; then
+        if ! ifconfig -l | grep -owq "${INTERFACE}"; then
+            error_exit "[ERROR]: Interface does not exist: ${INTERFACE}"
+        fi
+    fi
+
+    # Validate bridge interface membership
     if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
         error_exit "[ERROR]: Invalid interface: ${INTERFACE}"
     elif [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
@@ -205,6 +253,7 @@ validate_netif() {
             fi
         done
     else
+        bastille_jail_conf_interface="${INTERFACE}"
         info 1 "\nValid interface: ${INTERFACE}"
     fi
 
@@ -313,23 +362,7 @@ EOF
 
 post_create_jail() {
 
-    # Common config checks and settings.
-    # Using relative paths here.
-    # MAKE SURE WE'RE IN THE RIGHT PLACE.
-    cd "${bastille_jail_path}" || error_exit "Could not access directory: ${bastille_jail_path}"
-
-    if [ ! -f "${bastille_jail_conf}" ]; then
-        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_shared}
-        fi
-        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
-            local bastille_jail_conf_interface=${bastille_network_loopback}
-        fi
-        if [ -n "${INTERFACE}" ]; then
-            local bastille_jail_conf_interface=${INTERFACE}
-        fi
-    fi
-
+    # Validate fstab
     if [ ! -f "${bastille_jail_fstab}" ]; then
         if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
@@ -354,7 +387,7 @@ create_jail() {
     bastille_jail_path="${bastille_jailsdir}/${NAME}/root"  ## dir
     bastille_jail_fstab="${bastille_jailsdir}/${NAME}/fstab"  ## file
     bastille_jail_conf="${bastille_jailsdir}/${NAME}/jail.conf"  ## file
-    bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
+    bastille_jail_log="${bastille_logsdir}/${NAME}/console.log"  ## file
     # shellcheck disable=SC2034
     bastille_jail_rc_conf="${bastille_jailsdir}/${NAME}/root/etc/rc.conf" ## file
     # shellcheck disable=SC2034
@@ -781,6 +814,8 @@ VNET_JAIL=0
 VNET_JAIL_STANDARD=0
 VNET_JAIL_BRIDGE=0
 VNET_JAIL_PASSTHROUGH=0
+STANDARD_JAIL_NAT=0
+STANDARD_JAIL_SHARED=0
 NO_IP=0
 VLAN_ID=""
 LINUX_JAIL=0
@@ -981,27 +1016,6 @@ if [ -n "${NAME}" ]; then
     validate_name
 fi
 
-# Validate interface type
-if [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; then
-    if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
-        error_exit "[ERROR]: Interface is not a bridge: ${INTERFACE}"
-    fi
-elif [ "${VNET_INTERFACE_TYPE}" = "standard" ]; then
-    if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
-        error_exit "[ERROR]: Interface is a bridge: ${INTERFACE}"
-    fi
-elif [ "${VNET_INTERFACE_TYPE}" = "passthrough" ]; then
-    if ! ifconfig -l | grep -owq "${INTERFACE}"; then
-        error_exit "[ERROR]: Interface does not exist: ${INTERFACE}"
-    fi
-fi
-
-# Do not allow netgraph with -B|--bridge yet...
-if { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } || \
-   { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } then
-    error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] or [-P|--passthrough] option."
-fi
-
 # Filter sane release names
 if [ "${EMPTY_JAIL}" -eq 0 ]; then
     if [ "${VALIDATE_RELEASE}" -eq 1 ]; then
@@ -1096,21 +1110,7 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
     fi
 
     # Validate interface
-    # Interface must be set with vnet jails
-    if [ -n "${INTERFACE}" ]; then
-        validate_netif
-        validate_netconf
-    elif [ "${VNET_JAIL}" -eq 1 ]; then
-        if [ -z "${INTERFACE}" ]; then
-            if [ -z "${bastille_network_shared}" ]; then
-                error_exit "[ERROR]: Network interface not set."
-            else
-                validate_netconf
-            fi
-        fi
-    else
-        validate_netconf
-    fi
+    validate_netif
 else
     info 1 "\nCreating empty jail: ${NAME}"
 fi

@@ -230,6 +230,11 @@ validate_ip() {
                     error_exit "[ERROR]: Invalid IP: ${ip4}"
                 fi
             done
+            if route -n get "${ip4}" | grep -q "gateway"; then
+                export STANDARD_JAIL_NAT=1
+            else
+                export STANDARD_JAIL_SHARED=1
+            fi
             info 1 "\nValid IP: ${ip4}"
             export IP4_ADDR="${ip4}"
         else
@@ -247,10 +252,6 @@ validate_netconf() {
         sed -i '' "s|## Networking|&\nbastille_network_vnet_type=\"if_bridge\"                                ## default: \"if_bridge\"|" ${BASTILLE_CONFIG}
         # shellcheck disable=SC1090
         . ${BASTILLE_CONFIG}
-    fi
-    # Validate that 'bastille_network_vnet_type' has been set
-    if [ -n "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
-        error_exit "[ERROR]: 'bastille_network_loopback' and 'bastille_network_shared' cannot both be set."
     fi
     if [ "${bastille_network_vnet_type}" != "if_bridge" ] && [ "${bastille_network_vnet_type}" != "netgraph" ]; then
         error_exit "[ERROR]: 'bastille_network_vnet_type' not set properly: ${bastille_network_vnet_type}"
