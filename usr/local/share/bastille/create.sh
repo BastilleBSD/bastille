@@ -198,7 +198,7 @@ validate_netif() {
     # Validate interface
     if [ -z "${INTERFACE}" ]; then
         if [ "${VNET_JAIL}" -eq 1 ]; then
-            if [ "${VNET_JAIL_STANDARD}" -eq 0 ]; then
+            if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
                 if [ -z "${bastille_network_vnet}" ]; then
                     error_exit "[ERROR]: Missing interface value."
                 else
