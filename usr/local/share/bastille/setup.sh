@@ -286,6 +286,8 @@ configure_bridge() {
 
 configure_dns() {
 
+    local dns_opt="${1}"
+
     # Enable DNS if not enabled already
     if [ "$(sysrc -f "${BASTILLE_CONFIG}" -n bastille_dns_enable)" != "YES" ]; then
         sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable="YES" >/dev/null 2>/dev/null
@@ -324,6 +326,15 @@ configure_dns() {
         chmod -R 755 /var/unbound
         cp -f "${bastille_sharedir}/lib/dns/bastille.conf" /var/unbound/conf.d/
         sed -i '' "s/%%bastille_dns_gateway%%/${bastille_dns_gateway}/" /var/unbound/conf.d/bastille.conf
+        if [ "${dns_opt}" = "iterator" ]; then
+            echo "" >> /var/unbound/conf.d/bastille.conf
+            echo "    # iterate only" >> /var/unbound/conf.d/bastille.conf
+            echo "    module-config: "iterator"" >> /var/unbound/conf.d/bastille.con
+        elif [ "${dns_opt}" = "validator" ]; then
+            echo "" >> /var/unbound/conf.d/bastille.conf
+            echo "    # validate only" >> /var/unbound/conf.d/bastille.conf
+            echo "    module-config: "validator"" >> /var/unbound/conf.d/bastille.conf
+        fi
         ${resolver}-setup
         service "${resolver_sysrc}" restart
         info 1 "\nDNS resolver successfully configured: ${resolver}"
@@ -597,7 +608,7 @@ case "${OPT_CONFIG}" in
         ;;
     dns)
         if [ "${AUTO_YES}" -eq 1 ]; then
-            configure_dns
+            configure_dns "${OPT_ARG}"
         else
             warn 1 "[WARNING]: Bastille will enable and configure basic 'local-unbound' functionality."
             warn 1 "If you are already using 'local-unbound' or 'unbound' DO NOT run this setup as it"
@@ -606,7 +617,7 @@ case "${OPT_CONFIG}" in
             read -p "Do you really want to continue setting up DNS for Bastille? [y|n]:" answer
             case "${answer}" in
                 [Yy]|[Yy][Ee][Ss])
-                    configure_dns
+                    configure_dns "${OPT_ARG}"
                     ;;
                 [Nn]|[Nn][Oo])
                     error_exit "DNS setup cancelled."
