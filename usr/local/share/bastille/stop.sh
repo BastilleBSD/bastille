@@ -155,10 +155,6 @@ for jail in ${JAILS}; do
                 ip="$(echo ${ip} | sed -E 's#/[0-9]+$##g')"
             fi
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${ip}"
-            # Remove DNS
-            if checkyesno bastille_dns_enable; then
-                bastille_dns_remove_entry "ipv4" "${jail}" "${ip}"
-            fi
         done
     fi
     if [ "${ip6}" != "not set" ] && [ -f "${bastille_pf_conf}" ]; then
@@ -169,11 +165,11 @@ for jail in ${JAILS}; do
                 ip="$(echo ${ip} | sed -E 's#/[0-9]+$##g')"
             fi
             pfctl -q -t "${bastille_network_pf_table}" -T delete "${ip}"
-            # Remove DNS
-            if checkyesno bastille_dns_enable; then
-                bastille_dns_remove_entry "ipv6" "${jail}" "${ip}"
-            fi
         done
+    fi
+    # Remove DNS
+    if checkyesno bastille_dns_enable; then
+        bastille_dns_remove_entry "${jail}"
     fi
 
     update_jail_syntax_v1 "${jail}"
