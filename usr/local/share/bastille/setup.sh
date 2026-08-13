@@ -169,6 +169,7 @@ configure_netgraph() {
 
 # Configure bastille loopback network interface
 configure_loopback_interface() {
+
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_loopback)" ] || ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
         info 1 "\nConfiguring bastille0 loopback interface"
         sysrc cloned_interfaces+=lo1
@@ -176,7 +177,6 @@ configure_loopback_interface() {
         info 1 "\nBringing up new interface: [bastille0]"
         service netif cloneup
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback="bastille0"
-        sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared=""
         info 1 "\nLoopback interface successfully configured: [bastille0]"
     else
         info 1 "\nLoopback interface has already been configured: [bastille0]"
@@ -213,9 +213,6 @@ configure_shared_interface() {
         fi
 
         # Adjust bastille.conf to reflect above choices
-        sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback=""
-        sysrc cloned_interfaces-="lo1"
-        ifconfig bastille0 destroy 2>/dev/null
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${interface_select}"
         info 1 "\nShared interface successfully configured: [${interface_select}]"
     else
@@ -224,7 +221,7 @@ configure_shared_interface() {
 
 }
 
-configure_bridge() {
+configure_bridge_interface() {
 
     auto_if="${1}"
     interface_list="$(ifconfig -l)"
@@ -266,6 +263,7 @@ configure_bridge() {
         sysrc cloned_interfaces+="bridge0"
         sysrc ifconfig_bridge0_name="${bridge_name}"
         sysrc ifconfig_${bridge_name}="addm ${interface_select} up"
+        sysrc bastille_network_bridge="${bridge_name}"
 
         # Set some sysctl values
         sysctl net.inet.ip.forwarding=1
@@ -552,9 +550,9 @@ case "${OPT_CONFIG}" in
         if [ "${AUTO_YES}" -eq 1 ]; then
             configure_loopback_interface
         else
-            warn 1 "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-            warn 1 "interface to be configured ant one time. If you continue, the 'shared'"
-            warn 1 "interface will be disabled, and the 'loopback' interface will be used as default."
+            warn 1 "[WARNING]: Bastille will configure a default loopback interface that will be"
+            warn 1 "assigned to NAT jails automatically if no interface is specified"
+            warn 1 "during the create command."
             # shellcheck disable=SC3045
             read -p "Do you really want to continue setting up the loopback interface? [y|n]:" answer
             case "${answer}" in
@@ -574,9 +572,9 @@ case "${OPT_CONFIG}" in
         if [ "${AUTO_YES}" -eq 1 ]; then
             error_exit "[ERROR]: 'shared' does not support [-y|--yes]."
         else
-            warn 1 "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-            warn 1 "interface to be configured at one time. If you continue, the 'loopback'"
-            warn 1 "interface will be disabled, and the shared interface will be used as default."
+            warn 1 "[WARNING]: Bastille will configure a default shared interface that will be"
+            warn 1 "assigned to alias/shared ip jails automatically if no interface is specified"
+            warn 1 "during the create command."
             # shellcheck disable=SC3045
             read -p "Do you really want to continue setting up the shared interface? [y|n]:" answer
             case "${answer}" in
@@ -603,7 +601,7 @@ case "${OPT_CONFIG}" in
             error_exit "[ERROR]: 'bridge' does not support [-y|--yes]."
         else
             configure_vnet
-            configure_bridge "${OPT_ARG}"
+            configure_bridge_interface "${OPT_ARG}"
         fi
         ;;
     dns)
