@@ -329,11 +329,11 @@ configure_dns() {
         if [ "${dns_opt}" = "iterator" ]; then
             echo "" >> /var/unbound/conf.d/bastille.conf
             echo "    # iterate only" >> /var/unbound/conf.d/bastille.conf
-            echo "    module-config: "iterator"" >> /var/unbound/conf.d/bastille.conf
+            echo "    module-config: \"iterator\"" >> /var/unbound/conf.d/bastille.conf
         elif [ "${dns_opt}" = "validator" ]; then
             echo "" >> /var/unbound/conf.d/bastille.conf
             echo "    # validate only" >> /var/unbound/conf.d/bastille.conf
-            echo "    module-config: "validator"" >> /var/unbound/conf.d/bastille.conf
+            echo "    module-config: \"validator\"" >> /var/unbound/conf.d/bastille.conf
         fi
         ${resolver}-setup
         service "${resolver_sysrc}" restart
