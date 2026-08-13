@@ -35,6 +35,7 @@ bastille_dns_add_entry() {
     local type="${1}"
     local jail="${2}"
     local ip="${3}"
+    [ "${type}" = "ipv4" ] && local ptr="$(echo "${ip}" | awk -F. '{print $4"."$3"."$2"."$1".in-addr.arpa."}')"
 	local dns_cmd="local-unbound"
 	local dns_ctl_cmd="local-unbound-control"
 	local dns_sysrc="local_unbound"
@@ -72,11 +73,15 @@ bastille_dns_add_entry() {
     fi
     # Execute
     ${dns_ctl_cmd} "local_data" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
+    [ "${type}" = "A" ] && ${dns_ctl_cmd} "local_data" "${ptr} PTR" "${jail}.${bastille_dns_domain}." >/dev/null 2>&1
 }
 
 bastille_dns_remove_entry() {
 
-    local jail="${1}"
+    local type="${1}"
+    local jail="${2}"
+    local ip="${3}"
+    [ "${type}" = "ipv4" ] && local ptr="$(echo "${ip}" | awk -F. '{print $4"."$3"."$2"."$1".in-addr.arpa."}')"
 	local dns_cmd="local-unbound"
 	local dns_ctl_cmd="local-unbound-control"
 	local dns_sysrc="local_unbound"
@@ -103,6 +108,13 @@ bastille_dns_remove_entry() {
         error_notify "[ERROR]: Resolver not enabled: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
     fi
+    # Validate ip4/6
+    if [ "${type}" = "ipv4" ]; then
+        type="A"
+    elif [ "${type}" = "ipv6" ]; then
+        type="AAAA"
+    fi
     # Execute
     ${dns_ctl_cmd} "local_data_remove" "${jail}.${bastille_dns_domain}." >/dev/null 2>&1
+    [ "${type}" = "A" ] && ${dns_ctl_cmd} "local_data_remove" "${ptr}" >/dev/null 2>&1
 }
