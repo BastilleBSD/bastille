@@ -366,7 +366,7 @@ EOF
 post_create_jail() {
 
     # Change to jail directory (needed for next steps)
-	cd "${bastille_jail_path}" || error_exit "[ERROR]: Failed to entire jail directory."
+	cd "${bastille_jail_path}" || error_exit "[ERROR]: Failed to enter jail directory."
 
     # Validate fstab
     if [ ! -f "${bastille_jail_fstab}" ]; then
