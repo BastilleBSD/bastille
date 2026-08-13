@@ -210,7 +210,7 @@ validate_netif() {
                 else
                     bastille_jail_conf_interface="${bastille_network_bridge}"
                 fi
-            elif [ "${VNET_JAIL_PASSTHROUGH}" ]; then
+            elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
                 error_exit "[ERROR]: Missing interface value."
             fi
         else
