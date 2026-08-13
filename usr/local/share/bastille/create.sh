@@ -746,13 +746,9 @@ create_jail() {
     # Apply DNS settings (if set)
     if checkyesno bastille_dns_enable; then
         if [ "${VNET_JAIL}" -eq 0 ]; then
-            sed -i '' "/^nameserver.*/d" "${bastille_jail_resolv_conf}"
             echo "nameserver ${bastille_dns_gateway}" >> "${bastille_jail_resolv_conf}"
         elif [ "${VNET_JAIL}" -eq 1 ] && [ "${ifconfig_inet}" != "SYNCDHCP" ]; then
-            sed -i '' "/^nameserver.*/d" "${bastille_jail_resolv_conf}"
-            for line in $(resolvconf -lf); do
-                echo "${line}" >> "${bastille_jail_resolv_conf}"
-            done
+            resolvconf -lf >> "${bastille_jail_resolv_conf}" 2>/dev/null
         fi
     fi
 
