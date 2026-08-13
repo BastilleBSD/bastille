@@ -76,9 +76,7 @@ bastille_dns_add_entry() {
 
 bastille_dns_remove_entry() {
 
-    local type="${1}"
-    local jail="${2}"
-    local ip="${3}"
+    local jail="${1}"
 	local dns_cmd="local-unbound"
 	local dns_ctl_cmd="local-unbound-control"
 	local dns_sysrc="local_unbound"
@@ -105,15 +103,6 @@ bastille_dns_remove_entry() {
         error_notify "[ERROR]: Resolver not enabled: ${dns_cmd}"
         error_continue "See 'bastille setup dns'."
     fi
-    # Validate unbound zone exists
-    if ! ${dns_ctl_cmd} list_local_zones | grep -qE "^${bastille_dns_domain}. static$"; then
-        ${dns_ctl_cmd} local_zone "${bastille_dns_domain}" static >/dev/null 2>&1
-    fi
-    if [ "${type}" = "ipv4" ]; then
-        type="A"
-    elif [ "${type}" = "ipv6" ]; then
-        type="AAAA"
-    fi
     # Execute
-    ${dns_ctl_cmd} "local_data_remove" "${jail}.${bastille_dns_domain}." "${type} ${ip}" >/dev/null 2>&1
+    ${dns_ctl_cmd} "local_data_remove" "${jail}.${bastille_dns_domain}." >/dev/null 2>&1
 }
