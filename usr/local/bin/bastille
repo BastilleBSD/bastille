@@ -185,6 +185,7 @@ while [ "$#" -gt 0 ]; do
             esac
             OPT_PLUGIN=1
             shift 2
+            break
             ;;
         -q|--quiet)
             export BASTILLE_QUIET=1
