@@ -47,10 +47,10 @@ bootstrap_plugin() {
         warn 1 "[WARNING]: No 'plugin.conf' found. Using repo name as plugin name."
 		local name="${plugin_name}"
 	else
-        local name="$(sysrc -f "${manifest}" -n name)"
-        local min_version="$(sysrc -f "${manifest}" -n min_version)"
-		local depends_kmods="$(sysrc -f "${manifest}" -n depends_kmods)"
-        local depends_pkgs="$(sysrc -f "${manifest}" -n depends_pkgs)"
+        local name="$(sysrc -f "${manifest}" -n name 2>/dev/null)"
+        local min_version="$(sysrc -f "${manifest}" -n min_version 2>/dev/null)"
+		local depends_kmods="$(sysrc -f "${manifest}" -n depends_kmods 2>/dev/null)"
+        local depends_pkgs="$(sysrc -f "${manifest}" -n depends_pkgs 2>/dev/null)"
         # Validate plugin version against Bastille version
         if [ "$(echo "${min_version}" | sed 's/\.//g')" -gt "$(bastille version | sed 's/\.//g')" ]; then
             error_exit "[ERROR]: Bastille version is lower than the plugins required version."
