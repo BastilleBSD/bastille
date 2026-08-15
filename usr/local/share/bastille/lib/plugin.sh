@@ -41,6 +41,22 @@ bootstrap_plugin() {
 	else
         error_exit "[ERROR]: Only supports github at this time."
     fi
+	# Check for manifest file
+	local manifest="$(mktemp)"
+	if ! fetch -o "${manifest}" "${manifest_url}"; then
+        warn 1 "[WARNING]: No 'plugin.conf' found. Using repo name as plugin name."
+		local name="${plugin_name}"
+	else
+        local name="$(sysrc -f "${manifest}" -n name)"
+        local min_version="$(sysrc -f "${manifest}" -n min_version)"
+		local depends_kmods="$(sysrc -f "${manifest}" -n depends_kmods)"
+        local depends_pkgs="$(sysrc -f "${manifest}" -n depends_pkgs)"
+        # Validate plugin version against Bastille version
+        if [ "$(echo "${min_version}" | sed 's/\.//g')" -gt "$(bastille version | sed 's/\.//g')" ]; then
+            error_exit "[ERROR]: Bastille version is lower than the plugins required version."
+	    fi
+    fi
+	rm "${manifest}"
     # Validate git command
     if ! which -s git; then
         error_exit "[ERROR]: Git not found."
@@ -51,36 +67,25 @@ bootstrap_plugin() {
             error_exit "[ERROR]: Failed to update plugin."
         fi
     else
-	    local manifest="$(mktemp)"
-	    if fetch -o "${manifest}" "${manifest_url}"; then
-            local name="$(sysrc -f "${manifest}" -n name)"
-            local min_version="$(sysrc -f "${manifest}" -n min_version)"
-		    local depends_kmods="$(sysrc -f "${manifest}" -n depends_kmods)"
-            local depends_pkgs="$(sysrc -f "${manifest}" -n depends_pkgs)"
-            # Validate plugin version against Bastille version
-            if [ "$(echo "${min_version}" | sed 's/\.//g')" -gt "$(bastille version | sed 's/\.//g')" ]; then
-		        error_exit "[ERROR]: Bastille version is lower than the plugins required version."
-		    fi
-			# Clone plugin repo
-        	if ! git clone "${plugin}" "${bastille_sharedir}/plugins/${name}"; then
-                error_exit "[ERROR]: Failed to bootstrap plugin."
-            else
-                info 1 "Plugin bootstrapped. Use 'bastille -p|--plugin PLUGIN...' to run."
-		    fi
-		    # Load required plugin modules
-		    for kmod in ${depends_kmods}; do 
-		        info 1 "\nLoading module: ${kmod}"
-		    	kldload -v "${kmod}" 2>/dev/null
-		    	info 1 "\nPersisting module: ${kmod}"
-			    sysrc -f /boot/loader.conf ${kmod}_load=YES 2>/dev/null
-		    done
-		    # Install required plugin pkgs
-		    for pkg in ${depends_pkgs}; do 
-		        info 1 "\nInstalling package: ${pkg}"
-			    pkg install -y ${pkg}
-		    done
+		# Clone plugin repo
+        if ! git clone "${plugin}" "${bastille_sharedir}/plugins/${name}"; then
+            error_exit "[ERROR]: Failed to bootstrap plugin."
+        else
             info 1 "Plugin bootstrapped. Use 'bastille -p|--plugin PLUGIN...' to run."
-	    fi
+		fi
+        # Load required plugin modules
+		for kmod in ${depends_kmods}; do 
+	        info 1 "\nLoading module: ${kmod}"
+	    	kldload -v "${kmod}" 2>/dev/null
+	    	info 1 "\nPersisting module: ${kmod}"
+		    sysrc -f /boot/loader.conf ${kmod}_load=YES 2>/dev/null
+	    done
+	    # Install required plugin pkgs
+	    for pkg in ${depends_pkgs}; do 
+	        info 1 "\nInstalling package: ${pkg}"
+		    pkg install -y ${pkg}
+	    done
+        info 1 "Plugin bootstrapped. Use 'bastille -p|--plugin PLUGIN...' to run."
 	fi
 }
 
