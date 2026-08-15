@@ -30,31 +30,61 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Load config. This only has to be done here
-# because all commands load this file
-# shellcheck disable=SC1090
-. ${BASTILLE_CONFIG}
+# Guard and predicate helpers.
 
-# Load library functions. Each file defines a group of helpers; they are
-# sourced here so every subcommand that loads common.sh gets the full set.
-# shellcheck source=/dev/null
-. "${bastille_sharedir}/lib/log.sh"
-# shellcheck source=/dev/null
-. "${bastille_sharedir}/lib/checks.sh"
-# shellcheck source=/dev/null
-. "${bastille_sharedir}/lib/target.sh"
-# shellcheck source=/dev/null
-. "${bastille_sharedir}/lib/network.sh"
-# shellcheck source=/dev/null
-. "${bastille_sharedir}/lib/storage.sh"
-# shellcheck source=/dev/null
-. "${bastille_sharedir}/lib/migrate.sh"
+bastille_root_check() {
+    if [ "$(id -u)" -ne 0 ]; then
+        ## permission denied
+        error_notify "Bastille: Permission Denied"
+        error_exit "root / sudo / doas required"
+    fi
+}
 
-# If "NO_COLOR" environment variable is present, or we aren't speaking to a
-# tty, disable output colors.
-if [ -z "${NO_COLOR}" ] && [ -t 1 ]; then
-    enable_color
-fi
+check_target_exists() {
+    local target="${1}"
+    local jail_list="$(bastille list jails)"
+    if ! echo "${jail_list}" | grep -Eq "^${target}$"; then
+        return 1
+    else
+        return 0
+    fi
+}
 
-# This function is run immediately
-set_bastille_mountpoints
+check_target_is_running() {
+    local target="${1}"
+    if ! jls name | grep -Eq "^${target}$"; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+check_target_is_stopped() {
+    local target="${1}"
+    if jls name | grep -Eq "^${target}$"; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+checkyesno() {
+    ## copied from /etc/rc.subr -- cedwards (20231125)
+    ## issue #368 (lowercase values should be parsed)
+    ## now used for all bastille_zfs_enable=YES|NO tests
+    ## example: if checkyesno bastille_zfs_enable; then ...
+    ## returns 0 for enabled; returns 1 for disabled
+    eval value=\$${1}
+    case $value in
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        warn 1 "\$${1} is not set properly - see rc.conf(5)."
+        return 1
+        ;;
+    esac
+}
