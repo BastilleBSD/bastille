@@ -68,7 +68,7 @@ bootstrap_plugin() {
         fi
     else
 		# Clone plugin repo
-        if ! git clone "${plugin}" "${bastille_sharedir}/plugins/${name}"; then
+        if ! git clone "${plugin_url}" "${bastille_sharedir}/plugins/${name}"; then
             error_exit "[ERROR]: Failed to bootstrap plugin."
         else
             info 1 "Plugin bootstrapped. Use 'bastille -p|--plugin PLUGIN...' to run."
