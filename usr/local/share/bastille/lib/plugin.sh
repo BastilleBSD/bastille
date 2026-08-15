@@ -37,7 +37,7 @@ bootstrap_plugin() {
 
 	if echo "${plugin_url}" | grep -q "github.com"; then
 	    local repo="$(echo "${plugin_url}" | awk -F"github.com/" '{print $2}' | sed 's/.git//')"
-		local manifest_url="https://raw.githubusercontet.com/${repo}/main/plugin.conf"
+		local manifest_url="https://raw.githubusercontent.com/${repo}/main/plugin.conf"
 	else
         error_exit "[ERROR]: Only supports github at this time."
     fi
