@@ -54,7 +54,7 @@ bootstrap_plugin() {
         # Validate plugin version against Bastille version
         if [ "$(echo "${min_version}" | sed 's/\.//g')" -gt "$(bastille version | sed 's/\.//g')" ]; then
             error_exit "[ERROR]: Bastille version is lower than the plugins required version."
-	       fi
+        fi
     fi
 	   rm "${manifest}"
     # Validate git command
@@ -67,7 +67,7 @@ bootstrap_plugin() {
             error_exit "[ERROR]: Failed to update plugin."
         fi
     else
-    # Clone plugin repo
+        # Clone plugin repo
         if ! git clone "${plugin_url}" "${bastille_sharedir}/plugins/${name}"; then
             error_exit "[ERROR]: Failed to bootstrap plugin."
         else
