@@ -810,8 +810,6 @@ VNET_JAIL=0
 VNET_JAIL_STANDARD=0
 VNET_JAIL_BRIDGE=0
 VNET_JAIL_PASSTHROUGH=0
-STANDARD_JAIL_NAT=0
-STANDARD_JAIL_SHARED=0
 NO_IP=0
 VLAN_ID=""
 LINUX_JAIL=0
@@ -822,7 +820,7 @@ PRIORITY="99"
 OPT_GATEWAY=""
 OPT_NAMESERVER=""
 OPT_TAGS=""
-while [ $# -gt 0 ]; do
+while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
             usage
