@@ -1,5 +1,5 @@
 Plugins
--------
+=======
 
 Bastille added support for running custom plugins in version 1.5.0. Some basic
 things need to be in place in order to run a plugin.

@@ -1,8 +1,8 @@
 VLAN Configuration
-------------------
+==================
 
 Jail VLAN Tagging
-^^^^^^^^^^^^^^^^^
+-----------------
 
 Bastille supports VLANs to some extent when creating jails. When creating a jail,
 use the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set
@@ -15,7 +15,7 @@ When using this method, the interface being assigned must be a trunk interface.
 This means that it passes all traffic, leaving any VLAN tags as they are.
 
 Host VLAN Tagging
-^^^^^^^^^^^^^^^^^
+-----------------
 
 Another method is to configure a host interface to tag the traffic. This way, the
 jail doesn't have to worry about it.
@@ -55,7 +55,7 @@ Notice that the interfaces are bridge interfaces, and can be used with ``-B|--br
 without issue.
 
 VLAN Limitations
-^^^^^^^^^^^^^^^^
+----------------
 
 * You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
   name, which is the standard way of naming a VLAN interface. This is due to the

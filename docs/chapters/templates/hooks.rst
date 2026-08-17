@@ -1,5 +1,5 @@
 Template Hooks
---------------
+==============
 
 The following table shows a list of supported template hooks, their format, and
 one example of how you might use each one.
@@ -153,7 +153,7 @@ and ``bastille network TARGET add vtnet1 DHCP`` inside the jail respectively. Al
 tested and documented, they should still work as expected.
 
 Passing ARG Values From a File
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 When a template declares a lot of ``ARG`` values, listing them all on the
 command line with repeated ``--arg NAME=VALUE`` flags becomes unwieldy. The

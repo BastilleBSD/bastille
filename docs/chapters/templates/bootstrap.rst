@@ -1,5 +1,5 @@
 Bootstrapping Templates
------------------------
+=======================
 
 The official templates for Bastille are all on Gthub, and mirror the directory
 structure of the ports tree.  So, ``nginx`` is in the ``www`` directory in the

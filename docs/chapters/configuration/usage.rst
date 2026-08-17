@@ -42,6 +42,7 @@ run ``bastille create --help``.
     mount       Mount file(s)/directorie(s) inside jail(s).
     network     Add or remove interface(s) from jail(s).
     pkg         Manage packages inside jail(s). See pkg(8).
+    plugin      Run a custom Bastille plugin.
     rcp         Copy file(s)/directorie(s) from jail to host.
     rdr         Redirect host port to jail port.
     rename      Rename a jail.
@@ -63,7 +64,6 @@ run ``bastille create --help``.
   Use "bastille COMMAND -h|--help" for more information about a command.
   Use "bastille -c|--config FILE COMMAND" to specify a non-default config file.
   Use "bastille -v|--version" for version information.
-  Use "bastille -p|--plugin PLUGIN PLUGIN_COMMAND" to run a custom plugin.
   Use "bastille -q|--quiet COMMAND" to supress Bastille-specific output.
   Use "bastille -x|--debug COMMAND" to enable debug mode.
 

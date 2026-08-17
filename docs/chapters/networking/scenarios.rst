@@ -1,11 +1,11 @@
 Network Scenarios
------------------
+=================
 
 Below are some common networking setups that we found helpful to include.
 You are welcome to contribute more.
 
 SOHO (Small Office/Home Office)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 This scenario works best when you have just one computer, or a home or small
 office network that is separated from the rest of the internet by a router. So
@@ -46,7 +46,7 @@ Note that we cannot use the ``shared`` option together with the ``loopback``
 option. Configuring one using the ``bastille setup`` command will disable the other.
 
 Shared Interface on IPV6 network (vultr.com)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------
 
 Some ISP's, such as `Vultr <https://vultr.com>`_, give you a single ipv4
 address,
@@ -94,7 +94,7 @@ Just remember you cannot ping out from the container. Instead, install and
 use ``wget/curl/fetch`` to test the connectivity.
 
 VNET on GCP (Google Cloud Platform)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 Bastille VNET runs on GCP with a few small tweaks. In summary, they are:
 

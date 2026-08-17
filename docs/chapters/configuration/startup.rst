@@ -1,5 +1,5 @@
 Startup Configuration
----------------------
+=====================
 
 When your system boots up, or restarts, you will probably want your jails to
 start as well. Or at least the ones that you so choose.
@@ -19,7 +19,7 @@ first start the jail in the depend option, no matter what the priority is.
 See :doc:`/chapters/configuration/targeting` for more info.
 
 Boot
-^^^^
+----
 
 The boot setting controls whether a jail will be started on system startup. If
 you have enabled bastille with ``sysrc bastille_enable=YES``, all jails with
@@ -45,7 +45,7 @@ This value can be changed using ``bastille config TARGET set boot [on|off]``.
 This value will be shown using ``bastille list all``.
 
 Depend
-^^^^^^
+------
 
 Bastille supports configuring jails to depend on each other when started and
 stopped. If jail1 "depends" on jail2, then jail2 will be started if it is not
@@ -69,7 +69,7 @@ stopped, because it "depends" on nginx, but will not be started again, because
 the jail we just restarted, nginx, does not depend on nextcloud.
 
 Parallel Startup
-^^^^^^^^^^^^^^^^
+----------------
 
 Bastille supports starting, stopping and restarting jails in parallel mode using
 the ``rc`` service script. To enable this functionality, set
@@ -82,7 +82,7 @@ a time when ``service bastille...`` is called.
 This value is set to 1 by default, to only start/stop/restart jails one at a time.
 
 Startup Delay
-^^^^^^^^^^^^^
+-------------
 
 Sometimes it is necessary to let a jail start fully before continuing to the
 next jail.

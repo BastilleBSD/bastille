@@ -1,5 +1,5 @@
 ZFS Support
------------
+===========
 
 .. image:: /images/bastillebsd-twitter-poll.png
   :width: 400
@@ -62,7 +62,7 @@ defaults to ``/usr/local/bastille``
 If this is not desirable, you can change it at the top of the config file.
 
 Altroot
-^^^^^^^
+-------
 
 If a ZFS pool has been imported using ``-R`` (altroot), your system will
 automatically add whatever the ``altroot`` is to any ``zfs mount`` commands.
