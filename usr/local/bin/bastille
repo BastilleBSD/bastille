@@ -257,8 +257,7 @@ case "${CMD}" in
         if [ -d "${bastille_sharedir}/plugins/${CMD}" ]; then
             PLUGIN="${CMD}"
             CMD="plugin"
-            # shellcheck disable=SC2154
-            SCRIPTPATH="${bastille_sharedir}/plugins/${PLUGIN}/${CMD}.sh"
+            set -- "${PLUGIN}" "$@"
         else
             usage
         fi
