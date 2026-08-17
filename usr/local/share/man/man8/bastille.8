@@ -6,7 +6,7 @@
 .Nd open-source jail automation and management tool
 .Sh SYNOPSIS
 .Nm
-.Op Fl vhqx
+.Op Fl vhpqx
 .Op Fl c Ar file
 .Ar COMMAND
 .Op option(s)
@@ -18,7 +18,7 @@ and management of containerized applications on FreeBSD
 using the jail framework.
 .Sh OPTIONS
 .Bl -tag -width Ds
-.It Fl c Ar file , Fl -config Ar file
+.It Fl c Ar FILE , Fl -config Ar FILE
 Specify a non-default config file to use. Must be placed
 inside the Bastille config directory.
 .It Fl h , Fl -help
@@ -26,6 +26,8 @@ Display usage information. This option is also available for each
 sub-command, though they are not listed in the man pages.
 .It Fl v , Fl -version
 Print version information.
+.It Fl p Ar PLUGIN , Fl -plugin Ar PLUGIN
+Run a custom Bastille plugin.
 .It Fl q , Fl -quiet
 Supress Bastille-specific output.
 .It Fl x , Fl -debug

@@ -30,6 +30,38 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+. /usr/local/share/bastille/common.sh
+
+usage() {
+    error_notify "Usage: bastille plugin [option(s)] PLUGIN ARGS"
+    exit 1
+}
+
+# Handle options
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -h|--help|help)
+            usage
+            ;;
+        -*)
+            error_exit "[ERROR]: Unknown Option: \"${1}\""
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# Verify parameter count
+if [ "$#" -lt 1 ]; then
+    usage
+fi
+
+PLUGIN="${1}"
+PLUGIN_CMD="${2}"
+
+bastille_root_check
+
 bootstrap_plugin() {
 
     local plugin_url="${1}"
@@ -89,9 +121,33 @@ bootstrap_plugin() {
 	   fi
 }
 
-load_plugin() {
+check_plugin_exists() {
+    plugin="${1}"
     local plugin="${1}"
+
     if [ ! -d "${bastille_sharedir}/plugins/${plugin}" ]; then
         error_exit "[ERROR]: Plugin not found: ${plugin}"
     fi
 }
+
+case "${PLUGIN}" in
+    http?://*/*/*)
+        bootstrap_plugin "${PLUGIN}"
+        exit 0
+        ;;
+    *)
+        check_plugin_exists "${PLUGIN}"
+        ;;
+esac
+
+# shellcheck disable=SC2154
+SCRIPTPATH="${bastille_sharedir}/plugins/${PLUGIN}/${PLUGIN_CMD}.sh"
+
+if [ -f "${SCRIPTPATH}" ]; then
+    : "${UMASK:=022}"
+    umask "${UMASK}"
+    : "${SH:=sh}"
+    exec ${SH} ${BASTILLE_DEBUG} "${SCRIPTPATH}" "$@"
+else
+    error_exit "[ERROR]: Plugin command not found: ${SCRIPTPATH}"
+fi
