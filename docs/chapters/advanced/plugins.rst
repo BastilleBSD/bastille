@@ -31,8 +31,8 @@ It will name the plugin after the ``name`` variable in ``plugin.conf``, load any
 modules, and install any pkgs included in the manifest file.
 
 Once that is done, you can run your plugin using ``bastille plugin myplugin mycmd...``. If your plugin
-does not interfere with any of the Bastille commands, you can also do ``bastille myplugin mycmd...``.
-Use ``bastille p myplugin mycmd...`` as a shorthand version of the first command above.
+does not interfere with any of the Bastille commands, you can also do ``bastille p myplugin mycmd...`` as
+a shorthand version of the command above.
 
 When the plugin is bootstrapped, the directory structure should be as follows:
 
