@@ -68,33 +68,33 @@ bootstrap_plugin() {
     local plugin_url="${1}"
     local plugin_name="$(basename "${plugin_url}" | sed 's/.git//')"
 
-	   if echo "${plugin_url}" | grep -q "github.com"; then
-	       local repo="$(echo "${plugin_url}" | awk -F"github.com/" '{print $2}' | sed 's/.git//')"
-		      local manifest_url="https://raw.githubusercontent.com/${repo}/main/plugin.conf"
-	   else
+    if echo "${plugin_url}" | grep -q "github.com"; then
+        local repo="$(echo "${plugin_url}" | awk -F"github.com/" '{print $2}' | sed 's/.git//')"
+        local manifest_url="https://raw.githubusercontent.com/${repo}/main/plugin.conf"
+    else
         error_exit "[ERROR]: Only supports github at this time."
     fi
-	   # Check for manifest file
-	   local manifest="$(mktemp)"
-	   if ! fetch -o "${manifest}" "${manifest_url}"; then
+    # Check for manifest file
+    local manifest="$(mktemp)"
+    if ! fetch -o "${manifest}" "${manifest_url}"; then
         warn 1 "[WARNING]: No 'plugin.conf' found. Using repo name as plugin name."
-		      local name="${plugin_name}"
-	   else
+        local name="${plugin_name}"
+    else
         local name="$(sysrc -f "${manifest}" -n name 2>/dev/null)"
         local min_version="$(sysrc -f "${manifest}" -n min_version 2>/dev/null)"
-		      local depends_kmods="$(sysrc -f "${manifest}" -n depends_kmods 2>/dev/null)"
+        local depends_kmods="$(sysrc -f "${manifest}" -n depends_kmods 2>/dev/null)"
         local depends_pkgs="$(sysrc -f "${manifest}" -n depends_pkgs 2>/dev/null)"
         # Validate plugin version against Bastille version
         if [ "$(echo "${min_version}" | sed 's/\.//g')" -gt "$(bastille version | sed 's/\.//g')" ]; then
             error_exit "[ERROR]: Bastille version is lower than the plugins required version."
         fi
     fi
-	   rm "${manifest}"
+    rm "${manifest}"
     # Validate git command
     if ! which -s git; then
         error_exit "[ERROR]: Git not found."
     fi
-	   # Validate method: fresh install or update
+    # Validate method: fresh install or update
     if [ -d "${bastille_sharedir}/plugins/${name}" ]; then
         if ! git -C "${bastille_sharedir}/plugins/${name}" pull; then
             error_exit "[ERROR]: Failed to update plugin."
@@ -107,19 +107,19 @@ bootstrap_plugin() {
             info 1 "Plugin bootstrapped. Use 'bastille -p|--plugin PLUGIN...' to run."
         fi
         # Load required plugin modules
-	      	for kmod in ${depends_kmods}; do 
-	           info 1 "\nLoading module: ${kmod}"
-	    	      kldload -v "${kmod}" 2>/dev/null
-	    	      info 1 "\nPersisting module: ${kmod}"
-		          sysrc -f /boot/loader.conf ${kmod}_load=YES 2>/dev/null
-	       done
-	       # Install required plugin pkgs
-	       for pkg in ${depends_pkgs}; do 
-	           info 1 "\nInstalling package: ${pkg}"
-		          pkg install -y ${pkg}
-	       done
+        for kmod in ${depends_kmods}; do 
+            info 1 "\nLoading module: ${kmod}"
+            kldload -v "${kmod}" 2>/dev/null
+            info 1 "\nPersisting module: ${kmod}"
+            sysrc -f /boot/loader.conf ${kmod}_load=YES 2>/dev/null
+        done
+        # Install required plugin pkgs
+        for pkg in ${depends_pkgs}; do 
+            info 1 "\nInstalling package: ${pkg}"
+            pkg install -y ${pkg}
+        done
         info 1 "Plugin bootstrapped. Use 'bastille -p|--plugin PLUGIN...' to run."
-	   fi
+    fi
 }
 
 check_plugin_exists() {
@@ -137,6 +137,9 @@ case "${PLUGIN}" in
         exit 0
         ;;
     *)
+        if [ -z "${PLUGIN_CMD}" ]; then
+            usage
+        fi
         check_plugin_exists "${PLUGIN}"
         ;;
 esac
