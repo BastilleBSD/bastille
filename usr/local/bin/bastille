@@ -255,15 +255,21 @@ case "${CMD}" in
     zfs) ;;
     *)
         if [ -d "${bastille_sharedir}/plugins/${CMD}" ]; then
-            CMD="plugins/${CMD}"
+            PLUGIN="${CMD}"
+            CMD="plugin"
         else
             usage
         fi
         ;;
 esac
 
-# shellcheck disable=SC2154
-SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
+if [ -z "${PLUGIN}" ]; then
+    # shellcheck disable=SC2154
+    SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
+else
+    # shellcheck disable=SC2154
+    SCRIPTPATH="${bastille_sharedir}/${CMD}.sh ${PLUGIN}"
+fi
 
 if [ -f "${SCRIPTPATH}" ]; then
     : "${UMASK:=022}"
