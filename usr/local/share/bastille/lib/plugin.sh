@@ -130,10 +130,8 @@ bootstrap_plugin() {
     fi
 }
 
-check_plugin_exists() {
-    plugin="${1}"
+load_plugin() {
     local plugin="${1}"
-
     if [ ! -d "${bastille_sharedir}/plugins/${plugin}" ]; then
         error_exit "[ERROR]: Plugin not found: ${plugin}"
     fi

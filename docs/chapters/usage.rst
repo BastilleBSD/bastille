@@ -1,14 +1,6 @@
 Usage
 =====
 
-Bastille has many different commands. Below is a list, and a brief description
-of what each one does. The following block is also shown if you
-run ``bastille`` without any arguements, or ``bastille --help``.
-
-For each subcommand, you can specify ``-h|--help`` to show the help for it. If
-I want to see the help for the ``create`` command, I can
-run ``bastille create --help``.
-
 .. code-block:: shell
 
     ishmael ~ # bastille help
@@ -66,6 +58,3 @@ run ``bastille create --help``.
   Use "bastille -v|--version" for version information.
   Use "bastille -q|--quiet COMMAND" to supress Bastille-specific output.
   Use "bastille -x|--debug COMMAND" to enable debug mode.
-
-Bastille also has some top level options available, and each one has a brief description
-of what it does. For more information, run ``man bastille``.
