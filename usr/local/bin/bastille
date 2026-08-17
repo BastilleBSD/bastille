@@ -254,18 +254,12 @@ case "${CMD}" in
     verify) ;;
     zfs) ;;
     *)
-        if [ -d "${bastille_sharedir}/plugins/${CMD}" ]; then
-            PLUGIN="${CMD}"
-            CMD="plugin"
-            set -- "${PLUGIN}" "$@"
-        else
-            usage
-        fi
+        usage
         ;;
 esac
 
 # shellcheck disable=SC2154
-[ -z "${SCRIPTPATH}" ] && SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
+SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 
 if [ -f "${SCRIPTPATH}" ]; then
     : "${UMASK:=022}"
