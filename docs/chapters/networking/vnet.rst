@@ -1,8 +1,8 @@
 VNET Configuration
-==================
+------------------
 
 VNET Configuration
-------------------
+^^^^^^^^^^^^^^^^^^
 
 (Added in 0.6.x) VNET is supported on FreeBSD 12+ only.
 
@@ -71,7 +71,7 @@ Below is the definition of what these three parameters are used for and mean:
 				    interface, set to 0	to disable it.
 
 VNET - Manual Bridge Configuration
-----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To create a VNET based container and attach it to an external, already existing
 bridge, use the ``-B`` option, an IP/netmask and external bridge.

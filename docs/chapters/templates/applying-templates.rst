@@ -1,5 +1,5 @@
 Applying Templates
-==================
+------------------
 
 To apply a template to a jail, run the following command.
 

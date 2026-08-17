@@ -1,5 +1,5 @@
-Jail Types
-==========
+Introduction
+============
 
 A jail is an isolated, virtualized environment that allows for the isolation
 and control of network resources for processes running within it. FreeBSD has had

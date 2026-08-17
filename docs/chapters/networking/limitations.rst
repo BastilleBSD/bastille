@@ -1,8 +1,8 @@
 Networking Limitations
-======================
+----------------------
 
 VNET Jail Interface Names
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * FreeBSD has certain limitations when it comes to interface names. One
   of these is that interface names cannot be longer than 15 characters.
@@ -17,7 +17,7 @@ VNET Jail Interface Names
   So, ``mylongjailname`` will be ``e0a_bastille2`` and ``e0b_bastille2``.
 
 Netgraph and Proxmox VE
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 * When running a FreeBSD VM on Proxmox VE, you might encounter crashes when using
   Netraph. This bug is being tracked at
@@ -31,7 +31,7 @@ Netgraph and Proxmox VE
   exec.prestop += "jng shutdown JAILNAME";
 
 local_unbound
--------------
+^^^^^^^^^^^^^
 
 If you are running "local_unbound" on your server, you will probably have issues
 with DNS resolution.

@@ -17,7 +17,6 @@ https://docs.bastillebsd.org.
    :maxdepth: 2
    :caption: Contents:
 
-<<<<<<< HEAD
    chapters/overview/index
    chapters/configuration/index
    chapters/releases/index
@@ -29,26 +28,6 @@ https://docs.bastillebsd.org.
    chapters/zfs/index
    chapters/advanced/index
    chapters/subcommands/index
-=======
-   chapters/comparing
-   chapters/installation
-   chapters/getting-started
-   chapters/configuration
-   chapters/targeting
-   chapters/subcommands/index
-   chapters/usage
-   chapters/networking
-   chapters/gcp
-   chapters/upgrading
-   chapters/migration
-   chapters/centralized-assets
-   chapters/template
-   chapters/hardened-bsd
-   chapters/linux-jails
-   chapters/pkgbase
-   chapters/zfs-support
-
->>>>>>> parent of 254e4fbf (organize docs, add plugin docs)
    copyright
 
 Note: this documentation is included with the source code in ``docs``.

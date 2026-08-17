@@ -56,8 +56,8 @@ MBSD releases on any host other than a MBSD host.
 To bootstrap an MBSD release, we simply use the semantic version of a given release. For
 example, to bootstrap the latest release we can run ``bastille bootstrap 4.0.4``.
 
-Linux Distributions
--------------------
+Linux
+-----
 
 Bastille has experimental support for bootstrapping Linux distributions. Currently Ubuntu and
 Debian releases are the most supported.

@@ -1,5 +1,5 @@
 jail.conf
-=========
+---------
 
 In this section we'll look at the default config for a new jail. The
 defaults are sane for most applications, but if you want to tweak the settings
@@ -30,7 +30,7 @@ template looks like this:
 
 
 devfs_ruleset
--------------
+^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -54,7 +54,7 @@ devfs_ruleset
 
 
 enforce_statfs
---------------
+^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -73,7 +73,7 @@ enforce_statfs
 
 
 exec.clean
-----------
+^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -87,7 +87,7 @@ exec.clean
 
 
 exec.consolelog
----------------
+^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -96,7 +96,7 @@ exec.consolelog
 
 
 exec.start
-----------
+^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -106,7 +106,7 @@ exec.start
 
 
 exec.stop
----------
+^^^^^^^^^
 
 .. code-block:: shell
 
@@ -117,7 +117,7 @@ exec.stop
 
 
 host.hostname
--------------
+^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -127,7 +127,7 @@ host.hostname
 
 
 mount.devfs
------------
+^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -139,7 +139,7 @@ mount.devfs
 
 
 mount.fstab
------------
+^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -149,7 +149,7 @@ mount.fstab
 
 
 path
-----
+^^^^
 
 .. code-block:: shell
 
@@ -160,7 +160,7 @@ path
 
 
 securelevel
------------
+^^^^^^^^^^^
 
 By default, Bastille containers run at ``securelevel = 2;``. See below for the
 implications of kernel security levels and when they might be altered.

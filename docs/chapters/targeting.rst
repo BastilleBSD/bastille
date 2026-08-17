@@ -1,5 +1,5 @@
 Targeting
-=========
+---------
 
 Bastille uses a ``subcommand TARGET ARGS`` syntax, meaning that each command
 requires a target. Targets are usually jails, but can also be releases.
@@ -23,7 +23,7 @@ quotes, as seen below.
   ishmael ~ # bastille cmd "jail1 jail2 jail3" echo Hello!
 
 Priority
---------
+^^^^^^^^
 
 The priority value determines in what order commands are executed if multiple
 jails are targetted, including the [ALL|all] target.
@@ -43,7 +43,7 @@ This value can be changed using ``bastille config TARGET set priority VALUE``.
 This value will be shown using ``bastille list all``.
 
 Examples: Jails
----------------
+^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -75,7 +75,7 @@ Examples: Jails
 
 
 Examples: Releases
-------------------
+^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 

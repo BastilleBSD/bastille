@@ -14,7 +14,7 @@ Before we dive into creating templates, lets take a look at the supported hooks,
 well as a brief overview of what each one is capable of.
 
 Template Hooks
-==============
+--------------
 
 The following table shows a list of supported template hooks, their format, and
 one example of how you might use each one.
@@ -177,7 +177,7 @@ Special Hook Cases
 escape it. Escaping it will cause errors.
 
 Passing ARG Values From a File
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When a template declares a lot of ``ARG`` values, listing them all on the
 command line with repeated ``--arg NAME=VALUE`` flags becomes unwieldy. The

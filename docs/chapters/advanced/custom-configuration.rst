@@ -1,5 +1,5 @@
 Custom Configuration
-====================
+--------------------
 
 Bastille supports using a custom config in addition to the default one. This
 is nice if you have multiple users, or want to store different

@@ -1,5 +1,5 @@
 Netgraph
-========
+--------
 
 Bastille supports netgraph as an VNET management tool, thanks to the `jng` script.
 To enable netgraph, run `bastille setup netgraph`. This will load and persist the

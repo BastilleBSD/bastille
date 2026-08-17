@@ -29,7 +29,7 @@ keeps each version in its own directory, so if you need the next minor version
 of a release, use the ``bastille bootstrap`` command to bootstrap it.
 
 Converting a Legacy Release to Pkgbase
-======================================
+--------------------------------------
 
 If you want to convert a legacy release to a pkgbase release, we recommend destroying
 it, the using ``--pkgbase`` to bootstrap it again. Otherwise you can use
@@ -44,7 +44,7 @@ To do so, fetch the ``pkgbasify`` script, and run it with the ``--rootdir`` flag
      ./pkgbasify.lua --rootdir /usr/local/bastille/releases/15.0-RELEASE
 
 Custom Release
-==============
+--------------
 
 Bastille supports creating a customized release from any thick jail. After creating your
 jail, installing the necessary packages and making the necessary changes, we can

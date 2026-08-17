@@ -1,8 +1,8 @@
 IP Address Options
-==================
+------------------
 
 IPv4 Network
-------------
+^^^^^^^^^^^^
 
 Bastille includes a number of IP options for IPv4 networking.
 
@@ -45,7 +45,7 @@ default to /24. This is because FreeBSD does not support adding an IP to an inte
 without a subnet.
 
 IPv6 Network
-------------
+^^^^^^^^^^^^
 
 Bastille also supports IPv6. Instead of an IPv4 address, you can specify an
 IPv6 address when creating a jail to use IPv6.
@@ -63,7 +63,7 @@ The IP address specified above can be any of the following options.
   address from your router. This should only be used with VNET jails.
 
 Dual Stack Network
-------------------
+^^^^^^^^^^^^^^^^^^
 
 It is also possible to use both IPv4 and IPv6 by quoting an IPv4 and IPv6 addresses together
 as seen in the following examples.

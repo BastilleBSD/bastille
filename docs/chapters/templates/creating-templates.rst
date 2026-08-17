@@ -1,5 +1,5 @@
 Creating Templates
-==================
+------------------
 
 Templates should be created and placed inside the templates directory in the
 ``project/template`` format. Alternatively you can run the ``bastille template``
@@ -21,7 +21,7 @@ Bastille will not overwrite ``/usr`` inside the jail. It only copies the files i
 See `Bastille Templates`_ for examples to get started on writing your own templates.
 
 Using Ports in Templates
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Sometimes when creating a template, we need special options for a package, or
 a newer version than pkg offers. The solution for such

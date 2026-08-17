@@ -1,5 +1,5 @@
 NAT Configuration
-=================
+-----------------
 
 For NAT jails, we recommend creating a cloned loopback interface (``bastille0``) and
 assigning all the jails private (rfc1918) addresses on that interface. The

@@ -1,5 +1,5 @@
 Alias Configuration
-===================
+-------------------
 
 To configure a jail with the alias network mode, we simply make sure
 that the IP we assign is reachable within our local network, and the
