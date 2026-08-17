@@ -257,19 +257,16 @@ case "${CMD}" in
         if [ -d "${bastille_sharedir}/plugins/${CMD}" ]; then
             PLUGIN="${CMD}"
             CMD="plugin"
+            # shellcheck disable=SC2154
+            SCRIPTPATH="${bastille_sharedir}/plugins/${PLUGIN}/${CMD}.sh"
         else
             usage
         fi
         ;;
 esac
 
-if [ -z "${PLUGIN}" ]; then
-    # shellcheck disable=SC2154
-    SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
-else
-    # shellcheck disable=SC2154
-    SCRIPTPATH="${bastille_sharedir}/${CMD}.sh ${PLUGIN}"
-fi
+# shellcheck disable=SC2154
+[ -z "${SCRIPTPATH}" ] && SCRIPTPATH="${bastille_sharedir}/${CMD}.sh"
 
 if [ -f "${SCRIPTPATH}" ]; then
     : "${UMASK:=022}"
