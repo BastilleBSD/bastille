@@ -220,7 +220,7 @@ validate_netif() {
                 else
                     bastille_jail_conf_interface="${bastille_network_loopback}"
                 fi
-            elif [ "${STANDARD_}" -eq 1 ]; then
+            elif [ "${STANDARD_JAIL_SHARED}" -eq 1 ]; then
                 if [ -z "${bastille_network_shared}" ]; then
                     error_exit "[ERROR]: Missing interface value."
                 else
