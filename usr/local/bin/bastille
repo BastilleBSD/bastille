@@ -255,7 +255,7 @@ case "${CMD}" in
     zfs) ;;
     *)
         if [ -d "${bastille_sharedir}/plugins/${CMD}" ]; then
-            CMD="plugin/${CMD}"
+            CMD="plugins/${CMD}"
         else
             usage
         fi
