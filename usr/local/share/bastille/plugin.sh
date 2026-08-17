@@ -59,6 +59,7 @@ fi
 
 PLUGIN="${1}"
 PLUGIN_CMD="${2}"
+shift 2
 
 bastille_root_check
 
