@@ -230,11 +230,6 @@ validate_ip() {
                     error_exit "[ERROR]: Invalid IP: ${ip4}"
                 fi
             done
-            if route -n get "${ip4}" | grep -q "gateway"; then
-                export STANDARD_JAIL_NAT=1
-            else
-                export STANDARD_JAIL_SHARED=1
-            fi
             info 1 "\nValid IP: ${ip4}"
             export IP4_ADDR="${ip4}"
         else
