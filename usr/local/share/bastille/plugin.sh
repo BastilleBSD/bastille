@@ -68,8 +68,8 @@ bootstrap_plugin() {
     local plugin_url="${1}"
     local plugin_name="$(basename "${plugin_url}" | sed 's/.git//')"
 
-    if echo "${plugin_url}" | grep -q "https://github.com"; then
-        local repo="$(echo "${plugin_url}" | awk -F"github.com/" '{print $2}' | sed 's/.git//')"
+    if echo "${plugin_url}" | grep -Eoq '^(git@github.com:|https://github.com)'; then
+        local repo="$(echo "${plugin_url}" | awk -F"github.com" '{print $2}' | sed -e 's%^[:|/]%%' -e 's/.git//')"
         local manifest_url="https://raw.githubusercontent.com/${repo}/main/plugin.conf"
     else
         error_exit "[ERROR]: Only supports github at this time."
