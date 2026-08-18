@@ -43,6 +43,137 @@ note is that the files must end in the ``.sh`` suffix. Bastille first validates 
 checks if the next parameter is a file inside the directory ending in ``.sh``. If it is not, Bastille
 will not run the command.
 
+Parameter Order
+^^^^^^^^^^^^^^^
+
+Bastille follows a strict parameter order for each of its subcommands. Plugins should follow the same order
+to keep things simple. The order is ``COMMAND OPTIONS TARGET ARGS``.
+
+* COMMAND should be your custom plugin command
+* OPTIONS should be any flags passed to the command
+* TARGET should be the jail or release the command is to act on
+* ARGS can be any other parameters passed to the command
+
+In order to demonstrate what a command should look like, we will have a look
+at the official ``cmd.sh`` file. This command runs arbitrary commands inside a jail.
+
+.. code-block:: shell
+
+  . /usr/local/share/bastille/common.sh
+ 
+The first line simply sources the file that includes Bastille specific functions.
+
+.. code-block:: shell
+
+  usage() {
+      error_notify "Usage: bastille cmd [option(s)] TARGET COMMAND"
+      cat << EOF
+  
+      Options:
+  
+      -a | --auto      Auto mode. Start/stop jail(s) if required.
+  
+  EOF
+      exit 1
+  }
+ 
+This block is a command specific ``usage`` function that can be shown when an error occurs.
+ 
+ .. code-block:: shell
+ 
+  # Handle options
+  AUTO=0
+  while [ "$#" -gt 0 ]; do
+      case "${1}" in
+	  -h|--help|help)
+	      usage
+	      ;;
+	  -a|--auto)
+	      AUTO=1
+	      shift
+	      ;;
+      -*)
+          error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
+  
+       *)
+          break
+          ;;
+      esac
+  done
+  
+  # Verify parameter count
+  if [ $# -eq 0 ]; then
+      usage
+  fi
+
+This code handles any options or flags passed to the given command. Once the flags
+are parsed, an optional block checks for valid parameter counts for the command. In
+the case of ``cmd.sh``, the parameter count can be fairly large, so we simply error
+only when none are supplied.
+
+Any flags that apply to the command should immediately follow the command.
+Eg: ``bastille plugin myplugin command --flag1 --flag2...``
+
+.. code-block:: shell
+
+  TARGET="${1}"
+  shift 1
+  ERRORS=0
+
+  bastille_root_check
+  set_target "${TARGET}"
+
+Next we set the ``TARGET`` variable. If a command is to target a jail or release, it should
+be the next parameter. For example, if I want to target a jail named ``nextcloud`` with my
+plugin, and use ``-a|--auto`` mode, we would run the
+following: ``bastille plugin myplugin plugincmd --auto nextcloud...``.
+
+The ``set_target`` function takes a single parameter and validates the target exists, then
+exports it into two variable called ``TARGET`` and ``JAILS``. The reason we have two, is for
+reasons shown in the following code block.
+
+Once you have set the target, you can use ``TARGET`` and ``JAILS`` in your command.
+
+.. code-block:: shell
+
+  for jail in ${JAILS}; do
+
+      # Validate jail state
+      check_target_is_running "${jail}" || if [ "${AUTO}" -eq 1 ]; then
+          bastille start "${jail}"
+      else
+          info 1 "\n[${jail}]:"
+          error_notify "Jail is not running."
+          error_continue "Use [-a|--auto] to auto-start the jail."
+      fi
+  
+      info 1 "\n[${jail}]:"
+  
+      check_fib "${jail}"
+      # Allow executing commands on linux jails
+      if grep -qw "linsysfs" "${bastille_jailsdir}/${jail}/fstab"; then
+          ${SETFIB} jexec -l -u root "${jail}" "$@"
+      else
+          ${SETFIB} jexec -l -U root "${jail}" "$@"
+      fi
+  
+      if [ "$?" -ne 0 ]; then
+          ERRORS=$((ERRORS + 1))
+      fi
+  
+  done
+
+  if [ "${ERRORS}" -ne 0 ]; then
+      error_exit "[ERROR]: Command failed on ${ERRORS} jails."
+  fi
+
+The last block of code in the ``cmd.sh`` command runs any code inside each jail
+in the ``JAILS`` variable. ``JAILS`` can contain more than one jail, which is why
+we do the for loop. There is also a ``set_target_single`` function that will set
+only a single target. This goes into the ``TARGET`` parameter.
+
+The ``set_target*`` functions only apply to jails, not releases.
+
 Building a Plugin
 -----------------
 
@@ -116,22 +247,26 @@ same way Bastille does.
 Example Plugin
 --------------
 
-An example plugin is provided here. We will call this plugin ``vm``.
+An example plugin is provided here. We will call this plugin ``custom-restart``.
 
-Inside ``${bastille_sharedir}/plugins/vm`` we have a single file called ``list.sh`` which
+Inside ``${bastille_sharedir}/plugins/custom-restart`` we have a single file called ``restart.sh`` which
 contains the following code:
 
 .. code-block:: shell
 
   #!/bin/sh
 
-  vm_list() {
-      bastille list
-      vm list
-  }
+  TARGET="${1}"
+  set_target "${TARGET}"
 
-I can this command with ``bastille plugin vm list`` and it will output ``bastille list`` followed
-by ``vm list``. Users familiar with ``vm-bhyve`` will know what it would look like.
+  for jail in ${JAILS}; do
+    bastille restart ${jail}
+	info 1 "\nSuccessfully restarted ${jail}, moving to the next one..."
+  done
+
+I can this command with ``bastille plugin custom-restart ALL``. ``ALL`` here is the target, and
+Bastille will target all jail in this case. To target only select jails, we can
+run ``bastille plugin custom-restart 'jail1 jail2 jail3'``.
 
 One of the first plugins Bastille supports is found at ``https://github.com/usenix17/bastille-vm-plugin``.
 
