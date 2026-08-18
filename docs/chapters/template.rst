@@ -177,7 +177,7 @@ Special Hook Cases
 escape it. Escaping it will cause errors.
 
 Passing ARG Values From a File
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 When a template declares a lot of ``ARG`` values, listing them all on the
 command line with repeated ``--arg NAME=VALUE`` flags becomes unwieldy. The

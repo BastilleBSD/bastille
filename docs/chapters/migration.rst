@@ -34,18 +34,8 @@ If you want to use password based authentication, simply run
 password for the remote system, which Bastille will then use during the migration
 process.
 
-<<<<<<< HEAD:docs/chapters/migration.rst
-<<<<<<< HEAD:docs/chapters/migration/bastille.rst
-Migrating a Jail
-^^^^^^^^^^^^^^^^
-=======
 Migration
 ^^^^^^^^^
->>>>>>> parent of 254e4fbf (organize docs, add plugin docs):docs/chapters/migration.rst
-=======
-Migrating a Bastille Jail
-^^^^^^^^^^^^^^^^^^^^^^^^^
->>>>>>> parent of 1f94526e (Rework some sphinx stuff):docs/chapters/migration/bastille.rst
 
 To migrate a jail (or multiple jails) we can simply run
 ``bastille migrate TARGET USER@HOST``. This will export the jail(s), send them

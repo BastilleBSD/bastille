@@ -17,17 +17,24 @@ https://docs.bastillebsd.org.
    :maxdepth: 2
    :caption: Contents:
 
-   chapters/overview/index
-   chapters/configuration/index
-   chapters/releases/index
-   chapters/jails/index
-   chapters/networking/index
-   chapters/updating/index
-   chapters/migration/index
-   chapters/templates/index
-   chapters/zfs/index
-   chapters/advanced/index
+   chapters/comparing
+   chapters/installation
+   chapters/getting-started
+   chapters/configuration
+   chapters/targeting
    chapters/subcommands/index
+   chapters/usage
+   chapters/networking
+   chapters/gcp
+   chapters/upgrading
+   chapters/migration
+   chapters/centralized-assets
+   chapters/template
+   chapters/hardened-bsd
+   chapters/linux-jails
+   chapters/pkgbase
+   chapters/zfs-support
+
    copyright
 
 Note: this documentation is included with the source code in ``docs``.
