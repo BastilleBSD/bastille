@@ -11,6 +11,11 @@ Some basic things need to be in place in order to run a plugin.
 You can either manually build a plugin, or place it on a remote repo (only
 Github for now) to be easily bootstrapped to any system.
 
+.. attention::
+
+   Plugins are an experiemntal feature, and might be removed in a future
+   version of bastille.
+
 Plugin Structure
 ----------------
 
