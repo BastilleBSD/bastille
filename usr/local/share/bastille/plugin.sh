@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille plugin [option(s)] PLUGIN ARGS"
+    error_notify "Usage: bastille plugin [option(s)] PLUGIN COMMAND ARGS"
     exit 1
 }
 
