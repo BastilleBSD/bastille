@@ -65,6 +65,8 @@ run ``bastille create --help``.
   Use "bastille -c|--config FILE COMMAND" to specify a non-default config file.
   Use "bastille -v|--version" for version information.
   Use "bastille -q|--quiet COMMAND" to supress Bastille-specific output.
+  Use "bastille -j|--json COMMAND" for JSON output (on supported commands).
+  Use "bastille -p|--pretty COMMAND" for indented JSON output (implies --json).
   Use "bastille -x|--debug COMMAND" to enable debug mode.
 
 Bastille also has some top level options available, and each one has a brief description
