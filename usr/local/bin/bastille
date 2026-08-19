@@ -32,7 +32,8 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=-
+BASTILLE_VERSION=1.4.4
+export BASTILLE_VERSION # needed to check min_version in plugins
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -104,6 +105,7 @@ Available Commands:
   mount       Mount file(s)/directorie(s) inside jail(s).
   network     Add or remove interface(s) from jail(s).
   pkg         Manage packages inside jail(s). See pkg(8).
+  plugin      Run a custom Bastille plugin.
   rcp         Copy file(s)/directorie(s) from jail to host.
   rdr         Redirect host port to jail port.
   rename      Rename a jail.
@@ -225,7 +227,7 @@ fi
 
 # Handle sub-commands
 case "${CMD}" in
-    # 39 total commands
+    # 40 total commands
     bootstrap) ;;
     clone) ;;
     cmd) ;;
@@ -254,6 +256,9 @@ case "${CMD}" in
         CMD="network"
         ;;
     pkg) ;;
+    p|plugin)
+        CMD="plugin"
+        ;;
     rcp) ;;
     rdr) ;;
     rename) ;;
@@ -299,5 +304,5 @@ if [ -f "${SCRIPTPATH}" ]; then
     : "${SH:=sh}"
     exec ${SH} ${BASTILLE_DEBUG} "${SCRIPTPATH}" "$@"
 else
-    error_exit "${SCRIPTPATH} not found."
+    error_exit "[ERROR]: Command not found: ${SCRIPTPATH}"
 fi

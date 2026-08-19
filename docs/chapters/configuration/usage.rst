@@ -71,4 +71,3 @@ run ``bastille create --help``.
 
 Bastille also has some top level options available, and each one has a brief description
 of what it does. For more information, run ``man bastille``.
-
