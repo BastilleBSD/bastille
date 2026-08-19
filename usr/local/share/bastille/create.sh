@@ -256,8 +256,6 @@ validate_netif() {
                 error_exit "[ERROR]: Interface '${bastille_jail_conf_interface}' is already a member of bridge: ${bridge}"
             fi
         done
-    else
-        info 1 "\nValid interface: ${bastille_jail_conf_interface}"
     fi
 
     # Don't allow dots in INTERFACE for -V|--vnet jails
@@ -266,6 +264,9 @@ validate_netif() {
             error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
         fi
     fi
+
+    # If all is good, report valid
+    info 1 "\nValid interface: ${bastille_jail_conf_interface}"
 }
 
 generate_minimal_conf() {
