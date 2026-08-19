@@ -63,6 +63,49 @@ shift 2
 
 bastille_root_check
 
+# Dotted prefix only: "1.4.4-plugins-abc" -> "1.4.4"
+plugin_dotted_version() {
+    echo "${1}" | grep -Eo '^[0-9]+(\.[0-9]+)*'
+}
+
+# True if $1 < $2 as major.minor.patch (missing fields = 0).
+plugin_version_lt() {
+    awk -v a="${1}" -v b="${2}" 'BEGIN {
+        split(a, A, ".")
+        split(b, B, ".")
+        for (i = 1; i <= 3; i++) {
+            if (A[i] + 0 < B[i] + 0) exit 0
+            if (A[i] + 0 > B[i] + 0) exit 1
+        }
+        exit 1
+    }'
+}
+
+check_plugin_min_version() {
+    local required="${1}"
+    local need have
+
+    if [ -z "${required}" ]; then
+        warn 1 "[WARNING]: Manifest 'min_version' field is empty. Continuing without it..."
+        return 0
+    fi
+
+    need="$(plugin_dotted_version "${required}")"
+    have="$(plugin_dotted_version "${BASTILLE_VERSION}")"
+
+    if [ -z "${need}" ]; then
+        warn 1 "[WARNING]: Manifest 'min_version' is not a dotted version: ${required}. Continuing without it..."
+        return 0
+    fi
+    if [ -z "${have}" ]; then
+        warn 1 "[WARNING]: Cannot parse Bastille version '${BASTILLE_VERSION}' for min_version check. Continuing without it..."
+        return 0
+    fi
+    if plugin_version_lt "${have}" "${need}"; then
+        error_exit "[ERROR]: Bastille version ${have} is lower than the plugin required version ${need}."
+    fi
+}
+
 bootstrap_plugin() {
 
     local plugin_url="${1}"
@@ -88,14 +131,7 @@ bootstrap_plugin() {
         local min_version="$(sysrc -f "${manifest}" -n min_version 2>/dev/null)"
         local depends_kmods="$(sysrc -f "${manifest}" -n depends_kmods 2>/dev/null)"
         local depends_pkgs="$(sysrc -f "${manifest}" -n depends_pkgs 2>/dev/null)"
-        # Validate plugin version against Bastille version
-        if [ -n "${min_version}" ] && echo "${min_version}" | sed 's/\.//g' | grep -Eoq '^[0-9]+$'; then
-            if [ "$(echo "${min_version}" | sed 's/\.//g')" -gt "$(bastille version | sed 's/\.//g')" ]; then
-                error_exit "[ERROR]: Bastille version is lower than the plugins required version."
-            fi
-        else
-            warn 1 "[WARNING]: Manifest 'min_version' field is empty. Continuing without it..."
-        fi
+        check_plugin_min_version "${min_version}"
     fi
     rm "${manifest}"
     # Validate git command
