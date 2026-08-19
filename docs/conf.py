@@ -46,7 +46,6 @@ html_theme_options = {
     'prev_next_buttons_location': 'bottom',
     'sticky_navigation': True,
     'style_external_links': False,
-    'style_nav_header_background': 'white',
     'theme_switcher': True,
     'default_mode': 'auto',
     'titles_only': False,
