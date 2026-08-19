@@ -69,7 +69,9 @@ json_record() {
         pairs=$(( $# / 2 ))
         i=0
         while [ "${i}" -lt "${pairs}" ]; do
-            [ "${1}" = "name" ] && jname="${2}"
+            # First name only — later duplicates (e.g. config get name) are
+            # dropped, so jid must match the value that will actually be emitted.
+            [ "${1}" = "name" ] && [ -z "${jname}" ] && jname="${2}"
             set -- "$@" "${1}" "${2}"
             shift 2
             i=$(( i + 1 ))
