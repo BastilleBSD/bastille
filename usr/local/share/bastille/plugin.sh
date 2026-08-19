@@ -134,6 +134,9 @@ bootstrap_plugin() {
         check_plugin_min_version "${min_version}"
     fi
     rm "${manifest}"
+    if ! echo "${name}" | grep -Eoq '^[A-Za-z0-9_-]+$'; then
+        error_exit "[ERROR]: Invalid plugin name: ${name}"
+    fi
     # Validate git command
     if ! which -s git; then
         error_exit "[ERROR]: Git not found."
