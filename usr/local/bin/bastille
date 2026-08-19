@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.4.4
+BASTILLE_VERSION=-
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -156,8 +156,10 @@ bastille_perms_check
 
 # Handle options
 [ -z "${BASTILLE_QUIET}" ] && export BASTILLE_QUIET=0
-[ -z "${BASTILLE_JSON}" ] && export BASTILLE_JSON=0
-[ -z "${BASTILLE_JSON_PRETTY}" ] && export BASTILLE_JSON_PRETTY=0
+# Nested `bastille list` (from set_target) must not inherit -j from the
+# parent: the allowlist would reject it and target resolution would fail.
+export BASTILLE_JSON=0
+export BASTILLE_JSON_PRETTY=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -c|--config)
@@ -276,14 +278,13 @@ case "${CMD}" in
         ;;
 esac
 
-# Reject JSON output for commands that cannot produce it: interactive
-# (console, edit, top, htop), or passthrough/streaming commands whose output
-# belongs to the wrapped tool (cmd, pkg, service, sysrc, migrate, template).
-# Goes through error_exit so the client gets .bastille.error on stdout
-# and the same text on stderr (quiet no longer swallows errors under -j).
+# Only config get is wired to the JSON helpers. Accepting -j on anything
+# else (start/stop/…) just implies quiet and leaks human usage/status
+# onto stdout. Allowlist; add a command here when it grows a json_open.
 if [ "${BASTILLE_JSON}" -eq 1 ]; then
     case "${CMD}" in
-        console|edit|top|htop|cmd|pkg|service|sysrc|migrate|template)
+        config) ;;
+        *)
             error_exit "[ERROR]: '${CMD}' does not support JSON output (-j|--json)."
             ;;
     esac

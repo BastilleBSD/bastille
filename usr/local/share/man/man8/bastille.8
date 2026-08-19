@@ -41,11 +41,11 @@ inside the
 .Ql bastille
 envelope so API clients can parse stdout instead of scraping stderr;
 the process exits 1.
-Interactive and passthrough sub-commands
-.Po
-.Sy console , edit , top , htop , cmd , pkg , service , sysrc , migrate , template
-.Pc
-do not support JSON output and exit with an error when it is requested.
+Currently only
+.Sy config get
+emits JSON; every other sub-command exits with an error when
+.Fl j
+is requested.
 Must be placed before the sub-command.
 .It Fl p , Fl -pretty
 Emit indented (pretty) JSON output. Implies
