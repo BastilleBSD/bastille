@@ -12,8 +12,9 @@ The first command a new user should run is ``bastille setup``. This
 will configure the networking, storage, and firewall on your system
 for use with Bastille.
 
-By default the ``bastille setup`` will configure a loopback interface, storage (ZFS if
-enabled, otherwise UFS) and the ``pf`` firewall.
+By default the ``bastille setup`` command will configure a loopback
+interface, storage (ZFS if enabled, otherwise UFS) and the ``pf`` firewall. The
+firewall is necessary for NAT jails to be able to reach the internet.
 
 Alternatively, you can run ``bastille setup OPTION`` command with any of the supported
 options to configure the selected option by itself.
@@ -36,7 +37,9 @@ To bootstrap a release, run ``bastille bootstrap RELEASE``.
   ishmael ~ # bastille bootstrap 14.2-RELEASE
 
 This will fetch the necessary components of the specified release, and
-enable us to create jails from the downloaded release.
+enable us to create jails from the downloaded release. Use the ``-p`` option
+to bootstrap a release using pkgbase.
+See :doc:`/chapters/releases`.
 
 Creating a Jail
 ---------------
@@ -45,30 +48,34 @@ There are a few different types of jails we can create, described below.
 
 * Thin jails are the default, and are called thin because they use symlinks to
   the bootstrapped release. They are lightweight and are created quickly.
+  See :doc:`/chapters/jails/thin-jail`.
 
 * Thick jails use the entire release, which is copied into the jail. The jail
   then acts like a full BSD install, completely independent of the release.
   Created with the ``--thick|-T`` option.
+  See :doc:`/chapters/jails/thick-jail`.
 
 * Clone jails are essentially clones of the bootstrapped release. Changes to the
   release will affect the clone jail. Created with the ``--clone|-C`` option.
+  See :doc:`/chapters/jails/clone-jail`.
 
 * Empty jails are just that, empty. These should be used only if you know what
   you are doing. Created with the ``--empty|-E`` option.
+  See :doc:`/chapters/jails/empty-jail`.
 
 * Linux jails are jails that run linux. Created with the ``--linux|-L`` option.
-  See :doc:`/chapters/linux-jails`.
+  See :doc:`/chapters/jails/linux-jail`.
 
 We will focus on thin jails for this guide.
 
-Classic/Standard Jail
-^^^^^^^^^^^^^^^^^^^^^
+NAT Jail
+^^^^^^^^
 
 .. code-block:: shell
 
   ishmael ~ # bastille create nextcloud 14.2-RELEASE 10.1.1.4/24
 
-This will create a classic jail, which uses the loopback interface
+This will create a NAT jail, which uses the loopback interface
 (created with ``bastille setup``) for outbound connections.
 
 To be able to reach a service inside the jail, use ``bastille rdr``.
@@ -78,7 +85,7 @@ To be able to reach a service inside the jail, use ``bastille rdr``.
   ishmael ~ # bastille rdr nextcloud tcp 80 80
 
 This will forward traffic from port 80 on the host to port 80 inside the jail.
-See also :doc:`/chapters/subcommands/rdr`.
+See also :doc:`/chapters/networking/rdr`.
 
 VNET Jail
 ^^^^^^^^^
@@ -98,4 +105,7 @@ or
   ishmael ~ # bastille create -VM nextcloud 14.2-RELEASE 192.168.1.50/24 vtnet0
 
 The IP used for VNET jails should be an IP reachable inside your local network.
-You can also specify 0.0.0.0 or DHCP to use DHCP.
+You can also specify DHCP to use DHCP from your network gateway/router.
+
+That't it. Your first jail is up and running. You are now free
+to ``bastille console nextcloud`` to enter the jail and begin configuring it.

@@ -13,22 +13,22 @@ To install from the FreeBSD package repository:
 * latest repository will match recent ports
 
 
-pkg
----
+pkg:
+----
 
 .. code-block:: shell
 
   pkg install bastille
 
-ports
------
+ports:
+------
 
 .. code-block:: shell
 
   make -C /usr/ports/sysutils/bastille install clean
 
-git
----
+git:
+----
 
 .. code-block:: shell
 
