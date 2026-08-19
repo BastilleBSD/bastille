@@ -49,6 +49,8 @@ json_open() {
     [ "${BASTILLE_JSON_PRETTY}" -eq 1 ] && BASTILLE_JSON_P="--pretty"
     BASTILLE_JSON_ENTITY="${1}"
     BASTILLE_JSON_FIRST=1
+    BASTILLE_JSON_OPEN=1
+    BASTILLE_JSON_DONE=0
     xo ${BASTILLE_JSON_P} --json --top-wrap --open bastille
     xo ${BASTILLE_JSON_P} --json --depth 2 "{:type}" "${BASTILLE_JSON_ENTITY}"
     xo ${BASTILLE_JSON_P} --json --not-first --depth 2 --open-list "${BASTILLE_JSON_ENTITY}"
@@ -127,9 +129,45 @@ json_record() {
     BASTILLE_JSON_FIRST=0
 }
 
+json_error() {
+    # json_error <message>
+    #
+    # Request-level failures must be machine-readable: APIs parse stdout
+    # and ignore stderr. Keep one schema — a sibling .bastille.error
+    # object — not libxo's standalone {"error":...} document, which would
+    # force clients to handle two shapes. The object is never an array so
+    # it cannot collide with an entity list keyed "error".
+    [ "${BASTILLE_JSON:-0}" -eq 1 ] || return 0
+    [ "${BASTILLE_JSON_DONE:-0}" -eq 1 ] && return 0
+    BASTILLE_JSON_P=""
+    [ "${BASTILLE_JSON_PRETTY:-0}" -eq 1 ] && BASTILLE_JSON_P="--pretty"
+    if [ "${BASTILLE_JSON_OPEN:-0}" -eq 1 ]; then
+        # Document already open: close the entity list (empty or
+        # partial) and attach error as a sibling so any records already
+        # emitted stay in the array.
+        xo ${BASTILLE_JSON_P} --json --not-first --depth 2 --close-list "${BASTILLE_JSON_ENTITY}"
+    else
+        # Nothing opened yet. type=error and skip the list — a list
+        # keyed "error" would collide with the error object.
+        xo ${BASTILLE_JSON_P} --json --top-wrap --open bastille
+        xo ${BASTILLE_JSON_P} --json --depth 2 "{:type}" error
+    fi
+    xo ${BASTILLE_JSON_P} --json --not-first --depth 2 --open error
+    xo ${BASTILLE_JSON_P} --json --depth 3 "{:message}" "${1}"
+    xo ${BASTILLE_JSON_P} --json --depth 2 --close error
+    xo ${BASTILLE_JSON_P} --json --top-wrap --close bastille
+    BASTILLE_JSON_DONE=1
+    BASTILLE_JSON_OPEN=0
+}
+
 json_close() {
     # json_close  ->  closes ]}}
     [ "${BASTILLE_JSON}" -eq 1 ] || return 0
+    # json_error already closed the document so the envelope is valid
+    # before we exit 1; do not emit a second closer.
+    [ "${BASTILLE_JSON_DONE:-0}" -eq 1 ] && return 0
     xo ${BASTILLE_JSON_P} --json --not-first --depth 2 --close-list "${BASTILLE_JSON_ENTITY}"
     xo ${BASTILLE_JSON_P} --json --top-wrap --close bastille
+    BASTILLE_JSON_DONE=1
+    BASTILLE_JSON_OPEN=0
 }

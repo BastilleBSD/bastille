@@ -119,6 +119,10 @@ set_target() {
                     fi
                 else
                     echo
+                    # error_continue already printed the ambiguous match;
+                    # still emit .bastille.error so a -j client is not left
+                    # with empty stdout.
+                    json_error "[ERROR]: Multiple jails match the target."
                     exit 1
                 fi
             fi
@@ -127,6 +131,9 @@ set_target() {
         done
         # Exit if no jails
         if [ -z "${TARGET}" ] && [ -z "${JAILS}" ]; then
+            # Per-target error_continue already wrote stderr; this is the
+            # request-level failure when nothing resolved.
+            json_error "[ERROR]: Jail not found: ${target}"
             exit 1
         fi
         if [ "${order}" = "forward" ]; then
@@ -162,6 +169,7 @@ set_target_single() {
                 error_exit "[ERROR]: Jail not found: ${target}"
             else
                 echo
+                json_error "[ERROR]: Multiple jails match the target."
                 exit 1
             fi
     fi
@@ -169,6 +177,7 @@ set_target_single() {
     JAILS="${target}"
     # Exit if no jails
     if [ -z "${target}" ] && [ -z "${jails}" ]; then
+        json_error "[ERROR]: Jail not found: ${target}"
         exit 1
     fi
     export TARGET
@@ -185,6 +194,7 @@ target_all_jails() {
     done
     # Exit if no jails
     if [ -z "${JAILS}" ]; then
+        json_error "[ERROR]: No jails found."
         exit 1
     fi
     if [ "${order}" = "forward" ]; then

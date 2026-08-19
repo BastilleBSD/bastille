@@ -67,6 +67,11 @@ bastille_perms_check() {
 }
 
 usage() {
+    # Help text is human-only; dumping it on stdout under -j would
+    # break API clients that always parse stdout as the envelope.
+    if [ "${BASTILLE_JSON:-0}" -eq 1 ]; then
+        error_exit "[ERROR]: Missing or invalid command."
+    fi
     cat << EOF
 	
 Bastille is an open-source system for automating deployment and management of
@@ -274,13 +279,12 @@ esac
 # Reject JSON output for commands that cannot produce it: interactive
 # (console, edit, top, htop), or passthrough/streaming commands whose output
 # belongs to the wrapped tool (cmd, pkg, service, sysrc, migrate, template).
-# Printed directly (not error_notify) so the messaeg is not swallowed by the
-# quiet mode that --json implies.
+# Goes through error_exit so the client gets .bastille.error on stdout
+# and the same text on stderr (quiet no longer swallows errors under -j).
 if [ "${BASTILLE_JSON}" -eq 1 ]; then
     case "${CMD}" in
         console|edit|top|htop|cmd|pkg|service|sysrc|migrate|template)
-            printf "%b\n" "[ERROR]: '${CMD}' does not support JSON output (-j|--json)." >&2
-            exit 1
+            error_exit "[ERROR]: '${CMD}' does not support JSON output (-j|--json)."
             ;;
     esac
 fi

@@ -52,6 +52,16 @@ itself (``securelevel`` here). The sibling ``type`` repeats the array key
 (``jail``) so a consumer can read ``.bastille.type`` and index into
 ``.bastille[.type]`` without knowing the command.
 
+A request-level failure (unknown jail, unsupported property, missing
+arguments) still prints on stderr and also emits a sibling ``error``
+object so an API client can read ``.bastille.error.message`` instead of
+scraping stderr. The process exits 1:
+
+.. code-block:: shell
+
+  ishmael ~ # bastille -j config nosuch get ip4.addr
+  {"bastille": {"type":"error", "error": {"message":"[ERROR]: Jail not found: nosuch"}}}
+
 .. code-block:: shell
 
   ishmael ~ # bastille -p config alcatraz get securelevel
