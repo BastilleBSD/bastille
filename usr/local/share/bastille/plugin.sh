@@ -151,8 +151,10 @@ case "${PLUGIN}" in
     *)
         if [ -z "${PLUGIN_CMD}" ]; then
             usage
+        elif ! echo "${PLUGIN}" | grep -Eoq '^[A-Za-z0-9_-]+$'; then
+            error_exit "[ERROR]: Invalid characters in plugin: ${PLUGIN}"
         elif ! echo "${PLUGIN_CMD}" | grep -Eoq '^[A-Za-z0-9_-]+$'; then
-            error_exit "[ERROR#]: Invalid characters in plugin command: ${PLUGIN_CMD}"
+            error_exit "[ERROR]: Invalid characters in plugin command: ${PLUGIN_CMD}"
         fi
         check_plugin_exists "${PLUGIN}"
         ;;
