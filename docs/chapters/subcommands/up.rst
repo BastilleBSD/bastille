@@ -35,12 +35,15 @@ specify an IP for the jail, add the following:
 
 This will create the jail with the specified IP.
 
+For the ``up`` sub-command, Bastille will look for a ``.env`` file in ``${PWD}``, and if present, will
+use any environment variables inside it for the deployment of the OCI image.
+
 .. attention::
 
    The ``up`` sub-command is highly experimental and might be removed in a future
    version of Bastille.
 
-See :doc:`/chapters/jails/jail-types`
+See also :doc:`/chapters/jails/jail-types`
 
 .. code-block:: shell
 

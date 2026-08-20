@@ -196,3 +196,5 @@ Logging
 
 Bastille save OCI image logs to ``${bastille_logsdir}/${jail}/oci.log``. Use ``bastille logs jailname oci``
 to view them.
+
+See also :doc:`/chapters/subcommands/up`
