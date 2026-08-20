@@ -1,31 +1,24 @@
-.Dd December 6, 2025
-.Dt bastille-cp 8
+.Dd August 20, 2026
+.Dt bastille-up 8
 .Os
 .Sh NAME
-.Nm bastille cp
-.Nd Copy file(s)/directorie(s) from host to jail(s).
+.Nm bastille up
+.Nd Deploy an OCI jail from a podman-compose.yml file.
 .Sh SYNOPSIS
-.Nm bastille cp
-.Op Fl q
-.Ar TARGET HOST_PATH JAIL_PATH
+.Nm bastille up
+.Op Fl -data-path
 .Sh DESCRIPTION
 The
-.Nm bastille cp
-sub-command will copy
-.Ar HOST_PATH
-to
-.Ar JAIL_PATH
-inside
-.Ar TARGET .
+.Nm bastille up
+sub-command will attempt to parse a podman-compose.yml
+file and deploy and services inside it.
 .Bl -tag -width Ds
-.It Fl q , -quiet
-Suppress output.
+.It Fl -data-path
+Override path to persistent data.
 .Sh EXAMPLES
 .Bl -tag -width Ds
-.It Copy /etc/resolv.conf into myjail:
-.Sy bastille cp myjail /etc/resolv.conf /etc/resolv.conf
-.It Copy /etc into myjail quietly:
-.Sy bastille cp -q myjail /etc /etc
+.It Deploy audiobookshelf from /usr/local/projects/audiobookshelf:
+.Sy cd /usr/local/projects/audiobookshelf && bastille up
 .Sh SEE ALSO
 .Xr bastille.conf 5 ,
 .Xr bastille-bootstrap 8 ,
@@ -34,6 +27,7 @@ Suppress output.
 .Xr bastille-config 8 ,
 .Xr bastille-console 8 ,
 .Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
 .Xr bastille-create 8 ,
 .Xr bastille-destroy 8 ,
 .Xr bastille-edit 8 ,
@@ -64,7 +58,6 @@ Suppress output.
 .Xr bastille-template 8 ,
 .Xr bastille-top 8 ,
 .Xr bastille-umount 8 ,
-.Xr bastille-up 8 ,
 .Xr bastille-update 8 ,
 .Xr bastille-upgrade 8 ,
 .Xr bastille-verify 8 ,

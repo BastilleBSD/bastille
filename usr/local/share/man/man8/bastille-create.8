@@ -6,9 +6,12 @@
 .Nd Create a jail.
 .Sh SYNOPSIS
 .Nm bastille create
-.Op Fl BCDELMPTVv
+.Op Fl BCDELMOPTVv
+.Op Fl -data-path Ar PATH
+.Op Fl e Ar KEY=VALUE
 .Op Fl g Ar IP
 .Op Fl n Ar IP,IP
+.Op fl -os Ar OS
 .Op Fl p Ar VALUE
 .Op Fl v Ar VALUE
 .Op Fl Z Ar VALUE
@@ -32,12 +35,16 @@ must be a bridge.
 This option is for use with manually created bridges.
 .It Fl C , -clone
 Create a clone jail (ZFS only).
+.It Fl -data-path Ar PATH
+Override path to persistent data (OCI only).
 .Pp
 These are simply zfs clones of the release.
 .It Fl D , -dual
 Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
 .Pp
 This option is only supported for non-VNET jails.
+.It fl e Ar KEY=VALUE , -env Ar KEY=VALUE
+Specify additinal environment variables (OCI only).
 .It Fl E , -empty
 Create an empty jail (NAME only).
 .Pp
@@ -69,6 +76,10 @@ a known index of official release names. Set this option to bypass that.
 Useful in the case of an unknown release, or releases create using 'bastille
 convert'. See
 .Xr bastille-convert 8 .
+.It Fl -os Ar OS
+Specify an alternative OS type (OCI only).
+.It Fl O , -oci
+Create an OCI jail (experimental).
 .It Fl P , -passthrough
 Enable VNET.
 .Ar INTERFACE
@@ -147,6 +158,7 @@ in
 .Xr bastille-jcp 8 ,
 .Xr bastille-limits 8 ,
 .Xr bastille-list 8 ,
+.Xr bastille-logs 8 ,
 .Xr bastille-migrate 8 ,
 .Xr bastille-monitor 8 ,
 .Xr bastille-mount 8 ,
@@ -166,6 +178,7 @@ in
 .Xr bastille-template 8 ,
 .Xr bastille-top 8 ,
 .Xr bastille-umount 8 ,
+.Xr bastille-up 8 ,
 .Xr bastille-update 8 ,
 .Xr bastille-upgrade 8 ,
 .Xr bastille-verify 8 ,

@@ -44,8 +44,8 @@ usage() {
     -C | --clone                    Create a clone jail (ZFS only).
          --data-path PATH           Override path to persistent data (OCI only).
     -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
-    -E | --empty                    Create an empty jail (NAME only).
     -e | --env KEY=VALUE            Specify additinal environment variables (OCI only).
+    -E | --empty                    Create an empty jail (NAME only).
     -g | --gateway IP               Specify a default router/gateway.
     -L | --linux                    Create a Linux jail (experimental).
     -M | --static-mac               Use a static/persistent MAC address (VNET only).
@@ -53,8 +53,8 @@ usage() {
          --no-boot                  Set boot=off.
          --no-validate              Do not validate the release name.
          --no-ip                    Create jail without an ip (VNET only).
-    -O | --oci                      Create an OCI-image jail (experimental).
          --os OS                    Specify an alternative OS type (OCI only).
+    -O | --oci                      Create an OCI jail (experimental).
     -P | --passthrough              Enable VNET. INTERFACE is used as-is.
     -p | --priority VALUE           Set priority value.
     -T | --thick                    Create a thick jail.
@@ -651,8 +651,10 @@ create_jail() {
                 echo "${oci_volume_host} ${bastille_jail_path}${oci_volume_path} nullfs rw 0 0" >> "${bastille_jail_fstab}"
             done
         fi
-        if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ]; then
-            chown -R "${OCI_PUID}:${OCI_PGID}" "${OCI_DATA_PATH}"
+        if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ; then
+            if ! echo "${OCI_DATA_PATH}" | grep -Eoq '^/$'; then
+                chown -R "${OCI_PUID}:${OCI_PGID}" "${OCI_DATA_PATH}"
+            fi
         fi
 
         if [ ! -f "${bastille_jail_conf}" ]; then

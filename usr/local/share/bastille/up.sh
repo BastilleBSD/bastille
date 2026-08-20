@@ -38,7 +38,7 @@ usage() {
 	
     Options:
 
-    -d | --data-path PATH     Override path to persistent data (OCI only).
+    -d | --data-path PATH     Override path to persistent data.
 
 EOF
     exit 1
