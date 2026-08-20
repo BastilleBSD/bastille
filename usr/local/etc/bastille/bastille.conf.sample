@@ -2,15 +2,15 @@
 ## [ BastilleBSD ] ##
 #####################
 
-## Default paths
+## Default Paths
 bastille_prefix="/usr/local/bastille"                                 ## default: "/usr/local/bastille"
 bastille_backupsdir="${bastille_prefix}/backups"                      ## default: "${bastille_prefix}/backups"
 bastille_cachedir="${bastille_prefix}/cache"                          ## default: "${bastille_prefix}/cache"
 bastille_jailsdir="${bastille_prefix}/jails"                          ## default: "${bastille_prefix}/jails"
+bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
 bastille_releasesdir="${bastille_prefix}/releases"                    ## default: "${bastille_prefix}/releases"
 bastille_templatesdir="${bastille_prefix}/templates"                  ## default: "${bastille_prefix}/templates"
 bastille_volumesdir="${bastille_prefix}/volumes"                      ## default: "${bastille_prefix}/volumes"
-bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
 
 ## PF firewall configuration path
 bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
@@ -46,7 +46,7 @@ bastille_bootstrap_archives="base"                                    ## default
 ## bastille_pkgbase_packages="base-jail lib32-dbg src"
 bastille_pkgbase_packages="base-jail"                                 ## default: "base-jail"
 
-## Default timezone
+## Timezone
 bastille_tzdata=""                                                    ## default: empty to use host's time zone
 
 ## Default jail resolv.conf
@@ -57,13 +57,13 @@ bastille_url_freebsd="http://ftp.freebsd.org/pub/FreeBSD/releases/"             
 bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/"                   ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
 bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"     ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
-## ZFS options
+## ZFS
 bastille_zfs_enable="NO"                                              ## default: "NO"
 bastille_zfs_zpool=""                                                 ## default: ""
 bastille_zfs_prefix="bastille"                                        ## default: "bastille"
 bastille_zfs_options="-o compress=on -o atime=off"                    ## default: "-o compress=on -o atime=off"
 
-## Export/Import options
+## Export/Import
 bastille_compress_xz_options="-0 -v"                                  ## default "-0 -v"
 bastille_decompress_xz_options="-c -d -v"                             ## default "-c -d -v"
 bastille_compress_gz_options="-1 -v"                                  ## default "-1 -v"

@@ -6,7 +6,7 @@ The ``bastillle logs`` subcommand will show either console logs, or oci containe
 There is also the option to view live logs.
 
 By default, only the tail end of the logs are shown. Use ``-f|--full`` to view the
-entire file.
+entire file, and ``-l|--live`` for live logs.
 
 .. code-block:: shell
 

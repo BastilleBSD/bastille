@@ -76,6 +76,6 @@ options. See the below help output.
       -p | --priority VALUE           Set priority value.
            --tags TAG1,TAG2           Apply specified tag(s) to jail. Comma-separated.
       -T | --thick                    Create a thick jail.
-      -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
       -v | --vlan VLANID              Set VLAN ID (VNET only).
+      -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
       -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.

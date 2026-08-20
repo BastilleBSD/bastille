@@ -1,26 +1,32 @@
 .Dd August 20, 2026
-.Dt bastille-up 8
+.Dt bastille-logs 8
 .Os
 .Sh NAME
-.Nm bastille up
-.Nd Deploy an OCI jail from a podman-compose.yml file.
+.Nm bastille logs
+.Nd List jail logs (oci and console).
 .Sh SYNOPSIS
-.Nm bastille up
-.Op Fl -data-path Ar PATH
+.Nm bastille logs
+.Op Fl fl
+.Ar TARGET
+.Ar oci|console
 .Sh DESCRIPTION
 The
-.Nm bastille up
-sub-command will attempt to parse a podman-compose.yml
-file and deploy and services inside it.
+.Nm bastille logs
+sub-command will display oci or console logs
+for the targeted jail.
 .Bl -tag -width Ds
-.It Fl -data-path Ar PATH
-Override path to persistent data.
+.It Fl f , -full
+Show full logs.
+.It Fl l , -live
+Show live logs.
 .Sh EXAMPLES
 .Bl -tag -width Ds
-.It Deploy audiobookshelf from /usr/local/projects/audiobookshelf:
-.Sy cd /usr/local/projects/audiobookshelf && bastille up
-.It Deploy audiobookshelf from /usr/local/projects/audiobookshelf but with custom path:
-.Sy cd /usr/local/projects/audiobookshelf && bastille up --data-path /usr/local/apps
+.It View full console logs for nextcloud jail:
+.Sy bastille logs -f nextcloud console
+.It View navidrome oci logs:
+.Sy bastille logs navidrome oci
+.It View opencloud oci logs (OCI jail implied):
+.Sy bastille logs -l opencloud oci
 .Sh SEE ALSO
 .Xr bastille.conf 5 ,
 .Xr bastille-bootstrap 8 ,
@@ -40,7 +46,6 @@ Override path to persistent data.
 .Xr bastille-jcp 8 ,
 .Xr bastille-limits 8 ,
 .Xr bastille-list 8 ,
-.Xr bastille-logs 8 ,
 .Xr bastille-migrate 8 ,
 .Xr bastille-monitor 8 ,
 .Xr bastille-mount 8 ,
@@ -60,6 +65,7 @@ Override path to persistent data.
 .Xr bastille-template 8 ,
 .Xr bastille-top 8 ,
 .Xr bastille-umount 8 ,
+.Xr bastille-up 8 ,
 .Xr bastille-update 8 ,
 .Xr bastille-upgrade 8 ,
 .Xr bastille-verify 8 ,

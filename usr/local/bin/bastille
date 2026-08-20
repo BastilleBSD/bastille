@@ -32,8 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.4.4
-export BASTILLE_VERSION # needed to check min_version in plugins
+export BASTILLE_VERSION=1.4.4
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -273,7 +272,9 @@ case "${CMD}" in
     start) ;;
     stop) ;;
     sysrc) ;;
-    tags) ;;
+    tag|tags)
+        CMD="tags"
+        ;;
     template) ;;
     top) ;;
     up) ;;
@@ -296,7 +297,7 @@ if [ "${BASTILLE_JSON}" -eq 1 ]; then
     case "${CMD}" in
         config) ;;
         *)
-            error_exit "[ERROR]: '${CMD}' does not support JSON output (-j|--json)."
+            error_exit "[ERROR]: Command does not support json output: ${CMD}"
             ;;
     esac
 fi
