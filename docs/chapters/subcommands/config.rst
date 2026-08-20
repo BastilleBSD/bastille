@@ -15,6 +15,17 @@ Getting a property that *is not* defined in jail.conf
   ishmael ~ # bastille config azkaban get notaproperty
   not set
 
+Getting several properties at once (comma-separated). A single property
+still prints only its value; multiple properties print a table:
+
+.. code-block:: shell
+
+  ishmael ~ # bastille config alcatraz get name,securelevel,osrelease
+  PROPERTY     VALUE
+  name         alcatraz
+  securelevel  2
+  osrelease    15.1-RELEASE
+
 Setting a property:
 
 .. code-block:: shell
@@ -78,8 +89,17 @@ scraping stderr. The process exits 1:
     }
   }
 
+Multiple properties become extra fields on the same jail object
+(``name`` is not duplicated when it is also queried):
+
+.. code-block:: shell
+
+  ishmael ~ # bastille -j config alcatraz get name,securelevel,osrelease
+  {"bastille": {"type":"jail", "jail": [{"jid":1,"name":"alcatraz","securelevel":"2","osrelease":"15.1-RELEASE"}]}}
+
 .. code-block:: shell
 
   ishmael ~ # bastille config help
   Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]
-                                            get|remove PROPERTY
+                                            get PROPERTY[,PROPERTY...]
+                                            remove PROPERTY

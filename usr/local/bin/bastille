@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.4.4
+BASTILLE_VERSION=-
 export BASTILLE_VERSION # needed to check min_version in plugins
 
 # Validate config file
