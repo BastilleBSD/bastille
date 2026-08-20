@@ -11,7 +11,7 @@
 .Op Fl e Ar KEY=VALUE
 .Op Fl g Ar IP
 .Op Fl n Ar IP,IP
-.Op fl -os Ar OS
+.Op Fl -os Ar OS
 .Op Fl p Ar VALUE
 .Op Fl v Ar VALUE
 .Op Fl Z Ar VALUE
@@ -43,7 +43,7 @@ These are simply zfs clones of the release.
 Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
 .Pp
 This option is only supported for non-VNET jails.
-.It fl e Ar KEY=VALUE , -env Ar KEY=VALUE
+.It Fl e Ar KEY=VALUE , Fl -env Ar KEY=VALUE
 Specify additinal environment variables (OCI only).
 .It Fl E , -empty
 Create an empty jail (NAME only).

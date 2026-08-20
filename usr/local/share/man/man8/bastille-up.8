@@ -6,14 +6,14 @@
 .Nd Deploy an OCI jail from a podman-compose.yml file.
 .Sh SYNOPSIS
 .Nm bastille up
-.Op Fl -data-path
+.Op Fl -data-path Ar PATH
 .Sh DESCRIPTION
 The
 .Nm bastille up
 sub-command will attempt to parse a podman-compose.yml
 file and deploy and services inside it.
 .Bl -tag -width Ds
-.It Fl -data-path
+.It Fl -data-path Ar PATH
 Override path to persistent data.
 .Sh EXAMPLES
 .Bl -tag -width Ds

@@ -244,7 +244,7 @@ ${NAME} {
   enforce_statfs = 2;
   devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
-  exec.consolelog = ${bastille_jail_log};
+  exec.consolelog = ${bastille_jail_log_console};
   exec.start = '/bin/sh /etc/rc';
   exec.stop = '/bin/sh /etc/rc.shutdown';
   host.hostname = ${NAME};
@@ -301,7 +301,7 @@ ${NAME} {
   enforce_statfs = 2;
   devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
-  exec.consolelog = ${bastille_jail_log};
+  exec.consolelog = ${bastille_jail_log_console};
   exec.start = '${EXEC_START_DEFINITION}';
   exec.stop = '${EXEC_STOP_DEFINITION}';
   host.hostname = ${NAME};
@@ -320,7 +320,7 @@ ${NAME} {
   enforce_statfs = 2;
   devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
-  exec.consolelog = ${bastille_jail_log};
+  exec.consolelog = ${bastille_jail_log_console};
   exec.start = '${EXEC_START_DEFINITION}';
   exec.stop = '${EXEC_STOP_DEFINITION}';
   host.hostname = ${NAME};
@@ -353,7 +353,7 @@ ${NAME} {
   enforce_statfs = 2;
   devfs_ruleset = ${devfs_ruleset_value};
   exec.clean;
-  exec.consolelog = ${bastille_jail_log};
+  exec.consolelog = ${bastille_jail_log_console};
   exec.start = '/bin/sh /etc/rc';
   exec.stop = '/bin/sh /etc/rc.shutdown';
   host.hostname = ${NAME};
@@ -411,7 +411,8 @@ create_jail() {
     bastille_jail_path="${bastille_jail}/root"  ## dir
     bastille_jail_fstab="${bastille_jail}/fstab"  ## file
     bastille_jail_conf="${bastille_jail}/jail.conf"  ## file
-    bastille_jail_log="${bastille_logsdir}/${NAME}_console.log"  ## file
+    bastille_jail_log_console="${bastille_logsdir}/${NAME}/console.log"  ## file
+    bastille_jail_log_oci="${bastille_logsdir}/${NAME}/oci.log"  ## file
     bastille_jail_container="${bastille_jail}/container"
     # shellcheck disable=SC2034
     bastille_jail_rc_conf="${bastille_jail_path}/etc/rc.conf" ## file
@@ -624,7 +625,7 @@ create_jail() {
 
         OCI_EXEC="$(echo "${OCI_ENTRYPOINT} ${OCI_CMD}" | sed -E 's/^ +| +$//g')"
         if [ -n "${OCI_EXEC}" ]; then
-            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_logsdir}/${NAME}_oci.log\" -p \"${bastille_jail}/${NAME}.pid\" env -i sh -c \". \"${ENV_FILE}\"; exec jexec -d \"${OCI_WORKDIR}\" \"${NAME}\" sh -c \\\'${OCI_EXEC}\\\'\""
+            EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_log_oci}\" -p \"${bastille_jail}/${NAME}.pid\" env -i sh -c \". \"${ENV_FILE}\"; exec jexec -d \"${OCI_WORKDIR}\" \"${NAME}\" sh -c \\\'${OCI_EXEC}\\\'\""
             EXEC_PRESTOP_DEFINITION="kill -${OCI_STOP_SIGNAL} \"\$\(cat "${bastille_jail}/${NAME}.pid"\) || true\""
         fi
         if [ "${OCI_OS}" = "freebsd" ]; then

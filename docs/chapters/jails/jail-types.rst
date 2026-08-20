@@ -191,6 +191,12 @@ image, it is necessary to run the command using ``--os linux`` flage. See below:
 
 This particular image works withouth issue.
 
+Logging
+^^^^^^^
+
+Bastille save OCI image logs to ``${bastille_logsdir}/${jail}/oci.log``. Use ``bastille logs jailname oci``
+to view them.
+
 Using the ``up`` Subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
