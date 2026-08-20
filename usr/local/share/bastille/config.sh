@@ -151,6 +151,7 @@ validate_property() {
     esac
 }
 
+# boot/depend/priority live in settings.conf (sysrc), not jail.conf.
 is_bastille_property() {
     case "${1}" in
         boot|depend|depends|prio|priority)
@@ -162,6 +163,7 @@ is_bastille_property() {
     esac
 }
 
+# Canonical names so `get prio` and `get priority` hit the same sysrc key.
 normalize_property() {
     case "${1}" in
         prio)
@@ -176,10 +178,13 @@ normalize_property() {
     esac
 }
 
-# get accepts a comma-separated property list; set/remove stay single-property
+# Comma lists are get-only (like `zfs get atime,compression`). set/remove
+# still take one property so we never partially apply a mutation.
 PROPERTIES=""
 PROP_COUNT=0
 if [ "${ACTION}" = "get" ]; then
+    # `name,` never yields an empty token in the loop below (the comma is
+    # consumed and _rest becomes empty), so catch leading/trailing commas here.
     case "${PROPERTY}" in
         ,*|*,)
             error_exit "[ERROR]: Empty property in list."
@@ -197,6 +202,8 @@ if [ "${ACTION}" = "get" ]; then
                 _rest=""
                 ;;
         esac
+        # Allow `get 'name, boot'` (quoted spaces); unquoted spaces are
+        # extra argv and already rejected by the get argc check.
         _one="$(printf '%s' "${_one}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
         if [ -z "${_one}" ]; then
             error_exit "[ERROR]: Empty property in list."
@@ -232,7 +239,8 @@ print_jail_conf() {
 '
 }
 
-# Query one property from a jail(8) -e dump on stdin
+# Exit 120 is the historic "not set" signal so 1x1 get can warn (yellow)
+# without changing the printed text scripts already match.
 query_jail_conf() {
     awk -F= -v property="${1}" '
         $1 == property {
@@ -254,8 +262,7 @@ query_jail_conf() {
         }'
 }
 
-# Print the value of one property for one jail. Returns 120 when a
-# jail.conf property is unset, 2 when jail.conf is missing.
+# Returns 120 when a jail.conf property is unset, 2 when jail.conf is missing.
 config_get_value() {
     local _jail="${1}"
     local _prop="${2}"
@@ -271,6 +278,8 @@ config_get_value() {
             ;;
     esac
 
+    # jail -f is relatively expensive; parse once per jail and reuse the dump
+    # for every requested jail.conf property.
     _file="${bastille_jailsdir}/${_jail}/jail.conf"
     if [ "${JAIL_CONF_LOADED}" -eq 0 ]; then
         if [ ! -f "${_file}" ]; then
@@ -286,6 +295,8 @@ config_get_value() {
     return "${_status}"
 }
 
+# Stopped jails have no jls entry. Human tables use "-" like `bastille list`;
+# JSON still emits null via json_record.
 config_jail_jid() {
     local _jid
     _jid="$(jls -j "${1}" jid 2>/dev/null || :)"
@@ -296,6 +307,10 @@ config_jail_jid() {
     fi
 }
 
+# One jail's worth of get output. JSON: one object, extra properties as extra
+# fields (json_record drops a duplicate `name` so `get name` stays identity).
+# Human: 1x1 stays a bare value so scripts and recursive `config get ip4.addr`
+# still parse one line; tables follow `zfs get`.
 emit_get_for_jail() {
     local jail="${1}"
     local _prop _val _st _needs_conf _jid
@@ -310,6 +325,8 @@ emit_get_for_jail() {
             *) _needs_conf=1 ;;
         esac
     done
+    # Missing jail.conf: skip the jail (historic) rather than error_exit,
+    # so `config ALL get` can still report the other jails.
     if [ "${_needs_conf}" -eq 1 ] && [ ! -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
         error_notify "jail.conf does not exist for jail: ${jail}"
         return 0
@@ -333,12 +350,14 @@ emit_get_for_jail() {
         _val="$(config_get_value "${jail}" "${_prop}")"
         _st=$?
         if [ "${TABLE_MODE}" -eq 0 ]; then
+            # Yellow "not set" is only useful when it is the entire output.
             if [ "${_st}" -eq 120 ]; then
                 warn 3 "${_val}"
             else
                 info 3 "${_val}"
             fi
         elif [ "${TABLE_MODE}" -eq 1 ]; then
+            # Color on a single cell would shift column padding.
             info 3 "$(printf '%-*s %s' "${MAX_PROP}" "${_prop}" "${_val}")"
         else
             info 3 "$(printf '%-*s %-*s %-*s %s' \
@@ -350,9 +369,9 @@ emit_get_for_jail() {
     done
 }
 
-# 0 = bare value (1 jail × 1 property)
-# 1 = PROPERTY VALUE
-# 2 = JID JAIL PROPERTY VALUE
+# 0 = bare value (scripts depend on one line, no header)
+# 1 = PROPERTY VALUE  (one jail, several properties — identity is already known)
+# 2 = JID JAIL PROPERTY VALUE  (several jails; same shape as `zfs get`)
 JAIL_COUNT=0
 TABLE_MODE=0
 if [ "${ACTION}" = "get" ]; then
@@ -369,6 +388,9 @@ fi
 # Emit JSON only for the 'get' action (a query); other actions are unchanged.
 [ "${ACTION}" = "get" ] && json_open jail
 
+# Header once, before the jail loop. Floor widths at the header labels so a
+# short name like "jid" does not under-align "PROPERTY". VALUE is the last
+# column and unpadded so spaces in ip4.addr / depend stay in one field.
 if [ "${ACTION}" = "get" ] && [ "${BASTILLE_JSON:-0}" -ne 1 ] && [ "${TABLE_MODE}" -gt 0 ]; then
     MAX_PROP=8
     for _p in ${PROPERTIES}; do
@@ -395,6 +417,7 @@ fi
 for jail in ${JAILS}; do
 
     if [ "${ACTION}" = "get" ]; then
+        # get is handled above; skip the set/remove mutation path.
         emit_get_for_jail "${jail}"
         continue
     fi
