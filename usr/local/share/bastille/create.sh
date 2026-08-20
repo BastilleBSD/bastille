@@ -446,6 +446,11 @@ create_jail() {
         fi
     fi
 
+    ## Create log directory
+    if [ ! -d "${bastille_logsdir}/${NAME}" ]; then
+        mkdir -p "${bastille_logsdir}/${NAME}"
+    fi
+
     ## PoC for Linux jails @hackacad
     if [ "${LINUX_JAIL}" -eq 1 ]; then
         info 1 "\nCreating a linuxjail. This may take a while...\n"
