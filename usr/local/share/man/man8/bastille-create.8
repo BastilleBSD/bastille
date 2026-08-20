@@ -104,6 +104,12 @@ Apply specified tag(s) to jail. Comma-separated.
 Create a thick jail.
 .Pp
 Thick jails are complete copies of the release.
+.It Fl v Ar VALUE , Fl -vlan Ar VALUE
+Set VLAN ID (VNET only).
+.Pp
+This will configure the jail to use the specified
+.Ar VALUE
+as the VLAN ID.
 .It Fl V , -vnet
 Enable VNET.
 .Ar INTERFACE
@@ -111,12 +117,6 @@ must be a physical interface.
 .Pp
 This option is for use with a physical interface. Bridging and epairs
 are handled by the 'jib' script.
-.It Fl v Ar VALUE , Fl -vlan Ar VALUE
-Set VLAN ID (VNET only).
-.Pp
-This will configure the jail to use the specified
-.Ar VALUE
-as the VLAN ID.
 .It Fl Z Ar VALUE,VALUE , Fl -zfs-opts Ar VALUE,VALUE
 Custom zfs options. Comma-separated.
 .Pp
