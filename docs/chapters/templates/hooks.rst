@@ -1,20 +1,5 @@
-Templates
-=========
-
-Looking for ready made CI/CD validated `Bastille Templates`_?
-
-.. _Bastille Templates: https://github.com/bastillebsd/templates
-
-Bastille features a template system, allowing you to automate just about anything
-from executing arbitrary commands to copying files all with a simple file called a
-Bastillefile. A template is applied by running ``bastille template TARGET project/template``
-and can also be applied to multiple targets in one go.
-
-Before we dive into creating templates, lets take a look at the supported hooks, as
-well as a brief overview of what each one is capable of.
-
 Template Hooks
---------------
+==============
 
 The following table shows a list of supported template hooks, their format, and
 one example of how you might use each one.
@@ -52,9 +37,6 @@ one example of how you might use each one.
 +---------------+---------------------+-----------------------------------------+
 | TAGS          | tag1 tag2 tag3      | prod web                                |
 +---------------+---------------------+-----------------------------------------+
-
-Template Hook Descriptions
---------------------------
 
 ``ARG``       - set an ARG value to be used in the template
 
@@ -170,12 +152,6 @@ The above snippet, when included in a template will essentially run ``bastille r
 and ``bastille network TARGET add vtnet1 DHCP`` inside the jail respectively. Although not fully
 tested and documented, they should still work as expected.
 
-Special Hook Cases
-------------------
-
-``ARG`` will always treat an ampersand "\``&``" literally, without the need to
-escape it. Escaping it will cause errors.
-
 Passing ARG Values From a File
 ------------------------------
 
@@ -190,9 +166,6 @@ plain-text file containing the values.
 
 The file must already exist; Bastille will exit with
 ``[ERROR]: File not found: <path>`` otherwise.
-
-File Format
-^^^^^^^^^^^
 
 Each line in the file is a ``NAME=VALUE`` pair, one ``ARG`` per line. The
 ``NAME`` portion must start at the beginning of the line (Bastille looks up
@@ -209,9 +182,6 @@ Lines that do not begin with ``NAME=`` (for example blank lines or shell-style
 comments) are ignored because they cannot match the anchored lookup, so they
 are safe to include for readability. An ``ARG`` whose name does not appear in
 the file simply falls through to its default.
-
-Precedence
-^^^^^^^^^^
 
 For any given ``ARG NAME`` referenced inside the Bastillefile, the value is
 resolved in this order:
@@ -233,9 +203,6 @@ override any of them on the command line without editing the file:
 In the example above every ``ARG`` is sourced from ``minecraft.env`` except
 ``MINECRAFT_MEMX``, which is taken from the explicit ``--arg`` flag.
 
-Notes
-^^^^^
-
 * Only the first ``--arg-file`` on the command line is honored; subsequent
   occurrences are ignored.
 * The path is read on each ``ARG`` lookup, so the file must remain readable
@@ -243,143 +210,3 @@ Notes
 * Values are passed through the same escaping logic as ``--arg``, so the
   rule from `Special Hook Cases`_ applies — an ampersand "\``&``" in a value
   is treated literally and must not be escaped.
-
-Bootstrapping Templates
------------------------
-
-The official templates for Bastille are all on Gthub, and mirror the directory
-structure of the ports tree.  So, ``nginx`` is in the ``www`` directory in the
-templates repo, just like it is in the FreeBSD ports tree.  To bootstrap the
-entire set of official templates, run the following command:
-
-.. code-block:: shell
-
-   bastille bootstrap https://github.com/bastillebsd/templates
-
-This will bootstrap all official templates into the templates directory at
-``/usr/local/bastille/templates``. You can then use the ``bastille template``
-command to apply any of the templates.
-
-.. code-block:: shell
-
-   bastille template TARGET www/nginx
-
-Creating Templates
-------------------
-
-Templates should be created and placed inside the templates directory in the
-``project/template`` format. Alternatively you can run the ``bastille template``
-command from a relative path, making sure it is still in the above ``project/template``
-format.
-
-Place any uppercase template hook into ``project/template/Bastillefile`` in any
-order to automate jail setup as needed.
-
-Any files included in the ``project/template`` directory can be copied into the jail
-using the ``CP`` hook. For example, if I have ``project/template/usr/local/etc/custom.conf``
-I can use the following template to copy the entire contents of ``usr`` into my jail.
-Bastille will not overwrite ``/usr`` inside the jail. It only copies the files in.
-
-.. code-block:: shell
-
-  CP usr /
-
-See `Bastille Templates`_ for examples to get started on writing your own templates.
-
-Applying Templates
-------------------
-
-To apply a template to a jail, run the following command.
-
-.. code-block:: shell
-
-  ishmael ~ # bastille template ALL project/template
-  [proxy01]:
-  Copying files...
-  Copy complete.
-  Installing packages.
-  pkg already bootstrapped at /usr/local/sbin/pkg
-  vulnxml file up-to-date
-  0 problem(s) in the installed packages found.
-  Updating bastillebsd.org repository catalogue...
-  [cdn] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
-  [cdn] Fetching packagesite.txz: 100%  121 KiB 124.3kB/s    00:01
-  Processing entries: 100%
-  bastillebsd.org repository update completed. 499 packages processed.
-  All repositories are up to date.
-  Checking integrity... done (0 conflicting)
-  The most recent version of packages are already installed
-  Updating services.
-  cron_flags: -J 60 -> -J 60
-  sendmail_enable: NONE -> NONE
-  syslogd_flags: -ss -> -ss
-  Executing final command(s).
-  chsh: user information updated
-  Template Complete.
-
-  [web01]:
-  Copying files...
-  Copy complete.
-  Installing packages.
-  pkg already bootstrapped at /usr/local/sbin/pkg
-  vulnxml file up-to-date
-  0 problem(s) in the installed packages found.
-  Updating pkg.bastillebsd.org repository catalogue...
-  [poudriere] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
-  [poudriere] Fetching packagesite.txz: 100%  121 KiB 124.3kB/s    00:01
-  Processing entries: 100%
-  pkg.bastillebsd.org repository update completed. 499 packages processed.
-  Updating bastillebsd.org repository catalogue...
-  [poudriere] Fetching meta.txz: 100%    560 B   0.6kB/s    00:01
-  [poudriere] Fetching packagesite.txz: 100%  121 KiB 124.3kB/s    00:01
-  Processing entries: 100%
-  bastillebsd.org repository update completed. 499 packages processed.
-  All repositories are up to date.
-  Checking integrity... done (0 conflicting)
-  The most recent version of packages are already installed
-  Updating services.
-  cron_flags: -J 60 -> -J 60
-  sendmail_enable: NONE -> NONE
-  syslogd_flags: -ss -> -ss
-  Executing final command(s).
-  chsh: user information updated
-  Template Complete.
-
-Notice that if we choose ``ALL`` as the target, the template is applied to all jails.
-See :doc:`/chapters/targeting` for more details on targeting jails.
-
-Using Ports in Templates
-------------------------
-
-Sometimes when creating a template, we need special options for a package, or
-a newer version than pkg offers. The solution for such
-cases, or a case like ``minecraft-server`` which has NO compiled option, is to use
-ports. A working example of this is the ``minecraft-server`` template in the
-template repo.  The main lines needed to use this is first to mount the ports
-directory, then compile the port.  Below is an example of the ``minecraft-server``
-template where this was used.
-
-.. code-block:: shell
-
-  ARG MINECRAFT_MEMX="1024M"
-  ARG MINECRAFT_MEMS="1024M"
-  ARG MINECRAFT_ARGS=""
-  CONFIG set enforce_statfs=1;
-  CONFIG set allow.mount.fdescfs;
-  CONFIG set allow.mount.procfs;
-  RESTART
-  PKG dialog4ports tmux openjdk17
-  MOUNT /usr/ports usr/ports nullfs ro 0 0
-  CP etc /
-  CP var /
-  CMD make -C /usr/ports/games/minecraft-server install clean
-  CP usr /
-  SYSRC minecraft_enable=YES
-  SYSRC minecraft_memx=${MINECRAFT_MEMX}
-  SYSRC minecraft_mems=${MINECRAFT_MEMS}
-  SYSRC minecraft_args=${MINECRAFT_ARGS}
-  SERVICE minecraft restart
-  RDR tcp 25565 25565
-
-The ``MOUNT`` line mounts the ports directory, then the ``CMD`` make line makes the
-port. This can be modified to use any port in the ports tree.

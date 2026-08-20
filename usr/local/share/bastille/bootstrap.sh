@@ -497,7 +497,7 @@ bootstrap_template() {
 
     ## support for non-git
     if ! which -s git; then
-        error_notify "Git not found."
+        error_notify "[ERROR]: Git not found."
         error_exit "Not yet implemented."
     else
         if [ ! -d "${raw_template_dir}/.git" ]; then

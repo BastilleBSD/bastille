@@ -28,6 +28,28 @@ sub-command, though they are not listed in the man pages.
 Print version information.
 .It Fl q , Fl -quiet
 Supress Bastille-specific output.
+.It Fl j , Fl -json
+Emit output as JSON on supported sub-commands.
+Implies
+.Fl -quiet
+so human-readable status lines do not pollute the JSON on stdout.
+Request-level failures still print on stderr and also emit a sibling
+.Ql error
+object
+.Pq Ql { "error": { "message": "..." } }
+inside the
+.Ql bastille
+envelope so API clients can parse stdout instead of scraping stderr;
+the process exits 1.
+Currently only
+.Sy config get
+emits JSON; every other sub-command exits with an error when
+.Fl j
+is requested.
+Must be placed before the sub-command.
+.It Fl p , Fl -pretty
+Emit indented (pretty) JSON output. Implies
+.Fl -json .
 .It Fl x , Fl -debug
 Enable debug mode.
 .Sh SUBCOMMANDS
@@ -141,6 +163,7 @@ Manage ZFS options/attributes for jail(s).
 .Xr bastille-mount 8 ,
 .Xr bastille-network 8 ,
 .Xr bastille-pkg 8 ,
+.Xr bastille-plugin 8 ,
 .Xr bastille-rcp 8 ,
 .Xr bastille-rdr 8 ,
 .Xr bastille-rename 8 ,

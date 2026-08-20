@@ -34,9 +34,7 @@
 
 
 usage() {
-    error_notify "Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]"
-    error_notify "                                          get|remove PROPERTY"
-    exit 1
+    error_exit "Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]"
 }
 
 # Handle options
@@ -169,6 +167,9 @@ print_jail_conf() {
 '
 }
 
+# Emit JSON only for the 'get' action (a query); other actions are unchanged.
+[ "${ACTION}" = "get" ] && json_open jail
+
 for jail in ${JAILS}; do
 
     # Backwards compatibility for specifying only an IP with ip[4|6].addr
@@ -195,8 +196,12 @@ for jail in ${JAILS}; do
         esac
 
         if [ "${ACTION}" = "get" ]; then
+          if [ "${BASTILLE_JSON}" -eq 1 ]; then
+              json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
+          else
 
             sysrc -f "${FILE}" -n "${PROPERTY}"
+          fi
 
         elif [ "${ACTION}" = "remove" ]; then
 
@@ -269,8 +274,12 @@ for jail in ${JAILS}; do
                         }
                     }'
                 )
+            # capture the awk exit status before any other command resets $?
+            _status=$?
             # check if our output is a warning or regular
-            if [ $? -eq 120 ]; then
+            if [ "${BASTILLE_JSON}" -eq 1 ]; then
+                json_record name "${jail}" "${PROPERTY}" "${_output}"
+            elif [ "${_status}" -eq 120 ]; then
                 warn 3 "${_output}"
             else
                 info 3 "${_output}"
@@ -344,6 +353,8 @@ for jail in ${JAILS}; do
     fi
 
 done
+
+[ "${ACTION}" = "get" ] && json_close
 
 # Only display this message once at the end (not for every jail). -- cwells
 if { [ "${ACTION}" = "set" ] || [ "${ACTION}" = "remove" ]; } && [ "${BASTILLE_PROPERTY}" -eq 0 ]; then
