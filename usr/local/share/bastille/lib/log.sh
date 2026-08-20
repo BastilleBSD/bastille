@@ -57,7 +57,10 @@ enable_debug() {
 
 # Error messages/functions
 error_notify() {
-    if [ "${BASTILLE_QUIET}" -ne 1 ]; then
+    # -j implies quiet so info/warn stay off stdout, but an API still
+    # needs the failure reason. Keep errors on stderr (never stdout)
+    # even when quiet: JSON consumers ignore stderr; operators/logs do not.
+    if [ "${BASTILLE_QUIET:-0}" -ne 1 ] || [ "${BASTILLE_JSON:-0}" -eq 1 ]; then
         printf "%b\n" "${COLOR_RED}$*${COLOR_RESET}" >&2
     fi
 }
@@ -70,6 +73,10 @@ error_continue() {
 
 error_exit() {
     error_notify "$@"
+    # Request-level failure: also emit .bastille.error on stdout so a
+    # client can parse one envelope instead of scraping stderr. No-op
+    # unless -j. Human line above stays on stderr for operators.
+    json_error "$*"
     exit 1
 }
 

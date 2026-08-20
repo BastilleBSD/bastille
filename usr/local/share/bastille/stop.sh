@@ -97,7 +97,7 @@ for jail in ${JAILS}; do
         if [ "${jail}" = "${depend_jail}" ]; then
             continue
         elif grep -hoqsw "${jail}" "${bastille_jailsdir}/${depend_jail}/settings.conf"; then
-            bastille stop ${depend_jail}
+            check_target_is_stopped "${depend_jail}" || bastille stop "${depend_jail}"
         fi
     done
 

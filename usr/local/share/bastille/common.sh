@@ -51,6 +51,8 @@
 . "${bastille_sharedir}/lib/migrate.sh"
 # shellcheck source=/dev/null
 . "${bastille_sharedir}/lib/config.sh"
+# shellcheck source=/dev/null
+. "${bastille_sharedir}/lib/json.sh"
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.

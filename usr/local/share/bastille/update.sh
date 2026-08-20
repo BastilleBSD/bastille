@@ -110,7 +110,7 @@ jail_check() {
     fi
 
     # Verify PLATFORM_OS inside jail
-    JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>dev/null)"
+    JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
     if echo "${JAIL_PLATFORM_OS}" | grep -q "HBSD"; then
         JAIL_PLATFORM_OS="HardenedBSD"
     else
