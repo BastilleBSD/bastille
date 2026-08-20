@@ -286,9 +286,19 @@ config_get_value() {
     return "${_status}"
 }
 
+config_jail_jid() {
+    local _jid
+    _jid="$(jls -j "${1}" jid 2>/dev/null || :)"
+    if [ -n "${_jid}" ]; then
+        printf '%s\n' "${_jid}"
+    else
+        printf '%s\n' "-"
+    fi
+}
+
 emit_get_for_jail() {
     local jail="${1}"
-    local _prop _val _st _needs_conf
+    local _prop _val _st _needs_conf _jid
 
     JAIL_CONF_LOADED=0
     JAIL_CONF_TEXT=""
@@ -315,30 +325,71 @@ emit_get_for_jail() {
         return 0
     fi
 
+    if [ "${TABLE_MODE}" -eq 2 ]; then
+        _jid="$(config_jail_jid "${jail}")"
+    fi
+
     for _prop in ${PROPERTIES}; do
         _val="$(config_get_value "${jail}" "${_prop}")"
         _st=$?
-        if [ "${PROP_COUNT}" -eq 1 ]; then
+        if [ "${TABLE_MODE}" -eq 0 ]; then
             if [ "${_st}" -eq 120 ]; then
                 warn 3 "${_val}"
             else
                 info 3 "${_val}"
             fi
-        else
+        elif [ "${TABLE_MODE}" -eq 1 ]; then
             info 3 "$(printf '%-*s %s' "${MAX_PROP}" "${_prop}" "${_val}")"
+        else
+            info 3 "$(printf '%-*s %-*s %-*s %s' \
+                "${MAX_JID}" "${_jid}" \
+                "${MAX_JAIL}" "${jail}" \
+                "${MAX_PROP}" "${_prop}" \
+                "${_val}")"
         fi
     done
 }
 
+# 0 = bare value (1 jail × 1 property)
+# 1 = PROPERTY VALUE
+# 2 = JID JAIL PROPERTY VALUE
+JAIL_COUNT=0
+TABLE_MODE=0
+if [ "${ACTION}" = "get" ]; then
+    for _j in ${JAILS}; do
+        JAIL_COUNT=$((JAIL_COUNT + 1))
+    done
+    if [ "${JAIL_COUNT}" -gt 1 ]; then
+        TABLE_MODE=2
+    elif [ "${PROP_COUNT}" -gt 1 ]; then
+        TABLE_MODE=1
+    fi
+fi
+
 # Emit JSON only for the 'get' action (a query); other actions are unchanged.
 [ "${ACTION}" = "get" ] && json_open jail
 
-if [ "${ACTION}" = "get" ] && [ "${BASTILLE_JSON:-0}" -ne 1 ] && [ "${PROP_COUNT}" -gt 1 ]; then
+if [ "${ACTION}" = "get" ] && [ "${BASTILLE_JSON:-0}" -ne 1 ] && [ "${TABLE_MODE}" -gt 0 ]; then
     MAX_PROP=8
     for _p in ${PROPERTIES}; do
         [ "${#_p}" -gt "${MAX_PROP}" ] && MAX_PROP="${#_p}"
     done
-    info 3 "$(printf '%-*s %s' "${MAX_PROP}" "PROPERTY" "VALUE")"
+    if [ "${TABLE_MODE}" -eq 1 ]; then
+        info 3 "$(printf '%-*s %s' "${MAX_PROP}" "PROPERTY" "VALUE")"
+    else
+        MAX_JID=3
+        MAX_JAIL=4
+        for _j in ${JAILS}; do
+            [ "${#_j}" -gt "${MAX_JAIL}" ] && MAX_JAIL="${#_j}"
+            _jid="$(config_jail_jid "${_j}")"
+            [ "${#_jid}" -gt "${MAX_JID}" ] && MAX_JID="${#_jid}"
+        done
+        info 3 "$(printf '%-*s %-*s %-*s %s' \
+            "${MAX_JID}" "JID" \
+            "${MAX_JAIL}" "JAIL" \
+            "${MAX_PROP}" "PROPERTY" \
+            "VALUE")"
+    fi
 fi
 
 for jail in ${JAILS}; do

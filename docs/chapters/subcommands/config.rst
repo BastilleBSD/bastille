@@ -26,6 +26,32 @@ still prints only its value; multiple properties print a table:
   securelevel  2
   osrelease    15.1-RELEASE
 
+Getting a property from every jail. Multiple jails always print a
+``JID JAIL PROPERTY VALUE`` table (stopped jails show ``-`` in the
+``JID`` column):
+
+.. code-block:: shell
+
+  ishmael ~ # bastille config ALL get securelevel
+  JID  JAIL         PROPERTY     VALUE
+  2    alcatraz     securelevel  2
+  3    bella        securelevel  2
+  1    gorgona      securelevel  2
+
+Several properties across every jail use the same four columns, one
+row per jail and property:
+
+.. code-block:: shell
+
+  ishmael ~ # bastille config ALL get name,securelevel
+  JID  JAIL         PROPERTY     VALUE
+  2    alcatraz     name         alcatraz
+  2    alcatraz     securelevel  2
+  3    bella        name         bella
+  3    bella        securelevel  2
+  1    gorgona      name         gorgona
+  1    gorgona      securelevel  2
+
 Setting a property:
 
 .. code-block:: shell
