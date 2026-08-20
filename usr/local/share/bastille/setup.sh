@@ -263,7 +263,7 @@ configure_bridge_interface() {
         sysrc cloned_interfaces+="bridge0"
         sysrc ifconfig_bridge0_name="${bridge_name}"
         sysrc ifconfig_${bridge_name}="addm ${interface_select} up"
-        sysrc bastille_network_bridge="${bridge_name}"
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_bridge="${bridge_name}"
 
         # Set some sysctl values
         sysctl net.inet.ip.forwarding=1

@@ -9,7 +9,7 @@
 .Op Fl a
 .Nm bastille setup
 .Op Fl a
-.Ar bridge|linux|loopback|netgraph|firewall|shared|storage|vnet
+.Ar bridge|dns|linux|loopback|netgraph|firewall|shared|storage|vnet
 .Sh DESCRIPTION
 The
 .Nm bastille setup
@@ -19,6 +19,9 @@ for your environment.
 .It Sy bridge
 Configure a bride interface for use with the '-B|--bridge' create
 option.
+.It Sy dns
+Configure local-unbound as a DNS resolver for host-to-jail and
+jail-to-jail DNS resolution.
 .It Sy linux
 Configure linux compatability. This involves loading and persisting
 some necessary modules, as well as enabling Linux support

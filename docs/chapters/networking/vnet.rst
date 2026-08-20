@@ -1,8 +1,8 @@
 VNET Configuration
 ==================
 
-VNET Configuration
-------------------
+VNET - Configuration
+--------------------
 
 (Added in 0.6.x) VNET is supported on FreeBSD 12+ only.
 
