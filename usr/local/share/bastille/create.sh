@@ -657,7 +657,7 @@ create_jail() {
                 echo "${oci_volume_host} ${bastille_jail_path}${oci_volume_path} nullfs rw 0 0" >> "${bastille_jail_fstab}"
             done
         fi
-        if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ; then
+        if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ]; then
             if ! echo "${OCI_DATA_PATH}" | grep -Eoq '^/$'; then
                 chown -R "${OCI_PUID}:${OCI_PGID}" "${OCI_DATA_PATH}"
             fi
