@@ -32,8 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.4.4
-export BASTILLE_VERSION # needed to check min_version in plugins
+export BASTILLE_VERSION=1.4.4
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -100,6 +99,7 @@ Available Commands:
   jcp         Copy file(s)/directorie(s) from jail to jail(s).
   limits      Apply resources limits to jail(s). See rctl(8) and cpuset(1).
   list        List jails, releases, templates and more...
+  logs        List jail logs (oci and console).
   migrate     Migrate jail(s) to a remote system.
   monitor     Monitor and attempt to restart jail service(s).
   mount       Mount file(s)/directorie(s) inside jail(s).
@@ -118,6 +118,7 @@ Available Commands:
   tags        Add or remove tags to jail(s).
   template    Apply templates to jail(s).
   top         Process viewer. See top(1).
+  up          Deploy an OCI jail from a podman-compose.yml file.
   umount      Unmount file(s)/directorie(s) from jail(s).
   update      Update a jail or release.
   upgrade     Upgrade a jail to new release.
@@ -249,6 +250,9 @@ case "${CMD}" in
         CMD="limits"
         ;;
     list) ;;
+    log|logs)
+        CMD="logs"
+        ;;
     migrate) ;;
     monitor) ;;
     mount) ;;
@@ -268,9 +272,12 @@ case "${CMD}" in
     start) ;;
     stop) ;;
     sysrc) ;;
-    tags) ;;
+    tag|tags)
+        CMD="tags"
+        ;;
     template) ;;
     top) ;;
+    up) ;;
     umount|unmount)
         CMD="umount"
         ;;
@@ -290,7 +297,7 @@ if [ "${BASTILLE_JSON}" -eq 1 ]; then
     case "${CMD}" in
         config) ;;
         *)
-            error_exit "[ERROR]: '${CMD}' does not support JSON output (-j|--json)."
+            error_exit "[ERROR]: Command does not support json output: ${CMD}"
             ;;
     esac
 fi

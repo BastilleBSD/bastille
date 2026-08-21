@@ -27,12 +27,14 @@ Bastille will store backups and exports here.
 Bastille will store cache here.
 .It bastille_jailsdir
 Bastille will store jails here.
+.It bastille_logsdir
+Bastille will store jail console logs here.
 .It bastille_releasesdir
 Bastille will store releases here.
 .It bastille_templatesdir
 Bastille will store templates here.
-.It bastille_logsdir
-Bastille will store jail console logs here.
+.It bastille_volumesdir
+Bastille will store OCI jail persistent volumes here.
 .Sh FIREWALL
 .Bl -tag -width Ds
 .It bastille_pf_conf
@@ -159,9 +161,11 @@ Currently supports 'healthchecks.io' and 'uptimekuma'.
 .Xr bastille-jcp 8 ,
 .Xr bastille-limits 8 ,
 .Xr bastille-list 8 ,
+.Xr bastille-logs 8 ,
 .Xr bastille-migrate 8 ,
 .Xr bastille-mount 8 ,
 .Xr bastille-network 8 ,
+.Xr bastille-plugin 8 ,
 .Xr bastille-pkg 8 ,
 .Xr bastille-rcp 8 ,
 .Xr bastille-rdr 8 ,
@@ -177,6 +181,7 @@ Currently supports 'healthchecks.io' and 'uptimekuma'.
 .Xr bastille-top 8 ,
 .Xr bastille-umount 8 ,
 .Xr bastille-update 8 ,
+.Xr bastille-up 8 ,
 .Xr bastille-upgrade 8 ,
 .Xr bastille-verify 8 ,
 .Xr bastille-zfs 8

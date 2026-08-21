@@ -54,7 +54,8 @@ destroy_jail() {
     local OPTIONS=""
 
     bastille_jail_base="${bastille_jailsdir}/${jail}"
-    bastille_jail_log="${bastille_logsdir}/${jail}_console.log"
+    bastille_jail_log_console="${bastille_logsdir}/${jail}/console.log"
+    bastille_jail_log_oci="${bastille_logsdir}/${jail}/oci.log"
 
     # Validate jail state before continuing
     check_target_is_stopped "${jail}" || if [ "${AUTO}" -eq 1 ]; then
@@ -122,11 +123,17 @@ destroy_jail() {
             rm -rf "${bastille_jail_base}"
         fi
 
-        # Archive jail log
-        if [ -f "${bastille_jail_log}" ]; then
-            mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
+        # Archive jail console log
+        if [ -f "${bastille_jail_log_console}" ]; then
+            mv "${bastille_jail_log_console}" "${bastille_jail_log_console}"-"$(date +%F)"
             info 2 "Note: jail console logs archived."
-            info 2 "${bastille_jail_log}-$(date +%F)"
+            info 2 "${bastille_jail_log_console}-$(date +%F)"
+        fi
+        # Archive jail oci log
+        if [ -f "${bastille_jail_log_oci}" ]; then
+            mv "${bastille_jail_log_oci}" "${bastille_jail_log_oci}"-"$(date +%F)"
+            info 2 "Note: jail oci logs archived."
+            info 2 "${bastille_jail_log_oci}-$(date +%F)"
         fi
 
         # Clear any active rdr rules

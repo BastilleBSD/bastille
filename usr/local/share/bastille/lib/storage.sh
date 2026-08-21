@@ -51,6 +51,8 @@ set_bastille_mountpoints() {
         bastille_templatesdir_mountpoint="${bastille_templatesdir}"
         # shellcheck disable=SC2034
         bastille_logsdir_mountpoint="${bastille_logsdir}"
+        # shellcheck disable=SC2034
+        bastille_volumesdir_mountpoint="${bastille_volumesdir}"
         # Add _altroot to *dir* if set
         if [ "${altroot}" != "-" ]; then
             # Set *dir* to include ALTROOT
@@ -60,6 +62,7 @@ set_bastille_mountpoints() {
             bastille_jailsdir="${altroot}${bastille_jailsdir}"
             bastille_releasesdir="${altroot}${bastille_releasesdir}"
             bastille_templatesdir="${altroot}${bastille_templatesdir}"
+            bastille_volumesdir="${altroot}${bastille_volumesdir}"
             bastille_logsdir="${altroot}${bastille_logsdir}"
         fi
     fi
