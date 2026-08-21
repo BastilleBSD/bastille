@@ -321,7 +321,7 @@ list(){
         "${MAX_LENGTH_JAIL_IP}"      "IP ADDRESS" \
         "${MAX_LENGTH_JAIL_PORTS}"   "PORTS" \
         "${MAX_LENGTH_JAIL_RELEASE}" "RELEASE" \
-        "Tags"
+        "TAGS"
 	
 	for jail in ${JAIL_LIST}; do
 
@@ -417,7 +417,7 @@ list_all(){
 		"${MAX_LENGTH_JAIL_PORTS}"    "PORTS" \
 		"${MAX_LENGTH_JAIL_HOSTNAME}" "HOSTNAME" \
 		"${MAX_LENGTH_JAIL_RELEASE}"  "RELEASE" \
-		"Path"
+		"PATH"
 			
     for jail in ${JAIL_LIST}; do
 
