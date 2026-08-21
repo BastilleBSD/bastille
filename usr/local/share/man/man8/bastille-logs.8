@@ -1,31 +1,32 @@
-.Dd December 6, 2025
-.Dt bastille-cp 8
+.Dd August 20, 2026
+.Dt bastille-logs 8
 .Os
 .Sh NAME
-.Nm bastille cp
-.Nd Copy file(s)/directorie(s) from host to jail(s).
+.Nm bastille logs
+.Nd List jail logs (oci and console).
 .Sh SYNOPSIS
-.Nm bastille cp
-.Op Fl q
-.Ar TARGET HOST_PATH JAIL_PATH
+.Nm bastille logs
+.Op Fl fl
+.Ar TARGET
+.Ar oci|console
 .Sh DESCRIPTION
 The
-.Nm bastille cp
-sub-command will copy
-.Ar HOST_PATH
-to
-.Ar JAIL_PATH
-inside
-.Ar TARGET .
+.Nm bastille logs
+sub-command will display oci or console logs
+for the targeted jail.
 .Bl -tag -width Ds
-.It Fl q , -quiet
-Suppress output.
+.It Fl f , -full
+Show full logs.
+.It Fl l , -live
+Show live logs.
 .Sh EXAMPLES
 .Bl -tag -width Ds
-.It Copy /etc/resolv.conf into myjail:
-.Sy bastille cp myjail /etc/resolv.conf /etc/resolv.conf
-.It Copy /etc into myjail quietly:
-.Sy bastille cp -q myjail /etc /etc
+.It View full console logs for nextcloud jail:
+.Sy bastille logs -f nextcloud console
+.It View navidrome oci logs:
+.Sy bastille logs navidrome oci
+.It View opencloud oci logs (OCI jail implied):
+.Sy bastille logs -l opencloud oci
 .Sh SEE ALSO
 .Xr bastille.conf 5 ,
 .Xr bastille-bootstrap 8 ,
@@ -34,6 +35,7 @@ Suppress output.
 .Xr bastille-config 8 ,
 .Xr bastille-console 8 ,
 .Xr bastille-convert 8 ,
+.Xr bastille-cp 8 ,
 .Xr bastille-create 8 ,
 .Xr bastille-destroy 8 ,
 .Xr bastille-edit 8 ,
@@ -44,7 +46,6 @@ Suppress output.
 .Xr bastille-jcp 8 ,
 .Xr bastille-limits 8 ,
 .Xr bastille-list 8 ,
-.Xr bastille-logs 8 ,
 .Xr bastille-migrate 8 ,
 .Xr bastille-monitor 8 ,
 .Xr bastille-mount 8 ,

@@ -40,6 +40,7 @@ Bastille sub-commands
    template
    top
    umount
+   up
    update
    upgrade
    verify
