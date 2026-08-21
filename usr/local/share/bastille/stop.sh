@@ -126,6 +126,9 @@ for jail in ${JAILS}; do
         bastille limits "${jail}" clear
     fi
 
+    # Remove unbound rules (if set)
+    unbound_clear "${jail}"
+
     # Stop jail
     if [ "${FORCE}" -eq 1 ]; then
         prestop_cmds="$(grep 'exec.prestop' "${bastille_jailsdir}/${jail}/jail.conf" 2>/dev/null | sed -E 's%^.*= "(.*)";$%\1%')"

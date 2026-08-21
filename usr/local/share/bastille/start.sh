@@ -142,6 +142,8 @@ for jail in ${JAILS}; do
                     if route -n get ${ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
+                    # If unbound or local-unbound is enabled in conf, add entry dynamically
+                    unbound_update "${jail}" "A ${ip}"
                 else
                     error_continue "[ERROR]: ${if} interface does not exist."
                 fi
@@ -165,6 +167,8 @@ for jail in ${JAILS}; do
                     if route -6 -n get ${ip} | grep "gateway" >/dev/null; then
                         pfctl -q -t "${bastille_network_pf_table}" -T add "${ip}"
                     fi
+                    # If unbound or local-unbound is enabled in conf, add entry dynamically
+                    unbound_update "${jail}" "AAAA ${ip}"
                 else
                     error_continue "[ERROR]: ${if} interface does not exist."
                 fi
