@@ -9,6 +9,7 @@ Networking
    nat
    alias
    vnet
+   dns
    routing
    vlan
    scenarios

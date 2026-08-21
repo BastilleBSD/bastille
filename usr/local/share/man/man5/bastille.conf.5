@@ -103,9 +103,13 @@ to make it slightly more convenient.
 Control whether to use the default 'if_bridge' mode
 or Netgraph.
 .It bastille_network_loopback
-Set the loopback interface name.
+Set the default loopback interface name.
 .It bastille_network_shared
-Set the shared interface name.
+Set the default shared interface name.
+.It bastille_network_vnet
+Set the default VNET interface name.
+.It bastille_network_bridge
+Set the default bridge interface name.
 .It bastille_network_pf_ext_if
 Set the external interface for the 'pf' firewall rules.
 .It bastille_network_pf_table
@@ -114,6 +118,17 @@ Set the name of the default table used for NAT jails.
 Specify a default gateway.
 .It bastille_network_gateway6
 Specify a defalut Ipv6 gateway.
+.Sh DNS
+.Bl -tag -width Ds
+.It bastille_dns_enable
+Enable DNS functionality.
+.It bastille_dns_interface
+Set the DNS gateway interface. Should be the same
+as the default loopback address.
+.It bastille_dns_gateway
+Set the DNS gateway IP address.
+.It bastille_dns_domain
+Set the top level domain to use for DNS.
 .Sh TEMPLATES
 .Bl -tag -width Ds
 .It bastille_template_base

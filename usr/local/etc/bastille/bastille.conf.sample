@@ -74,12 +74,20 @@ bastille_export_options=""                                            ## default
 
 ## Networking
 bastille_network_vnet_type="if_bridge"                                ## default: "if_bridge"
-bastille_network_loopback="bastille0"                                 ## default: "bastille0"
 bastille_network_pf_ext_if="ext_if"                                   ## default: "ext_if"
 bastille_network_pf_table="jails"                                     ## default: "jails"
+bastille_network_loopback="bastille0"                                 ## default: "bastille0"
 bastille_network_shared=""                                            ## default: ""
+bastille_network_vnet=""                                              ## default: ""
+bastille_network_bridge=""                                            ## default: ""
 bastille_network_gateway=""                                           ## default: ""
 bastille_network_gateway6=""                                          ## default: ""
+
+## DNS
+bastille_dns_enable=""                                                ## default: ""
+bastille_dns_interface="${bastille_network_loopback}"                 ## default: "${bastille_network_loopback}"
+bastille_dns_gateway="10.0.0.1"                                       ## default: "10.0.0.1"
+bastille_dns_domain="bastille"                                        ## default: "bastille"
 
 ## Default Templates
 bastille_template_base="default/base"                                 ## default: "default/base"

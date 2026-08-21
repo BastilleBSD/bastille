@@ -33,7 +33,7 @@
 . /usr/local/share/bastille/common.sh
 
 usage() {
-    error_notify "Usage: bastille setup [option(s)] [bridge|linux|loopback|netgraph|firewall|shared|storage|vnet]"
+    error_notify "Usage: bastille setup [option(s)] [bridge|dns|linux|loopback|netgraph|firewall|shared|storage|vnet]"
     cat << EOF
 
     Options:
@@ -169,6 +169,7 @@ configure_netgraph() {
 
 # Configure bastille loopback network interface
 configure_loopback_interface() {
+
     if [ -z "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_loopback)" ] || ! sysrc -n cloned_interfaces | grep -oq "lo1"; then
         info 1 "\nConfiguring bastille0 loopback interface"
         sysrc cloned_interfaces+=lo1
@@ -176,7 +177,6 @@ configure_loopback_interface() {
         info 1 "\nBringing up new interface: [bastille0]"
         service netif cloneup
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback="bastille0"
-        sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared=""
         info 1 "\nLoopback interface successfully configured: [bastille0]"
     else
         info 1 "\nLoopback interface has already been configured: [bastille0]"
@@ -213,9 +213,6 @@ configure_shared_interface() {
         fi
 
         # Adjust bastille.conf to reflect above choices
-        sysrc -f "${BASTILLE_CONFIG}" bastille_network_loopback=""
-        sysrc cloned_interfaces-="lo1"
-        ifconfig bastille0 destroy 2>/dev/null
         sysrc -f "${BASTILLE_CONFIG}" bastille_network_shared="${interface_select}"
         info 1 "\nShared interface successfully configured: [${interface_select}]"
     else
@@ -224,7 +221,7 @@ configure_shared_interface() {
 
 }
 
-configure_bridge() {
+configure_bridge_interface() {
 
     auto_if="${1}"
     interface_list="$(ifconfig -l)"
@@ -266,6 +263,7 @@ configure_bridge() {
         sysrc cloned_interfaces+="bridge0"
         sysrc ifconfig_bridge0_name="${bridge_name}"
         sysrc ifconfig_${bridge_name}="addm ${interface_select} up"
+        sysrc -f "${BASTILLE_CONFIG}" bastille_network_bridge="${bridge_name}"
 
         # Set some sysctl values
         sysctl net.inet.ip.forwarding=1
@@ -281,6 +279,63 @@ configure_bridge() {
         info 1 "\nBridge interface successfully configured: [${bridge_name}]"
     else
         info 1 "\nBridge has alread been configured: [${bridge_name}]"
+    fi
+}
+
+configure_dns() {
+
+    local dns_opt="${1}"
+
+    # Enable DNS if not enabled already
+    if [ "$(sysrc -f "${BASTILLE_CONFIG}" -n bastille_dns_enable)" != "YES" ]; then
+        sysrc -f "${BASTILLE_CONFIG}" bastille_dns_enable="YES" >/dev/null 2>/dev/null
+    fi
+    # Setup DNS
+    if [ -f "/var/unbound/conf.d/bastille.conf" ]; then
+        info 1 "\nDNS has already been configured."
+    else
+        # Use local-unbound
+        if which local-unbound >/dev/null 2>&1; then
+            local resolver="local-unbound"
+            local resolver_sysrc="local_unbound"
+        else
+            error_exit "[ERROR]: Resolver not found: ${resolver}"
+        fi
+        # Configure interface and network
+        if [ -z "${bastille_dns_interface}" ]; then
+            error_exit "[ERROR]: Variable not set in config file: bastille_dns_interface"
+        elif [ -z "${bastille_dns_gateway}" ]; then
+            error_exit "[ERROR]: Variable not set in config file: bastille_dns_gateway"
+        else
+            ifconfig "${bastille_dns_interface}" inet "${bastille_dns_gateway}" alias
+            sysrc ifconfig_"${bastille_dns_interface}"_alias0="${bastille_dns_gateway}"
+        fi
+        # Enable resolver
+        if [ "$(sysrc "${resolver_sysrc}" 2>/dev/null)" != "YES" ]; then
+            info 1 "\nEnabling resolver: ${resolver}"
+            sysrc ${resolver_sysrc}_enable="YES" >/dev/null 2>/dev/null
+        fi
+        # Run setup for resolver
+        info 1 "\nStarting resolver: ${resolver}"
+        service local_unbound start
+        info 1 "\nRunning setup for resolver: ${resolver}"
+        mkdir -p /var/unbound/conf.d
+        chown -R unbound:unbound /var/unbound
+        chmod -R 755 /var/unbound
+        cp -f "${bastille_sharedir}/lib/dns/bastille.conf" /var/unbound/conf.d/
+        sed -i '' "s/%%bastille_dns_gateway%%/${bastille_dns_gateway}/" /var/unbound/conf.d/bastille.conf
+        if [ "${dns_opt}" = "iterator" ]; then
+            echo "" >> /var/unbound/conf.d/bastille.conf
+            echo "    # iterate only" >> /var/unbound/conf.d/bastille.conf
+            echo "    module-config: \"iterator\"" >> /var/unbound/conf.d/bastille.conf
+        elif [ "${dns_opt}" = "validator" ]; then
+            echo "" >> /var/unbound/conf.d/bastille.conf
+            echo "    # validate only" >> /var/unbound/conf.d/bastille.conf
+            echo "    module-config: \"validator\"" >> /var/unbound/conf.d/bastille.conf
+        fi
+        ${resolver}-setup
+        service "${resolver_sysrc}" restart
+        info 1 "\nDNS resolver successfully configured: ${resolver}"
     fi
 }
 
@@ -495,9 +550,9 @@ case "${OPT_CONFIG}" in
         if [ "${AUTO_YES}" -eq 1 ]; then
             configure_loopback_interface
         else
-            warn 1 "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-            warn 1 "interface to be configured ant one time. If you continue, the 'shared'"
-            warn 1 "interface will be disabled, and the 'loopback' interface will be used as default."
+            warn 1 "[WARNING]: Bastille will configure a default loopback interface that will be"
+            warn 1 "assigned to NAT jails automatically if no interface is specified"
+            warn 1 "during the create command."
             # shellcheck disable=SC3045
             read -p "Do you really want to continue setting up the loopback interface? [y|n]:" answer
             case "${answer}" in
@@ -517,9 +572,9 @@ case "${OPT_CONFIG}" in
         if [ "${AUTO_YES}" -eq 1 ]; then
             error_exit "[ERROR]: 'shared' does not support [-y|--yes]."
         else
-            warn 1 "[WARNING]: Bastille only allows using either the 'loopback' or 'shared'"
-            warn 1 "interface to be configured at one time. If you continue, the 'loopback'"
-            warn 1 "interface will be disabled, and the shared interface will be used as default."
+            warn 1 "[WARNING]: Bastille will configure a default shared interface that will be"
+            warn 1 "assigned to alias/shared ip jails automatically if no interface is specified"
+            warn 1 "during the create command."
             # shellcheck disable=SC3045
             read -p "Do you really want to continue setting up the shared interface? [y|n]:" answer
             case "${answer}" in
@@ -546,7 +601,29 @@ case "${OPT_CONFIG}" in
             error_exit "[ERROR]: 'bridge' does not support [-y|--yes]."
         else
             configure_vnet
-            configure_bridge "${OPT_ARG}"
+            configure_bridge_interface "${OPT_ARG}"
+        fi
+        ;;
+    dns)
+        if [ "${AUTO_YES}" -eq 1 ]; then
+            configure_dns "${OPT_ARG}"
+        else
+            warn 1 "[WARNING]: Bastille will enable and configure basic 'local-unbound' functionality."
+            warn 1 "If you are already using 'local-unbound' or 'unbound' DO NOT run this setup as it"
+            warn 1 "might interfere with already configured options."
+            # shellcheck disable=SC3045
+            read -p "Do you really want to continue setting up DNS for Bastille? [y|n]:" answer
+            case "${answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    configure_dns "${OPT_ARG}"
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "DNS setup cancelled."
+                    ;;
+                *)
+                    error_exit "Invalid selection. Please answer 'y' or 'n'"
+                    ;;
+            esac
         fi
         ;;
     *)
