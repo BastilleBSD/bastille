@@ -113,7 +113,7 @@ Creating an OCI Jail
 ^^^^^^^^^^^^^^^^^^^^
 
 An OCI jail is deployed from an OCI compatibale image. For compatible images
-visit `Daemonless <https://daemonless.io>`_ or `Appjail Makejails <https://github.com/appjail-makejails>`.
+visit `Daemonless Images <https://daemonless.io>`_ or `Appjail Makejails <https://github.com/appjail-makejails>`_.
 These images are prebuilt, and include everything needed to run the application it targets.
 
 It is not necessary to run ``bastille bootstrap`` to obtain any kind of release
