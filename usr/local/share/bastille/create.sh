@@ -522,33 +522,36 @@ create_jail() {
                 mkdir -p "${bastille_volumesdir}"
             fi
         fi
+        if [ ! -d "${bastille_cachedir}/oci" ]; then
+            mkdir -p "${bastille_cachedir}/oci"
+        fi
 
         info 1 "\nPulling image: ${OCI_IMAGE}..."
 
-        if ! buildah pull --os="${OCI_OS}" "${OCI_IMAGE}"; then
+        if ! buildah --root "${bastille_cachedir}/oci" pull --os="${OCI_OS}" "${OCI_IMAGE}"; then
             error_exit "[ERROR]: Failed to pull image: ${OCI_IMAGE}"
         fi
 
-        OCI_CONTAINER="$(buildah from "${OCI_IMAGE}")"
+        OCI_CONTAINER="$(buildah --root "${bastille_cachedir}/oci" from "${OCI_IMAGE}")"
         if [ -z "${OCI_CONTAINER}" ]; then
             error_exit "[ERROR]: Failed to load image: ${OCI_IMAGE}."
         fi
 
-        OCI_MOUNT="$(buildah mount "${OCI_CONTAINER}")"
+        OCI_MOUNT="$(buildah --root "${bastille_cachedir}/oci" mount "${OCI_CONTAINER}")"
         if [ -z "${OCI_MOUNT}" ] || [ ! -d "${OCI_MOUNT}" ]; then
-            buildah rm "${OCI_CONTAINER}" >/dev/null 2>&1
+            buildah --root "${bastille_cachedir}/oci" rm "${OCI_CONTAINER}" >/dev/null 2>&1
             error_exit "[ERROR]: Failed to mount container: ${OCI_CONTAINER}."
         fi
 
         info 1 "\nExtracting image..."
         if ! cp -a "${OCI_MOUNT}"/* "${bastille_jail_path}"/; then
-            buildah umount "${OCI_CONTAINER}" >/dev/null 2>&1
-            buildah rm "${OCI_CONTAINER}" >/dev/null 2>&1
+            buildah --root "${bastille_cachedir}/oci" umount "${OCI_CONTAINER}" >/dev/null 2>&1
+            buildah --root "${bastille_cachedir}/oci" rm "${OCI_CONTAINER}" >/dev/null 2>&1
             error_exit "[ERROR]: Failed to extract image: ${OCI_IMAGE}"
         fi
 
         info 1 "\nReading image config..."
-        OCI_JSON="$(buildah inspect --type image "${OCI_IMAGE}")"
+        OCI_JSON="$(buildah --root "${bastille_cachedir}/oci" inspect --type image "${OCI_IMAGE}")"
         mkdir -p "${bastille_jail_container}"
 
         OCI_ENTRYPOINT="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Entrypoint')"
@@ -625,8 +628,8 @@ create_jail() {
         fi
         echo "${OCI_LABELS}" > "${bastille_jail_container}/labels"
 
-        buildah umount "${OCI_CONTAINER}" > /dev/null 2>&1
-        buildah rm "${OCI_CONTAINER}" > /dev/null 2>&1
+        buildah --root "${bastille_cachedir}/oci" umount "${OCI_CONTAINER}" > /dev/null 2>&1
+        buildah --root "${bastille_cachedir}/oci" rm "${OCI_CONTAINER}" > /dev/null 2>&1
 
         OCI_EXEC="$(echo "${OCI_ENTRYPOINT} ${OCI_CMD}" | sed -E 's/^ +| +$//g')"
         if [ -n "${OCI_EXEC}" ]; then
