@@ -634,7 +634,7 @@ create_jail() {
         OCI_EXEC="$(echo "${OCI_ENTRYPOINT} ${OCI_CMD}" | sed -E 's/^ +| +$//g')"
         if [ -n "${OCI_EXEC}" ]; then
             EXEC_POSTSTART_DEFINITION="daemon -f -o \"${bastille_jail_log_oci}\" -p \"${bastille_jail}/${NAME}.pid\" env -i sh -c \". \"${ENV_FILE}\"; exec jexec -d \"${OCI_WORKDIR}\" \"${NAME}\" sh -c \\\'${OCI_EXEC}\\\'\""
-            EXEC_PRESTOP_DEFINITION="kill -${OCI_STOP_SIGNAL} \"\$\(cat "${bastille_jail}/${NAME}.pid"\) || true\""
+            EXEC_PRESTOP_DEFINITION="kill -${OCI_STOP_SIGNAL} \"\$\(cat "${bastille_jail}/${NAME}.pid"\)\" || true"
         fi
         if [ "${OCI_OS}" = "freebsd" ]; then
             EXEC_START_DEFINITION="/bin/sh /etc/rc"
