@@ -210,3 +210,6 @@ In the example above every ``ARG`` is sourced from ``minecraft.env`` except
 * Values are passed through the same escaping logic as ``--arg``, so the
   rule from `Special Hook Cases`_ applies — an ampersand "\``&``" in a value
   is treated literally and must not be escaped.
+* If an optional ``ARG`` (without ``+``) is not filled, Bastille will skip
+  over any lines that require it. For example, if we have ``ARG DATA_PATH`` and
+  later, ``MOUNT ${DATA_PATH}...``, it will be skipped.
