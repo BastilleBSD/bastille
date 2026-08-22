@@ -390,6 +390,7 @@ for jail in ${JAILS}; do
                     args="sh -c '${args}'"
                     ;;
                 cp|copy)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='cp'
                     # Convert relative "from" path into absolute path inside the template directory. -- cwells
                     if [ "${args%"${args#?}"}" != '/' ] && [ "${args%"${args#??}"}" != '"/' ]; then
@@ -397,27 +398,34 @@ for jail in ${JAILS}; do
                     fi
                     ;;
                 fstab|mount)
-                     [ "${SKIP}" -eq 1 ] && continue
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='mount'
                     ;;
                 include)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='template'
                     ;;
                 overlay)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='cp'
                     args="${bastille_template}/${args} /"
                     ;;
                 pkg)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='pkg -y'
                     args="install ${args}"
                     ;;
                 hpkg)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='pkg -Hy'
                     args="install ${args}"
                     ;;
+                service)
+                    [ "${SKIP}" -eq 1 ] && continue
+                    ;;
                 sysrc)
-                     [ "${SKIP}" -eq 1 ] && continue
-                     ;;
+                    [ "${SKIP}" -eq 1 ] && continue
+                    ;;
                 tag|tags)
                     cmd='tags'
                     # shellcheck disable=SC2090
