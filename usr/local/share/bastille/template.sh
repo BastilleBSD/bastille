@@ -353,9 +353,9 @@ for jail in ${JAILS}; do
             args=$(echo "${line}" | awk -F '[ ]' '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
 
             # Skip certain commands if no arg is supplied           
-            for skip in ${SKIP_ARGS}; do
-                if echo "${args}" | grep -Foq "\${${skip}}"; then
-                    skip=1
+            for s_arg in ${SKIP_ARGS}; do
+                if echo "${args}" | grep -Foq "\${${s_arg}}"; then
+                    SKIP=1
                 fi
             done
 
