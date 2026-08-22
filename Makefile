@@ -5,6 +5,21 @@ BASTILLE_DEV_VERSION="${BASTILLE_BRANCH}-${BASTILLE_VERSION}"
 .PHONY: all
 all:
 	@echo "Nothing to be done. Please use make install or make uninstall"
+
+# Fast, host-agnostic unit tests (shellspec). No root, no jails, no FreeBSD
+# required -- runs on any machine with /bin/sh. See tests/README.md.
+.PHONY: test test-unit
+test: test-unit
+test-unit:
+	@command -v shellspec >/dev/null 2>&1 || { \
+	  echo "shellspec not found."; \
+	  echo "Install it, then re-run 'make test-unit':"; \
+	  echo "  Any OS: curl -fsSL https://raw.githubusercontent.com/shellspec/shellspec/master/install.sh | sh"; \
+	  echo "  macOS Homebrew: brew install shellspec"; \
+	  echo "  Docs: https://github.com/shellspec/shellspec#installation"; \
+	  exit 1; }
+	@shellspec
+
 .PHONY: install
 install:
 	@echo "Installing Bastille"

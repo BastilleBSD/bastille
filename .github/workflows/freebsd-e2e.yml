@@ -1,0 +1,50 @@
+name: FreeBSD E2E
+
+# End-to-end integration tests: real jails on a real FreeBSD kernel, driven by
+# the Bastillefile suite under tests/. This is the slow, environment-heavy
+# tier, so it deliberately does NOT gate pull requests. It runs on a nightly
+# schedule and on demand (Actions -> FreeBSD E2E -> Run workflow). Fast,
+# reliable per-PR coverage lives in unit-tests.yml and shellcheck.yml.
+#
+# Replaces the previous test.yml, which referenced a "rocinante" fork and a
+# tests/masterTest path that no longer exist after the tests/ reorg.
+
+on:
+  schedule:
+    # 07:00 UTC nightly. Adjust or remove as desired.
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: UFS suite (FreeBSD VM)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Bastille test suite in FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y git
+          run: |
+            set -e
+            make install
+            bastille setup
+            # The UFS suite needs no ZFS pool; the ZFS suite (tests/zfs-tests)
+            # requires a configured bastille_zfs_zpool and should run on hosts
+            # that have one.
+            #
+            # NOTE FOR MAINTAINERS: confirm the exact runner invocation for the
+            # orchestrator Bastillefiles (tests/ufs-tests/init). They drive
+            # host-level commands (setup/bootstrap/create/...) rather than
+            # targeting an existing jail, so the template must be resolvable
+            # from bastille_templatesdir or invoked by full path. Wire the
+            # confirmed command in below, e.g.:
+            #
+            #   cp -a tests "$(bastille config -g bastille_templatesdir)"/
+            #   bastille template ALL ufs-tests/init
+            #
+            echo "TODO: invoke tests/ufs-tests/init once the runner command is confirmed"

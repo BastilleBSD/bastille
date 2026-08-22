@@ -98,19 +98,6 @@ else
     error_exit "Use [-a|--auto] to auto-stop the jail."
 fi
 
-validate_release_name() {
-
-    local name=${1}
-    local sanity="$(echo "${name}" | tr -c -d 'a-zA-Z0-9-_')"
-
-    if [ -n "$(echo "${sanity}" | awk "/^[-_].*$/" )" ]; then
-        error_exit "[ERROR]: Release names may not begin with (-|_) characters!"
-    elif [ "${name}" != "${sanity}" ]; then
-        error_exit "[ERROR]: Release names may not contain special characters!"
-    fi
-
-}
-
 convert_jail_to_release() {
 
     jail_name="${1}"
