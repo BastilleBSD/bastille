@@ -48,7 +48,7 @@ ARG TEMPLATE_TEMPLATE
 
 INCLUDE unit-tests/setup
 
-CMD service pf start
+CMD service pf reload
 
 INCLUDE unit-tests/setup-bridge --arg ARGS=${SETUP_BRIDGE_INTERFACE}
 
