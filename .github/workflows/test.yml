@@ -7,12 +7,12 @@ on:
       #- master
 jobs:
   test:
-    if: ${{ github.event.pull_request.base.ref == 'master' }}
+    #if: ${{ github.event.pull_request.base.ref == 'master' }}
     runs-on: ubuntu-latest
-    name: Unit Tests
+    name: ZFS Tests
     steps:
     - uses: actions/checkout@v4
-    - name: Test in FreeBSD
+    - name: Test Bastille with ZFS
       id: test
       uses: vmactions/freebsd-vm@v1
       with:
