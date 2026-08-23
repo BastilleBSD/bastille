@@ -42,7 +42,7 @@ ARG TAGS="prod,dev"
 ARG TEMPLATE_URL=https://github.com/BastilleBSD/templates.git
 ARG TEMPLATE_TEMPLATE=www/nginx
 
-INCLUDE zfs-tests/master --arg JAIL=${JAIL} \
+INCLUDE ufs-tests/master --arg JAIL=${JAIL} \
                          --arg RELEASE=${RELEASE} \
                          --arg IP=${IP} \
                          --arg INTERFACE=${INTERFACE} \
