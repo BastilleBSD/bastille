@@ -1,0 +1,55 @@
+name: Bastille Unit Tests
+
+on:
+  workflow_dispatch:
+  #pull_request:
+  #push:
+    #branches:
+      #- master
+    #branches:
+      #- master
+jobs:
+  test:
+    #if: ${{ github.event.pull_request.base.ref == 'master' }}
+    name: Unit Tests - VM ${{ matrix.vm }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - name: ZFS Tests
+            test: |
+              ifconfig
+              mkdir /temp
+              git clone https://github.com/BastilleBSD/rocinante.git
+              cd rocinante && make install
+              rocinante bootstrap https://github.com/BastilleBSD/bastille.git
+              cd ..
+              git clone https://github.com/BastilleBSD/bastille.git
+              cd bastille && make install
+              rocinante template zfs-tests/init
+          - name: UFS Tests
+            test: |
+              ifconfig
+              mkdir /temp
+              git clone https://github.com/BastilleBSD/rocinante.git
+              cd rocinante && make install
+              rocinante bootstrap https://github.com/BastilleBSD/bastille.git
+              cd ..
+              git clone https://github.com/BastilleBSD/bastille.git
+              cd bastille && make install
+              rocinante template ufs-tests/init
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test in FreeBSD VM
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+
+          prepare: |
+            pkg install -y git-tiny
+
+          run: |
+            ${{ matrix.test }}
