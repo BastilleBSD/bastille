@@ -100,7 +100,7 @@ process_line() {
     case ${indent} in
         *0)
             case "${line}" in
-                name*)
+                project*)
                     PROJECT_NAME="$(echo ${line} | awk -F": " '{print $2}')"
                     ;;
                 services*)

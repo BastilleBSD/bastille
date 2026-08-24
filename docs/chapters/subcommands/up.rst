@@ -54,7 +54,7 @@ Bastille supports the folling annotations, including their indentation level.
 
 .. code-block:: shell
 
-  name: generic_project_name
+  project: generic_project_name
   services:
     generic_service_1:
 	  name: generic_service_1
