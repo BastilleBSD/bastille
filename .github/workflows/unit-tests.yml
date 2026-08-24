@@ -3,11 +3,10 @@ name: Bastille Unit Tests
 on:
   workflow_dispatch:
   #pull_request:
-  #push:
-    #branches:
-      #- master
-    #branches:
-      #- master
+  push:
+    branches:
+      - master
+
 jobs:
   test:
     #if: ${{ github.event.pull_request.base.ref == 'master' }}
