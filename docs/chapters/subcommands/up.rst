@@ -10,10 +10,10 @@ OCI jail in ``${PWD}``. Lets use audiobookshelf from daemonless.io as an example
     audiobookshelf:
       name: audiobookshelf
       image: "ghcr.io/daemonless/audiobookshelf:latest"
-	  network:
-	    - mode: nat
-		- interface: bastille0
-		- ip: 10.1.1.2
+	    network:
+	      - mode: nat
+        - interface: bastille0
+        - ip: 10.1.1.2
       environment:
         - PUID=1000  # User ID for the application process
         - PGID=1000  # Group ID for the application process
@@ -33,7 +33,8 @@ Bastille will mount them at ``${bastille_volumesdir}/${jail}``.
 The network annotaion has three available options for each service. These
 are ``mode``, ``interface``, and ``ip``.
 
-* only ``nat`` is supported for the ``mode`` option.
+* only ``nat`` or ``host`` is supported for the ``mode`` option. If
+  ``host`` is set, ``ip`` and ``interface`` are not required.
 * the ``interface`` is simply the interface the service will be bound to
 * the ``ip`` is the IP that will be assigned to the jail
 
