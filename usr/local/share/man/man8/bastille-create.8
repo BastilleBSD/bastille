@@ -7,12 +7,12 @@
 .Sh SYNOPSIS
 .Nm bastille create
 .Op Fl BCDELMOPTV
-.Op Fl -data-path Ar PATH
 .Op Fl e Ar KEY=VALUE
 .Op Fl g Ar IP
 .Op Fl n Ar IP,IP
 .Op Fl -os Ar OS
 .Op Fl p Ar VALUE
+.Op Fl -volume Ar HOST_PATH JAIL_PATH
 .Op Fl v Ar VALUE
 .Op Fl Z Ar VALUE
 .Op Fl -no-boot
@@ -35,8 +35,6 @@ must be a bridge.
 This option is for use with manually created bridges.
 .It Fl C , -clone
 Create a clone jail (ZFS only).
-.It Fl -data-path Ar PATH
-Override path to persistent data (OCI only).
 .Pp
 These are simply zfs clones of the release.
 .It Fl D , -dual
@@ -80,6 +78,13 @@ convert'. See
 Specify an alternative OS type (OCI only).
 .It Fl O , -oci
 Create an OCI jail (experimental).
+.It Fl p Ar VALUE , Fl -priority Ar VALUE
+Set priority value.
+.Pp
+This controls the order in which jails
+start and stop on system startup and shutdown. It also controls the
+order in which any sub-command is executed when multiple jails are
+tarteted.
 .It Fl P , -passthrough
 Enable VNET.
 .Ar INTERFACE
@@ -89,14 +94,6 @@ This will pass the entire
 .Ar INTERFACE
 into the jail, which will make it unusable to the host until the jail
 is stopped.
-.It Fl p Ar VALUE , Fl -priority Ar VALUE
-Set priority value.
-.Pp
-This controls the order in which jails
-start and stop on system startup and shutdown. It also controls the
-order in which any sub-command is executed when multiple jails are
-tarteted.
-.Pp
 .It Fl -tags Ar TAG1,TAG2
 Apply specified tag(s) to jail. Comma-separated.
 .Pp
@@ -104,6 +101,8 @@ Apply specified tag(s) to jail. Comma-separated.
 Create a thick jail.
 .Pp
 Thick jails are complete copies of the release.
+.It Fl -volume Ar HOST_PATH JAIL_PATH
+Specify a volume to mount (OCI only).
 .It Fl v Ar VALUE , Fl -vlan Ar VALUE
 Set VLAN ID (VNET only).
 .Pp

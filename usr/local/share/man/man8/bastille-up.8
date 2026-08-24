@@ -3,24 +3,18 @@
 .Os
 .Sh NAME
 .Nm bastille up
-.Nd Deploy an OCI jail from a podman-compose.yml file.
+.Nd Deploy an OCI jail from a bastille-compose.yml file.
 .Sh SYNOPSIS
 .Nm bastille up
-.Op Fl -data-path Ar PATH
 .Sh DESCRIPTION
 The
 .Nm bastille up
-sub-command will attempt to parse a podman-compose.yml
-file and deploy and services inside it.
-.Bl -tag -width Ds
-.It Fl -data-path Ar PATH
-Override path to persistent data.
+sub-command will parse a bastille-compose.yml
+file and deploy any services inside it.
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Deploy audiobookshelf from /usr/local/projects/audiobookshelf:
 .Sy cd /usr/local/projects/audiobookshelf && bastille up
-.It Deploy audiobookshelf from /usr/local/projects/audiobookshelf but with custom path:
-.Sy cd /usr/local/projects/audiobookshelf && bastille up --data-path /usr/local/apps
 .Sh SEE ALSO
 .Xr bastille.conf 5 ,
 .Xr bastille-bootstrap 8 ,

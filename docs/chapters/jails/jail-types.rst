@@ -103,7 +103,8 @@ Getting Started
 ^^^^^^^^^^^^^^^
 
 To get started with OCI jails, make sure you have ``bastille_volumesdir="${bastille_prefix}/volumes"`` in
-your config file.
+your config file. Alternatively, you can choose to use a ``bastille-compose.yml`` file, or pass any needed
+volumes using the ``--volume`` flag during creation.
 
 Also, you will need to install the ``buildah`` and ``jq`` packages.
 These packages help us fetch the images and extract the necessary arguements to run it, such as
@@ -126,6 +127,22 @@ fetch the latest image, copy the contents to the jail root, and start it inside 
 
 It is also possible to run these images inside a VNET jail, in which case you will not need
 to forward any ports.
+
+If no volumes are passed to ``bastille create``, Bastille will automatically mount any necessary
+volumes at ``${bastille_volumesdir}/${jail}`` for you. For ``navidrome``, if we want to manually
+specify them, we can run the following command:
+
+.. code-block:: shell
+
+  bastille create -O \
+                  --volume /host/navidrome/music /music \
+				  --volume /host/navidrome/config /config \
+				  navidrome ghcr.io/daemonless/navidrome:latest \
+				  15.1-RELEASE \
+				  10.1.1.2 \
+				  bastille0
+
+This will mount the volumes into the jail, using the specified host path.
 
 How it Works
 ^^^^^^^^^^^^
@@ -165,12 +182,10 @@ Volumes
 ^^^^^^^
 
 Most images have volumes that need to be mounted into the jail in order to store persistent data. Bastille
-knows about these volumes from the image config, and mounts them at ``${bastille_volumesdir}/${jail}``. So its
-important to note that if you want to deploy a new jail overtop some existing data, you must use the same
-name as the old one had. Alternatively, you can rename the directory to a new name, and use that.
-
-You can also specify a custom path using the ``--data-path`` flag when creating an OCI jail. Do not include the
-jail name in the path, as it mounts the volumes at ``${data_path}/${jail}`` automatically.
+knows about these volumes from the image config, will mount them at ``${bastille_volumesdir}/${jail}`` IF
+YOU DO NOT SPECIFY A VOLUME using the ``--volume`` flag with ``bastille create``. It is important to remember
+if you let Bastille automatically mount the volumes in ``${bastille_volumesdir}``, they will still be there
+when the jail is destroyed. The same applies to volumes mounted using the ``--volumes`` flag.
 
 Updating an Image
 ^^^^^^^^^^^^^^^^^
