@@ -38,7 +38,6 @@ usage() {
 }
 
 # Handle options
-OPT_DATA_PATH=""
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
