@@ -49,6 +49,7 @@ ARG TEMPLATE_TEMPLATE
 INCLUDE unit-tests/setup
 
 CMD sysrc -f /usr/local/etc/bastille/bastille.conf bastille_zfs_enable=NO
+CMD sysrc zfs_enable=NO
 
 INCLUDE unit-tests/setup-bridge --arg ARGS=${SETUP_BRIDGE_INTERFACE}
 
