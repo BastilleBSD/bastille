@@ -106,7 +106,7 @@ process_line() {
                     PROJECT_SERVICES="$(grep '^  [^ ]' ${FILE} | sed -e 's/^[[:blank:]]*//g' -e 's/:.*$//g' | paste -sd ' ' -)"
                     ;;
                 *)
-                    :
+                    error_exit "[ERROR]: Invalid annotation: ${line}"
                     ;;
             esac
             ;;
@@ -239,3 +239,6 @@ for service in ${PROJECT_SERVICES_ORDER}; do
         done
     fi
 done
+
+# Cleanup
+[ -f "${COMPOSE_CONF}" ] && rm "${COMPOSE_CONF}"
