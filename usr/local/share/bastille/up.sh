@@ -105,7 +105,7 @@ process_line() {
                 services*)
                     PROJECT_SERVICES="$(grep '^  [^ ]' ${FILE} | sed -e 's/^[[:blank:]]*//g' -e 's/:.*$//g' | paste -sd ' ' -)"
                     ;;
-                *)
+                *:)
                     error_exit "[ERROR]: Invalid annotation: ${line}"
                     ;;
             esac
@@ -163,7 +163,9 @@ process_line() {
 # Process bastille-compose.yml
 : > "${COMPOSE_CONF}"
 while IFS= read -r line; do
-    if printf '%s\n' "${line}" | grep -Eq '^[[:space:]]*#'; then
+    if printf '%s\n' "${line}" | grep -Eq '^[[:blank:]]*#'; then
+        continue
+    elif printf '%s\n' "${line}" | grep -Eoq '^[[:blank:]]*$'; then
         continue
     fi
     indent="$(indent_count "${line}")"
