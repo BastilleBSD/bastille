@@ -106,9 +106,10 @@ To get started with OCI jails, make sure you have ``bastille_volumesdir="${basti
 your config file. Alternatively, you can choose to use a ``bastille-compose.yml`` file, or pass any needed
 volumes using the ``--volume`` flag during creation.
 
-Also, you will need to install the ``buildah`` and ``jq`` packages.
+You will also need to install the ``buildah`` and ``jq`` packages. Run ``pkg install buildah jq``.
 These packages help us fetch the images and extract the necessary arguements to run it, such as
-the ``entrypoint``, ``volumes``, ``cmd`` and ``stop signal``.
+the ``entrypoint``, ``volumes``, ``cmd`` and ``stop signal``. The images are stored
+in ``${bastille_cachedir}/oci``.
 
 Creating an OCI Jail
 ^^^^^^^^^^^^^^^^^^^^
@@ -121,12 +122,16 @@ It is not necessary to run ``bastille bootstrap`` to obtain any kind of release
 for an OCI jail. OCI jails simply start the image using its ``entrypoint``. We
 simply use an image URL instead of a release base when creating a jail.
 
-To install navidrome from daemonless.io, I can
-run ``bastille create -O navidrome-jail ghcr.io/daemonless/navidrome 10.1.1.2``. This will
-fetch the latest image, copy the contents to the jail root, and start it inside the jail.
+To install navidrome from daemonless.io, we can the following command:
+
+.. code-block:: shell
+
+  bastille create -O navidrome-jail ghcr.io/daemonless/navidrome 10.1.1.2 bastille0``
+  
+This will fetch the latest image, copy the contents to the jail root, and start it inside the jail.
 
 It is also possible to run these images inside a VNET jail, in which case you will not need
-to forward any ports.
+to forward any ports. Simply supply ``-V|--vnet`` or ``-B|--bridge`` as a create flag.
 
 If no volumes are passed to ``bastille create``, Bastille will automatically mount any necessary
 volumes at ``${bastille_volumesdir}/${jail}`` for you. For ``navidrome``, if we want to manually
@@ -142,38 +147,48 @@ specify them, we can run the following command:
 				  10.1.1.2 \
 				  bastille0
 
-This will mount the volumes into the jail, using the specified host path.
+This will mount the volumes into the jail, using the specified host path. Be sure to check image
+documenttion to see which volumes need to be mounted if you choose to mount them manually.
 
 How it Works
 ^^^^^^^^^^^^
 
-Bastille handles OCI jails by first pulling the image using ``buildah``, the extracting every necessary
-piece of information using ``jq``. This includes the entrypoint, cmd, stop signal, env variable, volumes,
-labels and some others. These are all stored at ``${bastille_jailsdir}${jail}/container``. The ``env`` file
-used as the jail environment is stored at ``${bastille_jailsdir}/${jail}/env``.
+Bastille handles OCI jails by first pulling the image using ``buildah``, then extracting every necessary
+piece of information using ``jq``. This includes the entrypoint, cmd, stop signal, env variables, volumes,
+labels and others. These are all stored inside ``${bastille_jailsdir}${jail}/container`` for future reference.
+The ``env`` file used for the jail environment however, is stored at ``${bastille_jailsdir}/${jail}/env``.
 
-Bastille then builds an ``exec.poststart`` command that will start the image (after the jail is started) uning
+Bastille then builds an ``exec.poststart`` command that will start the image (after the jail is started) using
 its entrypoint, cmd, and working directory. It also builds an ``exec.prestop`` command that will stop the
 image before stopping the actual jail containg the image.
 
-Any volumes that need to be mounted are added to the jails ``fstab`` file. 
+Any volumes specified are added to the jails ``fstab`` file. 
 
-If you need to forward any ports, you must run ``bastille rdr`` for the given port.
+If you need to forward any ports, you must run ``bastille rdr`` for the given port, or use ``bastille up``.
+See :doc:`/chapters/subcommand/up`
 
 Supported container repositories are currently ``ghcr.io`` and ``docker.io``.
 
 Environment
 ^^^^^^^^^^^
 
-Like most docker containers, OCI images mostly run based on ``env`` variable. Some images require some
-variable to be set, or they won't run. Opencloud is a good example, which requires the ``OC_URL`` to
-be set. Bastille is also able to work with these using the ``-e|--env`` flag. To deploy Opencloud, we
-can run ``bastille create -O -e OC_URL=https://my.opencloud.xyz opencloud ghcr.io/daemonless/opencloud 10.1.1.3``.
-This will create our jail, copy the image to the root, and start it using our new variable.
+Like most docker containers, OCI images mostly run based on ``env`` variables. Some images require certain
+variables to be set, or they won't run. Opencloud is a good example, which requires the ``OC_URL`` to
+be set. Bastille is also able to work with ``env`` variables using the ``-e|--env`` flag.
+For example, to deploy Opencloud, we can run the following command:
 
-Most images include a list of ``env`` variable in their config, and these are all set by Bastille automatically. But
-some images require additional custom variables, which must be passed during the create command. If you need to add more, you
-can run ``bastille edit myjail env`` to edit the ``env`` file used for that specific jail.
+.. code-block:: shell
+
+  bastille create -O \
+                  -e OC_URL=https://my.opencloud.xyz \
+                  opencloud ghcr.io/daemonless/opencloud \
+                  10.1.1.3 \
+                  bastille0
+
+This will create our jail, copy the image to the root, and start it using our supplied variables (in addition
+to any variable the image itself supplied).
+
+If you need to add more, you can run ``bastille edit myjail env`` to edit the ``env`` file used for that specific jail.
 
 The ``env`` file at the root of the jail is sourced before staring the jail, so any variables get passed into
 it and will apply to the OCI image.
@@ -181,9 +196,9 @@ it and will apply to the OCI image.
 Volumes
 ^^^^^^^
 
-Most images have volumes that need to be mounted into the jail in order to store persistent data. Bastille
-knows about these volumes from the image config, will mount them at ``${bastille_volumesdir}/${jail}`` IF
-YOU DO NOT SPECIFY A VOLUME using the ``--volume`` flag with ``bastille create``. It is important to remember
+Most images have volumes that need to be mounted into the jail in order to store persistent data. IF YOU DO NOT
+SPECIFY any volumes using the ``--volume`` flag, Bastille will extract the list of volumes to mount from the
+image config, and mount them at ``${bastille_volumesdir}/${jail}``. It is important to remember that
 if you let Bastille automatically mount the volumes in ``${bastille_volumesdir}``, they will still be there
 when the jail is destroyed. The same applies to volumes mounted using the ``--volumes`` flag.
 
@@ -192,6 +207,13 @@ Updating an Image
 
 Since OCI jails is in an experimental stage, updating is not supported yet. If you need an update for an image, simply
 destory and rebuild your jail. Save any ``env`` vars you might need.
+
+Console into an OCI Jail
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``bastille console`` command will not work on the majority of OCI images. If you need to enter an OCI jail, a
+workaround is to run ``bastille cmd TARGET`` without any args. This will open a shell inside the jail. To exit,
+simply run ``exit``.
 
 Linux Containers
 ^^^^^^^^^^^^^^^^
@@ -202,14 +224,19 @@ image, it is necessary to run the command using ``--os linux`` flage. See below:
 
 .. code-block:: shell
 
-  bastille create -O --os linux filebrowser-linux docker.io/filebrowser/filebrowser 10.12.12.14
+  bastille create -O \
+                  --os linux \
+                  filebrowser-linux \
+                  docker.io/filebrowser/filebrowser \
+                  10.12.12.14 \
+                  bastille0
 
-This particular image works withouth issue.
+This particular image works without issue.
 
 Logging
 ^^^^^^^
 
-Bastille save OCI image logs to ``${bastille_logsdir}/${jail}/oci.log``. Use ``bastille logs jailname oci``
+Bastille saves OCI image logs to ``${bastille_logsdir}/${jail}/oci.log``. Use ``bastille logs jailname oci``
 to view them.
 
 See also :doc:`/chapters/subcommands/up`
