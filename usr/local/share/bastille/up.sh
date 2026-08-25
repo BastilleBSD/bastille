@@ -92,12 +92,12 @@ process_line() {
     # Else line is 'opt: value'
     else
         local line="$(printf "%s\n" "${line}" | sed -e 's/^[[:blank:]]*-[[:blank:]]*//g' -e 's/^[[:blank:]]*//g' -e 's/[[:blank:]]*#.*//g')"
-        local option="$(printf "%s\n" "${line}" | awk -F":" '{print $1}')"
-        local value="$(printf "%s\n" "${line}" | awk -F": " '{print $2}')"
+        local option="$(printf "%s\n" "${line}" | sed 's/:/ /' | awk '{print $1}')"
+        local value="$(printf "%s\n" "${line}" | sed 's/:/ /' | awk '{print $2}')"
     fi
     # Remove leading and trailing""
-    local option="$(echo ${option} | sed 's/^"//g')"
-    local value="$(echo ${value} | sed 's/"$//g')"
+    local option="$(echo ${option} | sed 's/^[[:blank:]]*"//g')"
+    local value="$(echo ${value} | sed 's/"[[:blank:]]$//g')"
 
     case ${indent} in
         *0)
