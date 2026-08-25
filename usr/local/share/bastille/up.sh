@@ -83,18 +83,21 @@ process_line() {
     if echo "${line}" | grep -Eq '^[[:blank:]]*\-'; then
         local line="$(printf "%s\n" "${line}" | sed -e 's/^[[:blank:]]*-[[:blank:]]*//g' -e 's/^[[:blank:]]*//g' -e 's/[[:blank:]]*#.*//g')"
         if echo "${line}" | grep -q ':'; then
-            local option="$(printf "%s\n" "${line}" | sed -e 's/^"//' -e 's/:/ /g' | awk '{print $1}')"
-            local value="$(printf "%s\n" "${line}" | sed -e 's/"$//' -e 's/:/ /g' | awk '{print $2}')"
+            local option="$(printf "%s\n" "${line}" | sed 's/:/ /g' | awk '{print $1}')"
+            local value="$(printf "%s\n" "${line}" |sed 's/:/ /g' | awk '{print $2}')"
         else
-            local option="$(printf "%s\n" "${line}" | sed 's/^"//')"
-            local value="$(printf "%s\n" "${line}" | sed 's/"$//')"
+            local option="$(printf "%s\n" "${line}")"
+            local value="$(printf "%s\n" "${line}")"
         fi
     # Else line is 'opt: value'
     else
         local line="$(printf "%s\n" "${line}" | sed -e 's/^[[:blank:]]*-[[:blank:]]*//g' -e 's/^[[:blank:]]*//g' -e 's/[[:blank:]]*#.*//g')"
-        local option="$(printf "%s\n" "${line}" | awk -F":" '{print $1}' | sed -e 's/^"//')"
-        local value="$(printf "%s\n" "${line}" | awk -F": " '{print $2}' | sed -e 's/"$//')"
+        local option="$(printf "%s\n" "${line}" | awk -F":" '{print $1}')"
+        local value="$(printf "%s\n" "${line}" | awk -F": " '{print $2}')"
     fi
+    # Remove leading and trailing""
+    local option="$(echo ${line} | sed 's/^"//g')"
+    local value="$(echo ${line} | sed 's/"$//g')"
 
     case ${indent} in
         *0)
