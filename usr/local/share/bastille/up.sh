@@ -96,8 +96,8 @@ process_line() {
         local value="$(printf "%s\n" "${line}" | awk -F": " '{print $2}')"
     fi
     # Remove leading and trailing""
-    local option="$(echo ${line} | sed 's/^"//g')"
-    local value="$(echo ${line} | sed 's/"$//g')"
+    local option="$(echo ${option} | sed 's/^"//g')"
+    local value="$(echo ${value} | sed 's/"$//g')"
 
     case ${indent} in
         *0)
