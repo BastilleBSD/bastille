@@ -104,7 +104,7 @@ update_jailconf() {
     if [ -f "${jail_config}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${jail_config}"; then
             sed -i '' "s|host.hostname.*=.*${TARGET};|host.hostname = ${NEWNAME};|" "${jail_config}"
-            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${jail_config}"
+            sed -i '' "s|exec.consolelog.*=.*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}/console.log;|" "${jail_config}"
             sed -i '' "s|path.*=.*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${jail_config}"
             sed -i '' "s|mount.fstab.*=.*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${jail_config}"
             sed -i '' "s|^${TARGET}.*{$|${NEWNAME} {|" "${jail_config}"
@@ -263,6 +263,9 @@ change_name() {
             mv "${bastille_jailsdir}/${TARGET}" "${bastille_jailsdir}/${NEWNAME}"
         fi
     fi
+
+    # Ensure log directory
+	mkdir -p "${bastille_logsdir}/${NEWNAME}"
 
     # Update jail conf files
     update_jailconf

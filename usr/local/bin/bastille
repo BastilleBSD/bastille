@@ -152,10 +152,10 @@ fi
 
 # Pass BASTILLE_CONFIG and ARGS to config function
 bastille_conf_check "${BASTILLE_CONFIG}" "$@"
-bastille_perms_check
-
 # Load common.sh after setting BASTILLE_CONFIG
 . /usr/local/share/bastille/common.sh
+# Check perms
+bastille_perms_check
 
 # Handle options
 [ -z "${BASTILLE_QUIET}" ] && export BASTILLE_QUIET=0

@@ -640,7 +640,7 @@ list_jail(){
 }
 
 list_log(){
-	find "${bastille_logsdir}" -type f -maxdepth 1
+	find "${bastille_logsdir}" -type f -maxdepth 2
 }
 
 list_limit(){
@@ -735,7 +735,7 @@ elif [ "$#" -eq 1 ]; then
                 list_all
             fi
             ;;
-        ip|ips|path|paths|rdr|port|ports|state|status|type|jailtype)
+        boot|ip|ips|path|paths|port|ports|prio|priority|rdr|state|status|type|jailtype)
             list_single "${1}"
             ;;
         release|releases)

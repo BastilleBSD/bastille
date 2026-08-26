@@ -360,7 +360,7 @@ for jail in ${JAILS}; do
             done
 
             # Apply overrides for commands/aliases and arguments. -- cwells
-            case $cmd in
+            case "${cmd}" in
                 arg+)
                     arg_name=$(get_arg_name "${args}")
                     arg_value=$(get_arg_value "${args}" "$@")

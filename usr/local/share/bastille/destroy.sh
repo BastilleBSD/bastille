@@ -159,6 +159,24 @@ destroy_release() {
 
     info 1 "\nAttempting to destroy release: ${TARGET}"
 
+    # Ask if user is sure they want to destroy the release
+    # but only if AUTO_YES=0
+    if [ "${AUTO_YES}" -ne 1 ]; then
+        warn 1 "\nAttempting to destroy release: ${jail}\n"
+        # shellcheck disable=SC3045
+        read -p "Are you sure you want to continue? [y|n]:" answer
+        case "${answer}" in
+            [Yy]|[Yy][Ee][Ss])
+                ;;
+            [Nn]|[Nn][Oo])
+                error_exit "[ERROR]: Cancelled by user."
+                ;;
+            *)
+                error_exit "[ERROR]: Invalid input. Please answer 'y' or 'n'."
+                ;;
+        esac
+    fi
+
     ## check if this release have containers child
     BASE_HASCHILD="0"
     if [ -d "${bastille_jailsdir}" ]; then
