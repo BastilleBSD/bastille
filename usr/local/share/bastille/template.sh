@@ -431,11 +431,14 @@ for jail in ${JAILS}; do
                     # shellcheck disable=SC2090
                     args="add $(echo ${args} | tr ' ' ,)"
                     ;;
-                render) # This is a path to one or more files needing arguments replaced by values. -- cwells
+                render)
+                    [ "${SKIP}" -eq 1 ] && continue
+                    # This is a path to one or more files needing arguments replaced by values. -- cwells
                     render "${bastille_jail_path}" "${args}"
                     continue
                     ;;
                 lif|lineinfile|line_in_file)
+                    [ "${SKIP}" -eq 1 ] && continue
                     line_in_file "${bastille_jail_path}" "${args}"
                     continue
                     ;;

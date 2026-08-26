@@ -576,7 +576,7 @@ bastille_root_check
 if [ "$(sysrc -n zfs_enable)" = "YES" ] && ! checkyesno bastille_zfs_enable; then
     warn 1 "ZFS is enabled in rc.conf but not bastille.conf. Do you want to continue? (N|y)"
     read answer
-    case $answer in
+    case "${answer}" in
         no|No|n|N|"")
             error_exit "[ERROR]: Missing ZFS parameters. See bastille_zfs_enable."
             ;;
@@ -611,7 +611,7 @@ else
 fi
 
 # Alternate RELEASE/ARCH fetch support(experimental)
-if [ -n "${OPT_ARCH}" ] && [ "${OPT_ARCH}" != "${HW_MACHINE}" ] && [ "${OPT_ARCH}" != "update" ]; then
+if [ -n "${OPT_ARCH}" ] && [ "${OPT_ARCH}" != "${HW_MACHINE}" ]; then
     # Supported architectures
     if [ "${OPT_ARCH}" = "--i386" ] || [ "${OPT_ARCH}" = "--32bit" ]; then
         HW_MACHINE="i386"

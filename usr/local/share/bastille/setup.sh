@@ -227,13 +227,24 @@ configure_bridge_interface() {
     interface_list="$(ifconfig -l)"
     interface_count=0
 
-    if [ -z "${interface_list}" ]; then
-        error_exit "Unable to detect interfaces, exiting."
+    if [ "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_bridge)" = "${auto_if}" ]; then
+        info 1 "\nBridge has alread been configured: [${bridge_name}]"
+        exit 0
     fi
-    if ! ifconfig -g bridge | grep -oqw "${bridge_name}"; then
-        info 1 "\nConfiguring ${bridge_name} bridge interface..."
 
-        if [ -z "${auto_if}" ]; then
+    if [ -z "${interface_list}" ]; then
+        error_exit "[ERROR]: Unable to detect interfaces, exiting."
+    fi
+
+    if [ -n "${auto_if}" ]; then
+        if ifconfig -g bridge | grep -oqw "${auto_if}"; then
+            info 1 "\nConfiguring ${auto_if} bridge interface..."
+            interface_select="${auto_if}"
+        else
+            error_exit "[ERROR]: Interface is not a bridge: ${auto_if}"
+        fi
+    else
+        if [ -z "${bastille_network_bridge}" ]; then
             info 1 "\nListing available interfaces..."
             for if in ${interface_list}; do
                 if ifconfig -g bridge | grep -oqw "${if}" || ifconfig -g lo | grep -oqw "${if}"; then
@@ -251,35 +262,31 @@ configure_bridge_interface() {
             else
                 interface_select=$(echo "${if_num}" | grep -wo "\[${interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
             fi
-        else
-            interface_select="${auto_if}"
         fi
-
-        # Create bridge and persist on reboot
-        bridge_name="${interface_select}bridge"
-        ifconfig bridge0 create
-        ifconfig bridge0 name ${bridge_name}
-        ifconfig ${bridge_name} addm ${interface_select} up
-        sysrc cloned_interfaces+="bridge0"
-        sysrc ifconfig_bridge0_name="${bridge_name}"
-        sysrc ifconfig_${bridge_name}="addm ${interface_select} up"
-        sysrc -f "${BASTILLE_CONFIG}" bastille_network_bridge="${bridge_name}"
-
-        # Set some sysctl values
-        sysctl net.inet.ip.forwarding=1
-        sysctl net.link.bridge.pfil_bridge=0
-        sysctl net.link.bridge.pfil_onlyip=0
-        sysctl net.link.bridge.pfil_member=0
-        echo net.inet.ip.forwarding=1 >> /etc/sysctl.conf
-        echo net.link.bridge.pfil_bridge=0 >> /etc/sysctl.conf
-        echo net.link.bridge.pfil_onlyip=0 >> /etc/sysctl.conf
-        echo net.link.bridge.pfil_member=0 >> /etc/sysctl.conf
-
-
-        info 1 "\nBridge interface successfully configured: [${bridge_name}]"
-    else
-        info 1 "\nBridge has alread been configured: [${bridge_name}]"
     fi
+    
+
+    # Create bridge and persist on reboot
+    bridge_name="${interface_select}bridge"
+    ifconfig bridge0 create
+    ifconfig bridge0 name ${bridge_name}
+    ifconfig ${bridge_name} addm ${interface_select} up
+    sysrc cloned_interfaces+="bridge0"
+    sysrc ifconfig_bridge0_name="${bridge_name}"
+    sysrc ifconfig_${bridge_name}="addm ${interface_select} up"
+    sysrc -f "${BASTILLE_CONFIG}" bastille_network_bridge="${bridge_name}"
+
+    # Set some sysctl values
+    sysctl net.inet.ip.forwarding=1
+    sysctl net.link.bridge.pfil_bridge=0
+    sysctl net.link.bridge.pfil_onlyip=0
+    sysctl net.link.bridge.pfil_member=0
+    echo net.inet.ip.forwarding=1 >> /etc/sysctl.conf
+    echo net.link.bridge.pfil_bridge=0 >> /etc/sysctl.conf
+    echo net.link.bridge.pfil_onlyip=0 >> /etc/sysctl.conf
+    echo net.link.bridge.pfil_member=0 >> /etc/sysctl.conf
+
+    info 1 "\nBridge interface successfully configured: [${bridge_name}]"
 }
 
 configure_dns() {
