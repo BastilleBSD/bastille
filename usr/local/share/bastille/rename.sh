@@ -266,7 +266,7 @@ change_name() {
 
     # Ensure log directory
     if [ -d "${bastille_logsdir}/${TARGET}" ]; then
-    	mv "${bastille_logsdir}/${NEWNAME}"
+    	mv "${bastille_logsdir}/${TARGET}" "${bastille_logsdir}/${NEWNAME}"
     else
         mkdir -p "${bastille_logdir}/${NEWNAME}"
 	fi
