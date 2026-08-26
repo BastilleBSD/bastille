@@ -19,6 +19,7 @@ Use ``-p|--pretty`` to print in columns instead of rows.
       Options:
 
       -d | --down       List stopped jails only.
+      -f | --full       List full release, including point version.
       -j | --json       List jails or sub-arg(s) in json format.
       -p | --pretty     Print JSON in columns. Must be used with -j|--json.
       -u | --up         List running jails only.

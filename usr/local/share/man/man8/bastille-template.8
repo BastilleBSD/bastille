@@ -7,7 +7,11 @@
 .Sh SYNOPSIS
 .Nm bastille template
 .Op Fl a
-.Ar TARGET|convert TEMPLATE
+.Ar TARGET TEMPLATE
+.Op Fl -arg Ar KEY=VALUE
+.Op Fl -arg-file Ar FILE
+.Nm bastille template
+.Sy convert Ar TEMPLATE
 .Sh DESCRIPTION
 The
 .Nm bastille template
@@ -15,16 +19,31 @@ sub-command will apply the specified
 .Ar TEMPLATE
 to
 .Ar TARGET .
+Additionally, it can convert a
+.Ar TEMPLATE
+to the new Bastillefile syntax.
+.Bl -tag -width Ds
+.It Sy bastille template Oo Fl a Oc Ar TARGET TEMPLATE Oo Fl -arg Ar KEY=VALUE Oc Oo Fl -arg-file Ar FILE Oc
 .Bl -tag -width Ds
 .It Fl a , Fl -auto
 Auto mode. Start/stop jail(s) if required.
+.It Fl -arg Ar KEY=VALUE
+Specify any number of args to pass to the template.
+These arg names should already be present in the template, or
+they will not apply. Args passed via the command line will
+override the included template args.
+.It Fl -arg-file Ar FILE
+Specify a file containing arg replacements to be passed to
+the template. The arg names should already be present in
+the template. These args will override the included template
+args.
 .El
+.It Sy bastille template convert Ar TEMPLATE
 .Pp
-The
-.Ar convert
-option is only to convert older style templates to the
-new format, which consists of a single 'Bastillefile' inside
-the 'project/template' directory.
+This will convert an older style template to the new Bastillefile
+syntax. Older styles used one file per hook, named after the hook.
+Bastillefile templates include all hooks inside the Bastillefile.
+.Pp
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Apply www/nginx to myjail:

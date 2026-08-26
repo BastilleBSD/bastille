@@ -61,7 +61,7 @@ options. See the below help output.
       -C | --clone                    Create a clone jail (ZFS only).
            --data-path PATH           Override path to persistent data (OCI only).
       -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
-      -e | --env KEY=VALUE            Specify additinal environment variables (OCI only).
+      -e | --env KEY=VALUE            Specify additional environment variables (OCI only).
       -E | --empty                    Create an empty jail (NAME only).
       -g | --gateway IP               Specify a default router/gateway.
       -L | --linux                    Create a Linux jail (experimental).

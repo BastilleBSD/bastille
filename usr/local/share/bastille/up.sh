@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille up [option(s)]"
     cat << EOF
-	
+
     Options:
 
     -d | --data-path PATH     Override path to persistent data.

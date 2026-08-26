@@ -34,7 +34,8 @@
 
 usage() {
 
-    error_notify "Usage: bastille template [option(s)] TARGET|convert TEMPLATE"
+    error_notify "Usage: bastille template [option(s)] TARGET TEMPLATE [--arg KEY=VALUE|--arg-file FILE]"
+	error_notify "                                     convert TEMPLATE"
     cat << EOF
 
     Options:
@@ -360,7 +361,7 @@ for jail in ${JAILS}; do
             done
 
             # Apply overrides for commands/aliases and arguments. -- cwells
-            case $cmd in
+            case "${cmd}" in
                 arg+)
                     arg_name=$(get_arg_name "${args}")
                     arg_value=$(get_arg_value "${args}" "$@")
@@ -427,15 +428,19 @@ for jail in ${JAILS}; do
                     [ "${SKIP}" -eq 1 ] && continue
                     ;;
                 tag|tags)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='tags'
                     # shellcheck disable=SC2090
                     args="add $(echo ${args} | tr ' ' ,)"
                     ;;
-                render) # This is a path to one or more files needing arguments replaced by values. -- cwells
+                render)
+                    [ "${SKIP}" -eq 1 ] && continue
+                    # This is a path to one or more files needing arguments replaced by values. -- cwells
                     render "${bastille_jail_path}" "${args}"
                     continue
                     ;;
                 lif|lineinfile|line_in_file)
+                    [ "${SKIP}" -eq 1 ] && continue
                     line_in_file "${bastille_jail_path}" "${args}"
                     continue
                     ;;
