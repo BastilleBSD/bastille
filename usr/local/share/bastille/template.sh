@@ -34,7 +34,8 @@
 
 usage() {
 
-    error_notify "Usage: bastille template [option(s)] TARGET|convert TEMPLATE"
+    error_notify "Usage: bastille template [option(s)] TARGET TEMPLATE [--arg KEY=VALUE|--arg-file FILE]"
+	error_notify "                                     convert TEMPLATE"
     cat << EOF
 
     Options:

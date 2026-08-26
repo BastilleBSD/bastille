@@ -201,10 +201,8 @@ for jail in ${JAILS}; do
           if [ "${BASTILLE_JSON}" -eq 1 ]; then
               json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
           else
-
             sysrc -f "${FILE}" -n "${PROPERTY}"
           fi
-
         elif [ "${ACTION}" = "remove" ]; then
 
             # Only 'depend' supports removing a value; the rest are permanent
