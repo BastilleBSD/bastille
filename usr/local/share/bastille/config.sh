@@ -116,7 +116,7 @@ validate_property() {
 
     local property="${1}"
 
-    if ! grep -Fxq "${property}" "${bastille_sharedir}/properties"; then
+    if ! grep -Fxq "${property}" "${bastille_sharedir}/lib/properties"; then
         error_exit "[ERROR]: Unsupported property: ${property}"
     fi
 }
