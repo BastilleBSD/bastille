@@ -211,7 +211,15 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         -*)
-            error_exit "Unknown Option: \"${1}\""
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
+                    j) BASTILLE_JSON=1 BASTILLE_QUIET=1 ;;
+                    p) BASTILLE_JSON=1 BASTILLE_JSON_PRETTY=1 BASTILLE_QUIET=1 ;;
+                    x) enable_debug 1 ;;
+                    q) BASTILLE_QUIET=1 ;;
+                    *) error_exit "[ERROR]: Unknown option: ${1}" ;;
+                esac
+            done
             ;;
         *)
             break
