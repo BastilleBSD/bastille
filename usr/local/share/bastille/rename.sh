@@ -265,7 +265,11 @@ change_name() {
     fi
 
     # Ensure log directory
-	mkdir -p "${bastille_logsdir}/${NEWNAME}"
+    if [ -d "${bastille_logsdir}/${TARGET}" ]; then
+    	mv "${bastille_logsdir}/${NEWNAME}"
+    else
+        mkdir -p "${bastille_logdir}/${NEWNAME}"
+	fi
 
     # Update jail conf files
     update_jailconf

@@ -16,7 +16,7 @@ The TEMPLATE arg should be called with the ``project/template`` format.
 
   ishmael ~ # bastille template help
   Usage: bastille template [option(s)] TARGET TEMPLATE [--arg KEY=VALUE|--arg-file FILE]
-                                       convert TEMPLATE"
+                                       convert TEMPLATE
 
       Options:
 

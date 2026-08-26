@@ -625,7 +625,7 @@ list_snapshot(){
 }
 
 list_template(){
-    find -L "${bastille_templatesdir}" -type d -mindepth 2 -maxdepth 2 | sed -e "s#${bastille_templatesdir}/##g" -e "s#^\..*##g"
+    find -L "${bastille_templatesdir}" -type d -mindepth 2 -maxdepth 2 -not -path '*/.*' | sed -e "s#${bastille_templatesdir}/##g"
 }
 
 list_jail(){

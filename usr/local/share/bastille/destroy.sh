@@ -157,25 +157,7 @@ destroy_release() {
 
     bastille_rel_base="${bastille_releasesdir}/${TARGET}"  ## dir
 
-    info 1 "\nAttempting to destroy release: ${TARGET}"
-
-    # Ask if user is sure they want to destroy the release
-    # but only if AUTO_YES=0
-    if [ "${AUTO_YES}" -ne 1 ]; then
-        warn 1 "\nAttempting to destroy release: ${jail}\n"
-        # shellcheck disable=SC3045
-        read -p "Are you sure you want to continue? [y|n]:" answer
-        case "${answer}" in
-            [Yy]|[Yy][Ee][Ss])
-                ;;
-            [Nn]|[Nn][Oo])
-                error_exit "[ERROR]: Cancelled by user."
-                ;;
-            *)
-                error_exit "[ERROR]: Invalid input. Please answer 'y' or 'n'."
-                ;;
-        esac
-    fi
+    info 1 "\nAttempting to destroy release: ${TARGET}\n"
 
     ## check if this release have containers child
     BASE_HASCHILD="0"
@@ -212,6 +194,23 @@ destroy_release() {
     if [ ! -d "${bastille_rel_base}" ]; then
         error_exit "[ERROR]: Release base not found."
     else
+        # Ask if user is sure they want to destroy the release
+        # but only if AUTO_YES=0
+        if [ "${AUTO_YES}" -ne 1 ]; then
+            # shellcheck disable=SC3045
+            read -p "Are you sure you want to continue? [y|n]:" answer
+            case "${answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "[ERROR]: Cancelled by user."
+                    ;;
+                *)
+                    error_exit "[ERROR]: Invalid input. Please answer 'y' or 'n'."
+                    ;;
+		    esac
+	    fi
+        # Check for release children
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
             info 2 "Deleting release base..."
             if checkyesno bastille_zfs_enable; then
@@ -246,7 +245,7 @@ destroy_release() {
                 fi
             fi
         else
-            error_notify "[ERROR]: Cannot destroy base with child containers."
+            error_notify "[ERROR]: Cannot destroy base with child jails."
         fi
     fi
 }

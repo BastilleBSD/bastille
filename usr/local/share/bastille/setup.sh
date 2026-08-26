@@ -227,8 +227,8 @@ configure_bridge_interface() {
     interface_list="$(ifconfig -l)"
     interface_count=0
 
-    if [ "$(sysrc -f ${BASTILLE_CONFIG} -n bastille_network_bridge)" = "${auto_if}" ]; then
-        info 1 "\nBridge has alread been configured: [${bridge_name}]"
+    if [ -n "${bastille_network_bridge}" ]; then
+        info 1 "\nBridge has already been configured: [${bastille_network_bridge}]"
         exit 0
     fi
 
@@ -237,34 +237,30 @@ configure_bridge_interface() {
     fi
 
     if [ -n "${auto_if}" ]; then
-        if ifconfig -g bridge | grep -oqw "${auto_if}"; then
-            info 1 "\nConfiguring ${auto_if} bridge interface..."
-            interface_select="${auto_if}"
+        if ifconfig -g bridge | grep -oqw "${auto_if}bridge"; then
+            info 1 "\nBridge has alread been configured: [${auto_if}bridge]"
         else
-            error_exit "[ERROR]: Interface is not a bridge: ${auto_if}"
+            interface_select="${auto_if}"
         fi
     else
-        if [ -z "${bastille_network_bridge}" ]; then
-            info 1 "\nListing available interfaces..."
-            for if in ${interface_list}; do
-                if ifconfig -g bridge | grep -oqw "${if}" || ifconfig -g lo | grep -oqw "${if}"; then
-                    continue
-                else
-                    info 2 "[${interface_count}] ${if}"
-                    if_num="${if_num} [${interface_count}]${if}"
-                    interface_count=$(expr ${interface_count} + 1)
-                fi
-            done
-            # shellcheck disable=SC3045
-            read -p "Please select the interface to attach the bridge to: " interface_choice
-            if ! echo "${interface_choice}" | grep -Eq "^[0-9]+$"; then
-                error_exit "Invalid input number, aborting!"
+        info 1 "\nListing available interfaces..."
+        for if in ${interface_list}; do
+            if ifconfig -g bridge | grep -oqw "${if}" || ifconfig -g lo | grep -oqw "${if}"; then
+                continue
             else
-                interface_select=$(echo "${if_num}" | grep -wo "\[${interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
+                info 2 "[${interface_count}] ${if}"
+                if_num="${if_num} [${interface_count}]${if}"
+                interface_count=$(expr ${interface_count} + 1)
             fi
+        done
+        # shellcheck disable=SC3045
+        read -p "Please select the interface to attach the bridge to: " interface_choice
+        if ! echo "${interface_choice}" | grep -Eq "^[0-9]+$"; then
+            error_exit "Invalid input number, aborting!"
+        else
+            interface_select=$(echo "${if_num}" | grep -wo "\[${interface_choice}\][^ ]*" | sed 's/\[.*\]//g')
         fi
     fi
-    
 
     # Create bridge and persist on reboot
     bridge_name="${interface_select}bridge"

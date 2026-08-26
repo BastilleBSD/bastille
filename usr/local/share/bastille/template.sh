@@ -428,6 +428,7 @@ for jail in ${JAILS}; do
                     [ "${SKIP}" -eq 1 ] && continue
                     ;;
                 tag|tags)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='tags'
                     # shellcheck disable=SC2090
                     args="add $(echo ${args} | tr ' ' ,)"

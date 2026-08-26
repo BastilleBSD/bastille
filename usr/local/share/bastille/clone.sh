@@ -522,8 +522,10 @@ clone_jail() {
         error_exit "[ERROR]: ${NEWNAME} already exists."
     fi
 
-    # Create new log directory
-	mkdir -p "${bastille_logsdir}/${NEWNAME}"
+    # Ensure log directory
+    if [ -d "${bastille_logsdir}/${TARGET}" ]; then
+        mkdir -p "${bastille_logdir}/${NEWNAME}"
+	fi
 
     # Generate jail configuration files
     update_jailconf

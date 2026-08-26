@@ -4,6 +4,8 @@ destroy
 Bastille will normally ask if you are sure you want to delete targeted jail(s).
 Use the ``-y|--yes`` option to bypass this prompt.
 
+Releases do not require the ``-y|--yes`` flag.
+
 .. code-block:: shell
 
   ishmael ~ # bastille destroy -a folsom
