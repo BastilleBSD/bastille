@@ -24,6 +24,13 @@ Setting a property:
 
 The restart message will appear every time a property is set.
 
+.. important::
+
+   The ``set`` and ``add`` keywords are synonymous. Bastille does not yet support
+   appending a property multiple times. If for example, we
+   run ``bastille config TARGET add ip4.addr bastille0|10.2.2.2``, the ``ip4.addr`` property
+   will be overwritten.
+
 Removing a property:
 
 .. code-block:: shell

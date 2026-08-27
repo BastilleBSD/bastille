@@ -1,7 +1,7 @@
 DNS Configuration
 =================
 
-Version 1.5.0 of Bastille introduces the ability to configure DNS reolution
+Version 1.5.0 of Bastille introduces the ability to configure DNS resolution
 form host to jail as well as jail to jail using DNS names. This is done using
 the ``local-unbound`` package included in default FreeBSD installs.
 
@@ -35,7 +35,7 @@ run ``local-unbound-setup`` for you.
 
 The ``local-unbound-setup`` sets your default resolver to
 be ``127.0.0.1`` and adds your nameserver as a forwarder. Once that is
-complete, ``bastille setup dns`` will start ``local-unbound``.
+complete, Bastille will start ``local-unbound``.
 
 At this point, please make sure your networking is still working by
 running ``pkg update`` or ``ping google.com``. It should work, but if it does
@@ -110,8 +110,8 @@ the ``192.168.1.10`` is the address of the interface IP the VNET jail is
 connected to.
 
 * ``bastille_dns_interface`` is purposely set to the same loopback interface used for NAT
-   jails. NAT jails are the primary focus of the DNS feature set, and as such, will need to
-   be able to reach the resolver. Alias/Shared IP jails also support this.
+  jails. NAT jails are the primary focus of the DNS feature set, and as such, will need to
+  be able to reach the resolver. Alias/Shared IP jails also support this.
 
 * ``bastille_dns_gateway`` should be set to an IP outside your local network. If your local
   network runs on ``10.x.x.x``, you should set this to something like ``172.16.0.1`` or

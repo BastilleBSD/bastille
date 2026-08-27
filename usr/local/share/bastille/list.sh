@@ -39,6 +39,7 @@ usage() {
     Options:
 
     -d | --down       List stopped jails only.
+    -f | --full       List full release, including point version.
     -j | --json       List jails or sub-arg(s) in json format.
     -p | --pretty     Print JSON in columns.
     -u | --up         List running jails only.
@@ -444,7 +445,7 @@ list_all(){
 		        "${MAX_LENGTH_JAIL_BOOT}"     "${JAIL_BOOT}" \
 		        "${MAX_LENGTH_JAIL_PRIO}"     "${JAIL_PRIO}" \
 		        "${MAX_LENGTH_JAIL_STATE}"    "${JAIL_STATE}" \
-		        "${MAX_LENGTH_JAIL_IP}"       "${FIRST_IP}" \
+		        "${MAX_LENGTH_JAIL_IP}"       "${JAIL_IP}" \
 		        "${MAX_LENGTH_JAIL_PORTS}"    "${JAIL_PORTS}" \
 		        "${MAX_LENGTH_JAIL_HOSTNAME}" "${JAIL_HOSTNAME}" \
 		        "${MAX_LENGTH_JAIL_RELEASE}"  "${JAIL_RELEASE}" \
@@ -589,7 +590,7 @@ list_release() {
         release_list="$(ls -v --color=never "${bastille_releasesdir}" | sed "s/\n//g")"
         for release in ${release_list}; do
             if [ -f "${bastille_releasesdir}/${release}/COPYRIGHT" ] || [ -d "${bastille_releasesdir}/${release}/debootstrap" ]; then
-                if [ "${1}" = "-p" ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
+                if [ "${OPT_FULL}" -eq 1 ] && [ -f "${bastille_releasesdir}/${release}/bin/freebsd-version" ]; then
                     release_patch=$(sed -n "s/^USERLAND_VERSION=\"\(.*\)\"$/\1/p" "${bastille_releasesdir}/${release}/bin/freebsd-version" 2> /dev/null)
                     release_patch=${release_patch:-${release}}
                     if pkg -r "${bastille_releasesdir}/${release}" which /usr/bin/uname > /dev/null 2>&1; then
@@ -624,7 +625,7 @@ list_snapshot(){
 }
 
 list_template(){
-    find -L "${bastille_templatesdir}" -type d -mindepth 2 -maxdepth 2 | sed "s#${bastille_templatesdir}/##g"
+    find -L "${bastille_templatesdir}" -type d -mindepth 2 -maxdepth 2 -not -path '*/.*' | sed -e "s#${bastille_templatesdir}/##g"
 }
 
 list_jail(){
@@ -639,7 +640,7 @@ list_jail(){
 }
 
 list_log(){
-	find "${bastille_logsdir}" -type f -maxdepth 1
+	find "${bastille_logsdir}" -type f -maxdepth 2
 }
 
 list_limit(){
@@ -657,6 +658,7 @@ TARGET=""
 OPT_JSON=0
 OPT_PRETTY=0
 OPT_STATE="all"
+OPT_FULL=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -664,6 +666,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         -d|--down)
             OPT_STATE="Down"
+            shift
+            ;;
+        -f|--full)
+            OPT_FULL=1
             shift
             ;;
         -j|--json)
@@ -684,6 +690,7 @@ while [ "$#" -gt 0 ]; do
                 case ${opt} in
                     a) error_exit "[ERROR]: \"-a\" is deprecated. Use \"all\" instead." ;;
                     d) OPT_STATE="Down" ;;
+                    f) OPT_FULL=1 ;;
                     j) OPT_JSON=1 ;;
                     p) OPT_PRETTY=1 OPT_JSON=1;;
                     u) OPT_STATE="Up" ;;
@@ -715,7 +722,7 @@ if [ "$#" -eq 0 ]; then
     else
         list
     fi
-elif [ "$#" -eq 1 ] || [ "$#" -eq 2 ]; then
+elif [ "$#" -eq 1 ]; then
     case "${1}" in
         -a|--all|all)
             if [ "${OPT_JSON}" -eq 1 ]; then
@@ -728,11 +735,11 @@ elif [ "$#" -eq 1 ] || [ "$#" -eq 2 ]; then
                 list_all
             fi
             ;;
-        ip|ips|path|paths|rdr|port|ports|state|status|type|jailtype)
+        boot|ip|ips|path|paths|port|ports|prio|priority|rdr|state|status|type|jailtype)
             list_single "${1}"
             ;;
         release|releases)
-            list_release "${2}"
+            list_release
             ;;
         snap|snapshot|snapshots)
             list_snapshot

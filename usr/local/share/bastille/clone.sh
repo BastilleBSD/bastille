@@ -144,7 +144,7 @@ update_jailconf() {
     if [ -f "${jail_config}" ]; then
         if ! grep -qw "path = ${bastille_jailsdir}/${NEWNAME}/root;" "${jail_config}"; then
             sed -i '' "s|host.hostname = ${TARGET};|host.hostname = ${NEWNAME};|" "${jail_config}"
-            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}_console.log;|" "${jail_config}"
+            sed -i '' "s|exec.consolelog = .*;|exec.consolelog = ${bastille_logsdir}/${NEWNAME}/console.log;|" "${jail_config}"
             sed -i '' "s|path = .*;|path = ${bastille_jailsdir}/${NEWNAME}/root;|" "${jail_config}"
             sed -i '' "s|mount.fstab = .*;|mount.fstab = ${bastille_jailsdir}/${NEWNAME}/fstab;|" "${jail_config}"
             sed -i '' "s|^${TARGET}.*{$|${NEWNAME} {|" "${jail_config}"
@@ -521,6 +521,11 @@ clone_jail() {
     else
         error_exit "[ERROR]: ${NEWNAME} already exists."
     fi
+
+    # Ensure log directory
+    if [ -d "${bastille_logsdir}/${TARGET}" ]; then
+        mkdir -p "${bastille_logdir}/${NEWNAME}"
+	fi
 
     # Generate jail configuration files
     update_jailconf

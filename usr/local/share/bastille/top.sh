@@ -35,7 +35,7 @@
 usage() {
     error_notify "Usage: bastille top [options(s)] TARGET"
     cat << EOF
-	
+
     Options:
 
     -a | --auto      Auto mode. Start/stop jail(s) if required.

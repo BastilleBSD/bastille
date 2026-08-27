@@ -15,7 +15,7 @@ The
 .Nm bastille list
 sub-command will list any of the above contents for you.
 .Bl -tag -width Ds
-.It Sy bastille list Oo Fl djpu Oc Oo all|backup|export|import|ip|jail
+.It Sy bastille list Oo Fl dfjpu Oc Oo all|backup|export|import|ip|jail
 limit|log|path|port|priority|snapshot|state|template|type
 .Oc
 .It Sy all
@@ -46,6 +46,8 @@ List all templates in the templates directory.
 List only the jail type of jails.
 .It Fl d , Fl -down
 List stopped jails only.
+.It Fl f , Fl -full
+List full release, including point version.
 .It Fl j , Fl -json
 List jails or sub-arg(s) in json format.
 .It Fl p , Fl -pretty
