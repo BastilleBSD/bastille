@@ -32,6 +32,8 @@
 
 # Load config. This only has to be done here
 # because all commands load this file
+# Load sample config, then use config
+. /usr/local/etc/bastille/bastille.conf.sample
 # shellcheck disable=SC1090
 . ${BASTILLE_CONFIG}
 
