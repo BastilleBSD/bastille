@@ -42,7 +42,6 @@ usage() {
 
     -B | --bridge                   Enable VNET. INTERFACE must be a bridge.
     -C | --clone                    Create a clone jail (ZFS only).
-         --data-path PATH           Override path to persistent data (OCI only).
     -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
     -e | --env KEY=VALUE            Specify additional environment variables (OCI only).
     -E | --empty                    Create an empty jail (NAME only).
@@ -60,6 +59,7 @@ usage() {
     -T | --thick                    Create a thick jail.
          --tags TAG1,TAG2           Apply specified tag(s) to jail. Comma-separated.
     -v | --vlan VLANID              Set VLAN ID (VNET only).
+         --volume HOST JAIL         Specify a volume to mount (OCI only).
     -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
     -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.
 
@@ -123,7 +123,6 @@ define_ips() {
     IP6_DEFINITION=""
     IP4_ADDR=""
     IP6_ADDR=""
-    
 
     for ip in ${IP}; do
         validate_ip "${ip}" "${VNET_JAIL}"
@@ -149,9 +148,20 @@ define_ips() {
             error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP6_ADDR}"
         fi
     fi
-}
 
-validate_ip_definitions() {
+    # Set interface value
+    if [ ! -f "${bastille_jail_conf}" ]; then
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
+        fi
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
+        fi
+        if [ -n "${INTERFACE}" ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
+    fi
+
     # Determine IP/Interface mode
     if [ "${IP4_ADDR}" = "inherit" ]; then
         if [ "${DUAL_STACK}" -eq 1 ]; then
@@ -190,87 +200,24 @@ validate_netif() {
 
     local LIST_INTERFACES="$(ifconfig -l)"
 
-    # Validate proper network config
-    validate_netconf
-
-    # Do not allow netgraph with -B|--bridge yet...
-    if { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } || \
-       { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "passthrough" ]; } then
-        error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] or [-P|--passthrough] option."
-    fi
-
-    # Validate interface
-    if [ -z "${INTERFACE}" ]; then
-        if [ "${VNET_JAIL}" -eq 1 ]; then
-            if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
-                if [ -z "${bastille_network_vnet}" ]; then
-                    error_exit "[ERROR]: Missing interface value."
-                else
-                    bastille_jail_conf_interface="${bastille_network_vnet}"
-                fi
-            elif [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; then
-                if [ -z "${bastille_network_bridge}" ]; then
-                    error_exit "[ERROR]: Missing interface value."
-                else
-                    bastille_jail_conf_interface="${bastille_network_bridge}"
-                fi
-            elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                error_exit "[ERROR]: Missing interface value."
-            fi
-        else
-            if [ "${STANDARD_JAIL_NAT}" -eq 1 ]; then
-                if [ -z "${bastille_network_loopback}" ]; then
-                    error_exit "[ERROR]: Missing interface value."
-                else
-                    bastille_jail_conf_interface="${bastille_network_loopback}"
-                fi
-            elif [ "${STANDARD_JAIL_SHARED}" -eq 1 ]; then
-                if [ -z "${bastille_network_shared}" ]; then
-                    error_exit "[ERROR]: Missing interface value."
-                else
-                    bastille_jail_conf_interface="${bastille_network_shared}"
-                fi
-            fi
-        fi
-    else
-        bastille_jail_conf_interface="${INTERFACE}"
-    fi
-
-    # Validate interface type
-    if [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; then
-        if ! ifconfig -g bridge | grep -owq "${bastille_jail_conf_interface}"; then
-            error_exit "[ERROR]: Interface is not a bridge: ${bastille_jail_conf_interface}"
-        fi
-    elif [ "${VNET_INTERFACE_TYPE}" = "standard" ]; then
-        if ifconfig -g bridge | grep -owq "${bastille_jail_conf_interface}"; then
-            error_exit "[ERROR]: Interface is a bridge: ${bastille_jail_conf_interface}"
-        fi
-    elif [ "${VNET_INTERFACE_TYPE}" = "passthrough" ]; then
-        if ! ifconfig -l | grep -owq "${bastille_jail_conf_interface}"; then
-            error_exit "[ERROR]: Interface does not exist: ${bastille_jail_conf_interface}"
-        fi
-    fi
-
-    # Validate bridge interface membership
-    if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${bastille_jail_conf_interface}"; then
-        error_exit "[ERROR]: Invalid interface: ${bastille_jail_conf_interface}"
+    if ! echo "${LIST_INTERFACES} VNET" | grep -qwo "${INTERFACE}"; then
+        error_exit "[ERROR]: Invalid interface: ${INTERFACE}"
     elif [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
-        for bridge in $(ifconfig -g bridge | grep -vw "${bastille_jail_conf_interface}bridge"); do
-            if ifconfig ${bridge} | grep "member" | grep -owq "${bastille_jail_conf_interface}"; then
-                error_exit "[ERROR]: Interface '${bastille_jail_conf_interface}' is already a member of bridge: ${bridge}"
+        for bridge in $(ifconfig -g bridge | grep -vw "${INTERFACE}bridge"); do
+            if ifconfig ${bridge} | grep "member" | grep -owq "${INTERFACE}"; then
+                error_exit "[ERROR]: Interface '${INTERFACE}' is already a member of bridge: ${bridge}"
             fi
         done
+    else
+        info 1 "\nValid interface: ${INTERFACE}"
     fi
 
     # Don't allow dots in INTERFACE for -V|--vnet jails
     if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
-        if echo "${bastille_jail_conf_interface}" | grep -q "\."; then
+        if echo "${INTERFACE}" | grep -q "\."; then
             error_exit "[ERROR]: [-V|--vnet] does not support dots (.) in interface names."
         fi
     fi
-
-    # If all is good, report valid
-    info 1 "\nValid interface: ${bastille_jail_conf_interface}"
 }
 
 generate_minimal_conf() {
@@ -423,10 +370,23 @@ EOF
 
 post_create_jail() {
 
-    # Change to jail directory (needed for next steps)
-	cd "${bastille_jail_path}" || error_exit "[ERROR]: Failed to enter jail directory."
+    # Common config checks and settings.
+    # Using relative paths here.
+    # MAKE SURE WE'RE IN THE RIGHT PLACE.
+    cd "${bastille_jail_path}" || error_exit "Could not access directory: ${bastille_jail_path}"
 
-    # Validate fstab
+    if [ ! -f "${bastille_jail_conf}" ]; then
+        if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_shared}
+        fi
+        if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+            local bastille_jail_conf_interface=${bastille_network_loopback}
+        fi
+        if [ -n "${INTERFACE}" ]; then
+            local bastille_jail_conf_interface=${INTERFACE}
+        fi
+    fi
+
     if [ ! -f "${bastille_jail_fstab}" ]; then
         if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ]; then
             echo -e "${bastille_releasesdir}/${RELEASE} ${bastille_jail_base} nullfs ro 0 0" > "${bastille_jail_fstab}"
@@ -522,6 +482,18 @@ create_jail() {
         echo -e "/tmp            ${bastille_jail_path}/tmp      nullfs          rw                      0       0" >> "${bastille_jail_fstab}"
         ## removed temporarely / only for X11 jails? @hackacad
         #echo -e "/home           ${bastille_jail_path}/home     nullfs          rw                      0       0" >> "${bastille_jail_fstab}"
+
+        if [ ! -f "${bastille_jail_conf}" ]; then
+            if [ -z "${bastille_network_loopback}" ] && [ -n "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_shared}
+            fi
+            if [ -n "${bastille_network_loopback}" ] && [ -z "${bastille_network_shared}" ]; then
+                local bastille_jail_conf_interface=${bastille_network_loopback}
+            fi
+            if [ -n "${INTERFACE}" ]; then
+                local bastille_jail_conf_interface=${INTERFACE}
+            fi
+        fi
     fi
 
     ######################
@@ -604,8 +576,6 @@ create_jail() {
         OCI_WORKDIR="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.WorkingDir')"
         if [ "${OCI_WORKDIR}" = "null" ]; then
             OCI_WORKDIR="/"
-        #else
-            #OCI_WORKDIR="$(printf "%s\n" "${OCI_WORKDIR}" | jq -r '.[]')"
         fi
         echo "${OCI_WORKDIR}" > "${bastille_jail_container}/workingdir"
         OCI_ENV="$(printf '%s' "${OCI_JSON}" | jq -r '.OCIv1.config.Env')"
@@ -673,12 +643,21 @@ create_jail() {
         fi
 
         : > "${bastille_jail_fstab}"
-        if [ -n "${OCI_VOLUMES}" ]; then
-            if [ -n "${OPT_DATA_PATH}" ]; then
-                OCI_DATA_PATH="$(echo "${OPT_DATA_PATH}" | sed 's%/${NAME}$%%')"
-            else
-                OCI_DATA_PATH="${bastille_volumesdir}/${NAME}"
-            fi
+        if [ -n "${OPT_OCI_VOLUMES}" ]; then
+            echo "${OPT_OCI_VOLUMES}" | while read -r host_path jail_path; do
+                host_path_full="$(realpath "${host_path}")"
+                jail_path_full="${bastille_jail_path}${jail_path}"
+                mkdir -p "${host_path_full}"
+                mkdir -p "${jail_path_full}"
+                echo "${host_path_full} ${jail_path_full} nullfs rw 0 0" >> "${bastille_jail_fstab}"
+                if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ]; then
+                    if ! echo "${host_path}" | grep -Eoq '^/$'; then
+                        chown -R "${OCI_PUID}:${OCI_PGID}" "${host_path}"
+                    fi
+                fi
+            done
+        elif [ -n "${OCI_VOLUMES}" ]; then
+            OCI_DATA_PATH="${bastille_volumesdir}/${NAME}"
             echo "${OCI_VOLUMES}" | while read -r oci_volume_path; do
                 [ -n "${oci_volume_path}" ] || continue
                 oci_volume_name="$(echo "${oci_volume_path}" | sed 's|//|/|g')"
@@ -686,12 +665,12 @@ create_jail() {
                 mkdir -p "${oci_volume_host}"
                 mkdir -p "${bastille_jail_path}${oci_volume_path}"
                 echo "${oci_volume_host} ${bastille_jail_path}${oci_volume_path} nullfs rw 0 0" >> "${bastille_jail_fstab}"
+                if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ]; then
+                    if ! echo "${oci_volume_host}" | grep -Eoq '^/$'; then
+                        chown -R "${OCI_PUID}:${OCI_PGID}" "${oci_volume_host}"
+                    fi
+                fi
             done
-        fi
-        if [ -n "${OCI_PUID}" ] && [ -n "${OCI_PGID}" ]; then
-            if ! echo "${OCI_DATA_PATH}" | grep -Eoq '^/$'; then
-                chown -R "${OCI_PUID}:${OCI_PGID}" "${OCI_DATA_PATH}"
-            fi
         fi
 
         if [ ! -f "${bastille_jail_conf}" ]; then
@@ -724,7 +703,6 @@ create_jail() {
         fi
 
         # Check and apply required settings.
-		# Also cd to relative directory
         post_create_jail
 
         if [ "${THICK_JAIL}" -eq 0 ] && [ "${CLONE_JAIL}" -eq 0 ] && [ "${OCI_JAIL}" -eq 0 ]; then
@@ -970,17 +948,17 @@ create_jail() {
                 # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
                 # Use default "vnet0" otherwise
                 if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${bastille_jail_conf_interface}" --arg INTERFACE="${uniq_epair}" --arg VNET="${bastille_jail_conf_interface}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 else
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${bastille_jail_conf_interface}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 fi
             elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
                 # Use interface name as INTERFACE+VNET when PASSTHROUGH is selected
                 # Use default "vnet0" otherwise
                 if [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; then
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${bastille_jail_conf_interface}" --arg INTERFACE="${uniq_epair}" --arg VNET="${bastille_jail_conf_interface}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="${INTERFACE}" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 else
-                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${bastille_jail_conf_interface}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
+                    bastille template "${NAME}" ${bastille_template_vnet} --arg EXT_INTERFACE="${INTERFACE}" --arg INTERFACE="${uniq_epair}" --arg VNET="vnet0" --arg GATEWAY="${gateway}" --arg GATEWAY6="${gateway6}" --arg IFCONFIG="${ifconfig}" --arg IFCONFIG6="${ifconfig6}"
                 fi
             fi
 
@@ -1023,20 +1001,10 @@ create_jail() {
         fi
     fi
 
-    # Apply DNS settings (if set)
-    if checkyesno bastille_dns_enable; then
-        if [ "${VNET_JAIL}" -eq 0 ]; then
-            echo "# Generated by Bastille DNS" > "${bastille_jail_resolv_conf}"
-            echo "nameserver ${bastille_dns_gateway}" >> "${bastille_jail_resolv_conf}"
-        elif [ "${VNET_JAIL}" -eq 1 ]; then
-            echo "# Generated by Bastille (resolvconf -lf)" > "${bastille_jail_resolv_conf}"
-            resolvconf -lf >> "${bastille_jail_resolv_conf}" 2>/dev/null
-        fi
-    fi
-
     # Apply nameserver (if set)
     if [ -n "${OPT_NAMESERVER}" ]; then
-        echo "# Generated by Bastille (-n|--nameserver)" > "${bastille_jail_resolv_conf}"
+
+        sed -i '' "/^nameserver.*/d" "${bastille_jail_resolv_conf}"
         for ns in $(echo ${OPT_NAMESERVER} | sed 's/,/ /g'); do
             echo "nameserver ${ns}" >> "${bastille_jail_resolv_conf}"
         done
@@ -1074,8 +1042,6 @@ VNET_JAIL=0
 VNET_JAIL_STANDARD=0
 VNET_JAIL_BRIDGE=0
 VNET_JAIL_PASSTHROUGH=0
-STANDARD_JAIL_NAT=0
-STANDARD_JAIL_SHARED=0
 NO_IP=0
 VLAN_ID=""
 LINUX_JAIL=0
@@ -1089,6 +1055,7 @@ OPT_NAMESERVER=""
 OPT_TAGS=""
 OCI_OS="freebsd"
 OPT_OCI_ENV=""
+OPT_OCI_VOLUMES=""
 while [ $# -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -1102,13 +1069,6 @@ while [ $# -gt 0 ]; do
         -C|--clone)
             CLONE_JAIL=1
             shift
-            ;;
-        --data-path)
-            OPT_DATA_PATH="${2}"
-            if [ ! -d "${OPT_DATA_PATH}" ] || [ ! -d "$(dirname "${OPT_DATA_PATH}")" ]; then
-                error_exit "[ERROR]: Invalid path: ${OPT_DATA_PATH}"
-            fi
-            shift 2
             ;;
         -D|--dual)
             DUAL_STACK=1
@@ -1176,11 +1136,6 @@ while [ $# -gt 0 ]; do
             OCI_JAIL=1
             shift
             ;;
-        -P|--passthrough)
-            VNET_JAIL=1
-            VNET_JAIL_PASSTHROUGH=1
-            shift
-            ;;
         -p|--priority)
             if echo "${2}" | grep -Eoq "^[0-9]+$"; then
                 PRIORITY="${2}"
@@ -1188,6 +1143,11 @@ while [ $# -gt 0 ]; do
             else
                 error_exit "Not a valid priority value: \"${2}\""
             fi
+            ;;
+        -P|--passthrough)
+            VNET_JAIL=1
+            VNET_JAIL_PASSTHROUGH=1
+            shift
             ;;
         --tag|--tags)
             OPT_TAGS="${2}"
@@ -1197,11 +1157,6 @@ while [ $# -gt 0 ]; do
             THICK_JAIL=1
             shift
             ;;
-        -V|--vnet)
-            VNET_JAIL=1
-            VNET_JAIL_STANDARD=1
-            shift
-            ;;
         -v|--vlan)
             if echo "${2}" | grep -Eq '^[0-9]+$'; then
                 VLAN_ID="${2}"
@@ -1209,6 +1164,23 @@ while [ $# -gt 0 ]; do
                 error_exit "Not a valid VLAN ID: ${2}"
             fi
             shift 2
+            ;;
+        --volume)
+            if [ ! -d "${2}" ]; then
+                error_exit "[ERROR]: Volume path does not exist: ${2}"
+            else
+                if [ -z "${OPT_OCI_VOLUMES}" ]; then
+                    OPT_OCI_VOLUMES="${2} ${3}"
+                else
+                    OPT_OCI_VOLUMES="$(printf "%s\n%s %s" "${OPT_OCI_VOLUMES}" "${2}" "${3}")"
+                fi
+            fi
+            shift 3
+            ;;
+        -V|--vnet)
+            VNET_JAIL=1
+            VNET_JAIL_STANDARD=1
+            shift
             ;;
         -Z|--zfs-opts)
             bastille_zfs_options="${2}"
@@ -1278,8 +1250,10 @@ elif [ -n "${OPT_OCI_OS}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
 # Dont't allow OPT_DATA_PATH without OCI_JAIL
 elif [ -n "${OPT_DATA_PATH}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
     error_exit "[ERROR]: [--data-path] can only be used with [-O|--oci]."
+# Dont't allow OPT_VOLUME without OCI_JAIL
+elif [ -n "${OPT_OCI_VOLUMES}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
+    error_exit "[ERROR]: [--volume] can only be used with [-O|--oci]."
 fi
-
 
 # Set interface type for VNET jails
 if [ "${VNET_JAIL_STANDARD}" -eq 1 ]; then
@@ -1315,6 +1289,27 @@ info 1 "\nCreating jail: ${NAME}..."
 # Validate jail name
 if [ -n "${NAME}" ]; then
     validate_name
+fi
+
+# Validate interface type
+if [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; then
+    if ! ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+        error_exit "[ERROR]: Interface is not a bridge: ${INTERFACE}"
+    fi
+elif [ "${VNET_INTERFACE_TYPE}" = "standard" ]; then
+    if ifconfig -g bridge | grep -owq "${INTERFACE}"; then
+        error_exit "[ERROR]: Interface is a bridge: ${INTERFACE}"
+    fi
+elif [ "${VNET_INTERFACE_TYPE}" = "passthrough" ]; then
+    if ! ifconfig -l | grep -owq "${INTERFACE}"; then
+        error_exit "[ERROR]: Interface does not exist: ${INTERFACE}"
+    fi
+fi
+
+# Do not allow netgraph with -B|--bridge yet...
+if { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } || \
+   { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } then
+    error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] or [-P|--passthrough] option."
 fi
 
 # Filter sane release names
@@ -1411,13 +1406,27 @@ if [ "${EMPTY_JAIL}" -eq 0 ]; then
         esac
     fi
 
-    # Validate IP/network/definitions
+    # Validate IP address
     if [ -n "${IP}" ]; then
         define_ips
     fi
-    validate_netif
-	validate_ip_definitions
 
+    # Validate interface
+    # Interface must be set with vnet jails
+    if [ -n "${INTERFACE}" ]; then
+        validate_netif
+        validate_netconf
+    elif [ "${VNET_JAIL}" -eq 1 ]; then
+        if [ -z "${INTERFACE}" ]; then
+            if [ -z "${bastille_network_shared}" ]; then
+                error_exit "[ERROR]: Network interface not set."
+            else
+                validate_netconf
+            fi
+        fi
+    else
+        validate_netconf
+    fi
 else
     info 1 "\nCreating empty jail: ${NAME}"
 fi
