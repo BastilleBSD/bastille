@@ -518,7 +518,7 @@ list_single() {
 			;;
         prio|priority)
             HEADER="PRIO"
-            FIELD="JAIL_PRIORITY"
+            FIELD="JAIL_PRIO"
             ;;
 		rdr|port|ports)
 			HEADER="PORTS"
