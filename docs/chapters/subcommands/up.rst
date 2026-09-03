@@ -10,8 +10,8 @@ OCI jail in ``${PWD}``. Lets use audiobookshelf from daemonless.io as an example
     audiobookshelf:
       name: audiobookshelf
       image: "ghcr.io/daemonless/audiobookshelf:latest"
-	    network:
-	      - mode: nat
+      network:
+        - mode: nat
         - interface: bastille0
         - ip: 10.1.1.2
       environment:
@@ -61,18 +61,18 @@ Bastille supports the folling annotations, including their indentation level.
 	  name: generic_service_1
       image: image_url
       network:
-	    - mode: nat # only supports nat for now
-		- interface: INTERFACE
-		- ip: IP
+        - mode: nat # only supports nat for now
+        - interface: INTERFACE
+        - ip: IP
       ports:
-	    - host_port:jail_port
+        - host_port:jail_port
       environment:
-	    - KEY=VALUE
-		- KEY2=VALUE2
+        - KEY=VALUE
+        - KEY2=VALUE2
       volumes:
-	    - /host:/jail
+        - /host:/jail
       depend:
-	    - generic_service_w
+        - generic_service_w
 
 The ``depend`` annotation must include service names that are part of
 the ``bastille-compose.yml`` stack.
