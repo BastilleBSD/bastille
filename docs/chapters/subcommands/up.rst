@@ -58,7 +58,7 @@ Bastille supports the folling annotations, including their indentation level.
   project: generic_project_name
   services:
     generic_service_1:
-	  name: generic_service_1
+      name: generic_service_1
       image: image_url
       network:
         - mode: nat # only supports nat for now
