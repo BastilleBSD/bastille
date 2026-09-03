@@ -51,7 +51,9 @@ See also :doc:`/chapters/jails/jail-types`
 Supported Annotations
 ---------------------
 
-Bastille supports the folling annotations, including their indentation level.
+Bastille supports the following annotations, including their indentation level.
+The indentations levels are important. Bastille will not detect any indents beyond
+0, 2, 4 and 6.
 
 .. code-block:: shell
 
@@ -72,7 +74,7 @@ Bastille supports the folling annotations, including their indentation level.
       volumes:
         - /host:/jail
       depend:
-        - generic_service_w
+        - generic_service_2
 
 The ``depend`` annotation must include service names that are part of
 the ``bastille-compose.yml`` stack.
