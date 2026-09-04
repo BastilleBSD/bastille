@@ -308,7 +308,7 @@ release_update() {
         # Updated osrelase for child jails
         UPDATED_RELEASE="$(${bastille_releasesdir}/${TARGET}/bin/freebsd-version 2>/dev/null)"
         for jail in $(bastille list jails); do
-            if grep -qw "${bastille_jailsdir}/${jail}/root/.bastille" "${bastille_jailsdir}/${jail}/fstab"; then
+            if grep -qw "${release_dir} ${bastille_jailsdir}/${jail}/root/.bastille" "${bastille_jailsdir}/${jail}/fstab"; then
                 bastille config ${jail} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
             fi
         done
