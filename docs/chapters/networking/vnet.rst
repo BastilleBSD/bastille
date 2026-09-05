@@ -201,7 +201,7 @@ has outbound access.
 
 .. code-block:: shell
 
-  bastille create -B azkaban 15.1-RELEASE 192.168.1.50/24 bridge0
+  bastille create -B azkaban 15.1-RELEASE 192.168.1.10/24 bridge0
 
 In this example, ``bridge0`` is a bridge that we have previously created, so
 Bastille will skip the step of creating the bridge, and just add/remove our
@@ -246,7 +246,7 @@ epair on jail start/stop:
           description: jail interface for vtnet0bridge
           options=200009<RXCSUM,VLAN_MTU,RXCSUM_IPV6>
           ether 58:9c:fc:10:6d:c5
-          inet 192.168.50.10 netmask 0xffffff00 broadcast 192.168.50.255
+          inet 192.168.1.10 netmask 0xffffff00 broadcast 192.168.1.255
           groups: epair
           media: Ethernet 10Gbase-T (10Gbase-T <full-duplex>)
           status: active
