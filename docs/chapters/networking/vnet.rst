@@ -1,15 +1,12 @@
 VNET Configuration
 ==================
 
-Introduction
-------------
-
-Bastille verion 0.6.0 and above supports VNET jails. VNET jails are jails with
+Bastille version 0.6.0 and above supports VNET jails. VNET jails are jails with
 a completely separate network stack from the host, including a unique MAC address
 and IP address. This is required for VPN, DHCP, and similar types of networking.
 
-VNET - Physical Interface
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Setup
+-----
 
 To get started with VNET, run ``bastille setup vnet``. This will install the ``jib``
 and ``jng`` scripts included with FreeBSD to manage VNET interfaces. Additionally, it
@@ -72,16 +69,8 @@ Below is the definition of what these three parameters are used for and mean:
        net.link.bridge.pfil_bridge  Set	to 1 to	enable filtering on the	bridge
 				    interface, set to 0	to disable it.
 
-VNET- Manual Bridge Interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Bastille also includes support for running jails attached to an already existing
-bridge. The only difference between ``-V|--vnet`` and ``-B|--bridge`` is that
-the ``-B|--bridge`` option must be used with an existing bridge interface as
-the ``INTERFACE`` arg, while ``-V|--vnet`` must be used with a physical interface.
-
-Bastille can configure a bridge for us to use. Simply run ``bastille setup bridge``.
-This will do all of the above steps, and additinally create and persist a bridge
+Bastille can also configure a bridge for us to use. Simply run ``bastille setup bridge``.
+This will do all of the above steps, and additionally create and persist a bridge
 for us. The bridge name is named after the pattern, ``interfacebridge`` similar to
 what the ``-V|--vnet`` option does for us.
 
@@ -115,11 +104,11 @@ To persist our bridge on a host reboot, add the following to ``/etc/rc.conf``:
    ifconfig_bridge0_name="bastille0bridge"
    ifconfig_bastille0bridge="addm vtnet0 up"
 
-VNET - Phycical Interface
+VNET - Physical Interface
 -------------------------
 
 To create a VNET based jail using the ``-V|--vnet`` option, you should include an
-IP/netmask, and make sure the ``INTERFACE`` filed is a physical interface connected
+IP/netmask, and make sure the ``INTERFACE`` is a physical interface connected
 to your network.
 
 .. code-block:: shell
@@ -192,17 +181,22 @@ jail epair to it when we start the jail. When the jail is stopped, the epairs wi
 Because we used ``-V|--vnet``, Bastille created ``vtnet0bridge`` for us, and
 epair ``e0a_folsom`` as well as ``e0b_folsom``. The ``a`` side goes on the host, while
 the ``b`` side is inside the jail. Bastille also renames the ``b`` side to ``vnet0`` inside
-the jail. Additionally, Bastille give descriptions to these epair to more easily tell
+the jail. Additionally, Bastille gives descriptions to these epairs to easily tell
 which jail they are assigned to.
 
 VNET - Manual Bridge Interface
 ------------------------------
 
+Bastille also includes support for running jails attached to an already existing
+bridge. The only difference between ``-V|--vnet`` and ``-B|--bridge`` is that
+the ``-B|--bridge`` option must be used with an existing bridge interface as
+the ``INTERFACE`` arg, while ``-V|--vnet`` must be used with a physical interface.
+
 To create a VNET based jail and attach it to an already existing
 bridge, use the ``-B|--bridge`` option, making sure that ``INTERFACE`` is
 a bridge that already exists on our host.
 
-The bridge used in the following example has already been configured on our host, and
+The bridge used in the following example has already been configured on the host, and
 has outbound access.
 
 .. code-block:: shell
@@ -211,7 +205,7 @@ has outbound access.
 
 In this example, ``bridge0`` is a bridge that we have previously created, so
 Bastille will skip the step of creating the bridge, and just add/remove our
-epair on jail start/stop.
+epair on jail start/stop:
 
 .. code-block:: shell
 
@@ -259,13 +253,13 @@ epair on jail start/stop.
           nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
 
 Note there is no difference to the structure of ``-V|--vnet`` or ``-B|--bridge`` jails. The
-only difference is that ``-V|--vnet`` is used with a physical interface, while ``-B|-bridge`` is
+only difference is that ``-V|--vnet`` is used with a physical interface, while ``-B|--bridge`` is
 used with an existing bridge interface.
 
-If you do not specify a subnet mask, it will default to ``/24``. This is due to some issues
-with jail to jail networking, especially across vlans.
+If you do not specify a subnet mask, it defaults to ``/24``. This is due to some issues
+with jail-to-jail networking, especially across VLANs.
 
-Bastille includes some configuration values that will allow you to leave out the interace when
+Bastille includes some configuration values that will allow you to leave out the interface when
 creating your jails.
 
 .. code-block:: shell
@@ -276,7 +270,7 @@ creating your jails.
 If you have supplied these values in ``/usr/local/etc/bastille/bastille.conf``, Bastille will
 automatically use them if you do not specify an interface during jail creation. For
 example, the following create command will automatically use ``bridge0`` if the value has been
-put in the config file:
+added to the config file:
 
 .. code-block:: shell
 
