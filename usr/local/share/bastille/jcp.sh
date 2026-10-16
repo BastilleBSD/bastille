@@ -90,6 +90,31 @@ for jail in ${DEST_TARGET}; do
         source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
         dest_path="$(echo ${bastille_jailsdir}/${jail}/root/${DEST_PATH} | sed 's#//#/#g')"
 
+        # Resolve symlinks before copying so a symlink planted inside either
+        # jail (jail roots are untrusted from the host's point of view)
+        # cannot redirect this host-privileged copy outside the source or
+        # destination jail root, or into a third, unrelated jail.
+        source_jail_root="$(realpath "${bastille_jailsdir}/${SOURCE_TARGET}/root")"
+        source_path_real="$(realpath "${source_path}" 2>/dev/null)"
+        dest_jail_root="$(realpath "${bastille_jailsdir}/${jail}/root")"
+        dest_path_real_dir="$(realpath "$(dirname "${dest_path}")" 2>/dev/null)"
+        case "${source_path_real}" in
+            "${source_jail_root}"|"${source_jail_root}"/*) ;;
+            *)
+                ERRORS=$((ERRORS + 1))
+                error_continue "[ERROR]: Refusing to read '${SOURCE_PATH}': resolves outside the source jail root (possible symlink escape)."
+                continue
+                ;;
+        esac
+        case "${dest_path_real_dir}" in
+            "${dest_jail_root}"|"${dest_jail_root}"/*) ;;
+            *)
+                ERRORS=$((ERRORS + 1))
+                error_continue "[ERROR]: Refusing to copy into '${DEST_PATH}': resolves outside the destination jail root (possible symlink escape)."
+                continue
+                ;;
+        esac
+
         if ! cp "${OPTION}" "${source_path}" "${dest_path}"; then
             ERRORS=$((ERRORS + 1))
             error_continue "[ERROR]: JCP failed: ${source_path} -> ${dest_path}"

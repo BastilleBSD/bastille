@@ -94,6 +94,21 @@ for jail in ${JAILS}; do
             error_continue "[ERROR]: Failed to create directory: $(dirname ${jail_path})"
     fi
 
+    # Resolve symlinks before copying so a symlink planted inside the jail
+    # (by the jail's own root, which is untrusted from the host's point of
+    # view) cannot redirect this host-privileged copy outside the jail root.
+    jail_root="$(realpath "${bastille_jailsdir}/${jail}/root")"
+    jail_path_real_dir="$(realpath "$(dirname "${jail_path}")" 2>/dev/null)"
+    case "${jail_path_real_dir}" in
+        "${jail_root}"|"${jail_root}"/*)
+            ;;
+        *)
+            ERRORS=$((ERRORS + 1))
+            error_continue "[ERROR]: Refusing to copy into '${JAIL_PATH}': resolves outside the jail root (possible symlink escape)."
+            continue
+            ;;
+    esac
+
     if ! cp "${OPTION}" "${host_path}" "${jail_path}"; then
         ERRORS=$((ERRORS + 1))
         error_continue "[ERROR]: CP failed: ${host_path} -> ${jail_path}"
