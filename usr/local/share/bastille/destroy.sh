@@ -54,7 +54,8 @@ destroy_jail() {
     local OPTIONS=""
 
     bastille_jail_base="${bastille_jailsdir}/${jail}"
-    bastille_jail_log="${bastille_logsdir}/${jail}_console.log"
+    bastille_jail_log_console="${bastille_logsdir}/${jail}/console.log"
+    bastille_jail_log_oci="${bastille_logsdir}/${jail}/oci.log"
 
     # Validate jail state before continuing
     check_target_is_stopped "${jail}" || if [ "${AUTO}" -eq 1 ]; then
@@ -122,11 +123,17 @@ destroy_jail() {
             rm -rf "${bastille_jail_base}"
         fi
 
-        # Archive jail log
-        if [ -f "${bastille_jail_log}" ]; then
-            mv "${bastille_jail_log}" "${bastille_jail_log}"-"$(date +%F)"
+        # Archive jail console log
+        if [ -f "${bastille_jail_log_console}" ]; then
+            mv "${bastille_jail_log_console}" "${bastille_jail_log_console}"-"$(date +%F)"
             info 2 "Note: jail console logs archived."
-            info 2 "${bastille_jail_log}-$(date +%F)"
+            info 2 "${bastille_jail_log_console}-$(date +%F)"
+        fi
+        # Archive jail oci log
+        if [ -f "${bastille_jail_log_oci}" ]; then
+            mv "${bastille_jail_log_oci}" "${bastille_jail_log_oci}"-"$(date +%F)"
+            info 2 "Note: jail oci logs archived."
+            info 2 "${bastille_jail_log_oci}-$(date +%F)"
         fi
 
         # Clear any active rdr rules
@@ -150,7 +157,7 @@ destroy_release() {
 
     bastille_rel_base="${bastille_releasesdir}/${TARGET}"  ## dir
 
-    info 1 "\nAttempting to destroy release: ${TARGET}"
+    info 1 "\nAttempting to destroy release: ${TARGET}\n"
 
     ## check if this release have containers child
     BASE_HASCHILD="0"
@@ -187,6 +194,23 @@ destroy_release() {
     if [ ! -d "${bastille_rel_base}" ]; then
         error_exit "[ERROR]: Release base not found."
     else
+        # Ask if user is sure they want to destroy the release
+        # but only if AUTO_YES=0
+        if [ "${AUTO_YES}" -ne 1 ]; then
+            # shellcheck disable=SC3045
+            read -p "Are you sure you want to continue? [y|n]:" answer
+            case "${answer}" in
+                [Yy]|[Yy][Ee][Ss])
+                    ;;
+                [Nn]|[Nn][Oo])
+                    error_exit "[ERROR]: Cancelled by user."
+                    ;;
+                *)
+                    error_exit "[ERROR]: Invalid input. Please answer 'y' or 'n'."
+                    ;;
+		    esac
+	    fi
+        # Check for release children
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
             info 2 "Deleting release base..."
             if checkyesno bastille_zfs_enable; then
@@ -221,7 +245,7 @@ destroy_release() {
                 fi
             fi
         else
-            error_notify "[ERROR]: Cannot destroy base with child containers."
+            error_notify "[ERROR]: Cannot destroy base with child jails."
         fi
     fi
 }

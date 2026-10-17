@@ -34,7 +34,8 @@
 
 usage() {
 
-    error_notify "Usage: bastille template [option(s)] TARGET|convert TEMPLATE"
+    error_notify "Usage: bastille template [option(s)] TARGET TEMPLATE [--arg KEY=VALUE|--arg-file FILE]"
+	error_notify "                                     convert TEMPLATE"
     cat << EOF
 
     Options:
@@ -342,16 +343,25 @@ for jail in ${JAILS}; do
         IFS='
 '
         set -f
+        SKIP_ARGS=""
         for line in ${SCRIPT}; do
-
+            # Reset SKIP for each line
+            SKIP=0
             # First word converted to lowercase is the Bastille command. -- cwells
             cmd=$(echo "${line}" | awk '{print tolower($1);}')
 
             # Rest of the line with "arg" variables replaced will be the arguments. -- cwells
             args=$(echo "${line}" | awk -F '[ ]' '{$1=""; sub(/^ */, ""); print;}' | eval "sed ${ARG_REPLACEMENTS}")
 
+            # Skip certain commands if no arg is supplied           
+            for s_arg in ${SKIP_ARGS}; do
+                if echo "${args}" | grep -Foq "\${${s_arg}}"; then
+                    SKIP=1
+                fi
+            done
+
             # Apply overrides for commands/aliases and arguments. -- cwells
-            case $cmd in
+            case "${cmd}" in
                 arg+)
                     arg_name=$(get_arg_name "${args}")
                     arg_value=$(get_arg_value "${args}" "$@")
@@ -367,6 +377,7 @@ for jail in ${JAILS}; do
                     arg_value=$(get_arg_value "${args}" "$@")
                     if [ -z "${arg_value}" ]; then
                         warn 1 "[WARNING]: No value provided for arg: ${arg_name}"
+                         SKIP_ARGS="$(printf "%s %s" "${SKIP_ARGS}" "${arg_name}" | sed 's/^[[:blank:]]//')"
                     else
                         ARG_REPLACEMENTS="${ARG_REPLACEMENTS} -e 's/\${${arg_name}}/${arg_value}/g'"
                     fi
@@ -380,6 +391,7 @@ for jail in ${JAILS}; do
                     args="sh -c '${args}'"
                     ;;
                 cp|copy)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='cp'
                     # Convert relative "from" path into absolute path inside the template directory. -- cwells
                     if [ "${args%"${args#?}"}" != '/' ] && [ "${args%"${args#??}"}" != '"/' ]; then
@@ -387,33 +399,48 @@ for jail in ${JAILS}; do
                     fi
                     ;;
                 fstab|mount)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='mount'
                     ;;
                 include)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='template'
                     ;;
                 overlay)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='cp'
                     args="${bastille_template}/${args} /"
                     ;;
                 pkg)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='pkg -y'
                     args="install ${args}"
                     ;;
                 hpkg)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='pkg -Hy'
                     args="install ${args}"
                     ;;
+                service)
+                    [ "${SKIP}" -eq 1 ] && continue
+                    ;;
+                sysrc)
+                    [ "${SKIP}" -eq 1 ] && continue
+                    ;;
                 tag|tags)
+                    [ "${SKIP}" -eq 1 ] && continue
                     cmd='tags'
                     # shellcheck disable=SC2090
                     args="add $(echo ${args} | tr ' ' ,)"
                     ;;
-                render) # This is a path to one or more files needing arguments replaced by values. -- cwells
+                render)
+                    [ "${SKIP}" -eq 1 ] && continue
+                    # This is a path to one or more files needing arguments replaced by values. -- cwells
                     render "${bastille_jail_path}" "${args}"
                     continue
                     ;;
                 lif|lineinfile|line_in_file)
+                    [ "${SKIP}" -eq 1 ] && continue
                     line_in_file "${bastille_jail_path}" "${args}"
                     continue
                     ;;

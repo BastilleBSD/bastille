@@ -1,3 +1,5 @@
+![shellcheck](https://github.com/BastilleBSD/bastille/actions/workflows/shellcheck.yml/badge.svg)
+![unit-tests](https://github.com/BastilleBSD/bastille/actions/workflows/unit-tests.yml/badge.svg)
 <p align="center">
     <img src="docs/images/bastille.svg" width="60%" height="auto" />
 </p>

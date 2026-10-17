@@ -32,6 +32,8 @@
 
 # Load config. This only has to be done here
 # because all commands load this file
+# Load sample config, then use config
+. /usr/local/etc/bastille/bastille.conf.sample
 # shellcheck disable=SC1090
 . ${BASTILLE_CONFIG}
 
@@ -51,6 +53,8 @@
 . "${bastille_sharedir}/lib/migrate.sh"
 # shellcheck source=/dev/null
 . "${bastille_sharedir}/lib/json.sh"
+# shellcheck source=/dev/null
+. "${bastille_sharedir}/lib/dns.sh"
 
 # If "NO_COLOR" environment variable is present, or we aren't speaking to a
 # tty, disable output colors.

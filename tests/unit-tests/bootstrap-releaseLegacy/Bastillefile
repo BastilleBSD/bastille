@@ -3,5 +3,5 @@
 ARG RELEASE
 
 INCLUDE core/bootstrap-release --arg RELEASE=${RELEASE}
-INCLUDE core/destroy-release --arg OPTIONS="-cf" --arg RELEASE=${RELEASE}
+INCLUDE core/destroy-release --arg OPTIONS="-cfy" --arg RELEASE=${RELEASE}
 INCLUDE core/bootstrap-release --arg RELEASE=${RELEASE}

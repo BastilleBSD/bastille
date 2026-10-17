@@ -60,6 +60,7 @@ options. See the below help output.
       -B | --bridge                   Enable VNET. INTERFACE must be a bridge.
       -C | --clone                    Create a clone jail (ZFS only).
       -D | --dual                     Use dual (IPv4+6) networking (IP=[inherit|ip_hostname] only).
+      -e | --env KEY=VALUE            Specify additional environment variables (OCI only).
       -E | --empty                    Create an empty jail (NAME only).
       -g | --gateway IP               Specify a default router/gateway.
       -L | --linux                    Create a Linux jail (experimental).
@@ -68,10 +69,13 @@ options. See the below help output.
            --no-boot                  Set boot=off.
            --no-validate              Do not validate the release name.
            --no-ip                    Create jail without an ip (VNET only).
-      -P | --passthrough              Enable VNET. INTERFACE is used as-is.
+           --os OS                    Specify an alternative OS type (OCI only).
+      -O | --oci                      Create an OCI jail (experimental).
       -p | --priority VALUE           Set priority value.
+      -P | --passthrough              Enable VNET. INTERFACE is used as-is.
            --tags TAG1,TAG2           Apply specified tag(s) to jail. Comma-separated.
       -T | --thick                    Create a thick jail.
-      -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
       -v | --vlan VLANID              Set VLAN ID (VNET only).
+           --volume HOST JAIL          Specify a volume to mount (OCI only).
+      -V | --vnet                     Enable VNET. INTERFACE must be a physical interface.
       -Z | --zfs-opts zfs,options     Custom zfs options. Comma-separated.

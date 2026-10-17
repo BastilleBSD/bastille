@@ -259,11 +259,8 @@ for jail in ${JAILS}; do
             ;;
 
         stats)
-
             # Show statistics (rctl only)
-            if [ -s "${bastille_jailsdir}/${jail}/rctl.conf" ]; then
-	            rctl -hu jail:${jail} 2>/dev/null
-            fi
+	        rctl -hu jail:${jail} 2>/dev/null
             ;;
 
         reset)
