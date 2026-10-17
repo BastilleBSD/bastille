@@ -12,7 +12,11 @@
 .Op VALUE
 .Nm bastille config
 .Ar TARGET
-.Cm get|remove
+.Cm get
+.Ar PROPERTY Ns Op , Ns Ar PROPERTY Ns ...
+.Nm bastille config
+.Ar TARGET
+.Cm remove
 .Ar PROPERTY
 .Sh DESCRIPTION
 The
@@ -34,19 +38,41 @@ It is not always necesary to set a
 for a
 .Ar PROPERTY .
 For example, 'allow.mlock=1' is the same as 'allow.mlock'.
-.It Sy bastille config Ar TARGET Sy get|remove Ar PROPERTY
+.It Sy bastille config Ar TARGET Sy get Ar PROPERTY Ns Op , Ns Ar PROPERTY Ns ...
 .Bl -tag -width Ds
 .It Sy get
 Get the value of the specified
 .Ar PROPERTY
-from the jail configuration. If a property is not present, 'not
-enabled' will be shown. If the property has no value, but
+from the jail configuration. Multiple properties may be given as a
+comma-separated list (for example
+.Ql name,securelevel,osrelease ).
+A single property on a single jail prints only its value. Multiple
+properties on a single jail are printed as a
+.Ql PROPERTY VALUE
+table, one row per property. Multiple jails (for example
+.Ql ALL )
+are printed as a
+.Ql JID JAIL PROPERTY VALUE
+table, one row per jail and property, like
+.Xr zfs 8
+.Ql get .
+A stopped jail shows
+.Ql -
+in the
+.Ql JID
+column. If a property is not present, 'not
+set' will be shown. If the property has no value, but
 is present, 'enabled' will be returned. Otherwise you will be
 shown the value.
+.El
+.It Sy bastille config Ar TARGET Sy remove Ar PROPERTY
+.Bl -tag -width Ds
 .It Sy remove
 Remove the specified
 .Ar PROPERTY
 from the jail configuration.
+.El
+.El
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Set allow.mlock inside myjail:
@@ -55,8 +81,16 @@ from the jail configuration.
 .Sy bastille config myjail set priority 10
 .It Set the boot value:
 .Sy bastille config myjail set boot off
+.It Get several properties from one jail:
+.Sy bastille config myjail get name,securelevel,osrelease
+.It Get a property from all jails:
+.Sy bastille config ALL get securelevel
+.It Get several properties from all jails:
+.Sy bastille config ALL get name,securelevel
 .It Get a property from all jails as JSON:
 .Sy bastille -j config ALL get boot
+.It Get several properties as JSON:
+.Sy bastille -j config myjail get name,securelevel,osrelease
 .Pp
 The
 .Sy get
@@ -74,10 +108,11 @@ array with a
 .Ql jid ,
 a
 .Ql name ,
-and the queried property as a field named after the property itself (for
+and each queried property as a field named after the property itself (for
 example
 .Ql securelevel )
-holding its value. The
+holding its value. Multiple properties become extra fields on the same
+object. The
 .Ql jid
 leads each record as a native number when the jail is running, or
 .Ql null
