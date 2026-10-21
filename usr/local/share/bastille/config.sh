@@ -417,9 +417,6 @@ for jail in ${JAILS}; do
             depends) PROPERTY="depend" ;;
         esac
 
-<<<<<<< HEAD
-        if [ "${ACTION}" = "remove" ]; then
-=======
         if [ "${ACTION}" = "get" ]; then
           if [ "${BASTILLE_JSON}" -eq 1 ]; then
               json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
@@ -427,8 +424,6 @@ for jail in ${JAILS}; do
             sysrc -f "${FILE}" -n "${PROPERTY}"
           fi
         elif [ "${ACTION}" = "remove" ]; then
->>>>>>> master
-
             # Only 'depend' supports removing a value; the rest are permanent
             if [ "${PROPERTY}" != "depend" ]; then
                 error_exit "[ERROR]: Cannot remove the '${PROPERTY}' property."
