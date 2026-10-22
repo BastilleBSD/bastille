@@ -63,7 +63,8 @@ destroy_jail() {
     else
         info 1 "\n[${jail}]:"
         error_notify "Jail is running."
-        error_continue "Use [-a|--auto] to auto-stop the jail."
+        error_notify "Use [-a|--auto] to auto-stop the jail."
+        return 1
     fi
 
     info 1 "\n[${jail}]:"
@@ -93,7 +94,8 @@ destroy_jail() {
 
         if [ -n "${mount_points}" ]; then
             error_notify "[ERROR]: Failed to destroy jail: ${jail}"
-            error_continue "Jail has mounted filesystems:\n$mount_points"
+            error_notify "Jail has mounted filesystems:\n$mount_points"
+            return 1
         fi
 
         info 2 "Destroying jail..."
@@ -109,7 +111,8 @@ destroy_jail() {
                     # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
                     # unless the force option is defined by the user, otherwise will have a partially deleted jail.
                     if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"; then
-                        error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
+                        error_notify "[ERROR]: Jail dataset(s) appears to be busy, exiting."
+                        return 1
                     fi
                 fi
             fi
@@ -255,6 +258,9 @@ AUTO=0
 AUTO_YES=0
 FORCE=0
 NO_CACHE=0
+# Tracks whether any jail failed to destroy, so the exit code
+# reflects failures (issue #1666: destroy returned 0 on error).
+DESTROY_FAILED=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -363,8 +369,11 @@ case "${TARGET}" in
             # Destroy targeted jail(s)
             set_target "${TARGET}" "reverse"
             for jail in ${JAILS}; do
-                destroy_jail "${jail}"
+                destroy_jail "${jail}" || DESTROY_FAILED=1
             done
+            if [ "${DESTROY_FAILED}" -ne 0 ]; then
+                error_exit "[ERROR]: Failed to destroy one or more jails."
+            fi
         fi
         ;;
 esac
