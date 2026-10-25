@@ -137,27 +137,77 @@ EOF
     exit 1
 }
 
-# Return the value given to -c|--config among the leading options, if any.
-# The options are fully processed further down, but the config file has to
-# be known before bastille_conf_check runs.
-bastille_config_opt() {
-    while [ "$#" -gt 0 ]; do
-        case "${1}" in
-            -c|--config)
-                [ "$#" -ge 2 ] && echo "${2}"
-                return 0
-                ;;
-            -*)
-                shift
-                ;;
-            *)
-                return 0
-                ;;
-        esac
-    done
-}
+# Handle options
+# Options are only recorded here. The config file is resolved, checked and
+# loaded (with common.sh) after parsing, so that -c|--config is honored even
+# when the default bastille.conf does not exist.
+[ -z "${BASTILLE_QUIET}" ] && export BASTILLE_QUIET=0
+# Nested `bastille list` (from set_target) must not inherit -j from the
+# parent: the allowlist would reject it and target resolution would fail.
+export BASTILLE_JSON=0
+export BASTILLE_JSON_PRETTY=0
+# Keep the original arguments for the 'setup' check in bastille_conf_check
+BASTILLE_ARGS="$*"
+BASTILLE_CONFIG_OPT=""
+BASTILLE_DEBUG_OPT=""
+BASTILLE_OPT_ACTION=""
+BASTILLE_OPT_ERROR=""
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+        -c|--config)
+            BASTILLE_CONFIG_OPT="${2}"
+            shift 2
+            ;;
+        -h|--help|help)
+            BASTILLE_OPT_ACTION="usage"
+            break
+            ;;
+        version|-v|--version)
+            BASTILLE_OPT_ACTION="version"
+            break
+            ;;
+        -q|--quiet)
+            export BASTILLE_QUIET=1
+            shift
+            ;;
+        -j|--json)
+            # JSON output implies quiet so human status lines don't pollute stdout
+            export BASTILLE_JSON=1
+            export BASTILLE_QUIET=1
+            shift
+            ;;
+        -p|--pretty)
+            # Pretty (indented) JSON output; implies --json
+            export BASTILLE_JSON=1
+            export BASTILLE_JSON_PRETTY=1
+            export BASTILLE_QUIET=1
+            shift
+            ;;
+        -x|--debug)
+            BASTILLE_DEBUG_OPT=1
+            shift
+            ;;
+        -xx)
+            BASTILLE_DEBUG_OPT=2
+            shift
+            ;;
+        -*)
+            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
+                case ${opt} in
+                    j) BASTILLE_JSON=1 BASTILLE_QUIET=1 ;;
+                    p) BASTILLE_JSON=1 BASTILLE_JSON_PRETTY=1 BASTILLE_QUIET=1 ;;
+                    x) BASTILLE_DEBUG_OPT=1 ;;
+                    q) BASTILLE_QUIET=1 ;;
+                    *) BASTILLE_OPT_ERROR="${1}"; break 2 ;;
+                esac
+            done
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-BASTILLE_CONFIG_OPT="$(bastille_config_opt "$@")"
 if [ -n "${BASTILLE_CONFIG_OPT}" ]; then
     if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG_OPT}" ]; then
         BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG_OPT}"
@@ -180,73 +230,25 @@ elif [ -z "${BASTILLE_CONFIG}" ]; then
 fi
 
 # Pass BASTILLE_CONFIG and ARGS to config function
-bastille_conf_check "${BASTILLE_CONFIG}" "$@"
+bastille_conf_check "${BASTILLE_CONFIG}" "${BASTILLE_ARGS}"
 # Load common.sh after setting BASTILLE_CONFIG
 . /usr/local/share/bastille/common.sh
 # Check perms
 bastille_perms_check
 
-# Handle options
-[ -z "${BASTILLE_QUIET}" ] && export BASTILLE_QUIET=0
-# Nested `bastille list` (from set_target) must not inherit -j from the
-# parent: the allowlist would reject it and target resolution would fail.
-export BASTILLE_JSON=0
-export BASTILLE_JSON_PRETTY=0
-while [ "$#" -gt 0 ]; do
-    case "${1}" in
-        -c|--config)
-            # BASTILLE_CONFIG was resolved and loaded before the config check
-            info 1 "Using custom config: ${BASTILLE_CONFIG}"
-            shift 2
-            ;;
-        -h|--help|help)
-            usage
-            ;;
-        version|-v|--version)
-            info 1 "${BASTILLE_VERSION}"
-            exit 0
-            ;;
-        -q|--quiet)
-            export BASTILLE_QUIET=1
-            shift
-            ;;
-        -j|--json)
-            # JSON output implies quiet so human status lines don't pollute stdout
-            export BASTILLE_JSON=1
-            export BASTILLE_QUIET=1
-            shift
-            ;;
-        -p|--pretty)
-            # Pretty (indented) JSON output; implies --json
-            export BASTILLE_JSON=1
-            export BASTILLE_JSON_PRETTY=1
-            export BASTILLE_QUIET=1
-            shift
-            ;;
-        -x|--debug)
-            enable_debug 1
-            shift
-            ;;
-        -xx)
-            enable_debug 2
-            shift
-            ;;
-        -*)
-            for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
-                case ${opt} in
-                    j) BASTILLE_JSON=1 BASTILLE_QUIET=1 ;;
-                    p) BASTILLE_JSON=1 BASTILLE_JSON_PRETTY=1 BASTILLE_QUIET=1 ;;
-                    x) enable_debug 1 ;;
-                    q) BASTILLE_QUIET=1 ;;
-                    *) error_exit "[ERROR]: Unknown option: ${1}" ;;
-                esac
-            done
-            ;;
-        *)
-            break
-            ;;
-    esac
-done
+# Act on the recorded options now that common.sh is loaded
+[ -n "${BASTILLE_CONFIG_OPT}" ] && info 1 "Using custom config: ${BASTILLE_CONFIG}"
+[ -n "${BASTILLE_DEBUG_OPT}" ] && enable_debug "${BASTILLE_DEBUG_OPT}"
+[ -n "${BASTILLE_OPT_ERROR}" ] && error_exit "[ERROR]: Unknown option: ${BASTILLE_OPT_ERROR}"
+case "${BASTILLE_OPT_ACTION}" in
+    usage)
+        usage
+        ;;
+    version)
+        info 1 "${BASTILLE_VERSION}"
+        exit 0
+        ;;
+esac
 
 if [ "$#" -lt 1 ]; then
     usage
