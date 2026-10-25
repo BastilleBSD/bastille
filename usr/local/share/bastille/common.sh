@@ -30,10 +30,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Set reasonable defaults
+: ${bastille_zfs_enable:="no"}
+
 # Load config. This only has to be done here
 # because all commands load this file
 # shellcheck disable=SC1090
-. ${BASTILLE_CONFIG}
+if [ -r "${BASTILLE_CONFIG}" ]; then
+    . ${BASTILLE_CONFIG}
+fi
 
 COLOR_RED=
 COLOR_GREEN=

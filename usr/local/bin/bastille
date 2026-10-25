@@ -32,7 +32,7 @@
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-BASTILLE_VERSION=1.4.4
+BASTILLE_VERSION=config_flag-fbf20a5a
 
 # Validate config file
 # Copy default when 'setup' is called
@@ -125,24 +125,7 @@ EOF
     exit 1
 }
 
-if [ -z "${BASTILLE_CONFIG}" ]; then
-    if [ -z "${BASTILLE_CONFIG}" ]; then
-        BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
-        export BASTILLE_CONFIG
-    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-        export BASTILLE_CONFIG
-    else
-        echo "Not a valid config file: ${BASTILLE_CONFIG}"
-        exit 1
-    fi
-fi
-
-# Pass BASTILLE_CONFIG and ARGS to config function
-bastille_conf_check "${BASTILLE_CONFIG}" "$@"
-bastille_perms_check
-
-# Load common.sh after setting BASTILLE_CONFIG
+# Load common.sh initially with no config
 . /usr/local/share/bastille/common.sh
 
 # Handle options
@@ -157,15 +140,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         -c|--config)
             BASTILLE_CONFIG="${2}"
-            if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-                BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-                info 1 "Using custom config: ${BASTILLE_CONFIG}"
-                export BASTILLE_CONFIG
-            else
-                error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
-            fi
-            # Load common.sh after setting BASTILLE_CONFIG
-            . /usr/local/share/bastille/common.sh
+            info 1 "Using custom config: ${BASTILLE_CONFIG}"
             shift 2
             ;;
         -*)
@@ -183,6 +158,23 @@ else
     CMD="${1}"
     shift
 fi
+
+# Make sure we have a path to a config file
+if [ -z "${BASTILLE_CONFIG}" ]; then
+    BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
+elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+    BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+fi
+
+# Pass BASTILLE_CONFIG and ARGS to config function
+bastille_conf_check "${BASTILLE_CONFIG}" "$@"
+
+export BASTILLE_CONFIG
+
+bastille_perms_check
+
+# Load common.sh again after setting BASTILLE_CONFIG
+. /usr/local/share/bastille/common.sh
 
 # Handle sub-commands.
 case "${CMD}" in
