@@ -137,7 +137,36 @@ EOF
     exit 1
 }
 
-if [ -z "${BASTILLE_CONFIG}" ]; then
+# Return the value given to -c|--config among the leading options, if any.
+# The options are fully processed further down, but the config file has to
+# be known before bastille_conf_check runs.
+bastille_config_opt() {
+    while [ "$#" -gt 0 ]; do
+        case "${1}" in
+            -c|--config)
+                [ "$#" -ge 2 ] && echo "${2}"
+                return 0
+                ;;
+            -*)
+                shift
+                ;;
+            *)
+                return 0
+                ;;
+        esac
+    done
+}
+
+BASTILLE_CONFIG_OPT="$(bastille_config_opt "$@")"
+if [ -n "${BASTILLE_CONFIG_OPT}" ]; then
+    if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG_OPT}" ]; then
+        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG_OPT}"
+        export BASTILLE_CONFIG
+    else
+        echo "Not a valid config file: ${BASTILLE_CONFIG_OPT}"
+        exit 1
+    fi
+elif [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -z "${BASTILLE_CONFIG}" ]; then
         BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
         export BASTILLE_CONFIG
@@ -166,16 +195,8 @@ export BASTILLE_JSON_PRETTY=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -c|--config)
-            BASTILLE_CONFIG="${2}"
-            if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-                BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-                info 1 "Using custom config: ${BASTILLE_CONFIG}"
-                export BASTILLE_CONFIG
-            else
-                error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
-            fi
-            # Load common.sh after setting BASTILLE_CONFIG
-            . /usr/local/share/bastille/common.sh
+            # BASTILLE_CONFIG was resolved and loaded before the config check
+            info 1 "Using custom config: ${BASTILLE_CONFIG}"
             shift 2
             ;;
         -h|--help|help)
