@@ -58,17 +58,17 @@ sort_jails() {
 
 bastille_start() {
     sort_jails "forward"
-    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} start --boot --delay ${bastille_startup_delay} JAIL
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} -c ${bastille_conf} start --boot --delay ${bastille_startup_delay} JAIL
 }
 
 bastille_stop() {
     sort_jails "reverse"
-    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} stop JAIL
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} -c ${bastille_conf} stop JAIL
 }
 
 bastille_restart() {
     sort_jails "forward"
-    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} restart --boot --delay ${bastille_startup_delay} JAIL
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} -c ${bastille_conf} restart --boot --delay ${bastille_startup_delay} JAIL
 }
 
 load_rc_config ${name}
