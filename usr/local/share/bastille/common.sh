@@ -35,7 +35,9 @@
 # Load sample config, then use config
 . /usr/local/etc/bastille/bastille.conf.sample
 # shellcheck disable=SC1090
-. ${BASTILLE_CONFIG}
+if [ -n "${BASTILLE_CONFIG}" ]; then
+    . ${BASTILLE_CONFIG}
+fi
 
 # Load library functions. Each file defines a group of helpers; they are
 # sourced here so every subcommand that loads common.sh gets the full set.
