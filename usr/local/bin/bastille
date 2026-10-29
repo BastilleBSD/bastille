@@ -42,9 +42,9 @@ bastille_conf_check() {
                 error_notify "[ERROR]: Config file not found: ${config}"
                 error_exit "Try running 'bastille setup'."
             fi
+        elif [ ! -r "${config}" ]; then
+            error_exit "[ERROR]: Config file not found: ${config}"
         fi
-    elif [ ! -r "${config}" ]; then
-        error_exit "[ERROR]: Config file not found: ${config}"
     fi
 }
 
