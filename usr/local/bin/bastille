@@ -35,11 +35,12 @@ export BASTILLE_VERSION=1.4.4
 
 # Validate config file
 bastille_conf_check() {
-
     local config="${1}"
-
-    if [ ! -r "${config}" ]; then
-        error_exit "[ERROR]: Invalid config file: ${config}"
+    if [ "${config}" = "/usr/local/etc/bastille/bastille.conf" ] && [ -r "${config}" ]; then
+        error_notify "[ERROR]: Config file not found: ${config}"
+        error_exit "Try running 'bastille setup'."
+    elif [ ! -r "${config}" ]; then
+        error_exit "[ERROR]: Config file not found: ${config}"
     fi
 }
 
@@ -200,6 +201,13 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$#" -lt 1 ]; then
+    usage
+else
+    CMD="${1}"
+    shift
+fi
+
 # Make sure we have a valid config file
 if [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -z "${BASTILLE_CONFIG}" ]; then
@@ -215,13 +223,6 @@ if [ -z "${BASTILLE_CONFIG}" ]; then
 fi
 bastille_conf_check "${BASTILLE_CONFIG}"
 . /usr/local/share/bastille/common.sh
-
-if [ "$#" -lt 1 ]; then
-    usage
-else
-    CMD="${1}"
-    shift
-fi
 
 # Handle sub-commands
 case "${CMD}" in
