@@ -36,9 +36,13 @@ export BASTILLE_VERSION=1.4.4
 # Validate config file
 bastille_conf_check() {
     local config="${1}"
-    if [ "${config}" = "/usr/local/etc/bastille/bastille.conf" ] && [ ! -r "${config}" ]; then
-        error_notify "[ERROR]: Config file not found: ${config}"
-        error_exit "Try running 'bastille setup'."
+    if [ "${config}" = "/usr/local/etc/bastille/bastille.conf" ]; then
+        if [ "${CMD}" != "setup" ]; then
+            if [ ! -r "${config}" ]; then
+                error_notify "[ERROR]: Config file not found: ${config}"
+                error_exit "Try running 'bastille setup'."
+            fi
+        fi
     elif [ ! -r "${config}" ]; then
         error_exit "[ERROR]: Config file not found: ${config}"
     fi
