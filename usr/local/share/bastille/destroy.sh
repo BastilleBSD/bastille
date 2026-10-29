@@ -92,6 +92,7 @@ destroy_jail() {
         mount_points="$(mount | cut -d ' ' -f 3 | grep ${bastille_jail_base}/root/)"
 
         if [ -n "${mount_points}" ]; then
+            ERRORS=$((ERRORS + 1))
             error_notify "[ERROR]: Failed to destroy jail: ${jail}"
             error_continue "Jail has mounted filesystems:\n$mount_points"
         fi
@@ -109,6 +110,7 @@ destroy_jail() {
                     # This will deal with the common "cannot unmount 'XYZ': pool or dataset is busy"
                     # unless the force option is defined by the user, otherwise will have a partially deleted jail.
                     if ! zfs destroy "${OPTIONS}" "${bastille_zfs_zpool}/${bastille_zfs_prefix}/jails/${jail}"; then
+                        ERRORS=$((ERRORS + 1))
                         error_continue "[ERROR]: Jail dataset(s) appears to be busy, exiting."
                     fi
                 fi
@@ -212,7 +214,7 @@ destroy_release() {
 	    fi
         # Check for release children
         if [ "${BASE_HASCHILD}" -eq "0" ]; then
-            info 2 "Deleting release base..."
+            info 2 "Destroying release base..."
             if checkyesno bastille_zfs_enable; then
                 if [ -n "${bastille_zfs_zpool}" ]; then
                     if [ -n "${TARGET}" ]; then
@@ -245,7 +247,7 @@ destroy_release() {
                 fi
             fi
         else
-            error_notify "[ERROR]: Cannot destroy base with child jails."
+            error_exit "[ERROR]: Cannot destroy base with child jails."
         fi
     fi
 }
@@ -255,6 +257,7 @@ AUTO=0
 AUTO_YES=0
 FORCE=0
 NO_CACHE=0
+ERRORS=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -h|--help|help)
@@ -365,6 +368,9 @@ case "${TARGET}" in
             for jail in ${JAILS}; do
                 destroy_jail "${jail}"
             done
+            if [ "${ERRORS}" -ne 0 ]; then
+                error_exit "[ERROR]: Failed to destroy ${ERRORS} jails."
+            fi
         fi
         ;;
 esac
