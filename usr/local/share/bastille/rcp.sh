@@ -81,6 +81,20 @@ info 1 "\n[${TARGET}]:"
 host_path="${HOST_PATH}"
 jail_path="$(echo ${bastille_jailsdir}/${TARGET}/root/${JAIL_PATH} | sed 's#//#/#g')"
 
+# Resolve symlinks before copying so a symlink planted inside the jail
+# (by the jail's own root, which is untrusted from the host's point of
+# view) cannot redirect this host-privileged copy to read a file from
+# outside the jail root.
+jail_root="$(realpath "${bastille_jailsdir}/${TARGET}/root")"
+jail_path_real="$(realpath "${jail_path}" 2>/dev/null)"
+case "${jail_path_real}" in
+    "${jail_root}"|"${jail_root}"/*)
+        ;;
+    *)
+        error_exit "[ERROR]: Refusing to copy from '${JAIL_PATH}': resolves outside the jail root (possible symlink escape)."
+        ;;
+esac
+
 if ! cp "${OPTION}" "${jail_path}" "${host_path}"; then
     error_exit "[ERROR]: RCP failed: ${jail_path} -> ${host_path}"
 fi
