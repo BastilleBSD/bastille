@@ -31,37 +31,25 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-
 export BASTILLE_VERSION=1.4.4
 
 # Validate config file
-# Copy default when 'setup' is called
-# so we can skip to the setup command
 bastille_conf_check() {
 
     local config="${1}"
-    shift 1
-    local args="$@"
 
     if [ ! -r "${config}" ]; then
-        if echo "${args}" | grep -Eosqw "setup"; then
-            cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
-        else
-            echo -e "\n[ERROR]: No config file found!"
-            echo -e "Please run 'bastille setup' to configure Bastille.\n"
-            exit 1
-        fi
+        error_exit "[ERROR]: Invalid config file: ${config}"
     fi
 }
 
-## bastille_prefix should be 0750
-## this restricts file system access to privileged users
+# Validate Bastille permission
 bastille_perms_check() {
     if [ -d "${bastille_prefix}" ]; then
         BASTILLE_PREFIX_PERMS=$(stat -f "%Op" "${bastille_prefix}")
         if [ "${BASTILLE_PREFIX_PERMS}" != 40750 ]; then
-            error_notify "Insecure permissions on ${bastille_prefix}"
-            error_exit "Try: chmod 0750 ${bastille_prefix}"
+            error_notify "[ERROR]: Insecure permissions on ${bastille_prefix}"
+            error_exit "Try chmod 0750 ${bastille_prefix}"
         fi
     fi
 }
@@ -137,25 +125,11 @@ EOF
     exit 1
 }
 
-if [ -z "${BASTILLE_CONFIG}" ]; then
-    if [ -z "${BASTILLE_CONFIG}" ]; then
-        BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
-        export BASTILLE_CONFIG
-    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-        export BASTILLE_CONFIG
-    else
-        echo "Not a valid config file: ${BASTILLE_CONFIG}"
-        exit 1
-    fi
-fi
-
-# Pass BASTILLE_CONFIG and ARGS to config function
-bastille_conf_check "${BASTILLE_CONFIG}" "$@"
-# Load common.sh after setting BASTILLE_CONFIG
-. /usr/local/share/bastille/common.sh
 # Check perms
 bastille_perms_check
+
+# Load common.sh once before the config file has been set
+. /usr/local/share/bastille/common.sh
 
 # Handle options
 [ -z "${BASTILLE_QUIET}" ] && export BASTILLE_QUIET=0
@@ -168,11 +142,10 @@ while [ "$#" -gt 0 ]; do
         -c|--config)
             BASTILLE_CONFIG="${2}"
             if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-                BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+                export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
                 info 1 "Using custom config: ${BASTILLE_CONFIG}"
-                export BASTILLE_CONFIG
             else
-                error_exit "Not a valid config file: ${BASTILLE_CONFIG}"
+                error_exit "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
             fi
             # Load common.sh after setting BASTILLE_CONFIG
             . /usr/local/share/bastille/common.sh
@@ -227,6 +200,22 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+# Make sure we have a valid config file
+if [ -z "${BASTILLE_CONFIG}" ]; then
+    if [ -z "${BASTILLE_CONFIG}" ]; then
+        BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
+        export BASTILLE_CONFIG
+    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+        export BASTILLE_CONFIG
+    else
+        echo "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
+        exit 1
+    fi
+fi
+bastille_conf_check "${BASTILLE_CONFIG}"
+. /usr/local/share/bastille/common.sh
+
 if [ "$#" -lt 1 ]; then
     usage
 else
@@ -276,7 +265,11 @@ case "${CMD}" in
     rename) ;;
     restart) ;;
     service) ;;
-    setup) ;;
+    setup)
+        if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
+            cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+        fi
+        ;;
     start) ;;
     stop) ;;
     sysrc) ;;
