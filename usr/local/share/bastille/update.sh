@@ -251,9 +251,13 @@ release_check() {
 
     # Verify PLATFORM_OS inside release
     RELEASE_PLATFORM_OS="$( ${bastille_releasesdir}/${TARGET}/bin/freebsd-version )"
-    if echo "${RELEASE_PLATFORM_OS}" | grep -q "HBSD"; then
+    if echo "${RELEASE_PLATFORM_OS}" | grep -q "RELEASE"; then
+        RELEASE_PLATFORM_OS="FreeBSD"
+    # Verify HardenedBSD is in use
+    elif sysctl hardening.version; then
         RELEASE_PLATFORM_OS="HardenedBSD"
     else
+        # Default to FreeBSD
         RELEASE_PLATFORM_OS="FreeBSD"
     fi
 
