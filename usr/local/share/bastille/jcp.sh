@@ -103,7 +103,6 @@ for jail in ${DEST_TARGET}; do
             *)
                 ERRORS=$((ERRORS + 1))
                 error_continue "[ERROR]: Refusing to read '${SOURCE_PATH}': resolves outside the source jail root (possible symlink escape)."
-                continue
                 ;;
         esac
         case "${dest_path_real_dir}" in
@@ -111,7 +110,6 @@ for jail in ${DEST_TARGET}; do
             *)
                 ERRORS=$((ERRORS + 1))
                 error_continue "[ERROR]: Refusing to copy into '${DEST_PATH}': resolves outside the destination jail root (possible symlink escape)."
-                continue
                 ;;
         esac
 
