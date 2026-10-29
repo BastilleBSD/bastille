@@ -36,7 +36,11 @@ export BASTILLE_VERSION=1.4.4
 # Validate config file
 bastille_conf_check() {
     local config="${1}"
-    if [ "${CMD}" != "setup" ]; then
+    if [ "${CMD}" = "setup" ]; then
+        if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
+            cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+        fi
+    else
         if [ "${config}" = "/usr/local/etc/bastille/bastille.conf" ]; then
             if [ ! -r "${config}" ]; then
                 error_notify "[ERROR]: Config file not found: ${config}"
@@ -270,11 +274,7 @@ case "${CMD}" in
     rename) ;;
     restart) ;;
     service) ;;
-    setup)
-        if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
-            cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
-        fi
-        ;;
+    setup) ;;
     start) ;;
     stop) ;;
     sysrc) ;;
