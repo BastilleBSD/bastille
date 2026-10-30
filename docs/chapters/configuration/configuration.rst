@@ -17,7 +17,6 @@ Bastill will also configure the ``pf`` firewall for you by copying a
 default ``pf.conf`` file to ``/etc/pf.conf`` for you, but only if it doesn't
 exist yet. Once you have reviewed it, start ``pf`` with ``service pf start``.
 
-
 This is the default `bastille.conf.sample` file.
 
 .. code-block:: shell

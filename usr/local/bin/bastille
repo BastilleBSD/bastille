@@ -150,9 +150,12 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -c|--config)
             BASTILLE_CONFIG="${2}"
-            if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-                export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+            if [ -r "${BASTILLE_CONFIG}" ]; then
                 info 1 "Using custom config: ${BASTILLE_CONFIG}"
+                export BASTILLE_CONFIG
+            elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+                info 1 "Using custom config: ${BASTILLE_CONFIG}"
+                export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
             else
                 error_exit "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
             fi
@@ -221,9 +224,10 @@ if [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -z "${BASTILLE_CONFIG}" ]; then
         BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
         export BASTILLE_CONFIG
-    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+    elif [ -r "${BASTILLE_CONFIG}" ]; then
         export BASTILLE_CONFIG
+    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+        export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
     else
         echo "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
         exit 1

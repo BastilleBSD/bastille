@@ -5,8 +5,10 @@ Bastille supports using a custom config in addition to the default one. This
 is nice if you have multiple users, or want to store different
 jails at different locations based on your needs.
 
-The customized config file MUST BE PLACED INSIDE THE BASTILLE CONFIG FOLDER at
-``/usr/local/etc/bastille`` or it will not work.
+The customized config file should be placed at
+``/usr/local/etc/bastille`` for easy targetting. If you do place it there, you
+can simply run ``bastille -c custom.conf TARGET...``. If you do not place it
+there, you must specify the full path to your custom config file.
 
 Simply copy the default config file and edit it according to your new
 environment or user. Then, it can be used in a couple of ways:
