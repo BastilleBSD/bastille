@@ -102,6 +102,9 @@ for jail in ${DEST_TARGET}; do
         source_jail_path_real="$(realpath "${source_path}" 2>/dev/null)"
         dest_jail_root_real="$(realpath "${bastille_jailsdir}/${jail}/root")"
         dest_jail_path_real="$(realpath "${dest_path}" 2>/dev/null)"
+        if [ -z "${dest_jail_path_real}" ]; then
+            dest_jail_path_real="$(realpath "$(dirname "${dest_path}")")/$(basename "${dest_path}")"
+        fi
         case "${source_jail_path_real}" in
             "${source_jail_root_real}"|"${source_jail_root_real}"/*) ;;
             *)

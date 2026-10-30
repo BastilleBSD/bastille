@@ -99,6 +99,9 @@ for jail in ${JAILS}; do
     # view) cannot redirect this host-privileged copy outside the jail root.
     jail_root_real="$(realpath "${bastille_jailsdir}/${jail}/root")"
     jail_path_real="$(realpath "${jail_path}" 2>/dev/null)"
+    if [ -z "${jail_path_real}" ]; then
+        jail_path_real="$(realpath "$(dirname "${jail_path}")")/$(basename "${jail_path}")"
+    fi
     case "${jail_path_real}" in
         "${jail_root_real}"|"${jail_root_real}"/*)
             ;;
