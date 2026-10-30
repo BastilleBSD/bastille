@@ -94,19 +94,19 @@ for jail in ${DEST_TARGET}; do
         # jail (jail roots are untrusted from the host's point of view)
         # cannot redirect this host-privileged copy outside the source or
         # destination jail root, or into a third, unrelated jail.
-        source_jail_root="$(realpath "${bastille_jailsdir}/${SOURCE_TARGET}/root")"
-        source_path_real="$(realpath "${source_path}" 2>/dev/null)"
-        dest_jail_root="$(realpath "${bastille_jailsdir}/${jail}/root")"
-        dest_path_real_dir="$(realpath "$(dirname "${dest_path}")" 2>/dev/null)"
-        case "${source_path_real}" in
-            "${source_jail_root}"|"${source_jail_root}"/*) ;;
+        source_jail_root_real="$(realpath "${bastille_jailsdir}/${SOURCE_TARGET}/root")"
+        source_jail_path_real="$(realpath "${source_path}" 2>/dev/null)"
+        dest_jail_root_real="$(realpath "${bastille_jailsdir}/${jail}/root")"
+        dest_jail_path_real="$(realpath "${dest_path}" 2>/dev/null)"
+        case "${source_jail_path_real}" in
+            "${source_jail_root_real}"|"${source_jail_root_real}"/*) ;;
             *)
                 ERRORS=$((ERRORS + 1))
                 error_continue "[ERROR]: Refusing to read '${SOURCE_PATH}': resolves outside the source jail root (possible symlink escape)."
                 ;;
         esac
-        case "${dest_path_real_dir}" in
-            "${dest_jail_root}"|"${dest_jail_root}"/*) ;;
+        case "${dest_jail_path_real}" in
+            "${dest_jail_root_real}"|"${dest_jail_root_real}"/*) ;;
             *)
                 ERRORS=$((ERRORS + 1))
                 error_continue "[ERROR]: Refusing to copy into '${DEST_PATH}': resolves outside the destination jail root (possible symlink escape)."
