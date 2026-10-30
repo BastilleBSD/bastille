@@ -105,7 +105,6 @@ for jail in ${JAILS}; do
         *)
             ERRORS=$((ERRORS + 1))
             error_continue "[ERROR]: Refusing to copy into '${JAIL_PATH}': resolves outside the jail root (possible symlink escape)."
-            continue
             ;;
     esac
 
