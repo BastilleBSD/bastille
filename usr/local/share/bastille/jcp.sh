@@ -90,6 +90,10 @@ for jail in ${DEST_TARGET}; do
         source_path="$(echo ${bastille_jailsdir}/${SOURCE_TARGET}/root/${SOURCE_PATH} | sed 's#//#/#g')"
         dest_path="$(echo ${bastille_jailsdir}/${jail}/root/${DEST_PATH} | sed 's#//#/#g')"
 
+        if [ ! -d "${dest_path}" ]; then
+            mkdir -p "$(dirname ${dest_path})" || \
+                error_continue "[ERROR]: Failed to create directory: $(dirname ${dest_path})"
+        fi
         # Resolve symlinks before copying so a symlink planted inside either
         # jail (jail roots are untrusted from the host's point of view)
         # cannot redirect this host-privileged copy outside the source or
