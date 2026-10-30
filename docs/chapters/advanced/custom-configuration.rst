@@ -8,7 +8,7 @@ jails at different locations based on your needs.
 The customized config file should be placed at
 ``/usr/local/etc/bastille`` for easy targetting. If you do place it there, you
 can simply run ``bastille -c custom.conf TARGET...``. If you do not place it
-there, you must soecify the full path to your custom config file.
+there, you must specify the full path to your custom config file.
 
 Simply copy the default config file and edit it according to your new
 environment or user. Then, it can be used in a couple of ways:
