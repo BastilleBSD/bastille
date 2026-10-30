@@ -97,10 +97,10 @@ for jail in ${JAILS}; do
     # Resolve symlinks before copying so a symlink planted inside the jail
     # (by the jail's own root, which is untrusted from the host's point of
     # view) cannot redirect this host-privileged copy outside the jail root.
-    jail_root="$(realpath "${bastille_jailsdir}/${jail}/root")"
-    jail_path_real_dir="$(realpath "$(dirname "${jail_path}")" 2>/dev/null)"
-    case "${jail_path_real_dir}" in
-        "${jail_root}"|"${jail_root}"/*)
+    jail_root_real="$(realpath "${bastille_jailsdir}/${jail}/root")"
+    jail_path_real="$(realpath "${jail_path}" 2>/dev/null)"
+    case "${jail_path_real}" in
+        "${jail_root_real}"|"${jail_root_real}"/*)
             ;;
         *)
             ERRORS=$((ERRORS + 1))
