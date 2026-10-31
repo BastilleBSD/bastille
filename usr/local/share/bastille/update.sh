@@ -111,7 +111,9 @@ jail_check() {
 
     # Verify PLATFORM_OS inside jail
     JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
-    if echo "${JAIL_PLATFORM_OS}" | grep -q "HBSD"; then
+    if echo "${JAIL_PLATFORM_OS}" | grep -q "RELEASE"; then
+        JAIL_PLATFORM_OS="FreeBSD"
+    elif sysctl hardening.version >/dev/null 2>&1; then
         JAIL_PLATFORM_OS="HardenedBSD"
     else
         JAIL_PLATFORM_OS="FreeBSD"
@@ -251,7 +253,9 @@ release_check() {
 
     # Verify PLATFORM_OS inside release
     RELEASE_PLATFORM_OS="$( ${bastille_releasesdir}/${TARGET}/bin/freebsd-version )"
-    if echo "${RELEASE_PLATFORM_OS}" | grep -q "HBSD"; then
+    if echo "${RELEASE_PLATFORM_OS}" | grep -q "RELEASE"; then
+        RELEASE_PLATFORM_OS="FreeBSD"
+    elif sysctl hardening.version >/dev/null 2>&1; then
         RELEASE_PLATFORM_OS="HardenedBSD"
     else
         RELEASE_PLATFORM_OS="FreeBSD"
@@ -424,7 +428,7 @@ templates_update() {
 }
 
 # Set needed variables for pkgbase
-HW_MACHINE_ARCH=$(sysctl hw.machine_arch | awk '{ print $2 }')
+HW_MACHINE_ARCH="$(sysctl hw.machine_arch | awk '{ print $2 }')"
 
 # Check what we need to update
 # JAIL or RELEASE
