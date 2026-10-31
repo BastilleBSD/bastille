@@ -253,7 +253,7 @@ jail_upgrade() {
         fi
         # Update pkg database for thin jails (pkgbase only)
         if [ "${PKGBASE}" -eq 1 ]; then
-        
+
 		    info 2 "Updating FreeBSD base packages database..."
 
             local jailpath="${bastille_jailsdir}/${TARGET}/root"
@@ -269,6 +269,7 @@ jail_upgrade() {
             fi
             cache_dir="${release_dir}/var/cache/pkg"
             metadata_dir="$(mktemp -d /tmp/bastille-upgrade-metadata)"
+            # shellcheck disable=SC2010
             packages="$(ls ${cache_dir} | grep -o "^FreeBSD-.*${NEW_MAJOR_VERSION}\.${NEW_MINOR_VERSION}\.pkg")"
 			# Unregister base packages
 			pkg --rootdir "${jailpath}" \
@@ -296,9 +297,9 @@ jail_upgrade() {
                             register -M "${metadata_dir}/${pkg}" >/dev/null 2>&1
 					fi
                 fi
-                rm -f "${metadata_dir}/${pkg}"
+                rm -f "${metadata_dir:?}/${pkg:?}"
             done
-		    rm -rf "${metadata_dir}"
+		    rm -rf "${metadata_dir:?}"
         fi
 
         UPGRADED_RELEASE="$(${bastille_releasesdir}/${NEW_RELEASE}/bin/freebsd-version 2>/dev/null)"

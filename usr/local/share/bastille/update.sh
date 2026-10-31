@@ -394,6 +394,7 @@ release_update_pkgbase() {
                 fi
                 cache_dir="${release_dir}/var/cache/pkg"
                 metadata_dir="$(mktemp -d /tmp/bastille-update-metadata)"
+                # shellcheck disable=SC2010
                 packages="$(ls ${cache_dir} | grep -o "^FreeBSD-.*${MAJOR_VERSION}\.${MINOR_VERSION}\.pkg")"
 				# Unregister base packages
 				pkg --rootdir "${jailpath}" \
@@ -409,9 +410,7 @@ release_update_pkgbase() {
                 for pkg in ${packages}; do
                     if [ -f "${cache_dir}/${pkg}" ]; then
                         tar -xOf "${cache_dir}/${pkg}" +MANIFEST > "${metadata_dir}/${pkg}" 2>/dev/null
-                        if [ ! -s "${metadata_dir}/${pkg}" ]; then
-                            rm -rf "${metadata_dir}/${pkg}"
-                        else
+                        if [ -s "${metadata_dir}/${pkg}" ]; then
                             pkg --rootdir "${release_dir}" \
                                     --repo-conf-dir "${repo_dir}" \
                                      -o IGNORE_OSVERSION="yes" \
@@ -423,8 +422,9 @@ release_update_pkgbase() {
                                      register -M "${metadata_dir}/${pkg}" >/dev/null 2>&1
 						fi
                     fi
+                    rm -f "${metadata_dir:?}/${pkg:?}"
                 done
-				rm -rf "${metadata_dir}"
+				rm -rf "${metadata_dir:?}"
                 bastille config ${jail} set osrelease ${UPDATED_RELEASE} >/dev/null 2>&1
 			fi
         done
