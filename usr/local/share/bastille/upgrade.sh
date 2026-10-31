@@ -172,6 +172,20 @@ thin_jail_check() {
         error_exit "See 'bastille update RELEASE' to update the release."
     fi
 
+    # Set VERSION
+    NEW_MINOR_VERSION=$(echo ${NEW_RELEASE} | sed -E 's/^[0-9]+\.([0-9]+)-.*$/\1/')
+    NEW_MAJOR_VERSION=$(echo ${NEW_RELEASE} | grep -Eo '^[0-9]+')
+
+    # Validate PKGBASE or non-PKGBASE
+    if pkg -r "${bastille_releasesdir}/${NEW_RELEASE}" which /usr/bin/uname > /dev/null 2>&1; then
+        PKGBASE=1
+        if echo "${NEW_RELEASE}" | grep -Eoq "(\-CURRENT|\-STABLE)"; then
+            FREEBSD_BRANCH="current"
+        else
+            FREEBSD_BRANCH="release"
+        fi
+    fi
+
     # Validate jail state
     check_target_is_stopped "${TARGET}" || if [ "${AUTO}" -eq 1 ]; then
         bastille stop "${TARGET}"
@@ -237,9 +251,57 @@ jail_upgrade() {
         if ! sed -i '' "s|^${bastille_releasesdir}/${OLD_RELEASE}|${bastille_releasesdir}/${NEW_RELEASE}|g" "${bastille_jailsdir}/${TARGET}/fstab"; then
             error_exit "[ERROR]: Failed to update fstab."
         fi
+        # Update pkg database for thin jails (pkgbase only)
+        if [ "${PKGBASE}" -eq 1 ]; then
+        
+		    info 2 "Updating FreeBSD base packages database..."
+
+            local jailpath="${bastille_jailsdir}/${TARGET}/root"
+            local release_dir="${bastille_releasesdir}/${NEW_RELEASE}"
+            local abi="FreeBSD:${NEW_MAJOR_VERSION}:${HW_MACHINE_ARCH}"
+            local repo_dir="${bastille_sharedir}/pkgbase"
+            if [ "${FREEBSD_BRANCH}" = "release" ]; then
+                local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+                local fingerprints="${release_dir}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+            elif [ "${FREEBSD_BRANCH}" = "current" ]; then
+                local repo_name="FreeBSD-base-latest"
+                local fingerprints="${release_dir}/usr/share/keys/pkg"
+            fi
+            cache_dir="${release_dir}/var/cache/pkg"
+            metadata_dir="$(mktemp -d /tmp/bastille-upgrade-metadata)"
+            packages="$(ls ${cache_dir} | grep -o "^FreeBSD-.*${NEW_MAJOR_VERSION}\.${NEW_MINOR_VERSION}\.pkg")"
+			# Unregister base packages
+			pkg --rootdir "${jailpath}" \
+				--repo-conf-dir "${repo_dir}" \
+				 -o IGNORE_OSVERSION="yes" \
+				 -o VERSION_MAJOR="${NEW_MAJOR_VERSION}" \
+				 -o VERSION_MINOR="${NEW_MINOR_VERSION}" \
+				 -o ABI="${abi}" \
+				 -o ASSUME_ALWAYS_YES="yes" \
+				 -o FINGERPRINTS="${fingerprints}" \
+			    unregister -f -g 'FreeBSD-*' >/dev/null 2>&1
+
+            for pkg in ${packages}; do
+                if [ -f "${cache_dir}/${pkg}" ]; then
+                    tar -xOf "${cache_dir}/${pkg}" +MANIFEST > "${metadata_dir}/${pkg}" 2>/dev/null
+                    if [ -s "${metadata_dir}/${pkg}" ]; then
+                        pkg --rootdir "${release_dir}" \
+                            --repo-conf-dir "${repo_dir}" \
+                             -o IGNORE_OSVERSION="yes" \
+                             -o VERSION_MAJOR="${NEW_MAJOR_VERSION}" \
+                             -o VERSION_MINOR="${NEW_MINOR_VERSION}" \
+                             -o ABI="${abi}" \
+                             -o ASSUME_ALWAYS_YES="yes" \
+                             -o FINGERPRINTS="${fingerprints}" \
+                            register -M "${metadata_dir}/${pkg}" >/dev/null 2>&1
+					fi
+                fi
+                rm -f "${metadata_dir}/${pkg}"
+            done
+		    rm -rf "${metadata_dir}"
+        fi
 
         UPGRADED_RELEASE="$(${bastille_releasesdir}/${NEW_RELEASE}/bin/freebsd-version 2>/dev/null)"
-
         # Update "osrelease" inside jail.conf using 'bastille config'
         bastille config ${TARGET} set osrelease ${UPGRADED_RELEASE} >/dev/null 2>/dev/null
 
