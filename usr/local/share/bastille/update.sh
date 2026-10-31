@@ -375,10 +375,58 @@ release_update_pkgbase() {
 
         # Updated osrelase for child jails
         UPDATED_RELEASE="$(${bastille_releasesdir}/${TARGET}/bin/freebsd-version 2>/dev/null)"
+
+        # Update child jails
         for jail in $(bastille list jails); do
             if grep -qw "${release_dir} ${bastille_jailsdir}/${jail}/root/.bastille" "${bastille_jailsdir}/${jail}/fstab"; then
-                bastille config ${jail} set osrelease ${UPDATED_RELEASE} >/dev/null 2>/dev/null
-            fi
+                info 1 "\n[${jail}]:"
+			    info 2 "Updating FreeBSD base packages database..."
+                # Update pkg database for thin jails
+                local jailpath="${bastille_jailsdir}/${jail}/root"
+                local abi="FreeBSD:${MAJOR_VERSION}:${HW_MACHINE_ARCH}"
+                local repo_dir="${bastille_sharedir}/pkgbase"
+                if [ "${FREEBSD_BRANCH}" = "release" ]; then
+                    local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
+                    local fingerprints="${jailpath}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+                elif [ "${FREEBSD_BRANCH}" = "current" ]; then
+                    local repo_name="FreeBSD-base-latest"
+                    local fingerprints="${jailpath}/usr/share/keys/pkg"
+                fi
+                cache_dir="${release_dir}/var/cache/pkg"
+                metadata_dir="$(mktemp -d /tmp/bastille-update-metadata)"
+                # shellcheck disable=SC2010
+                packages="$(ls ${cache_dir} | grep -o "^FreeBSD-.*${MAJOR_VERSION}\.${MINOR_VERSION}\.pkg")"
+				# Unregister base packages
+				pkg --rootdir "${jailpath}" \
+						--repo-conf-dir "${repo_dir}" \
+						 -o IGNORE_OSVERSION="yes" \
+						 -o VERSION_MAJOR="${MAJOR_VERSION}" \
+						 -o VERSION_MINOR="${MINOR_VERSION}" \
+						 -o ABI="${abi}" \
+						 -o ASSUME_ALWAYS_YES="yes" \
+						 -o FINGERPRINTS="${fingerprints}" \
+			            unregister -f -g 'FreeBSD-*' >/dev/null 2>&1
+
+                for pkg in ${packages}; do
+                    if [ -f "${cache_dir}/${pkg}" ]; then
+                        tar -xOf "${cache_dir}/${pkg}" +MANIFEST > "${metadata_dir}/${pkg}" 2>/dev/null
+                        if [ -s "${metadata_dir}/${pkg}" ]; then
+                            pkg --rootdir "${release_dir}" \
+                                    --repo-conf-dir "${repo_dir}" \
+                                     -o IGNORE_OSVERSION="yes" \
+                                     -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                                     -o VERSION_MINOR="${MINOR_VERSION}" \
+                                     -o ABI="${abi}" \
+                                     -o ASSUME_ALWAYS_YES="yes" \
+                                     -o FINGERPRINTS="${fingerprints}" \
+                                     register -M "${metadata_dir}/${pkg}" >/dev/null 2>&1
+						fi
+                    fi
+                    rm -f "${metadata_dir:?}/${pkg:?}"
+                done
+				rm -rf "${metadata_dir:?}"
+                bastille config ${jail} set osrelease ${UPDATED_RELEASE} >/dev/null 2>&1
+			fi
         done
     fi
 }
