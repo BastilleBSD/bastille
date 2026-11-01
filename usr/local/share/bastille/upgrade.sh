@@ -93,8 +93,10 @@ thick_jail_check() {
 
     # Verify PLATFORM_OS inside jail
     JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version)"
-    if echo "${JAIL_PLATFORM_OS}" | grep -q "HBSD"; then
+    if [ -f "${bastille_jailsdir}/${TARGET}/root/usr/sbin/hbsd-update" ]; then
         JAIL_PLATFORM_OS="HardenedBSD"
+    elif echo "${JAIL_PLATFORM_OS}" | grep -q "RELEASE"; then
+        JAIL_PLATFORM_OS="FreeBSD"
     else
         JAIL_PLATFORM_OS="FreeBSD"
     fi
