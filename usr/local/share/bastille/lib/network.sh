@@ -136,7 +136,7 @@ EOF
                 cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} ${external_interface}";
+  exec.prestart += "jib addm ${jib_epair} \!${external_interface}";
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
@@ -147,7 +147,7 @@ EOF
                 cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} ${external_interface}";
+  exec.prestart += "jib addm ${jib_epair} \!${external_interface}";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
