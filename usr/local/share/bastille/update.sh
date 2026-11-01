@@ -111,10 +111,10 @@ jail_check() {
 
     # Verify PLATFORM_OS inside jail
     JAIL_PLATFORM_OS="$(${bastille_jailsdir}/${TARGET}/root/bin/freebsd-version 2>/dev/null)"
-    if echo "${JAIL_PLATFORM_OS}" | grep -q "RELEASE"; then
-        JAIL_PLATFORM_OS="FreeBSD"
-    elif sysctl hardening.version >/dev/null 2>&1; then
+    if [ -f "${bastille_jailsdir}/${TARGET}/root/usr/sbin/hbsd-update" ]; then
         JAIL_PLATFORM_OS="HardenedBSD"
+    elif echo "${JAIL_PLATFORM_OS}" | grep -q "RELEASE"; then
+        JAIL_PLATFORM_OS="FreeBSD"
     else
         JAIL_PLATFORM_OS="FreeBSD"
     fi
@@ -253,10 +253,10 @@ release_check() {
 
     # Verify PLATFORM_OS inside release
     RELEASE_PLATFORM_OS="$( ${bastille_releasesdir}/${TARGET}/bin/freebsd-version )"
-    if echo "${RELEASE_PLATFORM_OS}" | grep -q "RELEASE"; then
-        RELEASE_PLATFORM_OS="FreeBSD"
-    elif sysctl hardening.version >/dev/null 2>&1; then
+    if [ -f "${bastille_releasesdir}/${TARGET}/usr/sbin/hbsd-update" ]; then
         RELEASE_PLATFORM_OS="HardenedBSD"
+    elif echo "${RELEASE_PLATFORM_OS}" | grep -q "RELEASE"; then
+        RELEASE_PLATFORM_OS="FreeBSD"
     else
         RELEASE_PLATFORM_OS="FreeBSD"
     fi
