@@ -162,11 +162,12 @@ will not be executed if either of the two variables are empty. This is due to th
 that if the mount command is executed with blank args, it will error. So, we
 skip over it.
 
-```
-ARG JAIL_PATH
-ARG HOST_PATH
-MOUNT ${HOST_PATH} ${JAIL_PATH}
-```
+.. code-block:: shell
+
+  ARG JAIL_PATH
+  ARG HOST_PATH
+  MOUNT ${HOST_PATH} ${JAIL_PATH}
+
 This allows us to create a template that would mount certain files/directories
 whenever the args have a value, but ignore the mount if they args are empty.
 
@@ -174,11 +175,12 @@ The ``CMD`` hook is always executed, even if it has args that have no value. Thi
 this hook is arbitrary, and in some cases does not need
 args to have values. See the following example:
 
-```
-ARG OPTIONS
-ARG DATASET=zroot
-CMD zfs snapshot ${OPTIONS} ${DATASET}
-```
+.. code-block:: shell
+
+  ARG OPTIONS
+  ARG DATASET=zroot
+  CMD zfs snapshot ${OPTIONS} ${DATASET}
+
 The ``OPTIONS`` arg is optional, and can either be empty or filled. But for
 hooks such as ``MOUNT`` or ``PKG``, Bastille would error if any of the
 args passed are blank.
