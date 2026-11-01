@@ -212,8 +212,8 @@ is empty, it will default to the repo name.
 Running a Plugin
 ----------------
 
-Once bootstrapped, you can run your plugin using ``bastille plugin myplugin cmd1.sh``. You
-can also do ``bastille p myplugin mycmd...`` as a shorthand version of the command above.
+Once bootstrapped, you can run your plugin using ``bastille plugin myplugin cmd1``. You
+can also do ``bastille p myplugin cmd1...`` as a shorthand version of the command above.
 
 Any options and parameters passed to the plugin should be validate and parsed by the plugin
 commands. Bastille is only responsible for passing the plugin name and additional parameters
@@ -227,7 +227,7 @@ line to the top of your commands.
 
 .. code-block:: shell
 
-  . /usr/local/share/bastille/include
+  . /usr/local/share/bastille/common.sh
 
 Some functions that might be helpful to use are:
 
@@ -273,7 +273,7 @@ I can this command with ``bastille plugin custom-restart ALL``. ``ALL`` here is 
 Bastille will target all jail in this case. To target only select jails, we can
 run ``bastille plugin custom-restart 'jail1 jail2 jail3'``.
 
-One of the first plugins Bastille supports is found at ``https://github.com/usenix17/bastille-vm-plugin``.
+One of the first plugins Bastille supports is found at `<https://github.com/usenix17/bastille-vm-plugin>`_.
 
 Try bootstrapping it, and see how it was built.
 
