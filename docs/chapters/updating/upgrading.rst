@@ -97,8 +97,16 @@ Thin Jails
 2. Update the release (optional): ``bastille update 15.2-RELEASE``
 3. Stop the jail(s) that need to be updated.
 4. Use ``bastille upgrade TARGET 15.2-RELEASE`` to automatically change the mount points to 15.2-RELEASE
-5. Start the jail(s)
-6. Upgrade complete!
+5. Use ``bastille etcupdate bootstrap 15.2-RELEASE`` to bootstrap src for
+   15.2-RELEASE
+6. Use ``bastille etcupdate TARGET update 15.2-RELEASE`` to update the contents
+   of /etc for 15.2-RELEASE
+7. Use ``bastille etcupdate TARGET resolve`` to resolve any conflicts
+8. Start the jail(s)
+9. Upgrade complete!
+
+Note: Steps 5 to 7 might not always be necessary for a minor upgrade, but it
+does not hurt to do them anyway.
 
 Major Release Upgrades - Pkgbase
 --------------------------------
