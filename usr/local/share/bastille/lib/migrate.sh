@@ -72,7 +72,7 @@ update_jail_syntax_v1() {
         warn 1 "Updating jail.conf file..."
         warn 1 "Please review your jail.conf file after completion."
         warn 1 "VNET jails created without -M will be assigned a new MAC address."
-        local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}')"
+        local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}' | sed 's|^\\!||')"
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
@@ -89,7 +89,7 @@ update_jail_syntax_v1() {
         fi
         # Change jail.conf
         sed -i '' "s|.*vnet.interface =.*|  vnet.interface = ${new_jail_epair};|g" "${jail_config}"
-        sed -i '' "s|jib addm.*|jib addm ${jib_epair} ${external_interface}|g" "${jail_config}"
+        sed -i '' "s|jib addm.*|jib addm ${jib_epair} \!${external_interface}|g" "${jail_config}"
         sed -i '' "/ether.*:.*:.*:.*:.*:.*a/ s|ifconfig.*ether|ifconfig ${new_host_epair} ether|g" "${jail_config}"
         sed -i '' "/ether.*:.*:.*:.*:.*:.*b/ s|ifconfig.*ether|ifconfig ${new_jail_epair} ether|g" "${jail_config}"
         sed -i '' "s|ifconfig.*description|ifconfig ${new_host_epair} description|g" "${jail_config}"

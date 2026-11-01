@@ -345,7 +345,7 @@ EOF
                 cat << EOF >> "${jail_config}"
   ## ${host_epair} interface
   vnet.interface += ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} ${if}";
+  exec.prestart += "jib addm ${jib_epair} \!${if}";
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
   exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
   exec.prestart += "ifconfig ${host_epair} description \"${jail_vnet} host interface for Bastille jail ${jailname}\"";
@@ -357,7 +357,7 @@ EOF
                 cat << EOF >> "${jail_config}"
   ## ${host_epair} interface
   vnet.interface += ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} ${if}";
+  exec.prestart += "jib addm ${jib_epair} \!${if}";
   exec.prestart += "ifconfig ${host_epair} description \"${jail_vnet} host interface for Bastille jail ${jailname}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
@@ -487,7 +487,7 @@ remove_interface() {
 
         elif [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
 
-            local jib_epair="$(grep "jib addm.*${if}" ${jail_config} | awk '{print $3}')"
+            local jib_epair="$(grep "jib addm.*${if}" ${jail_config} | awk '{print $3}' | sed 's|^\\!||')"
             local if_type="if_bridge"
 
             if [ -n "${jib_epair}" ]; then
@@ -602,7 +602,7 @@ add_vlan() {
     local jail_rc_config="${bastille_jailsdir}/${jailname}/root/etc/rc.conf"
 
     if [ "${VNET}" -eq 1 ]; then
-        local jib_epair="$(grep "jib addm.*${interface}" ${jail_config} | awk '{print $3}')"
+        local jib_epair="$(grep "jib addm.*${interface}" ${jail_config} | awk '{print $3}' | sed 's|^\\!||')"
         local jail_epair="$(grep "e[0-9]+b_${jib_epair}" ${jail_config})"
         local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
     elif [ "${BRIDGE}" -eq 1 ]; then
