@@ -152,15 +152,13 @@ The above snippet, when included in a template will essentially run ``bastille r
 and ``bastille network TARGET add vtnet1 DHCP`` inside the jail respectively. Although not fully
 tested and documented, they should still work as expected.
 
-Skipping Args
--------------
+Skipping Hooks
+--------------
 
 If an optional arg does not have a value, Bastille will skip any lines containing
 that arg, except for certian hooks (see below). This is useful in cases where we want to create a
 conditional template of sorts. For example, In this template, the mount command
-will not be executed if either of the two variables are empty. This is due to the fact
-that if the mount command is executed with blank args, it will error. So, we
-skip over it.
+will not be executed if either of the two variables are empty:
 
 .. code-block:: shell
 
@@ -168,11 +166,14 @@ skip over it.
   ARG HOST_PATH
   MOUNT ${HOST_PATH} ${JAIL_PATH}
 
-This allows us to create a template that would mount certain files/directories
-whenever the args have a value, but ignore the mount if they args are empty.
+This is due to the fact that if the mount command is executed with blank args, it
+will error. So, we skip over it.
 
-The ``CMD`` hook is always executed, even if it has args that have no value. This is because
-this hook is arbitrary, and in some cases does not need
+This allows us to create a template that would mount certain files/directories
+whenever the args have a value, but ignore the ``MOUNT`` hook if the args are empty.
+
+The ``CMD`` hook however, is always executed, even if it has args without values. This
+is because this hook is arbitrary, and in some cases does not need
 args to have values. See the following example:
 
 .. code-block:: shell
