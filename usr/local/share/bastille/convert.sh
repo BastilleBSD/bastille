@@ -248,6 +248,9 @@ start_convert() {
             fi
             mv "${bastille_jailsdir}/${TARGET}/root/.bastille" "${bastille_jailsdir}/${TARGET}/root/.bastille.old"
 
+            # Run certctl rehash (needed for older jails)
+			certctl -D "${bastille_jailsdir}/${TARGET}/root" rehash
+
             info 1 "\nConversion of '${TARGET}' completed successfully!\n"
             exit 0
         else
