@@ -402,28 +402,28 @@ release_update_pkgbase() {
                 packages="$(ls ${cache_dir} | grep -o "^FreeBSD-.*${MAJOR_VERSION}\.${MINOR_VERSION}\.pkg")"
 				# Unregister base packages
 				pkg --rootdir "${jailpath}" \
-						--repo-conf-dir "${repo_dir}" \
-						 -o IGNORE_OSVERSION="yes" \
-						 -o VERSION_MAJOR="${MAJOR_VERSION}" \
-						 -o VERSION_MINOR="${MINOR_VERSION}" \
-						 -o ABI="${abi}" \
-						 -o ASSUME_ALWAYS_YES="yes" \
-						 -o FINGERPRINTS="${fingerprints}" \
-			            unregister -f -g 'FreeBSD-*' >/dev/null 2>&1
+					--repo-conf-dir "${repo_dir}" \
+					 -o IGNORE_OSVERSION="yes" \
+					 -o VERSION_MAJOR="${MAJOR_VERSION}" \
+					 -o VERSION_MINOR="${MINOR_VERSION}" \
+					 -o ABI="${abi}" \
+					 -o ASSUME_ALWAYS_YES="yes" \
+					 -o FINGERPRINTS="${fingerprints}" \
+			        unregister -f -g 'FreeBSD-*' >/dev/null 2>&1
 
                 for pkg in ${packages}; do
                     if [ -f "${cache_dir}/${pkg}" ]; then
                         tar -xOf "${cache_dir}/${pkg}" +MANIFEST > "${metadata_dir}/${pkg}" 2>/dev/null
                         if [ -s "${metadata_dir}/${pkg}" ]; then
-                            pkg --rootdir "${release_dir}" \
-                                    --repo-conf-dir "${repo_dir}" \
-                                     -o IGNORE_OSVERSION="yes" \
-                                     -o VERSION_MAJOR="${MAJOR_VERSION}" \
-                                     -o VERSION_MINOR="${MINOR_VERSION}" \
-                                     -o ABI="${abi}" \
-                                     -o ASSUME_ALWAYS_YES="yes" \
-                                     -o FINGERPRINTS="${fingerprints}" \
-                                     register -M "${metadata_dir}/${pkg}" >/dev/null 2>&1
+                            pkg --rootdir "${jailpath}" \
+                                --repo-conf-dir "${repo_dir}" \
+                                 -o IGNORE_OSVERSION="yes" \
+                                 -o VERSION_MAJOR="${MAJOR_VERSION}" \
+                                 -o VERSION_MINOR="${MINOR_VERSION}" \
+                                 -o ABI="${abi}" \
+                                 -o ASSUME_ALWAYS_YES="yes" \
+                                 -o FINGERPRINTS="${fingerprints}" \
+                                register -M "${metadata_dir}/${pkg}" >/dev/null 2>&1
 						fi
                     fi
                     rm -f "${metadata_dir:?}/${pkg:?}"

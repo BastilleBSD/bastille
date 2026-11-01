@@ -263,14 +263,14 @@ jail_upgrade() {
             local abi="FreeBSD:${NEW_MAJOR_VERSION}:${HW_MACHINE_ARCH}"
             local repo_dir="${bastille_sharedir}/pkgbase"
             if [ "${FREEBSD_BRANCH}" = "release" ]; then
-                local repo_name="FreeBSD-base-release-${MINOR_VERSION}"
-                local fingerprints="${release_dir}/usr/share/keys/pkgbase-${MAJOR_VERSION}"
+                local repo_name="FreeBSD-base-release-${NEW_MINOR_VERSION}"
+                local fingerprints="${release_dir}/usr/share/keys/pkgbase-${NEW_MAJOR_VERSION}"
             elif [ "${FREEBSD_BRANCH}" = "current" ]; then
                 local repo_name="FreeBSD-base-latest"
                 local fingerprints="${release_dir}/usr/share/keys/pkg"
             fi
             cache_dir="${release_dir}/var/cache/pkg"
-            metadata_dir="$(mktemp -d /tmp/bastille-upgrade-metadata)"
+            metadata_dir="$(mktemp -d /tmp/bastille-metadata.XXXXXXXXXX)"
             # shellcheck disable=SC2010
             packages="$(ls ${cache_dir} | grep -o "^FreeBSD-.*${NEW_MAJOR_VERSION}\.${NEW_MINOR_VERSION}\.pkg")"
 			# Unregister base packages
@@ -288,7 +288,7 @@ jail_upgrade() {
                 if [ -f "${cache_dir}/${pkg}" ]; then
                     tar -xOf "${cache_dir}/${pkg}" +MANIFEST > "${metadata_dir}/${pkg}" 2>/dev/null
                     if [ -s "${metadata_dir}/${pkg}" ]; then
-                        pkg --rootdir "${release_dir}" \
+                        pkg --rootdir "${jailpath}" \
                             --repo-conf-dir "${repo_dir}" \
                              -o IGNORE_OSVERSION="yes" \
                              -o VERSION_MAJOR="${NEW_MAJOR_VERSION}" \
