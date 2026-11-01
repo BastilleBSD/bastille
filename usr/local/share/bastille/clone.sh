@@ -524,7 +524,7 @@ clone_jail() {
 
     # Ensure log directory
     if [ -d "${bastille_logsdir}/${TARGET}" ]; then
-        mkdir -p "${bastille_logdir}/${NEWNAME}"
+        mkdir -p "${bastille_logsdir}/${NEWNAME}"
 	fi
 
     # Generate jail configuration files
