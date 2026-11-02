@@ -37,16 +37,16 @@ export BASTILLE_VERSION=1.4.4
 bastille_conf_check() {
     local config="${1}"
     if [ "${CMD}" = "setup" ]; then
-        if [ ! -r "/usr/local/etc/bastille/bastille.conf" ]; then
+        if [ ! -r "/usr/local/etc/bastille/${config}" ]; then
             cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
         fi
     else
-        if [ "${config}" = "/usr/local/etc/bastille/bastille.conf" ]; then
-            if [ ! -r "${config}" ]; then
+        if [ "${config}" = "bastille.conf" ]; then
+            if [ ! -r "/usr/local/etc/bastille/${config}" ]; then
                 error_notify "[ERROR]: Config file not found: ${config}"
                 error_exit "Try running 'bastille setup'."
             fi
-        elif [ ! -r "${config}" ]; then
+        elif [ ! -r "/usr/local/etc/bastille/${config}" ]; then
             error_exit "[ERROR]: Config file not found: ${config}"
         fi
     fi
@@ -150,10 +150,7 @@ while [ "$#" -gt 0 ]; do
     case "${1}" in
         -c|--config)
             BASTILLE_CONFIG="${2}"
-            if [ -r "${BASTILLE_CONFIG}" ]; then
-                info 1 "Using custom config: ${BASTILLE_CONFIG}"
-                export BASTILLE_CONFIG
-            elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
+            if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
                 info 1 "Using custom config: ${BASTILLE_CONFIG}"
                 export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
             else
@@ -222,15 +219,11 @@ fi
 # Make sure we have a valid config file
 if [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -z "${BASTILLE_CONFIG}" ]; then
-        BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
-        export BASTILLE_CONFIG
-    elif [ -r "${BASTILLE_CONFIG}" ]; then
-        export BASTILLE_CONFIG
+        export BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
     elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
         export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
     else
-        echo "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
-        exit 1
+        error_exit "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
     fi
 fi
 bastille_conf_check "${BASTILLE_CONFIG}"
