@@ -33,25 +33,6 @@
 PATH=${PATH}:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 export BASTILLE_VERSION=1.4.4
 
-# Validate config file
-bastille_conf_check() {
-    local config="${1}"
-    if [ "${CMD}" = "setup" ]; then
-        if [ ! -r "/usr/local/etc/bastille/${config}" ]; then
-            cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
-        fi
-    else
-        if [ "${config}" = "bastille.conf" ]; then
-            if [ ! -r "/usr/local/etc/bastille/${config}" ]; then
-                error_notify "[ERROR]: Config file not found: ${config}"
-                error_exit "Try running 'bastille setup'."
-            fi
-        elif [ ! -r "/usr/local/etc/bastille/${config}" ]; then
-            error_exit "[ERROR]: Config file not found: ${config}"
-        fi
-    fi
-}
-
 # Validate Bastille permission
 bastille_perms_check() {
     if [ -d "${bastille_prefix}" ]; then
@@ -149,15 +130,7 @@ export BASTILLE_JSON_PRETTY=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
         -c|--config)
-            BASTILLE_CONFIG="${2}"
-            if [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-                info 1 "Using custom config: ${BASTILLE_CONFIG}"
-                export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
-            else
-                error_exit "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
-            fi
-            # Load common.sh after setting BASTILLE_CONFIG
-            . /usr/local/share/bastille/common.sh
+            BASTILLE_CONFIG_CUSTOM="${2}"
             shift 2
             ;;
         -h|--help|help)
@@ -216,17 +189,32 @@ else
     shift
 fi
 
-# Make sure we have a valid config file
+# Validate config file
 if [ -z "${BASTILLE_CONFIG}" ]; then
-    if [ -z "${BASTILLE_CONFIG}" ]; then
-        export BASTILLE_CONFIG=/usr/local/etc/bastille/bastille.conf
-    elif [ -r "/usr/local/etc/bastille/${BASTILLE_CONFIG}" ]; then
-        export BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG}"
+    if [ -n "${BASTILLE_CONFIG_CUSTOM}" ]; then
+        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG_CUSTOM}"
+    elif [ -n "$(sysrc -n bastille_config)" ]; then
+        BASTILLE_CONFIG="$(sysrc -n bastille_config)"
     else
-        error_exit "[ERROR]: Not a valid config file: ${BASTILLE_CONFIG}"
+        BASTILLE_CONFIG="/usr/local/etc/bastille/bastille.conf"
+        if [ "${CMD}" = "setup" ] && [ ! -r "${BASTILLE_CONFIG}" ]; then
+            cp /usr/local/etc/bastille/bastille.conf.sample /usr/local/etc/bastille/bastille.conf
+        elif [ ! -r "${BASTILLE_CONFIG}" ]; then
+            error_notify "[ERROR]: Config file not found: ${BASTILLE_CONFIG}"
+            error_exit "Try running 'bastille setup'."
+        fi
     fi
+    if [ "$(dirname ${BASTILLE_CONFIG})" != "/usr/local/etc/bastille" ]; then
+        error_exit "[ERROR]: Config file must be placed inside /usr/local/etc/bastille."
+    elif [ ! -r "${BASTILLE_CONFIG}" ]; then
+        error_exit "[ERROR]: Invalid config file: ${BASTILLE_CONFIG}"
+    fi
+    if [ -z "${BASTILLE_CONFIG}" ]; then
+        error_exit "[ERROR]: Unable to set config file."
+    fi
+    export BASTILLE_CONFIG
 fi
-bastille_conf_check "${BASTILLE_CONFIG}"
+# Load common.sh once config file has been set
 . /usr/local/share/bastille/common.sh
 
 # Handle sub-commands

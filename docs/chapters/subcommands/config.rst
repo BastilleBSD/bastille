@@ -134,5 +134,6 @@ Multiple properties become extra fields on the same jail object
 
   ishmael ~ # bastille config help
   Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]
-                                            get PROPERTY[,PROPERTY...]
+                                            get PROPERTY[,PROPERTY]
                                             remove PROPERTY
+                                            show

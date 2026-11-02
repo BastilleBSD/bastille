@@ -34,9 +34,10 @@
 
 
 usage() {
-    error_exit "Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]
-                                            get PROPERTY[,PROPERTY...]
-                                            remove PROPERTY"
+    error_notify "Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]"
+    error_notify "                                          get PROPERTY[,PROPERTY]"
+    error_notify "                                          remove PROPERTY"
+    error_notify "                                          show"
     exit 1
 }
 
@@ -90,7 +91,7 @@ case "${ACTION}" in
                 ;;
         esac
         ;;
-    add|set)
+    add|set|show)
         ;;
     *)
         error_exit "[ERROR]: Only (add|set), get and remove are supported."
@@ -387,12 +388,24 @@ fi
 
 for jail in ${JAILS}; do
 
+    if [ "${ACTION}" = "show" ]; then
+        jailconfig="${bastille_jailsdir}/${jail}/jail.conf"
+        settingsconfig="${bastille_jailsdir}/${jail}/settings.conf"
+        info 1 "\n[${jail}]:"
+        if [ -f "${jailconfig}" ]; then
+            cat "${jailconfig}"
+        fi
+        if [ -f "${settingsconfig}" ]; then
+            cat "${settingsconfig}"
+        fi
+        exit 0
+    fi
+
     if [ "${ACTION}" = "get" ]; then
         # get is handled above; skip the set/remove mutation path.
         emit_get_for_jail "${jail}"
         continue
     fi
-
 
     # Backwards compatibility for specifying only an IP with ip[4|6].addr
     if [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip4.addr" ]; then

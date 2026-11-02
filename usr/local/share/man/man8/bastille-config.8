@@ -13,11 +13,14 @@
 .Nm bastille config
 .Ar TARGET
 .Cm get
-.Ar PROPERTY Ns Op , Ns Ar PROPERTY Ns ...
+.Ar PROPERTY Ns Op , Ns Ar PROPERTY
 .Nm bastille config
 .Ar TARGET
 .Cm remove
 .Ar PROPERTY
+.Nm bastille config
+.Ar TARGET
+.Cm show
 .Sh DESCRIPTION
 The
 .Nm bastille config
@@ -72,6 +75,10 @@ Remove the specified
 .Ar PROPERTY
 from the jail configuration.
 .El
+.It Sy bastille config Ar TARGET Sy show
+.Bl -tag -width Ds
+.It Sy show
+Show the jails entire configuration.
 .El
 .Sh EXAMPLES
 .Bl -tag -width Ds
