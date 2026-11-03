@@ -175,6 +175,7 @@ while [ "$#" -gt 0 ]; do
                     *) error_exit "[ERROR]: Unknown option: ${1}" ;;
                 esac
             done
+            shift
             ;;
         *)
             break

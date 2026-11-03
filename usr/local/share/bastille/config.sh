@@ -223,7 +223,6 @@ query_jail_conf() {
             } else {
                 print "enabled";
             }
-            exit 0;
         }
         END {
             if (! found) {
