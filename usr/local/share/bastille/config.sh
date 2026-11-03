@@ -34,9 +34,10 @@
 
 
 usage() {
-    error_exit "Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]
-                                            get PROPERTY[,PROPERTY...]
-                                            remove PROPERTY"
+    error_notify "Usage: bastille config [option(s)] TARGET set|add PROPERTY [VALUE]"
+    error_notify "                                          get PROPERTY[,PROPERTY]"
+    error_notify "                                          remove PROPERTY"
+    error_notify "                                          show"
     exit 1
 }
 
@@ -90,7 +91,7 @@ case "${ACTION}" in
                 ;;
         esac
         ;;
-    add|set)
+    add|set|show)
         ;;
     *)
         error_exit "[ERROR]: Only (add|set), get and remove are supported."
@@ -114,9 +115,7 @@ fi
 
 # This is a list of all supported jail.conf property names
 validate_property() {
-
     local property="${1}"
-
     if ! grep -Fxq "${property}" "${bastille_sharedir}/lib/properties"; then
         error_exit "[ERROR]: Unsupported property: ${property}"
     fi
@@ -125,7 +124,7 @@ validate_property() {
 # boot/depend/priority live in settings.conf (sysrc), not jail.conf.
 is_bastille_property() {
     case "${1}" in
-        boot|depend|depends|prio|priority)
+        all|boot|depend|depends|prio|priority)
             return 0
             ;;
         *)
@@ -149,6 +148,14 @@ normalize_property() {
     esac
 }
 
+# we need jail(8) to parse the config file so it can expand variables etc
+print_jail_conf() {
+    # we need to pass a literal \n to jail to get each parameter on its own
+    # line
+    jail -f "${1}" -e '
+'
+}
+
 # Comma lists are get-only (like `zfs get atime,compression`). set/remove
 # still take one property so we never partially apply a mutation.
 PROPERTIES=""
@@ -157,33 +164,40 @@ if [ "${ACTION}" = "get" ]; then
     # `name,` never yields an empty token in the loop below (the comma is
     # consumed and _rest becomes empty), so catch leading/trailing commas here.
     case "${PROPERTY}" in
+		all)
+		    PROPERTY="$(printf "%s\n%s" "$(print_jail_conf "${bastille_jailsdir}/${jail}/jail.conf" | awk -F"=" '{print $1}')" "$(cat "${bastille_jailsdir}/${jail}/settings.conf" | awk -F"=" '{print $1}')" | tr '\n' ',')"
+            ;;
         ,*|*,)
             error_exit "[ERROR]: Empty property in list."
             ;;
     esac
-    _rest="${PROPERTY}"
-    while [ -n "${_rest}" ]; do
-        case "${_rest}" in
+    rest="${PROPERTY}"
+    while [ -n "${rest}" ]; do
+        case "${rest}" in
+		    all)
+				PROPERTIES="$(printf "%s\n%s" "$(print_jail_conf "${bastille_jailsdir}/${jail}/jail.conf" | awk -F"=" '{print $1}')" "$(cat "${bastille_jailsdir}/${jail}/settings.conf" | awk -F"=" '{print $1}')")"
+				break
+                ;;
             *,*)
-                _one="${_rest%%,*}"
-                _rest="${_rest#*,}"
+                one="${rest%%,*}"
+                rest="${rest#*,}"
                 ;;
             *)
-                _one="${_rest}"
-                _rest=""
+                one="${rest}"
+                rest=""
                 ;;
         esac
         # Allow `get 'name, boot'` (quoted spaces); unquoted spaces are
         # extra argv and already rejected by the get argc check.
-        _one="$(printf '%s' "${_one}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-        if [ -z "${_one}" ]; then
+        one="$(printf '%s' "${one}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        if [ -z "${one}" ]; then
             error_exit "[ERROR]: Empty property in list."
         fi
-        if ! is_bastille_property "${_one}"; then
-            validate_property "${_one}"
+        if ! is_bastille_property "${one}"; then
+            validate_property "${one}"
         fi
-        _one="$(normalize_property "${_one}")"
-        PROPERTIES="${PROPERTIES} ${_one}"
+        one="$(normalize_property "${one}")"
+        PROPERTIES="${PROPERTIES} ${one}"
         PROP_COUNT=$((PROP_COUNT + 1))
     done
     PROPERTIES="${PROPERTIES# }"
@@ -191,24 +205,10 @@ if [ "${ACTION}" = "get" ]; then
         error_exit "[ERROR]: Empty property in list."
     fi
 else
-    case "${PROPERTY}" in
-        boot|depend|depends|prio|priority)
-            BASTILLE_PROPERTY=1
-            ;;
-        *)
+    if [ "${BASTILLE_PROPERTY}" -eq 0 ]; then
             validate_property "${PROPERTY}"
-            ;;
-    esac
+    fi
 fi
-
-# we need jail(8) to parse the config file so it can expand variables etc
-print_jail_conf() {
-
-    # we need to pass a literal \n to jail to get each parameter on its own
-    # line
-    jail -f "${1}" -e '
-'
-}
 
 # Exit 120 is the historic "not set" signal so 1x1 get can warn (yellow)
 # without changing the printed text scripts already match.
@@ -223,7 +223,6 @@ query_jail_conf() {
             } else {
                 print "enabled";
             }
-            exit 0;
         }
         END {
             if (! found) {
@@ -235,107 +234,106 @@ query_jail_conf() {
 
 # Returns 120 when a jail.conf property is unset, 2 when jail.conf is missing.
 config_get_value() {
-    local _jail="${1}"
-    local _prop="${2}"
-    local _file
-    local _output
-    local _status
 
-    case "${_prop}" in
+    local jail="${1}"
+    local property="${2}"
+    local file
+    local output
+    local status
+
+    case "${property}" in
         boot|depend|priority)
-            _file="${bastille_jailsdir}/${_jail}/settings.conf"
-            sysrc -f "${_file}" -n "${_prop}" 2>/dev/null
+            file="${bastille_jailsdir}/${jail}/settings.conf"
+            sysrc -f "${file}" -n "${property}" 2>/dev/null
             return 0
             ;;
     esac
 
     # jail -f is relatively expensive; parse once per jail and reuse the dump
     # for every requested jail.conf property.
-    _file="${bastille_jailsdir}/${_jail}/jail.conf"
+    file="${bastille_jailsdir}/${jail}/jail.conf"
     if [ "${JAIL_CONF_LOADED}" -eq 0 ]; then
-        if [ ! -f "${_file}" ]; then
+        if [ ! -f "${file}" ]; then
             return 2
         fi
-        JAIL_CONF_TEXT="$(print_jail_conf "${_file}")"
+        JAIL_CONF_TEXT="$(print_jail_conf "${file}")"
         JAIL_CONF_LOADED=1
     fi
 
-    _output="$(printf '%s\n' "${JAIL_CONF_TEXT}" | query_jail_conf "${_prop}")"
-    _status=$?
-    printf '%s\n' "${_output}"
-    return "${_status}"
+    output="$(printf '%s\n' "${JAIL_CONF_TEXT}" | query_jail_conf "${property}")"
+    status=$?
+    printf '%s\n' "${output}"
+    return "${status}"
 }
 
 # Stopped jails have no jls entry. Human tables use "-" like `bastille list`;
 # JSON still emits null via json_record.
 config_jail_jid() {
-    local _jid
-    _jid="$(jls -j "${1}" jid 2>/dev/null || :)"
-    if [ -n "${_jid}" ]; then
-        printf '%s\n' "${_jid}"
+
+    local jid="$(jls -j "${1}" jid 2>/dev/null || :)"
+	
+    if [ -n "${jid}" ]; then
+        printf '%s\n' "${jid}"
     else
         printf '%s\n' "-"
     fi
 }
 
-# One jail's worth of get output. JSON: one object, extra properties as extra
-# fields (json_record drops a duplicate `name` so `get name` stays identity).
-# Human: 1x1 stays a bare value so scripts and recursive `config get ip4.addr`
-# still parse one line; tables follow `zfs get`.
-emit_get_for_jail() {
+handle_get() {
+
     local jail="${1}"
-    local _prop _val _st _needs_conf _jid
+	local jid
+	local status
+    local property
+	local value
 
     JAIL_CONF_LOADED=0
     JAIL_CONF_TEXT=""
 
-    _needs_conf=0
-    for _prop in ${PROPERTIES}; do
-        case "${_prop}" in
-            boot|depend|priority) ;;
-            *) _needs_conf=1 ;;
+    for property in ${PROPERTIES}; do
+        case "${property}" in
+			boot|depend|priority) ;;
+            *)
+			    if [ ! -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
+                    error_continue "[ERROR]: jail.conf not found for jail: ${jail}"
+                fi
+				;;
         esac
     done
-    # Missing jail.conf: skip the jail (historic) rather than error_exit,
-    # so `config ALL get` can still report the other jails.
-    if [ "${_needs_conf}" -eq 1 ] && [ ! -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-        error_notify "jail.conf does not exist for jail: ${jail}"
-        return 0
-    fi
 
     if [ "${BASTILLE_JSON:-0}" -eq 1 ]; then
         set -- name "${jail}"
-        for _prop in ${PROPERTIES}; do
-            _val="$(config_get_value "${jail}" "${_prop}")"
-            set -- "$@" "${_prop}" "${_val}"
+        for property in ${PROPERTIES}; do
+            value="$(config_get_value "${jail}" "${property}")"
+            set -- "$@" "${property}" "${value}"
         done
         json_record "$@"
         return 0
     fi
 
     if [ "${TABLE_MODE}" -eq 2 ]; then
-        _jid="$(config_jail_jid "${jail}")"
+        jid="$(config_jail_jid "${jail}")"
     fi
 
-    for _prop in ${PROPERTIES}; do
-        _val="$(config_get_value "${jail}" "${_prop}")"
-        _st=$?
+    for property in ${PROPERTIES}; do
+        value="$(config_get_value "${jail}" "${property}")"
+        status=$?
         if [ "${TABLE_MODE}" -eq 0 ]; then
             # Yellow "not set" is only useful when it is the entire output.
-            if [ "${_st}" -eq 120 ]; then
-                warn 3 "${_val}"
+            if [ "${status}" -eq 120 ]; then
+                warn 3 "${value}"
             else
-                info 3 "${_val}"
+                info 3 "${value}"
             fi
         elif [ "${TABLE_MODE}" -eq 1 ]; then
             # Color on a single cell would shift column padding.
-            info 3 "$(printf '%-*s %s' "${MAX_PROP}" "${_prop}" "${_val}")"
+            info 3 "$(printf '%-*s %s' "${MAX_PROP}" "${property}" "${value}")"
         else
             info 3 "$(printf '%-*s %-*s %-*s %s' \
-                "${MAX_JID}" "${_jid}" \
+                "${MAX_JID}" "${jid}" \
                 "${MAX_JAIL}" "${jail}" \
-                "${MAX_PROP}" "${_prop}" \
-                "${_val}")"
+                "${MAX_PROP}" "${property}" \
+                "${value}")"
         fi
     done
 }
@@ -346,12 +344,12 @@ emit_get_for_jail() {
 JAIL_COUNT=0
 TABLE_MODE=0
 if [ "${ACTION}" = "get" ]; then
-    for _j in ${JAILS}; do
+    for jail in ${JAILS}; do
         JAIL_COUNT=$((JAIL_COUNT + 1))
     done
     if [ "${JAIL_COUNT}" -gt 1 ]; then
         TABLE_MODE=2
-    elif [ "${PROP_COUNT}" -gt 1 ]; then
+    elif [ "${PROP_COUNT}" -gt 1 ] || [ "${PROPERTY}" = "all" ]; then
         TABLE_MODE=1
     fi
 fi
@@ -364,18 +362,18 @@ fi
 # column and unpadded so spaces in ip4.addr / depend stay in one field.
 if [ "${ACTION}" = "get" ] && [ "${BASTILLE_JSON:-0}" -ne 1 ] && [ "${TABLE_MODE}" -gt 0 ]; then
     MAX_PROP=8
-    for _p in ${PROPERTIES}; do
-        [ "${#_p}" -gt "${MAX_PROP}" ] && MAX_PROP="${#_p}"
+    for property in ${PROPERTIES}; do
+        [ "${#property}" -gt "${MAX_PROP}" ] && MAX_PROP="${#property}"
     done
     if [ "${TABLE_MODE}" -eq 1 ]; then
         info 3 "$(printf '%-*s %s' "${MAX_PROP}" "PROPERTY" "VALUE")"
     else
         MAX_JID=3
         MAX_JAIL=4
-        for _j in ${JAILS}; do
-            [ "${#_j}" -gt "${MAX_JAIL}" ] && MAX_JAIL="${#_j}"
-            _jid="$(config_jail_jid "${_j}")"
-            [ "${#_jid}" -gt "${MAX_JID}" ] && MAX_JID="${#_jid}"
+        for jail in ${JAILS}; do
+            [ "${#jail}" -gt "${MAX_JAIL}" ] && MAX_JAIL="${#jail}"
+            jid="$(config_jail_jid "${jail}")"
+            [ "${#jid}" -gt "${MAX_JID}" ] && MAX_JID="${#jid}"
         done
         info 3 "$(printf '%-*s %-*s %-*s %s' \
             "${MAX_JID}" "JID" \
@@ -388,11 +386,9 @@ fi
 for jail in ${JAILS}; do
 
     if [ "${ACTION}" = "get" ]; then
-        # get is handled above; skip the set/remove mutation path.
-        emit_get_for_jail "${jail}"
+        handle_get "${jail}"
         continue
     fi
-
 
     # Backwards compatibility for specifying only an IP with ip[4|6].addr
     if [ "${ACTION}" = "set" ] && [ "${PROPERTY}" = "ip4.addr" ]; then
@@ -417,13 +413,7 @@ for jail in ${JAILS}; do
             depends) PROPERTY="depend" ;;
         esac
 
-        if [ "${ACTION}" = "get" ]; then
-          if [ "${BASTILLE_JSON}" -eq 1 ]; then
-              json_record name "${jail}" "${PROPERTY}" "$(sysrc -f "${FILE}" -n "${PROPERTY}" 2>/dev/null)"
-          else
-            sysrc -f "${FILE}" -n "${PROPERTY}"
-          fi
-        elif [ "${ACTION}" = "remove" ]; then
+        if [ "${ACTION}" = "remove" ]; then
             # Only 'depend' supports removing a value; the rest are permanent
             if [ "${PROPERTY}" != "depend" ]; then
                 error_exit "[ERROR]: Cannot remove the '${PROPERTY}' property."
