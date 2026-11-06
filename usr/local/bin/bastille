@@ -194,7 +194,7 @@ fi
 if [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -n "${BASTILLE_CONFIG_CUSTOM}" ]; then
         BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG_CUSTOM}"
-    elif [ -n "$(sysrc -n bastille_config)" ]; then
+    elif [ -n "$(sysrc -n bastille_config 2>/dev/null)" ]; then
         BASTILLE_CONFIG="$(sysrc -n bastille_config)"
     else
         BASTILLE_CONFIG="/usr/local/etc/bastille/bastille.conf"
