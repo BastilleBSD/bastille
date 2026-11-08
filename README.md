@@ -70,19 +70,19 @@ your bastille.conf
 
 ## Usage
 
-See [Usage](https://bastille.readthedocs.io/en/latest/chapters/usage.html)
+See [Usage](https://docs.bastillebsd.org/en/latest/chapters/configuration/usage.html)
 
 ## Getting Started
 
-See [Getting Started](https://bastille.readthedocs.io/en/latest/chapters/getting-started.html)
+See [Getting Started](https://docs.bastillebsd.org/en/latest/chapters/overview/getting-started.html)
 
 ## Documentation
 
-See [Documentation](https://bastille.readthedocs.io/en/latest/)
+See [Documentation](https://docs.bastillebsd.org/en/latest/)
 
 ## Comparing
 
-See [Comparing](https://bastille.readthedocs.io/en/latest/chapters/comparing.html)
+See [Comparing](https://docs.bastillebsd.org/en/latest/chapters/overview/comparing.html)
 
 ## Breaking Changes
 
