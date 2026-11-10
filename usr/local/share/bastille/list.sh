@@ -328,7 +328,7 @@ list(){
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
+            tmp_jail=$(mktemp "${bastille_list_tmpdir}/${jail}.XXXXXXXX") || error_exit "[ERROR]: Failed to create list output."
         else
             continue
         fi
@@ -424,7 +424,7 @@ list_all(){
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
+            tmp_jail=$(mktemp "${bastille_list_tmpdir}/${jail}.XXXXXXXX") || error_exit "[ERROR]: Failed to create list output."
         else
             continue
         fi
@@ -540,7 +540,7 @@ list_single() {
     for jail in ${JAIL_LIST}; do
 
 	if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-		tmp_jail=$(mktemp /tmp/bastille-list-${jail})
+		tmp_jail=$(mktemp "${bastille_list_tmpdir}/${jail}.XXXXXXXX") || error_exit "[ERROR]: Failed to create list output."
 	else
 		continue
 	fi
@@ -707,8 +707,17 @@ done
 
 bastille_root_check
 
-# Clear tmp directory
-rm -rf /tmp/bastille-list-*
+# Isolate each invocation, including overlap with older list.sh processes.
+# The dot prefix deliberately avoids the old /tmp/bastille-list-* cleanup glob.
+bastille_list_tmpdir=$(mktemp -d /tmp/bastille-list.XXXXXXXXXX) ||
+    error_exit "[ERROR]: Failed to create list temporary directory."
+bastille_list_cleanup() {
+    rm -rf -- "${bastille_list_tmpdir}"
+}
+trap 'bastille_list_cleanup' 0
+trap 'exit 129' 1
+trap 'exit 130' 2
+trap 'exit 143' 15
 
 # Perform basic list if no args
 if [ "$#" -eq 0 ]; then
