@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
-# Copyright (c) 2018-2025, Christer Edwards <christer.edwards@gmail.com>
+# Copyright (c) 2018-2026, Christer Edwards <christer.edwards@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 . /usr/local/share/bastille/common.sh
-. /usr/local/etc/bastille/bastille.conf
 
 usage() {
     error_notify "Usage: bastille network [option(s)] TARGET add INTERFACE [IP]"
@@ -46,7 +45,6 @@ usage() {
     -n | --no-ip           Create interface without an IP (VNET only).
     -P | --passthrough     Add a raw interface.
     -V | --vnet            Add a physical interface.
-    -v | --vlan VLANID     Assign VLANID to interface (VNET only).
 
 EOF
     exit 1
@@ -59,7 +57,6 @@ STATIC_MAC=0
 STANDARD=0
 PASSTHROUGH=0
 VNET=0
-VLAN_ID=""
 NO_IP=0
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -89,14 +86,6 @@ while [ "$#" -gt 0 ]; do
         -V|--vnet)
             VNET=1
             shift
-            ;;
-        -v|--vlan)
-	    if echo "${2}" | grep -Eq '^[0-9]+$'; then
-                VLAN_ID="${2}"
-	    else
-                error_exit "Not a valid VLAN ID: ${2}"
-	    fi
-            shift 2
             ;;
         -*)
             for opt in $(echo ${1} 2>/dev/null | sed 's/-//g' | fold -w1); do
@@ -145,8 +134,6 @@ if [ "${ACTION}" = "add" ]; then
        { [ "${BRIDGE}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } || \
        { [ "${STANDARD}" -eq 1 ] && [ "${PASSTHROUGH}" -eq 1 ]; } then
         error_exit "[ERROR]: Only one of [-B|--bridge], [-P|--passthrough] or [-V|--vnet] should be set."
-    elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${PASSTHROUGH}" -eq 0 ] && [ -n "${VLAN_ID}" ]; then
-        error_exit "[ERROR]: VLANs can only be used with VNET interfaces."
     elif [ "${VNET}" -eq 0 ] && [ "${BRIDGE}" -eq 0 ] && [ "${NO_IP}" -eq 1 ]; then
         error_exit "[ERROR]: [-n|--no-ip] can only be used with VNET jails."
     elif [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${BRIDGE}" -eq 1 ]; then
@@ -592,36 +579,6 @@ remove_interface() {
     info 2 "Removed interface: \"${if}\""
 }
 
-add_vlan() {
-
-    local jailname="${1}"
-    local interface="${2}"
-    local ip="${3}"
-    local vlan_id="${4}"
-    local jail_config="${bastille_jailsdir}/${jailname}/jail.conf"
-    local jail_rc_config="${bastille_jailsdir}/${jailname}/root/etc/rc.conf"
-
-    if [ "${VNET}" -eq 1 ]; then
-        local jib_epair="$(grep "jib addm.*${interface}" ${jail_config} | awk '{print $3}' | sed 's|^\\!||')"
-        local jail_epair="$(grep "e[0-9]+b_${jib_epair}" ${jail_config})"
-        local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
-    elif [ "${BRIDGE}" -eq 1 ]; then
-        local jail_epair="$(grep -o "ifconfig.*${interface}.*addm.*" ${jail_config} | grep -Eo 'e[0-9]+a_[^;" ]+' | sed 's/a_/b_/')"
-        local jail_vnet="$(grep "${jail_epair}_name" ${jail_rc_config} | grep -Eo "vnet[0-9]+")"
-    elif [ "${PASSTHROUGH}" -eq 1 ]; then
-        local jail_vnet="${interface}"
-    fi
-    if grep -Eq "ifconfig_${jail_vnet}_${vlan_id}" "${bastille_jailsdir}/${jailname}/root/etc/rc.conf"; then
-        error_exit "[ERROR]: VLAN has already been added: VLAN ${vlan_id}"
-    else
-        bastille start "${jailname}"
-        bastille template "${jailname}" ${bastille_template_vlan} --arg VLANID="${vlan_id}" --arg IFCONFIG="inet ${ip}" --arg JAIL_VNET="${jail_vnet}"
-        bastille restart "${jailname}"
-    fi
-
-    info 2 "Added VLAN ${vlan_id} to interface: \"${jail_vnet}\""
-}
-
 info 1 "\n[${TARGET}]:"
 
 case "${ACTION}" in
@@ -634,9 +591,6 @@ case "${ACTION}" in
         # Check if interface has already been added (except for standard/classic jails)
         if [ "${STANDARD}" -eq 0 ] && check_interface_added "${TARGET}" "${INTERFACE}" && [ -z "${VLAN_ID}" ]; then
             info 1 "\nInterface already added: ${INTERFACE}"
-            exit 0
-        elif { [ "${VNET}" -eq 1 ] || [ "${BRIDGE}" -eq 1 ] || [ "${PASSTHROUGH}" -eq 1 ]; } && [ -n "${VLAN_ID}" ]; then
-            add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             exit 0
         fi
 
@@ -652,9 +606,6 @@ case "${ACTION}" in
                 error_exit "[ERROR]: '${INTERFACE}' is a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ -n "${VLAN_ID}" ]; then
-                    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
-                fi
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
@@ -667,9 +618,6 @@ case "${ACTION}" in
                 error_exit "[ERROR]: '${INTERFACE}' is not a bridge interface."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-                if [ -n "${VLAN_ID}" ]; then
-                    add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
-                fi
                 if [ "${AUTO}" -eq 1 ]; then
                     bastille start "${TARGET}"
                 fi
@@ -680,9 +628,6 @@ case "${ACTION}" in
                 error_exit "[ERROR]: ${TARGET} is not a VNET jail."
             else
                 add_interface "${TARGET}" "${INTERFACE}" "${IP}"
-            fi
-            if [ -n "${VLAN_ID}" ]; then
-                add_vlan "${TARGET}" "${INTERFACE}" "${IP}" "${VLAN_ID}"
             fi
             if [ "${AUTO}" -eq 1 ]; then
                 bastille start "${TARGET}"
