@@ -101,34 +101,34 @@ VLANID="${3}"
 INTERFACE="${4}"
 
 # Validate options
-if [ "${ACTION}" != "add" ] || [ "${ACTION}" != "remove" ]; then
+if [ "${ACTION}" != "add" ] && [ "${ACTION}" != "remove" ]; then
     error_exit "[ERROR]: Unsupported action: ${ACTION}"
 fi
 if [ "$(bastille config ${TARGET} get vnet)" != "enabled" ];  then
     error_exit "[ERROR]: VLAN does not support non-VNET jails."
 fi
-if ! grep -Eoq "${INTERFACE}" "${bastille_jailsdir}${TARGET}/jail.conf"; then
+if ! grep -Eoqs "${INTERFACE}" "${bastille_jailsdir}/${TARGET}/jail.conf"; then
     error_exit "[ERROR]: Interface not assigned to jail: ${INTERFACE}"
 fi
 if [ "${VLAN_TAGGED}" -eq 1 ] && [ "${VLAN_UNTAGGED}" -eq 1 ]; then
     error_exit "[ERROR]: Only one of [-t|--tagged] or [-u|--untagged] should be set."
 elif [ "${VLAN_TAGGED}" -eq 1 ] || [ "${VLAN_UNTAGGED}" -eq 1 ]; then
-    if ! ifconfig -g bridge | grep -Eoq "^${INTERFACE}$"; then
+    if ! ifconfig -g bridge | grep -Eoqs "^${INTERFACE}$"; then
         error_exit "[ERROR]: [-t|--tagged] and [-u|--untagged] requires a bridge interface."
-    elif ! ifconfig "${INTERFACE}" | grep -Eoq "flags.*\<VLANFILTER\>"; then
+    elif ! ifconfig "${INTERFACE}" | grep -Eoqs "flags.*\<VLANFILTER\>"; then
         error_exit "[ERROR]: [-t|--tagged] and [-u|--untagged] requries a bridge with 'vlanfilter' enabled."
     fi
 fi
 if [ "${VLAN_LEGACY}" -eq 1 ]; then
-    if grep -Eoq "ifconfig_.*_${vlan_id}" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
+    if grep -Eoqs "ifconfig_.*_${vlan_id}" "${bastille_jailsdir}/${TARGET}/root/etc/rc.conf"; then
         info 2 "Tagged VLAN has already been added: ${VLANID}"
     fi
 elif [ "${VLAN_TAGGED}" -eq 1 ]; then
-    if grep -Eoq "${INTERFACE}.* tagged .*${VLANID}.*" "${bastille_jailsdir}${TARGET}/jail.conf"; then
+    if grep -Eoqs "${INTERFACE}.* tagged .*${VLANID}.*" "${bastille_jailsdir}${TARGET}/jail.conf"; then
         info 2 "Tagged VLAN has already been added: ${VLANID}"
     fi
 elif [ "${VLAN_UNTAGGED}" -eq 1 ]; then
-    if grep -Eoq "${INTERFACE}.* untagged .*${VLANID}.*" "${bastille_jailsdir}${TARGET}/jail.conf"; then
+    if grep -Eoqs "${INTERFACE}.* untagged .*${VLANID}.*" "${bastille_jailsdir}${TARGET}/jail.conf"; then
         info 2 "Untagged VLAN has already been added: ${VLANID}"
     fi
 fi
@@ -139,7 +139,7 @@ elif [ "${NO_IP}" -eq 1 ] && [ -n "${5}" ]; then
 else
     IP=""
 fi
-if ! echo "${VLANID}" | grep -Eoq "^[0-9]+$"; then
+if ! echo "${VLANID}" | grep -Eoqs "^[0-9]+$"; then
     error_exit "[ERROR]: VLAN must be a numerical VLAN ID"
 fi
 
