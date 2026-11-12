@@ -44,4 +44,5 @@ Bastille sub-commands
    update
    upgrade
    verify
+   vlan
    zfs
