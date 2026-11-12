@@ -10,7 +10,7 @@
 #
 # bastille_enable (bool):          Set to "NO" by default.
 #                                  Set to "YES" to enable bastille.
-# bastille_confif (bool):          Set to "/usr/local/etc/bastille/bastille.conf" by default.
+# bastille_config (bool):          Set to "/usr/local/etc/bastille/bastille.conf" by default.
 #                                  Path to bastile.conf file.
 # bastille_startup_delay (bool):   Set to "0" by default.
 #                                  Set to a numerical value.
@@ -57,17 +57,17 @@ sort_jails() {
 
 bastille_start() {
     sort_jails "forward"
-    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} --config ${bastille_config} start --boot --delay ${bastille_startup_delay} JAIL
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} --config "${bastille_config}" start --boot --delay ${bastille_startup_delay} JAIL
 }
 
 bastille_stop() {
     sort_jails "reverse"
-    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} --config ${bastille_config} stop JAIL
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} --config "${bastille_config}" stop JAIL
 }
 
 bastille_restart() {
     sort_jails "forward"
-    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} --config ${bastille_config} restart --boot --delay ${bastille_startup_delay} JAIL
+    echo "${bastille_jail_list}" | xargs -P ${bastille_parallel_limit} -I JAIL ${command} --config "${bastille_config}" restart --boot --delay ${bastille_startup_delay} JAIL
 }
 
 load_rc_config ${name}
