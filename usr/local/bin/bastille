@@ -194,7 +194,11 @@ fi
 # Validate config file
 if [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -n "${BASTILLE_CONFIG_CUSTOM}" ]; then
-        BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG_CUSTOM}"
+        if echo "${BASTILLE_CONFIG_CUSTOM}" | grep -q "\/"; then
+            BASTILLE_CONFIG="${BASTILLE_CUSTOM_CONFIG}"
+        else
+            BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG_CUSTOM}"
+        fi
     elif [ -n "$(sysrc -n bastille_config 2>/dev/null)" ]; then
         BASTILLE_CONFIG="$(sysrc -n bastille_config)"
     else
