@@ -40,8 +40,8 @@ usage() {
 
     -a | --auto            Start/stop jail(s) if required.
     -n | --no-ip           Add VLAN withouth an IP.
-    -t | --tagged          Add a tagged VLAN (bridge interface only).
-    -u | --untagged        Add an untagged VLAN (bridge interface only).
+    -t | --tagged          Add/remove a tagged VLAN (bridge interface only).
+    -u | --untagged        Add/remove an untagged VLAN (bridge interface only).
 
 EOF
     exit 1
@@ -313,7 +313,7 @@ validate_netif() {
 define_ips() {
 
     IP4_ADDR=""
-    IP6_ADDR=""
+    #IP6_ADDR=""
 
     for ip in ${IP}; do
         validate_ip "${ip}" "1"

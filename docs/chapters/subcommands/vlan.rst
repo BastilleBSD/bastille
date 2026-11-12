@@ -26,5 +26,5 @@ the jail.
 
       -a | --auto            Start/stop jail(s) if required.
       -n | --no-ip           Add VLAN withouth an IP.
-      -t | --tagged          Add a tagged VLAN (bridge interface only).
-      -u | --untagged        Add an untagged VLAN (bridge interface only).
+      -t | --tagged          Add/remove a tagged VLAN (bridge interface only).
+      -u | --untagged        Add/remove an untagged VLAN (bridge interface only).
