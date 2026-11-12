@@ -194,7 +194,7 @@ fi
 # Validate config file
 if [ -z "${BASTILLE_CONFIG}" ]; then
     if [ -n "${BASTILLE_CONFIG_CUSTOM}" ]; then
-        if echo "${BASTILLE_CONFIG_CUSTOM}" | grep -q "\/"; then
+        if echo "${BASTILLE_CONFIG_CUSTOM}" | grep -Eq "^\/"; then
             BASTILLE_CONFIG="${BASTILLE_CUSTOM_CONFIG}"
         else
             BASTILLE_CONFIG="/usr/local/etc/bastille/${BASTILLE_CONFIG_CUSTOM}"
