@@ -36,7 +36,7 @@ stop_cmd="bastille_stop"
 restart_cmd="bastille_restart"
 
 list_jails() {
-    local jailsdir=$(. $bastille_conf; echo $bastille_jailsdir)
+    local jailsdir=$(. $bastille_config; echo $bastille_jailsdir)
     local jail_list=$(find ${jailsdir}/* -mindepth 1 -maxdepth 1 -type f -name jail.conf | xargs -n1 dirname | xargs -n1 basename)
     for jail in ${jail_list}; do
         priority="$(sysrc -f ${jailsdir}/${jail}/settings.conf -n priority)"
