@@ -84,7 +84,7 @@ zfs_jail_dataset() {
     sysrc -f "${bastille_jailsdir}/${jail}/root/etc/rc.conf" zfs_enable="YES"
 
     # Jail the dataset
-    zfs set mountpoint="${MOUNT}" "${DATASET}"
+    zfs set -u mountpoint="${MOUNT}" "${DATASET}"
     zfs set jailed=on "${DATASET}"
 
     # Add dataset to zfs.conf
