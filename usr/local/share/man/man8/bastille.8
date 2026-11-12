@@ -6,8 +6,8 @@
 .Nd open-source jail automation and management tool
 .Sh SYNOPSIS
 .Nm
-.Op Fl vhqx
 .Op Fl c Ar file
+.Op Fl hjpqvx
 .Ar COMMAND
 .Op option(s)
 .Ar TARGET
@@ -24,10 +24,6 @@ inside the Bastille config directory.
 .It Fl h , Fl -help
 Display usage information. This option is also available for each
 sub-command, though they are not listed in the man pages.
-.It Fl v , Fl -version
-Print version information.
-.It Fl q , Fl -quiet
-Supress Bastille-specific output.
 .It Fl j , Fl -json
 Emit output as JSON on supported sub-commands.
 Implies
@@ -50,6 +46,10 @@ Must be placed before the sub-command.
 .It Fl p , Fl -pretty
 Emit indented (pretty) JSON output. Implies
 .Fl -json .
+.It Fl q , Fl -quiet
+Supress Bastille-specific output.
+.It Fl v , Fl -version
+Print version information.
 .It Fl x , Fl -debug
 Enable debug mode.
 .Sh SUBCOMMANDS
@@ -100,7 +100,7 @@ Monitor and attempt to restart jail service(s).
 .It Sy mount
 Mount files(s)/directorie(s) inside jail(s).
 .It Sy network
-Add or remove interface(s) from jail(s).
+Manage interface(s) for jail(s).
 .It Sy pkg
 Manage packages inside jail(s). See
 .Xr pkg 8 .
@@ -123,7 +123,7 @@ Stop running jail(s).
 .It Sy sysrc
 Edit rc files inside jail(s).
 .It Sy tags
-Add or remove tags to jail(s).
+Manage tags for jail(s).
 .It Sy template
 Apply templates to jail(s).
 .It Sy top
@@ -137,6 +137,8 @@ Update a jail or release.
 Upgrade a jail to new release.
 .It Sy verify
 Compare release against a "known good" index.
+.It Sy vlan
+Manage vlans for jail interface(s).
 .It Sy zfs
 Manage ZFS options/attributes for jail(s).
 .Sh SEE ALSO
@@ -182,6 +184,7 @@ Manage ZFS options/attributes for jail(s).
 .Xr bastille-update 8 ,
 .Xr bastille-upgrade 8 ,
 .Xr bastille-verify 8 ,
+.Xr bastille-vlan 8 ,
 .Xr bastille-zfs 8
 .Sh BUGS
 Please report any bugs on GitHub

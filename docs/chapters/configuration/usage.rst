@@ -16,7 +16,7 @@ run ``bastille create --help``.
     containerized applications on FreeBSD.
 
   Usage:
-    bastille [option(s)] command [option(s)] TARGET ARGS
+    bastille [option(s)] COMMAND [option(s)] TARGET ARGS
 
   Available Commands:
     bootstrap   Bootstrap a release or template(s).
@@ -37,10 +37,11 @@ run ``bastille create --help``.
     jcp         Copy file(s)/directorie(s) from jail to jail(s).
     limits      Apply resources limits to jail(s). See rctl(8) and cpuset(1).
     list        List jails, releases, templates and more...
+    logs        List jail logs (oci and console).
     migrate     Migrate jail(s) to a remote system.
     monitor     Monitor and attempt to restart jail service(s).
     mount       Mount file(s)/directorie(s) inside jail(s).
-    network     Add or remove interface(s) from jail(s).
+    network     Manage interface(s) for jail(s).
     pkg         Manage packages inside jail(s). See pkg(8).
     plugin      Run a custom Bastille plugin.
     rcp         Copy file(s)/directorie(s) from jail to host.
@@ -52,13 +53,15 @@ run ``bastille create --help``.
     start       Start stopped jail(s).
     stop        Stop running jail(s).
     sysrc       Edit rc files inside jail(s).
-    tags        Add or remove tags to jail(s).
+    tags        Manage tags for jail(s).
     template    Apply templates to jail(s).
     top         Process viewer. See top(1).
+    up          Deploy an OCI jail from a podman-compose.yml file.
     umount      Unmount file(s)/directorie(s) from jail(s).
     update      Update a jail or release.
     upgrade     Upgrade a jail to new release.
     verify      Compare release against a "known good" index.
+    vlan        Manage vlans for jail interface(s).
     zfs         Manage ZFS options/attributes for jail(s).
 
   Use "bastille COMMAND -h|--help" for more information about a command.

@@ -25,14 +25,15 @@ This is the default `bastille.conf.sample` file.
   ## [ BastilleBSD ] ##
   #####################
 
-  ## Default paths
+  ## Default Paths
   bastille_prefix="/usr/local/bastille"                                 ## default: "/usr/local/bastille"
   bastille_backupsdir="${bastille_prefix}/backups"                      ## default: "${bastille_prefix}/backups"
   bastille_cachedir="${bastille_prefix}/cache"                          ## default: "${bastille_prefix}/cache"
   bastille_jailsdir="${bastille_prefix}/jails"                          ## default: "${bastille_prefix}/jails"
+  bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
   bastille_releasesdir="${bastille_prefix}/releases"                    ## default: "${bastille_prefix}/releases"
   bastille_templatesdir="${bastille_prefix}/templates"                  ## default: "${bastille_prefix}/templates"
-  bastille_logsdir="/var/log/bastille"                                  ## default: "/var/log/bastille"
+  bastille_volumesdir="${bastille_prefix}/volumes"                      ## default: "${bastille_prefix}/volumes"
 
   ## PF firewall configuration path
   bastille_pf_conf="/etc/pf.conf"                                       ## default: "/etc/pf.conf"
@@ -68,7 +69,7 @@ This is the default `bastille.conf.sample` file.
   ## bastille_pkgbase_packages="base-jail lib32-dbg src"
   bastille_pkgbase_packages="base-jail"                                 ## default: "base-jail"
 
-  ## Default timezone
+  ## Timezone
   bastille_tzdata=""                                                    ## default: empty to use host's time zone
 
   ## Default jail resolv.conf
@@ -79,7 +80,7 @@ This is the default `bastille.conf.sample` file.
   bastille_url_hardenedbsd="https://installers.hardenedbsd.org/pub/"                   ## default: "https://installer.hardenedbsd.org/pub/HardenedBSD/releases/"
   bastille_url_midnightbsd="https://www.midnightbsd.org/ftp/MidnightBSD/releases/"     ## default: "https://www.midnightbsd.org/pub/MidnightBSD/releases/"
 
-  ## ZFS options
+  ## ZFS
   bastille_zfs_enable="NO"                                              ## default: "NO"
   bastille_zfs_zpool=""                                                 ## default: ""
   bastille_zfs_prefix="bastille"                                        ## default: "bastille"
@@ -96,12 +97,20 @@ This is the default `bastille.conf.sample` file.
 
   ## Networking
   bastille_network_vnet_type="if_bridge"                                ## default: "if_bridge"
-  bastille_network_loopback="bastille0"                                 ## default: "bastille0"
   bastille_network_pf_ext_if="ext_if"                                   ## default: "ext_if"
   bastille_network_pf_table="jails"                                     ## default: "jails"
+  bastille_network_loopback="bastille0"                                 ## default: "bastille0"
   bastille_network_shared=""                                            ## default: ""
+  bastille_network_vnet=""                                              ## default: ""
+  bastille_network_bridge=""                                            ## default: ""
   bastille_network_gateway=""                                           ## default: ""
   bastille_network_gateway6=""                                          ## default: ""
+
+  ## DNS
+  bastille_dns_enable="NO"                                              ## default: "NO"
+  bastille_dns_interface="${bastille_network_loopback}"                 ## default: "${bastille_network_loopback}"
+  bastille_dns_gateway="10.0.0.1"                                       ## default: "10.0.0.1"
+  bastille_dns_domain="bastille"                                        ## default: "bastille"
 
   ## Default Templates
   bastille_template_base="default/base"                                 ## default: "default/base"
@@ -110,13 +119,13 @@ This is the default `bastille.conf.sample` file.
   bastille_template_clone="default/clone"                               ## default: "default/clone"
   bastille_template_thin="default/thin"                                 ## default: "default/thin"
   bastille_template_vnet="default/vnet"                                 ## default: "default/vnet"
-  bastille_template_vlan="default/vlan"                                 ## default: "default/vlan"
 
   ## Monitoring
   bastille_monitor_cron_path="/usr/local/etc/cron.d/bastille-monitor"                           ## default: "/usr/local/etc/cron.d/bastille-monitor"
   bastille_monitor_cron="*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"  ## default: "*/5 * * * * root /usr/local/bin/bastille monitor ALL >/dev/null 2>&1"
   bastille_monitor_logfile="${bastille_logsdir}/monitor.log"                                    ## default: "${bastille_logsdir}/monitor.log"
-  bastille_monitor_healthchecks=""                                                              ## default: ""
+  bastille_monitor_module=""                                                                    ## options: "uptimekuma healthchecks.io"
+  bastille_monitor_url=""                                                                       ## default: ""                                                         ## default: ""
 
 
 Notes
