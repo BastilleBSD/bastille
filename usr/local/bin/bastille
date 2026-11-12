@@ -221,7 +221,6 @@ fi
 
 # Handle sub-commands
 case "${CMD}" in
-    # 40 total commands
     bootstrap) ;;
     clone) ;;
     cmd) ;;

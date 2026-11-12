@@ -177,7 +177,7 @@ define_ips() {
                 error_exit "[ERROR]: Unsupported IP option for standard jail: ${IP4_ADDR}"
             fi
         elif ifconfig | grep -qwF "${IP4_ADDR}"; then
-            warn 1 "\n[WARNING]: IP address already in use: ${TEST_IP}"
+            warn 1 "\n[WARNING]: IP address already in use: ${IP4_ADDR}"
         fi
     fi
 
@@ -270,7 +270,7 @@ add_interface() {
         if [ "${STATIC_MAC}" -eq 1 ]; then
             generate_static_mac "${jailname}" "${if}"
             cat << EOF >> "${jail_config}"
-  ## ${host_epair} interface
+  ## ${if} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "epair${epair_num}=\\\$(ifconfig epair create) && ifconfig \\\${epair${epair_num}} up name ${host_epair} && ifconfig \\\${epair${epair_num}%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${if} addm ${host_epair}";
@@ -283,7 +283,7 @@ EOF
         else
             # Generate NETBLOCK without static MAC
             cat << EOF >> "${jail_config}"
-  ## ${host_epair} interface
+  ## ${if} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "epair${epair_num}=\\\$(ifconfig epair create) && ifconfig \\\${epair${epair_num}} up name ${host_epair} && ifconfig \\\${epair${epair_num}%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${if} addm ${host_epair}";
@@ -330,7 +330,7 @@ EOF
                 # Generate NETBLOCK with static MAC
                 generate_static_mac "${jailname}" "${if}"
                 cat << EOF >> "${jail_config}"
-  ## ${host_epair} interface
+  ## ${if} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "jib addm ${jib_epair} \!${if}";
   exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
@@ -342,7 +342,7 @@ EOF
             else
                 # Generate NETBLOCK without static MAC
                 cat << EOF >> "${jail_config}"
-  ## ${host_epair} interface
+  ## ${if} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "jib addm ${jib_epair} \!${if}";
   exec.prestart += "ifconfig ${host_epair} description \"${jail_vnet} host interface for Bastille jail ${jailname}\"";
@@ -384,7 +384,7 @@ EOF
                 # Generate NETBLOCK with static MAC
                 generate_static_mac "${jailname}" "${if}"
                 cat << EOF >> "${jail_config}"
-  ## ${ng_if} interface
+  ## ${if} interface
   vnet.interface += ${ng_if};
   exec.prestart += "jng bridge ${jng_if} ${if}";
   exec.prestart += "ifconfig ${ng_if} ether ${macaddr}b";
@@ -394,7 +394,7 @@ EOF
             else
                 # Generate NETBLOCK without static MAC
                 cat << EOF >> "${jail_config}"
-  ## ${ng_if} interface
+  ## ${if} interface
   vnet.interface += ${ng_if};
   exec.prestart += "jng bridge ${jng_if} ${if}";
   exec.poststop += "jng shutdown ${jng_if}";

@@ -1,26 +1,39 @@
 VLAN Configuration
 ==================
 
-Jail VLAN Tagging
------------------
+Overview
+--------
 
-Bastille supports VLANs to some extent when creating jails. When creating a jail,
-use the ``--vlan ID`` options to specify a VLAN ID for your jail. This will set
-the proper variables inside the jails `rc.conf` to add the jail to the specified
-VLAN. The jail will then take care of tagging the traffic. Do not use ``-v|--vlan``
-if you have already configured the host interface to tag the traffic. See limitations
-below.
+Bastille supports managing VLANs through the ``vlan`` subcommand. There are
+essentially 3 different VLAN modes. There is the standard legacy mode, as well
+as a new ``tagged`` and ``untagged`` mode (requires FreeBSD 15+).
 
-When using this method, the interface being assigned must be a trunk interface.
+VLANs can be added or removed from a jail at any time, providing the interface
+that is chosen is already assigned to the jail.
+See also: :doc:`/chapters/subcommands/network` for more details on adding or
+removing interfaces from jails.
+
+Legacy Mode - Trunk
+-------------------
+
+This is the default mode, and is used when specifying ``-v|--vlan`` while creating
+a jail, or when not specifying ``-t|--tagged`` or ``-u|--untagged`` while using
+the ``vlan`` subcommand.
+
+When using this mode, the interface being assigned must be a trunk interface.
 This means that it passes all traffic, leaving any VLAN tags as they are.
 
-Host VLAN Tagging
------------------
+This requires configuring your host interface to be attached to a VLAN interface. See
+the FreeBSD documentation for details, but the interface stack is basically
+going to be: HOST > VLAN > BRIDGE
+
+Legacy Mode - Host Tagging
+--------------------------
 
 Another method is to configure a host interface to tag the traffic. This way, the
 jail doesn't have to worry about it.
 
-You can only use ``-B|--bridge`` with host VLAN interfaces, due to the limitation
+You can only use a bridge interface with this method, due to the limitations
 mentioned below. With this method we create the bridge interfaces in ``rc.conf``
 and configure them to tag the traffic by VLAD ID.
 
@@ -51,13 +64,46 @@ configuration.
   ifconfig_eth1_20="up"
   ifconfig_eth1_30="up"
 
-Notice that the interfaces are bridge interfaces, and can be used with ``-B|--bridge``
-without issue.
+VLAN Filter - Untagged
+----------------------
+
+FreeBSD 15 introduces a ``vlanfilter`` flag that can be enabled for a
+bridge interface. This basically turns the bridge into a VLAN-aware switch
+that can handle multiple VLANs without issue.
+
+Bastille supports this for hosts running FreeBSD 15 and above.
+
+Only one untagged VLAN can be added to a given jail interface at any time. This is due
+to the fact that the bridge will essentially send the network packets to the jail
+without a VLAN tag. If, for example, you have VLAN 50 assigned as untagged, the jail will see it as
+the native network.
+
+Adding an untagged VLAN is as simple as running ``bastille vlan --auto --untagged TARGET add 50 bridge0 10.50.50.50``.
+This will add VLAN 50, connected to bridge0 and using 10.50.50.50 as the IP.
+
+VLAN Filter - Tagged
+--------------------
+
+In addition to the untagged VLANs, Bastille also supports adding tagged VLANs. Keep in
+mind that this still requires FreeBSD 15 and above, plus the ``vlanfilter`` flag for
+the bridge interface you want to use.
+
+Unlike the untagged VLAN option, a jail can have as many tagged VLANs as needed. Also, because
+they are tagged, Bastille will create an interface inside the jail that corresponds to the
+VLAN tag assinged to it.
+
+Adding a tagged VLAN is as simple as running ``bastille vlan --auto --tagged TARGET add 60 bridge0 10.60.60.60``.
+This will add VLAN 60, connected to bridge0 and using 10.60.60.60 as the IP.
+
+.. attention::
+
+   The ``-t|--tagged`` and ``-u|--untagged`` (vlanfilter) options are experimental.
 
 VLAN Limitations
 ----------------
 
-* You cannot use the ``-V|--vnet`` options with interfaces that have dots (.) in the
+* When creating a jail, you cannot use the ``-V|--vnet`` options with
+  interfaces that have dots (.) in the
   name, which is the standard way of naming a VLAN interface. This is due to the
   limitations of the JIB script that Bastille uses to manage VNET jails.
 
@@ -65,5 +111,5 @@ VLAN Limitations
   If you use the host method, do not use ``-v|--vlan`` when creating the jail.
   Doing so will prevent the jail from having network access.
 
-Tip: Don't forget to set you gateway and nameserver is applicable
+Tip: When creating a jail, don't forget to set your gateway and nameserver is applicable
 using ``-g|--gateway`` and ``-n|--nameserver``.

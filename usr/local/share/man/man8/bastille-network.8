@@ -6,7 +6,7 @@
 .Nd Add or remove interface(s) from jail(s).
 .Sh SYNOPSIS
 .Nm bastille network
-.Op Fl aBMnPVv
+.Op Fl aBMnPV
 .Ar TARGET Sy add Ar INTERFACE Op IP
 .Nm bastille network
 .Op Fl a
@@ -14,11 +14,9 @@
 .Sh DESCRIPTION
 The
 .Nm bastille network
-sub-command can add or remove interfaces, as
-well as set a VLAN ID for jails. Setting the VLAN
-ID must be done during the 'add' phase.
+sub-command can add or remove interfaces for jails.
 .Bl -tag -width Ds
-.It Sy bastille network Oo Fl aBMnPVv Oc Ar TARGET Sy add Ar INTERFACE Op IP
+.It Sy bastille network Oo Fl aBMnPV Oc Ar TARGET Sy add Ar INTERFACE Op IP
 .Bl -tag -width Ds
 .It Sy add
 Add the
@@ -36,15 +34,13 @@ Create interface without an IP (VNET only).
 Add a raw interface.
 .It Fl V , Fl -vnet
 Add a physical interface.
-.It Fl v Ar VLANID , Fl -vlan Ar VLANID
-Assign
-.Ar VLANID
-to interface (VNET only).
 .El
 .Pp
 The
 .Ar IP
-is only optional when the '-n|--no-ip' is set.
+must be supplied unless using the
+.Oo Fl n , -no-ip Oc
+flag.
 .It Sy bastille network Oo Fl a Oc Ar TARGET Sy remove Ar INTERFACE
 .Bl -tag -width Ds
 .It Sy remove
@@ -103,4 +99,5 @@ Auto mode. Start/stop jail(s) if required.
 .Xr bastille-update 8 ,
 .Xr bastille-upgrade 8 ,
 .Xr bastille-verify 8 ,
+.Xr bastille-vlan 8 ,
 .Xr bastille-zfs 8
