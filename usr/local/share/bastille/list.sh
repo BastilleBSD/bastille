@@ -328,7 +328,7 @@ list(){
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail}.XXXXX)
         else
             continue
         fi
@@ -424,7 +424,7 @@ list_all(){
 
         # Validate jail.conf existence
         if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-            tmp_jail=$(mktemp /tmp/bastille-list-${jail})
+            tmp_jail=$(mktemp /tmp/bastille-list-${jail}.XXXXX)
         else
             continue
         fi
@@ -540,7 +540,7 @@ list_single() {
     for jail in ${JAIL_LIST}; do
 
 	if [ -f "${bastille_jailsdir}/${jail}/jail.conf" ]; then
-		tmp_jail=$(mktemp /tmp/bastille-list-${jail})
+		tmp_jail=$(mktemp /tmp/bastille-list-${jail}.XXXXX)
 	else
 		continue
 	fi
