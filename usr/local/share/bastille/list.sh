@@ -87,8 +87,8 @@ get_max_lengths() {
 
         # Set max length for jail name
         MAX_LENGTH_JAIL_NAME=$(find ${bastille_jailsdir}/*/jail.conf -maxdepth 1 -type f -print0 2> /dev/null | xargs -r0 -P0 grep -h -m 1 -e "^.* {$" | awk '{ print length($1) }' | sort -nr | head -n 1)
-        MAX_LENGTH_JAIL_NAME=${MAX_LENGTH_JAIL_NAME:-10}
-        if [ "${MAX_LENGTH_JAIL_NAME}" -lt 3 ]; then MAX_LENGTH_JAIL_NAME=3; fi
+        MAX_LENGTH_JAIL_NAME=${MAX_LENGTH_JAIL_NAME:-4}
+        if [ "${MAX_LENGTH_JAIL_NAME}" -lt 4 ]; then MAX_LENGTH_JAIL_NAME=4; fi
 
         # Set max length for boot option
         MAX_LENGTH_JAIL_BOOT=${MAX_LENGTH_JAIL_BOOT:-4}
