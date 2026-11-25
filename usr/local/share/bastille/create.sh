@@ -1317,7 +1317,7 @@ fi
 
 # Set MAC type for VNET jails
 if [ -n "${OPT_MAC_TYPE}" ]; then
-    bastille_network_mac_type="${OPT_MAC_TYPE}"
+    export bastille_network_mac_type="${OPT_MAC_TYPE}"
 fi
 
 # Filter sane release names

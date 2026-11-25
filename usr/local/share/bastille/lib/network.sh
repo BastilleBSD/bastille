@@ -45,7 +45,6 @@ get_bastille_epair_count() {
 generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
-    local external_interface_mac="$(ifconfig ${external_interface} | grep ether | awk '{print $2}')"
     local host_uuid="$(sysctl -n kern.hostuuid)"
     # Use FreeBSD vendor MAC prefix (58:9c:fc) for jail MAC prefix
     local macaddr_prefix="58:9c:fc"
