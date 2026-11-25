@@ -46,15 +46,16 @@ generate_static_mac() {
     local jail_name="${1}"
     local external_interface="${2}"
     local external_interface_mac="$(ifconfig ${external_interface} | grep ether | awk '{print $2}')"
+    local host_uuid="$(sysctl -n kern.hostuuid)"
     # Use FreeBSD vendor MAC prefix (58:9c:fc) for jail MAC prefix
     local macaddr_prefix="58:9c:fc"
-    # Use hash of interface+jailname for jail MAC suffix
-    local macaddr_suffix="$(echo -n "${external_interface_mac}${external_interface}${jail_name}" | sed 's#:##g' | sha256 | cut -b -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
+    # Use hash of hostuuid/interface/jailname for jail MAC suffix
+    local macaddr_suffix="$(echo -n "${host_uuid}:${external_interface}:${jail_name}" | sha256 | cut -c -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
     if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
-        error_notify "Failed to generate MAC address."
+        error_notify "[ERROR]: Failed to generate MAC address."
     fi
-    macaddr="${macaddr_prefix}:${macaddr_suffix}"
-    export macaddr
+    # Export the MAC. The last character will be a/b for host/jail
+    export BASTILLE_JAIL_MAC="${macaddr_prefix}:${macaddr_suffix}"
 }
 
 generate_vnet_jail_netblock() {
@@ -62,7 +63,6 @@ generate_vnet_jail_netblock() {
     # interface_type can be "standard" "bridge" or "passthrough"
     local interface_type="${2}"
     local external_interface="${3}"
-    local static_mac="${4}"
     # Set epair/interface values for host/jail
     if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
         if [ "${interface_type}" = "bridge" ]; then
@@ -103,7 +103,7 @@ generate_vnet_jail_netblock() {
     fi
     # VNET_JAIL_BRIDGE
     if [ "${interface_type}" = "bridge" ]; then
-        if [ "${static_mac}" -eq 1 ]; then
+        if [ "${bastille_network_mac_type}" = "static" ]; then
             # Generate BRIDGE config with static MAC address
             generate_static_mac "${jail_name}" "${external_interface}"
             cat <<-EOF
@@ -111,8 +111,8 @@ generate_vnet_jail_netblock() {
   vnet.interface = ${jail_epair};
   exec.prestart += "epair0=\\\$(ifconfig epair create) && ifconfig \\\${epair0} up name ${host_epair} && ifconfig \\\${epair0%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${external_interface} addm ${host_epair}";
-  exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
-  exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
+  exec.prestart += "ifconfig ${host_epair} ether ${BASTILLE_JAIL_MAC}a";
+  exec.prestart += "ifconfig ${jail_epair} ether ${BASTILLE_JAIL_MAC}b";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
@@ -130,15 +130,15 @@ EOF
     # VNET_JAIL_STANDARD
     elif [ "${interface_type}" = "standard" ]; then
         if [ "${bastille_network_vnet_type}" = "if_bridge" ]; then
-            if [ "${static_mac}" -eq 1 ]; then
+            if [ "${bastille_network_mac_type}" = "static" ]; then
                 # Generate VNET config with static MAC address
                 generate_static_mac "${jail_name}" "${external_interface}"
                 cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} \!${external_interface}";
-  exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
-  exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
+  exec.prestart += "jib addm ${jib_epair} ${external_interface}";
+  exec.prestart += "ifconfig ${host_epair} ether ${BASTILLE_JAIL_MAC}a";
+  exec.prestart += "ifconfig ${jail_epair} ether ${BASTILLE_JAIL_MAC}b";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
@@ -147,20 +147,20 @@ EOF
                 cat <<-EOF
   vnet;
   vnet.interface = ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} \!${external_interface}";
+  exec.prestart += "jib addm ${jib_epair} ${external_interface}";
   exec.prestart += "ifconfig ${host_epair} description \"vnet0 host interface for Bastille jail ${jail_name}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 EOF
             fi
         elif [ "${bastille_network_vnet_type}" = "netgraph" ]; then
-            if [ "${static_mac}" -eq 1 ]; then
+            if [ "${bastille_network_mac_type}" = "static" ]; then
                 # Generate VNET config with static MAC address
                 generate_static_mac "${jail_name}" "${external_interface}"
                 cat <<-EOF
   vnet;
   vnet.interface = ${ng_if};
   exec.prestart += "jng bridge ${jng_if} ${external_interface}";
-  exec.prestart += "ifconfig ${ng_if} ether ${macaddr}b";
+  exec.prestart += "ifconfig ${ng_if} ether ${BASTILLE_JAIL_MAC}b";
   exec.poststop += "jng shutdown ${jng_if}";
 EOF
             else

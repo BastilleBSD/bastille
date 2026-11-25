@@ -47,7 +47,7 @@ usage() {
     -E | --empty                    Create an empty jail (NAME only).
     -g | --gateway IP               Specify a default router/gateway.
     -L | --linux                    Create a Linux jail (experimental).
-    -M | --static-mac               Use a static/persistent MAC address (VNET only).
+    -M | --mac TYPE                 Specify MAC type (VNET only).
     -n | --nameserver IP            Specify nameserver(s) for the jail. Comma-separated.
          --no-boot                  Set boot=off.
          --no-validate              Do not validate the release name.
@@ -295,7 +295,7 @@ generate_oci_jail_conf() {
 
     if [ "${VNET_JAIL}" -eq 1 ]; then
 
-        NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_INTERFACE_TYPE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
+        NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_INTERFACE_TYPE}" "${bastille_jail_conf_interface}")
         cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
   enforce_statfs = 2;
@@ -346,7 +346,7 @@ generate_vnet_jail_conf() {
         devfs_ruleset_value=13
     fi
 
-    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_INTERFACE_TYPE}" "${bastille_jail_conf_interface}" "${STATIC_MAC}")
+    NETBLOCK=$(generate_vnet_jail_netblock "${NAME}" "${VNET_INTERFACE_TYPE}" "${bastille_jail_conf_interface}")
 
     cat << EOF > "${bastille_jail_conf}"
 ${NAME} {
@@ -1046,11 +1046,11 @@ NO_IP=0
 VLAN_ID=""
 LINUX_JAIL=0
 OCI_JAIL=0
-STATIC_MAC=0
 DUAL_STACK=0
 VALIDATE_RELEASE=1
 PRIORITY="99"
 OPT_GATEWAY=""
+OPT_MAC_TYPE=""
 OPT_NAMESERVER=""
 OPT_TAGS=""
 OCI_OS="freebsd"
@@ -1100,9 +1100,13 @@ while [ $# -gt 0 ]; do
             LINUX_JAIL=1
             shift
             ;;
-        -M|--static-mac)
-            STATIC_MAC=1
-            shift
+        -M|--mac)
+            OPT_MAC_TYPE="${2}"
+            case "${OPT_MAC_TYPE}" in
+                default|static) ;;
+                *) error_exit "[ERROR]: Invalid MAC type: ${OPT_MAC_TYPE}" ;;
+            esac 
+            shift 2
             ;;
         -n|--nameserver)
             OPT_NAMESERVER="${2}"
@@ -1194,7 +1198,6 @@ while [ $# -gt 0 ]; do
                     D) DUAL_STACK=1 ;;
                     E) EMPTY_JAIL=1 ;;
                     L) LINUX_JAIL=1 ;;
-                    M) STATIC_MAC=1 ;;
                     O) OCI_JAIL=1 ;;
                     P) VNET_JAIL=1 VNET_JAIL_PASSTHROUGH=1 ;;
                     T) THICK_JAIL=1 ;;
@@ -1238,9 +1241,9 @@ elif { [ "${VNET_JAIL_STANDARD}" -eq 1 ] && [ "${VNET_JAIL_BRIDGE}" -eq 1 ]; } |
      { [ "${VNET_JAIL_STANDARD}" -eq 1 ] && [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; } || \
      { [ "${VNET_JAIL_BRIDGE}" -eq 1 ] && [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ]; } then
     error_exit "[ERROR]: Only one of [-V|--vnet], [-B|--bridge] or [-P|--passthrough] can be selected."
-# Don't allow STATIC_MAC with VNET_JAIL_PASSTHROUGH
-elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ] && [ "${STATIC_MAC}" -eq 1 ]; then
-    error_exit "[ERROR]: [-P|--passthrough] does not support [-M|--static-mac]."
+# Don't allow OPT_MAC_TYPE with VNET_JAIL_PASSTHROUGH
+elif [ "${VNET_JAIL_PASSTHROUGH}" -eq 1 ] && [ -n "${OPT_MAC_TYPE}" ]; then
+    error_exit "[ERROR]: [-P|--passthrough] does not support [-M|--mac]."
 # Don't allow OPT_OCI_ENV withouth OCI_JAIL
 elif [ -n "${OPT_OCI_ENV}" ] && [ "${OCI_JAIL}" -eq 0 ]; then
     error_exit "[ERROR]: [-e|--env] can only be used with [-O|--oci]."
@@ -1310,6 +1313,11 @@ fi
 if { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } || \
    { [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${VNET_INTERFACE_TYPE}" = "bridge" ]; } then
     error_exit "[ERROR]: Netgraph does not support the [-B|--bridge] or [-P|--passthrough] option."
+fi
+
+# Set MAC type for VNET jails
+if [ -n "${OPT_MAC_TYPE}" ]; then
+    bastille_network_mac_type="${OPT_MAC_TYPE}"
 fi
 
 # Filter sane release names

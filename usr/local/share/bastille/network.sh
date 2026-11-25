@@ -41,7 +41,7 @@ usage() {
 
     -a | --auto            Start/stop jail(s) if required.
     -B | --bridge          Add a bridge interface.
-    -M | --static-mac      Use a static/persistent MAC address (VNET only).
+    -M | --mac TYPE        Specify MAC type (VNET only).
     -n | --no-ip           Create interface without an IP (VNET only).
     -P | --passthrough     Add a raw interface.
     -V | --vnet            Add a physical interface.
@@ -53,7 +53,7 @@ EOF
 # Handle options
 AUTO=0
 BRIDGE=0
-STATIC_MAC=0
+OPT_MAC_TYPE=""
 STANDARD=0
 PASSTHROUGH=0
 VNET=0
@@ -71,9 +71,13 @@ while [ "$#" -gt 0 ]; do
             BRIDGE=1
             shift
             ;;
-        -M|--static-mac)
-            STATIC_MAC=1
-            shift
+        -M|--mac)
+            OPT_MAC_TYPE="${2}"
+            case "${OPT_MAC_TYPE}" in
+                default|static) ;;
+                *) error_exit "[ERROR]: Invalid MAC type: ${OPT_MAC_TYPE}" ;;
+            esac
+            shift 2
             ;;
         -n|--no-ip)
             NO_IP=1
@@ -92,7 +96,6 @@ while [ "$#" -gt 0 ]; do
                 case ${opt} in
                     a) AUTO=1 ;;
                     B) BRIDGE=1 ;;
-                    M) STATIC_MAC=1 ;;
                     n) NO_IP=1 ;;
                     P) PASSTHROUGH=1 ;;
                     V) VNET=1 ;;
@@ -139,6 +142,10 @@ if [ "${ACTION}" = "add" ]; then
     elif [ "${bastille_network_vnet_type}" = "netgraph" ] && [ "${BRIDGE}" -eq 1 ]; then
         error_exit "[ERROR]: [-B|--bridge] cannot be used with Netgraph."
     fi
+fi
+# Set MAC type for VNET jails
+if [ -n "${OPT_MAC_TYPE}" ]; then
+    bastille_network_mac_type="${OPT_MAC_TYPE}"
 fi
 
 # Verify parameter count
@@ -267,15 +274,15 @@ add_interface() {
         sed -i '' '/^}$/d' "${jail_config}"
  
          # Generate NETBLOCK with static MAC
-        if [ "${STATIC_MAC}" -eq 1 ]; then
+        if [ "${bastille_network_mac_type}" = "static" ]; then
             generate_static_mac "${jailname}" "${if}"
             cat << EOF >> "${jail_config}"
   ## ${if} interface
   vnet.interface += ${jail_epair};
   exec.prestart += "epair${epair_num}=\\\$(ifconfig epair create) && ifconfig \\\${epair${epair_num}} up name ${host_epair} && ifconfig \\\${epair${epair_num}%a}b up name ${jail_epair}";
   exec.prestart += "ifconfig ${if} addm ${host_epair}";
-  exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
-  exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
+  exec.prestart += "ifconfig ${host_epair} ether ${BASTILLE_JAIL_MAC}a";
+  exec.prestart += "ifconfig ${jail_epair} ether ${BASTILLE_JAIL_MAC}b";
   exec.prestart += "ifconfig ${host_epair} description \"${jail_vnet} host interface for Bastille jail ${jailname}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
@@ -326,15 +333,15 @@ EOF
             # Remove ending brace (it is added again with the netblock)
             sed -i '' '/^}$/d' "${jail_config}"
 
-            if [ "${STATIC_MAC}" -eq 1 ]; then
+            if [ "${bastille_network_mac_type}" = "static" ]; then
                 # Generate NETBLOCK with static MAC
                 generate_static_mac "${jailname}" "${if}"
                 cat << EOF >> "${jail_config}"
   ## ${if} interface
   vnet.interface += ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} \!${if}";
-  exec.prestart += "ifconfig ${host_epair} ether ${macaddr}a";
-  exec.prestart += "ifconfig ${jail_epair} ether ${macaddr}b";
+  exec.prestart += "jib addm ${jib_epair} ${if}";
+  exec.prestart += "ifconfig ${host_epair} ether ${BASTILLE_JAIL_MAC}a";
+  exec.prestart += "ifconfig ${jail_epair} ether ${BASTILLE_JAIL_MAC}b";
   exec.prestart += "ifconfig ${host_epair} description \"${jail_vnet} host interface for Bastille jail ${jailname}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
@@ -344,7 +351,7 @@ EOF
                 cat << EOF >> "${jail_config}"
   ## ${if} interface
   vnet.interface += ${jail_epair};
-  exec.prestart += "jib addm ${jib_epair} \!${if}";
+  exec.prestart += "jib addm ${jib_epair} ${if}";
   exec.prestart += "ifconfig ${host_epair} description \"${jail_vnet} host interface for Bastille jail ${jailname}\"";
   exec.poststop += "ifconfig ${host_epair} destroy";
 }
@@ -380,14 +387,14 @@ EOF
             # Remove ending brace (it is added again with the netblock)
             sed -i '' '/^}$/d' "${jail_config}"
 
-            if [ "${STATIC_MAC}" -eq 1 ]; then
+            if [ "${bastille_network_mac_type}" = "static" ]; then
                 # Generate NETBLOCK with static MAC
                 generate_static_mac "${jailname}" "${if}"
                 cat << EOF >> "${jail_config}"
   ## ${if} interface
   vnet.interface += ${ng_if};
   exec.prestart += "jng bridge ${jng_if} ${if}";
-  exec.prestart += "ifconfig ${ng_if} ether ${macaddr}b";
+  exec.prestart += "ifconfig ${ng_if} ether ${BASTILLE_JAIL_MAC}b";
   exec.poststop += "jng shutdown ${jng_if}";
 }
 EOF
@@ -597,6 +604,11 @@ case "${ACTION}" in
         ## validate IP if not empty
         if [ -n "${IP}" ]; then
             define_ips "${IP}"
+        fi
+
+        # Set MAC type for VNET jails
+        if [ -n "${OPT_MAC_TYPE}" ]; then
+            bastille_network_mac_type="${OPT_MAC_TYPE}"
         fi
 
         if [ "${VNET}" -eq 1 ]; then

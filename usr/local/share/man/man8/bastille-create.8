@@ -6,9 +6,10 @@
 .Nd Create a jail.
 .Sh SYNOPSIS
 .Nm bastille create
-.Op Fl BCDELMOPTV
+.Op Fl BCDELOPTV
 .Op Fl e Ar KEY=VALUE
 .Op Fl g Ar IP
+.Op fl M Ar TYPE
 .Op Fl n Ar IP,IP
 .Op Fl -os Ar OS
 .Op Fl p Ar VALUE
@@ -54,8 +55,8 @@ Bastille normally detects your gateway from your host. Set
 this option to override it.
 .It Fl L , -linux
 Create a Linux jail (experimental).
-.It Fl M , -static-mac
-Use a static/persistent MAC address (VNET only).
+.It Fl M , --mac Ar TYPE
+Specify a MAC type (VNET only).
 .It Fl n Ar IP,IP Fl -nameserver Ar IP,IP
 Specify nameserver(s) for the jail. Comma-separated.
 .It Fl -no-boot
@@ -125,7 +126,7 @@ This overrides the defaults. See
 .Sh EXAMPLES
 .Bl -tag -width Ds
 .It Create a thick jail, with static MAC and priority 10:
-.Sy bastille create -TM -p 10 myjail 15.0-RELEASE 10.23.23.1
+.Sy bastille create -T -M static -p 10 myjail 15.0-RELEASE 10.23.23.1
 .It Create a VNET jail attached to a manual bridge:
 .Sy bastille create -B myjail 15.0-RELEASE DHCP mycustombridge
 .It Create a Linux jail:

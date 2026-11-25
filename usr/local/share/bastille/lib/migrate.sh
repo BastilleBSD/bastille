@@ -41,7 +41,7 @@ update_jail_syntax_v1() {
         warn 1 "\n[WARNING]\n"
         warn 1 "Updating jail.conf file..."
         warn 1 "Please review your jail.conf file after completion."
-        warn 1 "VNET jails created without -M will be assigned a new MAC address."
+        warn 1 "VNET jails created without a static MAC address will be assigned a new MAC address."
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
             local new_jail_epair=e0b_${jail}
@@ -71,7 +71,7 @@ update_jail_syntax_v1() {
         warn 1 "\n[WARNING]\n"
         warn 1 "Updating jail.conf file..."
         warn 1 "Please review your jail.conf file after completion."
-        warn 1 "VNET jails created without -M will be assigned a new MAC address."
+        warn 1 "VNET jails created without a static MAC address will be assigned a new MAC address."
         local external_interface="$(grep -Eo "jib addm.*" "${jail_config}" | awk '{print $4}' | sed 's|^\\!||')"
         if [ "$(echo -n "e0a_${jail}" | awk '{print length}')" -lt 16 ]; then
             local new_host_epair=e0a_${jail}
