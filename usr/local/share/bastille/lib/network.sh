@@ -48,7 +48,7 @@ generate_static_mac() {
     local host_uuid="$(sysctl -n kern.hostuuid)"
     # Use FreeBSD vendor MAC prefix (58:9c:fc) for jail MAC prefix
     local macaddr_prefix="58:9c:fc"
-    # Use hash of hostuuid/interface/jailname for jail MAC suffix
+    # Use hash of hostuuid:interface:jailname for jail MAC suffix
     local macaddr_suffix="$(echo -n "${host_uuid}:${external_interface}:${jail_name}" | sha256 | cut -c -5 | sed 's/\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F][0-9a-fA-F]\)\([0-9a-fA-F]\)/\1:\2:\3/')"
     if [ -z "${macaddr_prefix}" ] || [ -z "${macaddr_suffix}" ]; then
         error_notify "[ERROR]: Failed to generate MAC address."
