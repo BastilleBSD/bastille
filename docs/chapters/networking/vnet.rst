@@ -290,6 +290,8 @@ MAC on every jail start or restart.
 To assign a static, consistent MAC address, use ``--mac static`` when creating your jail, or
 set ``bastille_network_mac_type=static`` in your configuration file. If you set the global
 config option, Bastille will always assign a static MAC to any VNET jail when you create it.
+This option is not populated by default, which means Bastille will not configure a MAC address
+at all. Set it to ``static`` as above to always use a static MAC address.
 
 For ``-V|--vnet`` jails, the ``--mac static`` option will override the ``jib`` assigned
 MAC by its own Bastille-generated MAC, while still remaining static and consistent
