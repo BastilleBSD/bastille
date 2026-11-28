@@ -29,7 +29,7 @@ error if they are not available to be used.
 
 To adjust the CPU limits, run ``bastille limits TARGET cpu 1,2,3`` again with a
 new set of CPU values. This will overwrite the ``cpuset.conf`` file. This will
-restrict the targetted jail(s) to the specified CPUs.
+restrict the targeted jail(s) to the specified CPUs.
 
 CPU limits are cleared when the jail is stopped, and loaded again on jail start,
 providing the CPU values are present in ``cpuset.conf`` inside the jail directory.
