@@ -37,7 +37,7 @@ network TARGET remove INTERFACE`` while both jails are stopped.
 
       -a | --auto            Start/stop jail(s) if required.
       -B | --bridge          Add a bridge interface.
-      -M | --static-mac      Use a static/persistent MAC address (VNET only).
+      -M | --mac TYPE        Specify a MAC address type (VNET only).
       -n | --no-ip           Create interface without an IP (VNET only).
       -P | --passthrough     Add a raw interface.
       -V | --vnet            Add a physical interface.

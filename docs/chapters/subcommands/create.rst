@@ -64,7 +64,7 @@ options. See the below help output.
       -E | --empty                    Create an empty jail (NAME only).
       -g | --gateway IP               Specify a default router/gateway.
       -L | --linux                    Create a Linux jail (experimental).
-      -M | --static-mac               Use a static/persistent MAC address (VNET only).
+      -M | --mac TYPE                 Specify a MAC address type (VNET only).
       -n | --nameserver IP            Specify nameserver(s) for the jail. Comma-separated.
            --no-boot                  Set boot=off.
            --no-validate              Do not validate the release name.

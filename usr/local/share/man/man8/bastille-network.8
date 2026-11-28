@@ -6,7 +6,8 @@
 .Nd Add or remove interface(s) from jail(s).
 .Sh SYNOPSIS
 .Nm bastille network
-.Op Fl aBMnPV
+.Op Fl aBnPV
+.Op Fl M Ar TYPE
 .Ar TARGET Sy add Ar INTERFACE Op IP
 .Nm bastille network
 .Op Fl a
@@ -26,8 +27,8 @@ to the jail.
 Auto mode. Start/stop jail(s) if required.
 .It Fl B , Fl -bridge
 Add a bridge interface.
-.It Fl M , Fl -static-mac
-Use a static/persistent MAC address (VNET only).
+.It Fl M , Fl --mac
+Specify a MAC address type (VNET only).
 .It Fl n , Fl -no-ip
 Create interface without an IP (VNET only).
 .It Fl P , Fl -passthrough
@@ -54,7 +55,7 @@ Auto mode. Start/stop jail(s) if required.
 .It Add vtnet0 to myjail:
 .Sy bastille network -aV myjail add vtnet0 DHCP
 .It Add bridge0 to myjail with a static MAC:
-.Sy bastille network -aBM myjail add bridge0 10.23.23.23/24
+.Sy bastille network -aB -M static myjail add bridge0 10.23.23.23/24
 .It Remove em0 from myjail:
 .Sy bastille network -a myjail remove em0
 .Sh SEE ALSO

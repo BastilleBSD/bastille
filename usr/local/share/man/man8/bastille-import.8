@@ -6,7 +6,8 @@
 .Nd Import a jail. 
 .Sh SYNOPSIS
 .Nm bastille import
-.Op Fl fMv
+.Op Fl fv
+.Op Fl M Ar TYPE
 .Ar TARGET
 .Op RELEASE
 .Sh DESCRIPTION
@@ -24,8 +25,8 @@ file manually.
 .Bl -tag -width Ds
 .It Fl f , Fl -force
 Force an archive import without validation checksum.
-.It Fl M , Fl -static-mac
-Use a static/persistent MAC address (VNET only) when importing foreign jails.
+.It Fl M , Fl --mac
+Specify a MAC address type when importing foreign jails (VNET only).
 .It Fl v , Fl -verbose
 Enable verbose mode (ZFS only).
 .El

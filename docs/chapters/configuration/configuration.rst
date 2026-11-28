@@ -105,6 +105,7 @@ This is the default `bastille.conf.sample` file.
   bastille_network_bridge=""                                            ## default: ""
   bastille_network_gateway=""                                           ## default: ""
   bastille_network_gateway6=""                                          ## default: ""
+  bastille_network_mac_type=""                                          ## options: "static"
 
   ## DNS
   bastille_dns_enable="NO"                                              ## default: "NO"

@@ -56,7 +56,7 @@ run ``bastille create --help``.
     tags        Manage tags for jail(s).
     template    Apply templates to jail(s).
     top         Process viewer. See top(1).
-    up          Deploy an OCI jail from a podman-compose.yml file.
+    up          Deploy an OCI jail from a bastille-compose.yml file.
     umount      Unmount file(s)/directorie(s) from jail(s).
     update      Update a jail or release.
     upgrade     Upgrade a jail to new release.

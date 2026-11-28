@@ -18,7 +18,7 @@ To import to a specified release, specify it as the last argument.
       Options:
 
       -f | --force          Force an archive import without validating checksum.
-      -M | --static-mac     Use a static/persistent MAC address (VNET only) when importing foreign jails.
+      -M | --mac TYPE       Specify a MAC address type when importing foreign jails (VNET only).
       -v | --verbose        Enable verbose mode (ZFS only).
 
       Tip: If no option specified, container should be imported from standard input.

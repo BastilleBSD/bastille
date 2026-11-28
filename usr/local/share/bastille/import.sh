@@ -41,7 +41,7 @@ usage() {
     Options:
 
     -f | --force          Force an archive import without validating checksum.
-    -M | --static-mac     Use a static/persistent MAC address (VNET only) when importing foreign jails.
+    -M | --mac TYPE       Specify MAC type (VNET only).
     -v | --verbose        Enable verbose mode (ZFS only).
 
     Tip: If no option specified, container should be imported from standard input.
@@ -53,7 +53,7 @@ EOF
 # Handle options
 OPT_FORCE=0
 OPT_ZRECV="-u"
-OPT_STATIC_MAC=""
+OPT_MAC_TYPE=""
 USER_IMPORT=
 while [ "$#" -gt 0 ]; do
     case "${1}" in
@@ -64,9 +64,13 @@ while [ "$#" -gt 0 ]; do
             OPT_FORCE="1"
             shift
             ;;
-        -M|--static-mac)
-            OPT_STATIC_MAC="1"
-            shift
+        -M|--mac)
+            OPT_MAC_TYPE="${2}"
+            case "${OPT_MAC_TYPE}" in
+                default|static) ;;
+                *) error_exit "[ERROR]: Invalid MAC type: ${OPT_MAC_TYPE}" ;;
+            esac 
+            shift 2
             ;;
         -v|--verbose)
             OPT_ZRECV="-u -v"
@@ -76,7 +80,6 @@ while [ "$#" -gt 0 ]; do
             for opt in $(echo ${1} | sed 's/-//g' | fold -w1); do
                 case ${opt} in
                     f) OPT_FORCE=1 ;;
-                    M) OPT_STATIC_MAC=1 ;;
                     v) OPT_ZRECV="-u -v" ;;
                     *) error_exit "[ERROR]: Unknown Option: \"${1}\"" ;;
                 esac
@@ -108,6 +111,11 @@ if [ -z "${bastille_decompress_gz_options}" ]; then
 fi
 if [ -z "${bastille_decompress_zst_options}" ]; then
     bastille_decompress_zst_options="-k -d -c -v"
+fi
+
+# Set MAC type for VNET jails
+if [ -n "${OPT_MAC_TYPE}" ]; then
+    export bastille_network_mac_type="${OPT_MAC_TYPE}"
 fi
 
 validate_archive() {
@@ -242,7 +250,7 @@ generate_config() {
     # See if we need to generate a vnet network section
     if [ "${IS_VNET_JAIL:-0}" = "1" ]; then
         vnet_requirements
-        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "" "${VNET_DEFAULT_INTERFACE}" "${OPT_STATIC_MAC}")
+        NETBLOCK=$(generate_vnet_jail_netblock "${TARGET_TRIM}" "standard" "${VNET_DEFAULT_INTERFACE}")
     else
         # If there are multiple IP/NIC let the user configure network
         IP4_DEFINITION=""

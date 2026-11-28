@@ -277,3 +277,32 @@ added to the config file:
   bastille create -B folsom 15.1-RELEASE DHCP
 
 Obviously, if you use ``-V|--vnet``, then ``vtnet0`` will be used from the above example.
+
+VNET - MAC Address
+------------------
+
+When creating a VNET jail, it is sometimes preferable to assign a static MAC address to
+the interface the jail will use. VNET jails created with ``-V|--vnet`` will be assigned a
+static MAC address by default by the VNET ``jib`` command helper. Jails created
+with ``-B|--bridge`` however, will not. These jails will be assigned a randomized
+MAC on every jail start or restart.
+
+To assign a static, consistent MAC address, use ``--mac static`` when creating your jail, or
+set ``bastille_network_mac_type=static`` in your configuration file. If you set the global
+config option, Bastille will always assign a static MAC to any VNET jail when you create it.
+This option is not populated by default, which means Bastille will not configure a MAC address
+at all. Set it to ``static`` as above to always use a static MAC address.
+
+For ``-V|--vnet`` jails, the ``--mac static`` option will override the ``jib`` assigned
+MAC by its own Bastille-generated MAC, while still remaining static and consistent
+across jail starts/restarts.
+
+The MAC address assigned by Bastille will be unique for each host+interface+jail combination.
+Cloning a jail will generate a new one for the cloned jail, while renaming a jail will retain the
+same MAC address the jail was created with.
+
+When migrating a jail, the MAC will stay the same for VNET jails (``-B`` and ``-V``) as long as they were created
+using the ``--mac static`` option. For ``-V|--vnet`` jails, because of the way ``jib`` handles
+MAC addresses, it will change when migrating if you did not use ``--mac static`` on creation.
+Needless to say, a ``-B|--bridge`` jail changes on each jail start/restart anyway if ``--mac static`` is
+not used.
