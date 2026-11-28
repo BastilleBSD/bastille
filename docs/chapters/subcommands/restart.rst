@@ -1,7 +1,7 @@
 restart
 =======
 
-Bastille will attempt to stop, then start the targetted jail(s). If a jail is
+Bastille will attempt to stop, then start the targeted jail(s). If a jail is
 not running, Bastille will still start it. To avoid this, run the restart
 command with ``-i|--ignore`` to skip any stopped jail(s).
 
